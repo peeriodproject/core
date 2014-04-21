@@ -4,13 +4,13 @@
 
 /// <reference path='./main.d.ts' />
 
-var gui = require('nw.gui'),
-    tray = new gui.Tray({
+import gui = require('nw.gui');
+
+var tray = new gui.Tray({
         title: 'Tray',
         icon: 'icon.png'
     }),
     menu = new gui.Menu();
-
 
 // Give it a menu
 menu.append(new gui.MenuItem({

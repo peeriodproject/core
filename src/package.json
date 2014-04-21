@@ -4,7 +4,7 @@
 	"version": "0.0.1",
 	"main": "index.html",
 	"window": {
-		"show": false,
+		"show": true,
 		"show_in_taskbar" : false
 	}
 }
