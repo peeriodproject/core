@@ -1,0 +1,10 @@
+{
+	"name": "App",
+	"description": "",
+	"version": "0.0.1",
+	"main": "index.html",
+	"window": {
+		"show": false,
+		"show_in_taskbar" : false
+	}
+}
