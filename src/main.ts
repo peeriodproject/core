@@ -11,6 +11,7 @@ var gui = require('nw.gui'),
     }),
     menu = new gui.Menu();
 
+
 // Give it a menu
 menu.append(new gui.MenuItem({
     label: 'foo bar'
