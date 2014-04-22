@@ -1,23 +1,34 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
 
-
-/*
-Kademlia IDs are represented by instances of node.js's Buffer class.
-
-!!!IMPORTANT!!!
-The Byte Buffer will be interpreted as bigendian numbers, so the low index bytes are the most significant!
-
-Example (4 bytes):
-Buffer array 	-> [0, 0, 4, 1]
-Binary 			-> 00000000 00000000 00000100 00000001
-Decimal			-> 1025 (for example by calling `readUInt32BE`)
-
+/**
+ * @namespace topology
  */
 
+/**
+ * Kademlia IDs are represented by instances of node.js's Buffer class.
+ *
+ * !!!IMPORTANT!!!
+ * The Byte Buffer will be interpreted as bigendian numbers, so the low index bytes are the most significant!
+ *
+ * Example (4 bytes):
+ * Buffer array 	-> [0, 0, 4, 1]
+ * Binary 			-> 00000000 00000000 00000100 00000001
+ * Decimal			-> 1025 (for example by calling `readUInt32BE`)
+ *
+ * Interface Description Title.
+ * @interface
+ * @class topology.DistanceMetric
+ * @classdesc Interface Description
+ */
 export interface DistanceMetric {
 
-	/*
-	Returns the byte buffer.
+	/**
+	 * Returns the byte buffer.
+	 *
+	 * @abstract
+	 * @method topology.DistanceMetric#getBuffer
+	 *
+	 * @return {Buffer} the byte buffer.
 	 */
 	getBuffer():NodeBuffer;
 
@@ -67,20 +78,36 @@ export interface DistanceMetric {
 	toHexString():string;
 }
 
-
-
-
 export class Id implements DistanceMetric {
 
+	/**
+	 * @private
+	 * @member {Buffer} Id#buffer
+	 */
 	private buffer:NodeBuffer = null;
+
+	/**
+	 * @private
+	 * @member {number} Id#bit_length
+	 */
 	private bit_length:number = 0;
+
+	/**
+	 * @private
+	 * @member {number} Id#byte_length
+	 */
 	private byte_length:number = 0;
 
 	// Static helper methods
 
-	/*
-	Calculates the number of bytes needed to store the specified bit length (bl).
-	Identical to Math.ceil(bl / 8), but faster.
+	/**
+	 * Calculates the number of bytes needed to store the specified bit length (bl).
+	 * Identical to Math.ceil(bl / 8), but faster.
+	 *
+	 * @method Id.calculateByteLengthByBitLength
+	 *
+	 * @param {number} bl bit length
+	 * @returns {number}
 	 */
 	static calculateByteLengthByBitLength(bl:number):number {
 		var div = bl / 8,
@@ -88,9 +115,15 @@ export class Id implements DistanceMetric {
 		return n == div ? n : n + 1;
 	}
 
-	/*
-	Creates a byte buffer by the hexadecimal representation (string) provided. Throws an error if the hex doesn't equal
-	the number of bytes expected.
+	/**
+	 * Creates a byte buffer by the hexadecimal representation (string) provided. Throws an error if the hex doesn't
+	 * equal the number of bytes expected.
+	 *
+	 * @method Id.byteBufferByHexString
+	 *
+	 * @param {string} hex_string
+	 * @param {number} expected_byte_len
+	 * @returns {Buffer}
 	 */
 	static byteBufferByHexString(hex_string:string, expected_byte_len:number):NodeBuffer {
 		if (hex_string.length / 2 !== expected_byte_len) {
@@ -103,9 +136,11 @@ export class Id implements DistanceMetric {
 		return buffer;
 	}
 
-	/*
-	Creates a byte buffer by the binary representatino (string) provided. Throws an error if the string is longer than
-	the nzmber of bytes expected.
+	/**
+	 * Creates a byte buffer by the binary representatino (string) provided. Throws an error if the string is longer than
+	 * the number of bytes expected.
+	 *
+	 * @method Id.byteBufferByBitString
 	 */
 	static byteBufferByBitString(binary_string:string, expected_byte_len:number):NodeBuffer {
 		var str_len = binary_string.length;
@@ -130,8 +165,15 @@ export class Id implements DistanceMetric {
 		return buffer;
 	}
 
-
-	// Implementation
+	/**
+	 * Implementation
+	 *
+	 * @class Id
+	 * @implements topology.DistanceMetric
+	 *
+	 * @param {Buffer} buffer
+	 * @param {number} bit_length
+	 */
 	constructor(buffer:NodeBuffer, bit_length:number) {
 		var byte_length = Id.calculateByteLengthByBitLength(bit_length);
 

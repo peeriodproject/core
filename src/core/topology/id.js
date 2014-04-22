@@ -1,10 +1,30 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
 
 var Id = (function () {
-    // Implementation
+    /**
+    * Implementation
+    *
+    * @class Id
+    * @implements topology.DistanceMetric
+    *
+    * @param {Buffer} buffer
+    * @param {number} bit_length
+    */
     function Id(buffer, bit_length) {
+        /**
+        * @private
+        * @member {Buffer} Id#buffer
+        */
         this.buffer = null;
+        /**
+        * @private
+        * @member {number} Id#bit_length
+        */
         this.bit_length = 0;
+        /**
+        * @private
+        * @member {number} Id#byte_length
+        */
         this.byte_length = 0;
         var byte_length = Id.calculateByteLengthByBitLength(bit_length);
 
@@ -17,18 +37,29 @@ var Id = (function () {
         this.byte_length = byte_length;
     }
     // Static helper methods
-    /*
-    Calculates the number of bytes needed to store the specified bit length (bl).
-    Identical to Math.ceil(bl / 8), but faster.
+    /**
+    * Calculates the number of bytes needed to store the specified bit length (bl).
+    * Identical to Math.ceil(bl / 8), but faster.
+    *
+    * @method Id.calculateByteLengthByBitLength
+    *
+    * @param {number} bl bit length
+    * @returns {number}
     */
     Id.calculateByteLengthByBitLength = function (bl) {
         var div = bl / 8, n = div << 0;
         return n == div ? n : n + 1;
     };
 
-    /*
-    Creates a byte buffer by the hexadecimal representation (string) provided. Throws an error if the hex doesn't equal
-    the number of bytes expected.
+    /**
+    * Creates a byte buffer by the hexadecimal representation (string) provided. Throws an error if the hex doesn't
+    * equal the number of bytes expected.
+    *
+    * @method Id.byteBufferByHexString
+    *
+    * @param {string} hex_string
+    * @param {number} expected_byte_len
+    * @returns {Buffer}
     */
     Id.byteBufferByHexString = function (hex_string, expected_byte_len) {
         if (hex_string.length / 2 !== expected_byte_len) {
@@ -41,9 +72,11 @@ var Id = (function () {
         return buffer;
     };
 
-    /*
-    Creates a byte buffer by the binary representatino (string) provided. Throws an error if the string is longer than
-    the nzmber of bytes expected.
+    /**
+    * Creates a byte buffer by the binary representatino (string) provided. Throws an error if the string is longer than
+    * the number of bytes expected.
+    *
+    * @method Id.byteBufferByBitString
     */
     Id.byteBufferByBitString = function (binary_string, expected_byte_len) {
         var str_len = binary_string.length;
