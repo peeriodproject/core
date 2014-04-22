@@ -7,9 +7,11 @@
         "/usr/local/lib/node_modules/tsdoc/template/plugins/TSDoc.js"
     ],
 	"opts": {
-		"template"	: "/usr/local/lib/node_modules/tsdoc/template",
-		"recurse"	: true
-	},
+		"template"	: "./vendor/docstrap/template",
+		"recurse"	: true,
+        "private": true,
+        "explain": false
+    },
 	"templates" : {
 		"cleverLinks"     : false,
 		"monospaceLinks"  : false

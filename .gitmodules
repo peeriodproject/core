@@ -1,0 +1,3 @@
+[submodule "vendor/docstrap"]
+	path = vendor/docstrap
+	url = https://github.com/terryweiss/docstrap.git
