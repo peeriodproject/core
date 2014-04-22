@@ -5,13 +5,15 @@ var Id = (function () {
         this.buffer = null;
         this.bit_length = 0;
         this.byte_length = 0;
-        if (!(buffer instanceof Buffer) || (buffer.length !== bit_length)) {
+        var byte_length = Id.calculateByteLengthByBitLength(bit_length);
+
+        if (!((buffer instanceof Buffer) && (buffer.length == byte_length))) {
             throw new Error('ID construction failed: Must be Buffer of length ' + bit_length);
         }
 
         this.buffer = buffer;
         this.bit_length = bit_length;
-        this.byte_length = this.calculateByteLengthByBitLength(bit_length);
+        this.byte_length = byte_length;
     }
     Id.prototype.getBuffer = function () {
         return this.buffer;
@@ -100,14 +102,23 @@ var Id = (function () {
         return -1;
     };
 
-    Id.prototype.calculateByteLengthByBitLength = function (bl) {
+    Id.calculateByteLengthByBitLength = function (bl) {
         var div = bl / 8, n = div << 0;
         return n == div ? n : n + 1;
     };
 
-    Id.prototype.toString = function () {
+    Id.prototype.toHexString = function () {
         return this.getBuffer().toString('hex');
+    };
+
+    Id.prototype.toBitString = function () {
+        var result = '';
+        for (var i = 0; i < this.bit_length; ++i) {
+            result += this.at(i) ? '1' : '0';
+        }
+        return result;
     };
     return Id;
 })();
+exports.Id = Id;
 //# sourceMappingURL=id.js.map

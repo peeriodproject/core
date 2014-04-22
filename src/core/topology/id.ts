@@ -2,10 +2,11 @@
 
 
 /*
+Kademlia IDs are represented by instances node.js's Buffer class.
 The Byte Buffer will be interpreted as bigendian numbers, so the low index bytes are the most significant!
  */
 
-interface DistanceMetric {
+export interface DistanceMetric {
 
 	/*
 	Returns the byte buffer.
@@ -50,21 +51,22 @@ interface DistanceMetric {
 
 
 
-class Id implements DistanceMetric {
+export class Id implements DistanceMetric {
 
 	private buffer:NodeBuffer = null;
 	private bit_length:number = 0;
 	private byte_length:number = 0;
 
 	constructor(buffer:NodeBuffer, bit_length:number) {
-		if (!(buffer instanceof Buffer) || (buffer.length !== bit_length)) {
+		var byte_length = Id.calculateByteLengthByBitLength(bit_length);
+
+		if (!((buffer instanceof Buffer) && (buffer.length == byte_length))) {
 			throw new Error('ID construction failed: Must be Buffer of length ' + bit_length);
 		}
 
-
-		this.buffer = buffer;
-		this.bit_length = bit_length;
-		this.byte_length = this.calculateByteLengthByBitLength(bit_length);
+		this.buffer 		= buffer;
+		this.bit_length 	= bit_length;
+		this.byte_length 	= byte_length;
 	}
 
 	getBuffer():NodeBuffer {
@@ -159,14 +161,23 @@ class Id implements DistanceMetric {
 		return -1;
 	}
 
-	calculateByteLengthByBitLength(bl:number):number {
+
+	static calculateByteLengthByBitLength(bl:number):number {
 		var div = bl / 8,
 			n = div << 0;
 		return n == div ? n : n + 1;
 	}
 
-	toString():string {
+	toHexString():string {
 		return this.getBuffer().toString('hex');
+	}
+
+	toBitString():string {
+		var result = '';
+		for (var i=0; i<this.bit_length; ++i) {
+			result += this.at(i) ? '1' : '0';
+		}
+		return result;
 	}
 
 }
