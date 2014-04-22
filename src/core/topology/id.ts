@@ -18,7 +18,6 @@
  * Interface Description Title.
  * @interface
  * @class topology.DistanceMetric
- * @classdesc Interface Description
  */
 export interface DistanceMetric {
 
