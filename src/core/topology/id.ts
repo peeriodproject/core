@@ -2,8 +2,13 @@
 
 
 /*
-Kademlia IDs are represented by instances node.js's Buffer class.
+Kademlia IDs are represented by instances of node.js's Buffer class.
+
+!!!IMPORTANT!!!
 The Byte Buffer will be interpreted as bigendian numbers, so the low index bytes are the most significant!
+Example:
+Buffer array -> 	[]
+
  */
 
 export interface DistanceMetric {
@@ -46,6 +51,17 @@ export interface DistanceMetric {
 	Returns -1 if they don't differ (and are thus the same).
 	 */
 	differsInHighestBit(other:DistanceMetric):number;
+
+	/*
+	Returns a string of the binary representation of the id with the length 8 * ByteLength,
+	thus allowing zeros on the left.
+	 */
+	toBitString():string;
+
+	/*
+	Returns a string of the hexadecimal representation of the id.
+	 */
+	toHexString():string;
 }
 
 
@@ -57,6 +73,62 @@ export class Id implements DistanceMetric {
 	private bit_length:number = 0;
 	private byte_length:number = 0;
 
+	// Static helper methods
+
+	/*
+	Calculates the number of bytes needed to store the specified bit length (bl).
+	Identical to Math.ceil(bl / 8), but faster.
+	 */
+	static calculateByteLengthByBitLength(bl:number):number {
+		var div = bl / 8,
+			n = div << 0;
+		return n == div ? n : n + 1;
+	}
+
+	/*
+	Creates a byte buffer by the hexadecimal representation (string) provided. Throws an error if the hex doesn't equal
+	the number of bytes expected.
+	 */
+	static byteBufferByHexString(hex_string:string, expected_byte_len:number):NodeBuffer {
+		if (hex_string.length / 2 !== expected_byte_len) {
+			throw new Error('byteBufferByHexString: Expected ' + expected_byte_len + ', but got ' + (hex_string.length / 2) + ' bytes');
+		}
+
+		var buffer = new Buffer(expected_byte_len);
+		buffer.fill(0);
+		buffer.write(hex_string, 0, expected_byte_len, 'hex');
+		return buffer;
+	}
+
+	/*
+	Creates a byte buffer by the binary representatino (string) provided. Throws an error if the string is longer than
+	the nzmber of bytes expected.
+	 */
+	static byteBufferByBitString(binary_string:string, expected_byte_len:number):NodeBuffer {
+		var str_len = binary_string.length;
+		if ((str_len / 8) > expected_byte_len) {
+			throw new Error('byteBufferByBitString: Bit length exceeds expected number of bytes');
+		}
+
+		var buffer = new Buffer(expected_byte_len);
+		buffer.fill(0);
+
+		for (var i=0; i<str_len; ++i) {
+			var at = str_len - 1 - i,
+				_i = expected_byte_len - 1 - (at / 8 | 0),
+				mask = 1 << (at % 8);
+
+			if (binary_string.charAt(i) == '1')
+				buffer[_i] |= mask;
+			else
+				buffer[_i] &= 255 ^ mask;
+		}
+
+		return buffer;
+	}
+
+
+	// Implementation
 	constructor(buffer:NodeBuffer, bit_length:number) {
 		var byte_length = Id.calculateByteLengthByBitLength(bit_length);
 
@@ -118,7 +190,7 @@ export class Id implements DistanceMetric {
 		}
 
 		var a = this.getBuffer(),
-			b = this.getBuffer();
+			b = other.getBuffer();
 
 		for (var i=0; i<this.byte_length; ++i) {
 			if (a[i] !== b[i]) return false;
@@ -143,7 +215,7 @@ export class Id implements DistanceMetric {
 
 	differsInHighestBit(other:DistanceMetric):number {
 		if (!(other instanceof Id)) {
-			throw new Error('equals: Argument must be of type Id')
+			throw new Error('differsInHighestBit: Argument must be of type Id')
 		}
 
 		var a = this.getBuffer(),
@@ -162,22 +234,16 @@ export class Id implements DistanceMetric {
 	}
 
 
-	static calculateByteLengthByBitLength(bl:number):number {
-		var div = bl / 8,
-			n = div << 0;
-		return n == div ? n : n + 1;
+	toBitString():string {
+		var result = '';
+		for (var i=0; i<this.bit_length; ++i) {
+			result = (this.at(i) ? '1' : '0') + result;
+		}
+		return result;
 	}
 
 	toHexString():string {
 		return this.getBuffer().toString('hex');
-	}
-
-	toBitString():string {
-		var result = '';
-		for (var i=0; i<this.bit_length; ++i) {
-			result += this.at(i) ? '1' : '0';
-		}
-		return result;
 	}
 
 }

@@ -1,6 +1,7 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
 
 var Id = (function () {
+    // Implementation
     function Id(buffer, bit_length) {
         this.buffer = null;
         this.bit_length = 0;
@@ -15,6 +16,56 @@ var Id = (function () {
         this.bit_length = bit_length;
         this.byte_length = byte_length;
     }
+    // Static helper methods
+    /*
+    Calculates the number of bytes needed to store the specified bit length (bl).
+    Identical to Math.ceil(bl / 8), but faster.
+    */
+    Id.calculateByteLengthByBitLength = function (bl) {
+        var div = bl / 8, n = div << 0;
+        return n == div ? n : n + 1;
+    };
+
+    /*
+    Creates a byte buffer by the hexadecimal representation (string) provided. Throws an error if the hex doesn't equal
+    the number of bytes expected.
+    */
+    Id.byteBufferByHexString = function (hex_string, expected_byte_len) {
+        if (hex_string.length / 2 !== expected_byte_len) {
+            throw new Error('byteBufferByHexString: Expected ' + expected_byte_len + ', but got ' + (hex_string.length / 2) + ' bytes');
+        }
+
+        var buffer = new Buffer(expected_byte_len);
+        buffer.fill(0);
+        buffer.write(hex_string, 0, expected_byte_len, 'hex');
+        return buffer;
+    };
+
+    /*
+    Creates a byte buffer by the binary representatino (string) provided. Throws an error if the string is longer than
+    the nzmber of bytes expected.
+    */
+    Id.byteBufferByBitString = function (binary_string, expected_byte_len) {
+        var str_len = binary_string.length;
+        if ((str_len / 8) > expected_byte_len) {
+            throw new Error('byteBufferByBitString: Bit length exceeds expected number of bytes');
+        }
+
+        var buffer = new Buffer(expected_byte_len);
+        buffer.fill(0);
+
+        for (var i = 0; i < str_len; ++i) {
+            var at = str_len - 1 - i, _i = expected_byte_len - 1 - (at / 8 | 0), mask = 1 << (at % 8);
+
+            if (binary_string.charAt(i) == '1')
+                buffer[_i] |= mask;
+            else
+                buffer[_i] &= 255 ^ mask;
+        }
+
+        return buffer;
+    };
+
     Id.prototype.getBuffer = function () {
         return this.buffer;
     };
@@ -60,7 +111,7 @@ var Id = (function () {
             throw new Error('equals: Argument must be of type Id');
         }
 
-        var a = this.getBuffer(), b = this.getBuffer();
+        var a = this.getBuffer(), b = other.getBuffer();
 
         for (var i = 0; i < this.byte_length; ++i) {
             if (a[i] !== b[i])
@@ -84,7 +135,7 @@ var Id = (function () {
 
     Id.prototype.differsInHighestBit = function (other) {
         if (!(other instanceof Id)) {
-            throw new Error('equals: Argument must be of type Id');
+            throw new Error('differsInHighestBit: Argument must be of type Id');
         }
 
         var a = this.getBuffer(), b = other.getBuffer();
@@ -102,21 +153,16 @@ var Id = (function () {
         return -1;
     };
 
-    Id.calculateByteLengthByBitLength = function (bl) {
-        var div = bl / 8, n = div << 0;
-        return n == div ? n : n + 1;
+    Id.prototype.toBitString = function () {
+        var result = '';
+        for (var i = 0; i < this.bit_length; ++i) {
+            result = (this.at(i) ? '1' : '0') + result;
+        }
+        return result;
     };
 
     Id.prototype.toHexString = function () {
         return this.getBuffer().toString('hex');
-    };
-
-    Id.prototype.toBitString = function () {
-        var result = '';
-        for (var i = 0; i < this.bit_length; ++i) {
-            result += this.at(i) ? '1' : '0';
-        }
-        return result;
     };
     return Id;
 })();
