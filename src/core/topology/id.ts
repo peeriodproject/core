@@ -6,8 +6,11 @@ Kademlia IDs are represented by instances of node.js's Buffer class.
 
 !!!IMPORTANT!!!
 The Byte Buffer will be interpreted as bigendian numbers, so the low index bytes are the most significant!
-Example:
-Buffer array -> 	[]
+
+Example (4 bytes):
+Buffer array 	-> [0, 0, 4, 1]
+Binary 			-> 00000000 00000000 00000100 00000001
+Decimal			-> 1025 (for example by calling `readUInt32BE`)
 
  */
 
