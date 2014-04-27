@@ -14,7 +14,7 @@ var TCPSocket		= tcp_socket.TCPSocket;
  * automatically handling some stuff (like listening retry).
  *
  * It has the functionality to 'auto bootstrap' with open ports which means it creates TCP servers listening on those ports
- * and checking if they can be reached from outside.
+ * and checking if they can be reached from outside, at the end emitting a `bootstrapped`.
  *
  * (@todo Auto bootstrap functionality)
  *
