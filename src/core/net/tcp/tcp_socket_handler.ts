@@ -63,6 +63,15 @@ export interface TCPSocketHandlerOptions {
 }
 
 export interface TCPSocketHandlerInterface {
+
+	/**
+	 * Uses the provided open ports to listen on them with TCP servers. When all servers have been set up (or a timeout
+	 * has expired, when something takes too long), a callback is called with an array of the port being listened on.
+	 *
+	 * @param callback
+	 */
+	autoBootstrap(callback: (openPorts:Array<number>) => any):void;
+
 	/**
 	 * Create a TCP connection to the specified PORT, IP pair.
 	 * On success, a 'connected' event will be emitted with a TCPSocket instance as argument.
@@ -113,6 +122,39 @@ export class TCPSocketHandler extends events.EventEmitter implements TCPSocketHa
 		this.idle_connection_kill_timeout		 	= opts.idle_connection_kill_timeout;
 		this.allow_half_open_sockets 				= !!opts.allow_half_open_sockets;
 		this.connection_retry 						= opts.connection_retry;
+	}
+
+	public autoBootstrap(callback: (openPorts:Array<number>) => any):void {
+		var doCallback = true,
+			callbackTimeout = null,
+			checkAndCallback = (port:number, server:net.Server) => {
+				if (callbackTimeout) clearTimeout(callbackTimeout);
+				if (Object.keys(this.openTCPServers).length === this.my_open_ports.length) {
+					theCallback();
+				} else {
+					setCallbackTimeout();
+				}
+			},
+			setCallbackTimeout = () => {
+				callbackTimeout = setTimeout(() => {
+					theCallback();
+				}, 5000);
+			},
+			theCallback = () => {
+				if (doCallback) {
+					callback(this.getOpenServerPortsArray());
+					this.removeListener('opened server', checkAndCallback);
+				}
+				doCallback = false;
+			}
+
+		this.my_open_ports.forEach((port) => {
+			this.createTCPServerAndBootstrap(port);
+		});
+
+		this.on('opened server', checkAndCallback);
+
+		setCallbackTimeout();
 	}
 
 	public connectTo(port:number, ip:string):net.Socket {
@@ -179,6 +221,12 @@ export class TCPSocketHandler extends events.EventEmitter implements TCPSocketHa
 			idle_connection_kill_timeout: this.idle_connection_kill_timeout,
 			do_keep_alive: true
 		};
+	}
+
+	public getOpenServerPortsArray():Array<number> {
+		return Object.keys(this.openTCPServers).map(function (port) {
+			return parseInt(port, 10);
+		});
 	}
 
 
