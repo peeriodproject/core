@@ -1,8 +1,8 @@
-/// <reference path='../test.d.ts' />
+/// <reference path='../../test.d.ts' />
 
 require('should');
 
-var Id = require('../../src/core/topology/Id');
+var Id = require('../../../src/core/topology/Id');
 /*
  Kademlia IDs are represented by instances of node.js's Buffer class.
 
