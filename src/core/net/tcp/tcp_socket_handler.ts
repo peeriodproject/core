@@ -2,7 +2,7 @@
 
 import net 			= require('net');
 import events 		= require('events');
-import tcp_socket	= require('tcp_socket');
+import tcp_socket	= require('./tcp_socket');
 
 var TCPSocket		= tcp_socket.TCPSocket;
 
@@ -15,8 +15,6 @@ var TCPSocket		= tcp_socket.TCPSocket;
  *
  * It has the functionality to 'auto bootstrap' with open ports which means it creates TCP servers listening on those ports
  * and checking if they can be reached from outside, at the end emitting a `bootstrapped`.
- *
- * (@todo Auto bootstrap functionality)
  *
  * The aim of TCPSocketHandler is making it obsolete if a connections was established as a server or client on the local end.
  * What matters is the sockets.
@@ -42,6 +40,8 @@ export interface TCPSocketHandlerOptions {
 	 * For a "regular" connection (i.e. not a connection which serves as a proxy), how many seconds should be waited
 	 * after the last activity until the socket connection is killed from this side.
 	 *
+	 * If idle sockets should not be closed, set to 0 or below.
+	 *
 	 */
 	idle_connection_kill_timeout:number;
 
@@ -59,10 +59,17 @@ export interface TCPSocketHandlerOptions {
 	 * Default is 3. If no retry should be triggered, provide a negative number.
 	 *
 	 */
-	connection_retry:number;
+	connection_retry?:number;
 }
 
 export interface TCPSocketHandlerInterface {
+
+	/**
+	 * Sets the IP under which TCP servers should be reachable from outside.
+	 *
+	 * @param ip
+	 */
+	setMyExternalIp(ip:string):void;
 
 	/**
 	 * Uses the provided open ports to listen on them with TCP servers. When all servers have been set up (or a timeout
@@ -74,13 +81,14 @@ export interface TCPSocketHandlerInterface {
 
 	/**
 	 * Create a TCP connection to the specified PORT, IP pair.
-	 * On success, a 'connected' event will be emitted with a TCPSocket instance as argument.
-	 * Returns the raw net.Socket instance.
+	 * On success, a 'connected' event will be emitted with the TCPSocket instance as argument, if no callback is specified.
+	 *
+	 * If a callback is supplied, it will be called with the TCPSocket instance as argument.
 	 *
 	 * @param port
 	 * @param ip
 	 */
-	connectTo(port:number, ip:string):net.Socket;
+	connectTo(port:number, ip:string, callback?:(socket:tcp_socket.TCPSocket) => any):void;
 
 	/**
 	 * Creates a TCP server with the specified option of allowing half open sockets.
@@ -108,20 +116,25 @@ export class TCPSocketHandler extends events.EventEmitter implements TCPSocketHa
 	private my_open_ports:Array<number> 			= null;
 	private idle_connection_kill_timeout:number 	= 0;
 	private allow_half_open_sockets:boolean			= false;
-	private connection_retry:number					= 3;
+	private connection_retry:number					= 0;
 
 	private openTCPServers:Object					= {};
+	private retriedPorts:Array<number>				= [];
 
 	constructor(opts:TCPSocketHandlerOptions) {
 		super();
 
 		if (!net.isIP(opts.my_external_ip)) throw new Error('TCPHandler: Provided IP is no IP');
 
-		this.my_external_ip 						= opts.my_external_ip;
+		this.setMyExternalIp(opts.my_external_ip);
 		this.my_open_ports 							= opts.my_open_ports || [];
-		this.idle_connection_kill_timeout		 	= opts.idle_connection_kill_timeout;
+		this.idle_connection_kill_timeout		 	= opts.idle_connection_kill_timeout || 0;
 		this.allow_half_open_sockets 				= !!opts.allow_half_open_sockets;
-		this.connection_retry 						= opts.connection_retry;
+		this.connection_retry 						= opts.connection_retry || 3;
+	}
+
+	public setMyExternalIp(ip:string):void {
+		this.my_external_ip = ip;
 	}
 
 	public autoBootstrap(callback: (openPorts:Array<number>) => any):void {
@@ -129,6 +142,7 @@ export class TCPSocketHandler extends events.EventEmitter implements TCPSocketHa
 			callbackTimeout = null,
 			checkAndCallback = (port:number, server:net.Server) => {
 				if (callbackTimeout) clearTimeout(callbackTimeout);
+
 				if (Object.keys(this.openTCPServers).length === this.my_open_ports.length) {
 					theCallback();
 				} else {
@@ -157,15 +171,24 @@ export class TCPSocketHandler extends events.EventEmitter implements TCPSocketHa
 		setCallbackTimeout();
 	}
 
-	public connectTo(port:number, ip:string):net.Socket {
+	public connectTo(port:number, ip:string, callback?:(socket:tcp_socket.TCPSocket) => any):void {
 		var sock = net.createConnection(port, ip);
 
-		sock.on('connect', () => {
-			var socket = new TCPSocket(sock, this.defaultSocketOptions());
-			this.emit('connected', socket);
+		sock.on('error', function () {
+			this.emit('connection error', port, ip);
 		});
 
-		return sock;
+		sock.on('connect', () => {
+			sock.removeAllListeners('error');
+			var socket = new TCPSocket(sock, this.defaultSocketOptions());
+
+			if (!callback) {
+				this.emit('connected', socket);
+			} else {
+				callback(socket);
+			}
+
+		});
 	}
 
 	public createTCPServer():net.Server {
@@ -180,24 +203,35 @@ export class TCPSocketHandler extends events.EventEmitter implements TCPSocketHa
 		var server = this.createTCPServer();
 
 		// retry once when encountering EADDRINUSE
-		server.once('error', (error) => {
+		server.on('error', (error) => {
 			if (error.code == 'EADDRINUSE') {
-
 				// retry
-				if (this.connection_retry >= 0) {
+				if (this.connection_retry >= 0 && this.retriedPorts.indexOf(port) < 0) {
+					this.retriedPorts.push(port);
 					setTimeout(function () {
-						server.close();
 						server.listen(port);
 					}, this.connection_retry * 1000);
 				}
 			}
 		});
 
-		// put it in our open server list
+		// put it in our open server list, if reachable from outside
 		server.on('listening', () => {
-			var port = server.address().port;
-			this.openTCPServers[port] = server;
-			this.emit('opened server', port, server);
+			this.checkIfServerIsReachableFromOutside(server, (success) => {
+				if (success) {
+					var port = server.address().port;
+					this.openTCPServers[port] = server;
+
+					server.on('connection', (sock:net.Socket) => {
+						var socket = new TCPSocket(sock, this.defaultSocketOptions());
+						this.emit('connected', socket);
+					});
+
+					this.emit('opened server', port, server);
+				} else {
+					server.close();
+				}
+			});
 		});
 
 		// remove it from our open server list
@@ -206,14 +240,40 @@ export class TCPSocketHandler extends events.EventEmitter implements TCPSocketHa
 			this.emit('closed server', port);
 		});
 
-		server.on('connection', (sock:net.Socket) => {
-			var socket = new TCPSocket(sock, this.defaultSocketOptions());
-			this.emit('connected', socket);
-		});
-
 		server.listen(port);
 
 		return server;
+	}
+
+	public checkIfServerIsReachableFromOutside(server:net.Server, callback:(success:boolean) => any):void {
+		var connectionTimeout = null,
+			serverOnConnect = function (sock:net.Socket) {
+				sock.on('data', function (data) {
+					sock.write(data);
+				});
+			},
+			callbackWith = function (success:boolean, socket?:tcp_socket.TCPSocket) {
+				callback(success);
+				if (socket) socket.end();
+				server.removeListener('connection', serverOnConnect);
+			}
+
+		server.on('connection', serverOnConnect);
+
+		connectionTimeout = setTimeout(function () {
+			callbackWith(false);
+			server.close();
+		}, 2000);
+
+		this.connectTo(server.address().port, this.my_external_ip, function (socket) {
+			socket.writeBuffer(new Buffer([20]));
+			socket.on('data', function (data) {
+				clearTimeout(connectionTimeout);
+				if (data[0] === 20) {
+					callbackWith(true);
+				}
+			});
+		});
 	}
 
 	public defaultSocketOptions():tcp_socket.TCPSocketOptions {
