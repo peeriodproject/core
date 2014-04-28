@@ -2,7 +2,7 @@
 
 require('should');
 
-var Id = require('../../src/core/topology/Id').Id;
+var Id = require('../../src/core/topology/Id');
 /*
  Kademlia IDs are represented by instances of node.js's Buffer class.
 
@@ -143,8 +143,5 @@ describe('CORE --> ID', function () {
 			a.equals(new Id(Id.byteBufferByBitString(a.toBitString(), 6), 48)).should.be.true;
 		});
 	});
-
-
-
 
 });
