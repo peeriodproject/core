@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Documentation Namespaces</title>
+	<title>Documentation Class: ConfigInterface</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -131,12 +131,14 @@
 					
 
 
-	<h1 class="page-title">Namespaces</h1>
+	<h1 class="page-title">Class: ConfigInterface</h1>
 <section>
 
 <header>
     <h2>
+        <span class="ancestors"><a href="config.html">config</a>.</span>
     
+    ConfigInterface
     </h2>
     
 </header>
@@ -147,8 +149,27 @@
 
     
         
+<dt>
+    <h4 class="name" id="ConfigInterface"><span class="type-signature"></span>new ConfigInterface<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>The <code>ConfigInterface</code> provides a read-only key-value store for config values.
+The keys should be namespaced via <em>dot.notation</em> to prevent conflicts.</p>
+    </div>
+    
 
-        
+    
+    
+    
+    
+    
+    
+    
 <dl class="details">
     
 
@@ -169,6 +190,11 @@
     
 
     
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/config/Config.d.ts
+    </li></ul></dd>
+    
 
     
 
@@ -177,8 +203,20 @@
     
 </dl>
 
+    
+    
 
-        
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
     
     </div>
 
@@ -189,82 +227,197 @@
     
 
     
-        <h3 class="subsection-title">Classes</h3>
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
 
         <dl>
-            <dt><a href="config.ConfigInterface.html">ConfigInterface</a></dt>
-            <dd></dd>
+            
+<dt>
+    <h4 class="name" id="get"><span class="type-signature">&lt;virtual> </span>get<span class="signature">(key, alternative)</span><span class="type-signature"> &rarr; {any}</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Returns the config value stored under the given key or a default value if provided.</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
         
-            <dt><a href="config.ConfigKeyList.html">ConfigKeyList</a></dt>
-            <dd></dd>
+
+<table class="params table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+
+		<th>Type</th>
+
+		
+
+		
+
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+
+	<tbody>
+	
+
+        <tr>
+            
+                <td class="name"><code>key</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+
+        <tr>
+            
+                <td class="name"><code>alternative</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">any</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+	</tbody>
+</table>
+
+    
+    
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/config/Config.d.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    <h5>Throws:</h5>
+    <ul>
+            <li>
+
+    <div class="param-desc">
+    
+        Will throw an error if no key is specified.
+    
+    </div>
+
+</li>
         
-            <dt><a href="config.ConfigPair.html">ConfigPair</a></dt>
-            <dd></dd>
+            <li>
+
+    <div class="param-desc">
+    
+        Will throw an error if no value is found and no alternative is specified.
+    
+    </div>
+
+</li>
+        </ul>
+    
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type">any</span>
+
+
+	</dd>
+</dl>
+
+
         
-            <dt><a href="config.ConfigPairList.html">ConfigPairList</a></dt>
-            <dd></dd>
-        
-            <dt><a href="config.JSONConfig.html">JSONConfig</a></dt>
-            <dd></dd>
-        
-            <dt><a href="Id.html">Id</a></dt>
-            <dd></dd>
-        
-            <dt><a href="net.tcp.TCPSocketHandlerOptions.html">TCPSocketHandlerOptions</a></dt>
-            <dd></dd>
-        
-            <dt><a href="net.tcp.TCPSocketOptions.html">TCPSocketOptions</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.Bucket.html">Bucket</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.BucketInterface.html">BucketInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.BucketStoreInterface.html">BucketStoreInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.ContactNodeInterface.html">ContactNodeInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.DistanceMetric.html">DistanceMetric</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTable.html">RoutingTable</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTableInterface.html">RoutingTableInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="utils.ClosableInterface.html">ClosableInterface</a></dt>
-            <dd></dd>
+    
+    
+</dd>
+
         </dl>
-    
-
-    
-        <h3 class="subsection-title">Namespaces</h3>
-
-        <dl>
-            <dt><a href="namespaces.html#config"><a href="config.html">config</a></a></dt>
-            <dd></dd>
-        
-            <dt><a href="namespaces.html#net"><a href="net.html">net</a></a></dt>
-            <dd></dd>
-        
-            <dt><a href="namespaces.html#topology"><a href="topology.html">topology</a></a></dt>
-            <dd></dd>
-        
-            <dt><a href="namespaces.html#topology"><a href="topology.html">topology</a></a></dt>
-            <dd></dd>
-        
-            <dt><a href="namespaces.html#topology"><a href="topology.html">topology</a></a></dt>
-            <dd></dd>
-        </dl>
-    
-
-    
-
     
 
     
@@ -285,7 +438,7 @@
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a>
-		on Mon Apr 28 2014 16:04:14 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		on Mon Apr 28 2014 16:04:15 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
 			</div>

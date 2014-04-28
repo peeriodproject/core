@@ -13,7 +13,7 @@
         "explain": false
     },
 	"templates" : {
-		"cleverLinks"     : false,
+		"cleverLinks"     : true,
 		"monospaceLinks"  : false
 	},
 	"source": {

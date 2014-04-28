@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Documentation Namespace: topology</title>
+	<title>Documentation Class: JSONConfig</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -131,12 +131,14 @@
 					
 
 
-	<h1 class="page-title">Namespace: topology</h1>
+	<h1 class="page-title">Class: JSONConfig</h1>
 <section>
 
 <header>
     <h2>
-    topology
+        <span class="ancestors"><a href="config.html">config</a>.</span>
+    
+    JSONConfig
     </h2>
     
 </header>
@@ -147,8 +149,98 @@
 
     
         
+<dt>
+    <h4 class="name" id="JSONConfig"><span class="type-signature"></span>new JSONConfig<span class="signature">(configPath, keys)</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>The class <code>JSONConfig</code> loads a JSON-file and converts it into a dot.notated key-value store.</p>
+    </div>
+    
 
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
         
+
+<table class="params table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+
+		<th>Type</th>
+
+		
+
+		
+
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+
+	<tbody>
+	
+
+        <tr>
+            
+                <td class="name"><code>configPath</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+
+        <tr>
+            
+                <td class="name"><code>keys</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="config.ConfigKeyList.html">config.ConfigKeyList</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+	</tbody>
+</table>
+
+    
+    
+    
 <dl class="details">
     
 
@@ -171,7 +263,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/topology/Bucket.ts
+        src/core/config/Config.ts
     </li></ul></dd>
     
 
@@ -182,8 +274,20 @@
     
 </dl>
 
+    
+    
 
-        
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
     
     </div>
 
@@ -194,67 +298,35 @@
     
 
     
-        <h3 class="subsection-title">Classes</h3>
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
 
         <dl>
-            <dt><a href="topology.Bucket.html">Bucket</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.BucketInterface.html">BucketInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.BucketStoreInterface.html">BucketStoreInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.ContactNodeInterface.html">ContactNodeInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.DistanceMetric.html">DistanceMetric</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTable.html">RoutingTable</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTableInterface.html">RoutingTableInterface</a></dt>
-            <dd></dd>
-        </dl>
+            
+<dt>
+    <h4 class="name" id="_data"><span class="type-signature">&lt;private> </span>_data<span class="type-signature"> :<a href="config.ConfigPairList.html">config.ConfigPairList</a></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type"><a href="config.ConfigPairList.html">config.ConfigPairList</a></span>
+
+
+            </li>
+        </ul>
     
 
     
-
-    
-
-    
-
-    
-
-    
-</article>
-
-</section>
-
-
-
-
-
-	<h1 class="page-title">Namespace: topology</h1>
-<section>
-
-<header>
-    <h2>
-    topology
-    </h2>
-    
-</header>
-
-<article>
-    <div class="container-overview">
-    
-
-    
-        
-
-        
 <dl class="details">
     
 
@@ -277,7 +349,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/topology/DistanceMetric.d.ts
+        src/core/config/Config.ts
     </li></ul></dd>
     
 
@@ -288,79 +360,106 @@
     
 </dl>
 
-
-        
     
-    </div>
-
     
+</dd>
 
-    
-
-    
-
-    
-        <h3 class="subsection-title">Classes</h3>
-
-        <dl>
-            <dt><a href="topology.Bucket.html">Bucket</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.BucketInterface.html">BucketInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.BucketStoreInterface.html">BucketStoreInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.ContactNodeInterface.html">ContactNodeInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.DistanceMetric.html">DistanceMetric</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTable.html">RoutingTable</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTableInterface.html">RoutingTableInterface</a></dt>
-            <dd></dd>
         </dl>
     
 
     
+        <h3 class="subsection-title">Methods</h3>
 
+        <dl>
+            
+<dt>
+    <h4 class="name" id="_convertToDotNotation"><span class="type-signature">&lt;private> </span>_convertToDotNotation<span class="signature">(obj, configKeys)</span><span class="type-signature"> &rarr; {<a href="config.ConfigPairList.html">config.ConfigPairList</a>}</span></h4>
+    
+    
+</dt>
+<dd>
+    
     
 
     
-
     
-
     
-</article>
-
-</section>
-
-
-
-
-
-	<h1 class="page-title">Namespace: topology</h1>
-<section>
-
-<header>
-    <h2>
-    topology
-    </h2>
     
-</header>
-
-<article>
-    <div class="container-overview">
     
-
-    
+        <h5>Parameters:</h5>
         
 
-        
+<table class="params table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+
+		<th>Type</th>
+
+		
+
+		
+
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+
+	<tbody>
+	
+
+        <tr>
+            
+                <td class="name"><code>obj</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+
+        <tr>
+            
+                <td class="name"><code>configKeys</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="config.ConfigKeyList.html">config.ConfigKeyList</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+	</tbody>
+</table>
+
+    
+    
+    
 <dl class="details">
     
 
@@ -383,7 +482,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/topology/RoutingTable.ts
+        src/core/config/Config.ts
     </li></ul></dd>
     
 
@@ -394,48 +493,44 @@
     
 </dl>
 
-
-        
     
-    </div>
-
     
 
     
 
     
-
     
-        <h3 class="subsection-title">Classes</h3>
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>The dot-notated key-value object</p>
+</div>
 
-        <dl>
-            <dt><a href="topology.Bucket.html">Bucket</a></dt>
-            <dd></dd>
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type"><a href="config.ConfigPairList.html">config.ConfigPairList</a></span>
+
+
+	</dd>
+</dl>
+
+
         
-            <dt><a href="topology.BucketInterface.html">BucketInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.BucketStoreInterface.html">BucketStoreInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.ContactNodeInterface.html">ContactNodeInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.DistanceMetric.html">DistanceMetric</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTable.html">RoutingTable</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTableInterface.html">RoutingTableInterface</a></dt>
-            <dd></dd>
+    
+    
+</dd>
+
         </dl>
-    
-
-    
-
-    
-
     
 
     
@@ -456,7 +551,7 @@
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a>
-		on Mon Apr 28 2014 16:04:17 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		on Mon Apr 28 2014 16:04:15 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
 			</div>

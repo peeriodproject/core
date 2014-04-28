@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Documentation Namespace: topology</title>
+	<title>Documentation Class: ContactNodeInterface</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -131,12 +131,14 @@
 					
 
 
-	<h1 class="page-title">Namespace: topology</h1>
+	<h1 class="page-title">Class: ContactNodeInterface</h1>
 <section>
 
 <header>
     <h2>
-    topology
+        <span class="ancestors"><a href="topology.html">topology</a>.</span>
+    
+    ContactNodeInterface
     </h2>
     
 </header>
@@ -147,8 +149,27 @@
 
     
         
+<dt>
+    <h4 class="name" id="ContactNodeInterface"><span class="type-signature"></span>new ContactNodeInterface<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>The <code>ContactNodeInterface</code> represents a single contact node and is used by the <a href="topology.RoutingTableInterface.html"><code>topology.RoutingTableInterface</code></a>
+and <a href="topology.BucketInterface.html"><code>topology.BucketInterface</code></a> to store informations about other peers.</p>
+    </div>
+    
 
-        
+    
+    
+    
+    
+    
+    
+    
 <dl class="details">
     
 
@@ -171,7 +192,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/topology/Bucket.ts
+        src/core/topology/ContactNodeInterface.d.ts
     </li></ul></dd>
     
 
@@ -182,8 +203,20 @@
     
 </dl>
 
+    
+    
 
-        
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
     
     </div>
 
@@ -194,67 +227,36 @@
     
 
     
-        <h3 class="subsection-title">Classes</h3>
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
 
         <dl>
-            <dt><a href="topology.Bucket.html">Bucket</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.BucketInterface.html">BucketInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.BucketStoreInterface.html">BucketStoreInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.ContactNodeInterface.html">ContactNodeInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.DistanceMetric.html">DistanceMetric</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTable.html">RoutingTable</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTableInterface.html">RoutingTableInterface</a></dt>
-            <dd></dd>
-        </dl>
+            
+<dt>
+    <h4 class="name" id="getAddresses"><span class="type-signature">&lt;virtual> </span>getAddresses<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Returns the addresses of the contact node.</p>
+    </div>
     
 
     
-
     
-
     
-
     
-
     
-</article>
-
-</section>
-
-
-
-
-
-	<h1 class="page-title">Namespace: topology</h1>
-<section>
-
-<header>
-    <h2>
-    topology
-    </h2>
     
-</header>
-
-<article>
-    <div class="container-overview">
     
-
-    
-        
-
-        
 <dl class="details">
     
 
@@ -277,7 +279,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/topology/DistanceMetric.d.ts
+        src/core/topology/ContactNodeInterface.d.ts
     </li></ul></dd>
     
 
@@ -288,79 +290,61 @@
     
 </dl>
 
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type">string</span>
+
+
+	</dd>
+</dl>
+
 
         
     
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="getId"><span class="type-signature">&lt;virtual> </span>getId<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="topology.DistanceMetric.html">topology.DistanceMetric</a>}</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Returns the id of the contact node.</p>
     </div>
-
     
 
     
-
     
-
     
-        <h3 class="subsection-title">Classes</h3>
-
-        <dl>
-            <dt><a href="topology.Bucket.html">Bucket</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.BucketInterface.html">BucketInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.BucketStoreInterface.html">BucketStoreInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.ContactNodeInterface.html">ContactNodeInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.DistanceMetric.html">DistanceMetric</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTable.html">RoutingTable</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTableInterface.html">RoutingTableInterface</a></dt>
-            <dd></dd>
-        </dl>
     
-
     
-
     
-
     
-
-    
-
-    
-</article>
-
-</section>
-
-
-
-
-
-	<h1 class="page-title">Namespace: topology</h1>
-<section>
-
-<header>
-    <h2>
-    topology
-    </h2>
-    
-</header>
-
-<article>
-    <div class="container-overview">
-    
-
-    
-        
-
-        
 <dl class="details">
     
 
@@ -383,7 +367,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/topology/RoutingTable.ts
+        src/core/topology/ContactNodeInterface.d.ts
     </li></ul></dd>
     
 
@@ -394,10 +378,69 @@
     
 </dl>
 
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type"><a href="topology.DistanceMetric.html">topology.DistanceMetric</a></span>
+
+
+	</dd>
+</dl>
+
 
         
     
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="getLastSeen"><span class="type-signature">&lt;virtual> </span>getLastSeen<span class="signature">()</span><span class="type-signature"> &rarr; {number}</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Returns the last seen timestamp of the contact node.</p>
     </div>
+    
+
+    
+    
+    
+    
+    
+    
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
 
     
 
@@ -406,36 +449,145 @@
     
 
     
-        <h3 class="subsection-title">Classes</h3>
 
-        <dl>
-            <dt><a href="topology.Bucket.html">Bucket</a></dt>
-            <dd></dd>
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/topology/ContactNodeInterface.d.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type">number</span>
+
+
+	</dd>
+</dl>
+
+
         
-            <dt><a href="topology.BucketInterface.html">BucketInterface</a></dt>
-            <dd></dd>
+    
+    
+</dd>
+
         
-            <dt><a href="topology.BucketStoreInterface.html">BucketStoreInterface</a></dt>
-            <dd></dd>
+            
+<dt>
+    <h4 class="name" id="getPublicKey"><span class="type-signature">&lt;virtual> </span>getPublicKey<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Returns the public key of the contact node.</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+    
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/topology/ContactNodeInterface.d.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type">string</span>
+
+
+	</dd>
+</dl>
+
+
         
-            <dt><a href="topology.ContactNodeInterface.html">ContactNodeInterface</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.DistanceMetric.html">DistanceMetric</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTable.html">RoutingTable</a></dt>
-            <dd></dd>
-        
-            <dt><a href="topology.RoutingTableInterface.html">RoutingTableInterface</a></dt>
-            <dd></dd>
+    
+    
+</dd>
+
         </dl>
-    
-
-    
-
-    
-
     
 
     
@@ -456,7 +608,7 @@
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a>
-		on Mon Apr 28 2014 16:04:17 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		on Mon Apr 28 2014 16:04:18 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
 			</div>
