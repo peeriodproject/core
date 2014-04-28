@@ -4,7 +4,11 @@
 
 /// <reference path='./main.d.ts' />
 
-import gui = require('nw.gui');
+import RoutingTable = require('./core/topology/RoutingTable');
+
+RoutingTable
+
+/*import gui = require('nw.gui');
 
 var tray = new gui.Tray({
         title: 'Tray',
@@ -29,4 +33,4 @@ menu.items[menu.items.length - 1].click = function() {
     gui.App.quit();
 };
 
-tray.menu = menu;
+tray.menu = menu;*/
