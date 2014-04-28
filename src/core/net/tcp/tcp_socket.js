@@ -54,6 +54,10 @@ var TCPSocket = (function (_super) {
             return _this.onTimeout();
         });
 
+        socket.on('error', function (error) {
+            console.log(error);
+        });
+
         this.propagateEvents(this.eventsToPropagate);
     };
 
@@ -66,6 +70,10 @@ var TCPSocket = (function (_super) {
             throw new Error('TCPSocket: getSocket() called, but no socket set on this connection!');
 
         return this.socket;
+    };
+
+    TCPSocket.prototype.end = function (data, encoding) {
+        this.getSocket().end(data, encoding);
     };
 
     TCPSocket.prototype.getIPPortString = function () {

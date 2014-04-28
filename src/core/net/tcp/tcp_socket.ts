@@ -9,6 +9,7 @@
  *
  * It is planned, however, to maybe automatically control the upload rate and providing statistical data.
  *
+ * @todo proper error handling (currently only logging out errors)
  */
 
 import net 		= require('net');
@@ -17,6 +18,7 @@ import events 	= require('events');
 export interface TCPSocketOptions {
 	/**
 	 * Number of seconds to wait until an idle socket will be closed.
+	 * If idle socket should not be closed, set to 0 or below.
 	 */
 	idle_connection_kill_timeout:number;
 
@@ -132,6 +134,10 @@ export class TCPSocket extends events.EventEmitter implements TCPSocketInterface
 		var socket = this.getSocket();
 		socket.on('timeout', () => this.onTimeout());
 
+		socket.on('error', function (error) {
+			console.log(error);
+		});
+
 		this.propagateEvents(this.eventsToPropagate);
 	}
 
@@ -143,6 +149,10 @@ export class TCPSocket extends events.EventEmitter implements TCPSocketInterface
 		if (!this.socket) throw new Error('TCPSocket: getSocket() called, but no socket set on this connection!');
 
 		return this.socket;
+	}
+
+	public end(data?:any, encoding?:string) {
+		this.getSocket().end(data, encoding);
 	}
 
 	public getIPPortString():string {
