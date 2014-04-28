@@ -1,0 +1,8 @@
+{
+    "topology": {
+        "k": 48,
+        "bucketStore": {
+            "databasePath": "db"
+        }
+    }
+}
