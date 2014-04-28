@@ -1,5 +1,5 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
-
+/// <reference path='DistanceMetric.d.ts' />
 var Id = (function () {
     /**
     * Implementation
@@ -15,26 +15,26 @@ var Id = (function () {
         * @private
         * @member {Buffer} Id#buffer
         */
-        this.buffer = null;
+        this._buffer = null;
         /**
         * @private
         * @member {number} Id#bit_length
         */
-        this.bit_length = 0;
+        this._bit_length = 0;
         /**
         * @private
         * @member {number} Id#byte_length
         */
-        this.byte_length = 0;
+        this._byte_length = 0;
         var byte_length = Id.calculateByteLengthByBitLength(bit_length);
 
         if (!((buffer instanceof Buffer) && (buffer.length == byte_length))) {
             throw new Error('ID construction failed: Must be Buffer of length ' + bit_length);
         }
 
-        this.buffer = buffer;
-        this.bit_length = bit_length;
-        this.byte_length = byte_length;
+        this._buffer = buffer;
+        this._bit_length = bit_length;
+        this._byte_length = byte_length;
     }
     // Static helper methods
     /**
@@ -48,6 +48,7 @@ var Id = (function () {
     */
     Id.calculateByteLengthByBitLength = function (bl) {
         var div = bl / 8, n = div << 0;
+
         return n == div ? n : n + 1;
     };
 
@@ -69,6 +70,7 @@ var Id = (function () {
         var buffer = new Buffer(expected_byte_len);
         buffer.fill(0);
         buffer.write(hex_string, 0, expected_byte_len, 'hex');
+
         return buffer;
     };
 
@@ -76,7 +78,13 @@ var Id = (function () {
     * Creates a byte buffer by the binary representatino (string) provided. Throws an error if the string is longer than
     * the number of bytes expected.
     *
+    * todo add throw jsdoc comment
+    *
     * @method Id.byteBufferByBitString
+    *
+    * @param {string} binary_string
+    * @param {number} expected_byte_len
+    * @returns {Buffer}
     */
     Id.byteBufferByBitString = function (binary_string, expected_byte_len) {
         var str_len = binary_string.length;
@@ -90,27 +98,38 @@ var Id = (function () {
         for (var i = 0; i < str_len; ++i) {
             var at = str_len - 1 - i, _i = expected_byte_len - 1 - (at / 8 | 0), mask = 1 << (at % 8);
 
-            if (binary_string.charAt(i) == '1')
+            if (binary_string.charAt(i) == '1') {
                 buffer[_i] |= mask;
-            else
+            } else {
                 buffer[_i] &= 255 ^ mask;
+            }
         }
 
         return buffer;
     };
 
+    /**
+    * {@link topology.DistanceMetric#getBuffer}
+    *
+    * @method Id#getBuffer
+    */
     Id.prototype.getBuffer = function () {
-        return this.buffer;
+        return this._buffer;
     };
 
+    /**
+    * {@link topology.DistanceMetric#distanceTo}
+    *
+    * @method Id#distanceTo
+    */
     Id.prototype.distanceTo = function (other) {
         if (!(other instanceof Id)) {
             throw new Error('Can only compare to another ID.');
         }
 
-        var response = new Buffer(this.byte_length), a = this.getBuffer(), b = other.getBuffer();
+        var response = new Buffer(this._byte_length), a = this.getBuffer(), b = other.getBuffer();
 
-        for (var i = 0; i < this.byte_length; ++i) {
+        for (var i = 0; i < this._byte_length; ++i) {
             response[i] = a[i] ^ b[i];
         }
 
@@ -124,7 +143,7 @@ var Id = (function () {
 
         var a = this.getBuffer(), b = first.getBuffer(), c = second.getBuffer();
 
-        for (var i = 0; i < this.byte_length; ++i) {
+        for (var i = 0; i < this._byte_length; ++i) {
             var buf_a_b = a[i] ^ b[i], buf_a_c = a[i] ^ c[i];
 
             // first is farther away
@@ -146,7 +165,7 @@ var Id = (function () {
 
         var a = this.getBuffer(), b = other.getBuffer();
 
-        for (var i = 0; i < this.byte_length; ++i) {
+        for (var i = 0; i < this._byte_length; ++i) {
             if (a[i] !== b[i])
                 return false;
         }
@@ -155,15 +174,17 @@ var Id = (function () {
     };
 
     Id.prototype.at = function (index) {
-        return (this.getBuffer()[this.byte_length - 1 - (index / 8 | 0)] & (1 << (index % 8))) > 0 ? 1 : 0;
+        return (this.getBuffer()[this._byte_length - 1 - (index / 8 | 0)] & (1 << (index % 8))) > 0 ? 1 : 0;
     };
 
     Id.prototype.set = function (index, value) {
-        var _i = this.byte_length - 1 - (index / 8 | 0), mask = 1 << (index % 8);
-        if (value)
+        var _i = this._byte_length - 1 - (index / 8 | 0), mask = 1 << (index % 8);
+
+        if (value) {
             this.getBuffer()[_i] |= mask;
-        else
+        } else {
             this.getBuffer()[_i] &= 255 ^ mask;
+        }
     };
 
     Id.prototype.differsInHighestBit = function (other) {
@@ -173,12 +194,13 @@ var Id = (function () {
 
         var a = this.getBuffer(), b = other.getBuffer();
 
-        for (var i = 0; i < this.byte_length; ++i) {
+        for (var i = 0; i < this._byte_length; ++i) {
             var xor_byte = a[i] ^ b[i];
+
             if (xor_byte !== 0) {
                 for (var j = 0; j < 8; ++j) {
                     if (!(xor_byte >>= 1))
-                        return (this.byte_length - 1 - i) * 8 + j;
+                        return (this._byte_length - 1 - i) * 8 + j;
                 }
             }
         }
@@ -188,7 +210,7 @@ var Id = (function () {
 
     Id.prototype.toBitString = function () {
         var result = '';
-        for (var i = 0; i < this.bit_length; ++i) {
+        for (var i = 0; i < this._bit_length; ++i) {
             result = (this.at(i) ? '1' : '0') + result;
         }
         return result;
@@ -199,5 +221,6 @@ var Id = (function () {
     };
     return Id;
 })();
-exports.Id = Id;
-//# sourceMappingURL=id.js.map
+
+module.exports = Id;
+//# sourceMappingURL=Id.js.map

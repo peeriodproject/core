@@ -1,101 +1,25 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
+/// <reference path='DistanceMetric.d.ts' />
 
-/**
- * @namespace topology
- */
-
-/**
- * Kademlia IDs are represented by instances of node.js's Buffer class.
- *
- * !!!IMPORTANT!!!
- * The Byte Buffer will be interpreted as bigendian numbers, so the low index bytes are the most significant!
- *
- * Example (4 bytes):
- * Buffer array 	-> [0, 0, 4, 1]
- * Binary 			-> 00000000 00000000 00000100 00000001
- * Decimal			-> 1025 (for example by calling `readUInt32BE`)
- *
- * Interface Description Title.
- * @interface
- * @class topology.DistanceMetric
- */
-export interface DistanceMetric {
-
-	/**
-	 * Returns the byte buffer.
-	 *
-	 * @abstract
-	 * @method topology.DistanceMetric#getBuffer
-	 *
-	 * @return {Buffer} the byte buffer.
-	 */
-	getBuffer():NodeBuffer;
-
-
-	/*
-	Compute the distance between two ids `a` and `b` expressed as buffer.
-	 */
-	distanceTo(other:DistanceMetric):NodeBuffer;
-
-	/*
-	 Compare the difference of distance of two ids from this one. Return a
-	 Number equal to 0 if the distance is identical, >0 if `first` is closer,
-	 <0 otherwise.
-	 */
-	compareDistance(first:DistanceMetric, second:DistanceMetric):number;
-
-	/*
-	Test if the id is equal to another.
-	 */
-	equals(other:DistanceMetric):boolean;
-
-	/*
-	 Extract the bit at the specified index. The index must be between the range [0, bit_length[.
-	 */
-	at(index:number):number;
-
-	/*
-	Set the bit at the specified index. The index must be between the range [0, bit_length[.
-	 */
-	set(index:number, value:number):void;
-
-	/*
-	Returns the first bit in which two ids differ, starting from the highest bit, going down to 0.
-	Returns -1 if they don't differ (and are thus the same).
-	 */
-	differsInHighestBit(other:DistanceMetric):number;
-
-	/*
-	Returns a string of the binary representation of the id with the length 8 * ByteLength,
-	thus allowing zeros on the left.
-	 */
-	toBitString():string;
-
-	/*
-	Returns a string of the hexadecimal representation of the id.
-	 */
-	toHexString():string;
-}
-
-export class Id implements DistanceMetric {
+class Id implements DistanceMetric {
 
 	/**
 	 * @private
 	 * @member {Buffer} Id#buffer
 	 */
-	private buffer:NodeBuffer = null;
+	private _buffer:NodeBuffer = null;
 
 	/**
 	 * @private
 	 * @member {number} Id#bit_length
 	 */
-	private bit_length:number = 0;
+	private _bit_length:number = 0;
 
 	/**
 	 * @private
 	 * @member {number} Id#byte_length
 	 */
-	private byte_length:number = 0;
+	private _byte_length:number = 0;
 
 	// Static helper methods
 
@@ -111,6 +35,7 @@ export class Id implements DistanceMetric {
 	static calculateByteLengthByBitLength(bl:number):number {
 		var div = bl / 8,
 			n = div << 0;
+
 		return n == div ? n : n + 1;
 	}
 
@@ -132,6 +57,7 @@ export class Id implements DistanceMetric {
 		var buffer = new Buffer(expected_byte_len);
 		buffer.fill(0);
 		buffer.write(hex_string, 0, expected_byte_len, 'hex');
+
 		return buffer;
 	}
 
@@ -139,7 +65,13 @@ export class Id implements DistanceMetric {
 	 * Creates a byte buffer by the binary representatino (string) provided. Throws an error if the string is longer than
 	 * the number of bytes expected.
 	 *
+	 * todo add throw jsdoc comment
+	 *
 	 * @method Id.byteBufferByBitString
+	 *
+	 * @param {string} binary_string
+	 * @param {number} expected_byte_len
+	 * @returns {Buffer}
 	 */
 	static byteBufferByBitString(binary_string:string, expected_byte_len:number):NodeBuffer {
 		var str_len = binary_string.length;
@@ -150,15 +82,17 @@ export class Id implements DistanceMetric {
 		var buffer = new Buffer(expected_byte_len);
 		buffer.fill(0);
 
-		for (var i=0; i<str_len; ++i) {
+		for (var i = 0; i < str_len; ++i) {
 			var at = str_len - 1 - i,
 				_i = expected_byte_len - 1 - (at / 8 | 0),
 				mask = 1 << (at % 8);
 
-			if (binary_string.charAt(i) == '1')
+			if (binary_string.charAt(i) == '1') {
 				buffer[_i] |= mask;
-			else
+			}
+			else {
 				buffer[_i] &= 255 ^ mask;
+			}
 		}
 
 		return buffer;
@@ -180,25 +114,35 @@ export class Id implements DistanceMetric {
 			throw new Error('ID construction failed: Must be Buffer of length ' + bit_length);
 		}
 
-		this.buffer 		= buffer;
-		this.bit_length 	= bit_length;
-		this.byte_length 	= byte_length;
+		this._buffer 		= buffer;
+		this._bit_length 	= bit_length;
+		this._byte_length 	= byte_length;
 	}
 
+	/**
+	 * {@link topology.DistanceMetric#getBuffer}
+	 *
+	 * @method Id#getBuffer
+	 */
 	getBuffer():NodeBuffer {
-		return this.buffer;
+		return this._buffer;
 	}
 
+	/**
+	 * {@link topology.DistanceMetric#distanceTo}
+	 *
+	 * @method Id#distanceTo
+	 */
 	distanceTo(other:DistanceMetric):NodeBuffer {
 		if (!(other instanceof Id)) {
 			throw new Error('Can only compare to another ID.');
 		}
 
-		var response = new Buffer(this.byte_length),
+		var response = new Buffer(this._byte_length),
 			a = this.getBuffer(),
 			b = other.getBuffer();
 
-		for (var i=0; i<this.byte_length; ++i) {
+		for (var i=0; i<this._byte_length; ++i) {
 			response[i] = a[i] ^ b[i];
 		}
 
@@ -214,7 +158,7 @@ export class Id implements DistanceMetric {
 			b = first.getBuffer(),
 			c = second.getBuffer();
 
-		for (var i=0; i<this.byte_length; ++i) {
+		for (var i=0; i<this._byte_length; ++i) {
 			var buf_a_b = a[i] ^ b[i],
 				buf_a_c = a[i] ^ c[i];
 
@@ -236,7 +180,7 @@ export class Id implements DistanceMetric {
 		var a = this.getBuffer(),
 			b = other.getBuffer();
 
-		for (var i=0; i<this.byte_length; ++i) {
+		for (var i=0; i<this._byte_length; ++i) {
 			if (a[i] !== b[i]) return false;
 		}
 
@@ -244,32 +188,35 @@ export class Id implements DistanceMetric {
 	}
 
 	at(index:number):number {
-		return (this.getBuffer()[this.byte_length - 1 - (index / 8 | 0)] & (1 << (index % 8))) > 0 ? 1 : 0;
+		return (this.getBuffer()[this._byte_length - 1 - (index / 8 | 0)] & (1 << (index % 8))) > 0 ? 1 : 0;
 	}
 
 	set(index:number, value:number):void {
-		var _i = this.byte_length - 1 - (index / 8 | 0),
+		var _i = this._byte_length - 1 - (index / 8 | 0),
 			mask = 1 << (index % 8);
-		if (value)
-			this.getBuffer()[_i] |= mask;
-		else
-			this.getBuffer()[_i] &= 255 ^ mask;
 
+		if (value) {
+			this.getBuffer()[_i] |= mask;
+		}
+		else {
+			this.getBuffer()[_i] &= 255 ^ mask;
+		}
 	}
 
 	differsInHighestBit(other:DistanceMetric):number {
 		if (!(other instanceof Id)) {
-			throw new Error('differsInHighestBit: Argument must be of type Id')
+			throw new Error('differsInHighestBit: Argument must be of type Id');
 		}
 
 		var a = this.getBuffer(),
 			b = other.getBuffer();
 
-		for (var i=0; i<this.byte_length; ++i) {
+		for (var i=0; i<this._byte_length; ++i) {
 			var xor_byte = a[i] ^ b[i];
+
 			if (xor_byte !== 0) {
 				for (var j=0; j<8; ++j) {
-					if (!(xor_byte >>= 1)) return (this.byte_length - 1 - i) * 8 + j;
+					if (!(xor_byte >>= 1)) return (this._byte_length - 1 - i) * 8 + j;
 				}
 			}
 		}
@@ -277,10 +224,9 @@ export class Id implements DistanceMetric {
 		return -1;
 	}
 
-
 	toBitString():string {
 		var result = '';
-		for (var i=0; i<this.bit_length; ++i) {
+		for (var i=0; i<this._bit_length; ++i) {
 			result = (this.at(i) ? '1' : '0') + result;
 		}
 		return result;
@@ -289,5 +235,6 @@ export class Id implements DistanceMetric {
 	toHexString():string {
 		return this.getBuffer().toString('hex');
 	}
-
 }
+
+export = Id;
