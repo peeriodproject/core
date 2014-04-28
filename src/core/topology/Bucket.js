@@ -27,12 +27,6 @@ var Bucket = (function () {
         * @private
         */
         this._key = '';
-        /**
-        *
-        * @type {number}
-        * @private
-        */
-        this._k = -1;
         this._config = config;
         this._key = key;
         this._store = store;

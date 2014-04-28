@@ -29,33 +29,35 @@ class RoutingTable implements RoutingTableInterface {
 
 	/**
 	 * @private
-	 * @type {BucketStore}
+	 * @member {topology.BucketStoreInterface} _store
 	 */
 	private _store:BucketStoreInterface = null;
 
 	/**
 	 *
 	 * @private
-	 * @type {DistanceMetric}
+	 * @member {topology.DistanceMetric} _id
 	 */
 	private _id:DistanceMetric = null;
 
 	/**
 	 *
 	 * @private
-	 * @param index
+	 * @member {Array.<topology.BucketInterface>} _buckets
 	 */
 	private _buckets:{[key:string]: BucketInterface} = {};
 
 	/**
 	 *
-	 * @param index
 	 * @private
+	 * @member {boolean} _isOpen
 	 */
 	private _isOpen:boolean = false;
 
 	/**
 	 * @private
+	 * @method topology.RoutingTable#_createBucket
+	 *
 	 * @param {string} index
 	 */
 	private _createBucket(index:string) {
@@ -65,12 +67,13 @@ class RoutingTable implements RoutingTableInterface {
 	/**
 	 *
 	 * @private
+	 * @method topology.RoutingTable#_getBucketKey
 	 *
-	 * @param {IContactNode} contact
+	 * @param {topology.DistanceMetric} id
 	 * @return {string}
 	 */
-	private _getBucketKey(contact:ContactNodeInterface):string {
-		var bucketKey = this._id.differsInHighestBit(contact.getId()).toString();
+	private _getBucketKey(id:DistanceMetric):string {
+		var bucketKey = this._id.differsInHighestBit(id).toString();
 
 		return bucketKey;
 	}
@@ -81,8 +84,9 @@ class RoutingTable implements RoutingTableInterface {
 	 * @class topology.RoutingTable
 	 * @implements RoutingTableInterface
 	 *
-	 * @param {number} k
-	 * @param {IBucketStore} store
+	 * @param {config.ConfigInterface} config
+	 * @param {topology.DistanceMetric} id
+	 * @param {topology.BucketStoreInterface} store
 	 */
 	constructor(config:ConfigInterface, id:DistanceMetric, store:BucketStoreInterface) {
 		this._config = config;
@@ -96,8 +100,18 @@ class RoutingTable implements RoutingTableInterface {
 		this.open();
 	}
 
+	getContactNode(id:DistanceMetric):any {
+		var bucketKey = this._getBucketKey(id);
+		return this._buckets[bucketKey].get(id);
+	}
+
+	updateLastSeen(contact:ContactNodeInterface):void {
+		contact.updateLastSeen();
+		this.updateContactNode(contact);
+	}
+
 	updateContactNode(contact:ContactNodeInterface):void {
-		var bucketKey = this._getBucketKey(contact);
+		var bucketKey = this._getBucketKey(contact.getId());
 		this._buckets[bucketKey].update(contact);
 	}
 
@@ -165,7 +179,8 @@ var getContact = function (max):ContactNodeInterface {
 		return str;
 	},
 
-	id = getRandomId();
+	id = getRandomId(),
+	lastSeen = Date.now();
 
 	return {
 		getId: function ():DistanceMetric {
@@ -181,7 +196,11 @@ var getContact = function (max):ContactNodeInterface {
 		},
 
 		getLastSeen: function ():number {
-			return Date.now();
+			return lastSeen;
+		},
+
+		updateLastSeen: function ():void {
+			lastSeen = Date.now();
 		}
 	};
 };

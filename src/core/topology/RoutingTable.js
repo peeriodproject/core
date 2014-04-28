@@ -23,8 +23,9 @@ var RoutingTable = (function () {
     * @class topology.RoutingTable
     * @implements RoutingTableInterface
     *
-    * @param {number} k
-    * @param {IBucketStore} store
+    * @param {config.ConfigInterface} config
+    * @param {topology.DistanceMetric} id
+    * @param {topology.BucketStoreInterface} store
     */
     function RoutingTable(config, id, store) {
         var _this = this;
@@ -34,25 +35,25 @@ var RoutingTable = (function () {
         this._config = null;
         /**
         * @private
-        * @type {BucketStore}
+        * @member {topology.BucketStoreInterface} _store
         */
         this._store = null;
         /**
         *
         * @private
-        * @type {DistanceMetric}
+        * @member {topology.DistanceMetric} _id
         */
         this._id = null;
         /**
         *
         * @private
-        * @param index
+        * @member {Array.<topology.BucketInterface>} _buckets
         */
         this._buckets = {};
         /**
         *
-        * @param index
         * @private
+        * @member {boolean} _isOpen
         */
         this._isOpen = false;
         this._config = config;
@@ -67,6 +68,8 @@ var RoutingTable = (function () {
     }
     /**
     * @private
+    * @method topology.RoutingTable#_createBucket
+    *
     * @param {string} index
     */
     RoutingTable.prototype._createBucket = function (index) {
@@ -76,18 +79,29 @@ var RoutingTable = (function () {
     /**
     *
     * @private
+    * @method topology.RoutingTable#_getBucketKey
     *
-    * @param {IContactNode} contact
+    * @param {topology.DistanceMetric} id
     * @return {string}
     */
-    RoutingTable.prototype._getBucketKey = function (contact) {
-        var bucketKey = this._id.differsInHighestBit(contact.getId()).toString();
+    RoutingTable.prototype._getBucketKey = function (id) {
+        var bucketKey = this._id.differsInHighestBit(id).toString();
 
         return bucketKey;
     };
 
+    RoutingTable.prototype.getContactNode = function (id) {
+        var bucketKey = this._getBucketKey(id);
+        return this._buckets[bucketKey].get(id);
+    };
+
+    RoutingTable.prototype.updateLastSeen = function (contact) {
+        contact.updateLastSeen();
+        this.updateContactNode(contact);
+    };
+
     RoutingTable.prototype.updateContactNode = function (contact) {
-        var bucketKey = this._getBucketKey(contact);
+        var bucketKey = this._getBucketKey(contact.getId());
         this._buckets[bucketKey].update(contact);
     };
 
@@ -151,7 +165,7 @@ var getContact = function (max) {
         }
 
         return str;
-    }, id = getRandomId();
+    }, id = getRandomId(), lastSeen = Date.now();
 
     return {
         getId: function () {
@@ -164,7 +178,10 @@ var getContact = function (max) {
             return "[{ip: '123', port: 80}, {ip: '456', port: 80}]";
         },
         getLastSeen: function () {
-            return Date.now();
+            return lastSeen;
+        },
+        updateLastSeen: function () {
+            lastSeen = Date.now();
         }
     };
 };

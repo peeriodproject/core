@@ -33,19 +33,12 @@ class Bucket implements BucketInterface {
 	 */
 	_key:string = '';
 
-	/**
-	 *
-	 * @type {number}
-	 * @private
-	 */
-	_k:number = -1;
-
 	constructor(config:ConfigInterface, key:string, store:BucketStoreInterface) {
 		this._config = config;
 		this._key = key;
 		this._store = store;
 
-		this.open()
+		this.open();
 	}
 
 	add(contact:ContactNodeInterface):boolean {
