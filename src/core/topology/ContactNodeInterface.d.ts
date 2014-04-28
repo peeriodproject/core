@@ -53,4 +53,6 @@ interface ContactNodeInterface {
 	 */
 	getPublicKey():string;
 
+	updateLastSeen():void;
+
 }
