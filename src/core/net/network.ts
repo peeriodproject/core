@@ -6,8 +6,18 @@
  *
  */
 
+/**
+ *
+ * The network manager class's only objective is to automatically bootstrap the complete network, meaning:
+ *
+ * - obtaining the external IP of the machine
+ * - creating a TCP connection handler
+ * - letting the TCP connection handler auto bootstrap all servers
+ * - at last calling a callback if successful or not
+ *
+ */
+
 import net 		= require('net');
-import events 	= require('events');
 
 export interface NetworkOptions {
 
@@ -17,17 +27,14 @@ export interface NetworkOptions {
 	my_open_ports:Array<number>;
 }
 
-export interface NetworkManagerInterface {
+export interface NetworkBootstrapperInterface {
 
 }
 
-export class NetworkManager extends events.EventEmitter implements NetworkManagerInterface {
+export class NetworkBootstrapper implements NetworkBootstrapperInterface {
 
 	constructor(opts:NetworkOptions) {
-		super();
 
-		// @todo check if the ports are really open, maybe a PortChecker class?
-		// @todo create a TCPHandler
 		// @todo we also need some class to obtain the external ip
 
 	}
