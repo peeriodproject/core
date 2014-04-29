@@ -81,11 +81,6 @@ class BucketStore implements BucketStoreInterface {
 		this._path = path;
 
 		this.open();
-
-		var txn = this._beginTransaction();
-
-		txn.putString(this._dbi, 'END', true);
-		txn.commit();
 	}
 
 	get(bucketKey:string, id:DistanceMetric):any {
@@ -101,7 +96,7 @@ class BucketStore implements BucketStoreInterface {
 
 	remove(bucketKey:string, id:DistanceMetric):boolean {
 		var contact = this.get(bucketKey, id),
-			lastSeen = 0;
+			lastSeen;
 
 		if (null === contact) {
 			return true;
@@ -121,7 +116,7 @@ class BucketStore implements BucketStoreInterface {
 
 	add(bucketKey:string, id:DistanceMetric, lastSeen:number, addresses:any, publicKey:string):boolean {
 		var txn = this._beginTransaction(),
-			added = false;
+			added;
 
 		added = this._add(txn, bucketKey, id, lastSeen, addresses, publicKey);
 		txn.commit();
@@ -131,7 +126,7 @@ class BucketStore implements BucketStoreInterface {
 
 	addAll(bucketKey:string, contacts:any):boolean {
 		var txn = this._beginTransaction(),
-			added = false;
+			added;
 
 		for (var i in contacts) {
 			var contact = contacts[i];
@@ -196,7 +191,7 @@ class BucketStore implements BucketStoreInterface {
 	}
 
 	contains(bucketKey:string, id:DistanceMetric):boolean {
-		return (null === this.get(bucketKey, id)) ? false : true;
+		return (null !== this.get(bucketKey, id));
 	}
 
 	debug():void {

@@ -37,11 +37,6 @@ var BucketStore = (function () {
         this._path = path;
 
         this.open();
-
-        var txn = this._beginTransaction();
-
-        txn.putString(this._dbi, 'END', true);
-        txn.commit();
     }
     BucketStore.prototype._getBucketKey = function (key) {
         return key + '-';
@@ -89,7 +84,7 @@ var BucketStore = (function () {
     };
 
     BucketStore.prototype.remove = function (bucketKey, id) {
-        var contact = this.get(bucketKey, id), lastSeen = 0;
+        var contact = this.get(bucketKey, id), lastSeen;
 
         if (null === contact) {
             return true;
@@ -110,7 +105,7 @@ var BucketStore = (function () {
     };
 
     BucketStore.prototype.add = function (bucketKey, id, lastSeen, addresses, publicKey) {
-        var txn = this._beginTransaction(), added = false;
+        var txn = this._beginTransaction(), added;
 
         added = this._add(txn, bucketKey, id, lastSeen, addresses, publicKey);
         txn.commit();
@@ -119,7 +114,7 @@ var BucketStore = (function () {
     };
 
     BucketStore.prototype.addAll = function (bucketKey, contacts) {
-        var txn = this._beginTransaction(), added = false;
+        var txn = this._beginTransaction(), added;
 
         for (var i in contacts) {
             var contact = contacts[i];
