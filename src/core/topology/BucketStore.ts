@@ -175,33 +175,18 @@ class BucketStore implements BucketStoreInterface {
 	size(bucketKey:string):number {
 		var txn = this._beginReadOnlyTransaction(),
 			cursor = this._getCursor(txn),
-			shouldContinue = true,
-			prevKey = '',
 			size = 0;
 
 		bucketKey = this._getBucketKey(bucketKey);
 
-		try {
-			cursor.goToRange(bucketKey);
-
-			while (shouldContinue) {
-				cursor.getCurrentString(function(key, data) {
-					if (key.indexOf(bucketKey) !== 0 || prevKey === key) {
-						shouldContinue = false;
-					}
-					else {
-						size++;
-					}
-
-					prevKey = key;
-				});
-
-				cursor.goToNext();
+		// Go the the first occourence of `bucketKey` and iterate from there
+		for (var found = cursor.goToRange(bucketKey); found; found = cursor.goToNext()) {
+			// Stop the loop if the current key is no longer part of the bucket
+			if (found.indexOf(bucketKey) !== 0) {
+				break;
 			}
-		}
-		catch (err) {
-			console.log(err);
-			// Error here only means that we've reached the end
+
+			size++;
 		}
 
 		cursor.close();
