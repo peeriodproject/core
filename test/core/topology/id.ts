@@ -9,7 +9,7 @@ var Id = require('../../../src/core/topology/Id');
  The Byte Buffer will be interpreted as bigendian numbers, so the low index bytes are the most significant!
  */
 
-describe('CORE --> ID', function () {
+describe('CORE --> TOPOLOGY --> ID', function () {
 
 	it('should correctly calculate byte length by bit length', function () {
 
