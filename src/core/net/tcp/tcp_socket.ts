@@ -89,6 +89,19 @@ export interface TCPSocketInterface {
 	 * Returns a string representation of the remote connection in the form IP:PORT
 	 */
 	getIPPortString():string;
+
+	/**
+	 * Returns the identification string.
+	 */
+	getIdentifier():string;
+
+	/**
+	 * Sets an identification string on the socket object. Useful when trying to quickly pair a socket and some
+	 * remote machine.
+	 *
+	 * @param identifier
+	 */
+	setIdentifier(identifier:string):void;
 }
 
 export class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
@@ -96,6 +109,7 @@ export class TCPSocket extends events.EventEmitter implements TCPSocketInterface
 	private socket:net.Socket = null;
 	private closeOnTimeout:boolean = false;
 	private eventsToPropagate:Array<string> = ['data', 'close', 'error'];
+	private identifier:string = '';
 
 	/**
 	 * Takes an array of event names and propagates the corresponding node.js's net.Socket events,
@@ -173,5 +187,17 @@ export class TCPSocket extends events.EventEmitter implements TCPSocketInterface
 
 	public onTimeout():void {
 		if (this.closeOnTimeout) this.getSocket().end();
+	}
+
+	public setCloseOnTimeout(flag:boolean) {
+		this.closeOnTimeout = flag;
+	}
+
+	public getIdentifier():string {
+		return this.identifier;
+	}
+
+	public setIdentifier(identifier:string):void {
+		this.identifier = identifier;
 	}
 }

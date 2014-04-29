@@ -79,5 +79,25 @@ describe('CORE --> NET --> TCP --> TCPSocket', function () {
             done();
         });
     });
+
+    it('should not close the socket when dynamically setting closeOnTimeout to false', function (done) {
+        var sock_b = net.createConnection(9002, 'localhost');
+        var socket_b = null;
+        var all_good = true;
+        sock_b.on('connect', function () {
+            socket_b = new TCPSocket(sock_b, socket_opts);
+
+            socket_b.setCloseOnTimeout(false);
+
+            socket_b.once('close', function () {
+                all_good = false;
+            });
+
+            setTimeout(function () {
+                if (all_good)
+                    done();
+            }, 4000);
+        });
+    });
 });
 //# sourceMappingURL=tcp_socket.js.map

@@ -14,6 +14,7 @@ var TCPSocket = (function (_super) {
         this.socket = null;
         this.closeOnTimeout = false;
         this.eventsToPropagate = ['data', 'close', 'error'];
+        this.identifier = '';
 
         this.setSocket(socket);
 
@@ -96,6 +97,18 @@ var TCPSocket = (function (_super) {
     TCPSocket.prototype.onTimeout = function () {
         if (this.closeOnTimeout)
             this.getSocket().end();
+    };
+
+    TCPSocket.prototype.setCloseOnTimeout = function (flag) {
+        this.closeOnTimeout = flag;
+    };
+
+    TCPSocket.prototype.getIdentifier = function () {
+        return this.identifier;
+    };
+
+    TCPSocket.prototype.setIdentifier = function (identifier) {
+        this.identifier = identifier;
     };
     return TCPSocket;
 })(events.EventEmitter);
