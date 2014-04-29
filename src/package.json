@@ -1,10 +1,13 @@
 {
-	"name": "App",
-	"description": "",
-	"version": "0.0.1",
-	"main": "index.html",
-	"window": {
-		"show": true,
-		"show_in_taskbar" : false
-	}
+  "name": "App",
+  "description": "",
+  "version": "0.0.1",
+  "main": "index.html",
+  "window": {
+    "show": true,
+    "show_in_taskbar": false
+  },
+  "dependencies": {
+    "node-lmdb": "^0.2.1"
+  }
 }
