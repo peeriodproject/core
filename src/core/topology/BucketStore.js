@@ -135,8 +135,9 @@ var BucketStore = (function () {
     BucketStore.prototype._add = function (txn, bucketKey, id, lastSeen, addresses, publicKey) {
         var idKey = this._getIdKey(id), lastSeenKey = this._getLastSeenKey(bucketKey, lastSeen), value = {
             addresses: addresses,
-            publicKey: publicKey,
-            lastSeen: lastSeen
+            id: id,
+            lastSeen: lastSeen,
+            publicKey: publicKey
         };
 
         try  {
@@ -153,7 +154,7 @@ var BucketStore = (function () {
     };
 
     BucketStore.prototype.size = function (bucketKey) {
-        var txn = this._beginReadOnlyTransaction(), cursor = this._getCursor(txn), shouldContinue = true, size = 0;
+        var txn = this._beginReadOnlyTransaction(), cursor = this._getCursor(txn), shouldContinue = true, prevKey = '', size = 0;
 
         bucketKey = this._getBucketKey(bucketKey);
 
@@ -162,11 +163,13 @@ var BucketStore = (function () {
 
             while (shouldContinue) {
                 cursor.getCurrentString(function (key, data) {
-                    if (key.indexOf(bucketKey) !== 0) {
+                    if (key.indexOf(bucketKey) !== 0 || prevKey === key) {
                         shouldContinue = false;
                     } else {
                         size++;
                     }
+
+                    prevKey = key;
                 });
 
                 cursor.goToNext();

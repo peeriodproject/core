@@ -149,8 +149,9 @@ class BucketStore implements BucketStoreInterface {
 			lastSeenKey = this._getLastSeenKey(bucketKey, lastSeen),
 			value = {
 				addresses: addresses,
-				publicKey: publicKey,
-				lastSeen: lastSeen
+				id: id,
+				lastSeen: lastSeen,
+				publicKey: publicKey
 			};
 
 		/*console.log('--- Adding ---------------');
@@ -175,6 +176,7 @@ class BucketStore implements BucketStoreInterface {
 		var txn = this._beginReadOnlyTransaction(),
 			cursor = this._getCursor(txn),
 			shouldContinue = true,
+			prevKey = '',
 			size = 0;
 
 		bucketKey = this._getBucketKey(bucketKey);
@@ -184,12 +186,14 @@ class BucketStore implements BucketStoreInterface {
 
 			while (shouldContinue) {
 				cursor.getCurrentString(function(key, data) {
-					if (key.indexOf(bucketKey) !== 0) {
+					if (key.indexOf(bucketKey) !== 0 || prevKey === key) {
 						shouldContinue = false;
 					}
 					else {
 						size++;
 					}
+
+					prevKey = key;
 				});
 
 				cursor.goToNext();

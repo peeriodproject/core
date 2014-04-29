@@ -29,6 +29,19 @@ interface BucketStoreInterface extends ClosableInterface {
 	add(bucketKey:string, id:DistanceMetric, lastSeen:number, addresses:any, publicKey:string):boolean;
 
 	/**
+	 * Adds multiple objects to the bucket store.
+	 *
+	 * @see topology.BucketStoreInterface#add
+	 *
+	 * @abstract
+	 * @method topology.BucketStoreInterface#addAll
+	 *
+	 * @param {string} bucketKey
+	 * @param contacts
+	 */
+	addAll(bucketKey:string, contacts:any):boolean;
+
+	/**
 	 * Returns `true` if the specified bucket constains the id.
 	 *
 	 * @abstract
@@ -50,7 +63,9 @@ interface BucketStoreInterface extends ClosableInterface {
 	debug():void;
 
 	/**
-	 * Returns the object stored for the specified bucket/id combination.
+	 * Returns the object stored for the specified bucket/id combination as JSON-Object with sorted keys.
+	 *
+	 * todo json example
 	 *
 	 * @abstract
 	 * @method topology.BucketStoreInterface#get
