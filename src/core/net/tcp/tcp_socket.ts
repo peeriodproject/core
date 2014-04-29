@@ -174,4 +174,8 @@ export class TCPSocket extends events.EventEmitter implements TCPSocketInterface
 	public onTimeout():void {
 		if (this.closeOnTimeout) this.getSocket().end();
 	}
+
+	public setCloseOnTimeout(flag:boolean) {
+		this.closeOnTimeout = flag;
+	}
 }

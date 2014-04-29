@@ -97,6 +97,10 @@ var TCPSocket = (function (_super) {
         if (this.closeOnTimeout)
             this.getSocket().end();
     };
+
+    TCPSocket.prototype.setCloseOnTimeout = function (flag) {
+        this.closeOnTimeout = flag;
+    };
     return TCPSocket;
 })(events.EventEmitter);
 exports.TCPSocket = TCPSocket;
