@@ -1,120 +1,65 @@
-/**
-* Created by joernroeder on 4/23/14.
-*/
-/// <reference path='BucketStoreInterface.d.ts' />
+/// <reference path='interfaces/BucketStoreInterface.ts' />
+/// <reference path='../../../ts-definitions/node-lmdb/node-lmdb.d.ts' />
 var lmdb = require('node-lmdb');
 
 /**
 * LMDB-BucketStore Implementation
 *
-* key format:
 */
 var BucketStore = (function () {
     function BucketStore(name, path) {
         /**
+        * The internal lmdb database instance
+        *
         * @private
-        */
-        this._env = null;
-        /**
-        * @private
+        * @member {lmdb.Dbi} core.topology.BucketStore._dbi
         */
         this._dbi = null;
         /**
+        * The internal lmdb database environment instance
+        *
         * @private
+        * @member {lmdb.Env} core.topology.BucketStore._env
         */
-        this._name = '';
-        /**
-        * @private
-        */
-        this._path = '';
+        this._env = null;
         /**
         * Indicates wheather the store is open or closed
         *
         * @private
+        * @member {boolean} core.topology.BucketStore._isOpen
         */
         this._isOpen = false;
+        /**
+        * The name of the internal database
+        *
+        * @private
+        * @member {boolean} core.topology.BucketStore._name
+        */
+        this._name = '';
+        /**
+        * An absolute path where the database stores it's files
+        *
+        * @private
+        * @member {boolean} core.topology.BucketStore._path
+        */
+        this._path = '';
         this._name = name;
         this._path = path;
 
         this.open();
     }
-    BucketStore.prototype._getBucketKey = function (key) {
-        return key + '-';
-    };
-
-    BucketStore.prototype._getIdValue = function (id) {
-        return id.toBitString();
-    };
-
-    BucketStore.prototype._getIdKey = function (id) {
-        return this._getIdValue(id);
-    };
-
-    BucketStore.prototype._getLastSeenKey = function (bucketKey, lastSeen) {
-        return this._getBucketKey(bucketKey) + lastSeen;
-    };
-
-    BucketStore.prototype._beginTransaction = function () {
-        // todo replace with propper options
-        var opts = {};
-
-        return this._env.beginTxn(opts);
-    };
-
-    BucketStore.prototype._beginReadOnlyTransaction = function () {
-        // todo replace with propper options
-        var opts = {};
-
-        opts['readOnly'] = true;
-
-        return this._env.beginTxn(opts);
-    };
-
-    BucketStore.prototype._getCursor = function (txn) {
-        return new lmdb.Cursor(txn, this._dbi);
-    };
-
-    BucketStore.prototype.get = function (bucketKey, id) {
-        var txn = this._beginReadOnlyTransaction(), cursor = this._getCursor(txn), value = txn.getString(this._dbi, this._getIdKey(id));
-
-        cursor.close();
-        txn.commit();
-
-        return value;
-    };
-
-    BucketStore.prototype.remove = function (bucketKey, id) {
-        var contact = this.get(bucketKey, id), lastSeen;
-
-        if (null === contact) {
-            return true;
-        }
-
-        lastSeen = JSON.parse(contact).lastSeen;
-
-        var txn = this._beginTransaction();
-
-        // remove shortcut
-        txn.del(this._dbi, this._getLastSeenKey(bucketKey, lastSeen));
-
-        // remove object
-        txn.del(this._dbi, this._getIdKey(id));
-        txn.commit();
-
-        return true;
-    };
-
     BucketStore.prototype.add = function (bucketKey, id, lastSeen, addresses, publicKey) {
-        var txn = this._beginTransaction(), added;
+        var txn = this._beginTransaction();
+        var added = this._add(txn, bucketKey, id, lastSeen, addresses, publicKey);
 
-        added = this._add(txn, bucketKey, id, lastSeen, addresses, publicKey);
         txn.commit();
 
         return added;
     };
 
     BucketStore.prototype.addAll = function (bucketKey, contacts) {
-        var txn = this._beginTransaction(), added;
+        var txn = this._beginTransaction();
+        var added = false;
 
         for (var i in contacts) {
             var contact = contacts[i];
@@ -127,49 +72,22 @@ var BucketStore = (function () {
         return added;
     };
 
-    BucketStore.prototype._add = function (txn, bucketKey, id, lastSeen, addresses, publicKey) {
-        var idKey = this._getIdKey(id), lastSeenKey = this._getLastSeenKey(bucketKey, lastSeen), value = {
-            addresses: addresses,
-            id: id,
-            lastSeen: lastSeen,
-            publicKey: publicKey
-        };
-
-        try  {
-            // stores the object with id as it's key
-            txn.putString(this._dbi, idKey, JSON.stringify(value));
-
-            // stores a shortcut for bucketwide last seen searches.
-            txn.putString(this._dbi, lastSeenKey, this._getIdValue(id));
-        } catch (err) {
-            console.error(err);
+    BucketStore.prototype.close = function () {
+        if (!this._isOpen) {
+            return;
         }
 
-        return true;
-    };
+        this._isOpen = false;
 
-    BucketStore.prototype.size = function (bucketKey) {
-        var txn = this._beginReadOnlyTransaction(), cursor = this._getCursor(txn), size = 0;
+        this._dbi.close();
+        this._dbi = null;
 
-        bucketKey = this._getBucketKey(bucketKey);
-
-        for (var found = cursor.goToRange(bucketKey); found; found = cursor.goToNext()) {
-            // Stop the loop if the current key is no longer part of the bucket
-            if (found.indexOf(bucketKey) !== 0) {
-                break;
-            }
-
-            size++;
-        }
-
-        cursor.close();
-        txn.commit();
-
-        return size;
+        this._env.close();
+        this._env = null;
     };
 
     BucketStore.prototype.contains = function (bucketKey, id) {
-        return (null === this.get(bucketKey, id)) ? false : true;
+        return (this.get(bucketKey, id) !== null);
     };
 
     BucketStore.prototype.debug = function () {
@@ -184,6 +102,21 @@ var BucketStore = (function () {
 
         cursor.close();
         txn.commit();
+    };
+
+    BucketStore.prototype.get = function (bucketKey, id) {
+        var txn = this._beginReadOnlyTransaction();
+        var cursor = this._getCursor(txn);
+        var value = txn.getString(this._dbi, this._getIdKey(id));
+
+        cursor.close();
+        txn.commit();
+
+        return value;
+    };
+
+    BucketStore.prototype.isOpen = function () {
+        return this._isOpen;
     };
 
     BucketStore.prototype.open = function () {
@@ -204,21 +137,109 @@ var BucketStore = (function () {
         this._isOpen = true;
     };
 
-    BucketStore.prototype.close = function () {
-        if (!this._isOpen)
-            return;
+    BucketStore.prototype.remove = function (bucketKey, id) {
+        // todo Typescript: propper return type (callback vs return)
+        var contact = this.get(bucketKey, id);
+        var lastSeen;
+        var txn;
 
-        this._isOpen = false;
+        if (contact === null) {
+            return true;
+        }
 
-        this._dbi.close();
-        this._dbi = null;
+        lastSeen = JSON.parse(contact).lastSeen;
 
-        this._env.close();
-        this._env = null;
+        txn = this._beginTransaction();
+
+        // remove shortcut
+        txn.del(this._dbi, this._getLastSeenKey(bucketKey, lastSeen));
+
+        // remove object
+        txn.del(this._dbi, this._getIdKey(id));
+        txn.commit();
+
+        return true;
     };
 
-    BucketStore.prototype.isOpen = function () {
-        return this._isOpen;
+    BucketStore.prototype.size = function (bucketKey) {
+        var txn = this._beginReadOnlyTransaction();
+        var cursor = this._getCursor(txn);
+        var size = 0;
+
+        bucketKey = this._getBucketKey(bucketKey);
+
+        for (var found = cursor.goToRange(bucketKey); found; found = cursor.goToNext()) {
+            // Stop the loop if the current key is no longer part of the bucket
+            if (found.indexOf(bucketKey) !== 0) {
+                break;
+            }
+
+            size++;
+        }
+
+        cursor.close();
+        txn.commit();
+
+        return size;
+    };
+
+    BucketStore.prototype._add = function (txn, bucketKey, id, lastSeen, addresses, publicKey) {
+        var idKey = this._getIdKey(id);
+        var lastSeenKey = this._getLastSeenKey(bucketKey, lastSeen);
+        var value = {
+            addresses: addresses,
+            id: id,
+            lastSeen: lastSeen,
+            publicKey: publicKey
+        };
+
+        try  {
+            // stores the object with id as it's key
+            txn.putString(this._dbi, idKey, JSON.stringify(value));
+
+            // stores a shortcut for bucketwide last seen searches.
+            txn.putString(this._dbi, lastSeenKey, this._getIdValue(id));
+        } catch (err) {
+            console.error(err);
+        }
+
+        return true;
+    };
+
+    BucketStore.prototype._beginReadOnlyTransaction = function () {
+        // todo replace with propper options
+        var opts = {};
+
+        opts['readOnly'] = true;
+
+        return this._env.beginTxn(opts);
+    };
+
+    BucketStore.prototype._beginTransaction = function () {
+        // todo replace with propper options
+        var opts = {};
+
+        return this._env.beginTxn(opts);
+    };
+
+    BucketStore.prototype._getCursor = function (txn) {
+        return new lmdb.Cursor(txn, this._dbi);
+    };
+
+    BucketStore.prototype._getBucketKey = function (key) {
+        return key + '-';
+    };
+
+    BucketStore.prototype._getIdKey = function (id) {
+        return this._getIdValue(id);
+    };
+
+    BucketStore.prototype._getIdValue = function (id) {
+        return id.toBitString();
+    };
+
+    BucketStore.prototype._getLastSeenKey = function (bucketKey, lastSeen) {
+        return this._getBucketKey(bucketKey) + lastSeen;
     };
     return BucketStore;
 })();

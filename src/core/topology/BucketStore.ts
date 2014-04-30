@@ -1,92 +1,124 @@
-/**
- * Created by joernroeder on 4/23/14.
- */
+/// <reference path='interfaces/BucketStoreInterface.ts' />
+/// <reference path='../../../ts-definitions/node-lmdb/node-lmdb.d.ts' />
 
-/// <reference path='BucketStoreInterface.d.ts' />
-
-var lmdb = require('node-lmdb');
+import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
+import IdInterface = require('./interfaces/IdInterface');
+import lmdb = require('node-lmdb');
 
 /**
  * LMDB-BucketStore Implementation
  *
- * key format:
  */
 class BucketStore implements BucketStoreInterface {
 
 	/**
+	 * The internal lmdb database instance
+	 *
 	 * @private
+	 * @member {lmdb.Dbi} core.topology.BucketStore._dbi
 	 */
-	_env:any = null;
+	private _dbi:lmdb.Dbi = null;
 
 	/**
+	 * The internal lmdb database environment instance
+	 *
 	 * @private
+	 * @member {lmdb.Env} core.topology.BucketStore._env
 	 */
-	_dbi:any = null;
-
-	/**
-	 * @private
-	 */
-	_name:string = '';
-
-	/**
-	 * @private
-	 */
-	_path:string = '';
+	private _env:lmdb.Env = null;
 
 	/**
 	 * Indicates wheather the store is open or closed
 	 *
 	 * @private
+	 * @member {boolean} core.topology.BucketStore._isOpen
 	 */
-	_isOpen:boolean = false;
+	private _isOpen:boolean = false;
 
-	private _getBucketKey(key:string):string {
-		return key + '-';
-	}
+	/**
+	 * The name of the internal database
+	 *
+	 * @private
+	 * @member {boolean} core.topology.BucketStore._name
+	 */
+	private _name:string = '';
 
-	private _getIdValue(id:DistanceMetric):string {
-		return id.toBitString();
-	}
+	/**
+	 * An absolute path where the database stores it's files
+	 *
+	 * @private
+	 * @member {boolean} core.topology.BucketStore._path
+	 */
+	private _path:string = '';
 
-	private _getIdKey(id:DistanceMetric):string {
-		return this._getIdValue(id);
-	}
-
-	private _getLastSeenKey(bucketKey:string, lastSeen:number):string {
-		return this._getBucketKey(bucketKey) + lastSeen;
-	}
-
-	private _beginTransaction():any {
-		// todo replace with propper options
-		var opts = {};
-
-		return this._env.beginTxn(opts);
-	}
-
-	private _beginReadOnlyTransaction():any {
-		// todo replace with propper options
-		var opts = {};
-
-		opts['readOnly'] = true;
-
-		return this._env.beginTxn(opts);
-	}
-
-	private _getCursor(txn:any):any {
-		return new lmdb.Cursor(txn, this._dbi);
-	}
-
-	constructor(name:string, path:string) {
+	constructor (name:string, path:string) {
 		this._name = name;
 		this._path = path;
 
 		this.open();
 	}
 
-	get(bucketKey:string, id:DistanceMetric):any {
-		var txn = this._beginReadOnlyTransaction(),
-			cursor = this._getCursor(txn),
-			value = txn.getString(this._dbi, this._getIdKey(id));
+	public add (bucketKey:string, id:IdInterface, lastSeen:number, addresses:any, publicKey:string):boolean {
+		var txn:lmdb.Txn = this._beginTransaction();
+		var added:boolean = this._add(txn, bucketKey, id, lastSeen, addresses, publicKey);
+
+		txn.commit();
+
+		return added;
+	}
+
+	public addAll (bucketKey:string, contacts:any):boolean {
+		var txn:lmdb.Txn = this._beginTransaction();
+		var added:boolean = false;
+
+		for (var i in contacts) {
+			var contact = contacts[i];
+
+			added = this._add(txn, bucketKey, contact.id, contact.lastSeen, contact.addresses, contact.publicKey);
+		}
+
+		txn.commit();
+
+		return added;
+	}
+
+	public close ():void {
+		if (!this._isOpen) {
+			return;
+		}
+
+		this._isOpen = false;
+
+		this._dbi.close();
+		this._dbi = null;
+
+		this._env.close();
+		this._env = null;
+	}
+
+	public contains (bucketKey:string, id:IdInterface):boolean {
+		return (this.get(bucketKey, id) !== null);
+	}
+
+	public debug ():void {
+		var txn:lmdb.Txn = this._beginReadOnlyTransaction();
+		var cursor:lmdb.Cursor = this._getCursor(txn);
+
+		// loop through all key-value pairs
+		for (var found = cursor.goToFirst(); found; found = cursor.goToNext()) {
+			cursor.getCurrentString(function (key, data) {
+				console.log(key + "  " + data);
+			});
+		}
+
+		cursor.close();
+		txn.commit();
+	}
+
+	public get (bucketKey:string, id:IdInterface):any {
+		var txn:lmdb.Txn = this._beginReadOnlyTransaction();
+		var cursor:lmdb.Cursor = this._getCursor(txn);
+		var value:string = txn.getString(this._dbi, this._getIdKey(id));
 
 		cursor.close();
 		txn.commit();
@@ -94,17 +126,42 @@ class BucketStore implements BucketStoreInterface {
 		return value;
 	}
 
-	remove(bucketKey:string, id:DistanceMetric):boolean {
-		var contact = this.get(bucketKey, id),
-			lastSeen;
+	public isOpen ():boolean {
+		return this._isOpen;
+	}
 
-		if (null === contact) {
+	public open ():void {
+		if (this._isOpen) return;
+
+		this._env = new lmdb.Env();
+		this._env.open({
+			//name: this._name,
+			path: this._path
+			//mapSize: 2*1024*1024*1024, // maximum database size
+			//maxDbs: 3
+		});
+
+		this._dbi = this._env.openDbi({
+			name  : this._name,
+			create: true
+		});
+
+		this._isOpen = true;
+	}
+
+	public remove (bucketKey:string, id:IdInterface):boolean {
+		// todo Typescript: propper return type (callback vs return)
+		var contact:any = this.get(bucketKey, id);
+		var lastSeen:number;
+		var txn:lmdb.Txn;
+
+		if (contact === null) {
 			return true;
 		}
 
 		lastSeen = JSON.parse(contact).lastSeen;
 
-		var txn = this._beginTransaction();
+		txn = this._beginTransaction();
 		// remove shortcut
 		txn.del(this._dbi, this._getLastSeenKey(bucketKey, lastSeen));
 		// remove object
@@ -114,63 +171,10 @@ class BucketStore implements BucketStoreInterface {
 		return true;
 	}
 
-	add(bucketKey:string, id:DistanceMetric, lastSeen:number, addresses:any, publicKey:string):boolean {
-		var txn = this._beginTransaction(),
-			added;
-
-		added = this._add(txn, bucketKey, id, lastSeen, addresses, publicKey);
-		txn.commit();
-
-		return added;
-	}
-
-	addAll(bucketKey:string, contacts:any):boolean {
-		var txn = this._beginTransaction(),
-			added;
-
-		for (var i in contacts) {
-			var contact = contacts[i];
-
-			added = this._add(txn, bucketKey,contact.id, contact.lastSeen, contact.addresses, contact.publicKey);
-		}
-
-		txn.commit();
-
-		return added;
-	}
-
-	private _add(txn:any, bucketKey:string, id:DistanceMetric, lastSeen:number, addresses:any, publicKey:string) {
-		var idKey = this._getIdKey(id),
-			lastSeenKey = this._getLastSeenKey(bucketKey, lastSeen),
-			value = {
-				addresses: addresses,
-				id: id,
-				lastSeen: lastSeen,
-				publicKey: publicKey
-			};
-
-		/*console.log('--- Adding ---------------');
-		console.log(idKey);
-		console.log(lastSeenKey);*/
-
-		try {
-			// stores the object with id as it's key
-			txn.putString(this._dbi, idKey, JSON.stringify(value));
-
-			// stores a shortcut for bucketwide last seen searches.
-			txn.putString(this._dbi, lastSeenKey, this._getIdValue(id));
-		}
-		catch (err) {
-			console.error(err);
-		}
-
-		return true;
-	}
-
-	size(bucketKey:string):number {
-		var txn = this._beginReadOnlyTransaction(),
-			cursor = this._getCursor(txn),
-			size = 0;
+	public size (bucketKey:string):number {
+		var txn:lmdb.Txn = this._beginReadOnlyTransaction();
+		var cursor:lmdb.Cursor = this._getCursor(txn);
+		var size:number = 0;
 
 		bucketKey = this._getBucketKey(bucketKey);
 
@@ -190,58 +194,64 @@ class BucketStore implements BucketStoreInterface {
 		return size;
 	}
 
-	contains(bucketKey:string, id:DistanceMetric):boolean {
-		return (null !== this.get(bucketKey, id));
-	}
+	private _add (txn:any, bucketKey:string, id:IdInterface, lastSeen:number, addresses:any, publicKey:string) {
+		var idKey:string = this._getIdKey(id);
+		var lastSeenKey:string = this._getLastSeenKey(bucketKey, lastSeen);
+		var value:Object = {
+			addresses: addresses,
+			id       : id,
+			lastSeen : lastSeen,
+			publicKey: publicKey
+		};
 
-	debug():void {
-		var txn = this._beginReadOnlyTransaction();
-		var cursor = this._getCursor(txn);
+		try {
+			// stores the object with id as it's key
+			txn.putString(this._dbi, idKey, JSON.stringify(value));
 
-		// loop through all key-value pairs
-		for (var found = cursor.goToFirst(); found; found = cursor.goToNext()) {
-			cursor.getCurrentString(function(key, data) {
-				console.log(key + "  " + data );
-			});
+			// stores a shortcut for bucketwide last seen searches.
+			txn.putString(this._dbi, lastSeenKey, this._getIdValue(id));
+		}
+		catch (err) {
+			console.error(err);
 		}
 
-		cursor.close();
-		txn.commit();
+		return true;
 	}
 
-	open():void {
-		if (this._isOpen) return;
+	private _beginReadOnlyTransaction ():any {
+		// todo replace with propper options
+		var opts:Object = {};
 
-		this._env = new lmdb.Env();
-		this._env.open({
-			//name: this._name,
-			path: this._path
-			//mapSize: 2*1024*1024*1024, // maximum database size
-			//maxDbs: 3
-		});
+		opts['readOnly'] = true;
 
-		this._dbi = this._env.openDbi({
-			name: this._name,
-			create: true
-		});
-
-		this._isOpen = true;
+		return this._env.beginTxn(opts);
 	}
 
-	close():void {
-		if (!this._isOpen) return;
+	private _beginTransaction ():any {
+		// todo replace with propper options
+		var opts:Object = {};
 
-		this._isOpen = false;
-
-		this._dbi.close();
-		this._dbi = null;
-
-		this._env.close();
-		this._env = null;
+		return this._env.beginTxn(opts);
 	}
 
-	isOpen():boolean {
-		return this._isOpen;
+	private _getCursor (txn:any):any {
+		return new lmdb.Cursor(txn, this._dbi);
+	}
+
+	private _getBucketKey (key:string):string {
+		return key + '-';
+	}
+
+	private _getIdKey (id:IdInterface):string {
+		return this._getIdValue(id);
+	}
+
+	private _getIdValue (id:IdInterface):string {
+		return id.toBitString();
+	}
+
+	private _getLastSeenKey (bucketKey:string, lastSeen:number):string {
+		return this._getBucketKey(bucketKey) + lastSeen;
 	}
 }
 
