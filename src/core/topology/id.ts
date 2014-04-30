@@ -11,19 +11,19 @@ class Id implements IdInterface {
 
 	/**
 	 * @private
-	 * @member {number} Id#_bit_length
+	 * @member {number} core.topology.Id#_bit_length
 	 */
 	private _bit_length:number = 0;
 
 	/**
 	 * @private
-	 * @member {NodeBuffer} Id#_buffer
+	 * @member {NodeBuffer} core.topology.Id#_buffer
 	 */
 	private _buffer:NodeBuffer = null;
 
 	/**
 	 * @private
-	 * @member {number} Id#_byte_length
+	 * @member {number} core.topology.Id#_byte_length
 	 */
 	private _byte_length:number = 0;
 
@@ -31,7 +31,7 @@ class Id implements IdInterface {
 	 * Creates a byte buffer by the hexadecimal representation (string) provided. Throws an error if the hex doesn't
 	 * equal the number of bytes expected.
 	 *
-	 * @method Id.byteBufferByHexString
+	 * @method core.topology.Id.byteBufferByHexString
 	 *
 	 * @param {string} hex_string
 	 * @param {number} expected_byte_len
@@ -56,7 +56,7 @@ class Id implements IdInterface {
 	 *
 	 * todo add throw jsdoc comment
 	 *
-	 * @method Id.byteBufferByBitString
+	 * @method core.topology.Id.byteBufferByBitString
 	 *
 	 * @param {string} binary_string
 	 * @param {number} expected_byte_len
@@ -93,7 +93,7 @@ class Id implements IdInterface {
 	 * Calculates the number of bytes needed to store the specified bit length (bl).
 	 * Identical to Math.ceil(bl / 8), but faster.
 	 *
-	 * @method Id.calculateByteLengthByBitLength
+	 * @method core.topology.Id.calculateByteLengthByBitLength
 	 *
 	 * @param {number} bl bit length
 	 * @returns {number}
@@ -117,20 +117,10 @@ class Id implements IdInterface {
 		this._byte_length = byte_length;
 	}
 
-	/**
-	 * {@link topology.IdInterface#getBuffer}
-	 *
-	 * @method Id#getBuffer
-	 */
 	public getBuffer ():NodeBuffer {
 		return this._buffer;
 	}
 
-	/**
-	 * {@link topology.IdInterface#distanceTo}
-	 *
-	 * @method Id#distanceTo
-	 */
 	public distanceTo (other:IdInterface):NodeBuffer {
 		if (!(other instanceof Id)) {
 			throw new Error('Can only compare to another ID.');

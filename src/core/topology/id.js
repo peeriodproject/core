@@ -9,17 +9,17 @@ var Id = (function () {
     function Id(buffer, bit_length) {
         /**
         * @private
-        * @member {number} Id#_bit_length
+        * @member {number} core.topology.Id#_bit_length
         */
         this._bit_length = 0;
         /**
         * @private
-        * @member {NodeBuffer} Id#_buffer
+        * @member {NodeBuffer} core.topology.Id#_buffer
         */
         this._buffer = null;
         /**
         * @private
-        * @member {number} Id#_byte_length
+        * @member {number} core.topology.Id#_byte_length
         */
         this._byte_length = 0;
         var byte_length = Id.calculateByteLengthByBitLength(bit_length);
@@ -36,7 +36,7 @@ var Id = (function () {
     * Creates a byte buffer by the hexadecimal representation (string) provided. Throws an error if the hex doesn't
     * equal the number of bytes expected.
     *
-    * @method Id.byteBufferByHexString
+    * @method core.topology.Id.byteBufferByHexString
     *
     * @param {string} hex_string
     * @param {number} expected_byte_len
@@ -61,7 +61,7 @@ var Id = (function () {
     *
     * todo add throw jsdoc comment
     *
-    * @method Id.byteBufferByBitString
+    * @method core.topology.Id.byteBufferByBitString
     *
     * @param {string} binary_string
     * @param {number} expected_byte_len
@@ -95,7 +95,7 @@ var Id = (function () {
     * Calculates the number of bytes needed to store the specified bit length (bl).
     * Identical to Math.ceil(bl / 8), but faster.
     *
-    * @method Id.calculateByteLengthByBitLength
+    * @method core.topology.Id.calculateByteLengthByBitLength
     *
     * @param {number} bl bit length
     * @returns {number}
@@ -107,20 +107,10 @@ var Id = (function () {
         return n == div ? n : n + 1;
     };
 
-    /**
-    * {@link topology.IdInterface#getBuffer}
-    *
-    * @method Id#getBuffer
-    */
     Id.prototype.getBuffer = function () {
         return this._buffer;
     };
 
-    /**
-    * {@link topology.IdInterface#distanceTo}
-    *
-    * @method Id#distanceTo
-    */
     Id.prototype.distanceTo = function (other) {
         if (!(other instanceof Id)) {
             throw new Error('Can only compare to another ID.');
