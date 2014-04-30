@@ -1,13 +1,13 @@
 /// <reference path='../../test.d.ts' />
 require('should');
 
-var TCPSocket = require('../../../src/core/net/tcp/tcp_socket').TCPSocket;
+var TCPSocket = require('../../../src/core/net/tcp/TCPSocket');
 var events = require('events');
 var net = require('net');
 
 var socket_opts = {
-    "idle_connection_kill_timeout": 2,
-    "do_keep_alive": true
+    "idleConnectionKillTimeout": 2,
+    "doKeepAlive": true
 };
 
 // echoing server
@@ -100,4 +100,4 @@ describe('CORE --> NET --> TCP --> TCPSocket', function () {
         });
     });
 });
-//# sourceMappingURL=tcp_socket.js.map
+//# sourceMappingURL=TCPSocket.js.map

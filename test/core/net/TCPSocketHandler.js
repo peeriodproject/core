@@ -1,18 +1,14 @@
 /// <reference path='../../test.d.ts' />
 require('should');
 
-var tcp_socket = require('../../../src/core/net/tcp/tcp_socket');
-var tcp_socket_handler = require('../../../src/core/net/tcp/tcp_socket_handler');
-
-var TCPSocket = tcp_socket.TCPSocket;
-var TCPSocketHandler = tcp_socket_handler.TCPSocketHandler;
+var TCPSocketHandler = require('../../../src/core/net/tcp/TCPSocketHandler');
 
 var events = require('events');
 var net = require('net');
 
 var defaultHandlerOpts = {
-    my_external_ip: '127.0.0.1',
-    idle_connection_kill_timeout: 0
+    myExternalIp: '127.0.0.1',
+    idleConnectionKillTimeout: 0
 };
 
 describe('CORE --> NET --> TCP --> TCP SOCKET HANDLER', function () {
@@ -84,7 +80,7 @@ describe('CORE --> NET --> TCP --> TCP SOCKET HANDLER', function () {
     });
 
     it('should finally nicely auto bootstrap a TCP handler with all servers', function (done) {
-        defaultHandlerOpts.my_open_ports = [55555, 55557, 55558];
+        defaultHandlerOpts.myOpenPorts = [55555, 55557, 55558];
         var handler_b = new TCPSocketHandler(defaultHandlerOpts);
         handler_b.autoBootstrap(function (openPorts) {
             var expected = [55557, 55558], success = true;
@@ -99,4 +95,4 @@ describe('CORE --> NET --> TCP --> TCP SOCKET HANDLER', function () {
         });
     });
 });
-//# sourceMappingURL=tcp_socket_handler.js.map
+//# sourceMappingURL=TCPSocketHandler.js.map

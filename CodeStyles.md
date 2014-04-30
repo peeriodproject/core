@@ -36,7 +36,7 @@ setConfigKeys(keys:ConfigKeyList)
 
 ## Klassen
 
-Eine Datei pro Klasse. Die Datei exportiert die Klasse direct. Der Dateiname entspricht dem Klassennamen.
+Eine Datei pro Klasse. Die Datei exportiert die Klasse direkt. Der Dateiname entspricht dem Klassennamen.
 
 ```
 // FooBar.ts
