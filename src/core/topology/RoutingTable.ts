@@ -1,94 +1,95 @@
-/**
- * Created by joernroeder on 4/24/14.
- */
-
-// http://www.sitepen.com/blog/2013/12/31/definitive-guide-to-typescript/
-// https://github.com/felixge/node-style-guide
-
-/// <reference path='RoutingTableInterface.d.ts' />
-/// <reference path='../config/Config.d.ts' />
+import RoutingTableInterface = require('./interfaces/RoutingTableInterface');
+import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
+import BucketInterface = require('./interfaces/BucketInterface');
+import ConfigInterface = require('../config/interfaces/ConfigInterface');
+import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
+import IdInterface = require('./interfaces/IdInterface');
 
 import BucketStore = require('./BucketStore');
 import Bucket = require('./Bucket');
 
-var JSONConfig = require('../config/Config').JSONConfig;
+import JSONConfig = require('../config/JSONConfig');
 
 // just for testing
-import Id = require('./Id');
-
+//import Id = require('./Id');
 
 /**
- * @namespace topology
+ * Creates a routing table with the given number of k-buckets
+ *
+ * @class topology.RoutingTable
+ * @implements RoutingTableInterface
+ *
+ * @param {config.ConfigInterface} config
+ * @param {topology.IdInterface} id
+ * @param {topology.BucketStoreInterface} store
  */
 class RoutingTable implements RoutingTableInterface {
 
 	/**
+	 * The internally used config object instance. Usually just for reference and passed through to the Bucket
+	 *
 	 * @private
+	 * @member {core.config.ConfigInterface} core.topology.RoutingTable#_config
 	 */
 	private _config:ConfigInterface = null;
 
 	/**
+	 * The internally used bucket store instance.
+	 *
 	 * @private
-	 * @member {topology.BucketStoreInterface} _store
+	 * @member {core.topology.BucketStoreInterface} core.topology.RoutingTable#_store
 	 */
 	private _store:BucketStoreInterface = null;
 
 	/**
+	 * The Id of the node who owns the routing table
 	 *
 	 * @private
-	 * @member {topology.DistanceMetric} _id
+	 * @member {core.topology.IdInterface} core.topology.RoutingTable#_id
 	 */
-	private _id:DistanceMetric = null;
+	private _id:IdInterface = null;
 
 	/**
+	 * The internally used list of buckets
 	 *
 	 * @private
-	 * @member {Array.<topology.BucketInterface>} _buckets
+	 * @member {Array.<topology.BucketInterface>} core.topology.RoutingTable#_buckets
 	 */
 	private _buckets:{[key:string]: BucketInterface} = {};
 
 	/**
-	 *
 	 * @private
 	 * @member {boolean} _isOpen
 	 */
 	private _isOpen:boolean = false;
 
 	/**
+	 * Creates a bucket with the given key.
+	 *
 	 * @private
 	 * @method topology.RoutingTable#_createBucket
 	 *
-	 * @param {string} index
+	 * @param {string} key
 	 */
-	private _createBucket(index:string) {
-		this._buckets[index] = new Bucket(config, index, this._store);
+	private _createBucket (key:string) {
+		this._buckets[key] = new Bucket(this._config, key, this._store);
 	}
 
 	/**
+	 * Returns the bucket key where the given id should be stored.
+	 * See {@link core.topology.Id.differsInHighestBit} for more information.
 	 *
 	 * @private
 	 * @method topology.RoutingTable#_getBucketKey
 	 *
-	 * @param {topology.DistanceMetric} id
+	 * @param {topology.IdInterface} id
 	 * @return {string}
 	 */
-	private _getBucketKey(id:DistanceMetric):string {
-		var bucketKey = this._id.differsInHighestBit(id).toString();
-
-		return bucketKey;
+	private _getBucketKey (id:IdInterface):string {
+		return this._id.differsInHighestBit(id).toString();
 	}
 
-	/**
-	 * Creates a routing table with the given number of k-buckets
-	 *
-	 * @class topology.RoutingTable
-	 * @implements RoutingTableInterface
-	 *
-	 * @param {config.ConfigInterface} config
-	 * @param {topology.DistanceMetric} id
-	 * @param {topology.BucketStoreInterface} store
-	 */
-	constructor(config:ConfigInterface, id:DistanceMetric, store:BucketStoreInterface) {
+	constructor (config:ConfigInterface, id:IdInterface, store:BucketStoreInterface) {
 		this._config = config;
 		this._id = id;
 		this._store = store;
@@ -100,40 +101,11 @@ class RoutingTable implements RoutingTableInterface {
 		this.open();
 	}
 
-	getContactNode(id:DistanceMetric):any {
-		var bucketKey = this._getBucketKey(id);
-		return this._buckets[bucketKey].get(id);
-	}
-
-	updateLastSeen(contact:ContactNodeInterface):void {
-		contact.updateLastSeen();
-		this.updateContactNode(contact);
-	}
-
-	updateContactNode(contact:ContactNodeInterface):void {
-		var bucketKey = this._getBucketKey(contact.getId());
-		this._buckets[bucketKey].update(contact);
-	}
-
-	updateId(id:DistanceMetric):void {
-		return;
-	}
-
-	open():void {
-		if (this._isOpen) return;
-
-		this._buckets = {};
-
-		for (var i = this._config.get('topology.k'); i--;) {
-			this._createBucket(i.toString());
-		}
-
-		this._isOpen = true;
-	}
-
 	// todo check bucket.close() return value
-	close():void {
-		if (!this._isOpen) return;
+	close ():void {
+		if (!this._isOpen) {
+			return;
+		}
 
 		this._isOpen = false;
 
@@ -144,14 +116,46 @@ class RoutingTable implements RoutingTableInterface {
 		this._buckets = null;
 	}
 
-	isOpen():boolean {
+	getContactNode (id:IdInterface):any {
+		var bucketKey = this._getBucketKey(id);
+		return this._buckets[bucketKey].get(id);
+	}
+
+	isOpen ():boolean {
 		return this._isOpen;
+	}
+
+	open ():void {
+		if (this._isOpen) return;
+
+		this._buckets = {};
+
+		for (var i = 0, k = this._config.get('topology.k'); i < k; i++) {
+			this._createBucket(i.toString());
+		}
+
+		this._isOpen = true;
+	}
+
+	/*
+	 updateLastSeen(contact:ContactNodeInterface):void {
+	 contact.updateLastSeen();
+	 this.updateContactNode(contact);
+	 }*/
+
+	updateContactNode (contact:ContactNodeInterface):void {
+		var bucketKey:string = this._getBucketKey(contact.getId());
+		this._buckets[bucketKey].update(contact);
+	}
+
+	updateId (id:IdInterface):void {
+		return;
 	}
 
 }
 
 export = RoutingTable;
-
+/*
 // --- testing ---
 
 var my = new Id(Id.byteBufferByBitString('000010010000000000001110000100101000000000100010', 6), 48);
@@ -170,20 +174,20 @@ var rt = new RoutingTable(config, my, bucketStore);
 // dummy data generator
 var getContact = function (max):ContactNodeInterface {
 	var getRandomId = function ():string {
-		var str = '';
+			var str = '';
 
-		for (var i = max; i--;) {
-			str += (Math.round(Math.random())).toString();
-		}
+			for (var i = max; i--;) {
+				str += (Math.round(Math.random())).toString();
+			}
 
-		return str;
-	},
+			return str;
+		},
 
-	id = getRandomId(),
-	lastSeen = Date.now();
+		id = getRandomId(),
+		lastSeen = Date.now();
 
 	return {
-		getId: function ():DistanceMetric {
+		getId: function ():IdInterface {
 			return new Id(Id.byteBufferByBitString(id, 6), max);
 		},
 
@@ -223,4 +227,9 @@ t = Date.now() - t;
 console.log('added ' + amount + ' contacts in ' + t + ' ms');
 
 //console.log(rt);
-rt.close();
+rt.close();*/
+
+// https://github.com/mikejihbe/metrics
+// https://github.com/felixge/node-measured
+// http://blog.3rd-eden.com/post/5809079469/theoretical-node-js-real-time-performance
+// http://gigaom.com/2012/11/07/nodefly-goal-better-app-performance-monitoring-for-node-js/
