@@ -1,28 +1,29 @@
 /// <reference path='../../test.d.ts' />
 require('should');
 
-var Config = require('../../../src/core/config/Config');
+var ObjectConfig = require('../../../src/core/config/ObjectConfig');
+var JSONConfig = require('../../../src/core/config/JSONConfig');
 
 describe('CORE --> CONFIG --> ObjectConfig', function () {
-    it('should successfully instantiate and throw an error when created without a propper configData object', function () {
-        (new Config.ObjectConfig({})).should.be.a.instanceof(Config.ObjectConfig);
+    it('should successfully instantiate and throw an error when created without a proper configData object', function () {
+        (new ObjectConfig({})).should.be.a.instanceof(ObjectConfig);
 
         (function () {
-            new Config.ObjectConfig(false);
+            new ObjectConfig(false);
         }).should.throwError('Config.constructor: The given configData is not an object.');
 
         (function () {
-            new Config.ObjectConfig([]);
+            new ObjectConfig([]);
         }).should.throwError('Config.constructor: The given configData is not an object.');
     });
 
     it('should return the correct value for a specified key', function () {
-        var config = new Config.ObjectConfig({ foo: 'bar' });
+        var config = new ObjectConfig({ foo: 'bar' });
         config.get('foo').should.equal('bar');
     });
 
     it('should throw an error if no value for the specified key was found.', function () {
-        var config = new Config.ObjectConfig({
+        var config = new ObjectConfig({
             foo: 'bar'
         });
         config.get.bind(config, 'foobar').should.throw('Config.get: no value for "foobar" found.');
@@ -30,11 +31,11 @@ describe('CORE --> CONFIG --> ObjectConfig', function () {
     });
 
     it('should return the specified alternative value if provided', function () {
-        (new Config.ObjectConfig({})).get('foo', 'bar').should.equal('bar');
+        (new ObjectConfig({})).get('foo', 'bar').should.equal('bar');
     });
 
     it('should correctly convert the object into dot-notated keys', function () {
-        var config = new Config.ObjectConfig({
+        var config = new ObjectConfig({
             foo: {
                 bar: {
                     foobar: true
@@ -46,7 +47,7 @@ describe('CORE --> CONFIG --> ObjectConfig', function () {
     });
 
     it('should not allow to get subtrees of the object', function () {
-        var config = new Config.ObjectConfig({
+        var config = new ObjectConfig({
             foo: {
                 bar: {
                     foobar: true
@@ -74,7 +75,7 @@ describe('CORE --> CONFIG --> ObjectConfig', function () {
             }
         };
 
-        var config = new Config.ObjectConfig(data, ['foo.bar', 'foo.foo', 'foobario']);
+        var config = new ObjectConfig(data, ['foo.bar', 'foo.foo', 'foobario']);
         config.get('foo.bar.foobar').should.be.true;
         config.get('foo.foo.foobar').should.be.true;
         config.get.bind(config, 'foo.other').should.throw('Config.get: no value for "foo.other" found.');
@@ -88,16 +89,16 @@ describe('CORE --> CONFIG --> JSONConfig', function () {
         var validJSONPath = '../../../test/fixtures/core/config/valid.json', invalidJSONPath = '../../../test/fixtures/core/config/invalid.json', notFoundPath = '../Shep/Schwab/shopped/at/Scott\'s/Schnapps/shop';
 
         // should be instantiate
-        (new Config.JSONConfig(validJSONPath)).should.be.an.instanceof(Config.JSONConfig);
+        (new JSONConfig(validJSONPath)).should.be.an.instanceof(JSONConfig);
 
         // invalid/corrupt JSON-file
         (function () {
-            new Config.JSONConfig(invalidJSONPath);
+            new JSONConfig(invalidJSONPath);
         }).should.throw('JSONConfig.constructor: The file "' + invalidJSONPath + '" is not a valid JSON-File.');
 
         // file not found
         (function () {
-            new Config.JSONConfig(notFoundPath);
+            new JSONConfig(notFoundPath);
         }).should.throw('JSONConfig.constructor: Cannot find config file: "' + notFoundPath + '"');
     });
 });
