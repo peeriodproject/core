@@ -11,7 +11,7 @@ var Bucket = (function () {
         */
         this._config = null;
         /**
-        * The Internally used bucket store instace
+        * The internally used bucket store instance
         *
         * @private
         * @member {core.topology.BucketStoreInterface} core.topology.Bucket#_store
