@@ -21,6 +21,12 @@ describe('CORE --> TOPOLOGY --> ID', function () {
         id.getBuffer().should.be.instanceOf(Buffer);
     });
 
+    it('should throw an error when creating an Id of the wrong byte length', function () {
+        (function () {
+            new Id(new Buffer([20, 30]), 17);
+        }).should.throw('ID construction failed: Must be Buffer of length 3');
+    });
+
     it('should correctly compute distance between two IDs', function () {
         var bit_length = 112, a = new Id(new Buffer([0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 14, 18, 128, 34]), bit_length), b = new Id(new Buffer([0, 0, 0, 0, 0, 0, 12, 0, 17, 0, 0, 18, 255, 0]), bit_length), expected = new Buffer([0, 0, 0, 0, 0, 0, 12, 0, 24, 0, 14, 0, 127, 34]), distTo = a.distanceTo(b);
 
@@ -109,6 +115,22 @@ describe('CORE --> TOPOLOGY --> ID', function () {
 
         it('from bit string', function () {
             a.equals(new Id(Id.byteBufferByBitString(a.toBitString(), 6), 48)).should.be.true;
+        });
+    });
+
+    describe('should throw errors when converting strings to buffers', function () {
+        var a = new Id(new Buffer([10, 20, 30]), 24), hex = a.toHexString(), bit = a.toBitString();
+
+        it('from hex string', function () {
+            (function () {
+                Id.byteBufferByHexString(hex, 4);
+            }).should.throw('Id.byteBufferByHexString: Expected 4, but got 3 bytes');
+        });
+
+        it('from bit string', function () {
+            (function () {
+                Id.byteBufferByBitString(bit, 1);
+            }).should.throw('Id.byteBufferByBitString: Bit length exceeds expected number of bytes');
         });
     });
 });

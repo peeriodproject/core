@@ -109,7 +109,7 @@ class Id implements IdInterface {
 		var byte_length:number = Id.calculateByteLengthByBitLength(bit_length);
 
 		if (!((buffer instanceof Buffer) && (buffer.length === byte_length))) {
-			throw new Error('ID construction failed: Must be Buffer of length ' + bit_length);
+			throw new Error('ID construction failed: Must be Buffer of length ' + byte_length);
 		}
 
 		this._buffer = buffer;
