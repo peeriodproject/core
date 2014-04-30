@@ -1,34 +1,30 @@
-/// <reference path='../../../ts-definitions/node/node.d.ts' />
-/// <reference path='DistanceMetric.d.ts' />
+/**
+* @class core.topology.Id
+* @implements core.topology.IdInterface
+*
+* @param {NodeBuffer} buffer
+* @param {number} bit_length
+*/
 var Id = (function () {
-    /**
-    * Implementation
-    *
-    * @class Id
-    * @implements topology.DistanceMetric
-    *
-    * @param {Buffer} buffer
-    * @param {number} bit_length
-    */
     function Id(buffer, bit_length) {
         /**
         * @private
-        * @member {Buffer} Id#buffer
-        */
-        this._buffer = null;
-        /**
-        * @private
-        * @member {number} Id#bit_length
+        * @member {number} Id#_bit_length
         */
         this._bit_length = 0;
         /**
         * @private
-        * @member {number} Id#byte_length
+        * @member {NodeBuffer} Id#_buffer
+        */
+        this._buffer = null;
+        /**
+        * @private
+        * @member {number} Id#_byte_length
         */
         this._byte_length = 0;
         var byte_length = Id.calculateByteLengthByBitLength(bit_length);
 
-        if (!((buffer instanceof Buffer) && (buffer.length == byte_length))) {
+        if (!((buffer instanceof Buffer) && (buffer.length === byte_length))) {
             throw new Error('ID construction failed: Must be Buffer of length ' + bit_length);
         }
 
@@ -36,22 +32,6 @@ var Id = (function () {
         this._bit_length = bit_length;
         this._byte_length = byte_length;
     }
-    // Static helper methods
-    /**
-    * Calculates the number of bytes needed to store the specified bit length (bl).
-    * Identical to Math.ceil(bl / 8), but faster.
-    *
-    * @method Id.calculateByteLengthByBitLength
-    *
-    * @param {number} bl bit length
-    * @returns {number}
-    */
-    Id.calculateByteLengthByBitLength = function (bl) {
-        var div = bl / 8, n = div << 0;
-
-        return n == div ? n : n + 1;
-    };
-
     /**
     * Creates a byte buffer by the hexadecimal representation (string) provided. Throws an error if the hex doesn't
     * equal the number of bytes expected.
@@ -60,14 +40,15 @@ var Id = (function () {
     *
     * @param {string} hex_string
     * @param {number} expected_byte_len
-    * @returns {Buffer}
+    * @returns {NodeBuffer}
     */
     Id.byteBufferByHexString = function (hex_string, expected_byte_len) {
         if (hex_string.length / 2 !== expected_byte_len) {
-            throw new Error('byteBufferByHexString: Expected ' + expected_byte_len + ', but got ' + (hex_string.length / 2) + ' bytes');
+            throw new Error('Id.byteBufferByHexString: Expected ' + expected_byte_len + ', but got ' + (hex_string.length / 2) + ' bytes');
         }
 
         var buffer = new Buffer(expected_byte_len);
+
         buffer.fill(0);
         buffer.write(hex_string, 0, expected_byte_len, 'hex');
 
@@ -84,19 +65,21 @@ var Id = (function () {
     *
     * @param {string} binary_string
     * @param {number} expected_byte_len
-    * @returns {Buffer}
+    * @returns {NodeBuffer}
     */
     Id.byteBufferByBitString = function (binary_string, expected_byte_len) {
-        var str_len = binary_string.length;
-        if ((str_len / 8) > expected_byte_len) {
-            throw new Error('byteBufferByBitString: Bit length exceeds expected number of bytes');
+        var strLen = binary_string.length;
+
+        if ((strLen / 8) > expected_byte_len) {
+            throw new Error('Id.byteBufferByBitString: Bit length exceeds expected number of bytes');
         }
 
         var buffer = new Buffer(expected_byte_len);
+
         buffer.fill(0);
 
-        for (var i = 0; i < str_len; ++i) {
-            var at = str_len - 1 - i, _i = expected_byte_len - 1 - (at / 8 | 0), mask = 1 << (at % 8);
+        for (var i = 0; i < strLen; ++i) {
+            var at = strLen - 1 - i, _i = expected_byte_len - 1 - (at / 8 | 0), mask = 1 << (at % 8);
 
             if (binary_string.charAt(i) == '1') {
                 buffer[_i] |= mask;
@@ -109,7 +92,23 @@ var Id = (function () {
     };
 
     /**
-    * {@link topology.DistanceMetric#getBuffer}
+    * Calculates the number of bytes needed to store the specified bit length (bl).
+    * Identical to Math.ceil(bl / 8), but faster.
+    *
+    * @method Id.calculateByteLengthByBitLength
+    *
+    * @param {number} bl bit length
+    * @returns {number}
+    */
+    Id.calculateByteLengthByBitLength = function (bl) {
+        var div = bl / 8;
+        var n = div << 0;
+
+        return n == div ? n : n + 1;
+    };
+
+    /**
+    * {@link topology.IdInterface#getBuffer}
     *
     * @method Id#getBuffer
     */
@@ -118,7 +117,7 @@ var Id = (function () {
     };
 
     /**
-    * {@link topology.DistanceMetric#distanceTo}
+    * {@link topology.IdInterface#distanceTo}
     *
     * @method Id#distanceTo
     */
@@ -127,7 +126,9 @@ var Id = (function () {
             throw new Error('Can only compare to another ID.');
         }
 
-        var response = new Buffer(this._byte_length), a = this.getBuffer(), b = other.getBuffer();
+        var response = new Buffer(this._byte_length);
+        var a = this.getBuffer();
+        var b = other.getBuffer();
 
         for (var i = 0; i < this._byte_length; ++i) {
             response[i] = a[i] ^ b[i];
@@ -141,10 +142,13 @@ var Id = (function () {
             throw new Error('compareDistance: Arguments must be of type Id');
         }
 
-        var a = this.getBuffer(), b = first.getBuffer(), c = second.getBuffer();
+        var a = this.getBuffer();
+        var b = first.getBuffer();
+        var c = second.getBuffer();
 
         for (var i = 0; i < this._byte_length; ++i) {
-            var buf_a_b = a[i] ^ b[i], buf_a_c = a[i] ^ c[i];
+            var buf_a_b = a[i] ^ b[i];
+            var buf_a_c = a[i] ^ c[i];
 
             // first is farther away
             if (buf_a_b > buf_a_c)
@@ -163,7 +167,8 @@ var Id = (function () {
             throw new Error('equals: Argument must be of type Id');
         }
 
-        var a = this.getBuffer(), b = other.getBuffer();
+        var a = this.getBuffer();
+        var b = other.getBuffer();
 
         for (var i = 0; i < this._byte_length; ++i) {
             if (a[i] !== b[i])
@@ -178,7 +183,8 @@ var Id = (function () {
     };
 
     Id.prototype.set = function (index, value) {
-        var _i = this._byte_length - 1 - (index / 8 | 0), mask = 1 << (index % 8);
+        var _i = this._byte_length - 1 - (index / 8 | 0);
+        var mask = 1 << (index % 8);
 
         if (value) {
             this.getBuffer()[_i] |= mask;
@@ -192,7 +198,8 @@ var Id = (function () {
             throw new Error('differsInHighestBit: Argument must be of type Id');
         }
 
-        var a = this.getBuffer(), b = other.getBuffer();
+        var a = this.getBuffer();
+        var b = other.getBuffer();
 
         for (var i = 0; i < this._byte_length; ++i) {
             var xor_byte = a[i] ^ b[i];
@@ -210,9 +217,11 @@ var Id = (function () {
 
     Id.prototype.toBitString = function () {
         var result = '';
+
         for (var i = 0; i < this._bit_length; ++i) {
             result = (this.at(i) ? '1' : '0') + result;
         }
+
         return result;
     };
 
