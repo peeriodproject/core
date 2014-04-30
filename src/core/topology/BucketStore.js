@@ -5,6 +5,8 @@ var lmdb = require('node-lmdb');
 /**
 * LMDB-BucketStore Implementation
 *
+* @class core.topology.BucketStore
+* @implements core.topology.BucketStoreInterface
 */
 var BucketStore = (function () {
     function BucketStore(name, path) {

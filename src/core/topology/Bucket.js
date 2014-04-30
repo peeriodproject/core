@@ -1,5 +1,6 @@
 /**
-* @class topology.Bucket
+* @class core.topology.Bucket
+* @implements core.topology.BucketInterface
 */
 var Bucket = (function () {
     function Bucket(config, key, store) {

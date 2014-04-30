@@ -8,6 +8,8 @@ import lmdb = require('node-lmdb');
 /**
  * LMDB-BucketStore Implementation
  *
+ * @class core.topology.BucketStore
+ * @implements core.topology.BucketStoreInterface
  */
 class BucketStore implements BucketStoreInterface {
 

@@ -5,7 +5,7 @@ var Bucket = require('./Bucket');
 /**
 * Creates a routing table with the given number of k-buckets
 *
-* @class topology.RoutingTable
+* @class core.topology.RoutingTable
 * @implements RoutingTableInterface
 *
 * @param {config.ConfigInterface} config
@@ -45,7 +45,7 @@ var RoutingTable = (function () {
         this._buckets = {};
         /**
         * @private
-        * @member {boolean} _isOpen
+        * @member {boolean} core.topology.RoutingTable#_isOpen
         */
         this._isOpen = false;
         this._config = config;

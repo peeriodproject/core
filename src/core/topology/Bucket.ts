@@ -5,7 +5,8 @@ import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
 import IdInterface = require('./interfaces/IdInterface');
 
 /**
- * @class topology.Bucket
+ * @class core.topology.Bucket
+ * @implements core.topology.BucketInterface
  */
 class Bucket implements BucketInterface {
 

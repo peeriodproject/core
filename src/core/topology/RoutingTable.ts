@@ -16,7 +16,7 @@ import JSONConfig = require('../config/JSONConfig');
 /**
  * Creates a routing table with the given number of k-buckets
  *
- * @class topology.RoutingTable
+ * @class core.topology.RoutingTable
  * @implements RoutingTableInterface
  *
  * @param {config.ConfigInterface} config
@@ -59,7 +59,7 @@ class RoutingTable implements RoutingTableInterface {
 
 	/**
 	 * @private
-	 * @member {boolean} _isOpen
+	 * @member {boolean} core.topology.RoutingTable#_isOpen
 	 */
 	private _isOpen:boolean = false;
 
