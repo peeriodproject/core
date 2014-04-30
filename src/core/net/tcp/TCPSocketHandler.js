@@ -79,7 +79,7 @@ var TCPSocketHandler = (function (_super) {
         this._retriedPorts = [];
 
         if (!net.isIP(opts.myExternalIp))
-            throw new Error('TCPHandler: Provided IP is no IP');
+            throw new Error('TCPHandler.constructor: Provided IP is no IP');
 
         this.setMyExternalIp(opts.myExternalIp);
         this._myOpenPorts = opts.myOpenPorts || [];
@@ -110,7 +110,7 @@ var TCPSocketHandler = (function (_super) {
         var theCallback = function () {
             if (doCallback) {
                 callback(_this.getOpenServerPortsArray());
-                _this.removeListener('opened server', checkAndCallback);
+                _this.removeListener('openedReachableServer', checkAndCallback);
             }
             doCallback = false;
         };
@@ -119,7 +119,7 @@ var TCPSocketHandler = (function (_super) {
             _this.createTCPServerAndBootstrap(port);
         });
 
-        this.on('opened server', checkAndCallback);
+        this.on('openedReachableServer', checkAndCallback);
 
         setCallbackTimeout();
     };
@@ -175,9 +175,10 @@ var TCPSocketHandler = (function (_super) {
 
         // put it in our open server list, if reachable from outside
         server.on('listening', function () {
+            var port = server.address().port;
+
             _this.checkIfServerIsReachableFromOutside(server, function (success) {
                 if (success) {
-                    var port = server.address().port;
                     _this._openTCPServers[port] = server;
 
                     server.on('connection', function (sock) {
@@ -185,17 +186,17 @@ var TCPSocketHandler = (function (_super) {
                         _this.emit('connected', socket);
                     });
 
-                    _this.emit('opened server', port, server);
+                    _this.emit('openedReachableServer', port, server);
                 } else {
                     server.close();
                 }
             });
-        });
 
-        // remove it from our open server list
-        server.on('close', function () {
-            delete _this._openTCPServers[server.address().port];
-            _this.emit('closed server', port);
+            // remove it from our open server list
+            server.on('close', function () {
+                delete _this._openTCPServers[port];
+                _this.emit('closedServer', port);
+            });
         });
 
         server.listen(port);
@@ -206,6 +207,7 @@ var TCPSocketHandler = (function (_super) {
     /**
     * Takes a server and checks if it can be reached from outside the network with the external IP specified in
     * the constructor. Calls a callback with a flag indicating if it was successful (true) or not (false).
+    * It does not, however, automatically close the server if it is not reachable.
     *
     * @method TCPSocketHandler#checkIfServerIsReachableFromOutside
     *
@@ -231,7 +233,6 @@ var TCPSocketHandler = (function (_super) {
 
         connectionTimeout = setTimeout(function () {
             callbackWith(false);
-            server.close();
         }, 2000);
 
         this.connectTo(server.address().port, this._myExternalIp, function (socket) {
@@ -239,7 +240,7 @@ var TCPSocketHandler = (function (_super) {
             socket.on('data', function (data) {
                 clearTimeout(connectionTimeout);
                 if (data[0] === 20) {
-                    callbackWith(true);
+                    callbackWith(true, socket);
                 }
             });
         });
