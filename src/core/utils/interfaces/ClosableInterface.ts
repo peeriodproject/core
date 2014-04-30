@@ -10,7 +10,6 @@ interface ClosableInterface {
 	 *
 	 * todo: add throw exeption
 	 *
-	 * @abstract
 	 * @method core.utils.ClosableInterface#close
 	 */
 	close ():void;
@@ -20,7 +19,6 @@ interface ClosableInterface {
 	 *
 	 * todo: Wir sollten über den Callback-Style nachdenken und evtl. Callbacks/Deferreds verwenden.
 	 *
-	 * @abstract
 	 * @method core.utils.ClosableInterface#isOpen
 	 */
 	isOpen ():boolean;
@@ -30,7 +28,6 @@ interface ClosableInterface {
 	 *
 	 * todo: add throw exeption
 	 *
-	 * @abstract
 	 * @method core.utils.ClosableInterface#open
 	 */
 	open ():void;

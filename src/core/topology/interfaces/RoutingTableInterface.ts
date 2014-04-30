@@ -21,7 +21,6 @@ interface RoutingTableInterface extends ClosableInterface {
 	 * Updates the specified contact node according to the protocol.
 	 * This should be the main entry point to the routing table whenever a new peer shows up.
 	 *
-	 * @abstract
 	 * @method core.topology.RoutingTableInterface#updateContactNode
 	 *
 	 * @param {core.topology.ContactNodeInterface} contact

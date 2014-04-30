@@ -10,7 +10,6 @@ interface ConfigInterface {
 	/**
 	 * Returns the config value stored under the given key or a default value if provided.
 	 *
-	 * @abstract
 	 * @method core.config.ConfigInterface#get
 	 *
 	 * @throws Will throw an error if no key is specified.

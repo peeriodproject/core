@@ -12,7 +12,6 @@ interface ContactNodeInterface {
 	/**
 	 * Returns the addresses of the contact node.
 	 *
-	 * @abstract
 	 * @method core.topology.ContactNodeInterface#getAddresses
 	 *
 	 * @returns {string}
@@ -22,7 +21,6 @@ interface ContactNodeInterface {
 	/**
 	 * Returns the id of the contact node.
 	 *
-	 * @abstract
 	 * @method core.topology.ContactNodeInterface#getId
 	 *
 	 * @returns {core.topology.IdInterface}
@@ -32,7 +30,6 @@ interface ContactNodeInterface {
 	/**
 	 * Returns the last seen timestamp of the contact node.
 	 *
-	 * @abstract
 	 * @method core.topology.ContactNodeInterface#getLastSeen
 	 *
 	 * @returns {number}
@@ -42,7 +39,6 @@ interface ContactNodeInterface {
 	/**
 	 * Returns the public key of the contact node.
 	 *
-	 * @abstract
 	 * @method core.topology.ContactNodeInterface#getPublicKey
 	 *
 	 * @returns {string}
