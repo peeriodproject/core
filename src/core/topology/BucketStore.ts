@@ -17,17 +17,17 @@ class BucketStore implements BucketStoreInterface {
 	 * The internal lmdb database instance
 	 *
 	 * @private
-	 * @member {lmdb.Dbi} core.topology.BucketStore#_dbi
+	 * @member {lmdb.Dbi} core.topology.BucketStore#_databaseInstance
 	 */
-	private _dbi:lmdb.Dbi = null;
+	private _databaseInstance:lmdb.Dbi = null;
 
 	/**
 	 * The internal lmdb database environment instance
 	 *
 	 * @private
-	 * @member {lmdb.Env} core.topology.BucketStore#_env
+	 * @member {lmdb.Env} core.topology.BucketStore#_databaseEnvironment
 	 */
-	private _env:lmdb.Env = null;
+	private _databaseEnvironment:lmdb.Env = null;
 
 	/**
 	 * Indicates wheather the store is open or closed
@@ -91,11 +91,11 @@ class BucketStore implements BucketStoreInterface {
 
 		this._isOpen = false;
 
-		this._dbi.close();
-		this._dbi = null;
+		this._databaseInstance.close();
+		this._databaseInstance = null;
 
-		this._env.close();
-		this._env = null;
+		this._databaseEnvironment.close();
+		this._databaseEnvironment = null;
 	}
 
 	public contains (bucketKey:string, id:IdInterface):boolean {
@@ -120,7 +120,7 @@ class BucketStore implements BucketStoreInterface {
 	public get (bucketKey:string, id:IdInterface):any {
 		var txn:lmdb.Txn = this._beginReadOnlyTransaction();
 		var cursor:lmdb.Cursor = this._getCursor(txn);
-		var value:string = txn.getString(this._dbi, this._getIdKey(id));
+		var value:string = txn.getString(this._databaseInstance, this._getIdKey(id));
 
 		cursor.close();
 		txn.commit();
@@ -135,15 +135,15 @@ class BucketStore implements BucketStoreInterface {
 	public open ():void {
 		if (this._isOpen) return;
 
-		this._env = new lmdb.Env();
-		this._env.open({
+		this._databaseEnvironment = new lmdb.Env();
+		this._databaseEnvironment.open({
 			//name: this._name,
 			path: this._path
 			//mapSize: 2*1024*1024*1024, // maximum database size
 			//maxDbs: 3
 		});
 
-		this._dbi = this._env.openDbi({
+		this._databaseInstance = this._databaseEnvironment.openDbi({
 			name  : this._name,
 			create: true
 		});
@@ -165,9 +165,9 @@ class BucketStore implements BucketStoreInterface {
 
 		txn = this._beginTransaction();
 		// remove shortcut
-		txn.del(this._dbi, this._getLastSeenKey(bucketKey, lastSeen));
+		txn.del(this._databaseInstance, this._getLastSeenKey(bucketKey, lastSeen));
 		// remove object
-		txn.del(this._dbi, this._getIdKey(id));
+		txn.del(this._databaseInstance, this._getIdKey(id));
 		txn.commit();
 
 		return true;
@@ -200,7 +200,7 @@ class BucketStore implements BucketStoreInterface {
 	 * Adds the given object within the specified transaction `txn` to the database
 	 *
 	 * @private
-	 * @method {boolean} core.topology.BucketStore~_add
+	 * @method {boolean} core.topology.BucketStore#_add
 	 *
 	 * @param {lmdb.Txn} txn
 	 * @param {string} bucketKey
@@ -222,10 +222,10 @@ class BucketStore implements BucketStoreInterface {
 
 		try {
 			// stores the object with id as it's key
-			txn.putString(this._dbi, idKey, JSON.stringify(value));
+			txn.putString(this._databaseInstance, idKey, JSON.stringify(value));
 
 			// stores a shortcut for bucketwide last seen searches.
-			txn.putString(this._dbi, lastSeenKey, this._getIdValue(id));
+			txn.putString(this._databaseInstance, lastSeenKey, this._getIdValue(id));
 		}
 		catch (err) {
 			console.error(err);
@@ -238,7 +238,7 @@ class BucketStore implements BucketStoreInterface {
 	 * Creates a read-only transaction object on the instance environment
 	 *
 	 * @private
-	 * @method {boolean} core.topology.BucketStore~_beginReadOnlyTransaction
+	 * @method {boolean} core.topology.BucketStore#_beginReadOnlyTransaction
 	 *
 	 * @returns {lmdb.Txn}
 	 */
@@ -248,14 +248,14 @@ class BucketStore implements BucketStoreInterface {
 
 		opts['readOnly'] = true;
 
-		return this._env.beginTxn(opts);
+		return this._databaseEnvironment.beginTxn(opts);
 	}
 
 	/**
 	 * Creates a writable transaction object on the instance environment
 	 *
 	 * @private
-	 * @method {boolean} core.topology.BucketStore~_beginTransaction
+	 * @method {boolean} core.topology.BucketStore#_beginTransaction
 	 *
 	 * @returns {lmdb.Txn}
 	 */
@@ -263,26 +263,26 @@ class BucketStore implements BucketStoreInterface {
 		// todo replace with propper options
 		var opts:Object = {};
 
-		return this._env.beginTxn(opts);
+		return this._databaseEnvironment.beginTxn(opts);
 	}
 
 	/**
 	 * Creates a Cursor on the instace database
 	 *
 	 * @private
-	 * @method {boolean} core.topology.BucketStore~_getCursor
+	 * @method {boolean} core.topology.BucketStore#_getCursor
 	 *
 	 * @returns {lmdb.Txn}
 	 */
 	private _getCursor (txn:any):any {
-		return new lmdb.Cursor(txn, this._dbi);
+		return new lmdb.Cursor(txn, this._databaseInstance);
 	}
 
 	/**
 	 * Returns the internally used key for bucket wide searches
 	 *
 	 * @private
-	 * @method {boolean} core.topology.BucketStore~_getBucketKey
+	 * @method {boolean} core.topology.BucketStore#_getBucketKey
 
 	 * @param {string} key
 	 * @returns {string}
@@ -295,7 +295,7 @@ class BucketStore implements BucketStoreInterface {
 	 * Returns the internally used key for id related searches
 	 *
 	 * @private
-	 * @method {boolean} core.topology.BucketStore~_getIdKey
+	 * @method {boolean} core.topology.BucketStore#_getIdKey
 
 	 * @param {string} id
 	 * @returns {string}
@@ -307,7 +307,7 @@ class BucketStore implements BucketStoreInterface {
 	/**
 	 * Returns the id as a formatted string
 	 *
-	 * @method {boolean} core.topology.BucketStore~_getIdValue
+	 * @method {boolean} core.topology.BucketStore#_getIdValue
 	 *
 	 * @param {core.topology.IdInterface} id
 	 * @returns {string}
@@ -317,9 +317,9 @@ class BucketStore implements BucketStoreInterface {
 	}
 
 	/**
-	 * Returns a {@link core.topology.BucketStore~getIdKey} prefixed key to store objects within the `bucketKey` namespace
+	 * Returns a {@link core.topology.BucketStore#getIdKey} prefixed key to store objects within the `bucketKey` namespace
 	 *
-	 * @method {boolean} core.topology.BucketStore~_getLastSeenKey
+	 * @method {boolean} core.topology.BucketStore#_getLastSeenKey
 	 *
 	 * @param {string} bucketKey
 	 * @param {number} lastSeen

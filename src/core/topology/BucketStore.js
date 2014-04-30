@@ -14,16 +14,16 @@ var BucketStore = (function () {
         * The internal lmdb database instance
         *
         * @private
-        * @member {lmdb.Dbi} core.topology.BucketStore#_dbi
+        * @member {lmdb.Dbi} core.topology.BucketStore#_databaseInstance
         */
-        this._dbi = null;
+        this._databaseInstance = null;
         /**
         * The internal lmdb database environment instance
         *
         * @private
-        * @member {lmdb.Env} core.topology.BucketStore#_env
+        * @member {lmdb.Env} core.topology.BucketStore#_databaseEnvironment
         */
-        this._env = null;
+        this._databaseEnvironment = null;
         /**
         * Indicates wheather the store is open or closed
         *
@@ -81,11 +81,11 @@ var BucketStore = (function () {
 
         this._isOpen = false;
 
-        this._dbi.close();
-        this._dbi = null;
+        this._databaseInstance.close();
+        this._databaseInstance = null;
 
-        this._env.close();
-        this._env = null;
+        this._databaseEnvironment.close();
+        this._databaseEnvironment = null;
     };
 
     BucketStore.prototype.contains = function (bucketKey, id) {
@@ -109,7 +109,7 @@ var BucketStore = (function () {
     BucketStore.prototype.get = function (bucketKey, id) {
         var txn = this._beginReadOnlyTransaction();
         var cursor = this._getCursor(txn);
-        var value = txn.getString(this._dbi, this._getIdKey(id));
+        var value = txn.getString(this._databaseInstance, this._getIdKey(id));
 
         cursor.close();
         txn.commit();
@@ -125,13 +125,13 @@ var BucketStore = (function () {
         if (this._isOpen)
             return;
 
-        this._env = new lmdb.Env();
-        this._env.open({
+        this._databaseEnvironment = new lmdb.Env();
+        this._databaseEnvironment.open({
             //name: this._name,
             path: this._path
         });
 
-        this._dbi = this._env.openDbi({
+        this._databaseInstance = this._databaseEnvironment.openDbi({
             name: this._name,
             create: true
         });
@@ -154,10 +154,10 @@ var BucketStore = (function () {
         txn = this._beginTransaction();
 
         // remove shortcut
-        txn.del(this._dbi, this._getLastSeenKey(bucketKey, lastSeen));
+        txn.del(this._databaseInstance, this._getLastSeenKey(bucketKey, lastSeen));
 
         // remove object
-        txn.del(this._dbi, this._getIdKey(id));
+        txn.del(this._databaseInstance, this._getIdKey(id));
         txn.commit();
 
         return true;
@@ -189,7 +189,7 @@ var BucketStore = (function () {
     * Adds the given object within the specified transaction `txn` to the database
     *
     * @private
-    * @method {boolean} core.topology.BucketStore~_add
+    * @method {boolean} core.topology.BucketStore#_add
     *
     * @param {lmdb.Txn} txn
     * @param {string} bucketKey
@@ -211,10 +211,10 @@ var BucketStore = (function () {
 
         try  {
             // stores the object with id as it's key
-            txn.putString(this._dbi, idKey, JSON.stringify(value));
+            txn.putString(this._databaseInstance, idKey, JSON.stringify(value));
 
             // stores a shortcut for bucketwide last seen searches.
-            txn.putString(this._dbi, lastSeenKey, this._getIdValue(id));
+            txn.putString(this._databaseInstance, lastSeenKey, this._getIdValue(id));
         } catch (err) {
             console.error(err);
         }
@@ -226,7 +226,7 @@ var BucketStore = (function () {
     * Creates a read-only transaction object on the instance environment
     *
     * @private
-    * @method {boolean} core.topology.BucketStore~_beginReadOnlyTransaction
+    * @method {boolean} core.topology.BucketStore#_beginReadOnlyTransaction
     *
     * @returns {lmdb.Txn}
     */
@@ -236,14 +236,14 @@ var BucketStore = (function () {
 
         opts['readOnly'] = true;
 
-        return this._env.beginTxn(opts);
+        return this._databaseEnvironment.beginTxn(opts);
     };
 
     /**
     * Creates a writable transaction object on the instance environment
     *
     * @private
-    * @method {boolean} core.topology.BucketStore~_beginTransaction
+    * @method {boolean} core.topology.BucketStore#_beginTransaction
     *
     * @returns {lmdb.Txn}
     */
@@ -251,26 +251,26 @@ var BucketStore = (function () {
         // todo replace with propper options
         var opts = {};
 
-        return this._env.beginTxn(opts);
+        return this._databaseEnvironment.beginTxn(opts);
     };
 
     /**
     * Creates a Cursor on the instace database
     *
     * @private
-    * @method {boolean} core.topology.BucketStore~_getCursor
+    * @method {boolean} core.topology.BucketStore#_getCursor
     *
     * @returns {lmdb.Txn}
     */
     BucketStore.prototype._getCursor = function (txn) {
-        return new lmdb.Cursor(txn, this._dbi);
+        return new lmdb.Cursor(txn, this._databaseInstance);
     };
 
     /**
     * Returns the internally used key for bucket wide searches
     *
     * @private
-    * @method {boolean} core.topology.BucketStore~_getBucketKey
+    * @method {boolean} core.topology.BucketStore#_getBucketKey
     
     * @param {string} key
     * @returns {string}
@@ -283,7 +283,7 @@ var BucketStore = (function () {
     * Returns the internally used key for id related searches
     *
     * @private
-    * @method {boolean} core.topology.BucketStore~_getIdKey
+    * @method {boolean} core.topology.BucketStore#_getIdKey
     
     * @param {string} id
     * @returns {string}
@@ -295,7 +295,7 @@ var BucketStore = (function () {
     /**
     * Returns the id as a formatted string
     *
-    * @method {boolean} core.topology.BucketStore~_getIdValue
+    * @method {boolean} core.topology.BucketStore#_getIdValue
     *
     * @param {core.topology.IdInterface} id
     * @returns {string}
@@ -305,9 +305,9 @@ var BucketStore = (function () {
     };
 
     /**
-    * Returns a {@link core.topology.BucketStore~getIdKey} prefixed key to store objects within the `bucketKey` namespace
+    * Returns a {@link core.topology.BucketStore#getIdKey} prefixed key to store objects within the `bucketKey` namespace
     *
-    * @method {boolean} core.topology.BucketStore~_getLastSeenKey
+    * @method {boolean} core.topology.BucketStore#_getLastSeenKey
     *
     * @param {string} bucketKey
     * @param {number} lastSeen
