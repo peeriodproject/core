@@ -52,6 +52,10 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	public constructor (socket:net.Socket, opts:TCPSocketOptions) {
 		super();
 
+		if (!(socket && socket instanceof net.Socket)) {
+			throw new Error('TCPSocket.constructor: Invalid or no socket specified');
+		}
+
 		this.setSocket(socket);
 
 		// set keep-alive
@@ -83,10 +87,6 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	}
 
 	public getSocket ():net.Socket {
-		if (!this._socket) {
-			throw new Error('TCPSocket: getSocket() called, but no socket set on this connection!');
-		}
-
 		return this._socket;
 	}
 

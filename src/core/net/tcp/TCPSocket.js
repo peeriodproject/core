@@ -4,6 +4,7 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
+var net = require('net');
 var events = require('events');
 
 /**
@@ -49,6 +50,10 @@ var TCPSocket = (function (_super) {
         */
         this._socket = null;
 
+        if (!(socket && socket instanceof net.Socket)) {
+            throw new Error('TCPSocket.constructor: Invalid or no socket specified');
+        }
+
         this.setSocket(socket);
 
         // set keep-alive
@@ -79,10 +84,6 @@ var TCPSocket = (function (_super) {
     };
 
     TCPSocket.prototype.getSocket = function () {
-        if (!this._socket) {
-            throw new Error('TCPSocket: getSocket() called, but no socket set on this connection!');
-        }
-
         return this._socket;
     };
 
