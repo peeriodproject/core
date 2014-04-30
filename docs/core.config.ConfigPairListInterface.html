@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Documentation Class: RoutingTable</title>
+	<title>Documentation Class: ConfigPairListInterface</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -29,15 +29,23 @@
 					<ul class="dropdown-menu ">
 						
 						<li>
-							<a href="config.html">config</a>
+							<a href="core.html">core</a>
 						</li>
 						
 						<li>
-							<a href="net.html">net</a>
+							<a href="core.config.html">config</a>
 						</li>
 						
 						<li>
-							<a href="topology.html">topology</a>
+							<a href="core.net.html">net</a>
+						</li>
+						
+						<li>
+							<a href="core.topology.html">topology</a>
+						</li>
+						
+						<li>
+							<a href="core.utils.html">utils</a>
 						</li>
 						
 
@@ -51,67 +59,95 @@
 					<ul class="dropdown-menu ">
 						
 						<li>
-							<a href="config.ConfigInterface.html">ConfigInterface</a>
+							<a href="core.config.ConfigInterface.html">ConfigInterface</a>
 						</li>
 						
 						<li>
-							<a href="config.ConfigKeyList.html">ConfigKeyList</a>
+							<a href="core.config.ConfigKeyListInterface.html">ConfigKeyListInterface</a>
 						</li>
 						
 						<li>
-							<a href="config.ConfigPair.html">ConfigPair</a>
+							<a href="core.config.ConfigPairInterface.html">ConfigPairInterface</a>
 						</li>
 						
 						<li>
-							<a href="config.ConfigPairList.html">ConfigPairList</a>
+							<a href="core.config.ConfigPairListInterface.html">ConfigPairListInterface</a>
 						</li>
 						
 						<li>
-							<a href="config.JSONConfig.html">JSONConfig</a>
+							<a href="core.config.JSONConfig.html">JSONConfig</a>
 						</li>
 						
 						<li>
-							<a href="Id.html">Id</a>
+							<a href="core.config.ObjectConfig.html">ObjectConfig</a>
 						</li>
 						
 						<li>
-							<a href="net.tcp.TCPSocketHandlerOptions.html">TCPSocketHandlerOptions</a>
+							<a href="core.net.tcp.TCPSocket.html">TCPSocket</a>
 						</li>
 						
 						<li>
-							<a href="net.tcp.TCPSocketOptions.html">TCPSocketOptions</a>
+							<a href="core.net.tcp.TCPSocketHandler.html">TCPSocketHandler</a>
 						</li>
 						
 						<li>
-							<a href="topology.Bucket.html">Bucket</a>
+							<a href="core.net.tcp.TCPSocketHandlerInterface.html">TCPSocketHandlerInterface</a>
 						</li>
 						
 						<li>
-							<a href="topology.BucketInterface.html">BucketInterface</a>
+							<a href="core.net.tcp.TCPSocketHandlerOptions.html">TCPSocketHandlerOptions</a>
 						</li>
 						
 						<li>
-							<a href="topology.BucketStoreInterface.html">BucketStoreInterface</a>
+							<a href="core.net.tcp.TCPSocketInterface.html">TCPSocketInterface</a>
 						</li>
 						
 						<li>
-							<a href="topology.ContactNodeInterface.html">ContactNodeInterface</a>
+							<a href="core.net.tcp.TCPSocketOptions.html">TCPSocketOptions</a>
 						</li>
 						
 						<li>
-							<a href="topology.DistanceMetric.html">DistanceMetric</a>
+							<a href="core.topology.Bucket.html">Bucket</a>
 						</li>
 						
 						<li>
-							<a href="topology.RoutingTable.html">RoutingTable</a>
+							<a href="core.topology.BucketInterface.html">BucketInterface</a>
 						</li>
 						
 						<li>
-							<a href="topology.RoutingTableInterface.html">RoutingTableInterface</a>
+							<a href="core.topology.BucketStore.html">BucketStore</a>
 						</li>
 						
 						<li>
-							<a href="utils.ClosableInterface.html">ClosableInterface</a>
+							<a href="core.topology.BucketStoreInterface.html">BucketStoreInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.topology.ContactNodeInterface.html">ContactNodeInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.topology.Id.html">Id</a>
+						</li>
+						
+						<li>
+							<a href="core.topology.IdInterface.html">IdInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.topology.RoutingTable.html">RoutingTable</a>
+						</li>
+						
+						<li>
+							<a href="core.topology.RoutingTableInterface.html">RoutingTableInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.utils.ClosableInterface.html">ClosableInterface</a>
+						</li>
+						
+						<li>
+							<a href="Test.html">Test</a>
 						</li>
 						
 
@@ -131,14 +167,14 @@
 					
 
 
-	<h1 class="page-title">Class: RoutingTable</h1>
+	<h1 class="page-title">Class: ConfigPairListInterface</h1>
 <section>
 
 <header>
     <h2>
-        <span class="ancestors"><a href="topology.html">topology</a>.</span>
+        <span class="ancestors"><a href="core.html">core</a><a href="core.config.html">.config</a>.</span>
     
-    RoutingTable
+    ConfigPairListInterface
     </h2>
     
 </header>
@@ -150,7 +186,7 @@
     
         
 <dt>
-    <h4 class="name" id="RoutingTable"><span class="type-signature"></span>new RoutingTable<span class="signature">(k, store)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="ConfigPairListInterface"><span class="type-signature"></span>new ConfigPairListInterface<span class="signature">()</span><span class="type-signature"></span></h4>
     
     
 </dt>
@@ -158,7 +194,7 @@
     
     
     <div class="description">
-        <p>Creates a routing table with the given number of k-buckets</p>
+        <p>A <code>ConfigPairListInterface</code> represents an array of @{link config.ConfigPair}.</p>
     </div>
     
 
@@ -166,78 +202,6 @@
     
     
     
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-	<tr>
-		
-		<th>Name</th>
-		
-
-		<th>Type</th>
-
-		
-
-		
-
-		<th class="last">Description</th>
-	</tr>
-	</thead>
-
-	<tbody>
-	
-
-        <tr>
-            
-                <td class="name"><code>k</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-	
-
-        <tr>
-            
-                <td class="name"><code>store</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">IBucketStore</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-	
-	</tbody>
-</table>
-
     
     
     
@@ -263,7 +227,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/topology/RoutingTable.ts
+        src/core/config/interfaces/ConfigPairListInterface.ts
     </li></ul></dd>
     
 
@@ -323,7 +287,7 @@
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a>
-		on Mon Apr 28 2014 16:04:18 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		on Wed Apr 30 2014 18:23:10 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
 			</div>
