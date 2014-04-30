@@ -15,7 +15,7 @@ class BucketStore implements BucketStoreInterface {
 	 * The internal lmdb database instance
 	 *
 	 * @private
-	 * @member {lmdb.Dbi} core.topology.BucketStore._dbi
+	 * @member {lmdb.Dbi} core.topology.BucketStore#_dbi
 	 */
 	private _dbi:lmdb.Dbi = null;
 
@@ -23,7 +23,7 @@ class BucketStore implements BucketStoreInterface {
 	 * The internal lmdb database environment instance
 	 *
 	 * @private
-	 * @member {lmdb.Env} core.topology.BucketStore._env
+	 * @member {lmdb.Env} core.topology.BucketStore#_env
 	 */
 	private _env:lmdb.Env = null;
 
@@ -31,7 +31,7 @@ class BucketStore implements BucketStoreInterface {
 	 * Indicates wheather the store is open or closed
 	 *
 	 * @private
-	 * @member {boolean} core.topology.BucketStore._isOpen
+	 * @member {boolean} core.topology.BucketStore#_isOpen
 	 */
 	private _isOpen:boolean = false;
 
@@ -39,7 +39,7 @@ class BucketStore implements BucketStoreInterface {
 	 * The name of the internal database
 	 *
 	 * @private
-	 * @member {boolean} core.topology.BucketStore._name
+	 * @member {boolean} core.topology.BucketStore#_name
 	 */
 	private _name:string = '';
 
@@ -47,7 +47,7 @@ class BucketStore implements BucketStoreInterface {
 	 * An absolute path where the database stores it's files
 	 *
 	 * @private
-	 * @member {boolean} core.topology.BucketStore._path
+	 * @member {boolean} core.topology.BucketStore#_path
 	 */
 	private _path:string = '';
 
@@ -194,6 +194,20 @@ class BucketStore implements BucketStoreInterface {
 		return size;
 	}
 
+	/**
+	 * Adds the given object within the specified transaction `txn` to the database
+	 *
+	 * @private
+	 * @method {boolean} core.topology.BucketStore~_add
+	 *
+	 * @param {lmdb.Txn} txn
+	 * @param {string} bucketKey
+	 * @param {core.topology.IdInterface} id
+	 * @param {number} lastSeen
+	 * @param {any} addresses
+	 * @param {string} publicKey
+	 * @returns {boolean}
+	 */
 	private _add (txn:any, bucketKey:string, id:IdInterface, lastSeen:number, addresses:any, publicKey:string) {
 		var idKey:string = this._getIdKey(id);
 		var lastSeenKey:string = this._getLastSeenKey(bucketKey, lastSeen);
@@ -218,6 +232,14 @@ class BucketStore implements BucketStoreInterface {
 		return true;
 	}
 
+	/**
+	 * Creates a read-only transaction object on the instance environment
+	 *
+	 * @private
+	 * @method {boolean} core.topology.BucketStore~_beginReadOnlyTransaction
+	 *
+	 * @returns {lmdb.Txn}
+	 */
 	private _beginReadOnlyTransaction ():any {
 		// todo replace with propper options
 		var opts:Object = {};
@@ -227,6 +249,14 @@ class BucketStore implements BucketStoreInterface {
 		return this._env.beginTxn(opts);
 	}
 
+	/**
+	 * Creates a writable transaction object on the instance environment
+	 *
+	 * @private
+	 * @method {boolean} core.topology.BucketStore~_beginTransaction
+	 *
+	 * @returns {lmdb.Txn}
+	 */
 	private _beginTransaction ():any {
 		// todo replace with propper options
 		var opts:Object = {};
@@ -234,22 +264,65 @@ class BucketStore implements BucketStoreInterface {
 		return this._env.beginTxn(opts);
 	}
 
+	/**
+	 * Creates a Cursor on the instace database
+	 *
+	 * @private
+	 * @method {boolean} core.topology.BucketStore~_getCursor
+	 *
+	 * @returns {lmdb.Txn}
+	 */
 	private _getCursor (txn:any):any {
 		return new lmdb.Cursor(txn, this._dbi);
 	}
 
+	/**
+	 * Returns the internally used key for bucket wide searches
+	 *
+	 * @private
+	 * @method {boolean} core.topology.BucketStore~_getBucketKey
+
+	 * @param {string} key
+	 * @returns {string}
+	 */
 	private _getBucketKey (key:string):string {
 		return key + '-';
 	}
 
+	/**
+	 * Returns the internally used key for id related searches
+	 *
+	 * @private
+	 * @method {boolean} core.topology.BucketStore~_getIdKey
+
+	 * @param {string} id
+	 * @returns {string}
+	 */
 	private _getIdKey (id:IdInterface):string {
 		return this._getIdValue(id);
 	}
 
+	/**
+	 * Returns the id as a formatted string
+	 *
+	 * @method {boolean} core.topology.BucketStore~_getIdValue
+	 *
+	 * @param {core.topology.IdInterface} id
+	 * @returns {string}
+	 */
 	private _getIdValue (id:IdInterface):string {
 		return id.toBitString();
 	}
 
+	/**
+	 * Returns a {@link core.topology.BucketStore~getIdKey} prefixed key to store objects within the `bucketKey` namespace
+	 *
+	 * @method {boolean} core.topology.BucketStore~_getLastSeenKey
+	 *
+	 * @param {string} bucketKey
+	 * @param {number} lastSeen
+	 * @returns {string}
+	 */
 	private _getLastSeenKey (bucketKey:string, lastSeen:number):string {
 		return this._getBucketKey(bucketKey) + lastSeen;
 	}

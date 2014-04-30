@@ -222,4 +222,4 @@ var Id = (function () {
 })();
 
 module.exports = Id;
-//# sourceMappingURL=id.js.map
+//# sourceMappingURL=Id.js.map

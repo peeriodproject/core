@@ -1,16 +1,8 @@
-/**
- * Created by joernroeder on 4/23/14.
- */
-
-/// <reference path='BucketInterface.d.ts' />
-/// <reference path='BucketStoreInterface.d.ts' />
-/// <reference path='../config/Config.d.ts' />
-
-var Id = require('./Id');
-
-/**
- * @namespace topology
- */
+import BucketInterface = require('./interfaces/BucketInterface');
+import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
+import ConfigInterface = require('../config/interfaces/ConfigInterface');
+import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
+import IdInterface = require('./interfaces/IdInterface');
 
 /**
  * @class topology.Bucket
@@ -18,22 +10,30 @@ var Id = require('./Id');
 class Bucket implements BucketInterface {
 
 	/**
+	 * The internally used config object instance
+	 *
 	 * @private
+	 * @member {core.config.ConfigInterface} core.topology.Bucket#_config
 	 */
 	private _config:ConfigInterface = null;
 
 	/**
-	 * @private
-	 */
-	_store:BucketStoreInterface = null;
-
-	/**
+	 * The internally used bucket store instance
 	 *
 	 * @private
+	 * @member {core.topology.BucketStoreInterface} core.topology.Bucket#_store
 	 */
-	_key:string = '';
+	private _store:BucketStoreInterface = null;
 
-	constructor(config:ConfigInterface, key:string, store:BucketStoreInterface) {
+	/**
+	 * The Key of the bucket
+	 *
+	 * @private
+	 * @member {string} core.topology.Bucket#_key
+	 */
+	private _key:string = '';
+
+	constructor (config:ConfigInterface, key:string, store:BucketStoreInterface) {
 		this._config = config;
 		this._key = key;
 		this._store = store;
@@ -41,7 +41,7 @@ class Bucket implements BucketInterface {
 		this.open();
 	}
 
-	add(contact:ContactNodeInterface):boolean {
+	public add (contact:ContactNodeInterface):boolean {
 		return this._store.add(
 			this._key,
 			contact.getId(),
@@ -51,27 +51,43 @@ class Bucket implements BucketInterface {
 		);
 	}
 
-	remove(id:DistanceMetric):boolean {
-		return this._store.remove(this._key, id);
+	public close ():void {
+		this._store.close();
 	}
 
-	get(id:DistanceMetric):any {
-		return this._store.get(this._key, id);
-	}
-
-	contains(contact:ContactNodeInterface):boolean {
+	public contains (contact:ContactNodeInterface):boolean {
 		return this._store.contains(this._key, contact.getId());
 	}
 
-	update(contact:ContactNodeInterface):boolean {
+	public get (id:IdInterface):any {
+		return this._store.get(this._key, id);
+	}
+
+	public isOpen ():boolean {
+		return this._store.isOpen();
+	}
+
+	public open ():void {
+		this._store.open();
+	}
+
+	public remove (id:IdInterface):boolean {
+		return this._store.remove(this._key, id);
+	}
+
+	public size ():number {
+		return this._store.size(this._key);
+	}
+
+	public update (contact:ContactNodeInterface):boolean {
 		if (this.contains(contact)) {
 			// todo Benchmark: always replace vs. check nodeaddresses and update
 			this.remove(contact.getId());
 			this.add(contact);
-		 }
-		 else if (this.size() < this._config.get('topology.k')) {
-		 	this.add(contact);
-		 }
+		}
+		else if (this.size() < this._config.get('topology.k')) {
+			this.add(contact);
+		}
 		else {
 			// todo ping pong
 		}
@@ -79,21 +95,6 @@ class Bucket implements BucketInterface {
 		return false;
 	}
 
-	size():number {
-		return this._store.size(this._key);
-	}
-
-	close():void {
-		this._store.close();
-	}
-
-	open():void {
-		this._store.open();
-	}
-
-	isOpen():boolean {
-		return this._store.isOpen();
-	}
 }
 
 export = Bucket;
