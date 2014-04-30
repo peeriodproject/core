@@ -1,3 +1,7 @@
+/**
+* foobar
+* @class Test
+*/
 var NetworkBootstrapper = (function () {
     function NetworkBootstrapper(config) {
     }
