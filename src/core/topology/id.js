@@ -25,7 +25,7 @@ var Id = (function () {
         var byte_length = Id.calculateByteLengthByBitLength(bit_length);
 
         if (!((buffer instanceof Buffer) && (buffer.length === byte_length))) {
-            throw new Error('ID construction failed: Must be Buffer of length ' + bit_length);
+            throw new Error('ID construction failed: Must be Buffer of length ' + byte_length);
         }
 
         this._buffer = buffer;
@@ -222,4 +222,4 @@ var Id = (function () {
 })();
 
 module.exports = Id;
-//# sourceMappingURL=Id.js.map
+//# sourceMappingURL=id.js.map

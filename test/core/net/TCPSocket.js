@@ -19,7 +19,7 @@ var server = net.createServer(function (socket) {
     });
 });
 
-describe('CORE --> NET --> TCP --> TCPSocket @current', function () {
+describe('CORE --> NET --> TCP --> TCPSocket', function () {
     before(function (done) {
         server.listen(9002, 'localhost', function () {
             done();
