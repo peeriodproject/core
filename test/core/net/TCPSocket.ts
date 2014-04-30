@@ -21,7 +21,7 @@ var server = net.createServer(function (socket) {
 	});
 });
 
-describe('CORE --> NET --> TCP --> TCPSocket', function () {
+describe('CORE --> NET --> TCP --> TCPSocket @current', function () {
 
 	before(function (done) {
 		server.listen(9002, 'localhost', function () {
@@ -42,6 +42,11 @@ describe('CORE --> NET --> TCP --> TCPSocket', function () {
 
 	it('should inherit event emitter', function () {
 		socket.should.be.instanceof(events.EventEmitter);
+	});
+
+	it('should successfully set and get the identifier', function () {
+		socket.setIdentifier('foobar');
+		socket.getIdentifier().should.equal('foobar');
 	});
 
 	it('getSocket should return the socket', function () {
