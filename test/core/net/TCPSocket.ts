@@ -53,6 +53,12 @@ describe('CORE --> NET --> TCP --> TCPSocket @current', function () {
 		socket.getSocket().should.be.instanceof(net.Socket);
 	});
 
+	it('constructing a TCP socket without a valid net.Socket should throw an error', function () {
+		(function () {
+			new TCPSocket('foo', socket_opts)
+		}).should.throw('TCPSocket.constructor: Invalid or no socket specified');
+	});
+
 	it('should successfully write a buffer to the raw socket', function (done) {
 		socket.writeBuffer(new Buffer([20]), function () {
 			done();
