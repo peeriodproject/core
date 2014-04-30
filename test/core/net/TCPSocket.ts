@@ -8,8 +8,8 @@ var events = require('events');
 var net = require('net');
 
 var socket_opts = {
-	"idle_connection_kill_timeout":2,
-	"do_keep_alive": true
+	"idleConnectionKillTimeout":2,
+	"doKeepAlive": true
 };
 
 // echoing server
