@@ -10,8 +10,14 @@ Module sollten nur bei kleinen, zusammenhängenden Klassen & Interfaces konstrui
 
 ## Interfaces
 
-Interfaces sind getrennt von den Implementationen in einer `InterfaceName.d.ts` Datei.
+Interfaces sind getrennt von den Implementationen in einer `./interfaces/InterfaceName.ts` Datei.
 Die Methoden sind alphabetisch geordnet.
+
+```
+// ./interfaces/FooBar.ts
+interface FooBar {}
+export = FooBar
+```
 
 Sollte eine Typescript-Definition __mehr als einmal__ im gleichen Zusammenhang verwendet werden, muss diese in ein eigenes Interface gekapselt werden.
 
@@ -57,9 +63,13 @@ Eine Klasse ist in die folgenden Gruppen gegliedert, die Mitglieder einer Gruppe
 
 Klassen __erhalten alle Dependencies__ als __Constructor-Injection__. Es wird __niemals eine Implementation erzeugt__ (`new FooBar`). Der letzte Parameter ist ein (optionales) Optionen-Object.
 
+## Methodennamen
+
+Methodennamen wenn möglich in die
+
 ## Options
 
-Optionen sind Interfaces die die Optionen eines Objects definieren. 
+Optionen sind Interfaces die die Optionen eines Objects in alphabetischer Reihenfolge definieren. 
 
 `interface ObjectNameOptions {}`
 
