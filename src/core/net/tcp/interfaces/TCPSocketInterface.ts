@@ -1,26 +1,6 @@
-/// <reference path='../../../../ts-definitions/node/node.d.ts' />
+/// <reference path='../../../../../ts-definitions/node/node.d.ts' />
 
 import net = require('net');
-
-interface TCPSocketOptions {
-
-	/**
-	 * Indicates whether keep-alive functionality should be enabled/disabled on socket.
-	 */
-	doKeepAlive:boolean;
-
-	/**
-	 * Number of seconds to wait until an idle socket will be closed.
-	 * If idle socket should not be closed, set to 0 or below.
-	 */
-	idleConnectionKillTimeout:number;
-
-	/**
-	 * Delay between last data packet received and the first keepalive probe. 0 leaves the value unchanged
-	 * from default (or previous) setting.
-	 */
-	keepAliveDelay?:number;
-}
 
 /**
  * TCPSocket is a wrapper around node.js's raw net.Socket class and represents open TCP connections.
@@ -32,54 +12,86 @@ interface TCPSocketOptions {
  * @interface
  * @class core.net.tcp.TCPSocketInterface
  */
-interface TCPSocketInterface {
+interface TCPSocketInterface extends NodeEventEmitter {
+	/**
+	 * Manually close a socket, i.e. send a FIN packet. The other end may be able to still send data though.
+	 *
+	 * @method core.net.tcp.TCPSocketInterface#end
+	 *
+	 * @param data Data to finally send.
+	 * @param encoding Optional encoding. Will default to utf8 if `data` is a string.
+	 */
+	end (data?:any, encoding?:string):void;
 
 	/**
 	 * Returns the identification string.
 	 *
+	 * @method core.net.tcp.TCPSocketInterface#getIdentifier
+	 *
 	 * @returns {string} identifier
 	 */
-	getIdentifier():string;
+	getIdentifier ():string;
 
 	/**
 	 * Returns a string representation of the remote connection in the form IP:PORT
 	 *
+	 * @method core.net.tcp.TCPSocketInterface#getIPPortString
+	 *
 	 * @returns {string} IP:PORT
 	 */
-	getIPPortString():string;
+	getIPPortString ():string;
 
 	/**
 	 * Returns the net.Socket instance.
 	 *
+	 * @method core.net.tcp.TCPSocketInterface#getSocket
+	 *
 	 * @returns {net.Socket} net.Socket instance
 	 */
-	getSocket():net.Socket;
+	getSocket ():net.Socket;
 
 	/**
 	 * Function that gets called when a `timeout` event is emitted on an idle socket.
+	 *
+	 * @method core.net.tcp.TCPSocketInterface#onTimeout
 	 */
-	onTimeout():void;
+	onTimeout ():void;
+
+	/**
+	 * Specify if an idle socket should be closed on a `timeout` event.
+	 *
+	 * @method core.net.tcp.TCPSocketInterface#setCloseOnTimeout
+	 *
+	 * @param {boolean} flag
+	 */
+	setCloseOnTimeout (flag:boolean):void;
 
 	/**
 	 * Sets an identification string on the socket object. Useful when trying to quickly pair a socket and some
 	 * remote machine.
 	 *
-	 * @param {strign} identifier to set
+	 * @method core.net.tcp.TCPSocketInterface#setIdentifier
+	 *
+	 * @param {string} identifier Identifier to set
 	 */
-	setIdentifier(identifier:string):void;
+	setIdentifier (identifier:string):void;
 
 	/**
 	 * Sets an (open) socket
 	 *
+	 * @method core.net.tcp.TCPSocketInterface#setSocket
+	 *
 	 * @param {net.Socket} socket
 	 */
-	setSocket(socket:net.Socket):void;
+	setSocket (socket:net.Socket):void;
 
 	/**
 	 * Sets up the listeners on the raw socket's events and specifies the reaction.
 	 * Some socket events are simply propagated, like 'data', 'close', 'error'
+	 *
+	 * @method core.net.tcp.TCPSocketInterface#setupListeners
 	 */
-	setupListeners():void;
+	setupListeners ():void;
 
 	/**
 	 * Sends a byte buffer on the socket.
@@ -91,22 +103,25 @@ interface TCPSocketInterface {
 	 *
 	 * Optional `callback` will be executed when the data is finally written out - this may not be immediately.
 	 *
+	 * @method core.net.tcp.TCPSocketInterface#writeBuffer
+	 *
 	 * @param {NodeBuffer} buffer
 	 * @param {Function} callback
-
 	 * @returns {boolean} True if flushed to kernel buffer, false if all or part was queued in memory.
 	 */
-	writeBuffer(buffer:NodeBuffer, callback?:Function):boolean;
+	writeBuffer (buffer:NodeBuffer, callback?:Function):boolean;
 
 	/**
 	 * Writes a string to the socket.
 	 *
-	 * @param {string} message
-	 * @param {string} encoding, default is 'utf8'
-	 * @param {Function} optional callback
+	 * @method core.net.tcp.TCPSocketInterface#writeString
 	 *
+	 * @param {string} message
+	 * @param {string} encoding Optional. Defaults to 'utf8'
+	 * @param {Function} callback Optional
 	 * @returns {boolean} True if flushed to kernel buffer, false if all or part was queued in memory.
 	 */
-	writeString(message:string, encoding?:string, callback?:Function):boolean;
-
+	writeString (message:string, encoding?:string, callback?:Function):boolean;
 }
+
+export = TCPSocketInterface;
