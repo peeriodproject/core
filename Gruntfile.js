@@ -64,11 +64,10 @@ module.exports = function (grunt) {
 
     // execute 'grunt curl' manually to refresh the external definition files
     curl: {
-      'ts-definitions/express/express.d.ts': 'https://github.com/borisyankov/DefinitelyTyped/raw/master/express/express.d.ts',
       'ts-definitions/mocha/mocha.d.ts': 'https://github.com/borisyankov/DefinitelyTyped/raw/master/mocha/mocha.d.ts',
       'ts-definitions/node/node.d.ts': 'https://github.com/borisyankov/DefinitelyTyped/raw/master/node/node.d.ts',
       'ts-definitions/should/should.d.ts': 'https://github.com/borisyankov/DefinitelyTyped/raw/master/should/should.d.ts',
-      'ts-definitions/sinon/sinon-1.5.d.ts': 'https://github.com/borisyankov/DefinitelyTyped/raw/master/sinon/sinon-1.5.d.ts',
+      'ts-definitions/sinon/sinon.d.ts': 'https://github.com/borisyankov/DefinitelyTyped/raw/master/sinon/sinon.d.ts',
       'ts-definitions/superagent/superagent.d.ts': 'https://github.com/borisyankov/DefinitelyTyped/raw/master/superagent/superagent.d.ts',
       'ts-definitions/supertest/supertest.d.ts': 'https://github.com/borisyankov/DefinitelyTyped/raw/master/supertest/supertest.d.ts'
     }
