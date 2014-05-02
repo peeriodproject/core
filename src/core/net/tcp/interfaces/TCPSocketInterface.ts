@@ -12,7 +12,7 @@ import net = require('net');
  * @interface
  * @class core.net.tcp.TCPSocketInterface
  */
-interface TCPSocketInterface extends NodeEventEmitter {
+interface TCPSocketInterface extends NodeJS.EventEmitter {
 	/**
 	 * Manually close a socket, i.e. send a FIN packet. The other end may be able to still send data though.
 	 *
