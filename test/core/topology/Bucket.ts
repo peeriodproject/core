@@ -1,11 +1,11 @@
 /// <reference path='../../test.d.ts' />
 
-import should = require('should');
-import sinon = require('sinon');
-import testUtils = require('../../utils/testUtils');
+require('should');
 
-var fs = require('fs');
-var path = require('path');
+import sinon = require('sinon');
+
+import path = require('path');
+import testUtils = require('../../utils/testUtils');
 
 import Bucket = require('../../../src/core/topology/Bucket');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');

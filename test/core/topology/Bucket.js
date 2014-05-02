@@ -1,9 +1,9 @@
 /// <reference path='../../test.d.ts' />
-var sinon = require('sinon');
-var testUtils = require('../../utils/testUtils');
+require('should');
 
-var fs = require('fs');
-var path = require('path');
+var sinon = require('sinon');
+
+var testUtils = require('../../utils/testUtils');
 
 var Bucket = require('../../../src/core/topology/Bucket');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');

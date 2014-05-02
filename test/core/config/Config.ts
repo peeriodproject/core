@@ -1,6 +1,6 @@
 /// <reference path='../../test.d.ts' />
 
-import should = require('should');
+require('should');
 
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import JSONConfig = require('../../../src/core/config/JSONConfig');

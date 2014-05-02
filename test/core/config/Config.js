@@ -1,4 +1,6 @@
 /// <reference path='../../test.d.ts' />
+require('should');
+
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var JSONConfig = require('../../../src/core/config/JSONConfig');
 

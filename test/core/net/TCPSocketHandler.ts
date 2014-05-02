@@ -1,6 +1,6 @@
 /// <reference path='../../test.d.ts' />
 
-import should = require('should');
+require('should');
 
 import TCPSocket = require('../../../src/core/net/tcp/TCPSocket');
 import TCPSocketHandler = require('../../../src/core/net/tcp/TCPSocketHandler');

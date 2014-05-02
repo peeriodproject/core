@@ -1,4 +1,6 @@
 /// <reference path='../../test.d.ts' />
+require('should');
+
 var Id = require('../../../src/core/topology/Id');
 
 /*
