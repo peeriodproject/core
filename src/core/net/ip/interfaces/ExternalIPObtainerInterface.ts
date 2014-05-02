@@ -15,7 +15,7 @@ interface ExternalIPObtainerInterface {
 	 *
  	 * @param {Function} callback
 	 */
-	obtainIP(callback:(err:Error, ip:string) => any):void;
+	obtainIP (callback:(err:Error, ip:string) => any):void;
 }
 
 export = ExternalIPObtainerInterface;

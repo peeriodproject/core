@@ -27,7 +27,7 @@ class FreeGeoIp implements ExternalIPObtainerInterface {
 	 */
 	private _attr = 'ip';
 
-	public obtainIP(callback:(err:Error, ip:string) => any) {
+	public obtainIP (callback:(err:Error, ip:string) => any) {
 		http.get(this._url, (res) => {
 			var body = '';
 			if (res.statusCode === 200) {
@@ -40,14 +40,17 @@ class FreeGeoIp implements ExternalIPObtainerInterface {
 						var ip = JSON.parse(body)[this._attr];
 						if (net.isIP(ip)) {
 							callback(null, ip);
-						} else {
+						}
+						else {
 							callback(new Error('FreeGeoIp: Got no valid IP.'), null);
 						}
-					} catch (err) {
+					}
+					catch (err) {
 						callback(err, null);
 					}
 				});
-			} else {
+			}
+			else {
 				callback(new Error('FreeGeoIp: No 200 response.'), null);
 			}
 		}).on('error', function (err) {
@@ -60,7 +63,7 @@ class FreeGeoIp implements ExternalIPObtainerInterface {
 	 *
 	 * @param {string} url
 	 */
-	public setUrl(url:string) {
+	public setUrl (url:string) {
 		this._url = url;
 	}
 
@@ -69,7 +72,7 @@ class FreeGeoIp implements ExternalIPObtainerInterface {
 	 *
 	 * @param {string} attr
 	 */
-	public setIpAttribute(attr:string) {
+	public setIpAttribute (attr:string) {
 		this._attr = attr;
 	}
 }
