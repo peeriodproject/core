@@ -1,4 +1,4 @@
-// Type definitions for Sinon 1.5
+// Type definitions for Sinon 1.8.1
 // Project: http://sinonjs.org/
 // Definitions by: William Sears <https://github.com/mrbigdog2u>
 // DefinitelyTyped: https://github.com/borisyankov/DefinitelyTyped
@@ -60,20 +60,20 @@ interface SinonSpy extends SinonSpyCallApi {
 	calledAfter(anotherSpy: SinonSpy): boolean;
 	calledWithNew(spy: SinonSpy): boolean;
 	withArgs(...args: any[]): SinonSpy;
-	alwaysCalledOn(obj: any);
-	alwaysCalledWith(...args: any[]);
-	alwaysCalledWithExactly(...args: any[]);
-	alwaysCalledWithMatch(...args: SinonMatcher[]);
-	neverCalledWith(...args: any[]);
-	neverCalledWithMatch(...args: SinonMatcher[]);
+	alwaysCalledOn(obj: any): boolean;
+	alwaysCalledWith(...args: any[]): boolean;
+	alwaysCalledWithExactly(...args: any[]): boolean;
+	alwaysCalledWithMatch(...args: SinonMatcher[]): boolean;
+	neverCalledWith(...args: any[]): boolean;
+	neverCalledWithMatch(...args: SinonMatcher[]): boolean;
 	alwaysThrew(): boolean;
-	alwaysThrew(type: string);
-	alwaysThrew(obj: any);
+	alwaysThrew(type: string): boolean;
+	alwaysThrew(obj: any): boolean;
 	alwaysReturned(): boolean;
 	invokeCallback(...args: any[]): void;
 	getCall(n: number): SinonSpyCall;
 	reset(): void;
-	printf(format: string, ...args: any[]);
+	printf(format: string, ...args: any[]): string;
 	restore(): void;
 }
 
@@ -123,7 +123,7 @@ interface SinonStatic {
 	stub: SinonStubStatic;
 }
 
-interface SinonExpectation {
+interface SinonExpectation extends SinonStub {
 	atLeast(n: number): SinonExpectation;
 	atMost(n: number): SinonExpectation;
 	never(): SinonExpectation;
@@ -189,6 +189,19 @@ interface SinonStatic {
 	clock: SinonFakeTimers;
 }
 
+interface SinonFakeUploadProgress {
+    eventListeners: {
+        progress: any[];
+        load: any[];
+        abort: any[];
+        error: any[];
+    };
+
+    addEventListener(event: string, listener: (e: Event) => any): void;
+    removeEventListener(event: string, listener: (e: Event) => any): void;
+    dispatchEvent(event: Event): void;
+}
+
 interface SinonFakeXMLHttpRequest {
 	// Properties
 	onCreate: (xhr: SinonFakeXMLHttpRequest) => void;
@@ -200,7 +213,9 @@ interface SinonFakeXMLHttpRequest {
 	statusText: string;
 	async: boolean;
 	username: string;
-	password: string;
+    password: string;
+    withCredentials: boolean;
+    upload: SinonFakeUploadProgress;
 	responseXML: Document;
 	getResponseHeader(header: string): string;
 	getAllResponseHeaders(): any;
@@ -208,7 +223,7 @@ interface SinonFakeXMLHttpRequest {
 	// Methods
 	restore(): void;
 	useFilters: boolean;
-	addFilter(filter: (method, url, async, username, password) => boolean): void;
+	addFilter(filter: (method: string, url: string, async: boolean, username: string, password: string) => boolean): void;
 	setResponseHeaders(headers: any): void;
 	setResponseBody(body: string): void;
 	respond(status: number, headers: any, body: string): void;
@@ -230,6 +245,7 @@ interface SinonFakeServer {
 	autoRespondAfter: number;
 	fakeHTTPMethods: boolean;
 	getHTTPMethod: (request: SinonFakeXMLHttpRequest) => string;
+	requests: SinonFakeXMLHttpRequest[];
 
 	// Methods
 	respondWith(body: string): void;
@@ -347,11 +363,12 @@ interface SinonSandbox {
 	clock: SinonFakeTimers;
 	requests: SinonFakeXMLHttpRequest;
 	server: SinonFakeServer;
-	spy(): SinonSpy;
-	stub(): SinonStub;
-	mock(): SinonMock;
-	useFakeTimers: SinonFakeTimers;
-	useFakeXMLHttpRequest: SinonFakeXMLHttpRequest;
+	spy: SinonSpyStatic;
+	stub: SinonStubStatic;
+	mock: SinonMockStatic;
+	useFakeTimers: SinonFakeTimersStatic;
+	useFakeXMLHttpRequest: SinonFakeXMLHttpRequestStatic;
+	useFakeServer(): SinonFakeServer;
 	restore(): void;
 }
 
@@ -377,15 +394,21 @@ interface SinonTestWrapper extends SinonSandbox {
 }
 
 interface SinonStatic {
-	config: SinonTestConfig;
-	test(fn: (...args: any[]) => any): SinonTestWrapper;
-	testCase(tests: any): any;
+    config: SinonTestConfig;
+    test(fn: (...args: any[]) => any): SinonTestWrapper;
+    testCase(tests: any): any;
 }
 
 // Utility overridables
 interface SinonStatic {
+    createStubInstance: (constructor: any) => SinonStub;
 	format: (obj: any) => string;
 	log: (message: string) => void;
+    restore(object: any): void;
 }
 
 declare var sinon: SinonStatic;
+
+declare module "sinon" {
+    export = sinon;
+}
