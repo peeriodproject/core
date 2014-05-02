@@ -1,6 +1,6 @@
 /// <reference path='../../test.d.ts' />
 
-require('should');
+import should = require('should');
 
 import net = require('net');
 

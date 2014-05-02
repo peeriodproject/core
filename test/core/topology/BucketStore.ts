@@ -1,6 +1,6 @@
 /// <reference path='../../test.d.ts' />
 
-require('should');
+import should = require('should');
 
 var fs = require('fs');
 var path = require('path');

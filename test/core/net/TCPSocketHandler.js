@@ -1,6 +1,4 @@
 /// <reference path='../../test.d.ts' />
-require('should');
-
 var TCPSocketHandler = require('../../../src/core/net/tcp/TCPSocketHandler');
 
 var events = require('events');

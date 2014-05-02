@@ -1,6 +1,4 @@
 /// <reference path='../../test.d.ts' />
-require('should');
-
 var net = require('net');
 
 var FreeGeoIp = require('../../../src/core/net/ip/FreeGeoIp');

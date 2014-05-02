@@ -1,7 +1,6 @@
 /// <reference path='../../test.d.ts' />
 
-require('should');
-
+import should = require('should');
 
 var TCPSocket = require('../../../src/core/net/tcp/TCPSocket');
 var events = require('events');
