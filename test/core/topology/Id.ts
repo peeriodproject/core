@@ -2,13 +2,13 @@
 
 require('should');
 
-var Id = require('../../../src/core/topology/Id');
-/*
- Kademlia IDs are represented by instances of node.js's Buffer class.
+import Id = require('../../../src/core/topology/Id');
 
- The Byte Buffer will be interpreted as bigendian numbers, so the low index bytes are the most significant!
+/**
+ * Kademlia IDs are represented by instances of node.js's Buffer class.
+ *
+ * The Byte Buffer will be interpreted as bigendian numbers, so the low index bytes are the most significant!
  */
-
 describe('CORE --> TOPOLOGY --> ID', function () {
 
 	it('should correctly calculate byte length by bit length', function () {
@@ -167,6 +167,43 @@ describe('CORE --> TOPOLOGY --> ID', function () {
 			}).should.throw('Id.byteBufferByBitString: Bit length exceeds expected number of bytes');
 		});
 
+	});
+
+	describe('should correctly throw errors while comparing with a different class', function () {
+		var id:Id;
+		var differentClass:any;
+
+		beforeEach(function() {
+			id = null;
+			id = new Id(new Buffer([9,0,14,18,128,34]), 48);
+
+			differentClass = null;
+			differentClass = new Object();
+		});
+
+		it ('differsInHighestBit', function () {
+			(function () {
+				id.differsInHighestBit(differentClass);
+			}).should.throw('Id.differsInHighestBit: Argument must be of type Id');
+		});
+
+		it ('distanceTo', function () {
+			(function () {
+				id.distanceTo(differentClass);
+			}).should.throw('Id.distanceTo: Can only compare to another Id.');
+		});
+
+		it ('compareDistance', function () {
+			(function () {
+				id.compareDistance(differentClass, differentClass);
+			}).should.throw('Id.compareDistance: Arguments must be of type Id');
+		});
+
+		it ('equals', function () {
+			(function () {
+				id.equals(differentClass);
+			}).should.throw('Id.equals: Argument must be of type Id');
+		});
 	});
 
 });
