@@ -8,15 +8,9 @@ var path = require('path');
 var Bucket = require('../../../src/core/topology/Bucket');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var BucketStore = require('../../../src/core/topology/BucketStore');
+var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 
 //import Id = require('../../../src/core/topology/Id');
-// sinon can only spy/stub/mock methods on an object.
-// Therefore sinon objects are wrapped in this container object
-var sinonGlobal = {
-    ObjectConfig: ObjectConfig,
-    BucketStore: BucketStore
-};
-
 describe('CORE --> TOPOLOGY --> BUCKET', function () {
     // http://stackoverflow.com/a/14041593
     var sandbox;
@@ -51,11 +45,84 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
         bucket.should.be.an.instanceof(Bucket);
     });
 
-    it('should correctly call the call the internally bucket store', function () {
-        createBucket(stubPublicApi(BucketStore));
+    describe('should correctly call the call the internally bucket store', function () {
+        it('should call the internal add method', function () {
+            createBucket(stubPublicApi(BucketStore));
 
-        bucket.size();
-        bucketStoreStub.size.calledOnce;
+            bucket.add(ContactNodeFactory.createDummy());
+            bucketStoreStub.add.calledOnce;
+        });
+
+        it('should call the internal close method', function () {
+            createBucket(stubPublicApi(BucketStore));
+
+            bucket.close();
+            bucketStoreStub.close.calledOnce;
+        });
+
+        it('should return the correct contains value', function () {
+            var contact = ContactNodeFactory.createDummy();
+
+            createBucket(stubPublicApi(BucketStore, {
+                contains: function () {
+                    return false;
+                }
+            }));
+
+            bucket.contains(contact).should.be.false;
+            bucketStoreStub.contains.calledOnce;
+        });
+
+        it('should call the internal get method', function () {
+            var contact = ContactNodeFactory.createDummy();
+
+            createBucket(stubPublicApi(BucketStore));
+
+            bucket.get(contact.getId());
+            bucketStoreStub.get.calledOnce;
+        });
+
+        it('should return the correct value from the internal isOpen method', function () {
+            createBucket(stubPublicApi(BucketStore, {
+                isOpen: function () {
+                    return true;
+                }
+            }));
+
+            bucket.isOpen().should.be.true;
+            bucketStoreStub.isOpen.calledOnce;
+        });
+
+        it('should call the internal open method', function () {
+            createBucket(stubPublicApi(BucketStore));
+
+            bucket.open();
+            bucketStoreStub.open.calledOnce;
+        });
+
+        it('should call the internal remove method', function () {
+            var contact = ContactNodeFactory.createDummy();
+
+            createBucket(stubPublicApi(BucketStore));
+
+            bucket.remove(contact.getId());
+            bucketStoreStub.remove.calledOnce;
+        });
+
+        it('should return the correct size', function () {
+            createBucket(stubPublicApi(BucketStore, {
+                size: function () {
+                    return 10;
+                }
+            }));
+
+            bucket.size().should.equal(10);
+            bucketStoreStub.size.calledOnce;
+        });
+
+        it('update', function () {
+            // todo update method
+        });
     });
 });
 //# sourceMappingURL=Bucket.js.map
