@@ -2,9 +2,8 @@
 require('should');
 
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
-var JSONConfig = require('../../../src/core/config/JSONConfig');
 
-describe('CORE --> CONFIG --> ObjectConfig', function () {
+describe('CORE --> CONFIG --> ObjectConfig @joern', function () {
     it('should successfully instantiate and throw an error when created without a proper configData object', function () {
         (new ObjectConfig({})).should.be.a.instanceof(ObjectConfig);
 
@@ -95,23 +94,4 @@ describe('CORE --> CONFIG --> ObjectConfig', function () {
         }).should.throw('Config._convertObjectToDotNotation: Arrays can only contain primitives.');
     });
 });
-
-describe('CORE --> CONFIG --> JSONConfig', function () {
-    it('should successfully instantiate and throw an error if the config file was not found or is not a valid json-file.', function () {
-        var validJSONPath = '../../../test/fixtures/core/config/valid.json', invalidJSONPath = '../../../test/fixtures/core/config/invalid.json', notFoundPath = '../Shep/Schwab/shopped/at/Scott\'s/Schnapps/shop';
-
-        // should be instantiate
-        (new JSONConfig(validJSONPath)).should.be.an.instanceof(JSONConfig);
-
-        // invalid/corrupt JSON-file
-        (function () {
-            new JSONConfig(invalidJSONPath);
-        }).should.throw('JSONConfig.constructor: The file "' + invalidJSONPath + '" is not a valid JSON-File.');
-
-        // file not found
-        (function () {
-            new JSONConfig(notFoundPath);
-        }).should.throw('JSONConfig.constructor: Cannot find config file: "' + notFoundPath + '"');
-    });
-});
-//# sourceMappingURL=Config.js.map
+//# sourceMappingURL=ObjectConfig.js.map
