@@ -16,20 +16,20 @@ import ContactNodeInterface = require('../../../src/core/topology/interfaces/Con
 describe('CORE --> TOPOLOGY --> BUCKET', function () {
 	// http://stackoverflow.com/a/14041593
 	var sandbox:SinonSandbox;
-
 	var configStub:any;
 	var name:string;
 	var bucketStoreStub:any = {};
 	var bucket:Bucket;
-
 	var createBucket = function (bucketStore:any) {
 		bucketStoreStub = bucketStore;
 		bucket = new Bucket(configStub, name, bucketStoreStub);
 	};
-
 	var stubPublicApi = function (klass:Function, apiMethodCallbacks:testUtils.publicApiCallbackList = {}) {
 		return testUtils.stubPublicApi(sandbox, klass, apiMethodCallbacks);
-	}
+	};
+	var createStubbedBucketStore = function (apiMethodCallbacks:testUtils.publicApiCallbackList = {}) {
+		createBucket(stubPublicApi(BucketStore, apiMethodCallbacks));
+	};
 
 	beforeEach(function () {
 		sandbox = sinon.sandbox.create();
@@ -49,14 +49,14 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
 	describe('should correctly call the call the internally bucket store', function () {
 
 		it('should call the internal add method', function () {
-			createBucket(stubPublicApi(BucketStore));
+			createStubbedBucketStore();
 
 			bucket.add(ContactNodeFactory.createDummy());
 			bucketStoreStub.add.calledOnce;
 		});
 
 		it('should call the internal close method', function () {
-			createBucket(stubPublicApi(BucketStore));
+			createStubbedBucketStore();
 
 			bucket.close();
 			bucketStoreStub.close.calledOnce;
@@ -65,11 +65,11 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
 		it('should return the correct contains value', function () {
 			var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
 
-			createBucket(stubPublicApi(BucketStore, {
+			createStubbedBucketStore({
 				contains: function () {
 					return false;
 				}
-			}));
+			});
 
 			bucket.contains(contact).should.be.false;
 			bucketStoreStub.contains.calledOnce;
@@ -85,18 +85,18 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
 		});
 
 		it('should return the correct value from the internal isOpen method', function () {
-			createBucket(stubPublicApi(BucketStore, {
+			createStubbedBucketStore({
 				isOpen: function () {
 					return true;
 				}
-			}));
+			});
 
 			bucket.isOpen().should.be.true;
 			bucketStoreStub.isOpen.calledOnce;
 		});
 
 		it('should call the internal open method', function () {
-			createBucket(stubPublicApi(BucketStore));
+			createStubbedBucketStore();
 
 			bucket.open();
 			bucketStoreStub.open.calledOnce;
@@ -105,18 +105,18 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
 		it('should call the internal remove method', function () {
 			var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
 
-			createBucket(stubPublicApi(BucketStore));
+			createStubbedBucketStore();
 
 			bucket.remove(contact.getId());
 			bucketStoreStub.remove.calledOnce;
 		});
 
 		it('should return the correct size', function () {
-			createBucket(stubPublicApi(BucketStore, {
+			createStubbedBucketStore({
 				size: function () {
 					return 10;
 				}
-			}));
+			});
 
 			bucket.size().should.equal(10);
 			bucketStoreStub.size.calledOnce;
