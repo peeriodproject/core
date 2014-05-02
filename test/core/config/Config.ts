@@ -8,7 +8,7 @@ import JSONConfig = require('../../../src/core/config/JSONConfig');
 
 describe('CORE --> CONFIG --> ObjectConfig', function () {
 
-	it ('should successfully instantiate and throw an error when created without a proper configData object', function () {
+	it('should successfully instantiate and throw an error when created without a proper configData object', function () {
 		(new ObjectConfig({})).should.be.a.instanceof(ObjectConfig);
 
 		(function () {
@@ -20,24 +20,24 @@ describe('CORE --> CONFIG --> ObjectConfig', function () {
 		}).should.throwError('Config.constructor: The given configData is not an object.');
 	});
 
-	it ('should return the correct value for a specified key', function () {
+	it('should return the correct value for a specified key', function () {
 		var config = new ObjectConfig({foo: 'bar'});
 		config.get('foo').should.equal('bar');
 	});
 
-	it ('should throw an error if no value for the specified key was found.', function () {
+	it('should throw an error if no value for the specified key was found.', function () {
 		var config = new ObjectConfig({
 			foo: 'bar'
 		});
-		config.get.bind(config, 'foobar').should.throw('Config.get: no value for "foobar" found.');
+		config.get.bind(config, 'foobar').should.throw('Config.get: No value for "foobar" found.');
 		config.get.bind(config, undefined).should.throw('Config.get: No config key given.');
 	});
 
-	it ('should return the specified alternative value if provided', function () {
+	it('should return the specified alternative value if provided', function () {
 		(new ObjectConfig({})).get('foo', 'bar').should.equal('bar');
 	});
 
-	it ('should correctly convert the object into dot-notated keys', function () {
+	it('should correctly convert the object into dot-notated keys', function () {
 		var config = new ObjectConfig({
 			foo: {
 				bar: {
@@ -49,7 +49,7 @@ describe('CORE --> CONFIG --> ObjectConfig', function () {
 		config.get('foo.bar.foobar').should.be.true;
 	});
 
-	it ('should not allow to get subtrees of the object', function () {
+	it('should not allow to get subtrees of the object', function () {
 		var config = new ObjectConfig({
 			foo: {
 				bar: {
@@ -58,17 +58,17 @@ describe('CORE --> CONFIG --> ObjectConfig', function () {
 			}
 		});
 
-		config.get.bind(config, 'foo.bar').should.throw('Config.get: no value for "foo.bar" found.');
+		config.get.bind(config, 'foo.bar').should.throw('Config.get: No value for "foo.bar" found.');
 	});
 
-	it ('should limit the store to the given ConfigKeyList', function () {
+	it('should limit the store to the given ConfigKeyList', function () {
 		var data = {
-			foo: {
-				bar: {
+			foo     : {
+				bar  : {
 					foobar: true
 				},
-				foo: {
-					foobar: true
+				foo  : {
+					foobar: [1,2,3]
 				},
 				other: 1
 			},
@@ -80,20 +80,32 @@ describe('CORE --> CONFIG --> ObjectConfig', function () {
 
 		var config = new ObjectConfig(data, ['foo.bar', 'foo.foo', 'foobario']);
 		config.get('foo.bar.foobar').should.be.true;
-		config.get('foo.foo.foobar').should.be.true;
-		config.get.bind(config, 'foo.other').should.throw('Config.get: no value for "foo.other" found.');
+		config.get('foo.foo.foobar').should.containDeep([1,2,3]);
+		config.get.bind(config, 'foo.other').should.throw('Config.get: No value for "foo.other" found.');
 		config.get('foobario.one').should.be.true;
 		config.get('foobario.two').should.be.false;
+	});
+
+	it('should throw an error if an array contains non primitives @joern', function () {
+		(function () {
+			new ObjectConfig({
+				foo: [
+					{
+						name: 'bar'
+					}
+				]
+			});
+		}).should.throw('Config._convertObjectToDotNotation: Arrays can only contain primitives.');
 	});
 
 });
 
 describe('CORE --> CONFIG --> JSONConfig', function () {
 
-	it ('should successfully instantiate and throw an error if the config file was not found or is not a valid json-file.', function () {
-		var validJSONPath	= '../../../test/fixtures/core/config/valid.json',
-			invalidJSONPath	= '../../../test/fixtures/core/config/invalid.json',
-			notFoundPath	= '../Shep/Schwab/shopped/at/Scott\'s/Schnapps/shop';
+	it('should successfully instantiate and throw an error if the config file was not found or is not a valid json-file.', function () {
+		var validJSONPath = '../../../test/fixtures/core/config/valid.json',
+			invalidJSONPath = '../../../test/fixtures/core/config/invalid.json',
+			notFoundPath = '../Shep/Schwab/shopped/at/Scott\'s/Schnapps/shop';
 
 		// should be instantiate
 		(new JSONConfig(validJSONPath)).should.be.an.instanceof(JSONConfig);

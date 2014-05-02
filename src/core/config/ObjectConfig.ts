@@ -44,7 +44,7 @@ class ObjectConfig implements ConfigInterface {
 			return alternative;
 		}
 
-		throw new Error('Config.get: no value for "' + key + '" found.');
+		throw new Error('Config.get: No value for "' + key + '" found.');
 	}
 
 	/**
@@ -65,7 +65,7 @@ class ObjectConfig implements ConfigInterface {
 				var	newKey:string = (current ? current + '.' + key : key);
 
 				// it's a nested object, so do it again
-				if (value && typeof value === 'object') {
+				if (value && typeof value === 'object' && !Array.isArray(value)) {
 					recurse(value, configKeys, newKey);
 				}
 				else if (configKeys.length) {
@@ -79,6 +79,14 @@ class ObjectConfig implements ConfigInterface {
 				}
 				// it's not an object, so set the property
 				else {
+					if (Array.isArray(value)) {
+						for (var i in value) {
+							if (typeof value[i] === 'object') {
+								throw new Error('Config._convertObjectToDotNotation: Arrays can only contain primitives.');
+							}
+						}
+					}
+
 					res[newKey] = value;
 				}
 			}
