@@ -3,6 +3,7 @@
 
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
 import IdInterface = require('./interfaces/IdInterface');
+import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
 import lmdb = require('node-lmdb');
 
 /**
@@ -69,14 +70,14 @@ class BucketStore implements BucketStoreInterface {
 		return added;
 	}
 
-	public addAll (bucketKey:string, contacts:any):boolean {
+	public addAll (bucketKey:string, contacts:Array<ContactNodeInterface>):boolean {
 		var txn:lmdb.Txn = this._beginTransaction();
 		var added:boolean = false;
 
 		for (var i in contacts) {
-			var contact = contacts[i];
+			var contact:ContactNodeInterface = contacts[i];
 
-			added = this._add(txn, bucketKey, contact.id, contact.lastSeen, contact.addresses, contact.publicKey);
+			added = this._add(txn, bucketKey, contact.getId(), contact.getLastSeen(), contact.getAddresses(), contact.getPublicKey());
 		}
 
 		txn.commit();

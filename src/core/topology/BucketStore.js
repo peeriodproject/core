@@ -66,7 +66,7 @@ var BucketStore = (function () {
         for (var i in contacts) {
             var contact = contacts[i];
 
-            added = this._add(txn, bucketKey, contact.id, contact.lastSeen, contact.addresses, contact.publicKey);
+            added = this._add(txn, bucketKey, contact.getId(), contact.getLastSeen(), contact.getAddresses(), contact.getPublicKey());
         }
 
         txn.commit();
