@@ -9,17 +9,17 @@ class ContactNodeFactory implements ContactNodeFactoryInterface {
 		var max = 48;
 
 		var getRandomId = function ():string {
-				var str = '';
+			var str = '';
 
-				for (var i = max; i--;) {
-					str += (Math.round(Math.random())).toString();
-				}
+			for (var i = max; i--;) {
+				str += (Math.round(Math.random())).toString();
+			}
 
-				return str;
-			},
-
-			id = getRandomId(),
-			lastSeen = Date.now();
+			return str;
+		};
+		var id = getRandomId();
+		// node js is too fast for javascripts millis
+		var lastSeen = Math.round(Date.now() * Math.random());
 
 		return {
 			getId: function ():IdInterface {
@@ -40,6 +40,15 @@ class ContactNodeFactory implements ContactNodeFactoryInterface {
 
 			updateLastSeen: function ():void {
 				lastSeen = Date.now();
+			},
+
+			toString: function () {
+				return JSON.stringify({
+					addresses: this.getAddresses(),
+					id       : this.getId(),
+					lastSeen : this.getLastSeen(),
+					publicKey: this.getPublicKey()
+				});
 			}
 		};
 	}

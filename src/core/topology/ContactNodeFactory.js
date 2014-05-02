@@ -15,7 +15,11 @@ var ContactNodeFactory = (function () {
             }
 
             return str;
-        }, id = getRandomId(), lastSeen = Date.now();
+        };
+        var id = getRandomId();
+
+        // node js is too fast for javascripts millis
+        var lastSeen = Math.round(Date.now() * Math.random());
 
         return {
             getId: function () {
@@ -32,6 +36,14 @@ var ContactNodeFactory = (function () {
             },
             updateLastSeen: function () {
                 lastSeen = Date.now();
+            },
+            toString: function () {
+                return JSON.stringify({
+                    addresses: this.getAddresses(),
+                    id: this.getId(),
+                    lastSeen: this.getLastSeen(),
+                    publicKey: this.getPublicKey()
+                });
             }
         };
     };
