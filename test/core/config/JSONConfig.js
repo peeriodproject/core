@@ -4,7 +4,7 @@ require('should');
 var JSONConfig = require('../../../src/core/config/JSONConfig');
 
 describe('CORE --> CONFIG --> JSONConfig', function () {
-    describe('should successfully instantiate and throw an error if the config file was not found or is not a valid json-file. @joern', function () {
+    describe('should successfully instantiate and throw an error if the config file was not found or is not a valid json-file.', function () {
         var validJSONPath = '../../../test/fixtures/core/config/valid.json', invalidJSONPath = '../../../test/fixtures/core/config/invalid.json', notFoundPath = '../Shep/Schwab/shopped/at/Scott\'s/Schnapps/shop';
 
         it('should correctly instantiate', function () {
