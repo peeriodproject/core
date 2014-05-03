@@ -1,4 +1,4 @@
-import ClosableInterface = require('../../utils/interfaces/ClosableInterface');
+import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
 import IdInterface = require('./IdInterface');
 import ContactNodeInterface = require('./ContactNodeInterface');
 
@@ -7,7 +7,7 @@ import ContactNodeInterface = require('./ContactNodeInterface');
  * @class core.topology.BucketInterface
  * @extends core.utils.ClosableInterface
  */
-interface BucketInterface extends ClosableInterface {
+interface BucketInterface extends ClosableAsyncInterface {
 
 	/**
 	 * Adds the specified contact node to the bucket.
@@ -16,7 +16,7 @@ interface BucketInterface extends ClosableInterface {
 	 *
 	 * @param {core.topology.ContactNodeInterface} contact
 	 */
-	add (contact:ContactNodeInterface):boolean;
+	add (contact:ContactNodeInterface, callback?:(err:Error) => any):void;
 
 	/**
 	 * Returns `true` if the bucket contains the specified contact node.
@@ -26,7 +26,7 @@ interface BucketInterface extends ClosableInterface {
 	 * @param {core.topology.ContactNodeInterface} contact
 	 * @returns {boolean}
 	 */
-	contains (contact:ContactNodeInterface):boolean;
+	contains (contact:ContactNodeInterface, callback:(err:Error, contains:boolean) => any):void;
 
 	/**
 	 * Returns a contact node by id.
@@ -36,7 +36,7 @@ interface BucketInterface extends ClosableInterface {
 	 * @param {core.topology.IdInterface} id
 	 * @returns {any}
 	 */
-	get (id:IdInterface):any;
+	get (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void;
 
 	/**
 	 * Removes a contact node by id
@@ -45,7 +45,7 @@ interface BucketInterface extends ClosableInterface {
 	 *
 	 * @param {core.topology.IdInterface} id
 	 */
-	remove (id:IdInterface):boolean;
+	remove (id:IdInterface, callback?:(err:Error) => any):void;
 
 	/**
 	 * Returns the number of contact nodes in the bucket.
@@ -54,16 +54,16 @@ interface BucketInterface extends ClosableInterface {
 	 *
 	 * @returns {number}
 	 */
-	size ():number;
+	size (callback:(err:Error, size:number) => any):void;
 
 	/**
-	 * Updates the specified contact node according to the protocol logic.
+	 * Updates specified contact node.
 	 *
 	 * @method core.topology.BucketInterface#update
 	 *
 	 * @param {core.topology.ContactNodeInterface} contact
 	 */
-	update (contact:ContactNodeInterface):boolean;
+	update (contact:ContactNodeInterface, callback?:(err:Error) => any):void;
 
 }
 
