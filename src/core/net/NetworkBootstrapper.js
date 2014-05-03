@@ -1,13 +1,36 @@
 var TCPSocketHandler = require('./tcp/TCPSocketHandler');
 
 /**
-* foobar
-* @class Test
+* NetworkBootstraper implementation.
+*
+* @class core.net.NetworkBootstrapper
+* @implements core.net.NetowkrBootNetworkBootstrapperInterface
+*
+* @param {ConfigInterface} config The network configuration
+* @parma {Array<ExternalIPObtainerInterface>} A list of IP obtainers to use as tools to get the machine's external IP.
 */
 var NetworkBootstrapper = (function () {
     function NetworkBootstrapper(config, ipObtainers) {
-        this._externalIp = '';
+        /**
+        * Network configuration. Is used for getting the settings for TCP socket handler.
+        *
+        * @private
+        * @member {ConfigInterface} NetworkBootstrapper~_config
+        */
         this._config = null;
+        /**
+        * The machine's external IP address.
+        *
+        * @private
+        * @member {string} NetworkBootstrapper~_externalIp
+        */
+        this._externalIp = '';
+        /**
+        * The TCPSockhetHandler instance
+        *
+        * @private
+        * @member {TCPSocketHandlerInterface} NetworkBootstrapper~_tcpSocketHandler
+        */
         this._tcpSocketHandler = null;
         this._config = config;
         this._ipObtainers = ipObtainers;
@@ -33,6 +56,15 @@ var NetworkBootstrapper = (function () {
         return this._tcpSocketHandler;
     };
 
+    /**
+    * Iterates over the list of IP obtainers and tries to get the machine's external IP. If one fails, the next is used
+    * and so on.
+    *
+    * @private
+    * @method NetworkBootstapper~_getExternalIp
+    *
+    * @param {Function} callback Function to call with an optional error and the retrieved IP as arguments.
+    */
     NetworkBootstrapper.prototype._getExternalIp = function (callback) {
         var _this = this;
         if (!(this._ipObtainers && this._ipObtainers.length > 0)) {
@@ -59,6 +91,14 @@ var NetworkBootstrapper = (function () {
         doObtain(index);
     };
 
+    /**
+    * Creates a TCPSocketHandlerOptions object using configuration provided in the constructor.
+    *
+    * @private
+    * @method NetworkBootstrapper~_getTCPSocketHandlerOptions
+    *
+    * @returns {TCPSocketHandlerOptions}
+    */
     NetworkBootstrapper.prototype._getTCPSocketHandlerOptions = function () {
         return {
             allowHalfOpenSockets: this._config.get('net.allowHalfOpenSockets'),
