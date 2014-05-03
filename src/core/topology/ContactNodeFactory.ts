@@ -4,9 +4,14 @@ import IdInterface = require('./interfaces/IdInterface');
 import Id = require('./Id');
 
 class ContactNodeFactory implements ContactNodeFactoryInterface {
+
+	public create(id:IdInterface, addresses:any, lastSeen:number, publicKey:any):ContactNodeInterface {
+		return null;
+	}
+
 	public static createDummy ():ContactNodeInterface {
 		// dummy contact node generator
-		var max = 48;
+		var max = 160;
 
 		var getRandomId = function ():string {
 			var str = '';
@@ -23,7 +28,7 @@ class ContactNodeFactory implements ContactNodeFactoryInterface {
 
 		return {
 			getId: function ():IdInterface {
-				return new Id(Id.byteBufferByBitString(id, 6), max);
+				return new Id(Id.byteBufferByBitString(id, 20), max);
 			},
 
 			getPublicKey: function ():string {

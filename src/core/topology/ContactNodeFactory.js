@@ -3,9 +3,13 @@ var Id = require('./Id');
 var ContactNodeFactory = (function () {
     function ContactNodeFactory() {
     }
+    ContactNodeFactory.prototype.create = function (id, addresses, lastSeen, publicKey) {
+        return null;
+    };
+
     ContactNodeFactory.createDummy = function () {
         // dummy contact node generator
-        var max = 48;
+        var max = 160;
 
         var getRandomId = function () {
             var str = '';
@@ -23,7 +27,7 @@ var ContactNodeFactory = (function () {
 
         return {
             getId: function () {
-                return new Id(Id.byteBufferByBitString(id, 6), max);
+                return new Id(Id.byteBufferByBitString(id, 20), max);
             },
             getPublicKey: function () {
                 return 'pk-123456';

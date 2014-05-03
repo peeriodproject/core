@@ -16,7 +16,7 @@ interface ContactNodeInterface {
 	 *
 	 * @returns {string}
 	 */
-	getAddresses ():string;
+	getAddresses ():string; // Array<ContactNodeAddress>
 
 	/**
 	 * Returns the id of the contact node.
@@ -43,10 +43,7 @@ interface ContactNodeInterface {
 	 *
 	 * @returns {string}
 	 */
-	getPublicKey ():string;
-
-	updateLastSeen ():void;
-
+	getPublicKey ():string; // PublicKeyInterface
 }
 
 export = ContactNodeInterface;
