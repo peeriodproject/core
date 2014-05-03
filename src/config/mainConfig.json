@@ -4,5 +4,11 @@
         "bucketStore": {
             "databasePath": "db"
         }
+    },
+    "net": {
+        "allowHalfOpenSockets": false,
+        "connectionRetrySeconds": 4,
+        "idleConnectionKillTimeout": 30,
+        "myOpenPorts": [30415]
     }
 }
