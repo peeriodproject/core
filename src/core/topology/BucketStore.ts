@@ -1,8 +1,7 @@
-/// <reference path='interfaces/BucketStoreInterface.ts' />
+/// <reference path='../../../ts-definitions/node/node.d.ts' />
 /// <reference path='../../../ts-definitions/node-lmdb/node-lmdb.d.ts' />
 
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
-import IdInterface = require('./interfaces/IdInterface');
 import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
 import lmdb = require('node-lmdb');
 
@@ -61,7 +60,7 @@ class BucketStore implements BucketStoreInterface {
 		this.open();
 	}
 
-	public add (bucketKey:string, id:IdInterface, lastSeen:number, addresses:any, publicKey:string):boolean {
+	public add (bucketKey:string, id:NodeBuffer, lastSeen:number, addresses:any, publicKey:string):boolean {
 		var txn:lmdb.Txn = this._beginTransaction();
 		var added:boolean = this._add(txn, bucketKey, id, lastSeen, addresses, publicKey);
 
@@ -77,7 +76,7 @@ class BucketStore implements BucketStoreInterface {
 		for (var i in contacts) {
 			var contact:ContactNodeInterface = contacts[i];
 
-			added = this._add(txn, bucketKey, contact.getId(), contact.getLastSeen(), contact.getAddresses(), contact.getPublicKey());
+			added = this._add(txn, bucketKey, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses(), contact.getPublicKey());
 		}
 
 		txn.commit();
@@ -99,7 +98,7 @@ class BucketStore implements BucketStoreInterface {
 		this._databaseEnvironment = null;
 	}
 
-	public contains (bucketKey:string, id:IdInterface):boolean {
+	public contains (bucketKey:string, id:NodeBuffer):boolean {
 		return (this.get(bucketKey, id) !== null);
 	}
 
@@ -118,7 +117,7 @@ class BucketStore implements BucketStoreInterface {
 		txn.commit();
 	}
 
-	public get (bucketKey:string, id:IdInterface):any {
+	public get (bucketKey:string, id:NodeBuffer):any {
 		var txn:lmdb.Txn = this._beginReadOnlyTransaction();
 		var cursor:lmdb.Cursor = this._getCursor(txn);
 		var value:string = txn.getString(this._databaseInstance, this._getIdKey(id));
@@ -152,7 +151,7 @@ class BucketStore implements BucketStoreInterface {
 		this._isOpen = true;
 	}
 
-	public remove (bucketKey:string, id:IdInterface):boolean {
+	public remove (bucketKey:string, id:NodeBuffer):boolean {
 		// todo Typescript: propper return type (callback vs return)
 		var contact:any = this.get(bucketKey, id);
 		var lastSeen:number;
@@ -205,13 +204,13 @@ class BucketStore implements BucketStoreInterface {
 	 *
 	 * @param {lmdb.Txn} txn
 	 * @param {string} bucketKey
-	 * @param {core.topology.IdInterface} id
+	 * @param {NodeBuffer} id
 	 * @param {number} lastSeen
 	 * @param {any} addresses
 	 * @param {string} publicKey
 	 * @returns {boolean}
 	 */
-	private _add (txn:any, bucketKey:string, id:IdInterface, lastSeen:number, addresses:any, publicKey:string) {
+	private _add (txn:any, bucketKey:string, id:NodeBuffer, lastSeen:number, addresses:any, publicKey:string) {
 		var idKey:string = this._getIdKey(id);
 		var lastSeenKey:string = this._getLastSeenKey(bucketKey, lastSeen);
 		var value:Object = {
@@ -226,7 +225,7 @@ class BucketStore implements BucketStoreInterface {
 			txn.putString(this._databaseInstance, idKey, JSON.stringify(value));
 
 			// stores a shortcut for bucketwide last seen searches.
-			txn.putString(this._databaseInstance, lastSeenKey, this._getIdValue(id));
+			txn.putBinary(this._databaseInstance, lastSeenKey, id);
 		}
 		catch (err) {
 			console.error(err);
@@ -298,10 +297,10 @@ class BucketStore implements BucketStoreInterface {
 	 * @private
 	 * @method {boolean} core.topology.BucketStore#_getIdKey
 
-	 * @param {string} id
+	 * @param {NodeBuffer} id
 	 * @returns {string}
 	 */
-	private _getIdKey (id:IdInterface):string {
+	private _getIdKey (id:NodeBuffer):string {
 		return this._getIdValue(id);
 	}
 
@@ -310,15 +309,15 @@ class BucketStore implements BucketStoreInterface {
 	 *
 	 * @method {boolean} core.topology.BucketStore#_getIdValue
 	 *
-	 * @param {core.topology.IdInterface} id
+	 * @param {NodeBuffer} id
 	 * @returns {string}
 	 */
-	private _getIdValue (id:IdInterface):string {
-		return id.toBitString();
+	private _getIdValue (id:NodeBuffer):string {
+		return id.toString('hex');
 	}
 
 	/**
-	 * Returns a {@link core.topology.BucketStore#getIdKey} prefixed key to store objects within the `bucketKey` namespace
+	 * Returns a {@link core.topology.BucketStore#_getIdKey} prefixed key to store objects within the `bucketKey` namespace
 	 *
 	 * @method {boolean} core.topology.BucketStore#_getLastSeenKey
 	 *

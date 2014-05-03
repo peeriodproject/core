@@ -1,5 +1,6 @@
+/// <reference path='../../../../ts-definitions/node/node.d.ts' />
+
 import ClosableInterface = require('../../utils/interfaces/ClosableInterface');
-import IdInterface = require('./IdInterface');
 
 /**
  * A low-level interface which creates a unified api for different bucket stores.
@@ -18,12 +19,12 @@ interface BucketStoreInterface extends ClosableInterface {
 	 * @method core.topology.BucketStoreInterface#add
 	 *
 	 * @param {string} bucketKey
-	 * @param {core.topology.IdInterface} id
+	 * @param {NodeBuffer} id
 	 * @param {number} lastSeen
 	 * @param {any} addresses
 	 * @param {string} publicKey
 	 */
-	add (bucketKey:string, id:IdInterface, lastSeen:number, addresses:any, publicKey:string):boolean;
+	add (bucketKey:string, id:NodeBuffer, lastSeen:number, addresses:any, publicKey:string):boolean;
 
 	/**
 	 * Adds multiple objects to the bucket store.
@@ -45,11 +46,11 @@ interface BucketStoreInterface extends ClosableInterface {
 	 * @method core.topology.BucketStoreInterface#contains
 	 *
 	 * @param {String} bucketKey
-	 * @param {core.topology.IdInterface} id
+	 * @param {NodeBuffer} id
 	 *
 	 * @return {boolean}
 	 */
-	contains (bucketKey:string, id:IdInterface):boolean;
+	contains (bucketKey:string, id:NodeBuffer):boolean;
 
 	/**
 	 * Debug method
@@ -67,11 +68,11 @@ interface BucketStoreInterface extends ClosableInterface {
 	 * @method core.topology.BucketStoreInterface#get
 	 *
 	 * @param {string} bucketKey
-	 * @param {core.topology.IdInterface} id
+	 * @param {NodeBuffer} id
 	 *
 	 * @returns {any}
 	 */
-	get (bucketKey:string, id:IdInterface):any;
+	get (bucketKey:string, id:NodeBuffer):any;
 
 	/**
 	 * Removes the specified bucket/id combination from the store.
@@ -81,9 +82,9 @@ interface BucketStoreInterface extends ClosableInterface {
 	 * @method core.topology.BucketStoreInterface#remove
 	 *
 	 * @param {string} bucketKey
-	 * @param {core.topology.IdInterface} id
+	 * @param {NodeBuffer} id
 	 */
-	remove (bucketKey:string, id:IdInterface):boolean;
+	remove (bucketKey:string, id:NodeBuffer):boolean;
 
 	/**
 	 * Returns the size of the specified bucket.

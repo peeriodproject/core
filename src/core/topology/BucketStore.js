@@ -1,4 +1,4 @@
-/// <reference path='interfaces/BucketStoreInterface.ts' />
+/// <reference path='../../../ts-definitions/node/node.d.ts' />
 /// <reference path='../../../ts-definitions/node-lmdb/node-lmdb.d.ts' />
 var lmdb = require('node-lmdb');
 
@@ -66,7 +66,7 @@ var BucketStore = (function () {
         for (var i in contacts) {
             var contact = contacts[i];
 
-            added = this._add(txn, bucketKey, contact.getId(), contact.getLastSeen(), contact.getAddresses(), contact.getPublicKey());
+            added = this._add(txn, bucketKey, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses(), contact.getPublicKey());
         }
 
         txn.commit();
@@ -193,7 +193,7 @@ var BucketStore = (function () {
     *
     * @param {lmdb.Txn} txn
     * @param {string} bucketKey
-    * @param {core.topology.IdInterface} id
+    * @param {NodeBuffer} id
     * @param {number} lastSeen
     * @param {any} addresses
     * @param {string} publicKey
@@ -214,7 +214,7 @@ var BucketStore = (function () {
             txn.putString(this._databaseInstance, idKey, JSON.stringify(value));
 
             // stores a shortcut for bucketwide last seen searches.
-            txn.putString(this._databaseInstance, lastSeenKey, this._getIdValue(id));
+            txn.putBinary(this._databaseInstance, lastSeenKey, id);
         } catch (err) {
             console.error(err);
         }
@@ -285,7 +285,7 @@ var BucketStore = (function () {
     * @private
     * @method {boolean} core.topology.BucketStore#_getIdKey
     
-    * @param {string} id
+    * @param {NodeBuffer} id
     * @returns {string}
     */
     BucketStore.prototype._getIdKey = function (id) {
@@ -297,15 +297,15 @@ var BucketStore = (function () {
     *
     * @method {boolean} core.topology.BucketStore#_getIdValue
     *
-    * @param {core.topology.IdInterface} id
+    * @param {NodeBuffer} id
     * @returns {string}
     */
     BucketStore.prototype._getIdValue = function (id) {
-        return id.toBitString();
+        return id.toString('hex');
     };
 
     /**
-    * Returns a {@link core.topology.BucketStore#getIdKey} prefixed key to store objects within the `bucketKey` namespace
+    * Returns a {@link core.topology.BucketStore#_getIdKey} prefixed key to store objects within the `bucketKey` namespace
     *
     * @method {boolean} core.topology.BucketStore#_getLastSeenKey
     *

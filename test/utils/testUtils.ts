@@ -10,7 +10,7 @@ module testUtils {
 		[key:string]:Function;
 	}
 
-	export function stubPublicApi(sandbox:SinonSandbox, klass:Function, apiMethodCallbacks:publicApiCallbackList):any {
+	export function stubPublicApi(sandbox:SinonSandbox, klass:Function, apiMethodCallbacks:publicApiCallbackList = {}):any {
 		var proto = klass.constructor();
 		var keys = Object.keys(klass.prototype);
 		var stubbed:any = {};

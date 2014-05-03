@@ -4,7 +4,7 @@ require('should');
 
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> CONFIG --> ObjectConfig @joern', function () {
+describe('CORE --> CONFIG --> ObjectConfig', function () {
 
 	it('should successfully instantiate and throw an error when created without a proper configData object', function () {
 		(new ObjectConfig({})).should.be.a.instanceof(ObjectConfig);
@@ -84,7 +84,7 @@ describe('CORE --> CONFIG --> ObjectConfig @joern', function () {
 		config.get('foobario.two').should.be.false;
 	});
 
-	it('should throw an error if an array contains non primitives @joern', function () {
+	it('should throw an error if an array contains non primitives', function () {
 		(function () {
 			new ObjectConfig({
 				foo: [
