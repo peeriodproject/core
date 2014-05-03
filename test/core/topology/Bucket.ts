@@ -46,23 +46,23 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
 		bucket.should.be.an.instanceof(Bucket);
 	});
 
-	describe('should correctly call the call the internally bucket store', function () {
+	describe('should correctly call the internally bucket store', function () {
 
 		it('should call the internal add method', function () {
 			createStubbedBucketStore();
 
 			bucket.add(ContactNodeFactory.createDummy());
-			bucketStoreStub.add.calledOnce;
+			bucketStoreStub.add.calledOnce.should.be.true;
 		});
 
 		it('should call the internal close method', function () {
 			createStubbedBucketStore();
 
 			bucket.close();
-			bucketStoreStub.close.calledOnce;
+			bucketStoreStub.close.calledOnce.should.be.true;
 		});
 
-		it('should return the correct contains value', function () {
+		it('should return the correct contains value @joern', function () {
 			var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
 
 			createStubbedBucketStore({
@@ -72,7 +72,7 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
 			});
 
 			bucket.contains(contact).should.be.false;
-			bucketStoreStub.contains.calledOnce;
+			bucketStoreStub.contains.calledOnce.should.be.true;
 		});
 
 		it('should call the internal get method', function () {
@@ -81,7 +81,7 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
 			createBucket(stubPublicApi(BucketStore));
 
 			bucket.get(contact.getId());
-			bucketStoreStub.get.calledOnce;
+			bucketStoreStub.get.calledOnce.should.be.true;
 		});
 
 		it('should return the correct value from the internal isOpen method', function () {
@@ -92,14 +92,14 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
 			});
 
 			bucket.isOpen().should.be.true;
-			bucketStoreStub.isOpen.calledOnce;
+			bucketStoreStub.isOpen.calledOnce.should.be.true;
 		});
 
 		it('should call the internal open method', function () {
 			createStubbedBucketStore();
 
 			bucket.open();
-			bucketStoreStub.open.calledOnce;
+			bucketStoreStub.open.calledOnce.should.be.true;
 		});
 
 		it('should call the internal remove method', function () {
@@ -108,7 +108,7 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
 			createStubbedBucketStore();
 
 			bucket.remove(contact.getId());
-			bucketStoreStub.remove.calledOnce;
+			bucketStoreStub.remove.calledOnce.should.be.true;
 		});
 
 		it('should return the correct size', function () {
@@ -119,7 +119,7 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
 			});
 
 			bucket.size().should.equal(10);
-			bucketStoreStub.size.calledOnce;
+			bucketStoreStub.size.calledOnce.should.be.true;
 		});
 
 		it('update', function () {
