@@ -260,13 +260,6 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		};
 	}
 
-	/**
-	 * Returns an array of open TCP server ports which are reachable from outside.
-	 *
-	 * @method TCPSocketHandler#getOpenServerPortsArray
-	 *
-	 * @returns {number[]} Array of open server ports
-	 */
 	public getOpenServerPortsArray ():Array<number> {
 		return Object.keys(this._openTCPServers).map(function (port) {
 			return parseInt(port, 10);

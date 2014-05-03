@@ -78,6 +78,15 @@ interface TCPSocketHandlerInterface {
 	getDefaultSocketOptions ():TCPSocketOptions;
 
 	/**
+	 * Returns an array of open TCP server ports which are reachable from outside.
+	 *
+	 * @method core.net.tcp.TCPSocketHandlerInterface#getOpenServerPortsArray
+	 *
+	 * @returns {number[]} Array of open server ports
+	 */
+	getOpenServerPortsArray ():Array<number>
+
+	/**
 	 * Sets the IP under which TCP servers should be reachable from outside.
 	 *
 	 * @method core.net.tp.TCPSocketHandlerInterface#setMyExternalIp
