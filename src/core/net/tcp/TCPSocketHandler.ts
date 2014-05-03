@@ -4,6 +4,7 @@ import events = require('events');
 import TCPSocketHandlerOptions = require('./interfaces/TCPSocketHandlerOptions');
 import TCPSocketHandlerInterface = require('./interfaces/TCPSocketHandlerInterface');
 import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
+import TCPSocketFactoryInterface = require('./interfaces/TCPSocketFactoryInterface');
 import TCPSocketInterface = require('./interfaces/TCPSocketInterface');
 import TCPSocket = require('./TCPSocket');
 
@@ -80,10 +81,20 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	 */
 	private _retriedPorts:Array<number> = [];
 
-	constructor (opts:TCPSocketHandlerOptions) {
+	/**
+	 * TCPSocketFactory
+	 *
+	 * @private
+	 * @member TCPSocketHandler~_socketFactory
+	 */
+	private _socketFactory:TCPSocketFactoryInterface = null;
+
+	constructor (socketFactory:TCPSocketFactoryInterface, opts:TCPSocketHandlerOptions) {
 		super();
 
 		if (!net.isIP(opts.myExternalIp)) throw new Error('TCPHandler.constructor: Provided IP is no IP');
+
+		this._socketFactory = socketFactory;
 
 		this.setMyExternalIp(opts.myExternalIp);
 		this._myOpenPorts = opts.myOpenPorts || [];
@@ -139,7 +150,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		sock.on('connect', () => {
 			sock.removeAllListeners('error');
 
-			var socket = new TCPSocket(sock, this.getDefaultSocketOptions());
+			var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
 
 			if (!callback) {
 				this.emit('connected', socket);
@@ -188,7 +199,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 					this._openTCPServers[port] = server;
 
 					server.on('connection', (sock:net.Socket) => {
-						var socket = new TCPSocket(sock, this.getDefaultSocketOptions());
+						var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
 						this.emit('connected', socket);
 					});
 

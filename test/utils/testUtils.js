@@ -6,9 +6,13 @@ var testUtils;
 (function (testUtils) {
     function stubPublicApi(sandbox, klass, apiMethodCallbacks) {
         if (typeof apiMethodCallbacks === "undefined") { apiMethodCallbacks = {}; }
-        var proto = klass.prototype;
-        var keys = Object.keys(proto);
+        var proto = klass.constructor();
+        var keys = Object.keys(klass.prototype);
         var stubbed = {};
+
+        for (var attr in klass.prototype) {
+            proto[attr] = klass.prototype[attr];
+        }
 
         for (var i in keys) {
             var key = keys[i];

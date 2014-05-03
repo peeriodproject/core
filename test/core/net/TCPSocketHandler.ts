@@ -2,10 +2,13 @@
 
 require('should');
 
+import testUtils = require('../../utils/testUtils');
+
 import TCPSocket = require('../../../src/core/net/tcp/TCPSocket');
 import TCPSocketHandler = require('../../../src/core/net/tcp/TCPSocketHandler');
 import TCPSocketHandlerOptions = require('../../../src/core/net/tcp/interfaces/TCPSocketHandlerOptions');
 import TCPSocketOptions = require('../../../src/core/net/tcp/interfaces/TCPSocketOptions');
+import TCPSocketFactory = require('../../../src/core/net/tcp/TCPSocketFactory');
 
 var events = require('events');
 var net = require('net');
@@ -17,8 +20,10 @@ var defaultHandlerOpts:TCPSocketHandlerOptions = {
 
 describe('CORE --> NET --> TCP --> TCP SOCKET HANDLER', function () {
 
-	var handler_a = new TCPSocketHandler(defaultHandlerOpts),
-		server = handler_a.createTCPServer();
+	var handler_a = new TCPSocketHandler(new TCPSocketFactory(), defaultHandlerOpts),
+		server = handler_a.createTCPServer(),
+		sandbox:SinonSandbox;
+
 
 	it('should throw an error when creating handler with invalid IP', function () {
 		var opts:TCPSocketHandlerOptions = {
@@ -26,7 +31,7 @@ describe('CORE --> NET --> TCP --> TCP SOCKET HANDLER', function () {
 			idleConnectionKillTimeout: 0
 		};
 		(function () {
-			new TCPSocketHandler(opts);
+			new TCPSocketHandler(new TCPSocketFactory(), opts);
 		}).should.throw('TCPHandler.constructor: Provided IP is no IP');
 	});
 
@@ -103,7 +108,7 @@ describe('CORE --> NET --> TCP --> TCP SOCKET HANDLER', function () {
 
 	it('should finally nicely auto bootstrap a TCP handler with all servers which can connected to', function (done) {
 		defaultHandlerOpts.myOpenPorts = [55555, 55557, 55558];
-		var handler_b = new TCPSocketHandler(defaultHandlerOpts);
+		var handler_b = new TCPSocketHandler(new TCPSocketFactory(), defaultHandlerOpts);
 		handler_b.autoBootstrap(function (openPorts) {
 			var expected = [55557, 55558],
 				success = true;

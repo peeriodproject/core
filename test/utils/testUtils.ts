@@ -11,9 +11,13 @@ module testUtils {
 	}
 
 	export function stubPublicApi(sandbox:SinonSandbox, klass:Function, apiMethodCallbacks:publicApiCallbackList = {}):any {
-		var proto = klass.prototype;
-		var keys = Object.keys(proto);
+		var proto = klass.constructor();
+		var keys = Object.keys(klass.prototype);
 		var stubbed:any = {};
+
+		for (var attr in klass.prototype) {
+			proto[attr] = klass.prototype[attr];
+		}
 
 		for (var i in keys) {
 			var key = keys[i];
