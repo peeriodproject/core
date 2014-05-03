@@ -26,6 +26,14 @@ var FreeGeoIp = (function () {
     }
     FreeGeoIp.prototype.obtainIP = function (callback) {
         var _this = this;
+        var callbackCalled = false;
+        var doCallback = function (err, ip) {
+            if (!callbackCalled) {
+                callbackCalled = true;
+                callback(err, ip);
+            }
+        };
+
         http.get(this._url, function (res) {
             var body = '';
             if (res.statusCode === 200) {
@@ -37,29 +45,20 @@ var FreeGeoIp = (function () {
                     try  {
                         var ip = JSON.parse(body)[_this._attr];
                         if (net.isIP(ip)) {
-                            callback(null, ip);
+                            doCallback(null, ip);
                         } else {
-                            callback(new Error('FreeGeoIp: Got no valid IP.'), null);
+                            doCallback(new Error('FreeGeoIp: Got no valid IP.'), null);
                         }
                     } catch (err) {
-                        callback(err, null);
+                        doCallback(err, null);
                     }
                 });
             } else {
-                callback(new Error('FreeGeoIp: No 200 response.'), null);
+                doCallback(new Error('FreeGeoIp: No 200 response.'), null);
             }
         }).on('error', function (err) {
-            callback(err, null);
+            doCallback(err, null);
         });
-    };
-
-    /**
-    * Sets the url.
-    *
-    * @param {string} url
-    */
-    FreeGeoIp.prototype.setUrl = function (url) {
-        this._url = url;
     };
 
     /**
@@ -69,6 +68,15 @@ var FreeGeoIp = (function () {
     */
     FreeGeoIp.prototype.setIpAttribute = function (attr) {
         this._attr = attr;
+    };
+
+    /**
+    * Sets the url.
+    *
+    * @param {string} url
+    */
+    FreeGeoIp.prototype.setUrl = function (url) {
+        this._url = url;
     };
     return FreeGeoIp;
 })();
