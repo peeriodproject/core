@@ -2,9 +2,6 @@
 * Created by joernroeder on 4/21/14.
 */
 /// <reference path='./main.d.ts' />
-var RoutingTable = require('./core/topology/RoutingTable');
-
-RoutingTable;
 /*import gui = require('nw.gui');
 var tray = new gui.Tray({
 title: 'Tray',

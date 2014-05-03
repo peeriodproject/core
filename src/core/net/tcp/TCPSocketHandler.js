@@ -7,8 +7,6 @@ var __extends = this.__extends || function (d, b) {
 var net = require('net');
 var events = require('events');
 
-var TCPSocket = require('./TCPSocket');
-
 /**
 * TCPSocketHandler implementation.
 *
@@ -21,7 +19,7 @@ var TCPSocket = require('./TCPSocket');
 */
 var TCPSocketHandler = (function (_super) {
     __extends(TCPSocketHandler, _super);
-    function TCPSocketHandler(opts) {
+    function TCPSocketHandler(socketFactory, opts) {
         _super.call(this);
         /**
         * Flag which indicates whether a FIN packet should generally be sent when the other end of a handled
@@ -77,9 +75,18 @@ var TCPSocketHandler = (function (_super) {
         * @member {Array<number>} TCPSocketHandler~_retriedPorts
         */
         this._retriedPorts = [];
+        /**
+        * TCPSocketFactory
+        *
+        * @private
+        * @member TCPSocketHandler~_socketFactory
+        */
+        this._socketFactory = null;
 
         if (!net.isIP(opts.myExternalIp))
             throw new Error('TCPHandler.constructor: Provided IP is no IP');
+
+        this._socketFactory = socketFactory;
 
         this.setMyExternalIp(opts.myExternalIp);
         this._myOpenPorts = opts.myOpenPorts || [];
@@ -135,7 +142,7 @@ var TCPSocketHandler = (function (_super) {
         sock.on('connect', function () {
             sock.removeAllListeners('error');
 
-            var socket = new TCPSocket(sock, _this.getDefaultSocketOptions());
+            var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
 
             if (!callback) {
                 _this.emit('connected', socket);
@@ -182,7 +189,7 @@ var TCPSocketHandler = (function (_super) {
                     _this._openTCPServers[port] = server;
 
                     server.on('connection', function (sock) {
-                        var socket = new TCPSocket(sock, _this.getDefaultSocketOptions());
+                        var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
                         _this.emit('connected', socket);
                     });
 

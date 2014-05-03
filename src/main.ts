@@ -4,9 +4,6 @@
 
 /// <reference path='./main.d.ts' />
 
-import RoutingTable = require('./core/topology/RoutingTable');
-
-RoutingTable
 
 /*import gui = require('nw.gui');
 

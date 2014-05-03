@@ -1,7 +1,8 @@
 import NetworkBootstrapperInterface = require('./interfaces/NetworkBootstrapperInterface');
 import TCPSocketHandlerOptions = require('./tcp/interfaces/TCPSocketHandlerOptions');
 import TCPSocketHandlerInterface = require('./tcp/interfaces/TCPSocketHandlerInterface');
-import TCPSocketHandler = require('./tcp/TCPSocketHandler');
+import TCPSocketHandlerFactoryInterface = require('./tcp/interfaces/TCPSocketHandlerFactoryInterface');
+import TCPSocketFactory = require('./tcp/TCPSocketFactory');
 import ExternalIPObtainerInterface = require('./ip/interfaces/ExternalIPObtainerInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 
@@ -46,9 +47,18 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 	 */
 	private _tcpSocketHandler:TCPSocketHandlerInterface = null;
 
-	constructor (config:ConfigInterface, ipObtainers:Array<ExternalIPObtainerInterface>) {
+	/**
+	 * TCPSocketHandler factory
+	 *
+	 * @private
+	 * @member {TCPSocketHandlerFactory} NetworkBootstrapper~_tcpSocketHandlerFactory
+	 */
+	private _tcpSocketHandlerFactory:TCPSocketHandlerFactoryInterface = null;
+
+	constructor (socketHandlerFactory:TCPSocketHandlerFactoryInterface, config:ConfigInterface, ipObtainers:Array<ExternalIPObtainerInterface>) {
 		this._config = config;
 		this._ipObtainers = ipObtainers;
+		this._tcpSocketHandlerFactory = socketHandlerFactory;
 	}
 
 	public bootstrap (callback:(err:Error) => any):void {
@@ -59,7 +69,7 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 			else {
 				this._externalIp = ip;
 
-				this._tcpSocketHandler = new TCPSocketHandler(this._getTCPSocketHandlerOptions());
+				this._tcpSocketHandler = this._tcpSocketHandlerFactory.create(new TCPSocketFactory(), this._getTCPSocketHandlerOptions());
 
 				this._tcpSocketHandler.autoBootstrap(function (openPorts:Array<number>) {
 					callback(null);
@@ -67,6 +77,15 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 			}
 
 		});
+	}
+
+	/**
+	 * Returns the external IP which has been obtained (or not)
+	 *
+	 * @returns {string} external ip
+	 */
+	public getExternalIp ():string {
+		return this._externalIp;
 	}
 
 	public getTCPSocketHandler ():TCPSocketHandlerInterface {
@@ -125,7 +144,7 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 			connectionRetry          : this._config.get('net.connectionRetrySeconds'),
 			idleConnectionKillTimeout: this._config.get('net.idleConnectionKillTimeout'),
 			myExternalIp             : this._externalIp,
-			myOpenPorts              : [this._config.get('net.myOpenPorts.0')]
+			myOpenPorts              : this._config.get('net.myOpenPorts')
 		};
 	}
 

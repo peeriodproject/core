@@ -1,4 +1,4 @@
-var TCPSocketHandler = require('./tcp/TCPSocketHandler');
+var TCPSocketFactory = require('./tcp/TCPSocketFactory');
 
 /**
 * NetworkBootstraper implementation.
@@ -10,7 +10,7 @@ var TCPSocketHandler = require('./tcp/TCPSocketHandler');
 * @parma {Array<ExternalIPObtainerInterface>} A list of IP obtainers to use as tools to get the machine's external IP.
 */
 var NetworkBootstrapper = (function () {
-    function NetworkBootstrapper(config, ipObtainers) {
+    function NetworkBootstrapper(socketHandlerFactory, config, ipObtainers) {
         /**
         * Network configuration. Is used for getting the settings for TCP socket handler.
         *
@@ -32,8 +32,16 @@ var NetworkBootstrapper = (function () {
         * @member {TCPSocketHandlerInterface} NetworkBootstrapper~_tcpSocketHandler
         */
         this._tcpSocketHandler = null;
+        /**
+        * TCPSocketHandler factory
+        *
+        * @private
+        * @member {TCPSocketHandlerFactory} NetworkBootstrapper~_tcpSocketHandlerFactory
+        */
+        this._tcpSocketHandlerFactory = null;
         this._config = config;
         this._ipObtainers = ipObtainers;
+        this._tcpSocketHandlerFactory = socketHandlerFactory;
     }
     NetworkBootstrapper.prototype.bootstrap = function (callback) {
         var _this = this;
@@ -43,13 +51,22 @@ var NetworkBootstrapper = (function () {
             } else {
                 _this._externalIp = ip;
 
-                _this._tcpSocketHandler = new TCPSocketHandler(_this._getTCPSocketHandlerOptions());
+                _this._tcpSocketHandler = _this._tcpSocketHandlerFactory.create(new TCPSocketFactory(), _this._getTCPSocketHandlerOptions());
 
                 _this._tcpSocketHandler.autoBootstrap(function (openPorts) {
                     callback(null);
                 });
             }
         });
+    };
+
+    /**
+    * Returns the external IP which has been obtained (or not)
+    *
+    * @returns {string} external ip
+    */
+    NetworkBootstrapper.prototype.getExternalIp = function () {
+        return this._externalIp;
     };
 
     NetworkBootstrapper.prototype.getTCPSocketHandler = function () {
@@ -105,7 +122,7 @@ var NetworkBootstrapper = (function () {
             connectionRetry: this._config.get('net.connectionRetrySeconds'),
             idleConnectionKillTimeout: this._config.get('net.idleConnectionKillTimeout'),
             myExternalIp: this._externalIp,
-            myOpenPorts: [this._config.get('net.myOpenPorts.0')]
+            myOpenPorts: this._config.get('net.myOpenPorts')
         };
     };
     return NetworkBootstrapper;
