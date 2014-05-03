@@ -14,7 +14,7 @@ var TCPSocket = require('./TCPSocket');
 *
 * @class core.net.tcp.TCPSocketHandler
 * @extends events.EventEmitter
-* @implements TCPSockerHandlerInterface
+* @implements core.net.tcp.TCPSockerHandlerInterface
 *
 * @param {core.net.tcp.TCPSocketHandlerOptions} opts
 *
