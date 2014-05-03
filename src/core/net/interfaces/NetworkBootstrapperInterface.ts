@@ -1,5 +1,6 @@
 /// <reference path='../../../../ts-definitions/node/node.d.ts' />
 
+import TCPSocketHandlerInterface = require('../tcp/interfaces/TCPSocketHandlerInterface');
 
 /**
  * The network bootstrapper class's only objective is to automatically bootstrap the complete network, meaning:
@@ -12,7 +13,8 @@
  */
 
 interface NetworkBootstrapperInterface {
-
+	bootstrap (callback:(err:Error) => any):void;
+	getTCPSocketHandler ():TCPSocketHandlerInterface;
 }
 
 export = NetworkBootstrapperInterface;
