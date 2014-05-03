@@ -2,7 +2,6 @@
 
 require('should');
 
-
 var TCPSocket = require('../../../src/core/net/tcp/TCPSocket');
 var events = require('events');
 var net = require('net');

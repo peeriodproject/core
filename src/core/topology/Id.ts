@@ -117,29 +117,13 @@ class Id implements IdInterface {
 		this._byte_length = byte_length;
 	}
 
-	public getBuffer ():NodeBuffer {
-		return this._buffer;
-	}
-
-	public distanceTo (other:IdInterface):NodeBuffer {
-		if (!(other instanceof Id)) {
-			throw new Error('Can only compare to another ID.');
-		}
-
-		var response:NodeBuffer = new Buffer(this._byte_length);
-		var a:NodeBuffer = this.getBuffer();
-		var b:NodeBuffer = other.getBuffer();
-
-		for (var i = 0; i < this._byte_length; ++i) {
-			response[i] = a[i] ^ b[i];
-		}
-
-		return response;
+	public at (index:number):number {
+		return (this.getBuffer()[this._byte_length - 1 - (index / 8 | 0)] & (1 << (index % 8))) > 0 ? 1 : 0;
 	}
 
 	public compareDistance (first:IdInterface, second:IdInterface):number {
 		if (!(first instanceof Id && second instanceof Id)) {
-			throw new Error('compareDistance: Arguments must be of type Id');
+			throw new Error('Id.compareDistance: Arguments must be of type Id');
 		}
 
 		var a:NodeBuffer = this.getBuffer();
@@ -160,40 +144,9 @@ class Id implements IdInterface {
 		return 0;
 	}
 
-	public equals (other:IdInterface):boolean {
-		if (!(other instanceof Id)) {
-			throw new Error('equals: Argument must be of type Id')
-		}
-
-		var a:NodeBuffer = this.getBuffer();
-		var b:NodeBuffer = other.getBuffer();
-
-		for (var i:number = 0; i < this._byte_length; ++i) {
-			if (a[i] !== b[i]) return false;
-		}
-
-		return true;
-	}
-
-	public at (index:number):number {
-		return (this.getBuffer()[this._byte_length - 1 - (index / 8 | 0)] & (1 << (index % 8))) > 0 ? 1 : 0;
-	}
-
-	public set (index:number, value:number):void {
-		var _i:number = this._byte_length - 1 - (index / 8 | 0);
-		var mask:number = 1 << (index % 8);
-
-		if (value) {
-			this.getBuffer()[_i] |= mask;
-		}
-		else {
-			this.getBuffer()[_i] &= 255 ^ mask;
-		}
-	}
-
 	public differsInHighestBit (other:IdInterface):number {
 		if (!(other instanceof Id)) {
-			throw new Error('differsInHighestBit: Argument must be of type Id');
+			throw new Error('Id.differsInHighestBit: Argument must be of type Id');
 		}
 
 		var a:NodeBuffer = this.getBuffer();
@@ -210,6 +163,53 @@ class Id implements IdInterface {
 		}
 
 		return -1;
+	}
+
+	public distanceTo (other:IdInterface):NodeBuffer {
+		if (!(other instanceof Id)) {
+			throw new Error('Id.distanceTo: Can only compare to another Id.');
+		}
+
+		var response:NodeBuffer = new Buffer(this._byte_length);
+		var a:NodeBuffer = this.getBuffer();
+		var b:NodeBuffer = other.getBuffer();
+
+		for (var i = 0; i < this._byte_length; ++i) {
+			response[i] = a[i] ^ b[i];
+		}
+
+		return response;
+	}
+
+	public equals (other:IdInterface):boolean {
+		if (!(other instanceof Id)) {
+			throw new Error('Id.equals: Argument must be of type Id');
+		}
+
+		var a:NodeBuffer = this.getBuffer();
+		var b:NodeBuffer = other.getBuffer();
+
+		for (var i:number = 0; i < this._byte_length; ++i) {
+			if (a[i] !== b[i]) return false;
+		}
+
+		return true;
+	}
+
+	public getBuffer ():NodeBuffer {
+		return this._buffer;
+	}
+
+	public set (index:number, value:number):void {
+		var _i:number = this._byte_length - 1 - (index / 8 | 0);
+		var mask:number = 1 << (index % 8);
+
+		if (value) {
+			this.getBuffer()[_i] |= mask;
+		}
+		else {
+			this.getBuffer()[_i] &= 255 ^ mask;
+		}
 	}
 
 	public toBitString ():string {
