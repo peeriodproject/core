@@ -94,5 +94,16 @@ describe('CORE --> NET --> NETWORK BOOTSTRAPPER', function () {
                 done();
         });
     });
+
+    it('should return tcp socket handler', function (done) {
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubSuccess]);
+
+        bootstrapper.bootstrap(function () {
+            if (bootstrapper.getTCPSocketHandler() === tcpHandlerStub) {
+                done();
+            } else
+                throw new Error();
+        });
+    });
 });
 //# sourceMappingURL=NetworkBootstrapper.js.map

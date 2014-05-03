@@ -89,4 +89,15 @@ describe('CORE --> NET --> NETWORK BOOTSTRAPPER', function () {
 			if (err && err.message === 'NetworkBootstrapper: No IP obtainers specified.') done();
 		});
 	});
+
+	it('should return tcp socket handler', function (done) {
+		var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubSuccess]);
+
+		bootstrapper.bootstrap(function () {
+
+			if (bootstrapper.getTCPSocketHandler() === tcpHandlerStub) {
+				done();
+			} else throw new Error();
+		});
+	});
 });
