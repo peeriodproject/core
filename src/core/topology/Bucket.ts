@@ -34,66 +34,109 @@ class Bucket implements BucketInterface {
 	 */
 	private _key:string = '';
 
-	constructor (config:ConfigInterface, key:string, store:BucketStoreInterface) {
+	constructor (config:ConfigInterface, key:string, store:BucketStoreInterface, openCallback?:(err:Error) => any) {
+		var internalOpenCallback = openCallback || function (err:Error) {};
+
 		this._config = config;
 		this._key = key;
 		this._store = store;
 
-		this.open();
+		this.open(internalOpenCallback);
 	}
 
-	public add (contact:ContactNodeInterface):boolean {
-		return this._store.add(
+	public add (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {};
+
+		this._store.add(
 			this._key,
-			contact.getId(),
+			contact.getId().getBuffer(),
 			contact.getLastSeen(),
 			contact.getAddresses(),
 			contact.getPublicKey()
 		);
+
+		internalCallback(null);
 	}
 
-	public close ():void {
+	public close (callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {};
+
 		this._store.close();
+		internalCallback(null);
 	}
 
-	public contains (contact:ContactNodeInterface):boolean {
-		return this._store.contains(this._key, contact.getId());
+	public contains (contact:ContactNodeInterface, callback:(err:Error, contains:boolean) => any):void {
+		callback(null, this._store.contains(this._key, contact.getId().getBuffer()));
 	}
 
-	public get (id:IdInterface):any {
-		return this._store.get(this._key, id);
+	public get (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void {
+		callback(null, this._store.get(this._key, id.getBuffer()));
 	}
 
-	public isOpen ():boolean {
-		return this._store.isOpen();
+	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
+		callback(null, this._store.isOpen());
 	}
 
-	public open ():void {
+	public open (callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {};
+
 		this._store.open();
+		internalCallback(null);
 	}
 
-	public remove (id:IdInterface):boolean {
-		return this._store.remove(this._key, id);
+	public remove (id:IdInterface, callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {};
+
+		this._store.remove(this._key, id.getBuffer());
+		internalCallback(null);
 	}
 
-	public size ():number {
-		return this._store.size(this._key);
+	public size (callback:(err:Error, size:number) => any):void {
+		callback(null, this._store.size(this._key));
 	}
 
-	public update (contact:ContactNodeInterface):boolean {
-		if (this.contains(contact)) {
-			// todo Benchmark: always replace vs. check nodeaddresses and update
-			this.remove(contact.getId());
-			this.add(contact);
-		}
-		else if (this.size() < this._config.get('topology.k')) {
-			this.add(contact);
-		}
-		else {
-			// todo ping pong
-		}
+	public update (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {};
+		var removed:boolean;
+		var added:boolean;
+		var error:Error;
 
-		return false;
+		var updatedCallback = function () {
+			if (error) {
+				internalCallback(error);
+			}
+			else if (removed && added) {
+				internalCallback(null);
+			}
+
+		};
+
+		// todo Benchmark: always replace vs. check nodeaddresses and update
+		this.remove(contact.getId(), function (err:Error) {
+			if (callback) {
+				if (err) {
+					error = err;
+				}
+				else {
+					removed = true;
+				}
+
+				updatedCallback();
+			}
+		});
+
+		this.add(contact, function (err:Error) {
+			if (callback) {
+				if (err) {
+					error = err;
+				}
+				else {
+					added = true;
+				}
+
+				updatedCallback();
+			}
+		});
 	}
 
 }

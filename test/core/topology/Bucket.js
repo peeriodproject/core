@@ -46,21 +46,27 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
     });
 
     describe('should correctly call the internally bucket store', function () {
-        it('should call the internal add method', function () {
+        it('should call the internal add method', function (done) {
             createStubbedBucketStore();
 
-            bucket.add(ContactNodeFactory.createDummy());
-            bucketStoreStub.add.calledOnce.should.be.true;
+            bucket.add(ContactNodeFactory.createDummy(), function (err) {
+                bucketStoreStub.add.calledOnce.should.be.true;
+
+                done();
+            });
         });
 
-        it('should call the internal close method', function () {
+        it('should call the internal close method', function (done) {
             createStubbedBucketStore();
 
-            bucket.close();
-            bucketStoreStub.close.calledOnce.should.be.true;
+            bucket.close(function (err) {
+                bucketStoreStub.close.calledOnce.should.be.true;
+
+                done();
+            });
         });
 
-        it('should return the correct contains value @joern', function () {
+        it('should return the correct contains value', function (done) {
             var contact = ContactNodeFactory.createDummy();
 
             createStubbedBucketStore({
@@ -69,55 +75,76 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
                 }
             });
 
-            bucket.contains(contact).should.be.false;
-            bucketStoreStub.contains.calledOnce.should.be.true;
+            bucket.contains(contact, function (err, contains) {
+                contains.should.be.false;
+                bucketStoreStub.contains.calledOnce.should.be.true;
+
+                done();
+            });
         });
 
-        it('should call the internal get method', function () {
+        it('should call the internal get method', function (done) {
             var contact = ContactNodeFactory.createDummy();
 
             createBucket(stubPublicApi(BucketStore));
 
-            bucket.get(contact.getId());
-            bucketStoreStub.get.calledOnce.should.be.true;
+            bucket.get(contact.getId(), function (err, contact) {
+                bucketStoreStub.get.calledOnce.should.be.true;
+
+                done();
+            });
         });
 
-        it('should return the correct value from the internal isOpen method', function () {
+        it('should return the correct value from the internal isOpen method', function (done) {
             createStubbedBucketStore({
                 isOpen: function () {
                     return true;
                 }
             });
 
-            bucket.isOpen().should.be.true;
-            bucketStoreStub.isOpen.calledOnce.should.be.true;
+            bucket.isOpen(function (err, isOpen) {
+                isOpen.should.be.true;
+                bucketStoreStub.isOpen.calledOnce.should.be.true;
+
+                done();
+            });
         });
 
-        it('should call the internal open method', function () {
+        it('should call the internal open method', function (done) {
             createStubbedBucketStore();
 
-            bucket.open();
-            bucketStoreStub.open.calledOnce.should.be.true;
+            bucket.open(function (err) {
+                bucketStoreStub.open.calledTwice.should.be.true;
+
+                done();
+            });
         });
 
-        it('should call the internal remove method', function () {
+        it('should call the internal remove method', function (done) {
             var contact = ContactNodeFactory.createDummy();
 
             createStubbedBucketStore();
 
-            bucket.remove(contact.getId());
-            bucketStoreStub.remove.calledOnce.should.be.true;
+            bucket.remove(contact.getId(), function (err) {
+                bucketStoreStub.remove.calledOnce.should.be.true;
+
+                done();
+            });
         });
 
-        it('should return the correct size', function () {
+        it('should return the correct size', function (done) {
             createStubbedBucketStore({
                 size: function () {
                     return 10;
                 }
             });
 
-            bucket.size().should.equal(10);
-            bucketStoreStub.size.calledOnce.should.be.true;
+            bucket.size(function (err, size) {
+                size.should.equal(10);
+                bucketStoreStub.size.calledOnce.should.be.true;
+
+                done();
+            });
         });
 
         it('update', function () {
