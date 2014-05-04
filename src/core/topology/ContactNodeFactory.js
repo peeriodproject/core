@@ -1,6 +1,7 @@
 var ContactNode = require('./ContactNode');
 
 var Id = require('./Id');
+var ContactNodeAddressFactory = require('./ContactNodeAddressFactory');
 
 var ContactNodeFactory = (function () {
     function ContactNodeFactory() {
@@ -32,7 +33,7 @@ var ContactNodeFactory = (function () {
                 return new Id(Id.byteBufferByBitString(id, 20), max);
             },
             getAddresses: function () {
-                return "[{ip: '123', port: 80}, {ip: '456', port: 80}]";
+                return [ContactNodeAddressFactory.createDummy()];
             },
             getLastSeen: function () {
                 return lastSeen;

@@ -4,6 +4,7 @@ import ContactNode = require('./ContactNode');
 import ContactNodeAddressInterface = require('./interfaces/ContactNodeAddressInterface');
 import IdInterface = require('./interfaces/IdInterface');
 import Id = require('./Id');
+import ContactNodeAddressFactory = require('./ContactNodeAddressFactory');
 
 class ContactNodeFactory implements ContactNodeFactoryInterface {
 
@@ -33,8 +34,8 @@ class ContactNodeFactory implements ContactNodeFactoryInterface {
 				return new Id(Id.byteBufferByBitString(id, 20), max);
 			},
 
-			getAddresses: function ():string {
-				return "[{ip: '123', port: 80}, {ip: '456', port: 80}]";
+			getAddresses: function ():Array<ContactNodeAddressInterface> {
+				return [ContactNodeAddressFactory.createDummy()];
 			},
 
 			getLastSeen: function ():number {

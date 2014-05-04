@@ -6,6 +6,19 @@ var ContactNodeAddressFactory = (function () {
     ContactNodeAddressFactory.prototype.create = function (ip, port) {
         return new ContactNodeAddress(ip, port);
     };
+
+    ContactNodeAddressFactory.createDummy = function () {
+        var getOctet = function () {
+            return Math.round(Math.random() * 255);
+        };
+
+        var getRandIp = function () {
+            //generate the ipaddress
+            return getOctet() + '.' + getOctet() + '.' + getOctet() + '.' + getOctet();
+        };
+
+        return new ContactNodeAddress(getRandIp(), Math.round(Math.random() * 100000));
+    };
     return ContactNodeAddressFactory;
 })();
 

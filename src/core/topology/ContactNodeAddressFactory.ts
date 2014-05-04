@@ -3,8 +3,24 @@ import ContactNodeAddressInterface = require('./interfaces/ContactNodeAddressInt
 import ContactNodeAddress = require('./ContactNodeAddress');
 
 class ContactNodeAddressFactory implements ContactNodeAddressFactoryInterface {
-	create (ip:string, port:number):ContactNodeAddressInterface {
+	public create (ip:string, port:number):ContactNodeAddressInterface {
 		return new ContactNodeAddress(ip, port);
+	}
+
+	public static createDummy():ContactNodeAddressInterface {
+		var getOctet = function():number {
+			return Math.round(Math.random()*255);
+		};
+
+		var getRandIp =function ():string {
+			//generate the ipaddress
+			return getOctet()
+				+ '.' + getOctet()
+				+ '.' + getOctet()
+				+ '.' + getOctet();
+		};
+
+		return new ContactNodeAddress(getRandIp(), Math.round(Math.random()*100000));
 	}
 }
 
