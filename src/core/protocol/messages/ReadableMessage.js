@@ -1,5 +1,3 @@
-var net = require('net');
-
 var Id = require('../../topology/Id');
 var MessageByteCheatsheet = require('./MessageByteCheatsheet');
 
@@ -44,10 +42,6 @@ var ReadableMessage = (function () {
         var ip = buffer.slice(0, 4).toJSON().join('.');
         var port = buffer.readUInt16BE(5);
 
-        if (!net.isIPv4(ip)) {
-            throw new Error('ReadableMessage: Extracted IPv4 is no IP.');
-        }
-
         return this._addressFactory.create(ip, port);
     };
 
@@ -60,10 +54,6 @@ var ReadableMessage = (function () {
             if (i !== 6) {
                 ip += ':';
             }
-        }
-
-        if (!net.isIPv6(ip)) {
-            throw new Error('ReadableMessage: Extracted IPv6 is no IP.');
         }
 
         return this._addressFactory.create(ip, port);
@@ -97,7 +87,7 @@ var ReadableMessage = (function () {
         }
 
         if (!result) {
-            throw new Error('ReadableMessage: Unknown message type.');
+            throw new Error('ReadableMessage~_extractMessageType: Unknown message type.');
         }
 
         this._msgType = result;
@@ -141,7 +131,7 @@ var ReadableMessage = (function () {
                 doRead = false;
             } else {
                 doRead = false;
-                throw new Error("ReadableMessage: Address does not seem to be protocol compliant.");
+                throw new Error("ReadableMessage~_extractSenderAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.");
             }
         }
 
