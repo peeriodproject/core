@@ -1,3 +1,193 @@
-/**
- * Created by Johnny on 04.05.14.
- */
+import net = require('net');
+
+import ReadableMessageInterface = require('./interfaces/ReadableMessageInterface');
+import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInterface');
+import ContactNodeFactoryInterface = require('../../topology/interfaces/ContactNodeFactoryInterface');
+import ContactNodeAddressInterface = require('../../topology/interfaces/ContactNodeAddressInterface');
+import ContactNodeAddressFactoryInterface = require('../../topology/interfaces/ContactNodeAddressFactoryInterface');
+import IdInterface = require('../../topology/interfaces/IdInterface');
+import Id = require('../../topology/Id');
+import MessageByteCheatsheet = require('./MessageByteCheatsheet');
+
+
+class ReadableMessage implements ReadableMessageInterface {
+
+	private _addressFactory:ContactNodeAddressFactoryInterface = null;
+	private _nodeFactory:ContactNodeFactoryInterface = null;
+
+	private _buffer:Buffer = null;
+	private _bufferLen:number = 0;
+	private _receiverId:IdInterface = null;
+	private _sender:ContactNodeInterface = null;
+	private _msgType:string = null;
+	private _payload:Buffer = null;
+
+	private _lastPosRead:number = 0;
+
+
+	constructor (buffer:Buffer, nodeFactory:ContactNodeFactoryInterface, addressFactory:ContactNodeAddressFactoryInterface) {
+		this._buffer = buffer;
+		this._bufferLen = buffer.length;
+		this._addressFactory = addressFactory;
+		this._nodeFactory = nodeFactory;
+	}
+
+	public deformat ():void {
+		if (!this._isProtocolMessage()) {
+			throw new Error("ReadableMessage: Buffer is not protocol compliant.");
+		}
+
+		this._lastPosRead = MessageByteCheatsheet.messageBegin.length;
+
+		this._lastPosRead = this._extractReceiverId(this._lastPosRead);
+
+		this._lastPosRead = this._extractSenderAsContactNode(this._lastPosRead);
+
+		this._lastPosRead = this._extractMessageType(this._lastPosRead);
+
+		this._lastPosRead = this._extractPayload(this._lastPosRead);
+
+	}
+
+	public discard ():void {
+		this._buffer = null;
+		this._payload = null;
+	}
+
+	private _contactNodeAddressByIPv4Buffer (buffer:Buffer):ContactNodeAddressInterface {
+		var ip:string = buffer.slice(0, 4).toJSON().join('.');
+		var port:number = buffer.readUInt16BE(5);
+
+		if (!net.isIPv4(ip)) {
+			throw new Error('ReadableMessage: Extracted IPv4 is no IP.');
+		}
+
+		return this._addressFactory.create(ip, port);
+	}
+
+	private _contactNodeAddressByIPv6Buffer (buffer:Buffer):ContactNodeAddressInterface {
+		var ip:string = null;
+		var port:number = buffer.readUInt16BE(17);
+
+		for (var i=0; i<7; i++) {
+			ip += buffer.slice(i * 2, 2).toString('hex');
+			if (i !== 6) {
+				ip += ':';
+			}
+		}
+
+		if (!net.isIPv6(ip)) {
+			throw new Error('ReadableMessage: Extracted IPv6 is no IP.');
+		}
+
+		return this._addressFactory.create(ip, port);
+	}
+
+	private _extractId (from:number):IdInterface {
+		var idBuffer = new Buffer(20);
+		this._buffer.copy(idBuffer, 0, from, 20);
+		return new Id(idBuffer, 160)
+	}
+
+	private _extractPayload (from:number):number {
+		this._payload = this._buffer.slice(++from, this._buffer.length - MessageByteCheatsheet.messageEnd.length);
+		return from + this._payload.length;
+	}
+
+	private _extractMessageType (from:number):number {
+		var msgTypeBytes:Buffer = this._buffer.slice(++from, 2);
+		var messageTypes = MessageByteCheatsheet.messageTypes;
+		var typesClear = Object.keys(messageTypes);
+		var result:string = null;
+
+		for (var i=0; i<typesClear.length; i++) {
+			var typeClear = typesClear[i];
+			var bytes = messageTypes[typeClear];
+
+			if (msgTypeBytes[0] === bytes[0] && msgTypeBytes[1] === bytes[1]) {
+				result = typeClear;
+				break;
+			}
+		}
+
+		if (!result) {
+			throw new Error('ReadableMessage: Unknown message type.');
+		}
+
+		this._msgType = result;
+
+		return ++from;
+	}
+
+	private _extractReceiverId (from:number):number {
+		this._receiverId = this._extractId(from);
+		return from + 20;
+	}
+
+	private _extractSenderAsContactNode (from:number):number {
+		var senderId:IdInterface = this._extractId(from);
+		from += 20;
+
+		var res = this._extractSenderAddressesAndBytesReadAsArray(from);
+		var senderAddresses:Array<ContactNodeAddressInterface> = res[0];
+		this._sender = this._nodeFactory.create(senderId, senderAddresses);
+
+		return res[1];
+	}
+
+	private _extractSenderAddressesAndBytesReadAsArray (from):any {
+		var doRead = true;
+		var result:Array<ContactNodeAddressInterface> = [];
+
+		while (doRead) {
+			var identByte = this._buffer[++from];
+			from++;
+
+			if (identByte === MessageByteCheatsheet.ipv4) {
+				var bytesToRead = 6;
+				result.push(this._contactNodeAddressByIPv4Buffer(this._buffer.slice(from, from + bytesToRead)));
+				from += bytesToRead;
+			}
+			else if (identByte === MessageByteCheatsheet.ipv6) {
+				var bytesToRead = 18;
+				result.push(this._contactNodeAddressByIPv6Buffer(this._buffer.slice(from, from + bytesToRead)));
+				from += bytesToRead;
+			}
+			else if (identByte === MessageByteCheatsheet.addressEnd) {
+				doRead = false;
+			}
+			else {
+				doRead = false;
+				throw new Error("ReadableMessage: Address does not seem to be protocol compliant.");
+			}
+		}
+
+		return [result, from];
+	}
+
+	private _isProtocolMessage ():boolean {
+		var msgBegin = MessageByteCheatsheet.messageBegin;
+		var msgEnd = MessageByteCheatsheet.messageEnd;
+
+		if (this._bufferLen < msgBegin.length + msgEnd.length) {
+			return false;
+		}
+
+		for (var i=0; i<msgBegin.length; i++) {
+			if (this._buffer[i] !== msgBegin[i]) {
+				return false;
+			}
+		}
+
+		for (var i=0; i<msgEnd.length; i++) {
+			if (this._buffer[this._bufferLen - (6 - i)] !== msgEnd[i]) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+}
+
+export = ReadableMessage;
