@@ -13,48 +13,40 @@ class ContactNodeFactory implements ContactNodeFactoryInterface {
 	}
 
 	public static createDummy ():ContactNodeInterface {
-		// dummy contact node generator
-		var max = 160;
+		var getId = function ():IdInterface {
+			var getRandomId = function ():string {
+				var str = '';
 
-		var getRandomId = function ():string {
-			var str = '';
+				for (var i = 160; i--;) {
+					str += (Math.round(Math.random())).toString();
+				}
 
-			for (var i = max; i--;) {
-				str += (Math.round(Math.random())).toString();
-			}
+				return str;
+			};
 
-			return str;
+			return new Id(Id.byteBufferByBitString(getRandomId(), 20), 160);
 		};
-		var id = getRandomId();
-		// node js is too fast for javascripts millis
-		var lastSeen = Math.round(Date.now() * Math.random());
 
-		return {
-			getId: function ():IdInterface {
-				return new Id(Id.byteBufferByBitString(id, 20), max);
-			},
-
-			getAddresses: function ():Array<ContactNodeAddressInterface> {
-				return [ContactNodeAddressFactory.createDummy()];
-			},
-
-			getLastSeen: function ():number {
-				return lastSeen;
-			},
-
-			updateLastSeen: function ():void {
-				lastSeen = Date.now();
-			},
-
-			toString: function () {
-				return JSON.stringify({
-					addresses: this.getAddresses(),
-					id       : this.getId(),
-					lastSeen : this.getLastSeen(),
-					publicKey: this.getPublicKey()
-				});
-			}
+		var getAddresses =  function ():Array<ContactNodeAddressInterface> {
+			return [ContactNodeAddressFactory.createDummy()];
 		};
+
+		var getLastSeen =  function ():number {
+			// node js is too fast for javascripts millis
+			return Math.round(Date.now() * Math.random());
+		};
+
+		return new ContactNode(getId(), getAddresses(), getLastSeen());
+
+		/*
+		 toString: function () {
+		 return JSON.stringify({
+		 addresses: this.getAddresses(),
+		 id       : this.getId(),
+		 lastSeen : this.getLastSeen()
+		 });
+		 }
+		 */
 	}
 }
 

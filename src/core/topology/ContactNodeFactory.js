@@ -11,45 +11,39 @@ var ContactNodeFactory = (function () {
     };
 
     ContactNodeFactory.createDummy = function () {
-        // dummy contact node generator
-        var max = 160;
+        var getId = function () {
+            var getRandomId = function () {
+                var str = '';
 
-        var getRandomId = function () {
-            var str = '';
+                for (var i = 160; i--;) {
+                    str += (Math.round(Math.random())).toString();
+                }
 
-            for (var i = max; i--;) {
-                str += (Math.round(Math.random())).toString();
-            }
+                return str;
+            };
 
-            return str;
+            return new Id(Id.byteBufferByBitString(getRandomId(), 20), 160);
         };
-        var id = getRandomId();
 
-        // node js is too fast for javascripts millis
-        var lastSeen = Math.round(Date.now() * Math.random());
-
-        return {
-            getId: function () {
-                return new Id(Id.byteBufferByBitString(id, 20), max);
-            },
-            getAddresses: function () {
-                return [ContactNodeAddressFactory.createDummy()];
-            },
-            getLastSeen: function () {
-                return lastSeen;
-            },
-            updateLastSeen: function () {
-                lastSeen = Date.now();
-            },
-            toString: function () {
-                return JSON.stringify({
-                    addresses: this.getAddresses(),
-                    id: this.getId(),
-                    lastSeen: this.getLastSeen(),
-                    publicKey: this.getPublicKey()
-                });
-            }
+        var getAddresses = function () {
+            return [ContactNodeAddressFactory.createDummy()];
         };
+
+        var getLastSeen = function () {
+            // node js is too fast for javascripts millis
+            return Math.round(Date.now() * Math.random());
+        };
+
+        return new ContactNode(getId(), getAddresses(), getLastSeen());
+        /*
+        toString: function () {
+        return JSON.stringify({
+        addresses: this.getAddresses(),
+        id       : this.getId(),
+        lastSeen : this.getLastSeen()
+        });
+        }
+        */
     };
     return ContactNodeFactory;
 })();
