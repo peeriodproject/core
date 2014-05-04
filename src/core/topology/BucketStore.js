@@ -50,9 +50,9 @@ var BucketStore = (function () {
 
         this.open();
     }
-    BucketStore.prototype.add = function (bucketKey, id, lastSeen, addresses, publicKey) {
+    BucketStore.prototype.add = function (bucketKey, id, lastSeen, addresses) {
         var txn = this._beginTransaction();
-        var added = this._add(txn, bucketKey, id, lastSeen, addresses, publicKey);
+        var added = this._add(txn, bucketKey, id, lastSeen, addresses);
 
         txn.commit();
 
@@ -66,7 +66,7 @@ var BucketStore = (function () {
         for (var i in contacts) {
             var contact = contacts[i];
 
-            added = this._add(txn, bucketKey, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses(), contact.getPublicKey());
+            added = this._add(txn, bucketKey, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
         }
 
         txn.commit();
@@ -196,17 +196,15 @@ var BucketStore = (function () {
     * @param {NodeBuffer} id
     * @param {number} lastSeen
     * @param {any} addresses
-    * @param {string} publicKey
     * @returns {boolean}
     */
-    BucketStore.prototype._add = function (txn, bucketKey, id, lastSeen, addresses, publicKey) {
+    BucketStore.prototype._add = function (txn, bucketKey, id, lastSeen, addresses) {
         var idKey = this._getIdKey(id);
         var lastSeenKey = this._getLastSeenKey(bucketKey, lastSeen);
         var value = {
             addresses: addresses,
             id: id,
-            lastSeen: lastSeen,
-            publicKey: publicKey
+            lastSeen: lastSeen
         };
 
         try  {

@@ -60,9 +60,9 @@ class BucketStore implements BucketStoreInterface {
 		this.open();
 	}
 
-	public add (bucketKey:string, id:NodeBuffer, lastSeen:number, addresses:any, publicKey:string):boolean {
+	public add (bucketKey:string, id:NodeBuffer, lastSeen:number, addresses:any):boolean {
 		var txn:lmdb.Txn = this._beginTransaction();
-		var added:boolean = this._add(txn, bucketKey, id, lastSeen, addresses, publicKey);
+		var added:boolean = this._add(txn, bucketKey, id, lastSeen, addresses);
 
 		txn.commit();
 
@@ -76,7 +76,7 @@ class BucketStore implements BucketStoreInterface {
 		for (var i in contacts) {
 			var contact:ContactNodeInterface = contacts[i];
 
-			added = this._add(txn, bucketKey, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses(), contact.getPublicKey());
+			added = this._add(txn, bucketKey, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
 		}
 
 		txn.commit();
@@ -207,17 +207,15 @@ class BucketStore implements BucketStoreInterface {
 	 * @param {NodeBuffer} id
 	 * @param {number} lastSeen
 	 * @param {any} addresses
-	 * @param {string} publicKey
 	 * @returns {boolean}
 	 */
-	private _add (txn:any, bucketKey:string, id:NodeBuffer, lastSeen:number, addresses:any, publicKey:string) {
+	private _add (txn:any, bucketKey:string, id:NodeBuffer, lastSeen:number, addresses:any) {
 		var idKey:string = this._getIdKey(id);
 		var lastSeenKey:string = this._getLastSeenKey(bucketKey, lastSeen);
 		var value:Object = {
 			addresses: addresses,
 			id       : id,
-			lastSeen : lastSeen,
-			publicKey: publicKey
+			lastSeen : lastSeen
 		};
 
 		try {

@@ -5,7 +5,7 @@ import Id = require('./Id');
 
 class ContactNodeFactory implements ContactNodeFactoryInterface {
 
-	public create(id:IdInterface, addresses:any, lastSeen:number, publicKey:any):ContactNodeInterface {
+	public create(id:IdInterface, addresses:any, lastSeen:number):ContactNodeInterface {
 		return null;
 	}
 
@@ -29,10 +29,6 @@ class ContactNodeFactory implements ContactNodeFactoryInterface {
 		return {
 			getId: function ():IdInterface {
 				return new Id(Id.byteBufferByBitString(id, 20), max);
-			},
-
-			getPublicKey: function ():string {
-				return 'pk-123456';
 			},
 
 			getAddresses: function ():string {

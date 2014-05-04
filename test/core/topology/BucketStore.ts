@@ -72,7 +72,7 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
 		var contact1:ContactNodeInterface = ContactNodeFactory.createDummy();
 		var contact2:ContactNodeInterface = ContactNodeFactory.createDummy();
 
-		store.add('bucket1', contact1.getId().getBuffer(), contact1.getLastSeen(), contact1.getAddresses(), contact1.getPublicKey());
+		store.add('bucket1', contact1.getId().getBuffer(), contact1.getLastSeen(), contact1.getAddresses());
 		store.contains('bucket1', contact1.getId().getBuffer()).should.be.true;
 
 		store.contains('bucket1', contact2.getId().getBuffer()).should.equal(contact1.getId().equals(contact2.getId()));
@@ -83,11 +83,10 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
 		var contactJSON = JSON.stringify({
 			addresses: contact.getAddresses(),
 			id       : contact.getId().getBuffer(),
-			lastSeen : contact.getLastSeen(),
-			publicKey: contact.getPublicKey()
+			lastSeen : contact.getLastSeen()
 		});
 
-		store.add('bucket1', contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses(), contact.getPublicKey());
+		store.add('bucket1', contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
 		store.get('bucket1', contact.getId().getBuffer()).should.equal(contactJSON);
 	});
 
@@ -106,7 +105,7 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
 	it('should correctly remove an item from the database even if it does not exists', function () {
 		var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
 
-		store.add('bucket1', contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses(), contact.getPublicKey());
+		store.add('bucket1', contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
 		store.remove('bucket1', contact.getId().getBuffer());
 
 		store.remove('randomBucket', contact.getId().getBuffer());
@@ -117,7 +116,7 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
 	it('should return the correct size items stored under the given bucket key', function () {
 		var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
 
-		store.add('bucket1', contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses(), contact.getPublicKey());
+		store.add('bucket1', contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
 		store.size('bucket1').should.equal(1);
 
 		store.size('bucket0').should.equal(0);

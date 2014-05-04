@@ -38,7 +38,7 @@ var Bucket = (function () {
         var internalCallback = callback || function (err) {
         };
 
-        this._store.add(this._key, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses(), contact.getPublicKey());
+        this._store.add(this._key, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
 
         internalCallback(null);
     };

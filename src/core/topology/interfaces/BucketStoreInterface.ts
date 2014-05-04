@@ -24,7 +24,7 @@ interface BucketStoreInterface extends ClosableInterface {
 	 * @param {any} addresses
 	 * @param {string} publicKey
 	 */
-	add (bucketKey:string, id:NodeBuffer, lastSeen:number, addresses:any, publicKey:string):boolean;
+	add (bucketKey:string, id:NodeBuffer, lastSeen:number, addresses:any):boolean;
 
 	/**
 	 * Adds multiple objects to the bucket store.

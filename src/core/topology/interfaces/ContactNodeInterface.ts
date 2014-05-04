@@ -36,14 +36,6 @@ interface ContactNodeInterface {
 	 */
 	getLastSeen ():number;
 
-	/**
-	 * Returns the public key of the contact node.
-	 *
-	 * @method core.topology.ContactNodeInterface#getPublicKey
-	 *
-	 * @returns {string}
-	 */
-	getPublicKey ():string; // PublicKeyInterface
 }
 
 export = ContactNodeInterface;

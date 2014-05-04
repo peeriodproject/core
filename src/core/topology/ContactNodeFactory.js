@@ -3,7 +3,7 @@ var Id = require('./Id');
 var ContactNodeFactory = (function () {
     function ContactNodeFactory() {
     }
-    ContactNodeFactory.prototype.create = function (id, addresses, lastSeen, publicKey) {
+    ContactNodeFactory.prototype.create = function (id, addresses, lastSeen) {
         return null;
     };
 
@@ -28,9 +28,6 @@ var ContactNodeFactory = (function () {
         return {
             getId: function () {
                 return new Id(Id.byteBufferByBitString(id, 20), max);
-            },
-            getPublicKey: function () {
-                return 'pk-123456';
             },
             getAddresses: function () {
                 return "[{ip: '123', port: 80}, {ip: '456', port: 80}]";

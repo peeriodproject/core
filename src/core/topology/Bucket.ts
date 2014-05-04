@@ -51,8 +51,7 @@ class Bucket implements BucketInterface {
 			this._key,
 			contact.getId().getBuffer(),
 			contact.getLastSeen(),
-			contact.getAddresses(),
-			contact.getPublicKey()
+			contact.getAddresses()
 		);
 
 		internalCallback(null);
