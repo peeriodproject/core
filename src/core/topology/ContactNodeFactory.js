@@ -1,10 +1,12 @@
+var ContactNode = require('./ContactNode');
+
 var Id = require('./Id');
 
 var ContactNodeFactory = (function () {
     function ContactNodeFactory() {
     }
-    ContactNodeFactory.prototype.create = function (id, addresses, lastSeen) {
-        return null;
+    ContactNodeFactory.prototype.create = function (id, addresses) {
+        return new ContactNode(id, addresses, Date.now());
     };
 
     ContactNodeFactory.createDummy = function () {

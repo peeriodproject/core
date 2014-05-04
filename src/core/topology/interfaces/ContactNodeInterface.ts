@@ -1,4 +1,6 @@
 import IdInterface = require('./IdInterface');
+import ContactNodeAddressInterface = require('./ContactNodeAddressInterface');
+
 
 /**
  * The `ContactNodeInterface` represents a single contact node and is used by the {@link core.topology.RoutingTableInterface}
@@ -16,7 +18,7 @@ interface ContactNodeInterface {
 	 *
 	 * @returns {string}
 	 */
-	getAddresses ():string; // Array<ContactNodeAddress>
+	getAddresses ():Array<ContactNodeAddressInterface>;
 
 	/**
 	 * Returns the id of the contact node.

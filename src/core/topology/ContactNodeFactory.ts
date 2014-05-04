@@ -1,12 +1,14 @@
 import ContactNodeFactoryInterface = require('./interfaces/ContactNodeFactoryInterface');
 import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
+import ContactNode = require('./ContactNode');
+import ContactNodeAddressInterface = require('./interfaces/ContactNodeAddressInterface');
 import IdInterface = require('./interfaces/IdInterface');
 import Id = require('./Id');
 
 class ContactNodeFactory implements ContactNodeFactoryInterface {
 
-	public create(id:IdInterface, addresses:any, lastSeen:number):ContactNodeInterface {
-		return null;
+	public create(id:IdInterface, addresses:Array<ContactNodeAddressInterface>):ContactNodeInterface {
+		return new ContactNode(id, addresses, Date.now());
 	}
 
 	public static createDummy ():ContactNodeInterface {
