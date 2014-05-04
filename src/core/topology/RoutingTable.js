@@ -1,3 +1,5 @@
+var ObjectUtils = require('../utils/ObjectUtils');
+
 var Bucket = require('./Bucket');
 
 // just for testing
@@ -13,7 +15,8 @@ var Bucket = require('./Bucket');
 * @param {topology.BucketStoreInterface} store
 */
 var RoutingTable = (function () {
-    function RoutingTable(config, id, store) {
+    // todo opts.onOpen, opts.onClose, closeOnProcessExit:true
+    function RoutingTable(config, id, store, options) {
         var _this = this;
         /**
         * The internally used config object instance. Usually just for reference and passed through to the Bucket
@@ -48,15 +51,36 @@ var RoutingTable = (function () {
         * @member {boolean} core.topology.RoutingTable#_isOpen
         */
         this._isOpen = false;
+        /**
+        *
+        * @private
+        * @member {core.topology.RoutingTableOptions} core.topology.RoutingTable~_options
+        */
+        this._options = null;
+        var defaults = {
+            closeOnProcessExit: true,
+            onCloseCallback: function (err) {
+            },
+            onOpenCallback: function (err) {
+            }
+        };
+
         this._config = config;
         this._id = id;
         this._store = store;
 
-        process.on('exit', function () {
-            _this.close();
-        });
+        // todo merge opts & defaults
+        console.log(ObjectUtils.extend(defaults, options));
 
-        this.open();
+        this._options = defaults;
+
+        if (this._options.closeOnProcessExit) {
+            process.on('exit', function () {
+                _this.close(_this._options.onCloseCallback);
+            });
+        }
+
+        this.open(this._options.onOpenCallback);
     }
     /**
     * Creates a bucket with the given key.
@@ -85,9 +109,11 @@ var RoutingTable = (function () {
     };
 
     // todo check bucket.close() return value
-    RoutingTable.prototype.close = function () {
+    RoutingTable.prototype.close = function (callback) {
+        var internalCallback = callback || this._options.onCloseCallback;
+
         if (!this._isOpen) {
-            return;
+            return internalCallback(null);
         }
 
         this._isOpen = false;
@@ -97,20 +123,27 @@ var RoutingTable = (function () {
         }
 
         this._buckets = null;
+        internalCallback(null);
     };
 
-    RoutingTable.prototype.getContactNode = function (id) {
+    RoutingTable.prototype.getContactNode = function (id, callback) {
+        var internalCallback = callback || function (err) {
+        };
         var bucketKey = this._getBucketKey(id);
-        return this._buckets[bucketKey].get(id);
+
+        this._buckets[bucketKey].get(id, internalCallback);
     };
 
-    RoutingTable.prototype.isOpen = function () {
-        return this._isOpen;
+    RoutingTable.prototype.isOpen = function (callback) {
+        return callback(null, this._isOpen);
     };
 
-    RoutingTable.prototype.open = function () {
-        if (this._isOpen)
-            return;
+    RoutingTable.prototype.open = function (callback) {
+        var internalCallback = callback || this._options.onOpenCallback;
+
+        if (this._isOpen) {
+            return internalCallback(null);
+        }
 
         this._buckets = {};
 
@@ -119,6 +152,7 @@ var RoutingTable = (function () {
         }
 
         this._isOpen = true;
+        internalCallback(null);
     };
 
     /*
@@ -126,9 +160,12 @@ var RoutingTable = (function () {
     contact.updateLastSeen();
     this.updateContactNode(contact);
     }*/
-    RoutingTable.prototype.updateContactNode = function (contact) {
+    RoutingTable.prototype.updateContactNode = function (contact, callback) {
+        var internalCallback = callback || function (err) {
+        };
         var bucketKey = this._getBucketKey(contact.getId());
-        this._buckets[bucketKey].update(contact);
+
+        this._buckets[bucketKey].update(contact, internalCallback);
     };
 
     RoutingTable.prototype.updateId = function (id) {

@@ -1,9 +1,12 @@
 import RoutingTableInterface = require('./interfaces/RoutingTableInterface');
+import RoutingTableOptions = require('./interfaces/RoutingTableOptions');
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
 import BucketInterface = require('./interfaces/BucketInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
 import IdInterface = require('./interfaces/IdInterface');
+
+import ObjectUtils = require('../utils/ObjectUtils');
 
 import BucketStore = require('./BucketStore');
 import Bucket = require('./Bucket');
@@ -64,6 +67,13 @@ class RoutingTable implements RoutingTableInterface {
 	private _isOpen:boolean = false;
 
 	/**
+	 *
+	 * @private
+	 * @member {core.topology.RoutingTableOptions} core.topology.RoutingTable~_options
+	 */
+	private _options:RoutingTableOptions = null;
+
+	/**
 	 * Creates a bucket with the given key.
 	 *
 	 * @private
@@ -89,22 +99,38 @@ class RoutingTable implements RoutingTableInterface {
 		return this._id.differsInHighestBit(id).toString();
 	}
 
-	constructor (config:ConfigInterface, id:IdInterface, store:BucketStoreInterface) {
+	// todo opts.onOpen, opts.onClose, closeOnProcessExit:true
+	constructor (config:ConfigInterface, id:IdInterface, store:BucketStoreInterface, options:RoutingTableOptions) {
+		var defaults:RoutingTableOptions = {
+			closeOnProcessExit: true,
+			onCloseCallback: function (err:Error) {},
+			onOpenCallback: function (err:Error) {}
+		};
+
 		this._config = config;
 		this._id = id;
 		this._store = store;
 
-		process.on('exit', () => {
-			this.close();
-		});
+		// todo merge opts & defaults
+		console.log(ObjectUtils.extend(defaults, options));
 
-		this.open();
+		this._options = defaults;
+
+		if (this._options.closeOnProcessExit) {
+			process.on('exit', () => {
+				this.close(this._options.onCloseCallback);
+			});
+		}
+
+		this.open(this._options.onOpenCallback);
 	}
 
 	// todo check bucket.close() return value
-	close ():void {
+	close (callback?:(err:Error) => any):void {
+		var internalCallback = callback || this._options.onCloseCallback;
+
 		if (!this._isOpen) {
-			return;
+			return internalCallback(null);
 		}
 
 		this._isOpen = false;
@@ -114,19 +140,26 @@ class RoutingTable implements RoutingTableInterface {
 		}
 
 		this._buckets = null;
+		internalCallback(null);
 	}
 
-	getContactNode (id:IdInterface):any {
+	getContactNode (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void {
+		var internalCallback = callback || function (err:Error) {};
 		var bucketKey = this._getBucketKey(id);
-		return this._buckets[bucketKey].get(id);
+
+		this._buckets[bucketKey].get(id, internalCallback);
 	}
 
-	isOpen ():boolean {
-		return this._isOpen;
+	isOpen (callback:(err:Error, isOpen:boolean) => any):boolean {
+		return callback(null, this._isOpen);
 	}
 
-	open ():void {
-		if (this._isOpen) return;
+	open (callback?:(err:Error) => any):void {
+		var internalCallback = callback || this._options.onOpenCallback;
+
+		if (this._isOpen) {
+			return internalCallback(null);
+		}
 
 		this._buckets = {};
 
@@ -135,6 +168,7 @@ class RoutingTable implements RoutingTableInterface {
 		}
 
 		this._isOpen = true;
+		internalCallback(null);
 	}
 
 	/*
@@ -143,9 +177,11 @@ class RoutingTable implements RoutingTableInterface {
 	 this.updateContactNode(contact);
 	 }*/
 
-	updateContactNode (contact:ContactNodeInterface):void {
+	updateContactNode (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {};
 		var bucketKey:string = this._getBucketKey(contact.getId());
-		this._buckets[bucketKey].update(contact);
+
+		this._buckets[bucketKey].update(contact, internalCallback);
 	}
 
 	updateId (id:IdInterface):void {

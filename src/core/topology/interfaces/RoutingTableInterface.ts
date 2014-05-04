@@ -1,4 +1,4 @@
-import ClosableInterface = require('../../utils/interfaces/ClosableInterface');
+import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
 import IdInterface = require('./IdInterface');
 import ContactNodeInterface = require('./ContactNodeInterface');
 
@@ -7,7 +7,7 @@ import ContactNodeInterface = require('./ContactNodeInterface');
  * @class core.topology.RoutingTableInterface
  * @extends core.utils.ClosableInterface
  */
-interface RoutingTableInterface extends ClosableInterface {
+interface RoutingTableInterface extends ClosableAsyncInterface {
 
 	/**
 	 * Returns the specified contact code by id
@@ -15,7 +15,7 @@ interface RoutingTableInterface extends ClosableInterface {
 	 * @param {core.topology.IdInterface} id The id of the contact node
 	 * @returns {ContactNodeInterface} The found contact node or null
 	 */
-	getContactNode(id:IdInterface):ContactNodeInterface;
+	getContactNode(id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void;
 
 	/**
 	 * Updates the specified contact node according to the protocol.
@@ -25,7 +25,7 @@ interface RoutingTableInterface extends ClosableInterface {
 	 *
 	 * @param {core.topology.ContactNodeInterface} contact
 	 */
-	updateContactNode(contact:ContactNodeInterface):void;
+	updateContactNode(contact:ContactNodeInterface, callback?:(err:Error) => any):void;
 
 	/**
 	 * IDEA: should be called whenever my ip changes
