@@ -115,13 +115,18 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 		routingTable.isOpen(function (err:Error, isOpen1:boolean) {
 			isOpen1.should.be.true;
 
-			routingTable.close(function (err:Error) {
-				routingTable.isOpen(function (err:Error, isOpen2:boolean) {
-					isOpen2.should.be.false;
-					done();
+			// double open check
+			routingTable.open(function (err:Error) {
+				// double close check
+				routingTable.close(function (err:Error) {
+					routingTable.close(function (err:Error) {
+						routingTable.isOpen(function (err:Error, isOpen2:boolean) {
+							isOpen2.should.be.false;
+							done();
+						});
+					});
 				});
-
-			})
+			});
 		});
 	});
 

@@ -112,10 +112,16 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
         routingTable.isOpen(function (err, isOpen1) {
             isOpen1.should.be.true;
 
-            routingTable.close(function (err) {
-                routingTable.isOpen(function (err, isOpen2) {
-                    isOpen2.should.be.false;
-                    done();
+            // double open check
+            routingTable.open(function (err) {
+                // double close check
+                routingTable.close(function (err) {
+                    routingTable.close(function (err) {
+                        routingTable.isOpen(function (err, isOpen2) {
+                            isOpen2.should.be.false;
+                            done();
+                        });
+                    });
                 });
             });
         });

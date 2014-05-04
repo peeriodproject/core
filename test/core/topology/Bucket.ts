@@ -149,8 +149,18 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
 			});
 		});
 
-		it('update', function () {
-			// todo update method
+		it('should correctly update a contact node @joern', function (done) {
+			var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
+
+			createStubbedBucketStore();
+
+			bucket.update(contact, function (err:Error) {
+				bucketStoreStub.remove.calledOnce.should.be.true;
+				bucketStoreStub.add.calledOnce.should.be.true;
+
+				done();
+			});
 		});
+
 	});
 });
