@@ -1,7 +1,5 @@
 var ObjectUtils = require('../utils/ObjectUtils');
 
-var Bucket = require('./Bucket');
-
 // just for testing
 //import Id = require('./Id');
 /**
@@ -15,9 +13,28 @@ var Bucket = require('./Bucket');
 * @param {topology.BucketStoreInterface} store
 */
 var RoutingTable = (function () {
-    // todo opts.onOpen, opts.onClose, closeOnProcessExit:true
-    function RoutingTable(config, id, store, options) {
+    function RoutingTable(config, id, bucketFactory, bucketStore, options) {
+        if (typeof options === "undefined") { options = {}; }
         var _this = this;
+        /**
+        * @private
+        * @member {core.topology.BucketFactoryInterface} core.topology~_bucketFactory
+        */
+        this._bucketFactory = null;
+        /**
+        * The internally used bucket store instance.
+        *
+        * @private
+        * @member {core.topology.BucketStoreInterface} core.topology.RoutingTable#_store
+        */
+        this._bucketStore = null;
+        /**
+        * The internally used list of buckets
+        *
+        * @private
+        * @member {Array.<topology.BucketInterface>} core.topology.RoutingTable#_buckets
+        */
+        this._buckets = {};
         /**
         * The internally used config object instance. Usually just for reference and passed through to the Bucket
         *
@@ -26,26 +43,12 @@ var RoutingTable = (function () {
         */
         this._config = null;
         /**
-        * The internally used bucket store instance.
-        *
-        * @private
-        * @member {core.topology.BucketStoreInterface} core.topology.RoutingTable#_store
-        */
-        this._store = null;
-        /**
         * The Id of the node who owns the routing table
         *
         * @private
         * @member {core.topology.IdInterface} core.topology.RoutingTable#_id
         */
         this._id = null;
-        /**
-        * The internally used list of buckets
-        *
-        * @private
-        * @member {Array.<topology.BucketInterface>} core.topology.RoutingTable#_buckets
-        */
-        this._buckets = {};
         /**
         * @private
         * @member {boolean} core.topology.RoutingTable#_isOpen
@@ -67,12 +70,12 @@ var RoutingTable = (function () {
 
         this._config = config;
         this._id = id;
-        this._store = store;
+        this._bucketFactory = bucketFactory;
+        this._bucketStore = bucketStore;
 
         // todo merge opts & defaults
-        console.log(ObjectUtils.extend(defaults, options));
-
-        this._options = defaults;
+        this._options = ObjectUtils.extend(defaults, options);
+        ;
 
         if (this._options.closeOnProcessExit) {
             process.on('exit', function () {
@@ -82,32 +85,6 @@ var RoutingTable = (function () {
 
         this.open(this._options.onOpenCallback);
     }
-    /**
-    * Creates a bucket with the given key.
-    *
-    * @private
-    * @method topology.RoutingTable#_createBucket
-    *
-    * @param {string} key
-    */
-    RoutingTable.prototype._createBucket = function (key) {
-        this._buckets[key] = new Bucket(this._config, key, this._store);
-    };
-
-    /**
-    * Returns the bucket key where the given id should be stored.
-    * See {@link core.topology.Id.differsInHighestBit} for more information.
-    *
-    * @private
-    * @method topology.RoutingTable#_getBucketKey
-    *
-    * @param {topology.IdInterface} id
-    * @return {string}
-    */
-    RoutingTable.prototype._getBucketKey = function (id) {
-        return this._id.differsInHighestBit(id).toString();
-    };
-
     // todo check bucket.close() return value
     RoutingTable.prototype.close = function (callback) {
         var internalCallback = callback || this._options.onCloseCallback;
@@ -155,11 +132,6 @@ var RoutingTable = (function () {
         internalCallback(null);
     };
 
-    /*
-    updateLastSeen(contact:ContactNodeInterface):void {
-    contact.updateLastSeen();
-    this.updateContactNode(contact);
-    }*/
     RoutingTable.prototype.updateContactNode = function (contact, callback) {
         var internalCallback = callback || function (err) {
         };
@@ -168,70 +140,38 @@ var RoutingTable = (function () {
         this._buckets[bucketKey].update(contact, internalCallback);
     };
 
+    // todo updateId Ideas
     RoutingTable.prototype.updateId = function (id) {
         return;
+    };
+
+    /**
+    * Creates a bucket with the given key.
+    *
+    * @private
+    * @method topology.RoutingTable#_createBucket
+    *
+    * @param {string} key
+    */
+    RoutingTable.prototype._createBucket = function (key) {
+        this._buckets[key] = this._bucketFactory.create(this._config, key, this._bucketStore);
+    };
+
+    /**
+    * Returns the bucket key where the given id should be stored.
+    * See {@link core.topology.Id.differsInHighestBit} for more information.
+    *
+    * @private
+    * @method topology.RoutingTable#_getBucketKey
+    *
+    * @param {topology.IdInterface} id
+    * @return {string}
+    */
+    RoutingTable.prototype._getBucketKey = function (id) {
+        return this._id.differsInHighestBit(id).toString();
     };
     return RoutingTable;
 })();
 
 module.exports = RoutingTable;
-/*
-// --- testing ---
-var my = new Id(Id.byteBufferByBitString('000010010000000000001110000100101000000000100010', 6), 48);
-// routing table construction
-var config = new JSONConfig('../../config/mainConfig', ['topology']),
-databasePath = (function () {
-var path = config.get('topology.bucketStore.databasePath');
-return process.cwd() + '/' + path;
-}()),
-bucketStore = new BucketStore('dbName', databasePath);
-var rt = new RoutingTable(config, my, bucketStore);
-// dummy data generator
-var getContact = function (max):ContactNodeInterface {
-var getRandomId = function ():string {
-var str = '';
-for (var i = max; i--;) {
-str += (Math.round(Math.random())).toString();
-}
-return str;
-},
-id = getRandomId(),
-lastSeen = Date.now();
-return {
-getId: function ():IdInterface {
-return new Id(Id.byteBufferByBitString(id, 6), max);
-},
-getPublicKey: function ():string {
-return 'pk-123456';
-},
-getAddresses: function ():string {
-return "[{ip: '123', port: 80}, {ip: '456', port: 80}]";
-},
-getLastSeen: function ():number {
-return lastSeen;
-},
-updateLastSeen: function ():void {
-lastSeen = Date.now();
-}
-};
-};
-var contacts = [],
-amount = 10000;
-// generate contacts
-for (var i = amount; i--;) {
-contacts[i] = getContact(48);
-}
-var t = Date.now();
-// push them to the db
-for (var i = amount; i--;) {
-rt.updateContactNode(contacts[i]);
-}
-t = Date.now() - t;
-console.log('added ' + amount + ' contacts in ' + t + ' ms');
-//console.log(rt);
-rt.close();*/
-// https://github.com/mikejihbe/metrics
-// https://github.com/felixge/node-measured
-// http://blog.3rd-eden.com/post/5809079469/theoretical-node-js-real-time-performance
-// http://gigaom.com/2012/11/07/nodefly-goal-better-app-performance-monitoring-for-node-js/
 //# sourceMappingURL=RoutingTable.js.map
