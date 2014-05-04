@@ -34,8 +34,8 @@ class Bucket implements BucketInterface {
 	 */
 	private _key:string = '';
 
-	constructor (config:ConfigInterface, key:string, store:BucketStoreInterface, openCallback?:(err:Error) => any) {
-		var internalOpenCallback = openCallback || function (err:Error) {};
+	constructor (config:ConfigInterface, key:string, store:BucketStoreInterface, onOpenCallback?:(err:Error) => any) {
+		var internalOpenCallback = onOpenCallback || function (err:Error) {};
 
 		this._config = config;
 		this._key = key;

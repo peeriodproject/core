@@ -3,7 +3,7 @@
 * @implements core.topology.BucketInterface
 */
 var Bucket = (function () {
-    function Bucket(config, key, store, openCallback) {
+    function Bucket(config, key, store, onOpenCallback) {
         /**
         * The internally used config object instance
         *
@@ -25,7 +25,7 @@ var Bucket = (function () {
         * @member {string} core.topology.Bucket#_key
         */
         this._key = '';
-        var internalOpenCallback = openCallback || function (err) {
+        var internalOpenCallback = onOpenCallback || function (err) {
         };
 
         this._config = config;
