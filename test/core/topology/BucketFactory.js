@@ -10,7 +10,7 @@ var Bucket = require('../../../src/core/topology/Bucket');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var BucketStore = require('../../../src/core/topology/BucketStore');
 
-describe('CORE --> TOPOLOGY --> BucketFactory @joern', function () {
+describe('CORE --> TOPOLOGY --> BucketFactory', function () {
     var sandbox;
     var configStub;
     var bucketStoreStub;

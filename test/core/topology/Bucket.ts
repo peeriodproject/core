@@ -18,7 +18,7 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
 	var sandbox:SinonSandbox;
 	var configStub:any;
 	var name:string;
-	var bucketStoreStub:any = {};
+	var bucketStoreStub:any;
 	var bucket:Bucket;
 	var createBucket = function (bucketStore:any) {
 		bucketStoreStub = bucketStore;

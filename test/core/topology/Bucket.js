@@ -15,7 +15,7 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
     var sandbox;
     var configStub;
     var name;
-    var bucketStoreStub = {};
+    var bucketStoreStub;
     var bucket;
     var createBucket = function (bucketStore) {
         bucketStoreStub = bucketStore;

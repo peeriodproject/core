@@ -4,7 +4,7 @@ require('should');
 
 import ContactNodeAddress = require('../../../src/core/topology/ContactNodeAddress');
 
-describe('CORE --> TOPOLOGY --> ContactNodeAddress @joern', function () {
+describe('CORE --> TOPOLOGY --> ContactNodeAddress', function () {
 
 	it ('should return the correct ip', function () {
 		var ip:string = '123.123.123.123';

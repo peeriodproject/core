@@ -25,7 +25,7 @@ describe('CORE --> TOPOLOGY --> ContactNodeFactory', function () {
         sandbox.restore();
     });
 
-    it('should correctly create Buckets', function () {
+    it('should correctly create contact nodes', function () {
         var contactNode = (new ContactNodeFactory()).create(idStub, [nodeAddressStub]);
         contactNode.should.be.an.instanceof(ContactNode);
     });

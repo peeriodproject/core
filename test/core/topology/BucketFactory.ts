@@ -11,7 +11,7 @@ import Bucket = require('../../../src/core/topology/Bucket');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import BucketStore = require('../../../src/core/topology/BucketStore');
 
-describe('CORE --> TOPOLOGY --> BucketFactory @joern', function () {
+describe('CORE --> TOPOLOGY --> BucketFactory', function () {
 	var sandbox:SinonSandbox;
 	var configStub:any;
 	var bucketStoreStub:any;
