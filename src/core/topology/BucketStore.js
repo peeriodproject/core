@@ -54,6 +54,7 @@ var BucketStore = (function () {
         return added;
     };
 
+    // todo remove depencency to ContactNodeInterface and use keyed objects instead
     BucketStore.prototype.addAll = function (bucketKey, contacts) {
         var txn = this._beginTransaction();
         var added = false;
@@ -104,12 +105,36 @@ var BucketStore = (function () {
     BucketStore.prototype.get = function (bucketKey, id) {
         var txn = this._beginReadOnlyTransaction();
         var cursor = this._getCursor(txn);
-        var value = txn.getString(this._databaseInstance, this._getIdKey(id));
+        var value = this._get(txn, id);
 
         cursor.close();
         txn.commit();
 
         return value;
+    };
+
+    BucketStore.prototype.getAll = function (bucketKey) {
+        var _this = this;
+        var txn = this._beginReadOnlyTransaction();
+        var cursor = this._getCursor(txn);
+        var bucketKeyShortcut = this._getBucketKey(bucketKey);
+        var values = [];
+
+        for (var found = cursor.goToRange(bucketKeyShortcut); found; found = cursor.goToNext()) {
+            // Stop the loop if the current key is no longer part of the bucket
+            if (found.indexOf(bucketKeyShortcut) !== 0) {
+                break;
+            }
+
+            cursor.getCurrentBinary(function (key, idBuffer) {
+                values.push(_this._get(txn, idBuffer));
+            });
+        }
+
+        cursor.close();
+        txn.commit();
+
+        return values;
     };
 
     BucketStore.prototype.isOpen = function () {
@@ -212,6 +237,10 @@ var BucketStore = (function () {
         }
 
         return true;
+    };
+
+    BucketStore.prototype._get = function (txn, id) {
+        return txn.getString(this._databaseInstance, this._getIdKey(id));
     };
 
     /**

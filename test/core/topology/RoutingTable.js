@@ -19,14 +19,14 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
     var bucketStub;
     var bucketFactoryStub;
     var bucketStoreStub;
-    var topologyK = 160;
+    var topologyBitLength = 160;
 
     beforeEach(function () {
         sandbox = sinon.sandbox.create();
         configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
             get: function (key) {
-                if (key === 'topology.k') {
-                    return topologyK;
+                if (key.toLowerCase() === 'topology.bitlength') {
+                    return topologyBitLength;
                 }
             }
         });
@@ -83,10 +83,10 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
         routingTable.close();
     });
 
-    it('should correctly create k buckets', function (done) {
+    it('should correctly create bitLength buckets', function (done) {
         var opts = {
             onOpenCallback: function () {
-                bucketFactoryStub.create.callCount.should.equal(topologyK);
+                bucketFactoryStub.create.callCount.should.equal(topologyBitLength);
                 done();
             }
         };
@@ -97,7 +97,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
     it('should correctly call the internal close method', function (done) {
         var opts = {
             onCloseCallback: function () {
-                if (bucketStub.close.callCount === topologyK) {
+                if (bucketStub.close.callCount === topologyBitLength) {
                     done();
                 }
             }

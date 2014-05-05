@@ -1,6 +1,7 @@
 {
     "topology": {
-        "k": 48,
+        "bitLength": 160,
+        "k": 20,
         "bucketStore": {
             "databasePath": "db"
         }

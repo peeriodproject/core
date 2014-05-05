@@ -83,6 +83,33 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
         store.get('bucket1', contact.getId().getBuffer()).should.equal(contactJSON);
     });
 
+    it('should correctly return all items stored in a specified bucket sorted by lastSeen @joern', function () {
+        var contacts = [];
+        var amount = 10;
+
+        for (var i = 0; i < amount; i++) {
+            var contact = ContactNodeFactory.createDummy();
+            contacts.push(contact);
+        }
+
+        // add items
+        store.addAll('bucket1', contacts);
+
+        var all = store.getAll('bucket1');
+        var lastTimestamp = 0;
+        var gotAmount = 0;
+
+        for (var i in all) {
+            var lastSeen = JSON.parse(all[i]).lastSeen;
+            lastSeen.should.be.greaterThan(lastTimestamp);
+
+            lastTimestamp = lastSeen;
+            gotAmount++;
+        }
+
+        gotAmount.should.be.equal(amount);
+    });
+
     it('should add multiple contacts at once', function () {
         var contact1 = ContactNodeFactory.createDummy();
         var contact2 = ContactNodeFactory.createDummy();

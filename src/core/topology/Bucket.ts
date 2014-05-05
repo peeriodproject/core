@@ -2,6 +2,7 @@ import BucketInterface = require('./interfaces/BucketInterface');
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
+import ContactNodeListInterface = require('./interfaces/ContactNodeListInterface');
 import IdInterface = require('./interfaces/IdInterface');
 
 /**
@@ -67,6 +68,10 @@ class Bucket implements BucketInterface {
 
 	public get (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void {
 		callback(null, this._store.get(this._key, id.getBuffer()));
+	}
+
+	getAll (callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
+		callback(null, this._store.getAll(this._key));
 	}
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
