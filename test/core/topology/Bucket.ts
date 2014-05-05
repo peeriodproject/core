@@ -97,6 +97,18 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
 			});
 		});
 
+		it('should call the internal getAll method', function (done) {
+			var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
+
+			createBucket(stubPublicApi(BucketStore));
+
+			bucket.getAll(function (err, contact) {
+				bucketStoreStub.getAll.calledOnce.should.be.true;
+
+				done();
+			});
+		});
+
 		it('should return the correct value from the internal isOpen method', function (done) {
 			createStubbedBucketStore({
 				isOpen: function () {

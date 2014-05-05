@@ -56,6 +56,10 @@ var Bucket = (function () {
         callback(null, this._store.get(this._key, id.getBuffer()));
     };
 
+    Bucket.prototype.getAll = function (callback) {
+        callback(null, this._store.getAll(this._key));
+    };
+
     Bucket.prototype.isOpen = function (callback) {
         callback(null, this._store.isOpen());
     };

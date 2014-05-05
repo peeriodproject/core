@@ -1,6 +1,7 @@
 import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
-import IdInterface = require('./IdInterface');
 import ContactNodeInterface = require('./ContactNodeInterface');
+import ContactNodeListInterface = require('./ContactNodeListInterface');
+import IdInterface = require('./IdInterface');
 
 /**
  * @interface
@@ -37,6 +38,13 @@ interface BucketInterface extends ClosableAsyncInterface {
 	 * @returns {any}
 	 */
 	get (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void;
+
+	/**
+	 * Returns all contacts from the bucket sorted by the last seen property.
+	 *
+	 * @param callback
+	 */
+	getAll (callback:(err:Error, contacts:ContactNodeListInterface) => any):void;
 
 	/**
 	 * Removes a contact node by id
