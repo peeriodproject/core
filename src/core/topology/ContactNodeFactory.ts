@@ -40,7 +40,13 @@ class ContactNodeFactory implements ContactNodeFactoryInterface {
 
 		var getLastSeen =  function ():number {
 			// node js is too fast for javascripts millis
-			return Math.round(Date.now() * Math.random());
+			var lastSeen = Math.round(Date.now() * Math.random()) + '';
+
+			if (lastSeen.length > 10 ) {
+				lastSeen = lastSeen.substr(0, 9);
+			}
+
+			return parseInt(lastSeen, 10);
 		};
 
 		return new ContactNode(getId(), getAddresses(), getLastSeen());
