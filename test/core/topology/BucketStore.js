@@ -7,7 +7,7 @@ var BucketStore = require('../../../src/core/topology/BucketStore');
 
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 
-describe('CORE --> TOPOLOGY --> BUCKETSTORE @joern', function () {
+describe('CORE --> TOPOLOGY --> BucketStore @joern', function () {
     var databasePath = testUtils.getFixturePath('core/topology/bucketstore/db');
     var store = null;
 
@@ -71,6 +71,8 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE @joern', function () {
 
         for (var i = 0; i < amount; i++) {
             var contact = ContactNodeFactory.createDummy();
+
+            //store.add('bucket1', contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
             contacts.push(contact);
         }
 
@@ -82,7 +84,7 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE @joern', function () {
         var gotAmount = 0;
 
         for (var i in all) {
-            var lastSeen = all[i]['lastSeen'];
+            var lastSeen = all[i].lastSeen;
 
             lastSeen.should.be.greaterThan(lastTimestamp);
 

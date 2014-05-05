@@ -10,20 +10,27 @@ import Bucket = require('../../../src/core/topology/Bucket');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import BucketStore = require('../../../src/core/topology/BucketStore');
 import ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
+import ContactNodeAddressListInterface = require('../../../src/core/topology/interfaces/ContactNodeAddressListInterface');
 import ContactNodeInterface = require('../../../src/core/topology/interfaces/ContactNodeInterface');
+import ContactNodeListInterface = require('../../../src/core/topology/interfaces/ContactNodeListInterface');
+import ContactNodeObjectInterface = require('../../../src/core/topology/interfaces/ContactNodeObjectInterface');
+import ContactNodeObjectListInterface = require('../../../src/core/topology/interfaces/ContactNodeObjectListInterface');
 
-describe('CORE --> TOPOLOGY --> BUCKET @joern', function () {
+import ContactNode= require('../../../src/core/topology/ContactNode');
+
+describe('CORE --> TOPOLOGY --> Bucket @_joern', function () {
 	// http://stackoverflow.com/a/14041593
 	var sandbox:SinonSandbox;
 	var configStub:any;
 	var name:number;
 	var bucketStoreStub:any;
+	var contactNodeFactoryStub:any;
 	var bucket:Bucket;
 	var maxBucketSize:number = 20;
 
 	var createBucket = function (bucketStore:any) {
 		bucketStoreStub = bucketStore;
-		bucket = new Bucket(configStub, name, maxBucketSize, bucketStoreStub);
+		bucket = new Bucket(configStub, name, maxBucketSize, bucketStoreStub, contactNodeFactoryStub);
 	};
 	var stubPublicApi = function (klass:Function, apiMethodCallbacks:testUtils.publicApiCallbackList = {}) {
 		return testUtils.stubPublicApi(sandbox, klass, apiMethodCallbacks);
@@ -37,6 +44,7 @@ describe('CORE --> TOPOLOGY --> BUCKET @joern', function () {
 		configStub = stubPublicApi(ObjectConfig);
 		// random bucket name (0 < name < 160
 		name = Math.round(Math.random() * 160);
+		contactNodeFactoryStub = testUtils.stubPublicApi(sandbox, ContactNodeFactory);
 	});
 
 	afterEach(function () {
@@ -48,7 +56,7 @@ describe('CORE --> TOPOLOGY --> BUCKET @joern', function () {
 		bucket.should.be.an.instanceof(Bucket);
 	});
 
-	describe ('should correctly limit the bucket size an return an error in the callback', function () {
+	describe('should correctly limit the bucket size an return an error in the callback', function () {
 
 		it('should correctly call the add method', function (done) {
 			createStubbedBucketStore({
@@ -87,6 +95,74 @@ describe('CORE --> TOPOLOGY --> BUCKET @joern', function () {
 			});
 		});
 
+	});
+
+	describe('should correctly create contact node objects from the object from the bucket store', function () {
+
+		var createNodeAddressList = function (nodeAddresses:ContactNodeAddressListInterface):Array<{ _ip:string; _port:number; }> {
+			var addresses:Array<{ _ip:string; _port:number; }> = [];
+
+			// create address objects
+			for (var i in nodeAddresses) {
+				addresses.push({
+					_ip: nodeAddresses[i].getIp(),
+					_port: nodeAddresses[i].getPort()
+				});
+			}
+
+			return addresses;
+		};
+
+		it('Bucket.get should correctly return a ContactNode instance', function (done) {
+			contactNodeFactoryStub = new ContactNodeFactory();
+
+			createStubbedBucketStore({
+				get: function ():ContactNodeObjectInterface {
+					var dummy:ContactNodeInterface = ContactNodeFactory.createDummy();
+					var obj:ContactNodeObjectInterface = {
+						id       : dummy.getId().getBuffer(),
+						lastSeen : dummy.getLastSeen(),
+						addresses: createNodeAddressList(dummy.getAddresses())
+					};
+
+					return obj;
+				}
+			});
+
+			bucket.get(ContactNodeFactory.createDummy().getId(), function (err:Error, contact:ContactNodeInterface) {
+				contact.should.be.an.instanceof(ContactNode);
+				done();
+			});
+		});
+
+		it('Bucket.getAll should correctly return an array of ContactNode instances', function (done) {
+			contactNodeFactoryStub = new ContactNodeFactory();
+
+			createStubbedBucketStore({
+				getAll: function ():ContactNodeObjectListInterface {
+					var dummies:ContactNodeObjectListInterface = [];
+
+					for (var i = 0; i < 10; i++) {
+						var dummy:ContactNodeInterface = ContactNodeFactory.createDummy();
+
+						var dummyObject:ContactNodeObjectInterface = {
+							id       : dummy.getId().getBuffer(),
+							lastSeen : dummy.getLastSeen(),
+							addresses: createNodeAddressList(dummy.getAddresses())
+						};
+
+						dummies.push(dummyObject);
+					}
+
+					return dummies;
+				}
+			});
+
+			bucket.getAll(function(err:Error, contacts:ContactNodeListInterface) {
+				contacts[0].should.be.an.instanceof(ContactNode);
+				done();
+			});
+		});
 	});
 
 	describe('should correctly call the internally bucket store', function () {
