@@ -55,7 +55,7 @@ class BucketStore implements BucketStoreInterface {
 		this.open();
 	}
 
-	public add (bucketKey:string, id:NodeBuffer, lastSeen:number, addresses:any):boolean {
+	public add (bucketKey:string, id:Buffer, lastSeen:number, addresses:any):boolean {
 		var txn:lmdb.Txn = this._beginTransaction();
 		var added:boolean = this._add(txn, bucketKey, id, lastSeen, addresses);
 
@@ -64,6 +64,7 @@ class BucketStore implements BucketStoreInterface {
 		return added;
 	}
 
+	// todo remove depencency to ContactNodeInterface and use keyed objects instead
 	public addAll (bucketKey:string, contacts:Array<ContactNodeInterface>):boolean {
 		var txn:lmdb.Txn = this._beginTransaction();
 		var added:boolean = false;
@@ -93,7 +94,7 @@ class BucketStore implements BucketStoreInterface {
 		this._databaseEnvironment = null;
 	}
 
-	public contains (bucketKey:string, id:NodeBuffer):boolean {
+	public contains (bucketKey:string, id:Buffer):boolean {
 		return (this.get(bucketKey, id) !== null);
 	}
 
@@ -112,15 +113,39 @@ class BucketStore implements BucketStoreInterface {
 		txn.commit();
 	}
 
-	public get (bucketKey:string, id:NodeBuffer):any {
+	public get (bucketKey:string, id:Buffer):any {
 		var txn:lmdb.Txn = this._beginReadOnlyTransaction();
 		var cursor:lmdb.Cursor = this._getCursor(txn);
-		var value:string = txn.getString(this._databaseInstance, this._getIdKey(id));
+		var value:string = this._get(txn, id);
 
 		cursor.close();
 		txn.commit();
 
 		return value;
+	}
+
+	public getAll (bucketKey:string):any {
+		var txn:lmdb.Txn = this._beginReadOnlyTransaction();
+		var cursor:lmdb.Cursor = this._getCursor(txn);
+		var bucketKeyShortcut = this._getBucketKey(bucketKey);
+		var values:Array<string> = [];
+
+		// Go the the first occourence of `bucketKey` and iterate from there
+		for (var found = cursor.goToRange(bucketKeyShortcut); found; found = cursor.goToNext()) {
+			// Stop the loop if the current key is no longer part of the bucket
+			if (found.indexOf(bucketKeyShortcut) !== 0) {
+				break;
+			}
+
+			cursor.getCurrentBinary((key, idBuffer) => {
+				values.push(this._get(txn, idBuffer));
+			});
+		}
+
+		cursor.close();
+		txn.commit();
+
+		return values;
 	}
 
 	public isOpen ():boolean {
@@ -146,7 +171,7 @@ class BucketStore implements BucketStoreInterface {
 		this._isOpen = true;
 	}
 
-	public remove (bucketKey:string, id:NodeBuffer):boolean {
+	public remove (bucketKey:string, id:Buffer):boolean {
 		// todo Typescript: propper return type (callback vs return)
 		var contact:any = this.get(bucketKey, id);
 		var lastSeen:number;
@@ -203,7 +228,7 @@ class BucketStore implements BucketStoreInterface {
 	 * @param {any} addresses
 	 * @returns {boolean}
 	 */
-	private _add (txn:any, bucketKey:string, id:NodeBuffer, lastSeen:number, addresses:any) {
+	private _add (txn:lmdb.Txn, bucketKey:string, id:Buffer, lastSeen:number, addresses:any) {
 		var idKey:string = this._getIdKey(id);
 		var lastSeenKey:string = this._getLastSeenKey(bucketKey, lastSeen);
 		var value:Object = {
@@ -224,6 +249,10 @@ class BucketStore implements BucketStoreInterface {
 		}
 
 		return true;
+	}
+
+	private _get(txn:lmdb.Txn, id:Buffer) {
+		return txn.getString(this._databaseInstance, this._getIdKey(id));
 	}
 
 	/**
@@ -287,7 +316,7 @@ class BucketStore implements BucketStoreInterface {
 	 * @param {Buffer} id
 	 * @returns {string}
 	 */
-	private _getIdKey (id:NodeBuffer):string {
+	private _getIdKey (id:Buffer):string {
 		return this._getIdValue(id);
 	}
 
@@ -299,7 +328,7 @@ class BucketStore implements BucketStoreInterface {
 	 * @param {Buffer} id
 	 * @returns {string}
 	 */
-	private _getIdValue (id:NodeBuffer):string {
+	private _getIdValue (id:Buffer):string {
 		return id.toString('hex');
 	}
 
@@ -315,6 +344,7 @@ class BucketStore implements BucketStoreInterface {
 	private _getLastSeenKey (bucketKey:string, lastSeen:number):string {
 		return this._getBucketKey(bucketKey) + lastSeen;
 	}
+
 }
 
 export = BucketStore;

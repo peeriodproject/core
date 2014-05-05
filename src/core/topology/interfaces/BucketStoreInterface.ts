@@ -58,6 +58,7 @@ interface BucketStoreInterface extends ClosableInterface {
 	 * Returns the object stored for the specified bucket/id combination as JSON-Object with sorted keys.
 	 *
 	 * todo json example
+	 * todo specify return value type
 	 *
 	 * @method core.topology.BucketStoreInterface#get
 	 *
@@ -67,6 +68,17 @@ interface BucketStoreInterface extends ClosableInterface {
 	 * @returns {any}
 	 */
 	get (bucketKey:string, id:Buffer):any;
+
+	/**
+	 * Returns all objects stored under the specified bucketKey
+	 *
+	 * todo specify return value type
+	 *
+	 * @param {string} bucketKey
+	 * @returns {any}
+	 */
+	getAll (bucketKey:string):any;
+
 
 	/**
 	 * Removes the specified bucket/id combination from the store.
