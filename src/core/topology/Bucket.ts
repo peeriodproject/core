@@ -39,13 +39,21 @@ class Bucket implements BucketInterface {
 	 */
 	private _keyString:string = '';
 
-	constructor (config:ConfigInterface, key:number, store:BucketStoreInterface, onOpenCallback?:(err:Error) => any) {
+	/**
+	 * The maximum amount of contact nodes the bucket should handle.
+	 *
+	 * @member {string} core.topology.Bucket~_maxBucketSize
+	 */
+	private _maxBucketSize:number = -1;
+
+	constructor (config:ConfigInterface, key:number, maxBucketSize:number, store:BucketStoreInterface, onOpenCallback?:(err:Error) => any) {
 		var internalOpenCallback = onOpenCallback || function (err:Error) {};
 
 		this._config = config;
 		this._key = key;
-		this._keyString = this._key.toString();
+		this._maxBucketSize = maxBucketSize;
 		this._store = store;
+		this._keyString = this._key.toString();
 
 		this.open(internalOpenCallback);
 	}
@@ -53,14 +61,19 @@ class Bucket implements BucketInterface {
 	public add (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {};
 
-		this._store.add(
-			this._keyString,
-			contact.getId().getBuffer(),
-			contact.getLastSeen(),
-			contact.getAddresses()
-		);
+		if (this._store.size(this._keyString) < this._maxBucketSize) {
+			this._store.add(
+				this._keyString,
+				contact.getId().getBuffer(),
+				contact.getLastSeen(),
+				contact.getAddresses()
+			);
 
-		internalCallback(null);
+			internalCallback(null);
+		}
+		else {
+			internalCallback(new Error('Bucket.add: Cannot add another contact. The Bucket is already full.'));
+		}
 	}
 
 	public close (callback?:(err:Error) => any):void {

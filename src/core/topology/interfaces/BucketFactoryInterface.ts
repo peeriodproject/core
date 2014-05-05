@@ -14,11 +14,12 @@ interface BucketFactoryInterface {
 	 * @method core.topology.BucketFactoryInterface#create
 	 *
 	 * @param {core.topology.ConfigInterface} config The config object which stores the `topology.k` value
-	 * @param {string} key The name of the bucket
+	 * @param {string} bucketKey The name of the bucket
+	 * @param {number} maxBucketSize The maximum amount of contact nodes
 	 * @param {core.topology.BucketStoreInterface} store The internally used bucket store
 	 * @returns {core.topology.BucketInterface}
 	 */
-	create (config:ConfigInterface, key:number, store:BucketStoreInterface):BucketInterface;
+	create (config:ConfigInterface, key:number, maxBucketSize:number, store:BucketStoreInterface):BucketInterface;
 
 }
 

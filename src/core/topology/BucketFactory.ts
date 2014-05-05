@@ -13,8 +13,8 @@ import Bucket = require('./Bucket');
  */
 class BucketFactory implements BucketFactoryInterface {
 
-	public create (config:ConfigInterface, key:number, store:BucketStoreInterface):BucketInterface {
-		return new Bucket(config, key, store);
+	public create (config:ConfigInterface, bucketKey:number, maxBucketSize:number, store:BucketStoreInterface):BucketInterface {
+		return new Bucket(config, bucketKey, maxBucketSize, store);
 	}
 
 }
