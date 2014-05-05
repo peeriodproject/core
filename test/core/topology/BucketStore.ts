@@ -2,8 +2,7 @@
 
 require('should');
 
-var fs = require('fs');
-var path = require('path');
+import testUtils = require('../../utils/testUtils');
 
 import Id = require('../../../src/core/topology/Id');
 import BucketStore = require('../../../src/core/topology/BucketStore');
@@ -12,31 +11,11 @@ import ContactNodeFactory = require('../../../src/core/topology/ContactNodeFacto
 import ContactNodeInterface = require('../../../src/core/topology/interfaces/ContactNodeInterface');
 
 describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
-	/** @see http://www.geedew.com/2012/10/24/remove-a-directory-that-is-not-empty-in-nodejs/ */
-	var deleteFolderRecursive = function (path) {
-		if (fs.existsSync(path)) {
-			fs.readdirSync(path).forEach(function (file, index) {
-				var curPath = path + '/' + file;
-				if (fs.lstatSync(curPath).isDirectory()) { // recurse
-					deleteFolderRecursive(curPath);
-				}
-				else { // delete file
-					fs.unlinkSync(curPath);
-				}
-			});
-
-			fs.rmdirSync(path);
-		}
-	},
-	databasePath:string = path.join(process.cwd(), 'test/fixtures/core/topology/bucketstore/db'),
-	store:BucketStoreInterface = null;
+	var databasePath:string = testUtils.getFixturePath('core/topology/bucketstore/db');
+	var store:BucketStoreInterface = null;
 
 	beforeEach(function () {
-		// create the temporary database folder
-		if (!fs.existsSync(databasePath)) {
-			fs.mkdirSync(databasePath);
-		}
-
+		testUtils.createFolder(databasePath);
 		store = new BucketStore('name', databasePath);
 
 	});
@@ -47,7 +26,7 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
 		store = null;
 
 		// remove the temporary database folder
-		deleteFolderRecursive(databasePath);
+		testUtils.deleteFolderRecursive(databasePath);
 	});
 
 	it('should correctly instantiate BucketStore without error', function () {

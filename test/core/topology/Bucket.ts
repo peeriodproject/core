@@ -4,7 +4,6 @@ require('should');
 
 import sinon = require('sinon');
 
-import path = require('path');
 import testUtils = require('../../utils/testUtils');
 
 import Bucket = require('../../../src/core/topology/Bucket');
