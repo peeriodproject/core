@@ -43,15 +43,15 @@ class ContactNodeAddress implements ContactNodeAddressInterface {
 		this._port = port;
 	}
 
-	getIp ():string {
+	public getIp ():string {
 		return this._ip;
 	}
 
-	getPort ():number {
+	public getPort ():number {
 		return this._port;
 	}
 
-	getAddressAsByteBuffer():Buffer {
+	public getAddressAsByteBuffer():Buffer {
 		var buf = null;
 		if (this._isV4) {
 			buf = new Buffer(6);
