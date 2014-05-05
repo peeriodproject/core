@@ -97,6 +97,14 @@ var RoutingTable = (function () {
         internalCallback(null);
     };
 
+    RoutingTable.prototype.getClosestContactNodes = function (id, callback) {
+        var internalCallback = callback || function (err) {
+        };
+
+        var startBucketKey = this._getBucketKey(id);
+        console.log(startBucketKey);
+    };
+
     RoutingTable.prototype.getContactNode = function (id, callback) {
         var internalCallback = callback || function (err) {
         };
