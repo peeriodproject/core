@@ -1,3 +1,5 @@
+/// <reference path='../../../../ts-definitions/node/node.d.ts' />
+
 /**
  * The `ContactNodeAddressInterface` represents a single Ip/Port combination at which the contact node is reachable from the outside.
  *
@@ -19,6 +21,8 @@ interface ContactNodeAddressInterface {
 	 * @returns {number}
 	 */
 	getPort ():number;
+
+	getAddressAsByteBuffer():Buffer;
 
 }
 
