@@ -38,12 +38,12 @@ declare module "node-lmdb" {
 		constructor (opts?:TxnOptions);
 		del(dbi:Dbi, key:any);
 
-		getBinary(dbi:Dbi, key:any):NodeBuffer;
+		getBinary(dbi:Dbi, key:any):Buffer;
 		getBoolean(dbi:Dbi, key:any):boolean;
 		getNumber(dbi:Dbi, key:any):number;
 		getString(dbi:Dbi, key:any):string;
 
-		putBinary(dbi:Dbi, key:any, value:NodeBuffer);
+		putBinary(dbi:Dbi, key:any, value:Buffer);
 		putBoolean(dbi:Dbi, key:any, value:boolean);
 		putNumber(dbi:Dbi, key:any, value:number);
 		putString(dbi:Dbi, key:any, value:string);
@@ -53,7 +53,7 @@ declare module "node-lmdb" {
 		constructor (txn:Txn, dbi:Dbi);
 		close():void;
 		del():void;
-		getCurrentBinary(callback:(key:any, value:NodeBuffer) => any):void;
+		getCurrentBinary(callback:(key:any, value:Buffer) => any):void;
 		getCurrentBoolean(callback:(key:any, value:boolean) => any ):void;
 		getCurrentNumber(callback:(key:any, value:number) => any ):void;
 		getCurrentString(callback:(key:any, value:string) => any ):void;
