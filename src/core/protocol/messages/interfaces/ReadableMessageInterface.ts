@@ -6,6 +6,7 @@
  */
 interface ReadableMessageInterface {
 
+	// todo move into constructor?!
 	deformat ():void;
 
 	discard ():void;

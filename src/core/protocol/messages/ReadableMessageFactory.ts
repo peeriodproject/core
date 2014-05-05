@@ -28,7 +28,7 @@ class ReadableMessageFactory implements ReadableMessageFactoryInterface {
 		this._addressFactory = new ContactNodeAddressFactory();
 	}
 
-	create (buffer:NodeBuffer):ReadableMessageInterface {
+	public create (buffer:NodeBuffer):ReadableMessageInterface {
 		return new ReadableMessage(buffer, this._nodeFactory, this._addressFactory);
 	}
 

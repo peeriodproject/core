@@ -23,9 +23,9 @@ class FreeGeoIp implements ExternalIPObtainerInterface {
 	 * The expected JSON attribute which holds the IP.
 	 *
 	 * @private
-	 * @member {string} FreeGeoIp~_attr
+	 * @member {string} FreeGeoIp~_attribute
 	 */
-	private _attr = 'ip';
+	private _attribute = 'ip';
 
 	public obtainIP (callback:(err:Error, ip:string) => any) {
 		var callbackCalled:boolean = false;
@@ -38,6 +38,7 @@ class FreeGeoIp implements ExternalIPObtainerInterface {
 
 		http.get(this._url, (res) => {
 			var body = '';
+
 			if (res.statusCode === 200) {
 				res.on('data', function (chunk) {
 					if (chunk) {
@@ -45,7 +46,7 @@ class FreeGeoIp implements ExternalIPObtainerInterface {
 					}
 				}).on('end', () => {
 					try {
-						var ip = JSON.parse(body)[this._attr];
+						var ip = JSON.parse(body)[this._attribute];
 						if (net.isIP(ip)) {
 							doCallback(null, ip);
 						}
@@ -72,7 +73,7 @@ class FreeGeoIp implements ExternalIPObtainerInterface {
 	 * @param {string} attr
 	 */
 	public setIpAttribute (attr:string) {
-		this._attr = attr;
+		this._attribute = attr;
 	}
 
 	/**
@@ -83,6 +84,7 @@ class FreeGeoIp implements ExternalIPObtainerInterface {
 	public setUrl (url:string) {
 		this._url = url;
 	}
+
 }
 
 export = FreeGeoIp;
