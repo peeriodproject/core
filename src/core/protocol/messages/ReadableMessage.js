@@ -4,6 +4,10 @@ var MessageByteCheatsheet = require('./MessageByteCheatsheet');
 /**
 * @class core.protocol.messages.ReadableMessage
 * @implements core.protocol.messages.ReadableMessageInterface
+*
+* @param {Buffer} buffer The message buffer
+* @param {core.topology.ContactNodeFactoryInterface} nodeFactory A contact node factory
+* @param {core.topology.ContactNodeAddressFactoryInterface} addressFactory An address factory.
 */
 var ReadableMessage = (function () {
     function ReadableMessage(buffer, nodeFactory, addressFactory) {
@@ -12,18 +16,26 @@ var ReadableMessage = (function () {
         */
         this._addressFactory = null;
         /**
+        * The message buffer.
+        *
         * @member {Buffer} core.protocol.messages.ReadableMessage~_buffer
         */
         this._buffer = null;
         /**
+        * Length of the message buffer.
+        *
         * @member {number} core.protocol.messages.ReadableMessage~_bufferLength
         */
         this._bufferLength = 0;
         /**
+        * A helper member for remembering which bytes have already been read and processed.
+        *
         * @member {number}  core.protocol.messages.ReadableMessage~_lastPosRead
         */
         this._lastPosRead = 0;
         /**
+        * The type of protocol message (e.g. PING, PONG, etc.)
+        *
         * @member {string} core.protocol.messages.ReadableMessage~_messageType
         */
         this._messageType = null;
@@ -32,14 +44,20 @@ var ReadableMessage = (function () {
         */
         this._nodeFactory = null;
         /**
+        * The slice of message buffer constituting the payload of the message.
+        *
         * @member {Buffer} core.protocol.messages.ReadableMessage~_payload
         */
         this._payload = null;
         /**
+        * The ID of the intended receiver of the message.
+        *
         * @member {core.topology.IdInterface} core.protocol.messages.ReadableMessage~_receiverId
         */
         this._receiverId = null;
         /**
+        * The sender object.
+        *
         * @member {core.topology.ContactNodeInterface} core.protocol.messages.ReadableMessage~_sender
         */
         this._sender = null;
@@ -50,6 +68,69 @@ var ReadableMessage = (function () {
 
         this._deformat();
     }
+    ReadableMessage.prototype.discard = function () {
+        this._buffer = null;
+        this._payload = null;
+    };
+
+    ReadableMessage.prototype.getMessageType = function () {
+        return this._messageType;
+    };
+
+    ReadableMessage.prototype.getPayload = function () {
+        return this._payload;
+    };
+
+    ReadableMessage.prototype.getReceiverId = function () {
+        return this._receiverId;
+    };
+
+    ReadableMessage.prototype.getSender = function () {
+        return this._sender;
+    };
+
+    /**
+    * Makes a ContactNodeAddress out of a buffer representing an IPv4 address.
+    *
+    * @method core.protocol.messages.ReadableMessage~_contactNodeAddressByIPv4Buffer
+    *
+    * @param {Buffer} buffer
+    * @returns {ContactNodeAddressInterface}
+    */
+    ReadableMessage.prototype._contactNodeAddressByIPv4Buffer = function (buffer) {
+        var ip = buffer.slice(0, 4).toJSON().join('.');
+        var port = buffer.readUInt16BE(4);
+
+        return this._addressFactory.create(ip, port);
+    };
+
+    /**
+    * Makes a ContactNodeAddress out of a buffer representing an IPv6 address.
+    *
+    * @method core.protocol.messages.ReadableMessage~_contactNodeAddressByIPv6Buffer
+    *
+    * @param {Buffer} buffer
+    * @returns {ContactNodeAddressInterface}
+    */
+    ReadableMessage.prototype._contactNodeAddressByIPv6Buffer = function (buffer) {
+        var ip = '';
+        var port = buffer.readUInt16BE(16);
+
+        for (var i = 0; i < 8; i++) {
+            ip += buffer.slice(i * 2, i * 2 + 2).toString('hex');
+            if (i !== 7) {
+                ip += ':';
+            }
+        }
+
+        return this._addressFactory.create(ip, port);
+    };
+
+    /**
+    * Kicks off the extracting process.
+    *
+    * @method core.protocol.messages.ReadableMessage~_deformat
+    */
     ReadableMessage.prototype._deformat = function () {
         if (!this._isProtocolMessage()) {
             throw new Error('ReadableMessage~_deformat: Buffer is not protocol compliant.');
@@ -66,48 +147,14 @@ var ReadableMessage = (function () {
         this._lastPosRead = this._extractPayload(this._lastPosRead);
     };
 
-    ReadableMessage.prototype.discard = function () {
-        this._buffer = null;
-        this._payload = null;
-    };
-
-    ReadableMessage.prototype.getReceiverId = function () {
-        return this._receiverId;
-    };
-
-    ReadableMessage.prototype.getSender = function () {
-        return this._sender;
-    };
-
-    ReadableMessage.prototype.getMessageType = function () {
-        return this._messageType;
-    };
-
-    ReadableMessage.prototype.getPayload = function () {
-        return this._payload;
-    };
-
-    ReadableMessage.prototype._contactNodeAddressByIPv4Buffer = function (buffer) {
-        var ip = buffer.slice(0, 4).toJSON().join('.');
-        var port = buffer.readUInt16BE(4);
-
-        return this._addressFactory.create(ip, port);
-    };
-
-    ReadableMessage.prototype._contactNodeAddressByIPv6Buffer = function (buffer) {
-        var ip = '';
-        var port = buffer.readUInt16BE(16);
-
-        for (var i = 0; i < 8; i++) {
-            ip += buffer.slice(i * 2, i * 2 + 2).toString('hex');
-            if (i !== 7) {
-                ip += ':';
-            }
-        }
-
-        return this._addressFactory.create(ip, port);
-    };
-
+    /**
+    * Extracts a 20 byte ID from the message buffer.
+    *
+    * @method core.protocol.messages.ReadableMessage~_extractId
+    *
+    * @param {number} from Byte index to start from
+    * @returns {Id} The created ID
+    */
     ReadableMessage.prototype._extractId = function (from) {
         var idBuffer = new Buffer(20);
 
@@ -116,11 +163,27 @@ var ReadableMessage = (function () {
         return new Id(idBuffer, 160);
     };
 
+    /**
+    * Extracts the slice of the message buffer representing the message payload.
+    *
+    * @method core.protocol.messages.ReadableMessage~_extractPayload
+    *
+    * @param {number} from Byte index to start from
+    * @returns {number} Index of last byte read.
+    */
     ReadableMessage.prototype._extractPayload = function (from) {
         this._payload = this._buffer.slice(from, this._buffer.length - MessageByteCheatsheet.messageEnd.length);
         return from + this._payload.length;
     };
 
+    /**
+    * Extracts the protocol message type.
+    *
+    * @method core.protocol.messages.ReadableMessage~_extractMessageType
+    *
+    * @param {number} from Byte index to start from
+    * @returns {number} The index of the last byte read
+    */
     ReadableMessage.prototype._extractMessageType = function (from) {
         var msgTypeBytes = this._buffer.slice(from, from + 2);
         var messageTypes = MessageByteCheatsheet.messageTypes;
@@ -146,12 +209,28 @@ var ReadableMessage = (function () {
         return from + 2;
     };
 
+    /**
+    * Extracts the ID of the intended receiver.
+    *
+    * @method core.protocol.messages.ReadableMessage~_extractReceiverId
+    *
+    * @param {number} from The byte index to start from
+    * @returns {number} The index of the last byte read
+    */
     ReadableMessage.prototype._extractReceiverId = function (from) {
         this._receiverId = this._extractId(from);
 
         return from + 20;
     };
 
+    /**
+    * Extract the sender addresses and returns them in an array
+    *
+    * @method core.protocol.messages.ReadableMessage~_extractSenderAddressesAndBytesReadAsArray
+    *
+    * @param {number} from The index of bytes to start from
+    * @returns {Array} Returns an array with two items: First is the array of the sender's addresses, second is the index of the last byte read.
+    */
     ReadableMessage.prototype._extractSenderAddressesAndBytesReadAsArray = function (from) {
         var doRead = true;
         var result = [];
@@ -182,6 +261,14 @@ var ReadableMessage = (function () {
         return [result, from];
     };
 
+    /**
+    * Extracts the sender ID and address block and makes ContactNode out of it.
+    *
+    * @method core.protocol.messages.ReadableMessage~_extractSenderAsContactNode
+    *
+    * @param {number} from Byte index to start from.
+    * @returns {number} Index of the last byte read.
+    */
     ReadableMessage.prototype._extractSenderAsContactNode = function (from) {
         var senderId = this._extractId(from);
 
@@ -195,6 +282,13 @@ var ReadableMessage = (function () {
         return res[1];
     };
 
+    /**
+    * Checks whether the message buffer starts and ends with the expected 6 byte-identifiers.
+    *
+    * @method core.protocol.message.ReadableMessage~_isProtocolMessage
+    *
+    * @returns {boolean} `True` if protocol message, `false` if not.
+    */
     ReadableMessage.prototype._isProtocolMessage = function () {
         var msgBegin = MessageByteCheatsheet.messageBegin;
         var msgEnd = MessageByteCheatsheet.messageEnd;
