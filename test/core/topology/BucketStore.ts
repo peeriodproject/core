@@ -10,7 +10,7 @@ import BucketStoreInterface = require('../../../src/core/topology/interfaces/Buc
 import ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 import ContactNodeInterface = require('../../../src/core/topology/interfaces/ContactNodeInterface');
 
-describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
+describe('CORE --> TOPOLOGY --> BUCKETSTORE @joern', function () {
 	var databasePath:string = testUtils.getFixturePath('core/topology/bucketstore/db');
 	var store:BucketStoreInterface = null;
 
@@ -66,7 +66,7 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
 		});
 
 		store.add('bucket1', contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
-		store.get('bucket1', contact.getId().getBuffer()).should.equal(contactJSON);
+		JSON.stringify(store.get('bucket1', contact.getId().getBuffer())).should.equal(contactJSON);
 	});
 
 	it ('should correctly return all items stored in a specified bucket sorted by lastSeen', function () {
@@ -81,12 +81,12 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
 		// add items
 		store.addAll('bucket1', contacts);
 
-		var all:Array<string> = store.getAll('bucket1');
+		var all:Array<Object> = store.getAll('bucket1');
 		var lastTimestamp:number = 0;
 		var gotAmount:number = 0;
 
 		for (var i in all) {
-			var lastSeen = JSON.parse(all[i]).lastSeen;
+			var lastSeen = all[i]['lastSeen'];
 
 			lastSeen.should.be.greaterThan(lastTimestamp);
 
