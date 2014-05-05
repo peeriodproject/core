@@ -159,7 +159,7 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
             });
         });
 
-        it('should correctly update a contact node @joern', function (done) {
+        it('should correctly update a contact node', function (done) {
             var contact = ContactNodeFactory.createDummy();
 
             createStubbedBucketStore();

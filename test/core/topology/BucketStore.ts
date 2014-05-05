@@ -90,7 +90,7 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
 		store.get('bucket1', contact.getId().getBuffer()).should.equal(contactJSON);
 	});
 
-	it ('should correctly return all items stored in a specified bucket sorted by lastSeen @joern', function () {
+	it ('should correctly return all items stored in a specified bucket sorted by lastSeen', function () {
 		var contacts:any = [];
 		var amount:number = 10;
 
@@ -108,6 +108,7 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
 
 		for (var i in all) {
 			var lastSeen = JSON.parse(all[i]).lastSeen;
+
 			lastSeen.should.be.greaterThan(lastTimestamp);
 
 			lastTimestamp = lastSeen;

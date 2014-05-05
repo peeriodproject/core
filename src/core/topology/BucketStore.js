@@ -208,6 +208,8 @@ var BucketStore = (function () {
     /**
     * Adds the given object within the specified transaction `txn` to the database
     *
+    * todo all lastSeen keys should have the same length!
+    *
     * @method {boolean} core.topology.BucketStore~_add
     *
     * @param {lmdb.Txn} txn
