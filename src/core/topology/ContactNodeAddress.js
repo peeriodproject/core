@@ -4,6 +4,9 @@ var net = require('net');
 /**
 * @class core.topology.ContactNodeAddress
 * @implements core.topology.ContactNodeAddressInterface
+*
+* @param {string} ip IPv4 or IPv6 address as string representation.
+* @param {number} port The port number.
 */
 var ContactNodeAddress = (function () {
     function ContactNodeAddress(ip, port) {
@@ -42,6 +45,14 @@ var ContactNodeAddress = (function () {
         return this._port;
     };
 
+    /**
+    * Represents the IP address and Port number as a bytes.
+    * 4 Bytes for IPv4 addresses.
+    * 16 Bytes for IPv6 addresses.
+    * 2 Bytes for the port number.
+    *
+    * @returns {Buffer}
+    */
     ContactNodeAddress.prototype.getAddressAsByteBuffer = function () {
         var buf = null;
         if (this._isV4) {

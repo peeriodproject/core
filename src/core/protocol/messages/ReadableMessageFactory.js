@@ -3,16 +3,22 @@ var ContactNodeFactory = require('../../topology/ContactNodeFactory');
 var ReadableMessage = require('./ReadableMessage');
 
 /**
+* ReadableMessageFactoryInterface implementation.
+*
 * @class core.protocol.messages.ReadableMessageFactory
 * @implements core.protocol.messages.ReadableMessageFactoryInterface
 */
 var ReadableMessageFactory = (function () {
     function ReadableMessageFactory() {
         /**
+        * A ContactNodeFactory which gets passed to all ReadableMessages.
+        *
         * @member {core.topology.ContactNodeFactoryInterface} core.protocol.messages.ReadableMessageFactory~_nodeFactory
         */
         this._nodeFactory = null;
         /**
+        * A ContractNodeAddressFactory which gets passed to all ReadableMessages.
+        *
         * @member {core.topology.ContactNodeAddressFactoryInterface} core.protocol.messages.ReadableMessageFactory~_addressFactory
         */
         this._addressFactory = null;

@@ -8,7 +8,12 @@ import ReadableMessageInterface = require('./ReadableMessageInterface');
  */
 interface ReadableMessageFactoryInterface {
 
-	create (buffer:NodeBuffer):ReadableMessageInterface;
+	/**
+	 * Creates an instance of a class implementing ReadableMessageInterface
+	 *
+	 * @param {Buffer} buffer A byte buffer.
+	 */
+	create (buffer:Buffer):ReadableMessageInterface;
 
 }
 
