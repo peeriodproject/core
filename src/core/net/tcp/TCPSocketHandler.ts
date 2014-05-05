@@ -137,7 +137,11 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		var sock:net.Socket = net.createConnection(port, ip);
 
 		sock.on('error', function () {
-			this.emit('connection error', port, ip);
+			if (callback) {
+				callback(null);
+			} else {
+				this.emit('connection error', port, ip);
+			}
 		});
 
 		sock.on('connect', () => {
@@ -146,7 +150,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
 
 			if (!callback) {
-				this.emit('connected', socket);
+				this.emit('connected', socket, 'outgoing');
 			}
 			else {
 				callback(socket);
@@ -193,7 +197,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 
 					server.on('connection', (sock:net.Socket) => {
 						var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
-						this.emit('connected', socket);
+						this.emit('connected', socket, 'incoming');
 					});
 
 					this.emit('openedReachableServer', port, server);
