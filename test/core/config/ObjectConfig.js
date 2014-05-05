@@ -91,7 +91,7 @@ describe('CORE --> CONFIG --> ObjectConfig', function () {
                     }
                 ]
             });
-        }).should.throw('Config._convertObjectToDotNotation: Arrays can only contain primitives.');
+        }).should.throw('Config~_convertObjectToDotNotation: Arrays can only contain primitives.');
     });
 });
 //# sourceMappingURL=ObjectConfig.js.map

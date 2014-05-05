@@ -10,7 +10,7 @@ interface ClosableAsyncInterface {
 	 *
 	 * todo: add throw exeption
 	 *
-	 * @method core.utils.ClosableInterface#close
+	 * @method core.utils.ClosableAsyncInterface#close
 	 *
 	 * @param {Function} callback
 	 */
@@ -19,9 +19,7 @@ interface ClosableAsyncInterface {
 	/**
 	 * Returns true if the object is open and therefore writeable.
 	 *
-	 * todo: Wir sollten über den Callback-Style nachdenken und evtl. Callbacks/Deferreds verwenden.
-	 *
-	 * @method core.utils.ClosableInterface#isOpen
+	 * @method core.utils.ClosableAsyncInterface#isOpen
 	 *
 	 * @param {Function} callback
 	 */
@@ -32,7 +30,7 @@ interface ClosableAsyncInterface {
 	 *
 	 * todo: add throw exeption
 	 *
-	 * @method core.utils.ClosableInterface#open
+	 * @method core.utils.ClosableAsyncInterface#open
 	 *
 	 * @param {Function} callback
 	 */

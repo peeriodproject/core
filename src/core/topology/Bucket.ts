@@ -13,24 +13,21 @@ class Bucket implements BucketInterface {
 	/**
 	 * The internally used config object instance
 	 *
-	 * @private
-	 * @member {core.config.ConfigInterface} core.topology.Bucket#_config
+	 * @member {core.config.ConfigInterface} core.topology.Bucket~_config
 	 */
 	private _config:ConfigInterface = null;
 
 	/**
 	 * The internally used bucket store instance
 	 *
-	 * @private
-	 * @member {core.topology.BucketStoreInterface} core.topology.Bucket#_store
+	 * @member {core.topology.BucketStoreInterface} core.topology.Bucket~_store
 	 */
 	private _store:BucketStoreInterface = null;
 
 	/**
 	 * The Key of the bucket
 	 *
-	 * @private
-	 * @member {string} core.topology.Bucket#_key
+	 * @member {string} core.topology.Bucket~_key
 	 */
 	private _key:string = '';
 

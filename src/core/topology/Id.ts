@@ -10,20 +10,17 @@ import IdInterface = require('./interfaces/IdInterface');
 class Id implements IdInterface {
 
 	/**
-	 * @private
-	 * @member {number} core.topology.Id#_bit_length
+	 * @member {number} core.topology.Id~_bit_length
 	 */
 	private _bit_length:number = 0;
 
 	/**
-	 * @private
-	 * @member {NodeBuffer} core.topology.Id#_buffer
+	 * @member {NodeBuffer} core.topology.Id~_buffer
 	 */
 	private _buffer:NodeBuffer = null;
 
 	/**
-	 * @private
-	 * @member {number} core.topology.Id#_byte_length
+	 * @member {number} core.topology.Id~_byte_length
 	 */
 	private _byte_length:number = 0;
 

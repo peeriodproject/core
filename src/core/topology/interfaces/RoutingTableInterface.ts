@@ -15,7 +15,7 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	 * @param {core.topology.IdInterface} id The id of the contact node
 	 * @returns {ContactNodeInterface} The found contact node or null
 	 */
-	getContactNode(id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void;
+	getContactNode (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void;
 
 	/**
 	 * Updates the specified contact node according to the protocol.
@@ -25,14 +25,14 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	 *
 	 * @param {core.topology.ContactNodeInterface} contact
 	 */
-	updateContactNode(contact:ContactNodeInterface, callback?:(err:Error) => any):void;
+	updateContactNode (contact:ContactNodeInterface, callback?:(err:Error) => any):void;
 
 	/**
 	 * IDEA: should be called whenever my ip changes
 	 *
 	 * @param {core.topology.IdInterface} id
 	 */
-	updateId(id:IdInterface):void;
+	updateId (id:IdInterface):void;
 
 }
 

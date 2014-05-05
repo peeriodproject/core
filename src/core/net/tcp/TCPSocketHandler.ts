@@ -1,11 +1,12 @@
-import net = require('net');
 import events = require('events');
+import net = require('net');
 
+import TCPSocketFactoryInterface = require('./interfaces/TCPSocketFactoryInterface');
 import TCPSocketHandlerOptions = require('./interfaces/TCPSocketHandlerOptions');
 import TCPSocketHandlerInterface = require('./interfaces/TCPSocketHandlerInterface');
-import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
-import TCPSocketFactoryInterface = require('./interfaces/TCPSocketFactoryInterface');
 import TCPSocketInterface = require('./interfaces/TCPSocketInterface');
+import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
+
 import TCPSocket = require('./TCPSocket');
 
 /**
@@ -24,7 +25,6 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	 * Flag which indicates whether a FIN packet should generally be sent when the other end of a handled
 	 * socket sends a FIN packet.
 	 *
-	 * @private
 	 * @member {boolean} TCPSocketHandler~_allowHalfOpenSockets
 	 */
 	private _allowHalfOpenSockets:boolean = false;
@@ -33,7 +33,6 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	 * Indicates the number of seconds to wait until a server tries to listen on a used port again.
 	 * Negative number meas that no retry will be triggered.
 	 *
-	 * @private
 	 * @member {number} TCPSocketHandler~_connectionRetry
 	 */
 	private _connectionRetry:number = 0;
@@ -44,7 +43,6 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	 *
 	 * If idle sockets should not be closed, set to 0 or below.
 	 *
-	 * @private
 	 * @member {number} TCPSocketHandler~_idleConnectionKillTimeout
 	 */
 	private _idleConnectionKillTimeout:number = 0;
@@ -52,7 +50,6 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	/**
 	 * The external IP address of the computer.
 	 *
-	 * @private
 	 * @member {string} TCPSocketHandler~_myExternalIp
 	 */
 	private _myExternalIp:string = '';
@@ -60,7 +57,6 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	/**
 	 * An array of open ports under which the computer can be reached from outside.
 	 *
-	 * @private
 	 * @member {number[]} TCPSocketHandler~_myOpenPorts
 	 */
 	private _myOpenPorts:Array<number> = null;
@@ -68,7 +64,6 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	/**
 	 * A list of listening, from outside reachable servers. Stored under their port numbers.
 	 *
-	 * @private
 	 * @member {Object} TCPSocketHandler~_openTCPServer
 	 */
 	private _openTCPServers:{[port:string]:net.Socket} = {};
@@ -76,7 +71,6 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	/**
 	 * An internal list of ports used to memorize which ports have already been retried.
 	 *
-	 * @private
 	 * @member {Array<number>} TCPSocketHandler~_retriedPorts
 	 */
 	private _retriedPorts:Array<number> = [];
@@ -84,7 +78,6 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	/**
 	 * TCPSocketFactory
 	 *
-	 * @private
 	 * @member TCPSocketHandler~_socketFactory
 	 */
 	private _socketFactory:TCPSocketFactoryInterface = null;
@@ -280,7 +273,6 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	public setMyExternalIp (ip:string):void {
 		this._myExternalIp = ip;
 	}
-
 
 }
 

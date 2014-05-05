@@ -20,9 +20,9 @@ var FreeGeoIp = (function () {
         * The expected JSON attribute which holds the IP.
         *
         * @private
-        * @member {string} FreeGeoIp~_attr
+        * @member {string} FreeGeoIp~_attribute
         */
-        this._attr = 'ip';
+        this._attribute = 'ip';
     }
     FreeGeoIp.prototype.obtainIP = function (callback) {
         var _this = this;
@@ -36,6 +36,7 @@ var FreeGeoIp = (function () {
 
         http.get(this._url, function (res) {
             var body = '';
+
             if (res.statusCode === 200) {
                 res.on('data', function (chunk) {
                     if (chunk) {
@@ -43,7 +44,7 @@ var FreeGeoIp = (function () {
                     }
                 }).on('end', function () {
                     try  {
-                        var ip = JSON.parse(body)[_this._attr];
+                        var ip = JSON.parse(body)[_this._attribute];
                         if (net.isIP(ip)) {
                             doCallback(null, ip);
                         } else {
@@ -67,7 +68,7 @@ var FreeGeoIp = (function () {
     * @param {string} attr
     */
     FreeGeoIp.prototype.setIpAttribute = function (attr) {
-        this._attr = attr;
+        this._attribute = attr;
     };
 
     /**

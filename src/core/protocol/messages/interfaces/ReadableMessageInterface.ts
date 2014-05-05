@@ -3,6 +3,10 @@
 import IdInterface = require('../../../topology/interfaces/IdInterface');
 import ContactNodeInterface = require('../../../topology/interfaces/ContactNodeInterface');
 
+/**
+ * @interface
+ * @class core.protocol.messages.ReadableMessageInterface
+ */
 interface ReadableMessageInterface {
 
 	discard ():void;

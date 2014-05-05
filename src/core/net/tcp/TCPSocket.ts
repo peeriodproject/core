@@ -1,8 +1,8 @@
-import net = require('net');
 import events = require('events');
+import net = require('net');
 
-import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
 import TCPSocketInterface = require('./interfaces/TCPSocketInterface');
+import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
 
 /**
  * TCP Socket implementation.
@@ -19,7 +19,6 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	/**
 	 * Flag which indicates if an idle socket will be closed on a `timeout` event.
 	 *
-	 * @private
 	 * @member {boolean} TCPSocket~_closeOnTimeout
 	 */
 	private _closeOnTimeout:boolean = false;
@@ -27,7 +26,6 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	/**
 	 * List of event names of net.Socket which will be simply propagated on emission
 	 *
-	 * @private
 	 * @member {string[]} TCPSocket~_eventsToPropagate
 	 */
 	private _eventsToPropagate:Array<string> = ['data', 'close', 'error'];
@@ -35,7 +33,6 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	/**
 	 * Identification string.
 	 *
-	 * @private
 	 * @member {string} TCPSocket~_identifier
 	 */
 	private _identifier:string = '';
@@ -43,7 +40,6 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	/**
 	 * node.js socket instance
 	 *
-	 * @private
 	 * @member {net.Socket} TCPSocket~_socket
 	 */
 	private _socket:net.Socket = null;
@@ -134,7 +130,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	 *
 	 * @method core.net.tcp.TCPSocket~propagateEvents
 	 *
-	 * @param events
+	 * @param {Array<string>} events
 	 */
 	private _propagateEvents (events:Array<string>):void {
 		events.forEach((event) => {
@@ -143,6 +139,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			})(event);
 		});
 	}
+
 }
 
 export = TCPSocket;

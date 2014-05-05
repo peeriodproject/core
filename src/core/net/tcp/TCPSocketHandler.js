@@ -4,8 +4,8 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-var net = require('net');
 var events = require('events');
+var net = require('net');
 
 /**
 * TCPSocketHandler implementation.
@@ -25,7 +25,6 @@ var TCPSocketHandler = (function (_super) {
         * Flag which indicates whether a FIN packet should generally be sent when the other end of a handled
         * socket sends a FIN packet.
         *
-        * @private
         * @member {boolean} TCPSocketHandler~_allowHalfOpenSockets
         */
         this._allowHalfOpenSockets = false;
@@ -33,7 +32,6 @@ var TCPSocketHandler = (function (_super) {
         * Indicates the number of seconds to wait until a server tries to listen on a used port again.
         * Negative number meas that no retry will be triggered.
         *
-        * @private
         * @member {number} TCPSocketHandler~_connectionRetry
         */
         this._connectionRetry = 0;
@@ -43,42 +41,36 @@ var TCPSocketHandler = (function (_super) {
         *
         * If idle sockets should not be closed, set to 0 or below.
         *
-        * @private
         * @member {number} TCPSocketHandler~_idleConnectionKillTimeout
         */
         this._idleConnectionKillTimeout = 0;
         /**
         * The external IP address of the computer.
         *
-        * @private
         * @member {string} TCPSocketHandler~_myExternalIp
         */
         this._myExternalIp = '';
         /**
         * An array of open ports under which the computer can be reached from outside.
         *
-        * @private
         * @member {number[]} TCPSocketHandler~_myOpenPorts
         */
         this._myOpenPorts = null;
         /**
         * A list of listening, from outside reachable servers. Stored under their port numbers.
         *
-        * @private
         * @member {Object} TCPSocketHandler~_openTCPServer
         */
         this._openTCPServers = {};
         /**
         * An internal list of ports used to memorize which ports have already been retried.
         *
-        * @private
         * @member {Array<number>} TCPSocketHandler~_retriedPorts
         */
         this._retriedPorts = [];
         /**
         * TCPSocketFactory
         *
-        * @private
         * @member TCPSocketHandler~_socketFactory
         */
         this._socketFactory = null;

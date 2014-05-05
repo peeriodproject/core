@@ -13,36 +13,31 @@ var BucketStore = (function () {
         /**
         * The internal lmdb database instance
         *
-        * @private
-        * @member {lmdb.Dbi} core.topology.BucketStore#_databaseInstance
+        * @member {lmdb.Dbi} core.topology.BucketStore~_databaseInstance
         */
         this._databaseInstance = null;
         /**
         * The internal lmdb database environment instance
         *
-        * @private
-        * @member {lmdb.Env} core.topology.BucketStore#_databaseEnvironment
+        * @member {lmdb.Env} core.topology.BucketStore~_databaseEnvironment
         */
         this._databaseEnvironment = null;
         /**
         * Indicates wheather the store is open or closed
         *
-        * @private
-        * @member {boolean} core.topology.BucketStore#_isOpen
+        * @member {boolean} core.topology.BucketStore~_isOpen
         */
         this._isOpen = false;
         /**
         * The name of the internal database
         *
-        * @private
-        * @member {boolean} core.topology.BucketStore#_name
+        * @member {boolean} core.topology.BucketStore~_name
         */
         this._name = '';
         /**
         * An absolute path where the database stores it's files
         *
-        * @private
-        * @member {boolean} core.topology.BucketStore#_path
+        * @member {boolean} core.topology.BucketStore~_path
         */
         this._path = '';
         this._name = name;
@@ -188,12 +183,11 @@ var BucketStore = (function () {
     /**
     * Adds the given object within the specified transaction `txn` to the database
     *
-    * @private
-    * @method {boolean} core.topology.BucketStore#_add
+    * @method {boolean} core.topology.BucketStore~_add
     *
     * @param {lmdb.Txn} txn
     * @param {string} bucketKey
-    * @param {NodeBuffer} id
+    * @param {Buffer} id
     * @param {number} lastSeen
     * @param {any} addresses
     * @returns {boolean}
@@ -223,8 +217,7 @@ var BucketStore = (function () {
     /**
     * Creates a read-only transaction object on the instance environment
     *
-    * @private
-    * @method {boolean} core.topology.BucketStore#_beginReadOnlyTransaction
+    * @method {boolean} core.topology.BucketStore~_beginReadOnlyTransaction
     *
     * @returns {lmdb.Txn}
     */
@@ -240,8 +233,7 @@ var BucketStore = (function () {
     /**
     * Creates a writable transaction object on the instance environment
     *
-    * @private
-    * @method {boolean} core.topology.BucketStore#_beginTransaction
+    * @method {boolean} core.topology.BucketStore~_beginTransaction
     *
     * @returns {lmdb.Txn}
     */
@@ -255,8 +247,7 @@ var BucketStore = (function () {
     /**
     * Creates a Cursor on the instace database
     *
-    * @private
-    * @method {boolean} core.topology.BucketStore#_getCursor
+    * @method {boolean} core.topology.BucketStore~_getCursor
     *
     * @returns {lmdb.Txn}
     */
@@ -267,8 +258,7 @@ var BucketStore = (function () {
     /**
     * Returns the internally used key for bucket wide searches
     *
-    * @private
-    * @method {boolean} core.topology.BucketStore#_getBucketKey
+    * @method {boolean} core.topology.BucketStore~_getBucketKey
     
     * @param {string} key
     * @returns {string}
@@ -280,10 +270,9 @@ var BucketStore = (function () {
     /**
     * Returns the internally used key for id related searches
     *
-    * @private
-    * @method {boolean} core.topology.BucketStore#_getIdKey
+    * @method {boolean} core.topology.BucketStore~_getIdKey
     
-    * @param {NodeBuffer} id
+    * @param {Buffer} id
     * @returns {string}
     */
     BucketStore.prototype._getIdKey = function (id) {
@@ -293,9 +282,9 @@ var BucketStore = (function () {
     /**
     * Returns the id as a formatted string
     *
-    * @method {boolean} core.topology.BucketStore#_getIdValue
+    * @method {boolean} core.topology.BucketStore~_getIdValue
     *
-    * @param {NodeBuffer} id
+    * @param {Buffer} id
     * @returns {string}
     */
     BucketStore.prototype._getIdValue = function (id) {

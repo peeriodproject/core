@@ -8,18 +8,15 @@
 var Id = (function () {
     function Id(buffer, bit_length) {
         /**
-        * @private
-        * @member {number} core.topology.Id#_bit_length
+        * @member {number} core.topology.Id~_bit_length
         */
         this._bit_length = 0;
         /**
-        * @private
-        * @member {NodeBuffer} core.topology.Id#_buffer
+        * @member {NodeBuffer} core.topology.Id~_buffer
         */
         this._buffer = null;
         /**
-        * @private
-        * @member {number} core.topology.Id#_byte_length
+        * @member {number} core.topology.Id~_byte_length
         */
         this._byte_length = 0;
         var byte_length = Id.calculateByteLengthByBitLength(bit_length);

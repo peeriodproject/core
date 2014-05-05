@@ -4,8 +4,8 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-var net = require('net');
 var events = require('events');
+var net = require('net');
 
 /**
 * TCP Socket implementation.
@@ -24,28 +24,24 @@ var TCPSocket = (function (_super) {
         /**
         * Flag which indicates if an idle socket will be closed on a `timeout` event.
         *
-        * @private
         * @member {boolean} TCPSocket~_closeOnTimeout
         */
         this._closeOnTimeout = false;
         /**
         * List of event names of net.Socket which will be simply propagated on emission
         *
-        * @private
         * @member {string[]} TCPSocket~_eventsToPropagate
         */
         this._eventsToPropagate = ['data', 'close', 'error'];
         /**
         * Identification string.
         *
-        * @private
         * @member {string} TCPSocket~_identifier
         */
         this._identifier = '';
         /**
         * node.js socket instance
         *
-        * @private
         * @member {net.Socket} TCPSocket~_socket
         */
         this._socket = null;
@@ -135,7 +131,7 @@ var TCPSocket = (function (_super) {
     *
     * @method core.net.tcp.TCPSocket~propagateEvents
     *
-    * @param events
+    * @param {Array<string>} events
     */
     TCPSocket.prototype._propagateEvents = function (events) {
         var _this = this;

@@ -10,24 +10,23 @@ import ConfigInterface = require('../config/interfaces/ConfigInterface');
  * NetworkBootstraper implementation.
  *
  * @class core.net.NetworkBootstrapper
- * @implements core.net.NetowkrBootNetworkBootstrapperInterface
+ * @implements core.net.NetworkBootstrapperInterface
  *
- * @param {ConfigInterface} config The network configuration
- * @parma {Array<ExternalIPObtainerInterface>} A list of IP obtainers to use as tools to get the machine's external IP.
+ * @param {core.config.ConfigInterface} config The network configuration
+ * @parma {Array<core.net.ip.ExternalIPObtainerInterface>} A list of IP obtainers to use as tools to get the machine's external IP.
  */
 class NetworkBootstrapper implements NetworkBootstrapperInterface {
+
 	/**
 	 * Network configuration. Is used for getting the settings for TCP socket handler.
 	 *
-	 * @private
-	 * @member {ConfigInterface} NetworkBootstrapper~_config
+	 * @member {core.config.ConfigInterface} NetworkBootstrapper~_config
 	 */
 	private _config:ConfigInterface = null;
 
 	/**
 	 * The machine's external IP address.
 	 *
-	 * @private
 	 * @member {string} NetworkBootstrapper~_externalIp
 	 */
 	private _externalIp:string = '';
@@ -35,23 +34,21 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 	/**
 	 * List of IP obtainers to use.
 	 *
-	 * @member {Array<ExternalIPObtainerInterface>} NetworkBootstrapper~_ipObtainers
+	 * @member {Array<core.net.ip.ExternalIPObtainerInterface>} NetworkBootstrapper~_ipObtainers
 	 */
 	private _ipObtainers:Array<ExternalIPObtainerInterface>;
 
 	/**
 	 * The TCPSockhetHandler instance
 	 *
-	 * @private
-	 * @member {TCPSocketHandlerInterface} NetworkBootstrapper~_tcpSocketHandler
+	 * @member {core.net.tcp.TCPSocketHandlerInterface} NetworkBootstrapper~_tcpSocketHandler
 	 */
 	private _tcpSocketHandler:TCPSocketHandlerInterface = null;
 
 	/**
 	 * TCPSocketHandler factory
 	 *
-	 * @private
-	 * @member {TCPSocketHandlerFactory} NetworkBootstrapper~_tcpSocketHandlerFactory
+	 * @member {core.net.tcp.TCPSocketHandlerFactoryInterface} NetworkBootstrapper~_tcpSocketHandlerFactory
 	 */
 	private _tcpSocketHandlerFactory:TCPSocketHandlerFactoryInterface = null;
 
@@ -96,8 +93,7 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 	 * Iterates over the list of IP obtainers and tries to get the machine's external IP. If one fails, the next is used
 	 * and so on.
 	 *
-	 * @private
-	 * @method NetworkBootstapper~_getExternalIp
+	 * @method core.net.NetworkBootstapper~_getExternalIp
 	 *
 	 * @param {Function} callback Function to call with an optional error and the retrieved IP as arguments.
 	 */
@@ -133,10 +129,9 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 	/**
 	 * Creates a TCPSocketHandlerOptions object using configuration provided in the constructor.
 	 *
-	 * @private
-	 * @method NetworkBootstrapper~_getTCPSocketHandlerOptions
+	 * @method core.net.NetworkBootstrapper~_getTCPSocketHandlerOptions
 	 *
-	 * @returns {TCPSocketHandlerOptions}
+	 * @returns {core.net.tcp.TCPSocketHandlerOptions}
 	 */
 	private _getTCPSocketHandlerOptions ():TCPSocketHandlerOptions {
 		return <TCPSocketHandlerOptions> {

@@ -8,7 +8,9 @@ import TCPSocketOptions = require('./TCPSocketOptions');
  * @class core.net.tcp.TCPSocketFactoryInterface
  */
 interface TCPSocketFactoryInterface {
-	create(socket:net.Socket, opts:TCPSocketOptions):TCPSocketInterface;
+
+	create (socket:net.Socket, opts:TCPSocketOptions):TCPSocketInterface;
+
 }
 
 export = TCPSocketFactoryInterface;

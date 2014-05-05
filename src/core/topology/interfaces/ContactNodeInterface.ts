@@ -1,6 +1,5 @@
-import IdInterface = require('./IdInterface');
 import ContactNodeAddressListInterface = require('./ContactNodeAddressListInterface');
-
+import IdInterface = require('./IdInterface');
 
 /**
  * The `ContactNodeInterface` represents a single contact node and is used by the {@link core.topology.RoutingTableInterface}

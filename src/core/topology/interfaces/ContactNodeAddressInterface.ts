@@ -16,13 +16,18 @@ interface ContactNodeAddressInterface {
 	getIp ():string;
 
 	/**
-	 * @method {number} core.topology.ContactNodeAddressInterface#getPort
+	 * @method core.topology.ContactNodeAddressInterface#getPort
 	 *
 	 * @returns {number}
 	 */
 	getPort ():number;
 
-	getAddressAsByteBuffer():Buffer;
+	/**
+	 * @method core.topology.ContactNodeAddressInterface#getAddressAsByteBuffer
+	 *
+	 * @returns {Buffer}
+	 */
+	getAddressAsByteBuffer ():Buffer;
 
 }
 

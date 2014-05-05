@@ -1,21 +1,52 @@
 var Id = require('../../topology/Id');
 var MessageByteCheatsheet = require('./MessageByteCheatsheet');
 
+/**
+* @class core.protocol.messages.ReadableMessage
+* @implements core.protocol.messages.ReadableMessageInterface
+*/
 var ReadableMessage = (function () {
     function ReadableMessage(buffer, nodeFactory, addressFactory) {
+        /**
+        * @member {core.topology.ContactNodeAddressFactoryInterface} core.protocol.messages.ReadableMessage~_addressFactory
+        */
         this._addressFactory = null;
-        this._nodeFactory = null;
+        /**
+        * @member {Buffer} core.protocol.messages.ReadableMessage~_buffer
+        */
         this._buffer = null;
-        this._bufferLen = 0;
-        this._receiverId = null;
-        this._sender = null;
-        this._msgType = null;
-        this._payload = null;
+        /**
+        * @member {number} core.protocol.messages.ReadableMessage~_bufferLength
+        */
+        this._bufferLength = 0;
+        /**
+        * @member {number}  core.protocol.messages.ReadableMessage~_lastPosRead
+        */
         this._lastPosRead = 0;
+        /**
+        * @member {string} core.protocol.messages.ReadableMessage~_messageType
+        */
+        this._messageType = null;
+        /**
+        * @member {core.topology.ContactNodeFactoryInterface} core.protocol.messages.ReadableMessage~_nodeFactory
+        */
+        this._nodeFactory = null;
+        /**
+        * @member {Buffer} core.protocol.messages.ReadableMessage~_payload
+        */
+        this._payload = null;
+        /**
+        * @member {core.topology.IdInterface} core.protocol.messages.ReadableMessage~_receiverId
+        */
+        this._receiverId = null;
+        /**
+        * @member {core.topology.ContactNodeInterface} core.protocol.messages.ReadableMessage~_sender
+        */
+        this._sender = null;
         this._buffer = buffer;
-        this._bufferLen = buffer.length;
-        this._addressFactory = addressFactory;
         this._nodeFactory = nodeFactory;
+        this._addressFactory = addressFactory;
+        this._bufferLength = buffer.length;
 
         this._deformat();
     }
@@ -49,7 +80,7 @@ var ReadableMessage = (function () {
     };
 
     ReadableMessage.prototype.getMessageType = function () {
-        return this._msgType;
+        return this._messageType;
     };
 
     ReadableMessage.prototype.getPayload = function () {
@@ -79,7 +110,9 @@ var ReadableMessage = (function () {
 
     ReadableMessage.prototype._extractId = function (from) {
         var idBuffer = new Buffer(20);
+
         this._buffer.copy(idBuffer, 0, from, from + 20);
+
         return new Id(idBuffer, 160);
     };
 
@@ -108,26 +141,15 @@ var ReadableMessage = (function () {
             throw new Error('ReadableMessage~_extractMessageType: Unknown message type.');
         }
 
-        this._msgType = result;
+        this._messageType = result;
 
         return from + 2;
     };
 
     ReadableMessage.prototype._extractReceiverId = function (from) {
         this._receiverId = this._extractId(from);
+
         return from + 20;
-    };
-
-    ReadableMessage.prototype._extractSenderAsContactNode = function (from) {
-        var senderId = this._extractId(from);
-
-        from += 20;
-
-        var res = this._extractSenderAddressesAndBytesReadAsArray(from);
-        var senderAddresses = res[0];
-        this._sender = this._nodeFactory.create(senderId, senderAddresses);
-
-        return res[1];
     };
 
     ReadableMessage.prototype._extractSenderAddressesAndBytesReadAsArray = function (from) {
@@ -141,10 +163,12 @@ var ReadableMessage = (function () {
 
             if (identByte === MessageByteCheatsheet.ipv4) {
                 var bytesToRead = 6;
+
                 result.push(this._contactNodeAddressByIPv4Buffer(this._buffer.slice(from, from + bytesToRead)));
                 from += bytesToRead;
             } else if (identByte === MessageByteCheatsheet.ipv6) {
                 var bytesToRead = 18;
+
                 result.push(this._contactNodeAddressByIPv6Buffer(this._buffer.slice(from, from + bytesToRead)));
                 from += bytesToRead;
             } else if (identByte === MessageByteCheatsheet.addressEnd) {
@@ -158,11 +182,24 @@ var ReadableMessage = (function () {
         return [result, from];
     };
 
+    ReadableMessage.prototype._extractSenderAsContactNode = function (from) {
+        var senderId = this._extractId(from);
+
+        from += 20;
+
+        var res = this._extractSenderAddressesAndBytesReadAsArray(from);
+        var senderAddresses = res[0];
+
+        this._sender = this._nodeFactory.create(senderId, senderAddresses);
+
+        return res[1];
+    };
+
     ReadableMessage.prototype._isProtocolMessage = function () {
         var msgBegin = MessageByteCheatsheet.messageBegin;
         var msgEnd = MessageByteCheatsheet.messageEnd;
 
-        if (this._bufferLen < msgBegin.length + msgEnd.length) {
+        if (this._bufferLength < msgBegin.length + msgEnd.length) {
             return false;
         }
 
@@ -173,7 +210,7 @@ var ReadableMessage = (function () {
         }
 
         for (var i = 0; i < msgEnd.length; i++) {
-            if (this._buffer[this._bufferLen - (6 - i)] !== msgEnd[i]) {
+            if (this._buffer[this._bufferLength - (6 - i)] !== msgEnd[i]) {
                 return false;
             }
         }

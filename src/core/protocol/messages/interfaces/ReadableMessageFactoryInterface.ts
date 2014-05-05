@@ -2,8 +2,14 @@
 
 import ReadableMessageInterface = require('./ReadableMessageInterface');
 
+/**
+ * @interface
+ * @class core.protocol.messages.ReadableMessageFactoryInterface
+ */
 interface ReadableMessageFactoryInterface {
-	create(buffer:NodeBuffer):ReadableMessageInterface;
+
+	create (buffer:NodeBuffer):ReadableMessageInterface;
+
 }
 
 export = ReadableMessageFactoryInterface;

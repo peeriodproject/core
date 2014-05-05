@@ -17,8 +17,6 @@ interface ClosableInterface {
 	/**
 	 * Returns true if the object is open and therefore writeable.
 	 *
-	 * todo: Wir sollten über den Callback-Style nachdenken und evtl. Callbacks/Deferreds verwenden.
-	 *
 	 * @method core.utils.ClosableInterface#isOpen
 	 */
 	isOpen ():boolean;

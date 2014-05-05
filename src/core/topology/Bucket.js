@@ -7,22 +7,19 @@ var Bucket = (function () {
         /**
         * The internally used config object instance
         *
-        * @private
-        * @member {core.config.ConfigInterface} core.topology.Bucket#_config
+        * @member {core.config.ConfigInterface} core.topology.Bucket~_config
         */
         this._config = null;
         /**
         * The internally used bucket store instance
         *
-        * @private
-        * @member {core.topology.BucketStoreInterface} core.topology.Bucket#_store
+        * @member {core.topology.BucketStoreInterface} core.topology.Bucket~_store
         */
         this._store = null;
         /**
         * The Key of the bucket
         *
-        * @private
-        * @member {string} core.topology.Bucket#_key
+        * @member {string} core.topology.Bucket~_key
         */
         this._key = '';
         var internalOpenCallback = onOpenCallback || function (err) {
