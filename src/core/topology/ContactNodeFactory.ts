@@ -1,9 +1,14 @@
+/// <reference path='../../../ts-definitions/node/node.d.ts' />
+
+import ContactNodeAddressFactoryInterface = require('./interfaces/ContactNodeAddressFactoryInterface');
 import ContactNodeAddressListInterface = require('./interfaces/ContactNodeAddressListInterface');
 import ContactNodeFactoryInterface = require('./interfaces/ContactNodeFactoryInterface');
 import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
+import ContactNodeObjectInterface = require('./interfaces/ContactNodeObjectInterface');
 import IdInterface = require('./interfaces/IdInterface');
 
 import ContactNode = require('./ContactNode');
+import ContactNodeAddress = require('./ContactNodeAddress');
 import ContactNodeAddressFactory = require('./ContactNodeAddressFactory');
 import Id = require('./Id');
 
@@ -15,8 +20,24 @@ import Id = require('./Id');
  */
 class ContactNodeFactory implements ContactNodeFactoryInterface {
 
-	public create (id:IdInterface, addresses:ContactNodeAddressListInterface):ContactNodeInterface {
-		return new ContactNode(id, addresses, Date.now());
+	public create (id:IdInterface, addresses:ContactNodeAddressListInterface, lastSeen?:number):ContactNodeInterface {
+		lastSeen = lastSeen || Date.now();
+		return new ContactNode(id, addresses, lastSeen);
+	}
+
+	public createFromObject (object:ContactNodeObjectInterface):ContactNodeInterface {
+		var addressFactory:ContactNodeAddressFactoryInterface = new ContactNodeAddressFactory();
+		var addresses:ContactNodeAddressListInterface = [];
+
+		if (object.addresses && object.addresses.length) {
+			for (var i in object.addresses) {
+				var address = object.addresses[i];
+				addresses.push(addressFactory.create(address._ip, address._port));
+			}
+		}
+
+		var idBuffer:Buffer = new Buffer(object.id);
+		return this.create(new Id(idBuffer, 160), addresses, object.lastSeen);
 	}
 
 	public static createDummy ():ContactNodeInterface {

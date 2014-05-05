@@ -11,7 +11,7 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @param {core.topology.BucketStoreInterface} bucketStore
 */
 var RoutingTable = (function () {
-    function RoutingTable(config, id, bucketFactory, bucketStore, options) {
+    function RoutingTable(config, id, bucketFactory, bucketStore, contactNodeFactory, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
         /**
@@ -30,6 +30,12 @@ var RoutingTable = (function () {
         * @member {Array.<topology.BucketInterface>} core.topology.RoutingTable~_buckets
         */
         this._buckets = {};
+        /**
+        * The internally used contact node factory instance. Usually just for reference and passed through to the Bucket
+        *
+        * @member {core.topology.ContactNodeFactoryInterface} core.topology.RoutingTable~_contactNodeFactory
+        */
+        this._contactNodeFactory = null;
         /**
         * The internally used config object instance. Usually just for reference and passed through to the Bucket
         *
@@ -66,6 +72,7 @@ var RoutingTable = (function () {
         this._id = id;
         this._bucketFactory = bucketFactory;
         this._bucketStore = bucketStore;
+        this._contactNodeFactory = contactNodeFactory;
 
         // todo merge opts & defaults
         this._options = ObjectUtils.extend(defaults, options);
@@ -101,8 +108,22 @@ var RoutingTable = (function () {
         var internalCallback = callback || function (err) {
         };
 
+        var closestContactNodes = [];
+
         var startBucketKey = this._getBucketKey(id);
-        console.log(startBucketKey);
+        this._getBucket(startBucketKey).getAll(function (err, contacts) {
+            if (contacts.length) {
+                for (var i in contacts) {
+                    var contact = contacts[i];
+
+                    // foobar
+                    console.log('contact');
+                    console.log(contact);
+                    var dist = id.distanceTo(contact.getId());
+                    console.log(dist);
+                }
+            }
+        });
     };
 
     RoutingTable.prototype.getContactNode = function (id, callback) {
@@ -110,7 +131,7 @@ var RoutingTable = (function () {
         };
         var bucketKey = this._getBucketKey(id);
 
-        this._buckets[bucketKey].get(id, internalCallback);
+        this._getBucket(bucketKey).get(id, internalCallback);
     };
 
     RoutingTable.prototype.isOpen = function (callback) {
@@ -127,7 +148,7 @@ var RoutingTable = (function () {
         this._buckets = {};
 
         for (var i = 0, k = this._config.get('topology.bitLength'); i < k; i++) {
-            this._createBucket(i);
+            this._createBucket(i, this._config.get('topology.k'));
         }
 
         this._isOpen = true;
@@ -139,7 +160,7 @@ var RoutingTable = (function () {
         };
         var bucketKey = this._getBucketKey(contact.getId());
 
-        this._buckets[bucketKey].update(contact, internalCallback);
+        this._getBucket(bucketKey).update(contact, internalCallback);
     };
 
     // todo updateId Ideas
@@ -152,10 +173,11 @@ var RoutingTable = (function () {
     *
     * @method core.topology.RoutingTable~_createBucket
     *
-    * @param {string} key
+    * @param {string} bucketKey
+    * @param {number} maxBucketSize
     */
-    RoutingTable.prototype._createBucket = function (key) {
-        this._buckets[key] = this._bucketFactory.create(this._config, key, this._bucketStore);
+    RoutingTable.prototype._createBucket = function (bucketKey, maxBucketSize) {
+        this._buckets[this._getBucketKeyString(bucketKey)] = this._bucketFactory.create(this._config, bucketKey, maxBucketSize, this._bucketStore, this._contactNodeFactory);
     };
 
     /**
@@ -165,10 +187,22 @@ var RoutingTable = (function () {
     * @method core.topology.RoutingTable~_getBucketKey
     *
     * @param {core.topology.IdInterface} id
-    * @return {string}
+    * @return {number}
     */
     RoutingTable.prototype._getBucketKey = function (id) {
-        return this._id.differsInHighestBit(id).toString();
+        return this._id.differsInHighestBit(id);
+    };
+
+    RoutingTable.prototype._getBucketKeyAsString = function (id) {
+        return this._getBucketKeyString(this._getBucketKey(id));
+    };
+
+    RoutingTable.prototype._getBucketKeyString = function (key) {
+        return key.toString();
+    };
+
+    RoutingTable.prototype._getBucket = function (bucketKey) {
+        return this._buckets[this._getBucketKeyString(bucketKey)];
     };
     return RoutingTable;
 })();

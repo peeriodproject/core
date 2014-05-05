@@ -1,5 +1,6 @@
 import ContactNodeAddressListInterface = require('./ContactNodeAddressListInterface');
 import ContactNodeInterface = require('./ContactNodeInterface');
+import ContactNodeObjectInterface = require('./ContactNodeObjectInterface');
 import IdInterface = require('./IdInterface');
 
 /**
@@ -18,6 +19,14 @@ interface ContactNodeFactoryInterface {
 	 * @returns {core.topology.ContactNodeInterface}
 	 */
 	create (id:IdInterface, addresses:ContactNodeAddressListInterface):ContactNodeInterface;
+
+	/**
+	 * @method core.topology.ContactNodeFactoryInterface#createFromObject
+	 *
+	 * @param {core.topology.ContactNodeObjectInterface} object
+	 * @returns {core.topology.ContactNodeInterface}
+	 */
+	createFromObject(object:ContactNodeObjectInterface):ContactNodeInterface;
 
 }
 

@@ -1,15 +1,28 @@
 /**
 * @class core.topology.Bucket
 * @implements core.topology.BucketInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {number} key
+* @param {number} maxBucketSize
+* @param {core.topology.BucketStoreInterface} store
+* @param {core.topology.ContactNodeFactoryInterface} contactNodeFactory
+* @param {Function} onOpenCallback
 */
 var Bucket = (function () {
-    function Bucket(config, key, maxBucketSize, store, onOpenCallback) {
+    function Bucket(config, key, maxBucketSize, store, contactNodeFactory, onOpenCallback) {
         /**
         * The internally used config object instance
         *
         * @member {core.config.ConfigInterface} core.topology.Bucket~_config
         */
         this._config = null;
+        /**
+        * The internally used contact node factory instance
+        *
+        * @member {core.topology.ContactNodeFactoryInterface} core.topology.Bucket~_contactNodeFactory
+        */
+        this._contactNodeFactory = null;
         /**
         * The internally used bucket store instance
         *
@@ -41,6 +54,7 @@ var Bucket = (function () {
         this._key = key;
         this._maxBucketSize = maxBucketSize;
         this._store = store;
+        this._contactNodeFactory = contactNodeFactory;
         this._keyString = this._key.toString();
 
         this.open(internalOpenCallback);
@@ -71,11 +85,27 @@ var Bucket = (function () {
     };
 
     Bucket.prototype.get = function (id, callback) {
-        callback(null, this._store.get(this._keyString, id.getBuffer()));
+        var storedObject = this._store.get(this._keyString, id.getBuffer());
+        var contact = null;
+
+        if (storedObject) {
+            contact = this._convertToContactNodeInstance(storedObject);
+        }
+
+        callback(null, contact);
     };
 
     Bucket.prototype.getAll = function (callback) {
-        callback(null, this._store.getAll(this._keyString));
+        var storedObjects = this._store.getAll(this._keyString);
+        var contacts = [];
+
+        if (storedObjects && storedObjects.length) {
+            for (var i in storedObjects) {
+                contacts.push(this._convertToContactNodeInstance(storedObjects[i]));
+            }
+        }
+
+        callback(null, contacts);
     };
 
     Bucket.prototype.isOpen = function (callback) {
@@ -141,6 +171,18 @@ var Bucket = (function () {
                 updatedCallback();
             }
         });
+    };
+
+    /**
+    * Converts a {@link core.topology.ContactNodeObjectInterface} into a {@link core.topology.ContactNodeInterface}
+    *
+    * @method core.topology.RoutingTable~_convertToContactNodeInstance
+    *
+    * @param {core.topology.ContactNodeObjectInterface} contactObject
+    * @returns {core.topology.ContactNodeInterface}
+    */
+    Bucket.prototype._convertToContactNodeInstance = function (contactObject) {
+        return this._contactNodeFactory.createFromObject(contactObject);
     };
     return Bucket;
 })();

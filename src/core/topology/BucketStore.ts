@@ -1,9 +1,12 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
 /// <reference path='../../../ts-definitions/node-lmdb/node-lmdb.d.ts' />
 
+import lmdb = require('node-lmdb');
+
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
 import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
-import lmdb = require('node-lmdb');
+import ContactNodeObjectInterface = require('./interfaces/ContactNodeObjectInterface');
+import ContactNodeObjectListInterface = require('./interfaces/ContactNodeObjectListInterface');
 
 /**
  * LMDB-BucketStore Implementation
@@ -113,7 +116,7 @@ class BucketStore implements BucketStoreInterface {
 		txn.commit();
 	}
 
-	public get (bucketKey:string, id:Buffer):any {
+	public get (bucketKey:string, id:Buffer):ContactNodeObjectInterface {
 		var txn:lmdb.Txn = this._beginReadOnlyTransaction();
 		var cursor:lmdb.Cursor = this._getCursor(txn);
 		var value:any = this._get(txn, id);
@@ -124,11 +127,11 @@ class BucketStore implements BucketStoreInterface {
 		return value;
 	}
 
-	public getAll (bucketKey:string):any {
+	public getAll (bucketKey:string):ContactNodeObjectListInterface {
 		var txn:lmdb.Txn = this._beginReadOnlyTransaction();
 		var cursor:lmdb.Cursor = this._getCursor(txn);
 		var bucketKeyShortcut = this._getBucketKey(bucketKey);
-		var values:Array<string> = [];
+		var values:ContactNodeObjectListInterface = [];
 
 		// Go the the first occourence of `bucketKey` and iterate from there
 		for (var found = cursor.goToRange(bucketKeyShortcut); found; found = cursor.goToNext()) {
@@ -138,7 +141,8 @@ class BucketStore implements BucketStoreInterface {
 			}
 
 			cursor.getCurrentBinary((key, idBuffer) => {
-				values.push(this._get(txn, idBuffer));
+				var contact = this._get(txn, idBuffer);
+				values.push(contact);
 			});
 		}
 
@@ -240,11 +244,20 @@ class BucketStore implements BucketStoreInterface {
 		};
 
 		try {
+
 			// stores the object with id as it's key
+			/*
+			// multi row test
+			txn.putBinary(this._databaseInstance, this._getPropertyKey(id, 'id'), id);
+			txn.putNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'), lastSeen);
+			txn.putString(this._databaseInstance, this._getPropertyKey(id, 'addresses'), JSON.stringify(addresses));
+			*/
 			txn.putString(this._databaseInstance, idKey, JSON.stringify(value));
 
 			// stores a shortcut for bucketwide last seen searches.
+			// node-lmdb uses the old (slow buffer)! Therefore we're using much faster strings at the moment.
 			txn.putBinary(this._databaseInstance, lastSeenKey, id);
+			//txn.putString(this._databaseInstance, lastSeenKey, id.toJSON());
 		}
 		catch (err) {
 			console.error(err);
@@ -292,6 +305,16 @@ class BucketStore implements BucketStoreInterface {
 	 * @returns {any}
 	 */
 	private _get(txn:lmdb.Txn, id:Buffer):any {
+		/*
+		multi row test
+		var contact = {
+			addresses: JSON.parse(txn.getString(this._databaseInstance, this._getPropertyKey(id, 'addresses'))),
+			id: txn.getBinary(this._databaseInstance, this._getPropertyKey(id, 'id')),
+			lastSeen: txn.getNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'))
+		};
+
+		return contact;*/
+
 		return JSON.parse(txn.getString(this._databaseInstance, this._getIdKey(id)));
 	}
 
@@ -353,6 +376,18 @@ class BucketStore implements BucketStoreInterface {
 	 */
 	private _getLastSeenKey (bucketKey:string, lastSeen:number):string {
 		return this._getBucketKey(bucketKey) + lastSeen;
+	}
+
+	/**
+	 *
+	 * @method core.topology.BucketStore~_getPropertyKey
+	 *
+	 * @param {Buffer} id
+	 * @param {string} propertyName The name of the property
+	 * @returns {string}
+	 */
+	private _getPropertyKey(id:Buffer, propertyName:string):string {
+		return this._getIdKey(id) + '-' + propertyName;
 	}
 
 }

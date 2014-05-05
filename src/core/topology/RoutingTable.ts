@@ -2,6 +2,7 @@ import BucketFactoryInterface = require('./interfaces/BucketFactoryInterface');
 import BucketInterface = require('./interfaces/BucketInterface');
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
+import ContactNodeFactoryInterface = require('./interfaces/ContactNodeFactoryInterface');
 import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
 import ContactNodeListInterface = require('./interfaces/ContactNodeListInterface');
 import IdInterface = require('./interfaces/IdInterface');
@@ -45,6 +46,13 @@ class RoutingTable implements RoutingTableInterface {
 	private _buckets:{[key:string]: BucketInterface} = {};
 
 	/**
+	 * The internally used contact node factory instance. Usually just for reference and passed through to the Bucket
+	 *
+	 * @member {core.topology.ContactNodeFactoryInterface} core.topology.RoutingTable~_contactNodeFactory
+	 */
+	private _contactNodeFactory:ContactNodeFactoryInterface = null;
+
+	/**
 	 * The internally used config object instance. Usually just for reference and passed through to the Bucket
 	 *
 	 * @member {core.config.ConfigInterface} core.topology.RoutingTable~_config
@@ -72,7 +80,7 @@ class RoutingTable implements RoutingTableInterface {
 	 */
 	private _options:RoutingTableOptions = null;
 
-	constructor (config:ConfigInterface, id:IdInterface, bucketFactory:BucketFactoryInterface, bucketStore:BucketStoreInterface, options:RoutingTableOptions = {}) {
+	constructor (config:ConfigInterface, id:IdInterface, bucketFactory:BucketFactoryInterface, bucketStore:BucketStoreInterface, contactNodeFactory:ContactNodeFactoryInterface, options:RoutingTableOptions = {}) {
 
 		var defaults:RoutingTableOptions = {
 			closeOnProcessExit: true,
@@ -86,6 +94,7 @@ class RoutingTable implements RoutingTableInterface {
 		this._id = id;
 		this._bucketFactory = bucketFactory;
 		this._bucketStore = bucketStore;
+		this._contactNodeFactory = contactNodeFactory;
 
 		// todo merge opts & defaults
 		this._options = ObjectUtils.extend(defaults, options);
@@ -122,17 +131,32 @@ class RoutingTable implements RoutingTableInterface {
 		var internalCallback = callback || function (err:Error) {
 		};
 
-		var startBucketKey = this._getBucketKey(id);
-		console.log(startBucketKey);
+		var closestContactNodes:ContactNodeListInterface = [];
 
+		var startBucketKey:number = this._getBucketKey(id);
+		this._getBucket(startBucketKey).getAll(function (err:Error, contacts:ContactNodeListInterface) {
+
+			if (contacts.length) {
+				for (var i in contacts) {
+					var contact:ContactNodeInterface = contacts[i];
+
+					// foobar
+					console.log('contact');
+					console.log(contact);
+					var dist = id.distanceTo(contact.getId());
+					console.log(dist);
+				}
+
+			}
+		});
 	}
 
 	public getContactNode (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
-		var bucketKey = this._getBucketKey(id);
+		var bucketKey:number = this._getBucketKey(id);
 
-		this._buckets[bucketKey].get(id, internalCallback);
+		this._getBucket(bucketKey).get(id, internalCallback);
 	}
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):boolean {
@@ -149,7 +173,7 @@ class RoutingTable implements RoutingTableInterface {
 		this._buckets = {};
 
 		for (var i = 0, k = this._config.get('topology.bitLength'); i < k; i++) {
-			this._createBucket(i);
+			this._createBucket(i, this._config.get('topology.k'));
 		}
 
 		this._isOpen = true;
@@ -159,9 +183,9 @@ class RoutingTable implements RoutingTableInterface {
 	public updateContactNode (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
-		var bucketKey:string = this._getBucketKey(contact.getId());
+		var bucketKey:number = this._getBucketKey(contact.getId());
 
-		this._buckets[bucketKey].update(contact, internalCallback);
+		this._getBucket(bucketKey).update(contact, internalCallback);
 	}
 
 	// todo updateId Ideas
@@ -174,10 +198,11 @@ class RoutingTable implements RoutingTableInterface {
 	 *
 	 * @method core.topology.RoutingTable~_createBucket
 	 *
-	 * @param {string} key
+	 * @param {string} bucketKey
+	 * @param {number} maxBucketSize
 	 */
-	private _createBucket (key:number) {
-		this._buckets[key] = this._bucketFactory.create(this._config, key, this._bucketStore);
+	private _createBucket (bucketKey:number, maxBucketSize:number) {
+		this._buckets[this._getBucketKeyString(bucketKey)] = this._bucketFactory.create(this._config, bucketKey, maxBucketSize, this._bucketStore, this._contactNodeFactory);
 	}
 
 	/**
@@ -187,10 +212,22 @@ class RoutingTable implements RoutingTableInterface {
 	 * @method core.topology.RoutingTable~_getBucketKey
 	 *
 	 * @param {core.topology.IdInterface} id
-	 * @return {string}
+	 * @return {number}
 	 */
-	private _getBucketKey (id:IdInterface):string {
-		return this._id.differsInHighestBit(id).toString();
+	private _getBucketKey (id:IdInterface):number {
+		return this._id.differsInHighestBit(id);
+	}
+
+	private _getBucketKeyAsString (id:IdInterface):string {
+		return    this._getBucketKeyString(this._getBucketKey(id));
+	}
+
+	private _getBucketKeyString (key:number):string {
+		return key.toString();
+	}
+
+	private _getBucket (bucketKey:number):BucketInterface {
+		return this._buckets[this._getBucketKeyString(bucketKey)]
 	}
 
 }

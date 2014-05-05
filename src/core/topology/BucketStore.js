@@ -127,7 +127,8 @@ var BucketStore = (function () {
             }
 
             cursor.getCurrentBinary(function (key, idBuffer) {
-                values.push(_this._get(txn, idBuffer));
+                var contact = _this._get(txn, idBuffer);
+                values.push(contact);
             });
         }
 
@@ -230,10 +231,18 @@ var BucketStore = (function () {
 
         try  {
             // stores the object with id as it's key
+            /*
+            // multi row test
+            txn.putBinary(this._databaseInstance, this._getPropertyKey(id, 'id'), id);
+            txn.putNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'), lastSeen);
+            txn.putString(this._databaseInstance, this._getPropertyKey(id, 'addresses'), JSON.stringify(addresses));
+            */
             txn.putString(this._databaseInstance, idKey, JSON.stringify(value));
 
             // stores a shortcut for bucketwide last seen searches.
+            // node-lmdb uses the old (slow buffer)! Therefore we're using much faster strings at the moment.
             txn.putBinary(this._databaseInstance, lastSeenKey, id);
+            //txn.putString(this._databaseInstance, lastSeenKey, id.toJSON());
         } catch (err) {
             console.error(err);
         }
@@ -280,6 +289,15 @@ var BucketStore = (function () {
     * @returns {any}
     */
     BucketStore.prototype._get = function (txn, id) {
+        /*
+        multi row test
+        var contact = {
+        addresses: JSON.parse(txn.getString(this._databaseInstance, this._getPropertyKey(id, 'addresses'))),
+        id: txn.getBinary(this._databaseInstance, this._getPropertyKey(id, 'id')),
+        lastSeen: txn.getNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'))
+        };
+        
+        return contact;*/
         return JSON.parse(txn.getString(this._databaseInstance, this._getIdKey(id)));
     };
 
@@ -341,6 +359,18 @@ var BucketStore = (function () {
     */
     BucketStore.prototype._getLastSeenKey = function (bucketKey, lastSeen) {
         return this._getBucketKey(bucketKey) + lastSeen;
+    };
+
+    /**
+    *
+    * @method core.topology.BucketStore~_getPropertyKey
+    *
+    * @param {Buffer} id
+    * @param {string} propertyName The name of the property
+    * @returns {string}
+    */
+    BucketStore.prototype._getPropertyKey = function (id, propertyName) {
+        return this._getIdKey(id) + '-' + propertyName;
     };
     return BucketStore;
 })();

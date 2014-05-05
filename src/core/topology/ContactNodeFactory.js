@@ -1,4 +1,6 @@
+/// <reference path='../../../ts-definitions/node/node.d.ts' />
 var ContactNode = require('./ContactNode');
+
 var ContactNodeAddressFactory = require('./ContactNodeAddressFactory');
 var Id = require('./Id');
 
@@ -11,8 +13,24 @@ var Id = require('./Id');
 var ContactNodeFactory = (function () {
     function ContactNodeFactory() {
     }
-    ContactNodeFactory.prototype.create = function (id, addresses) {
-        return new ContactNode(id, addresses, Date.now());
+    ContactNodeFactory.prototype.create = function (id, addresses, lastSeen) {
+        lastSeen = lastSeen || Date.now();
+        return new ContactNode(id, addresses, lastSeen);
+    };
+
+    ContactNodeFactory.prototype.createFromObject = function (object) {
+        var addressFactory = new ContactNodeAddressFactory();
+        var addresses = [];
+
+        if (object.addresses && object.addresses.length) {
+            for (var i in object.addresses) {
+                var address = object.addresses[i];
+                addresses.push(addressFactory.create(address._ip, address._port));
+            }
+        }
+
+        var idBuffer = new Buffer(object.id);
+        return this.create(new Id(idBuffer, 160), addresses, object.lastSeen);
     };
 
     ContactNodeFactory.createDummy = function () {
