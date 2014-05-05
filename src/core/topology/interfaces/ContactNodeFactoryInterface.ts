@@ -3,7 +3,7 @@ import ContactNodeInterface = require('./ContactNodeInterface');
 import IdInterface = require('./IdInterface');
 
 /**
- * The `ContactNodeFactoryInterface` provides an Interface to create objects which implements the {@link core.topology.ContactNodeInterface}
+ * The `ContactNodeFactoryInterface` provides an Interface to create objects which implement the {@link core.topology.ContactNodeInterface}
  *
  * @interface
  * @class core.topology.ContactNodeFactoryInterface
