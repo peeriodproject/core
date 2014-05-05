@@ -14,14 +14,14 @@ import TCPSocketOptions = require('./TCPSocketOptions');
  *
  * The aim of TCPSocketHandler is making it obsolete if a connection was established as a server or client on the local end.
  * What matters is the sockets.
- * Thus it emits the event `connected` with a TCPSocket instance.
+ * Thus it emits the event `connected` with a TCPSocket instance and a string which is either 'outgoing' (client) or 'incoming' (server).
  * It also emits an `opened server` and `closed server` event (with net.Server instance) on the opening or closing of
  * a TCP server.
  *
  * @interface
  * @class core.net.tcp.TCPSocketHandlerInterface
  */
-interface TCPSocketHandlerInterface {
+interface TCPSocketHandlerInterface extends NodeJS.EventEmitter {
 
 	/**
 	 * Uses the provided open ports to listen on them with TCP servers. When all servers have been set up (or a timeout

@@ -128,7 +128,11 @@ var TCPSocketHandler = (function (_super) {
         var sock = net.createConnection(port, ip);
 
         sock.on('error', function () {
-            this.emit('connection error', port, ip);
+            if (callback) {
+                callback(null);
+            } else {
+                this.emit('connection error', port, ip);
+            }
         });
 
         sock.on('connect', function () {
@@ -137,7 +141,7 @@ var TCPSocketHandler = (function (_super) {
             var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
 
             if (!callback) {
-                _this.emit('connected', socket);
+                _this.emit('connected', socket, 'outgoing');
             } else {
                 callback(socket);
             }
@@ -182,7 +186,7 @@ var TCPSocketHandler = (function (_super) {
 
                     server.on('connection', function (sock) {
                         var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
-                        _this.emit('connected', socket);
+                        _this.emit('connected', socket, 'incoming');
                     });
 
                     _this.emit('openedReachableServer', port, server);
