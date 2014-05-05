@@ -150,7 +150,7 @@ var ReadableMessage = (function () {
     /**
     * Extracts a 20 byte ID from the message buffer.
     *
-    * @method core.protocol.messages.ReadableMessage~_e
+    * @method core.protocol.messages.ReadableMessage~_extractId
     *
     * @param {number} from Byte index to start from
     * @returns {Id} The created ID
