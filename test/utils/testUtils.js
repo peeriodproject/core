@@ -63,7 +63,7 @@ var testUtils;
             fs.readdirSync(path).forEach(function (file, index) {
                 var curPath = path + '/' + file;
                 if (fs.lstatSync(curPath).isDirectory()) {
-                    deleteFolderRecursive(curPath);
+                    testUtils.deleteFolderRecursive(curPath);
                 } else {
                     fs.unlinkSync(curPath);
                 }
