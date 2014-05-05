@@ -18,7 +18,7 @@ interface BucketFactoryInterface {
 	 * @param {core.topology.BucketStoreInterface} store The internally used bucket store
 	 * @returns {core.topology.BucketInterface}
 	 */
-	create (config:ConfigInterface, key:string, store:BucketStoreInterface):BucketInterface;
+	create (config:ConfigInterface, key:number, store:BucketStoreInterface):BucketInterface;
 
 }
 

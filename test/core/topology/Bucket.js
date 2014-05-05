@@ -10,7 +10,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var BucketStore = require('../../../src/core/topology/BucketStore');
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 
-describe('CORE --> TOPOLOGY --> BUCKET', function () {
+describe('CORE --> TOPOLOGY --> BUCKET @joern', function () {
     // http://stackoverflow.com/a/14041593
     var sandbox;
     var configStub;
@@ -33,7 +33,9 @@ describe('CORE --> TOPOLOGY --> BUCKET', function () {
     beforeEach(function () {
         sandbox = sinon.sandbox.create();
         configStub = stubPublicApi(ObjectConfig);
-        name = 'bucket1';
+
+        // random bucket name (0 < name < 160
+        name = Math.round(Math.random() * 160);
     });
 
     afterEach(function () {

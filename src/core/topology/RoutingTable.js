@@ -127,7 +127,7 @@ var RoutingTable = (function () {
         this._buckets = {};
 
         for (var i = 0, k = this._config.get('topology.bitLength'); i < k; i++) {
-            this._createBucket(i.toString());
+            this._createBucket(i);
         }
 
         this._isOpen = true;

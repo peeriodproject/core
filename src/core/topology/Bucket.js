@@ -21,12 +21,19 @@ var Bucket = (function () {
         *
         * @member {string} core.topology.Bucket~_key
         */
-        this._key = '';
+        this._key = -1;
+        /**
+        * The key of the bucket as string
+        *
+        * @member {string} core.topology.Bucket~_keyString
+        */
+        this._keyString = '';
         var internalOpenCallback = onOpenCallback || function (err) {
         };
 
         this._config = config;
         this._key = key;
+        this._keyString = this._key.toString();
         this._store = store;
 
         this.open(internalOpenCallback);
@@ -35,7 +42,7 @@ var Bucket = (function () {
         var internalCallback = callback || function (err) {
         };
 
-        this._store.add(this._key, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
+        this._store.add(this._keyString, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
 
         internalCallback(null);
     };
@@ -49,15 +56,15 @@ var Bucket = (function () {
     };
 
     Bucket.prototype.contains = function (contact, callback) {
-        callback(null, this._store.contains(this._key, contact.getId().getBuffer()));
+        callback(null, this._store.contains(this._keyString, contact.getId().getBuffer()));
     };
 
     Bucket.prototype.get = function (id, callback) {
-        callback(null, this._store.get(this._key, id.getBuffer()));
+        callback(null, this._store.get(this._keyString, id.getBuffer()));
     };
 
     Bucket.prototype.getAll = function (callback) {
-        callback(null, this._store.getAll(this._key));
+        callback(null, this._store.getAll(this._keyString));
     };
 
     Bucket.prototype.isOpen = function (callback) {
@@ -76,12 +83,12 @@ var Bucket = (function () {
         var internalCallback = callback || function (err) {
         };
 
-        this._store.remove(this._key, id.getBuffer());
+        this._store.remove(this._keyString, id.getBuffer());
         internalCallback(null);
     };
 
     Bucket.prototype.size = function (callback) {
-        callback(null, this._store.size(this._key));
+        callback(null, this._store.size(this._keyString));
     };
 
     Bucket.prototype.update = function (contact, callback) {
