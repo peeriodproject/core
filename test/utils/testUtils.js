@@ -1,4 +1,8 @@
 /// <reference path='../test.d.ts' />
+var fs = require('fs');
+
+var path = require('path');
+
 /**
 *
 */
@@ -36,6 +40,40 @@ var testUtils;
         return stubbed;
     }
     testUtils.stubPublicApi = stubPublicApi;
+
+    function getFixturePath(fixturePath) {
+        return path.join(process.cwd(), 'test/fixtures/', fixturePath);
+    }
+    testUtils.getFixturePath = getFixturePath;
+    ;
+
+    function createFolder(folderPath) {
+        if (!fs.existsSync(folderPath)) {
+            fs.mkdirSync(folderPath);
+        }
+    }
+    testUtils.createFolder = createFolder;
+    ;
+
+    /**
+    * @see http://www.geedew.com/2012/10/24/remove-a-directory-that-is-not-empty-in-nodejs/
+    */
+    function deleteFolderRecursive(path) {
+        if (fs.existsSync(path)) {
+            fs.readdirSync(path).forEach(function (file, index) {
+                var curPath = path + '/' + file;
+                if (fs.lstatSync(curPath).isDirectory()) {
+                    testUtils.deleteFolderRecursive(curPath);
+                } else {
+                    fs.unlinkSync(curPath);
+                }
+            });
+
+            fs.rmdirSync(path);
+        }
+    }
+    testUtils.deleteFolderRecursive = deleteFolderRecursive;
+    ;
 })(testUtils || (testUtils = {}));
 
 module.exports = testUtils;

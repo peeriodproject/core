@@ -1,36 +1,18 @@
 /// <reference path='../../test.d.ts' />
 require('should');
 
-var fs = require('fs');
-var path = require('path');
+var testUtils = require('../../utils/testUtils');
 
 var BucketStore = require('../../../src/core/topology/BucketStore');
 
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 
 describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
-    /** @see http://www.geedew.com/2012/10/24/remove-a-directory-that-is-not-empty-in-nodejs/ */
-    var deleteFolderRecursive = function (path) {
-        if (fs.existsSync(path)) {
-            fs.readdirSync(path).forEach(function (file, index) {
-                var curPath = path + '/' + file;
-                if (fs.lstatSync(curPath).isDirectory()) {
-                    deleteFolderRecursive(curPath);
-                } else {
-                    fs.unlinkSync(curPath);
-                }
-            });
-
-            fs.rmdirSync(path);
-        }
-    }, databasePath = path.join(process.cwd(), 'test/fixtures/core/topology/bucketstore/db'), store = null;
+    var databasePath = testUtils.getFixturePath('core/topology/bucketstore/db');
+    var store = null;
 
     beforeEach(function () {
-        // create the temporary database folder
-        if (!fs.existsSync(databasePath)) {
-            fs.mkdirSync(databasePath);
-        }
-
+        testUtils.createFolder(databasePath);
         store = new BucketStore('name', databasePath);
     });
 
@@ -40,7 +22,7 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
         store = null;
 
         // remove the temporary database folder
-        deleteFolderRecursive(databasePath);
+        testUtils.deleteFolderRecursive(databasePath);
     });
 
     it('should correctly instantiate BucketStore without error', function () {
@@ -83,7 +65,7 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
         store.get('bucket1', contact.getId().getBuffer()).should.equal(contactJSON);
     });
 
-    it('should correctly return all items stored in a specified bucket sorted by lastSeen @joern', function () {
+    it('should correctly return all items stored in a specified bucket sorted by lastSeen', function () {
         var contacts = [];
         var amount = 10;
 
@@ -101,6 +83,7 @@ describe('CORE --> TOPOLOGY --> BUCKETSTORE', function () {
 
         for (var i in all) {
             var lastSeen = JSON.parse(all[i]).lastSeen;
+
             lastSeen.should.be.greaterThan(lastTimestamp);
 
             lastTimestamp = lastSeen;

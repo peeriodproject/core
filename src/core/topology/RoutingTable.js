@@ -97,6 +97,14 @@ var RoutingTable = (function () {
         internalCallback(null);
     };
 
+    RoutingTable.prototype.getClosestContactNodes = function (id, callback) {
+        var internalCallback = callback || function (err) {
+        };
+
+        var startBucketKey = this._getBucketKey(id);
+        console.log(startBucketKey);
+    };
+
     RoutingTable.prototype.getContactNode = function (id, callback) {
         var internalCallback = callback || function (err) {
         };
@@ -119,7 +127,7 @@ var RoutingTable = (function () {
         this._buckets = {};
 
         for (var i = 0, k = this._config.get('topology.bitLength'); i < k; i++) {
-            this._createBucket(i.toString());
+            this._createBucket(i);
         }
 
         this._isOpen = true;

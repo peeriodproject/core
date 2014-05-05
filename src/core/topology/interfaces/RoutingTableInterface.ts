@@ -3,6 +3,11 @@ import IdInterface = require('./IdInterface');
 import ContactNodeInterface = require('./ContactNodeInterface');
 
 /**
+ * RoutingTable Interface
+ *
+ * - creates k buckes
+ * - provides a single entry point for contact nodes which should be stored within a bucket.
+ *
  * @interface
  * @class core.topology.RoutingTableInterface
  * @extends core.utils.ClosableInterface
@@ -10,7 +15,18 @@ import ContactNodeInterface = require('./ContactNodeInterface');
 interface RoutingTableInterface extends ClosableAsyncInterface {
 
 	/**
+	 * Returns the `topology.k` closest nodes to the specified id
+	 *
+	 * @method core.topology.RoutingTableInterface#getClosestContactNodes
+	 *
+	 * @param {core.topology.IdInterface} id
+	 */
+	getClosestContactNodes (id:IdInterface, callback:(err:Error, contacts:Array<ContactNodeInterface>) => any):void;
+
+	/**
 	 * Returns the specified contact code by id
+	 *
+	 * @method core.topology.RoutingTableInterface#getContactNode
 	 *
 	 * @param {core.topology.IdInterface} id The id of the contact node
 	 * @returns {ContactNodeInterface} The found contact node or null

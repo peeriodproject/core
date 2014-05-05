@@ -3,6 +3,7 @@ import BucketInterface = require('./interfaces/BucketInterface');
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
+import ContactNodeListInterface = require('./interfaces/ContactNodeListInterface');
 import IdInterface = require('./interfaces/IdInterface');
 import RoutingTableInterface = require('./interfaces/RoutingTableInterface');
 import RoutingTableOptions = require('./interfaces/RoutingTableOptions');
@@ -117,6 +118,15 @@ class RoutingTable implements RoutingTableInterface {
 		internalCallback(null);
 	}
 
+	public getClosestContactNodes (id:IdInterface, callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
+		var internalCallback = callback || function (err:Error) {
+		};
+
+		var startBucketKey = this._getBucketKey(id);
+		console.log(startBucketKey);
+
+	}
+
 	public getContactNode (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
@@ -139,7 +149,7 @@ class RoutingTable implements RoutingTableInterface {
 		this._buckets = {};
 
 		for (var i = 0, k = this._config.get('topology.bitLength'); i < k; i++) {
-			this._createBucket(i.toString());
+			this._createBucket(i);
 		}
 
 		this._isOpen = true;
@@ -166,7 +176,7 @@ class RoutingTable implements RoutingTableInterface {
 	 *
 	 * @param {string} key
 	 */
-	private _createBucket (key:string) {
+	private _createBucket (key:number) {
 		this._buckets[key] = this._bucketFactory.create(this._config, key, this._bucketStore);
 	}
 

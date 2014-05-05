@@ -30,13 +30,21 @@ class Bucket implements BucketInterface {
 	 *
 	 * @member {string} core.topology.Bucket~_key
 	 */
-	private _key:string = '';
+	private _key:number = -1;
 
-	constructor (config:ConfigInterface, key:string, store:BucketStoreInterface, onOpenCallback?:(err:Error) => any) {
+	/**
+	 * The key of the bucket as string
+	 *
+	 * @member {string} core.topology.Bucket~_keyString
+	 */
+	private _keyString:string = '';
+
+	constructor (config:ConfigInterface, key:number, store:BucketStoreInterface, onOpenCallback?:(err:Error) => any) {
 		var internalOpenCallback = onOpenCallback || function (err:Error) {};
 
 		this._config = config;
 		this._key = key;
+		this._keyString = this._key.toString();
 		this._store = store;
 
 		this.open(internalOpenCallback);
@@ -46,7 +54,7 @@ class Bucket implements BucketInterface {
 		var internalCallback = callback || function (err:Error) {};
 
 		this._store.add(
-			this._key,
+			this._keyString,
 			contact.getId().getBuffer(),
 			contact.getLastSeen(),
 			contact.getAddresses()
@@ -63,15 +71,15 @@ class Bucket implements BucketInterface {
 	}
 
 	public contains (contact:ContactNodeInterface, callback:(err:Error, contains:boolean) => any):void {
-		callback(null, this._store.contains(this._key, contact.getId().getBuffer()));
+		callback(null, this._store.contains(this._keyString, contact.getId().getBuffer()));
 	}
 
 	public get (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void {
-		callback(null, this._store.get(this._key, id.getBuffer()));
+		callback(null, this._store.get(this._keyString, id.getBuffer()));
 	}
 
 	getAll (callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
-		callback(null, this._store.getAll(this._key));
+		callback(null, this._store.getAll(this._keyString));
 	}
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
@@ -88,12 +96,12 @@ class Bucket implements BucketInterface {
 	public remove (id:IdInterface, callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {};
 
-		this._store.remove(this._key, id.getBuffer());
+		this._store.remove(this._keyString, id.getBuffer());
 		internalCallback(null);
 	}
 
 	public size (callback:(err:Error, size:number) => any):void {
-		callback(null, this._store.size(this._key));
+		callback(null, this._store.size(this._keyString));
 	}
 
 	public update (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
