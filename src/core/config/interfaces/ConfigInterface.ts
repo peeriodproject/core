@@ -14,10 +14,11 @@ interface ConfigInterface {
 	 *
 	 * @throws Will throw an error if no key is specified.
 	 * @throws Will throw an error if no value is found and no alternative is specified.
+	 * @throws Will throw an error if an array contains a non pimitive object.
 	 *
-	 * @param {string} key
-	 * @param {any} alternative
-	 * @returns {any}
+	 * @param {string} key The dot-notated object key
+	 * @param {any} alternative An alternative (default) value if no value is specified for the given key
+	 * @returns {any} The value stored under the specific key
 	 */
 	get (key:string, alternative?:any):any;
 

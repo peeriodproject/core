@@ -5,21 +5,22 @@ import ConfigKeyListInterface = require('./interfaces/ConfigKeyListInterface');
 declare var require;
 
 /**
- * The class `JSONConfig` loads a JSON-file and converts it into a dot.notated key-value store.
+ * The class `JSONConfig` loads a JSON-file and converts it into a dot-notated key-value store.
+ *
+ * @see {@link core.config.ObjectConfig} for an example how to limit the store to specified namespaces.
  *
  * @class core.config.JSONConfig
  * @extends core.config.ObjectConfig
  *
- * todo add throw comment
- * todo implement json loading without require
+ * @throws Throws a `file not found` error if no file could be found at the specified `configPath`.
+ * @throws Throws a `syntax error` if the specified file contains invalid JSON.
  *
- *
- * @param {string} configPath
- * @param {core.config.ConfigKeyListInterface} keys
+ * @param {string} configPath The path to the JSON file
+ * @param {core.config.ConfigKeyListInterface} configKeys An array of namespace keys to limit the store
  */
 class JSONConfig extends ObjectConfig {
 
-	constructor (configPath:string, keys:ConfigKeyListInterface = []) {
+	constructor (configPath:string, configKeys:ConfigKeyListInterface = []) {
 		var fileData:Object = {};
 
 		try {
@@ -42,7 +43,7 @@ class JSONConfig extends ObjectConfig {
 			}
 		}
 
-		super(fileData, keys);
+		super(fileData, configKeys);
 	}
 
 }

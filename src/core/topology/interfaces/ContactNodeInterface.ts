@@ -1,5 +1,5 @@
 import IdInterface = require('./IdInterface');
-import ContactNodeAddressInterface = require('./ContactNodeAddressInterface');
+import ContactNodeAddressListInterface = require('./ContactNodeAddressListInterface');
 
 
 /**
@@ -16,9 +16,9 @@ interface ContactNodeInterface {
 	 *
 	 * @method core.topology.ContactNodeInterface#getAddresses
 	 *
-	 * @returns {string}
+	 * @returns {core.topology.ContactNodeAddressListInterface}
 	 */
-	getAddresses ():Array<ContactNodeAddressInterface>;
+	getAddresses ():ContactNodeAddressListInterface;
 
 	/**
 	 * Returns the id of the contact node.

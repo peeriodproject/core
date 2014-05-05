@@ -1,14 +1,21 @@
+import ContactNodeAddressListInterface = require('./interfaces/ContactNodeAddressListInterface');
 import ContactNodeFactoryInterface = require('./interfaces/ContactNodeFactoryInterface');
 import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
-import ContactNode = require('./ContactNode');
-import ContactNodeAddressInterface = require('./interfaces/ContactNodeAddressInterface');
 import IdInterface = require('./interfaces/IdInterface');
-import Id = require('./Id');
-import ContactNodeAddressFactory = require('./ContactNodeAddressFactory');
 
+import ContactNode = require('./ContactNode');
+import ContactNodeAddressFactory = require('./ContactNodeAddressFactory');
+import Id = require('./Id');
+
+/**
+ * The `ContactNodeFactory` creates {@link core.topology.ContactNode} according to the {@link core.topology.ContactNodeInterface}
+ *
+ * @class core.topology.ContactNodeFactory
+ * @implements core.topology.ContactNodeFactoryInterface
+ */
 class ContactNodeFactory implements ContactNodeFactoryInterface {
 
-	public create(id:IdInterface, addresses:Array<ContactNodeAddressInterface>):ContactNodeInterface {
+	public create (id:IdInterface, addresses:ContactNodeAddressListInterface):ContactNodeInterface {
 		return new ContactNode(id, addresses, Date.now());
 	}
 
@@ -27,7 +34,7 @@ class ContactNodeFactory implements ContactNodeFactoryInterface {
 			return new Id(Id.byteBufferByBitString(getRandomId(), 20), 160);
 		};
 
-		var getAddresses =  function ():Array<ContactNodeAddressInterface> {
+		var getAddresses =  function ():ContactNodeAddressListInterface {
 			return [ContactNodeAddressFactory.createDummy()];
 		};
 

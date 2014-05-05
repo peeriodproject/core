@@ -8,22 +8,23 @@ var ObjectConfig = require('./ObjectConfig');
 
 
 /**
-* The class `JSONConfig` loads a JSON-file and converts it into a dot.notated key-value store.
+* The class `JSONConfig` loads a JSON-file and converts it into a dot-notated key-value store.
+*
+* @see {@link core.config.ObjectConfig} for an example how to limit the store to specified namespaces.
 *
 * @class core.config.JSONConfig
 * @extends core.config.ObjectConfig
 *
-* todo add throw comment
-* todo implement json loading without require
+* @throws Throws a `file not found` error if no file could be found at the specified `configPath`.
+* @throws Throws a `syntax error` if the specified file contains invalid JSON.
 *
-*
-* @param {string} configPath
-* @param {core.config.ConfigKeyListInterface} keys
+* @param {string} configPath The path to the JSON file
+* @param {core.config.ConfigKeyListInterface} configKeys An array of namespace keys to limit the store
 */
 var JSONConfig = (function (_super) {
     __extends(JSONConfig, _super);
-    function JSONConfig(configPath, keys) {
-        if (typeof keys === "undefined") { keys = []; }
+    function JSONConfig(configPath, configKeys) {
+        if (typeof configKeys === "undefined") { configKeys = []; }
         var fileData = {};
 
         try  {
@@ -42,7 +43,7 @@ var JSONConfig = (function (_super) {
             }
         }
 
-        _super.call(this, fileData, keys);
+        _super.call(this, fileData, configKeys);
     }
     return JSONConfig;
 })(ObjectConfig);

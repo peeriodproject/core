@@ -1,5 +1,11 @@
 var Bucket = require('./Bucket');
 
+/**
+* The `BucketFactory` creates {@link core.topology.Bucket} according to the {@link core.topology.BucketInterface}.
+*
+* @class core.topology.BucketFactory
+* @implements core.topology.BucketFactoryInterface
+*/
 var BucketFactory = (function () {
     function BucketFactory() {
     }

@@ -1,8 +1,13 @@
 var ContactNode = require('./ContactNode');
-
-var Id = require('./Id');
 var ContactNodeAddressFactory = require('./ContactNodeAddressFactory');
+var Id = require('./Id');
 
+/**
+* The `ContactNodeFactory` creates {@link core.topology.ContactNode} according to the {@link core.topology.ContactNodeInterface}
+*
+* @class core.topology.ContactNodeFactory
+* @implements core.topology.ContactNodeFactoryInterface
+*/
 var ContactNodeFactory = (function () {
     function ContactNodeFactory() {
     }
