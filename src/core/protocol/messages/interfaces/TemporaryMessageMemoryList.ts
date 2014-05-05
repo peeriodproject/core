@@ -1,3 +1,11 @@
+import TemporaryMessageMemory = require('./TemporaryMessageMemory');
+
 /**
- * Created by Johnny on 05.05.14.
+ * @interface
+ * @class core.protocol.messages.TemporaryMessageMemoryList
  */
+interface TemporaryMessageMemoryList {
+	[id:string]:TemporaryMessageMemory;
+}
+
+export = TemporaryMessageMemoryList;

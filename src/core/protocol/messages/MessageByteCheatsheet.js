@@ -11,4 +11,4 @@ var sheet = {
 };
 
 module.exports = sheet;
-//# sourceMappingURL=MessageByteCheatsheet.js.map
+//# sourceMappingURL=MessageByteCheatSheet.js.map

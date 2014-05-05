@@ -1,3 +1,12 @@
+/// <reference path='../../../../../ts-definitions/node/node.d.ts' />´
+
 /**
- * Created by Johnny on 05.05.14.
+ * @interface
+ * @class core.protocol.messages.TemporaryMessageMemory
  */
+interface TemporaryMessageMemory {
+	length:number;
+	data:Array<Buffer>;
+}
+
+export = TemporaryMessageMemory;
