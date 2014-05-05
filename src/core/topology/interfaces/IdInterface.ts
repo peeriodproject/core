@@ -56,7 +56,7 @@ interface IdInterface {
 	 * @param {core.topology.IdInterface} other
 	 * @return {NodeBuffer}
 	 */
-	distanceTo (other:IdInterface):NodeBuffer;
+	distanceTo (other:IdInterface):Buffer;
 
 	/**
 	 * Test if the id is equal to another.
@@ -75,7 +75,7 @@ interface IdInterface {
 	 *
 	 * @return {NodeBuffer} the byte buffer.
 	 */
-	getBuffer ():NodeBuffer;
+	getBuffer ():Buffer;
 
 	/**
 	 * Set the bit at the specified index. The index must be between the range [0, bit_length[.
