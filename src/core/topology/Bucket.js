@@ -3,7 +3,7 @@
 * @implements core.topology.BucketInterface
 */
 var Bucket = (function () {
-    function Bucket(config, key, store, onOpenCallback) {
+    function Bucket(config, key, maxBucketSize, store, onOpenCallback) {
         /**
         * The internally used config object instance
         *
@@ -28,13 +28,20 @@ var Bucket = (function () {
         * @member {string} core.topology.Bucket~_keyString
         */
         this._keyString = '';
+        /**
+        * The maximum amount of contact nodes the bucket should handle.
+        *
+        * @member {string} core.topology.Bucket~_maxBucketSize
+        */
+        this._maxBucketSize = -1;
         var internalOpenCallback = onOpenCallback || function (err) {
         };
 
         this._config = config;
         this._key = key;
-        this._keyString = this._key.toString();
+        this._maxBucketSize = maxBucketSize;
         this._store = store;
+        this._keyString = this._key.toString();
 
         this.open(internalOpenCallback);
     }
@@ -42,9 +49,13 @@ var Bucket = (function () {
         var internalCallback = callback || function (err) {
         };
 
-        this._store.add(this._keyString, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
+        if (this._store.size(this._keyString) < this._maxBucketSize) {
+            this._store.add(this._keyString, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
 
-        internalCallback(null);
+            internalCallback(null);
+        } else {
+            internalCallback(new Error('Bucket.add: Cannot add another contact. The Bucket is already full.'));
+        }
     };
 
     Bucket.prototype.close = function (callback) {

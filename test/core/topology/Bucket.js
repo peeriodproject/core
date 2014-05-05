@@ -17,9 +17,11 @@ describe('CORE --> TOPOLOGY --> BUCKET @joern', function () {
     var name;
     var bucketStoreStub;
     var bucket;
+    var maxBucketSize = 20;
+
     var createBucket = function (bucketStore) {
         bucketStoreStub = bucketStore;
-        bucket = new Bucket(configStub, name, bucketStoreStub);
+        bucket = new Bucket(configStub, name, maxBucketSize, bucketStoreStub);
     };
     var stubPublicApi = function (klass, apiMethodCallbacks) {
         if (typeof apiMethodCallbacks === "undefined") { apiMethodCallbacks = {}; }
@@ -47,9 +49,52 @@ describe('CORE --> TOPOLOGY --> BUCKET @joern', function () {
         bucket.should.be.an.instanceof(Bucket);
     });
 
+    describe('should correctly limit the bucket size an return an error in the callback', function () {
+        it('should correctly call the add method', function (done) {
+            createStubbedBucketStore({
+                size: function () {
+                    return maxBucketSize;
+                }
+            });
+
+            bucket.add(ContactNodeFactory.createDummy(), function (err) {
+                err.should.be.an.instanceof(Error);
+                err.message.should.equal('Bucket.add: Cannot add another contact. The Bucket is already full.');
+
+                bucketStoreStub.add.called.should.be.false;
+
+                done();
+            });
+        });
+
+        it('should correctly update a contact node', function (done) {
+            var contact = ContactNodeFactory.createDummy();
+
+            createStubbedBucketStore({
+                size: function () {
+                    return 20;
+                }
+            });
+
+            bucket.update(contact, function (err) {
+                err.should.be.an.instanceof(Error);
+                err.message.should.equal('Bucket.add: Cannot add another contact. The Bucket is already full.');
+
+                bucketStoreStub.remove.calledOnce.should.be.true;
+                bucketStoreStub.add.called.should.be.false;
+
+                done();
+            });
+        });
+    });
+
     describe('should correctly call the internally bucket store', function () {
         it('should call the internal add method', function (done) {
-            createStubbedBucketStore();
+            createStubbedBucketStore({
+                size: function () {
+                    return 0;
+                }
+            });
 
             bucket.add(ContactNodeFactory.createDummy(), function (err) {
                 bucketStoreStub.add.calledOnce.should.be.true;
@@ -164,7 +209,11 @@ describe('CORE --> TOPOLOGY --> BUCKET @joern', function () {
         it('should correctly update a contact node', function (done) {
             var contact = ContactNodeFactory.createDummy();
 
-            createStubbedBucketStore();
+            createStubbedBucketStore({
+                size: function () {
+                    return 10;
+                }
+            });
 
             bucket.update(contact, function (err) {
                 bucketStoreStub.remove.calledOnce.should.be.true;
