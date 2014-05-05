@@ -16,10 +16,12 @@ var ReadableMessage = (function () {
         this._bufferLen = buffer.length;
         this._addressFactory = addressFactory;
         this._nodeFactory = nodeFactory;
+
+        this._deformat();
     }
-    ReadableMessage.prototype.deformat = function () {
+    ReadableMessage.prototype._deformat = function () {
         if (!this._isProtocolMessage()) {
-            throw new Error("ReadableMessage: Buffer is not protocol compliant.");
+            throw new Error('ReadableMessage~_deformat: Buffer is not protocol compliant.');
         }
 
         this._lastPosRead = MessageByteCheatsheet.messageBegin.length;
@@ -38,20 +40,36 @@ var ReadableMessage = (function () {
         this._payload = null;
     };
 
+    ReadableMessage.prototype.getReceiverId = function () {
+        return this._receiverId;
+    };
+
+    ReadableMessage.prototype.getSender = function () {
+        return this._sender;
+    };
+
+    ReadableMessage.prototype.getMessageType = function () {
+        return this._msgType;
+    };
+
+    ReadableMessage.prototype.getPayload = function () {
+        return this._payload;
+    };
+
     ReadableMessage.prototype._contactNodeAddressByIPv4Buffer = function (buffer) {
         var ip = buffer.slice(0, 4).toJSON().join('.');
-        var port = buffer.readUInt16BE(5);
+        var port = buffer.readUInt16BE(4);
 
         return this._addressFactory.create(ip, port);
     };
 
     ReadableMessage.prototype._contactNodeAddressByIPv6Buffer = function (buffer) {
-        var ip = null;
-        var port = buffer.readUInt16BE(17);
+        var ip = '';
+        var port = buffer.readUInt16BE(16);
 
-        for (var i = 0; i < 7; i++) {
-            ip += buffer.slice(i * 2, 2).toString('hex');
-            if (i !== 6) {
+        for (var i = 0; i < 8; i++) {
+            ip += buffer.slice(i * 2, i * 2 + 2).toString('hex');
+            if (i !== 7) {
                 ip += ':';
             }
         }
@@ -61,17 +79,17 @@ var ReadableMessage = (function () {
 
     ReadableMessage.prototype._extractId = function (from) {
         var idBuffer = new Buffer(20);
-        this._buffer.copy(idBuffer, 0, from, 20);
+        this._buffer.copy(idBuffer, 0, from, from + 20);
         return new Id(idBuffer, 160);
     };
 
     ReadableMessage.prototype._extractPayload = function (from) {
-        this._payload = this._buffer.slice(++from, this._buffer.length - MessageByteCheatsheet.messageEnd.length);
+        this._payload = this._buffer.slice(from, this._buffer.length - MessageByteCheatsheet.messageEnd.length);
         return from + this._payload.length;
     };
 
     ReadableMessage.prototype._extractMessageType = function (from) {
-        var msgTypeBytes = this._buffer.slice(++from, 2);
+        var msgTypeBytes = this._buffer.slice(from, from + 2);
         var messageTypes = MessageByteCheatsheet.messageTypes;
         var typesClear = Object.keys(messageTypes);
         var result = null;
@@ -92,7 +110,7 @@ var ReadableMessage = (function () {
 
         this._msgType = result;
 
-        return ++from;
+        return from + 2;
     };
 
     ReadableMessage.prototype._extractReceiverId = function (from) {
@@ -102,6 +120,7 @@ var ReadableMessage = (function () {
 
     ReadableMessage.prototype._extractSenderAsContactNode = function (from) {
         var senderId = this._extractId(from);
+
         from += 20;
 
         var res = this._extractSenderAddressesAndBytesReadAsArray(from);
@@ -116,7 +135,8 @@ var ReadableMessage = (function () {
         var result = [];
 
         while (doRead) {
-            var identByte = this._buffer[++from];
+            var identByte = this._buffer[from];
+
             from++;
 
             if (identByte === MessageByteCheatsheet.ipv4) {
@@ -131,7 +151,7 @@ var ReadableMessage = (function () {
                 doRead = false;
             } else {
                 doRead = false;
-                throw new Error("ReadableMessage~_extractSenderAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.");
+                throw new Error('ReadableMessage~_extractSenderAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.');
             }
         }
 

@@ -30,11 +30,13 @@ class ReadableMessage implements ReadableMessageInterface {
 		this._bufferLen = buffer.length;
 		this._addressFactory = addressFactory;
 		this._nodeFactory = nodeFactory;
+
+		this._deformat();
 	}
 
-	public deformat ():void {
+	private _deformat ():void {
 		if (!this._isProtocolMessage()) {
-			throw new Error("ReadableMessage: Buffer is not protocol compliant.");
+			throw new Error('ReadableMessage~_deformat: Buffer is not protocol compliant.');
 		}
 
 		this._lastPosRead = MessageByteCheatsheet.messageBegin.length;
@@ -54,20 +56,36 @@ class ReadableMessage implements ReadableMessageInterface {
 		this._payload = null;
 	}
 
+	public getReceiverId ():IdInterface {
+		return this._receiverId;
+	}
+
+	public getSender ():ContactNodeInterface {
+		return this._sender;
+	}
+
+	public getMessageType ():string {
+		return this._msgType;
+	}
+
+	public getPayload ():Buffer {
+		return this._payload;
+	}
+
 	private _contactNodeAddressByIPv4Buffer (buffer:Buffer):ContactNodeAddressInterface {
 		var ip:string = buffer.slice(0, 4).toJSON().join('.');
-		var port:number = buffer.readUInt16BE(5);
+		var port:number = buffer.readUInt16BE(4);
 
 		return this._addressFactory.create(ip, port);
 	}
 
 	private _contactNodeAddressByIPv6Buffer (buffer:Buffer):ContactNodeAddressInterface {
-		var ip:string = null;
-		var port:number = buffer.readUInt16BE(17);
+		var ip:string = '';
+		var port:number = buffer.readUInt16BE(16);
 
-		for (var i=0; i<7; i++) {
-			ip += buffer.slice(i * 2, 2).toString('hex');
-			if (i !== 6) {
+		for (var i=0; i<8; i++) {
+			ip += buffer.slice(i * 2, i*2 + 2).toString('hex');
+			if (i !== 7) {
 				ip += ':';
 			}
 		}
@@ -77,17 +95,17 @@ class ReadableMessage implements ReadableMessageInterface {
 
 	private _extractId (from:number):IdInterface {
 		var idBuffer = new Buffer(20);
-		this._buffer.copy(idBuffer, 0, from, 20);
+		this._buffer.copy(idBuffer, 0, from, from + 20);
 		return new Id(idBuffer, 160)
 	}
 
 	private _extractPayload (from:number):number {
-		this._payload = this._buffer.slice(++from, this._buffer.length - MessageByteCheatsheet.messageEnd.length);
+		this._payload = this._buffer.slice(from, this._buffer.length - MessageByteCheatsheet.messageEnd.length);
 		return from + this._payload.length;
 	}
 
 	private _extractMessageType (from:number):number {
-		var msgTypeBytes:Buffer = this._buffer.slice(++from, 2);
+		var msgTypeBytes:Buffer = this._buffer.slice(from, from + 2);
 		var messageTypes = MessageByteCheatsheet.messageTypes;
 		var typesClear = Object.keys(messageTypes);
 		var result:string = null;
@@ -108,7 +126,7 @@ class ReadableMessage implements ReadableMessageInterface {
 
 		this._msgType = result;
 
-		return ++from;
+		return from + 2;
 	}
 
 	private _extractReceiverId (from:number):number {
@@ -118,6 +136,7 @@ class ReadableMessage implements ReadableMessageInterface {
 
 	private _extractSenderAsContactNode (from:number):number {
 		var senderId:IdInterface = this._extractId(from);
+
 		from += 20;
 
 		var res = this._extractSenderAddressesAndBytesReadAsArray(from);
@@ -132,7 +151,8 @@ class ReadableMessage implements ReadableMessageInterface {
 		var result:Array<ContactNodeAddressInterface> = [];
 
 		while (doRead) {
-			var identByte = this._buffer[++from];
+			var identByte = this._buffer[from];
+
 			from++;
 
 			if (identByte === MessageByteCheatsheet.ipv4) {
@@ -150,7 +170,7 @@ class ReadableMessage implements ReadableMessageInterface {
 			}
 			else {
 				doRead = false;
-				throw new Error("ReadableMessage~_extractSenderAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.");
+				throw new Error('ReadableMessage~_extractSenderAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.');
 			}
 		}
 
