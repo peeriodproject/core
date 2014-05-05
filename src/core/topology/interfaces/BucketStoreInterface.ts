@@ -1,6 +1,8 @@
 /// <reference path='../../../../ts-definitions/node/node.d.ts' />
 
 import ClosableInterface = require('../../utils/interfaces/ClosableInterface');
+import ContactNodeObjectInterface = require('./ContactNodeObjectInterface');
+import ContactNodeObjectListInterface = require('./ContactNodeObjectListInterface');
 
 /**
  * A low-level interface which creates a unified api for different bucket stores.
@@ -67,7 +69,7 @@ interface BucketStoreInterface extends ClosableInterface {
 	 *
 	 * @returns {any}
 	 */
-	get (bucketKey:string, id:Buffer):any;
+	get (bucketKey:string, id:Buffer):ContactNodeObjectInterface;
 
 	/**
 	 * Returns all objects stored under the specified bucketKey
@@ -77,7 +79,7 @@ interface BucketStoreInterface extends ClosableInterface {
 	 * @param {string} bucketKey
 	 * @returns {any}
 	 */
-	getAll (bucketKey:string):any;
+	getAll (bucketKey:string):ContactNodeObjectListInterface;
 
 
 	/**
