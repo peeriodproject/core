@@ -105,6 +105,7 @@ interface IdInterface {
 	 * @return {string}
 	 */
 	toHexString ():string;
+
 }
 
 export = IdInterface;

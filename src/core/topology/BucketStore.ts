@@ -16,40 +16,35 @@ class BucketStore implements BucketStoreInterface {
 	/**
 	 * The internal lmdb database instance
 	 *
-	 * @private
-	 * @member {lmdb.Dbi} core.topology.BucketStore#_databaseInstance
+	 * @member {lmdb.Dbi} core.topology.BucketStore~_databaseInstance
 	 */
 	private _databaseInstance:lmdb.Dbi = null;
 
 	/**
 	 * The internal lmdb database environment instance
 	 *
-	 * @private
-	 * @member {lmdb.Env} core.topology.BucketStore#_databaseEnvironment
+	 * @member {lmdb.Env} core.topology.BucketStore~_databaseEnvironment
 	 */
 	private _databaseEnvironment:lmdb.Env = null;
 
 	/**
 	 * Indicates wheather the store is open or closed
 	 *
-	 * @private
-	 * @member {boolean} core.topology.BucketStore#_isOpen
+	 * @member {boolean} core.topology.BucketStore~_isOpen
 	 */
 	private _isOpen:boolean = false;
 
 	/**
 	 * The name of the internal database
 	 *
-	 * @private
-	 * @member {boolean} core.topology.BucketStore#_name
+	 * @member {boolean} core.topology.BucketStore~_name
 	 */
 	private _name:string = '';
 
 	/**
 	 * An absolute path where the database stores it's files
 	 *
-	 * @private
-	 * @member {boolean} core.topology.BucketStore#_path
+	 * @member {boolean} core.topology.BucketStore~_path
 	 */
 	private _path:string = '';
 
@@ -199,12 +194,11 @@ class BucketStore implements BucketStoreInterface {
 	/**
 	 * Adds the given object within the specified transaction `txn` to the database
 	 *
-	 * @private
-	 * @method {boolean} core.topology.BucketStore#_add
+	 * @method {boolean} core.topology.BucketStore~_add
 	 *
 	 * @param {lmdb.Txn} txn
 	 * @param {string} bucketKey
-	 * @param {NodeBuffer} id
+	 * @param {Buffer} id
 	 * @param {number} lastSeen
 	 * @param {any} addresses
 	 * @returns {boolean}
@@ -235,8 +229,7 @@ class BucketStore implements BucketStoreInterface {
 	/**
 	 * Creates a read-only transaction object on the instance environment
 	 *
-	 * @private
-	 * @method {boolean} core.topology.BucketStore#_beginReadOnlyTransaction
+	 * @method {boolean} core.topology.BucketStore~_beginReadOnlyTransaction
 	 *
 	 * @returns {lmdb.Txn}
 	 */
@@ -252,8 +245,7 @@ class BucketStore implements BucketStoreInterface {
 	/**
 	 * Creates a writable transaction object on the instance environment
 	 *
-	 * @private
-	 * @method {boolean} core.topology.BucketStore#_beginTransaction
+	 * @method {boolean} core.topology.BucketStore~_beginTransaction
 	 *
 	 * @returns {lmdb.Txn}
 	 */
@@ -267,8 +259,7 @@ class BucketStore implements BucketStoreInterface {
 	/**
 	 * Creates a Cursor on the instace database
 	 *
-	 * @private
-	 * @method {boolean} core.topology.BucketStore#_getCursor
+	 * @method {boolean} core.topology.BucketStore~_getCursor
 	 *
 	 * @returns {lmdb.Txn}
 	 */
@@ -279,8 +270,7 @@ class BucketStore implements BucketStoreInterface {
 	/**
 	 * Returns the internally used key for bucket wide searches
 	 *
-	 * @private
-	 * @method {boolean} core.topology.BucketStore#_getBucketKey
+	 * @method {boolean} core.topology.BucketStore~_getBucketKey
 
 	 * @param {string} key
 	 * @returns {string}
@@ -292,10 +282,9 @@ class BucketStore implements BucketStoreInterface {
 	/**
 	 * Returns the internally used key for id related searches
 	 *
-	 * @private
-	 * @method {boolean} core.topology.BucketStore#_getIdKey
+	 * @method {boolean} core.topology.BucketStore~_getIdKey
 
-	 * @param {NodeBuffer} id
+	 * @param {Buffer} id
 	 * @returns {string}
 	 */
 	private _getIdKey (id:NodeBuffer):string {
@@ -305,9 +294,9 @@ class BucketStore implements BucketStoreInterface {
 	/**
 	 * Returns the id as a formatted string
 	 *
-	 * @method {boolean} core.topology.BucketStore#_getIdValue
+	 * @method {boolean} core.topology.BucketStore~_getIdValue
 	 *
-	 * @param {NodeBuffer} id
+	 * @param {Buffer} id
 	 * @returns {string}
 	 */
 	private _getIdValue (id:NodeBuffer):string {

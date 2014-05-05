@@ -1,21 +1,16 @@
-import RoutingTableInterface = require('./interfaces/RoutingTableInterface');
-import RoutingTableOptions = require('./interfaces/RoutingTableOptions');
 import BucketFactoryInterface = require('./interfaces/BucketFactoryInterface');
-import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
 import BucketInterface = require('./interfaces/BucketInterface');
+import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
 import IdInterface = require('./interfaces/IdInterface');
-
-import ObjectUtils = require('../utils/ObjectUtils');
+import RoutingTableInterface = require('./interfaces/RoutingTableInterface');
+import RoutingTableOptions = require('./interfaces/RoutingTableOptions');
 
 import BucketStore = require('./BucketStore');
 import Bucket = require('./Bucket');
-
 import JSONConfig = require('../config/JSONConfig');
-
-// just for testing
-//import Id = require('./Id');
+import ObjectUtils = require('../utils/ObjectUtils');
 
 /**
  * Creates a routing table with the given number of k-buckets
@@ -24,58 +19,54 @@ import JSONConfig = require('../config/JSONConfig');
  * @implements RoutingTableInterface
  *
  * @param {config.ConfigInterface} config
- * @param {topology.IdInterface} id
- * @param {topology.BucketStoreInterface} store
+ * @param {core.topology.IdInterface} id
+ * @param {core.topology.BucketStoreInterface} bucketStore
  */
 class RoutingTable implements RoutingTableInterface {
 
 	/**
-	 * @private
-	 * @member {core.topology.BucketFactoryInterface} core.topology~_bucketFactory
+	 * @member {core.topology.BucketFactoryInterface} core.topologyRoutingTable~_bucketFactory
 	 */
 	private _bucketFactory:BucketFactoryInterface = null;
 
 	/**
 	 * The internally used bucket store instance.
 	 *
-	 * @private
-	 * @member {core.topology.BucketStoreInterface} core.topology.RoutingTable#_store
+	 * @member {core.topology.BucketStoreInterface} core.topology.RoutingTable~_bucketStore
 	 */
 	private _bucketStore:BucketStoreInterface = null;
 
 	/**
 	 * The internally used list of buckets
 	 *
-	 * @private
-	 * @member {Array.<topology.BucketInterface>} core.topology.RoutingTable#_buckets
+	 * @member {Array.<topology.BucketInterface>} core.topology.RoutingTable~_buckets
 	 */
 	private _buckets:{[key:string]: BucketInterface} = {};
 
 	/**
 	 * The internally used config object instance. Usually just for reference and passed through to the Bucket
 	 *
-	 * @private
-	 * @member {core.config.ConfigInterface} core.topology.RoutingTable#_config
+	 * @member {core.config.ConfigInterface} core.topology.RoutingTable~_config
 	 */
 	private _config:ConfigInterface = null;
 
 	/**
 	 * The Id of the node who owns the routing table
 	 *
-	 * @private
-	 * @member {core.topology.IdInterface} core.topology.RoutingTable#_id
+	 * @member {core.topology.IdInterface} core.topology.RoutingTable~_id
 	 */
 	private _id:IdInterface = null;
 
 	/**
-	 * @private
-	 * @member {boolean} core.topology.RoutingTable#_isOpen
+	 * A flag indicates weather the store is open or closed
+	 *
+	 * @member {boolean} core.topology.RoutingTable~_isOpen
 	 */
 	private _isOpen:boolean = false;
 
 	/**
+	 * The mix of the passed in options object and the defaults
 	 *
-	 * @private
 	 * @member {core.topology.RoutingTableOptions} core.topology.RoutingTable~_options
 	 */
 	private _options:RoutingTableOptions = null;
@@ -109,7 +100,7 @@ class RoutingTable implements RoutingTableInterface {
 	}
 
 	// todo check bucket.close() return value
-	close (callback?:(err:Error) => any):void {
+	public close (callback?:(err:Error) => any):void {
 		var internalCallback = callback || this._options.onCloseCallback;
 
 		if (!this._isOpen) {
@@ -126,7 +117,7 @@ class RoutingTable implements RoutingTableInterface {
 		internalCallback(null);
 	}
 
-	getContactNode (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void {
+	public getContactNode (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
 		var bucketKey = this._getBucketKey(id);
@@ -134,11 +125,11 @@ class RoutingTable implements RoutingTableInterface {
 		this._buckets[bucketKey].get(id, internalCallback);
 	}
 
-	isOpen (callback:(err:Error, isOpen:boolean) => any):boolean {
+	public isOpen (callback:(err:Error, isOpen:boolean) => any):boolean {
 		return callback(null, this._isOpen);
 	}
 
-	open (callback?:(err:Error) => any):void {
+	public open (callback?:(err:Error) => any):void {
 		var internalCallback = callback || this._options.onOpenCallback;
 
 		if (this._isOpen) {
@@ -155,7 +146,7 @@ class RoutingTable implements RoutingTableInterface {
 		internalCallback(null);
 	}
 
-	updateContactNode (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
+	public updateContactNode (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
 		var bucketKey:string = this._getBucketKey(contact.getId());
@@ -164,15 +155,14 @@ class RoutingTable implements RoutingTableInterface {
 	}
 
 	// todo updateId Ideas
-	updateId (id:IdInterface):void {
+	public updateId (id:IdInterface):void {
 		return;
 	}
 
 	/**
 	 * Creates a bucket with the given key.
 	 *
-	 * @private
-	 * @method topology.RoutingTable#_createBucket
+	 * @method core.topology.RoutingTable~_createBucket
 	 *
 	 * @param {string} key
 	 */
@@ -184,10 +174,9 @@ class RoutingTable implements RoutingTableInterface {
 	 * Returns the bucket key where the given id should be stored.
 	 * See {@link core.topology.Id.differsInHighestBit} for more information.
 	 *
-	 * @private
-	 * @method topology.RoutingTable#_getBucketKey
+	 * @method core.topology.RoutingTable~_getBucketKey
 	 *
-	 * @param {topology.IdInterface} id
+	 * @param {core.topology.IdInterface} id
 	 * @return {string}
 	 */
 	private _getBucketKey (id:IdInterface):string {

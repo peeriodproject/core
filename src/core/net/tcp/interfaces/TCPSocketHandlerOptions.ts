@@ -3,6 +3,7 @@
  * @class core.net.tcp.TCPSocketHandlerOptions
  */
 interface TCPSocketHandlerOptions {
+
 	/**
 	 * Indicates whether a socket should not send a FIN packet when the other side sends a FIN packet
 	 * (thus being 'half-open')
@@ -37,6 +38,7 @@ interface TCPSocketHandlerOptions {
 	 * An array of open ports under which the computer can be reached from outside.
 	 */
 	myOpenPorts?:Array<number>;
+
 }
 
 export = TCPSocketHandlerOptions;

@@ -3,7 +3,7 @@
 * @implements core.topology.ContactNodeInterface
 *
 * @param {core.topology.IdInterface} id The id of the contact node
-* @param {core.topology.ContactNodeAddressListInterface} addressed The addresses of the contact node
+* @param {core.topology.ContactNodeAddressListInterface} addresses The addresses of the contact node
 * @param {number} lastSeen The timestamp at which the contact node was last seen
 */
 var ContactNode = (function () {

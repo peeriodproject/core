@@ -94,6 +94,7 @@ interface TCPSocketHandlerInterface {
 	 * @param {string} ip
 	 */
 	setMyExternalIp (ip:string):void;
+
 }
 
 export = TCPSocketHandlerInterface;

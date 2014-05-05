@@ -1,7 +1,5 @@
 var ObjectUtils = require('../utils/ObjectUtils');
 
-// just for testing
-//import Id = require('./Id');
 /**
 * Creates a routing table with the given number of k-buckets
 *
@@ -9,54 +7,50 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @implements RoutingTableInterface
 *
 * @param {config.ConfigInterface} config
-* @param {topology.IdInterface} id
-* @param {topology.BucketStoreInterface} store
+* @param {core.topology.IdInterface} id
+* @param {core.topology.BucketStoreInterface} bucketStore
 */
 var RoutingTable = (function () {
     function RoutingTable(config, id, bucketFactory, bucketStore, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
         /**
-        * @private
-        * @member {core.topology.BucketFactoryInterface} core.topology~_bucketFactory
+        * @member {core.topology.BucketFactoryInterface} core.topologyRoutingTable~_bucketFactory
         */
         this._bucketFactory = null;
         /**
         * The internally used bucket store instance.
         *
-        * @private
-        * @member {core.topology.BucketStoreInterface} core.topology.RoutingTable#_store
+        * @member {core.topology.BucketStoreInterface} core.topology.RoutingTable~_bucketStore
         */
         this._bucketStore = null;
         /**
         * The internally used list of buckets
         *
-        * @private
-        * @member {Array.<topology.BucketInterface>} core.topology.RoutingTable#_buckets
+        * @member {Array.<topology.BucketInterface>} core.topology.RoutingTable~_buckets
         */
         this._buckets = {};
         /**
         * The internally used config object instance. Usually just for reference and passed through to the Bucket
         *
-        * @private
-        * @member {core.config.ConfigInterface} core.topology.RoutingTable#_config
+        * @member {core.config.ConfigInterface} core.topology.RoutingTable~_config
         */
         this._config = null;
         /**
         * The Id of the node who owns the routing table
         *
-        * @private
-        * @member {core.topology.IdInterface} core.topology.RoutingTable#_id
+        * @member {core.topology.IdInterface} core.topology.RoutingTable~_id
         */
         this._id = null;
         /**
-        * @private
-        * @member {boolean} core.topology.RoutingTable#_isOpen
+        * A flag indicates weather the store is open or closed
+        *
+        * @member {boolean} core.topology.RoutingTable~_isOpen
         */
         this._isOpen = false;
         /**
+        * The mix of the passed in options object and the defaults
         *
-        * @private
         * @member {core.topology.RoutingTableOptions} core.topology.RoutingTable~_options
         */
         this._options = null;
@@ -148,8 +142,7 @@ var RoutingTable = (function () {
     /**
     * Creates a bucket with the given key.
     *
-    * @private
-    * @method topology.RoutingTable#_createBucket
+    * @method core.topology.RoutingTable~_createBucket
     *
     * @param {string} key
     */
@@ -161,10 +154,9 @@ var RoutingTable = (function () {
     * Returns the bucket key where the given id should be stored.
     * See {@link core.topology.Id.differsInHighestBit} for more information.
     *
-    * @private
-    * @method topology.RoutingTable#_getBucketKey
+    * @method core.topology.RoutingTable~_getBucketKey
     *
-    * @param {topology.IdInterface} id
+    * @param {core.topology.IdInterface} id
     * @return {string}
     */
     RoutingTable.prototype._getBucketKey = function (id) {

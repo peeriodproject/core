@@ -1,40 +1,77 @@
 import net = require('net');
 
-import ReadableMessageInterface = require('./interfaces/ReadableMessageInterface');
-import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInterface');
-import ContactNodeFactoryInterface = require('../../topology/interfaces/ContactNodeFactoryInterface');
-import ContactNodeAddressInterface = require('../../topology/interfaces/ContactNodeAddressInterface');
 import ContactNodeAddressFactoryInterface = require('../../topology/interfaces/ContactNodeAddressFactoryInterface');
+import ContactNodeAddressInterface = require('../../topology/interfaces/ContactNodeAddressInterface');
+import ContactNodeAddressListInterface = require('../../topology/interfaces/ContactNodeAddressListInterface');
+import ContactNodeFactoryInterface = require('../../topology/interfaces/ContactNodeFactoryInterface');
+import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInterface');
 import IdInterface = require('../../topology/interfaces/IdInterface');
+import ReadableMessageInterface = require('./interfaces/ReadableMessageInterface');
+
 import Id = require('../../topology/Id');
 import MessageByteCheatsheet = require('./MessageByteCheatsheet');
 
-
+/**
+ * @class core.protocol.messages.ReadableMessage
+ * @implements core.protocol.messages.ReadableMessageInterface
+ */
 class ReadableMessage implements ReadableMessageInterface {
 
+	/**
+	 * @member {core.topology.ContactNodeAddressFactoryInterface} core.protocol.messages.ReadableMessage~_addressFactory
+	 */
 	private _addressFactory:ContactNodeAddressFactoryInterface = null;
-	private _nodeFactory:ContactNodeFactoryInterface = null;
 
+	/**
+	 * @member {Buffer} core.protocol.messages.ReadableMessage~_buffer
+	 */
 	private _buffer:Buffer = null;
-	private _bufferLen:number = 0;
-	private _receiverId:IdInterface = null;
-	private _sender:ContactNodeInterface = null;
-	private _msgType:string = null;
-	private _payload:Buffer = null;
 
+	/**
+	 * @member {number} core.protocol.messages.ReadableMessage~_bufferLength
+	 */
+	private _bufferLength:number = 0;
+
+	/**
+	 * @member {number}  core.protocol.messages.ReadableMessage~_lastPosRead
+	 */
 	private _lastPosRead:number = 0;
 
+	/**
+	 * @member {string} core.protocol.messages.ReadableMessage~_messageType
+	 */
+	private _messageType:string = null;
+
+	/**
+	 * @member {core.topology.ContactNodeFactoryInterface} core.protocol.messages.ReadableMessage~_nodeFactory
+	 */
+	private _nodeFactory:ContactNodeFactoryInterface = null;
+
+	/**
+	 * @member {Buffer} core.protocol.messages.ReadableMessage~_payload
+	 */
+	private _payload:Buffer = null;
+
+	/**
+	 * @member {core.topology.IdInterface} core.protocol.messages.ReadableMessage~_receiverId
+	 */
+	private _receiverId:IdInterface = null;
+
+	/**
+	 * @member {core.topology.ContactNodeInterface} core.protocol.messages.ReadableMessage~_sender
+	 */
+	private _sender:ContactNodeInterface = null;
 
 	constructor (buffer:Buffer, nodeFactory:ContactNodeFactoryInterface, addressFactory:ContactNodeAddressFactoryInterface) {
 		this._buffer = buffer;
-		this._bufferLen = buffer.length;
+		this._bufferLength = buffer.length;
 		this._addressFactory = addressFactory;
 		this._nodeFactory = nodeFactory;
 	}
 
 	public deformat ():void {
 		if (!this._isProtocolMessage()) {
-			throw new Error("ReadableMessage: Buffer is not protocol compliant.");
+			throw new Error('ReadableMessage: Buffer is not protocol compliant.');
 		}
 
 		this._lastPosRead = MessageByteCheatsheet.messageBegin.length;
@@ -106,7 +143,7 @@ class ReadableMessage implements ReadableMessageInterface {
 			throw new Error('ReadableMessage~_extractMessageType: Unknown message type.');
 		}
 
-		this._msgType = result;
+		this._messageType = result;
 
 		return ++from;
 	}
@@ -121,7 +158,7 @@ class ReadableMessage implements ReadableMessageInterface {
 		from += 20;
 
 		var res = this._extractSenderAddressesAndBytesReadAsArray(from);
-		var senderAddresses:Array<ContactNodeAddressInterface> = res[0];
+		var senderAddresses:ContactNodeAddressListInterface = res[0];
 		this._sender = this._nodeFactory.create(senderId, senderAddresses);
 
 		return res[1];
@@ -129,7 +166,7 @@ class ReadableMessage implements ReadableMessageInterface {
 
 	private _extractSenderAddressesAndBytesReadAsArray (from):any {
 		var doRead = true;
-		var result:Array<ContactNodeAddressInterface> = [];
+		var result:ContactNodeAddressListInterface = [];
 
 		while (doRead) {
 			var identByte = this._buffer[++from];
@@ -161,7 +198,7 @@ class ReadableMessage implements ReadableMessageInterface {
 		var msgBegin = MessageByteCheatsheet.messageBegin;
 		var msgEnd = MessageByteCheatsheet.messageEnd;
 
-		if (this._bufferLen < msgBegin.length + msgEnd.length) {
+		if (this._bufferLength < msgBegin.length + msgEnd.length) {
 			return false;
 		}
 
@@ -172,7 +209,7 @@ class ReadableMessage implements ReadableMessageInterface {
 		}
 
 		for (var i=0; i<msgEnd.length; i++) {
-			if (this._buffer[this._bufferLen - (6 - i)] !== msgEnd[i]) {
+			if (this._buffer[this._bufferLength - (6 - i)] !== msgEnd[i]) {
 				return false;
 			}
 		}

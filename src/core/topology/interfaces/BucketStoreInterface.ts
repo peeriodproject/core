@@ -14,22 +14,17 @@ interface BucketStoreInterface extends ClosableInterface {
 	/**
 	 * Adds a object to the bucket store.
 	 *
-	 * todo Typescript: propper return type (callback vs return)
-	 *
 	 * @method core.topology.BucketStoreInterface#add
 	 *
 	 * @param {string} bucketKey
-	 * @param {NodeBuffer} id
+	 * @param {Buffer} id
 	 * @param {number} lastSeen
 	 * @param {any} addresses
-	 * @param {string} publicKey
 	 */
-	add (bucketKey:string, id:NodeBuffer, lastSeen:number, addresses:any):boolean;
+	add (bucketKey:string, id:Buffer, lastSeen:number, addresses:any):boolean;
 
 	/**
 	 * Adds multiple objects to the bucket store.
-	 *
-	 * todo Typescript: propper return type (callback vs return)
 	 *
 	 * @see core.topology.BucketStoreInterface#add
 	 *
@@ -46,11 +41,11 @@ interface BucketStoreInterface extends ClosableInterface {
 	 * @method core.topology.BucketStoreInterface#contains
 	 *
 	 * @param {String} bucketKey
-	 * @param {NodeBuffer} id
+	 * @param {Buffer} id
 	 *
 	 * @return {boolean}
 	 */
-	contains (bucketKey:string, id:NodeBuffer):boolean;
+	contains (bucketKey:string, id:Buffer):boolean;
 
 	/**
 	 * Debug method
@@ -63,28 +58,25 @@ interface BucketStoreInterface extends ClosableInterface {
 	 * Returns the object stored for the specified bucket/id combination as JSON-Object with sorted keys.
 	 *
 	 * todo json example
-	 * todo Typescript: propper return type (callback vs return)
 	 *
 	 * @method core.topology.BucketStoreInterface#get
 	 *
 	 * @param {string} bucketKey
-	 * @param {NodeBuffer} id
+	 * @param {Buffer} id
 	 *
 	 * @returns {any}
 	 */
-	get (bucketKey:string, id:NodeBuffer):any;
+	get (bucketKey:string, id:Buffer):any;
 
 	/**
 	 * Removes the specified bucket/id combination from the store.
-	 *
-	 * todo Typescript: propper return type (callback vs return)
 	 * 
 	 * @method core.topology.BucketStoreInterface#remove
 	 *
 	 * @param {string} bucketKey
-	 * @param {NodeBuffer} id
+	 * @param {Buffer} id
 	 */
-	remove (bucketKey:string, id:NodeBuffer):boolean;
+	remove (bucketKey:string, id:Buffer):boolean;
 
 	/**
 	 * Returns the size of the specified bucket.

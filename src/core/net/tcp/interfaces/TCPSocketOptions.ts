@@ -3,6 +3,7 @@
  * @class core.net.tcp.TCPSocketOptions
  */
 interface TCPSocketOptions {
+
 	/**
 	 * Indicates whether keep-alive functionality should be enabled/disabled on socket.
 	 */
@@ -19,6 +20,7 @@ interface TCPSocketOptions {
 	 * from default (or previous) setting.
 	 */
 	keepAliveDelay?:number;
+
 }
 
 export = TCPSocketOptions;
