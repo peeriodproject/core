@@ -69,6 +69,13 @@ var TCPSocket = (function (_super) {
         this.getSocket().end(data, encoding);
     };
 
+    TCPSocket.prototype.forceDestroy = function () {
+        this.getSocket().removeAllListeners();
+        this.getSocket().end();
+        this._socket = null;
+        this.removeAllListeners();
+    };
+
     TCPSocket.prototype.getIdentifier = function () {
         return this._identifier;
     };
@@ -85,7 +92,7 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.onTimeout = function () {
         if (this._closeOnTimeout) {
-            this.getSocket().end();
+            this.forceDestroy();
         }
     };
 

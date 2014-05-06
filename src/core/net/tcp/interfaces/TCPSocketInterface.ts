@@ -25,6 +25,13 @@ interface TCPSocketInterface extends NodeJS.EventEmitter {
 	end (data?:any, encoding?:string):void;
 
 	/**
+	 * Closes the socket, unbinds all listeners to it, drops reference to it and unbinds listeners to itself.
+	 *
+	 * @method core.net.tcp.TCPSocketInterface#forceDestroy
+	 */
+	forceDestroy ():void;
+
+	/**
 	 * Returns the identification string.
 	 *
 	 * @method core.net.tcp.TCPSocketInterface#getIdentifier

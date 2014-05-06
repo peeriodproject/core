@@ -72,6 +72,13 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		this.getSocket().end(data, encoding);
 	}
 
+	public forceDestroy():void {
+		this.getSocket().removeAllListeners();
+		this.getSocket().end();
+		this._socket = null;
+		this.removeAllListeners();
+	}
+
 	public getIdentifier ():string {
 		return this._identifier;
 	}
@@ -88,7 +95,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	public onTimeout ():void {
 		if (this._closeOnTimeout) {
-			this.getSocket().end();
+			this.forceDestroy();
 		}
 	}
 
