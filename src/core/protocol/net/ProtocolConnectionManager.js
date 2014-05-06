@@ -33,6 +33,7 @@ var ProtocolConnectionManager = (function (_super) {
         this._incomingPendingSockets = {};
         this._incomingDataPipeline = null;
         this._incomingPendingTimeoutLength = 0;
+        this._keepSocketOpenList = [];
 
         this._tcpSocketHandler = tcpSocketHandler;
 
@@ -42,6 +43,82 @@ var ProtocolConnectionManager = (function (_super) {
 
         this._setGlobalListeners();
     }
+    ProtocolConnectionManager.prototype.keepSocketsOpenFromNode = function (contactNode) {
+        var identifier = this._nodeToIdentifier(contactNode);
+
+        if (this._keepSocketOpenList.indexOf(identifier) > -1) {
+            return;
+        } else {
+            this._keepSocketOpenList.push(identifier);
+            var existing = this._confirmedSockets[identifier];
+            if (existing) {
+                existing.socket.setCloseOnTimeout(false);
+            }
+        }
+    };
+
+    ProtocolConnectionManager.prototype.keepSocketNoLongerOpenFromNode = function (contactNode) {
+        var identifier = this._nodeToIdentifier(contactNode);
+        var i = this._keepSocketOpenList.indexOf(identifier);
+
+        if (i > -1) {
+            var existing = this._confirmedSockets[identifier];
+            if (existing) {
+                existing.socket.setCloseOnTimeout(true);
+            }
+            this._keepSocketOpenList.splice(i, 1);
+        }
+    };
+
+    ProtocolConnectionManager.prototype._initiateOutgoingConnection = function (contactNode) {
+        var _this = this;
+        var identifier = this._nodeToIdentifier(contactNode);
+
+        if (!this._outgoingPendingSockets[identifier]) {
+            var outgoingEntry = {
+                closeAtOnce: false
+            };
+
+            this._outgoingPendingSockets[identifier] = outgoingEntry;
+
+            this._tryToOutgoingConnectToNode(contactNode, function (socket) {
+                if (socket) {
+                    if (outgoingEntry.closeAtOnce) {
+                        socket.forceDestroy();
+                    } else {
+                        socket.setIdentifier(identifier);
+                        _this._incomingDataPipeline.hookSocket(socket);
+                        _this._addToConfirmed(identifier, 'outgoing', socket);
+                    }
+                }
+                delete _this._outgoingPendingSockets[identifier];
+            });
+        }
+    };
+
+    ProtocolConnectionManager.prototype._tryToOutgoingConnectToNode = function (contactNode, callback) {
+        var addresses = contactNode.getAddresses();
+        var startAt = 0;
+        var maxIndex = addresses.length - 1;
+        var tcpSocketHandler = this._tcpSocketHandler;
+
+        var connectToAddressByIndex = function (i, callback) {
+            var address = address[i];
+            tcpSocketHandler.connectTo(address.getPort(), address.getIp(), callback);
+        };
+        var theCallback = function (socket) {
+            if (!socket) {
+                if (++startAt <= maxIndex) {
+                    connectToAddressByIndex(startAt, theCallback);
+                }
+            } else {
+                callback(socket);
+            }
+        };
+
+        connectToAddressByIndex(startAt, theCallback);
+    };
+
     ProtocolConnectionManager.prototype._setGlobalListeners = function () {
         var _this = this;
         this._incomingDataPipeline.on('message', function (identifier, message) {
@@ -108,7 +185,21 @@ var ProtocolConnectionManager = (function (_super) {
                 this._destroyConnection(existingSocket.socket, true);
             }
         }
+
+        this._hookDestroyOnCloseToSocket(socket);
+
+        if (this._keepSocketOpenList.indexOf(identifier)) {
+            socket.setCloseOnTimeout(false);
+        }
+
         this._confirmedSockets[identifier] = newConfirmedSocket;
+    };
+
+    ProtocolConnectionManager.prototype._hookDestroyOnCloseToSocket = function (socket) {
+        var _this = this;
+        socket.on('close', function () {
+            _this._destroyConnection(socket);
+        });
     };
 
     ProtocolConnectionManager.prototype._identifierAndContactNodeMatch = function (identifier, node) {
@@ -157,7 +248,7 @@ var ProtocolConnectionManager = (function (_super) {
 
         socket.forceDestroy();
 
-        if (!blockTerminationEvent) {
+        if (confirmed && !blockTerminationEvent) {
             this._emitTerminatedEventByIdentifier(identifier);
         }
     };
@@ -172,7 +263,7 @@ var ProtocolConnectionManager = (function (_super) {
 
     ProtocolConnectionManager.prototype._destroyConnectionByIdentifier = function (identifier) {
         var socket = null;
-        var it = ['_incomingPendingSockets', '_outgoingPendingSockets', '_confirmedSockets'];
+        var it = ['_incomingPendingSockets', '_confirmedSockets'];
         for (var i = 0; i < 3; i++) {
             if (socket) {
                 break;

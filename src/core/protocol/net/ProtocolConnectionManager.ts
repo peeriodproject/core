@@ -4,6 +4,8 @@ import ObjectConfig = require('../../config/ObjectConfig');
 import IdInterface = require('../../topology/interfaces/IdInterface');
 import Id = require('../../topology/Id');
 import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInterface');
+import ContactNodeAddressListInterface = require('../../topology/interfaces/ContactNodeAddressListInterface');
+import ContactNodeAddressInterface = require('../../topology/interfaces/ContactNodeAddressInterface');
 import ProtocolConnectionManagerInterface = require('./interfaces/ProtocolConnectionManagerInterface');
 import ReadableMessageInterface = require('../messages/interfaces/ReadableMessageInterface');
 import ReadableMessageFactory = require('./../messages/ReadableMessageFactory');
@@ -42,6 +44,8 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 	private _incomingPendingTimeoutLength:number = 0;
 
+	private _keepSocketOpenList:Array<string> = [];
+
 	constructor (config:ObjectConfig, tcpSocketHandler:TCPSocketHandlerInterface) {
 		super();
 
@@ -57,6 +61,83 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._incomingPendingTimeoutLength = config.get('protocol.net.msToWaitForIncomingMessage');
 
 		this._setGlobalListeners();
+	}
+
+	public keepSocketsOpenFromNode(contactNode:ContactNodeInterface) {
+		var identifier:string = this._nodeToIdentifier(contactNode);
+
+		if (this._keepSocketOpenList.indexOf(identifier) > -1) {
+			return;
+		}
+		else {
+			this._keepSocketOpenList.push(identifier);
+			var existing:ConfirmedSocket = this._confirmedSockets[identifier];
+			if (existing) {
+				existing.socket.setCloseOnTimeout(false);
+			}
+		}
+	}
+
+	public keepSocketNoLongerOpenFromNode(contactNode:ContactNodeInterface) {
+		var identifier:string = this._nodeToIdentifier(contactNode);
+		var i:number = this._keepSocketOpenList.indexOf(identifier);
+
+		if (i > -1) {
+			var existing:ConfirmedSocket = this._confirmedSockets[identifier];
+			if (existing) {
+				existing.socket.setCloseOnTimeout(true);
+			}
+			this._keepSocketOpenList.splice(i, 1);
+		}
+	}
+
+	private _initiateOutgoingConnection (contactNode:ContactNodeInterface):void {
+		var identifier:string = this._nodeToIdentifier(contactNode);
+
+		if (!this._outgoingPendingSockets[identifier]) {
+			var outgoingEntry:OutgoingPendingSocket = {
+				closeAtOnce: false
+			};
+
+			this._outgoingPendingSockets[identifier] = outgoingEntry;
+
+			this._tryToOutgoingConnectToNode(contactNode, (socket:TCPSocketInterface) => {
+				if (socket) {
+					if (outgoingEntry.closeAtOnce) {
+						socket.forceDestroy();
+					}
+					else {
+						socket.setIdentifier(identifier);
+						this._incomingDataPipeline.hookSocket(socket);
+						this._addToConfirmed(identifier, 'outgoing', socket);
+					}
+				}
+				delete this._outgoingPendingSockets[identifier];
+			});
+		}
+	}
+
+	private _tryToOutgoingConnectToNode(contactNode, callback:(socket:TCPSocketInterface) => any) {
+		var addresses:ContactNodeAddressListInterface = contactNode.getAddresses();
+		var startAt:number = 0;
+		var maxIndex:number = addresses.length - 1;
+		var tcpSocketHandler:TCPSocketHandlerInterface = this._tcpSocketHandler;
+
+		var connectToAddressByIndex = function (i:number, callback:(socket:TCPSocketInterface) => any) {
+			var address:ContactNodeAddressInterface = address[i];
+			tcpSocketHandler.connectTo(address.getPort(), address.getIp(), callback);
+		};
+		var theCallback = function (socket:TCPSocketInterface) {
+			if (!socket) {
+				if (++startAt <= maxIndex) {
+					connectToAddressByIndex(startAt, theCallback);
+				}
+			} else {
+				callback(socket);
+			}
+		};
+
+		connectToAddressByIndex(startAt, theCallback);
 	}
 
 	private _setGlobalListeners ():void {
@@ -126,7 +207,20 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 				this._destroyConnection(existingSocket.socket, true);
 			}
 		}
+
+		this._hookDestroyOnCloseToSocket(socket);
+
+		if (this._keepSocketOpenList.indexOf(identifier)) {
+			socket.setCloseOnTimeout(false);
+		}
+
 		this._confirmedSockets[identifier] = newConfirmedSocket;
+	}
+
+	private _hookDestroyOnCloseToSocket(socket:TCPSocketInterface) {
+		socket.on('close', () => {
+			this._destroyConnection(socket);
+		});
 	}
 
 	private _identifierAndContactNodeMatch(identifier: string, node:ContactNodeInterface):boolean {
@@ -172,7 +266,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 		socket.forceDestroy();
 
-		if (!blockTerminationEvent) {
+		if (confirmed && !blockTerminationEvent) {
 			this._emitTerminatedEventByIdentifier(identifier);
 		}
 	}
@@ -187,7 +281,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 	private _destroyConnectionByIdentifier(identifier:string):void {
 		var socket = null;
-		var it = ['_incomingPendingSockets', '_outgoingPendingSockets', '_confirmedSockets'];
+		var it = ['_incomingPendingSockets', '_confirmedSockets'];
 		for (var i=0; i<3; i++) {
 			if (socket) {
 				break;
