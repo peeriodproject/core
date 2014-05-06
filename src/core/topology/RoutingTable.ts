@@ -130,24 +130,112 @@ class RoutingTable implements RoutingTableInterface {
 	public getClosestContactNodes (id:IdInterface, callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
-
-		var closestContactNodes:ContactNodeListInterface = [];
-
 		var startBucketKey:number = this._getBucketKey(id);
-		this._getBucket(startBucketKey).getAll(function (err:Error, contacts:ContactNodeListInterface) {
 
-			if (contacts.length) {
-				for (var i in contacts) {
-					var contact:ContactNodeInterface = contacts[i];
+		var distances:Array<Buffer> = [];
+		var distanceMap:{ [key:string]:ContactNodeInterface; } = {};
 
-					// foobar
-					console.log('contact');
-					console.log(contact);
-					var dist = id.distanceTo(contact.getId());
-					console.log(dist);
+		var addContactToDistanceMap:Function = function (contactDistance:Buffer, contact:ContactNodeInterface) {
+			distances.push(contactDistance);
+			distanceMap[contactDistance.toString('hex')] = contact;
+			distances.sort();
+		};
+		var getContactFromDistanceMap = function (contactDistance:Buffer):ContactNodeInterface {
+			return distanceMap[contactDistance.toString('hex')];
+		};
+
+
+		var crawlBucket = (crawlBucketKey:number, crawlReverse:boolean, onCrawlEnd:Function) => {
+			//console.log('crawling bucket', crawlBucketKey);
+
+			this._getBucket(crawlBucketKey).getAll((err:Error, contacts:ContactNodeListInterface) => {
+				if (contacts.length) {
+					for (var i in contacts) {
+						var contact:ContactNodeInterface = contacts[i];
+						var contactId:IdInterface = contact.getId();
+
+						// exclude target id
+						if (!id.equals(contactId)) {
+							if (!distances.length) {
+								var dist = id.distanceTo(contactId);
+								addContactToDistanceMap(dist, contact);
+							}
+							else {
+								var farestDistance = distances[distances.length - 1];
+								var contactDistance = id.distanceTo(contactId);
+
+								// contact is closer -> adding
+								if (contactDistance < farestDistance) {
+									addContactToDistanceMap(contactDistance, contact);
+								}
+								// still space in the list -> adding
+								else if (distances.length < this._config.get('topology.k')) {
+									addContactToDistanceMap(contactDistance, contact);
+								}
+							}
+
+							if (distances.length === this._config.get('topology.k')) {
+								break;
+							}
+						}
+						else {
+							//console.log('excluded target id!');
+						}
+					}
 				}
 
+				// top-to-bottom search: going to crawl the next bucket
+				if (!crawlReverse) {
+					if (crawlBucketKey < this._config.get('topology.bitLength') - 1) {
+						//console.log('crawl the next (child) bucket');
+						crawlBucket(++crawlBucketKey, false, onCrawlEnd);
+					}
+					// reached the bottom of the store.
+					else {
+						//console.log('reached the end of the bucket store.');
+
+						// we have still less then topology.k contacts.
+						// starting reverse (bottom-to-top) search at startBucketKey - 1
+						if (distances.length < this._config.get('topology.k')) {
+							//console.log('starting reverse search!');
+							crawlBucket(--startBucketKey, true, onCrawlEnd);
+						}
+						// we found topology.k nodes. ending...
+						else {
+							//console.log('found nodes! ending...');
+							onCrawlEnd();
+						}
+					}
+				}
+				// reverse (bottom-to-top) search: going to crawl the previous bucket
+				else {
+					// crawling the previous bucket
+					if (crawlBucketKey > 0) {
+						//console.log('crawl the previous bucket', distances.length);
+						crawlBucket(--crawlBucketKey, true, onCrawlEnd);
+					}
+					// reached the top of the store. ending...
+					else {
+						//console.log('reached the top of the bucket store. ending...');
+						onCrawlEnd();
+					}
+				}
+			});
+		};
+
+		crawlBucket(startBucketKey, false, function () {
+			var closestContactNodes:ContactNodeListInterface = [];
+
+			if (distances.length) {
+				for (var i in distances) {
+					closestContactNodes.push(getContactFromDistanceMap(distances[i]));
+				}
 			}
+
+			internalCallback(null, closestContactNodes);
+
+			distances = null;
+			distanceMap = null;
 		});
 	}
 

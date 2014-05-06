@@ -105,24 +105,100 @@ var RoutingTable = (function () {
     };
 
     RoutingTable.prototype.getClosestContactNodes = function (id, callback) {
+        var _this = this;
         var internalCallback = callback || function (err) {
         };
-
-        var closestContactNodes = [];
-
         var startBucketKey = this._getBucketKey(id);
-        this._getBucket(startBucketKey).getAll(function (err, contacts) {
-            if (contacts.length) {
-                for (var i in contacts) {
-                    var contact = contacts[i];
 
-                    // foobar
-                    console.log('contact');
-                    console.log(contact);
-                    var dist = id.distanceTo(contact.getId());
-                    console.log(dist);
+        var distances = [];
+        var distanceMap = {};
+
+        var addContactToDistanceMap = function (contactDistance, contact) {
+            distances.push(contactDistance);
+            distanceMap[contactDistance.toString('hex')] = contact;
+            distances.sort();
+        };
+        var getContactFromDistanceMap = function (contactDistance) {
+            return distanceMap[contactDistance.toString('hex')];
+        };
+
+        var crawlBucket = function (crawlBucketKey, crawlReverse, onCrawlEnd) {
+            //console.log('crawling bucket', crawlBucketKey);
+            _this._getBucket(crawlBucketKey).getAll(function (err, contacts) {
+                if (contacts.length) {
+                    for (var i in contacts) {
+                        var contact = contacts[i];
+                        var contactId = contact.getId();
+
+                        // exclude target id
+                        if (!id.equals(contactId)) {
+                            if (!distances.length) {
+                                var dist = id.distanceTo(contactId);
+                                addContactToDistanceMap(dist, contact);
+                            } else {
+                                var farestDistance = distances[distances.length - 1];
+                                var contactDistance = id.distanceTo(contactId);
+
+                                // contact is closer -> adding
+                                if (contactDistance < farestDistance) {
+                                    addContactToDistanceMap(contactDistance, contact);
+                                } else if (distances.length < _this._config.get('topology.k')) {
+                                    addContactToDistanceMap(contactDistance, contact);
+                                }
+                            }
+
+                            if (distances.length === _this._config.get('topology.k')) {
+                                break;
+                            }
+                        } else {
+                            //console.log('excluded target id!');
+                        }
+                    }
+                }
+
+                // top-to-bottom search: going to crawl the next bucket
+                if (!crawlReverse) {
+                    if (crawlBucketKey < _this._config.get('topology.bitLength') - 1) {
+                        //console.log('crawl the next (child) bucket');
+                        crawlBucket(++crawlBucketKey, false, onCrawlEnd);
+                    } else {
+                        //console.log('reached the end of the bucket store.');
+                        // we have still less then topology.k contacts.
+                        // starting reverse (bottom-to-top) search at startBucketKey - 1
+                        if (distances.length < _this._config.get('topology.k')) {
+                            //console.log('starting reverse search!');
+                            crawlBucket(--startBucketKey, true, onCrawlEnd);
+                        } else {
+                            //console.log('found nodes! ending...');
+                            onCrawlEnd();
+                        }
+                    }
+                } else {
+                    // crawling the previous bucket
+                    if (crawlBucketKey > 0) {
+                        //console.log('crawl the previous bucket', distances.length);
+                        crawlBucket(--crawlBucketKey, true, onCrawlEnd);
+                    } else {
+                        //console.log('reached the top of the bucket store. ending...');
+                        onCrawlEnd();
+                    }
+                }
+            });
+        };
+
+        crawlBucket(startBucketKey, false, function () {
+            var closestContactNodes = [];
+
+            if (distances.length) {
+                for (var i in distances) {
+                    closestContactNodes.push(getContactFromDistanceMap(distances[i]));
                 }
             }
+
+            internalCallback(null, closestContactNodes);
+
+            distances = null;
+            distanceMap = null;
         });
     };
 

@@ -20,7 +20,8 @@ import ContactNode = require('../../../src/core/topology/ContactNode');
 import ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
+describe('CORE --> TOPOLOGY --> RoutingTable', function () {
+
 	var sandbox:SinonSandbox;
 	var configStub:any;
 	var me:ContactNodeInterface;
@@ -30,6 +31,19 @@ describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
 	var contactNodeFactoryStub:any;
 	var topologyBitLength = 160;
 	var topologyK = 20;
+
+	/**
+	 * Helper function to close the RoutingTable and call the doneCallback.
+	 *
+	 * @param {core.topology.RoutingTableInterface} routingTable
+	 * @param {Function} doneCallback
+	 */
+
+	var closeRtAndDone = function (routingTable:RoutingTableInterface, doneCallback:Function) {
+		routingTable.close(function () {
+			doneCallback();
+		});
+	};
 
 	beforeEach(function () {
 		sandbox = sinon.sandbox.create();
@@ -45,10 +59,9 @@ describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
 				}
 			}
 		});
-		//me = testUtils.stubPublicApi(sandbox, ContactNode);
 		me = ContactNodeFactory.createDummy();
 		bucketStub = testUtils.stubPublicApi(sandbox, Bucket, {
-			get: function (id, callback) {
+			get   : function (id, callback) {
 				callback(null, null);
 			},
 			update: function (contact, callback) {
@@ -89,11 +102,11 @@ describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
 
 		var opts:RoutingTableOptions = {
 			closeOnProcessExit: false,
-			onCloseCallback: function () {
+			onCloseCallback   : function () {
 				onClose();
 				checkDone();
 			},
-			onOpenCallback: function () {
+			onOpenCallback    : function () {
 				onOpen();
 				checkDone();
 			}
@@ -103,16 +116,16 @@ describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
 		routingTable.close();
 	});
 
-	it ('should correctly create topology.bitLength buckets', function (done) {
+	it('should correctly create topology.bitLength buckets', function (done) {
 		var routingTable:RoutingTableInterface;
 		var opts:RoutingTableOptions = {
 			onOpenCallback: function () {
 				bucketFactoryStub.create.callCount.should.equal(topologyBitLength);
 
-				// wait for the next tick. the routing table is still in construction and `routingTable` will be undefined otherwise.
+				// waiting for the next tick!
+				// The routing table is still in construction and `routingTable` will be undefined otherwise.
 				setTimeout(function () {
-					routingTable.close();
-					done();
+					closeRtAndDone(routingTable, done);
 				}, 0)
 			}
 		};
@@ -120,11 +133,11 @@ describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
 		routingTable = new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub, opts);
 	});
 
-	it ('should correctly call the internal close method', function (done) {
+	it('should correctly call the internal close method', function (done) {
 		var routingTable:RoutingTableInterface;
 		var opts:RoutingTableOptions = {
 			closeOnProcessExit: false,
-			onCloseCallback: function () {
+			onCloseCallback   : function () {
 				if (bucketStub.close.callCount === topologyBitLength) {
 					done();
 				}
@@ -135,7 +148,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
 		routingTable.close();
 	});
 
-	it ('should correctly return the isOpen value', function (done) {
+	it('should correctly return the isOpen value', function (done) {
 		var routingTable:RoutingTableInterface;
 
 		routingTable = new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub);
@@ -158,7 +171,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
 		});
 	});
 
-	it ('should correctly call the internal bucket.get method', function (done) {
+	it('should correctly call the internal bucket.get method', function (done) {
 		var routingTable:RoutingTableInterface;
 		var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
 
@@ -167,12 +180,11 @@ describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
 		routingTable.getContactNode(contact.getId(), function (err:Error, contact:ContactNodeInterface) {
 			bucketStub.get.calledOnce.should.be.true;
 
-			routingTable.close();
-			done();
+			closeRtAndDone(routingTable, done);
 		});
 	});
 
-	it ('should correctly call th internal bucket.update method', function (done) {
+	it('should correctly call th internal bucket.update method', function (done) {
 		var routingTable:RoutingTableInterface;
 		var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
 
@@ -181,9 +193,136 @@ describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
 		routingTable.updateContactNode(contact, function (err:Error) {
 			bucketStub.update.calledOnce.should.be.true;
 
-			routingTable.close();
-			done();
+			closeRtAndDone(routingTable, done);
 		});
 	});
 
+	describe('should correctly return the closest contact nodes', function () {
+		var databasePath:string = testUtils.getFixturePath('core/topology/bucketstore/db');
+
+		var bucketFactory:BucketFactoryInterface;
+		var bucketStore:BucketStoreInterface;
+		var contactNodeFactory:ContactNodeFactory;
+		var targetNode:ContactNodeInterface;
+
+		var createContactNodes = function (routingTable:RoutingTableInterface, amount:number, callback:Function) {
+			var addedAmount = 0;
+			var addContactNode = function () {
+				var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
+
+				routingTable.updateContactNode(contact, function (err:Error) {
+					if (!err) {
+						addedAmount++;
+					}
+
+					if (addedAmount < amount) {
+						addContactNode();
+					}
+					else {
+						callback();
+					}
+				});
+			};
+
+			addContactNode();
+		};
+
+		beforeEach(function () {
+			testUtils.createFolder(databasePath);
+
+			bucketFactory = new BucketFactory();
+			bucketStore = new BucketStore('name', databasePath);
+			contactNodeFactory = new ContactNodeFactory();
+			targetNode = ContactNodeFactory.createDummy();
+		});
+
+		afterEach(function () {
+			bucketFactory = null;
+			bucketStore = null;
+			contactNodeFactory = null;
+			targetNode = null;
+
+			testUtils.deleteFolderRecursive(databasePath);
+		});
+
+		it('should correctly exclude the target id', function (done) {
+			var routingTable:RoutingTableInterface;
+
+			routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory);
+
+			routingTable.updateContactNode(targetNode, function () {
+				createContactNodes(routingTable, 10, function () {
+					routingTable.getClosestContactNodes(targetNode.getId(), function (err:Error, contacts:ContactNodeListInterface) {
+						for (var i in contacts) {
+							var contact:ContactNodeInterface = contacts[i];
+
+							targetNode.getId().equals(contact.getId()).should.be.false;
+						}
+
+						closeRtAndDone(routingTable, done);
+					});
+				});
+			});
+		});
+
+		it('should correctly limit the return value to k contact nodes', function (done) {
+			var routingTable:RoutingTableInterface;
+
+			routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory);
+
+			createContactNodes(routingTable, 100, function () {
+				routingTable.getClosestContactNodes(targetNode.getId(), function (err:Error, contacts:ContactNodeListInterface) {
+					contacts.length.should.equal(topologyK);
+
+					closeRtAndDone(routingTable, done);
+				});
+			});
+		});
+
+		it('should correctly return all contact nodes', function (done) {
+			var routingTable:RoutingTableInterface;
+
+			routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory);
+
+			createContactNodes(routingTable, 10, function () {
+				routingTable.getClosestContactNodes(targetNode.getId(), function (err:Error, contacts:ContactNodeListInterface) {
+					contacts.length.should.equal(10);
+
+					closeRtAndDone(routingTable, done);
+				});
+			});
+		});
+
+		it('should correctly return the contact nodes in sorted order', function (done) {
+			var routingTable:RoutingTableInterface;
+
+			routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory);
+
+			createContactNodes(routingTable, 100, function () {
+				routingTable.getClosestContactNodes(targetNode.getId(), function (err:Error, contacts:ContactNodeListInterface) {
+					var lastDistance:Buffer = null;
+
+					contacts.length.should.equal(topologyK);
+
+					for (var i in contacts) {
+						var contact:ContactNodeInterface = contacts[i];
+
+						if (lastDistance !== null) {
+							var isGreater:boolean = targetNode.getId().distanceTo(contact.getId()) > lastDistance;
+
+							isGreater.should.be.true;
+						}
+						else {
+							lastDistance = targetNode.getId().distanceTo(contact.getId());
+						}
+					}
+
+					lastDistance = null;
+
+					closeRtAndDone(routingTable, done);
+				});
+			});
+		});
+
+	});
 });
