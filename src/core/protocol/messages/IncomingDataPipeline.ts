@@ -78,12 +78,30 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 		this._clearTimeoutLength = clearTimeoutLength;
 	}
 
-	public getTemporaryMemoryByIdentifier (identifier:string):TemporaryMessageMemory {
-		return this._temporaryBufferStorage[identifier];
+	/**
+	 * Returns the socket `data` listener by identifier. Only used for testing purposes.
+	 *
+	 * @method core.protocol.messages.IncomingDataPipeline#getSocketHookByIdentifier
+	 *
+	 * @param {string} identifier
+	 * @returns {Function}
+	 */
+	public getSocketHookByIdentifier (identifier:string):Function {
+
+		return this._socketHooks[identifier];
 	}
 
-	public getSocketHookByIdentifier (identifier:string):Function {
-		return this._socketHooks[identifier];
+	/**
+	 * Returns the temporary memory slot by socket identifier. Only used for testing purposes.
+	 *
+	 * @method core.protocol.messages.IncomingDataPipeline#getTemporaryMemoryByIdentifier
+	 *
+	 * @param {string} identifier
+	 * @returns {TemporaryMessageMemory} Memory slot
+	 */
+	public getTemporaryMemoryByIdentifier (identifier:string):TemporaryMessageMemory {
+
+		return this._temporaryBufferStorage[identifier];
 	}
 
 	public hookSocket (socket:TCPSocketInterface):void {

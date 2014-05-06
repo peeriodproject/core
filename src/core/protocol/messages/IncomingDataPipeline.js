@@ -67,12 +67,28 @@ var IncomingDataPipeline = (function (_super) {
 
         this._clearTimeoutLength = clearTimeoutLength;
     }
-    IncomingDataPipeline.prototype.getTemporaryMemoryByIdentifier = function (identifier) {
-        return this._temporaryBufferStorage[identifier];
-    };
-
+    /**
+    * Returns the socket `data` listener by identifier. Only used for testing purposes.
+    *
+    * @method core.protocol.messages.IncomingDataPipeline#getSocketHookByIdentifier
+    *
+    * @param {string} identifier
+    * @returns {Function}
+    */
     IncomingDataPipeline.prototype.getSocketHookByIdentifier = function (identifier) {
         return this._socketHooks[identifier];
+    };
+
+    /**
+    * Returns the temporary memory slot by socket identifier. Only used for testing purposes.
+    *
+    * @method core.protocol.messages.IncomingDataPipeline#getTemporaryMemoryByIdentifier
+    *
+    * @param {string} identifier
+    * @returns {TemporaryMessageMemory} Memory slot
+    */
+    IncomingDataPipeline.prototype.getTemporaryMemoryByIdentifier = function (identifier) {
+        return this._temporaryBufferStorage[identifier];
     };
 
     IncomingDataPipeline.prototype.hookSocket = function (socket) {
