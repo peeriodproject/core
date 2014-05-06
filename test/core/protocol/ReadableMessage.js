@@ -12,7 +12,7 @@ var ContactNodeAddress = require('../../../src/core/topology/ContactNodeAddress'
 
 var ReadableMessage = require('../../../src/core/protocol/messages/ReadableMessage');
 
-describe('CORE --> PROTOCOL --> READABLEMESSAGE', function () {
+describe('CORE --> PROTOCOL --> ReadableMessage', function () {
     var sandbox;
     var addressFactoryStub;
     var nodeFactoryStub;
