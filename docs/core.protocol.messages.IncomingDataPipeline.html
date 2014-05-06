@@ -215,6 +215,30 @@
 						</li>
 						
 						<li>
+							<a href="core.protocol.net.ConfirmedSocket.html">ConfirmedSocket</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.net.ConfirmedSocketList.html">ConfirmedSocketList</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.net.IncomingPendingSocket.html">IncomingPendingSocket</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.net.IncomingPendingSocketList.html">IncomingPendingSocketList</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.net.OutgoingPendingSocket.html">OutgoingPendingSocket</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.net.OutgoingPendingSocketList.html">OutgoingPendingSocketList</a>
+						</li>
+						
+						<li>
 							<a href="core.protocol.ProtocolConnectionManager.html">ProtocolConnectionManager</a>
 						</li>
 						
@@ -544,6 +568,134 @@
         <dl>
             
 <dt>
+    <h4 class="name" id="_clearTimeoutLength"><span class="type-signature">&lt;inner> </span>_clearTimeoutLength<span class="type-signature"> :number</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Indicates how long to keep memory of an unhooked socket before clearing it (in ms).</p>
+    </div>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">number</span>
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/protocol/messages/IncomingDataPipeline.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="_identifierHooks"><span class="type-signature">&lt;inner> </span>_identifierHooks<span class="type-signature"> :Object</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Keeps references to the <code>identifierChange</code> listeners.</p>
+    </div>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">Object</span>
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/protocol/messages/IncomingDataPipeline.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+</dd>
+
+        
+            
+<dt>
     <h4 class="name" id="_maxByteLenghtPerMessage"><span class="type-signature">&lt;inner> </span>_maxByteLenghtPerMessage<span class="type-signature"> :number</span></h4>
     
     
@@ -856,6 +1008,284 @@
         <h3 class="subsection-title">Methods</h3>
 
         <dl>
+            
+<dt>
+    <h4 class="name" id="getSocketHookByIdentifier"><span class="type-signature"></span>getSocketHookByIdentifier<span class="signature">(identifier)</span><span class="type-signature"> &rarr; {Function}</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Returns the socket <code>data</code> listener by identifier. Only used for testing purposes.</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+
+		<th>Type</th>
+
+		
+
+		
+
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+
+	<tbody>
+	
+
+        <tr>
+            
+                <td class="name"><code>identifier</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+	</tbody>
+</table>
+
+    
+    
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/protocol/messages/IncomingDataPipeline.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type">Function</span>
+
+
+	</dd>
+</dl>
+
+
+        
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="getTemporaryMemoryByIdentifier"><span class="type-signature"></span>getTemporaryMemoryByIdentifier<span class="signature">(identifier)</span><span class="type-signature"> &rarr; {TemporaryMessageMemory}</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Returns the temporary memory slot by socket identifier. Only used for testing purposes.</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+
+		<th>Type</th>
+
+		
+
+		
+
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+
+	<tbody>
+	
+
+        <tr>
+            
+                <td class="name"><code>identifier</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+	</tbody>
+</table>
+
+    
+    
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/protocol/messages/IncomingDataPipeline.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Memory slot</p>
+</div>
+
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type">TemporaryMessageMemory</span>
+
+
+	</dd>
+</dl>
+
+
+        
+    
+    
+</dd>
+
+        
             
 <dt>
     <h4 class="name" id="_concatBufferAndFree"><span class="type-signature">&lt;inner> </span>_concatBufferAndFree<span class="signature">(identifier, tempMessageMemory)</span><span class="type-signature"> &rarr; {Buffer}</span></h4>
@@ -1447,6 +1877,147 @@ and tries to finalize it in the end. Keeps track of the byte length, so merging 
         
             
 <dt>
+    <h4 class="name" id="_identifierChange"><span class="type-signature">&lt;inner> </span>_identifierChange<span class="signature">(oldIdentifier, newIdentifier)</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>The listener on a socket's <code>identifierChange</code> event. Saves the data under the new identifier to avoid stowaways.</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+
+		<th>Type</th>
+
+		
+
+		
+
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+
+	<tbody>
+	
+
+        <tr>
+            
+                <td class="name"><code>oldIdentifier</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+
+        <tr>
+            
+                <td class="name"><code>newIdentifier</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+	</tbody>
+</table>
+
+    
+    
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/protocol/messages/IncomingDataPipeline.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
+        
+            
+<dt>
     <h4 class="name" id="_tryToFinalizeData"><span class="type-signature">&lt;inner> </span>_tryToFinalizeData<span class="signature">(identifier, tempMessageMemory)</span><span class="type-signature"></span></h4>
     
     
@@ -1608,7 +2179,7 @@ If the temporary buffer exceeds its limit, the references to the memory are drop
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a>
-		on Tue May 06 2014 13:35:52 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		on Tue May 06 2014 21:00:56 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
 			</div>
