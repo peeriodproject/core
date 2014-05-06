@@ -5,7 +5,6 @@ import TCPSocketInterface = require('../../../net/tcp/interfaces/TCPSocketInterf
  * @class core.protocol.net.OutgoingPendingSocket
  */
 interface OutgoingPendingSocket {
-	socket:TCPSocketInterface;
 	closeAtOnce:boolean;
 }
 

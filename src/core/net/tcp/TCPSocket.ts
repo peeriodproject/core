@@ -44,6 +44,13 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	 */
 	private _socket:net.Socket = null;
 
+	/**
+	 * The options passed in the constructor (for reference)
+	 *
+	 * @member {core.net.TCPSocketOptions} TCPSocket~_constructorOpts
+	 */
+	private _constructorOpts:TCPSocketOptions = null;
+
 
 	public constructor (socket:net.Socket, opts:TCPSocketOptions) {
 		super();
@@ -53,6 +60,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		}
 
 		this.setSocket(socket);
+
+		this._constructorOpts = opts;
 
 		// set keep-alive
 		if (opts.doKeepAlive) {
@@ -74,7 +83,10 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	public forceDestroy():void {
 		this.getSocket().removeAllListeners();
-		this.getSocket().end();
+		try {
+			this.getSocket().end();
+		}
+		catch (e) {}
 		this._socket = null;
 		this.removeAllListeners();
 	}
@@ -100,6 +112,10 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	}
 
 	public setCloseOnTimeout (flag:boolean):void {
+		if (!this._closeOnTimeout && flag) {
+			this.getSocket().setTimeout(this._constructorOpts.idleConnectionKillTimeout * 1000);
+		}
+
 		this._closeOnTimeout = flag;
 	}
 

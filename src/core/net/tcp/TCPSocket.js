@@ -45,12 +45,20 @@ var TCPSocket = (function (_super) {
         * @member {net.Socket} TCPSocket~_socket
         */
         this._socket = null;
+        /**
+        * The options passed in the constructor (for reference)
+        *
+        * @member {core.net.TCPSocketOptions} TCPSocket~_constructorOpts
+        */
+        this._constructorOpts = null;
 
         if (!(socket && socket instanceof net.Socket)) {
             throw new Error('TCPSocket.constructor: Invalid or no socket specified');
         }
 
         this.setSocket(socket);
+
+        this._constructorOpts = opts;
 
         // set keep-alive
         if (opts.doKeepAlive) {
@@ -71,7 +79,10 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.forceDestroy = function () {
         this.getSocket().removeAllListeners();
-        this.getSocket().end();
+        try  {
+            this.getSocket().end();
+        } catch (e) {
+        }
         this._socket = null;
         this.removeAllListeners();
     };
@@ -97,6 +108,10 @@ var TCPSocket = (function (_super) {
     };
 
     TCPSocket.prototype.setCloseOnTimeout = function (flag) {
+        if (!this._closeOnTimeout && flag) {
+            this.getSocket().setTimeout(this._constructorOpts.idleConnectionKillTimeout * 1000);
+        }
+
         this._closeOnTimeout = flag;
     };
 
