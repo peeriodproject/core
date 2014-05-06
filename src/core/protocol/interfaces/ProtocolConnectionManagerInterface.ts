@@ -11,7 +11,7 @@
  * 1.) Outgoing connections are directly referenced, without needing to wait for a first message.
  * 2.) Incoming connections have to wait for a first message before being referenced.
  * 3.) Only one socket per node.
- * 3.) As it may be that an outgoing connection is being proxied, incoming always beats outgoing.
+ * 4.) As it may be that an outgoing connection is being proxied, incoming always beats outgoing.
  *
  * @interface
  * @class core.protocol.ProtocolConnectionManagerInterface
