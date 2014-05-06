@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/net/ProtocolConnectionManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/net/ProtocolConnectionManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">67.67</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">200</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">47.31</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.74</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var events = require(&#039;events&#039;);
+
+var Id = require(&#039;../../topology/Id&#039;);
+
+var ReadableMessageFactory = require(&#039;./../messages/ReadableMessageFactory&#039;);
+
+var MessageByteCheatsheet = require(&#039;./../messages/MessageByteCheatsheet&#039;);
+
+var IncomingDataPipeline = require(&#039;./../messages/IncomingDataPipeline&#039;);
+
+/**
+* @class core.protocol.ProtocolConnectionManager
+*
+* @extends events.EventEmitter
+* @implements core.protocol.ProtocolConnectionManagerInterface
+*
+*/
+var ProtocolConnectionManager = (function (_super) {
+    __extends(ProtocolConnectionManager, _super);
+    function ProtocolConnectionManager(config, tcpSocketHandler) {
+        _super.call(this);
+        this._temporaryIdentifierPrefix = &#039;_temp&#039;;
+        this._temporaryIdentifierCount = 0;
+        this._tcpSocketHandler = null;
+        this._confirmedSockets = {};
+        this._outgoingPendingSockets = {};
+        this._incomingPendingSockets = {};
+        this._incomingDataPipeline = null;
+        this._incomingPendingTimeoutLength = 0;
+
+        this._tcpSocketHandler = tcpSocketHandler;
+
+        this._incomingDataPipeline = new IncomingDataPipeline(config.get(&#039;protocol.messages.maxByteLengthPerMessage&#039;), MessageByteCheatsheet.messageEnd, config.get(&#039;prococol.messages.msToKeepNonAddressableMemory&#039;), new ReadableMessageFactory());
+
+        this._incomingPendingTimeoutLength = config.get(&#039;protocol.net.msToWaitForIncomingMessage&#039;);
+
+        this._setGlobalListeners();
+    }
+    ProtocolConnectionManager.prototype._setGlobalListeners = function () {
+        var _this = this;
+        this._incomingDataPipeline.on(&#039;message&#039;, function (identifier, message) {
+            _this._onMessage(identifier, message);
+        });
+
+        this._tcpSocketHandler.on(&#039;connected&#039;, function (socket, direction) {
+            if (direction === &#039;incoming&#039;) {
+                _this._onIncomingConnection(socket);
+            }
+        });
+    };
+
+    ProtocolConnectionManager.prototype._onMessage = function (identifier, message) {
+        var propagateMessage = true;
+        var incomingPending = this._incomingPendingSockets[identifier];
+
+        if (incomingPending) {
+            var newIdentifier = this._nodeToIdentifier(message.getSender());
+            this._fromIncomingPendingToConfirmed(newIdentifier, identifier, incomingPending);
+        } else if (!(this._identifierAndContactNodeMatch(identifier, message.getSender()))) {
+            // does not seem to be the person it&#039;s supposed to be. we assume something is wrong here
+            // and destroy the connection.
+            propagateMessage = false;
+            this._destroyConnectionByIdentifier(identifier);
+        }
+
+        if (propagateMessage) {
+            this.emit(&#039;message&#039;, message);
+        }
+    };
+
+    ProtocolConnectionManager.prototype._fromIncomingPendingToConfirmed = function (newIdentifier, oldIdentifier, pending) {
+        var socket = pending.socket;
+        var outgoingPending = this._outgoingPendingSockets[newIdentifier];
+
+        if (pending.timeout) {
+            clearTimeout(pending.timeout);
+        }
+        delete this._incomingPendingSockets[oldIdentifier];
+
+        // check if any outgoing are pending
+        if (outgoingPending) {
+            outgoingPending.closeAtOnce = true;
+        }
+
+        socket.setIdentifier(newIdentifier);
+
+        this._addToConfirmed(newIdentifier, &#039;incoming&#039;, socket);
+    };
+
+    ProtocolConnectionManager.prototype._addToConfirmed = function (identifier, direction, socket) {
+        var existingSocket = this._confirmedSockets[identifier];
+        var newConfirmedSocket = {
+            socket: socket,
+            direction: direction
+        };
+
+        if (existingSocket) {
+            if (direction === &#039;outgoing&#039; &amp;&amp; existingSocket.direction === &#039;incoming&#039;) {
+                this._destroyConnection(socket, true);
+                return;
+            } else {
+                this._destroyConnection(existingSocket.socket, true);
+            }
+        }
+        this._confirmedSockets[identifier] = newConfirmedSocket;
+    };
+
+    ProtocolConnectionManager.prototype._identifierAndContactNodeMatch = function (identifier, node) {
+        return identifier === this._nodeToIdentifier(node);
+    };
+
+    ProtocolConnectionManager.prototype._nodeToIdentifier = function (node) {
+        return node.getId().toHexString();
+    };
+
+    ProtocolConnectionManager.prototype._onIncomingConnection = function (socket) {
+        var _this = this;
+        var identifier = this._setTemporaryIdentifier(socket);
+        if (!this._incomingPendingSockets[identifier]) {
+            var pending = {
+                socket: socket,
+                timeout: setTimeout(function () {
+                    _this._destroyConnection(socket);
+                }, this._incomingPendingTimeoutLength)
+            };
+            this._incomingPendingSockets[identifier] = pending;
+            this._incomingDataPipeline.hookSocket(socket);
+        }
+    };
+
+    ProtocolConnectionManager.prototype._destroyConnection = function (socket, blockTerminationEvent) {
+        var identifier = socket.getIdentifier();
+        var incoming = this._incomingPendingSockets[identifier];
+        var outgoing = this._outgoingPendingSockets[identifier];
+        var confirmed = this._confirmedSockets[identifier];
+
+        this._incomingDataPipeline.unhookSocket(socket);
+
+        if (incoming) {
+            if (incoming.timeout) {
+                clearTimeout(incoming.timeout);
+            }
+            delete this._incomingPendingSockets[identifier];
+        }
+        if (outgoing) {
+            delete this._outgoingPendingSockets[identifier];
+        }
+        if (confirmed) {
+            delete this._confirmedSockets[identifier];
+        }
+
+        socket.forceDestroy();
+
+        if (!blockTerminationEvent) {
+            this._emitTerminatedEventByIdentifier(identifier);
+        }
+    };
+
+    ProtocolConnectionManager.prototype._emitTerminatedEventByIdentifier = function (identifier) {
+        try  {
+            var id = new Id(Id.byteBufferByHexString(identifier, 20), 160);
+            this.emit(&#039;terminatedConnection&#039;, id);
+        } catch (e) {
+        }
+    };
+
+    ProtocolConnectionManager.prototype._destroyConnectionByIdentifier = function (identifier) {
+        var socket = null;
+        var it = [&#039;_incomingPendingSockets&#039;, &#039;_outgoingPendingSockets&#039;, &#039;_confirmedSockets&#039;];
+        for (var i = 0; i &lt; 3; i++) {
+            if (socket) {
+                break;
+            } else {
+                var o = this[it[i]][identifier];
+                if (o) {
+                    socket = o.socket || null;
+                }
+            }
+        }
+        if (socket) {
+            this._destroyConnection(socket);
+        }
+    };
+
+    ProtocolConnectionManager.prototype._setTemporaryIdentifier = function (socket) {
+        var identifier = this._temporaryIdentifierPrefix + (++this._temporaryIdentifierCount);
+        socket.setIdentifier(identifier);
+
+        return identifier;
+    };
+    return ProtocolConnectionManager;
+})(events.EventEmitter);
+
+module.exports = ProtocolConnectionManager;
+//# sourceMappingURL=ProtocolConnectionManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

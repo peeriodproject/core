@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/topology/RoutingTable.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/topology/RoutingTable.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">68.97</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">312</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">70.11</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.02</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
+
+/**
+* Creates a routing table with the given number of k-buckets
+*
+* @class core.topology.RoutingTable
+* @implements RoutingTableInterface
+*
+* @param {config.ConfigInterface} config
+* @param {core.topology.IdInterface} id
+* @param {core.topology.BucketStoreInterface} bucketStore
+*/
+var RoutingTable = (function () {
+    function RoutingTable(config, id, bucketFactory, bucketStore, contactNodeFactory, options) {
+        if (typeof options === &quot;undefined&quot;) { options = {}; }
+        var _this = this;
+        /**
+        * @member {core.topology.BucketFactoryInterface} core.topologyRoutingTable~_bucketFactory
+        */
+        this._bucketFactory = null;
+        /**
+        * The internally used bucket store instance.
+        *
+        * @member {core.topology.BucketStoreInterface} core.topology.RoutingTable~_bucketStore
+        */
+        this._bucketStore = null;
+        /**
+        * The internally used list of buckets
+        *
+        * @member {Array.&lt;topology.BucketInterface&gt;} core.topology.RoutingTable~_buckets
+        */
+        this._buckets = {};
+        /**
+        * The internally used contact node factory instance. Usually just for reference and passed through to the Bucket
+        *
+        * @member {core.topology.ContactNodeFactoryInterface} core.topology.RoutingTable~_contactNodeFactory
+        */
+        this._contactNodeFactory = null;
+        /**
+        * The internally used config object instance. Usually just for reference and passed through to the Bucket
+        *
+        * @member {core.config.ConfigInterface} core.topology.RoutingTable~_config
+        */
+        this._config = null;
+        /**
+        * The Id of the node who owns the routing table
+        *
+        * @member {core.topology.IdInterface} core.topology.RoutingTable~_id
+        */
+        this._id = null;
+        /**
+        * A flag indicates weather the store is open or closed
+        *
+        * @member {boolean} core.topology.RoutingTable~_isOpen
+        */
+        this._isOpen = false;
+        /**
+        * The mix of the passed in options object and the defaults
+        *
+        * @member {core.topology.RoutingTableOptions} core.topology.RoutingTable~_options
+        */
+        this._options = null;
+        var defaults = {
+            closeOnProcessExit: true,
+            onCloseCallback: function (err) {
+            },
+            onOpenCallback: function (err) {
+            }
+        };
+
+        this._config = config;
+        this._id = id;
+        this._bucketFactory = bucketFactory;
+        this._bucketStore = bucketStore;
+        this._contactNodeFactory = contactNodeFactory;
+
+        // todo merge opts &amp; defaults
+        this._options = ObjectUtils.extend(defaults, options);
+        ;
+
+        if (this._options.closeOnProcessExit) {
+            process.on(&#039;exit&#039;, function () {
+                _this.close(_this._options.onCloseCallback);
+            });
+        }
+
+        this.open(this._options.onOpenCallback);
+    }
+    // todo check bucket.close() return value
+    RoutingTable.prototype.close = function (callback) {
+        var internalCallback = callback || this._options.onCloseCallback;
+
+        if (!this._isOpen) {
+            return internalCallback(null);
+        }
+
+        this._isOpen = false;
+
+        for (var key in this._buckets) {
+            this._buckets[key].close();
+        }
+
+        this._buckets = null;
+        internalCallback(null);
+    };
+
+    RoutingTable.prototype.getClosestContactNodes = function (id, excludeId, callback) {
+        var _this = this;
+        var internalCallback = callback || function (err) {
+        };
+        var startBucketKey = this._getBucketKey(id);
+
+        if (!this._isInBucketKeyRange(startBucketKey)) {
+            internalCallback(new Error(&#039;RoutingTable.getClosestContactNode: cannot get closest contact nodes for the given Id.&#039;), null);
+            return;
+        }
+
+        var topologyK = this._config.get(&#039;topology.k&#039;);
+        var bitLength = this._config.get(&#039;topology.bitLength&#039;);
+
+        var distances = [];
+        var distanceMap = {};
+
+        var addContactToDistanceMap = function (contactDistance, contact) {
+            distances.push(contactDistance);
+            distanceMap[contactDistance.toString(&#039;hex&#039;)] = contact;
+            distances.sort();
+        };
+        var getContactFromDistanceMap = function (contactDistance) {
+            return distanceMap[contactDistance.toString(&#039;hex&#039;)];
+        };
+
+        var crawlBucket = function (crawlBucketKey, crawlReverse, onCrawlEnd) {
+            //console.log(&#039;bucket&#039;, crawlBucketKey);
+            _this._getBucket(crawlBucketKey).getAll(function (err, contacts) {
+                if (contacts.length) {
+                    for (var i in contacts) {
+                        var contact = contacts[i];
+                        var contactId = contact.getId();
+
+                        // exclude id
+                        if (excludeId !== null &amp;&amp; contactId.equals(excludeId)) {
+                            continue;
+                        }
+
+                        if (!distances.length) {
+                            var dist = id.distanceTo(contactId);
+                            addContactToDistanceMap(dist, contact);
+                        } else {
+                            var farestDistance = distances[distances.length - 1];
+                            var contactDistance = id.distanceTo(contactId);
+
+                            // contact is closer -&gt; adding
+                            if (contactDistance &lt; farestDistance) {
+                                addContactToDistanceMap(contactDistance, contact);
+                            } else if (distances.length &lt; topologyK) {
+                                addContactToDistanceMap(contactDistance, contact);
+                            }
+                        }
+
+                        if (crawlReverse &amp;&amp; distances.length === topologyK) {
+                            break;
+                        }
+                    }
+                }
+
+                if (!crawlReverse) {
+                    if (crawlBucketKey &gt; 0) {
+                        crawlBucket(--crawlBucketKey, false, onCrawlEnd);
+                    } else {
+                        //console.log(&#039;reached the first bucket.&#039;);
+                        if (distances.length &lt; topologyK &amp;&amp; startBucketKey &lt; bitLength - 1) {
+                            //console.log(&#039;starting reverse search!&#039;);
+                            crawlBucket(++startBucketKey, true, onCrawlEnd);
+                        } else {
+                            //console.log(&#039;found nodes! ending...&#039;);
+                            onCrawlEnd();
+                        }
+                    }
+                } else {
+                    if (crawlBucketKey &lt; bitLength - 1) {
+                        //console.log(&#039;crawl the next bucket&#039;, distances.length);
+                        crawlBucket(++crawlBucketKey, true, onCrawlEnd);
+                    } else {
+                        //console.log(&#039;reached the last bucket &#039; + (bitLength - 1) + &#039;. ending...&#039;);
+                        onCrawlEnd();
+                    }
+                }
+            });
+        };
+
+        crawlBucket(startBucketKey, false, function () {
+            var closestContactNodes = [];
+
+            // console.log(distances);
+            if (distances.length) {
+                for (var i in distances) {
+                    if (i &lt; topologyK) {
+                        closestContactNodes.push(getContactFromDistanceMap(distances[i]));
+                    }
+                }
+            }
+
+            internalCallback(null, closestContactNodes);
+
+            distances = null;
+            distanceMap = null;
+        });
+    };
+
+    RoutingTable.prototype.getContactNode = function (id, callback) {
+        var internalCallback = callback || function (err) {
+        };
+        var bucketKey = this._getBucketKey(id);
+
+        if (this._isInBucketKeyRange(bucketKey)) {
+            this._getBucket(bucketKey).get(id, internalCallback);
+        } else {
+            internalCallback(new Error(&#039;RoutingTable.getContactNode: cannot get the contact node.&#039;), null);
+        }
+    };
+
+    RoutingTable.prototype.isOpen = function (callback) {
+        return callback(null, this._isOpen);
+    };
+
+    RoutingTable.prototype.open = function (callback) {
+        var internalCallback = callback || this._options.onOpenCallback;
+
+        if (this._isOpen) {
+            return internalCallback(null);
+        }
+
+        this._buckets = {};
+
+        for (var i = 0, k = this._config.get(&#039;topology.bitLength&#039;); i &lt; k; i++) {
+            this._createBucket(i, this._config.get(&#039;topology.k&#039;));
+        }
+
+        this._isOpen = true;
+        internalCallback(null);
+    };
+
+    RoutingTable.prototype.updateContactNode = function (contact, callback) {
+        var internalCallback = callback || function (err) {
+        };
+        var bucketKey = this._getBucketKey(contact.getId());
+
+        if (this._isInBucketKeyRange(bucketKey)) {
+            this._getBucket(bucketKey).update(contact, internalCallback);
+        } else {
+            internalCallback(new Error(&#039;RoutingTable.updateContactNode: cannot update the given contact node.&#039;));
+        }
+    };
+
+    // todo updateId Ideas
+    RoutingTable.prototype.updateId = function (id) {
+        return;
+    };
+
+    /**
+    * Creates a bucket with the given key.
+    *
+    * @method core.topology.RoutingTable~_createBucket
+    *
+    * @param {string} bucketKey
+    * @param {number} maxBucketSize
+    */
+    RoutingTable.prototype._createBucket = function (bucketKey, maxBucketSize) {
+        this._buckets[this._getBucketKeyString(bucketKey)] = this._bucketFactory.create(this._config, bucketKey, maxBucketSize, this._bucketStore, this._contactNodeFactory);
+    };
+
+    /**
+    * Returns the bucket key where the given id should be stored.
+    * See {@link core.topology.Id.differsInHighestBit} for more information.
+    *
+    * @method core.topology.RoutingTable~_getBucketKey
+    *
+    * @param {core.topology.IdInterface} id
+    * @return {number}
+    */
+    RoutingTable.prototype._getBucketKey = function (id) {
+        return this._id.differsInHighestBit(id);
+    };
+
+    RoutingTable.prototype._getBucketKeyAsString = function (id) {
+        return this._getBucketKeyString(this._getBucketKey(id));
+    };
+
+    RoutingTable.prototype._getBucketKeyString = function (key) {
+        return key.toString();
+    };
+
+    RoutingTable.prototype._getBucket = function (bucketKey) {
+        return this._buckets[this._getBucketKeyString(bucketKey)];
+    };
+
+    /**
+    * Returns `true` if the given bucket key fits into the range `0 &lt;= bucketKey &lt; topology.bitLength`
+    *
+    * @method core.topology.RoutingTable~_isInBucketKeyRange
+    *
+    * @param {number} bucketKey
+    * @return {boolean}
+    */
+    RoutingTable.prototype._isInBucketKeyRange = function (bucketKey) {
+        return (0 &lt;= bucketKey &amp;&amp; bucketKey &lt; this._config.get(&#039;topology.bitLength&#039;));
+    };
+    return RoutingTable;
+})();
+
+module.exports = RoutingTable;
+//# sourceMappingURL=RoutingTable.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>
