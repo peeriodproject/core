@@ -11,7 +11,7 @@ import ContactNodeFactory = require('../../../src/core/topology/ContactNodeFacto
 import ContactNodeInterface = require('../../../src/core/topology/interfaces/ContactNodeInterface');
 import ContactNodeObjectListInterface = require('../../../src/core/topology/interfaces/ContactNodeObjectListInterface');
 
-describe('CORE --> TOPOLOGY --> BucketStore @joern', function () {
+describe('CORE --> TOPOLOGY --> BucketStore', function () {
 	var databasePath:string = testUtils.getFixturePath('core/topology/bucketstore/db');
 	var store:BucketStoreInterface = null;
 
