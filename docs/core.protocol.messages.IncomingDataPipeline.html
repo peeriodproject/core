@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Documentation Class: TCPSocketInterface</title>
+	<title>Documentation Class: IncomingDataPipeline</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -339,14 +339,14 @@
 					
 
 
-	<h1 class="page-title">Class: TCPSocketInterface</h1>
+	<h1 class="page-title">Class: IncomingDataPipeline</h1>
 <section>
 
 <header>
     <h2>
-        <span class="ancestors"><a href="core.html">core</a><a href="core.net.html">.net</a><a href="core.net.tcp.html">.tcp</a>.</span>
+        <span class="ancestors"><a href="core.html">core</a><a href="core.protocol.html">.protocol</a><a href="core.protocol.messages.html">.messages</a>.</span>
     
-    TCPSocketInterface
+    IncomingDataPipeline
     </h2>
     
 </header>
@@ -358,7 +358,7 @@
     
         
 <dt>
-    <h4 class="name" id="TCPSocketInterface"><span class="type-signature"></span>new TCPSocketInterface<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="IncomingDataPipeline"><span class="type-signature"></span>new IncomingDataPipeline<span class="signature">(maxByteLengthPerMessage, messageEndBytes, readableMessageFactory)</span><span class="type-signature"></span></h4>
     
     
 </dt>
@@ -366,97 +366,7 @@
     
     
     <div class="description">
-        <p>TCPSocket is a wrapper around node.js's raw net.Socket class and represents open TCP connections.
-What it does for now is setting the keep-alive option and optionally auto-kill idle sockets, as well as
-providing the socket with an identifier string.</p>
-<p>It is planned, however, to maybe automatically control the upload rate and providing statistical data.</p>
-    </div>
-    
-
-    
-    
-    
-    
-    
-    
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/net/tcp/interfaces/TCPSocketInterface.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-</dd>
-
-    
-    </div>
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        <dl>
-            
-<dt>
-    <h4 class="name" id="end"><span class="type-signature"></span>end<span class="signature">(data, encoding)</span><span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        <p>Manually close a socket, i.e. send a FIN packet. The other end may be able to still send data though.</p>
+        <p>IncomingDataPipeline interface implementation.</p>
     </div>
     
 
@@ -490,489 +400,59 @@ providing the socket with an identifier string.</p>
 
         <tr>
             
-                <td class="name"><code>data</code></td>
-            
-
-            <td class="type">
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Data to finally send.</p></td>
-        </tr>
-
-	
-
-        <tr>
-            
-                <td class="name"><code>encoding</code></td>
-            
-
-            <td class="type">
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Optional encoding. Will default to utf8 if <code>data</code> is a string.</p></td>
-        </tr>
-
-	
-	</tbody>
-</table>
-
-    
-    
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/net/tcp/interfaces/TCPSocketInterface.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="getIdentifier"><span class="type-signature"></span>getIdentifier<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        <p>Returns the identification string.</p>
-    </div>
-    
-
-    
-    
-    
-    
-    
-    
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/net/tcp/interfaces/TCPSocketInterface.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>identifier</p>
-</div>
-
-
-
-<dl>
-	<dt>
-		Type
-	</dt>
-	<dd>
-		
-<span class="param-type">string</span>
-
-
-	</dd>
-</dl>
-
-
-        
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="getIPPortString"><span class="type-signature"></span>getIPPortString<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        <p>Returns a string representation of the remote connection in the form IP:PORT</p>
-    </div>
-    
-
-    
-    
-    
-    
-    
-    
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/net/tcp/interfaces/TCPSocketInterface.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>IP:PORT</p>
-</div>
-
-
-
-<dl>
-	<dt>
-		Type
-	</dt>
-	<dd>
-		
-<span class="param-type">string</span>
-
-
-	</dd>
-</dl>
-
-
-        
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="getSocket"><span class="type-signature"></span>getSocket<span class="signature">()</span><span class="type-signature"> &rarr; {net.Socket}</span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        <p>Returns the net.Socket instance.</p>
-    </div>
-    
-
-    
-    
-    
-    
-    
-    
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/net/tcp/interfaces/TCPSocketInterface.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>net.Socket instance</p>
-</div>
-
-
-
-<dl>
-	<dt>
-		Type
-	</dt>
-	<dd>
-		
-<span class="param-type">net.Socket</span>
-
-
-	</dd>
-</dl>
-
-
-        
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="onTimeout"><span class="type-signature"></span>onTimeout<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        <p>Function that gets called when a <code>timeout</code> event is emitted on an idle socket.</p>
-    </div>
-    
-
-    
-    
-    
-    
-    
-    
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/net/tcp/interfaces/TCPSocketInterface.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="setCloseOnTimeout"><span class="type-signature"></span>setCloseOnTimeout<span class="signature">(flag)</span><span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        <p>Specify if an idle socket should be closed on a <code>timeout</code> event.</p>
-    </div>
-    
-
-    
-    
-    
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-	<tr>
-		
-		<th>Name</th>
-		
-
-		<th>Type</th>
-
-		
-
-		
-
-		<th class="last">Description</th>
-	</tr>
-	</thead>
-
-	<tbody>
-	
-
-        <tr>
-            
-                <td class="name"><code>flag</code></td>
+                <td class="name"><code>maxByteLengthPerMessage</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">boolean</span>
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The maximum number of bytes a message may have before the memory is discarded.</p></td>
+        </tr>
+
+	
+
+        <tr>
+            
+                <td class="name"><code>messageEndBytes</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;number></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>A byte array indicating that a message is final.</p></td>
+        </tr>
+
+	
+
+        <tr>
+            
+                <td class="name"><code>readableMessageFactory</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="core.protocol.messages.ReadableMessageFactoryInterface.html">core.protocol.messages.ReadableMessageFactoryInterface</a></span>
 
 
             
@@ -1014,7 +494,7 @@ providing the socket with an identifier string.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/net/tcp/interfaces/TCPSocketInterface.ts
+        src/core/protocol/messages/IncomingDataPipeline.ts
     </li></ul></dd>
     
 
@@ -1039,10 +519,346 @@ providing the socket with an identifier string.</p>
     
 </dd>
 
+    
+    </div>
+
+    
+        <h3 class="subsection-title">Extends</h3>
+
+        <ul>
+            <li>events.EventEmitter</li>
+        </ul>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        <dl>
+            
+<dt>
+    <h4 class="name" id="_maxByteLenghtPerMessage"><span class="type-signature">&lt;inner> </span>_maxByteLenghtPerMessage<span class="type-signature"> :number</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">number</span>
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/protocol/messages/IncomingDataPipeline.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+</dd>
+
         
             
 <dt>
-    <h4 class="name" id="setIdentifier"><span class="type-signature"></span>setIdentifier<span class="signature">(identifier)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="_messageEndBytes"><span class="type-signature">&lt;inner> </span>_messageEndBytes<span class="type-signature"> :Array.&lt;number></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">Array.&lt;number></span>
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/protocol/messages/IncomingDataPipeline.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="_readableMessageFactory"><span class="type-signature">&lt;inner> </span>_readableMessageFactory<span class="type-signature"> :<a href="core.protocol.messages.ReadableMessageFactoryInterface.html">core.protocol.messages.ReadableMessageFactoryInterface</a></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type"><a href="core.protocol.messages.ReadableMessageFactoryInterface.html">core.protocol.messages.ReadableMessageFactoryInterface</a></span>
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/protocol/messages/IncomingDataPipeline.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="_socketHooks"><span class="type-signature">&lt;inner> </span>_socketHooks<span class="type-signature"> :Object</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Keeps references to the <code>data</code> listeners.</p>
+    </div>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">Object</span>
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/protocol/messages/IncomingDataPipeline.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="_temporaryBufferStorage"><span class="type-signature">&lt;inner> </span>_temporaryBufferStorage<span class="type-signature"> :<a href="core.protocol.messages.TemporaryMessageMemoryList.html">core.protocol.messages.TemporaryMessageMemoryList</a></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Stores the temporary buffers before merging them into a single message buffer. Identified by TCPSocket identifiers.</p>
+    </div>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type"><a href="core.protocol.messages.TemporaryMessageMemoryList.html">core.protocol.messages.TemporaryMessageMemoryList</a></span>
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/protocol/messages/IncomingDataPipeline.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+</dd>
+
+        </dl>
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        <dl>
+            
+<dt>
+    <h4 class="name" id="_concatBufferAndFree"><span class="type-signature">&lt;inner> </span>_concatBufferAndFree<span class="signature">(identifier, tempMessageMemory)</span><span class="type-signature"> &rarr; {Buffer}</span></h4>
     
     
 </dt>
@@ -1050,8 +866,7 @@ providing the socket with an identifier string.</p>
     
     
     <div class="description">
-        <p>Sets an identification string on the socket object. Useful when trying to quickly pair a socket and some
-remote machine.</p>
+        <p>Concatenates the temporary memory to one buffer object. As the bytes are copied, references to the segments are dropped.</p>
     </div>
     
 
@@ -1101,7 +916,30 @@ remote machine.</p>
 
             
 
-            <td class="description last"><p>Identifier to set</p></td>
+            <td class="description last"><p>TCP socket identifier</p></td>
+        </tr>
+
+	
+
+        <tr>
+            
+                <td class="name"><code>tempMessageMemory</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="core.protocol.messages.TemporaryMessageMemory.html">core.protocol.messages.TemporaryMessageMemory</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The temporary buffer storage slot</p></td>
         </tr>
 
 	
@@ -1133,7 +971,7 @@ remote machine.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/net/tcp/interfaces/TCPSocketInterface.ts
+        src/core/protocol/messages/IncomingDataPipeline.ts
     </li></ul></dd>
     
 
@@ -1154,6 +992,29 @@ remote machine.</p>
     
     
     
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>Concatenated buffer</p>
+</div>
+
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type">Buffer</span>
+
+
+	</dd>
+</dl>
+
+
+        
     
     
 </dd>
@@ -1161,7 +1022,7 @@ remote machine.</p>
         
             
 <dt>
-    <h4 class="name" id="setSocket"><span class="type-signature"></span>setSocket<span class="signature">(socket)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="_freeMemory"><span class="type-signature">&lt;inner> </span>_freeMemory<span class="signature">(identifier, tempMessageMemory)</span><span class="type-signature"></span></h4>
     
     
 </dt>
@@ -1169,7 +1030,7 @@ remote machine.</p>
     
     
     <div class="description">
-        <p>Sets an (open) socket</p>
+        <p>Drops references to the buffer segments stored under an identifer in the temporary buffer storage.</p>
     </div>
     
 
@@ -1203,13 +1064,13 @@ remote machine.</p>
 
         <tr>
             
-                <td class="name"><code>socket</code></td>
+                <td class="name"><code>identifier</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">net.Socket</span>
+<span class="param-type">string</span>
 
 
             
@@ -1219,7 +1080,30 @@ remote machine.</p>
 
             
 
-            <td class="description last"></td>
+            <td class="description last"><p>TCP socket identifier</p></td>
+        </tr>
+
+	
+
+        <tr>
+            
+                <td class="name"><code>tempMessageMemory</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="core.protocol.messages.TemporaryMessageMemory.html">core.protocol.messages.TemporaryMessageMemory</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The temporary buffer storage slot</p></td>
         </tr>
 
 	
@@ -1251,7 +1135,7 @@ remote machine.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/net/tcp/interfaces/TCPSocketInterface.ts
+        src/core/protocol/messages/IncomingDataPipeline.ts
     </li></ul></dd>
     
 
@@ -1279,7 +1163,7 @@ remote machine.</p>
         
             
 <dt>
-    <h4 class="name" id="setupListeners"><span class="type-signature"></span>setupListeners<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="_freeMemory"><span class="type-signature">&lt;inner> </span>_freeMemory<span class="signature">(tempMessageMemory)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
     
     
 </dt>
@@ -1287,8 +1171,8 @@ remote machine.</p>
     
     
     <div class="description">
-        <p>Sets up the listeners on the raw socket's events and specifies the reaction.
-Some socket events are simply propagated, like 'data', 'close', 'error'</p>
+        <p>Checks whether a tmeporary message memory slot constitutes a full message. This is determined by comparing
+the last bytes to the <code>messageEndBytes</code> provided in the constructor.</p>
     </div>
     
 
@@ -1296,6 +1180,55 @@ Some socket events are simply propagated, like 'data', 'close', 'error'</p>
     
     
     
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+
+		<th>Type</th>
+
+		
+
+		
+
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+
+	<tbody>
+	
+
+        <tr>
+            
+                <td class="name"><code>tempMessageMemory</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="core.protocol.messages.TemporaryMessageMemory.html">core.protocol.messages.TemporaryMessageMemory</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The temporary buffer storage slot</p></td>
+        </tr>
+
+	
+	</tbody>
+</table>
+
     
     
     
@@ -1321,7 +1254,7 @@ Some socket events are simply propagated, like 'data', 'close', 'error'</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/net/tcp/interfaces/TCPSocketInterface.ts
+        src/core/protocol/messages/IncomingDataPipeline.ts
     </li></ul></dd>
     
 
@@ -1342,6 +1275,29 @@ Some socket events are simply propagated, like 'data', 'close', 'error'</p>
     
     
     
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p><code>True</code> if message is complete, <code>false</code> if not complete</p>
+</div>
+
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type">boolean</span>
+
+
+	</dd>
+</dl>
+
+
+        
     
     
 </dd>
@@ -1349,7 +1305,7 @@ Some socket events are simply propagated, like 'data', 'close', 'error'</p>
         
             
 <dt>
-    <h4 class="name" id="writeBuffer"><span class="type-signature"></span>writeBuffer<span class="signature">(buffer, callback)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+    <h4 class="name" id="_handleIncomingData"><span class="type-signature">&lt;inner> </span>_handleIncomingData<span class="signature">(buffer, socket)</span><span class="type-signature"></span></h4>
     
     
 </dt>
@@ -1357,12 +1313,8 @@ Some socket events are simply propagated, like 'data', 'close', 'error'</p>
     
     
     <div class="description">
-        <p>Sends a byte buffer on the socket.
-Returns <code>true</code> if the entire data was successfully flushed to the kernel buffer. Returns <code>false</code> if all or
-part of the data was queued in user memory. The socket emits <code>drain</code> when the buffer is again free.</p>
-<p>To avoid unnecessary memory retention and to let garbage collection know that the buffer
-is no longer needed, keep in mind to set the buffer to <code>null</code> as soon as possible.</p>
-<p>Optional <code>callback</code> will be executed when the data is finally written out - this may not be immediately.</p>
+        <p>The entrance function for incoming data. Assigns new data a slot in the temporary buffer storage,
+and tries to finalize it in the end. Keeps track of the byte length, so merging later will be faster.</p>
     </div>
     
 
@@ -1402,7 +1354,7 @@ is no longer needed, keep in mind to set the buffer to <code>null</code> as soon
             <td class="type">
             
                 
-<span class="param-type">NodeBuffer</span>
+<span class="param-type">Buffer</span>
 
 
             
@@ -1412,20 +1364,20 @@ is no longer needed, keep in mind to set the buffer to <code>null</code> as soon
 
             
 
-            <td class="description last"></td>
+            <td class="description last"><p>Incoming byte buffer</p></td>
         </tr>
 
 	
 
         <tr>
             
-                <td class="name"><code>callback</code></td>
+                <td class="name"><code>socket</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Function</span>
+<span class="param-type">TCPSocketInterface</span>
 
 
             
@@ -1435,7 +1387,7 @@ is no longer needed, keep in mind to set the buffer to <code>null</code> as soon
 
             
 
-            <td class="description last"></td>
+            <td class="description last"><p>The socket on which the data was received.</p></td>
         </tr>
 
 	
@@ -1467,7 +1419,7 @@ is no longer needed, keep in mind to set the buffer to <code>null</code> as soon
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/net/tcp/interfaces/TCPSocketInterface.ts
+        src/core/protocol/messages/IncomingDataPipeline.ts
     </li></ul></dd>
     
 
@@ -1488,29 +1440,6 @@ is no longer needed, keep in mind to set the buffer to <code>null</code> as soon
     
     
     
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>True if flushed to kernel buffer, false if all or part was queued in memory.</p>
-</div>
-
-
-
-<dl>
-	<dt>
-		Type
-	</dt>
-	<dd>
-		
-<span class="param-type">boolean</span>
-
-
-	</dd>
-</dl>
-
-
-        
     
     
 </dd>
@@ -1518,7 +1447,7 @@ is no longer needed, keep in mind to set the buffer to <code>null</code> as soon
         
             
 <dt>
-    <h4 class="name" id="writeString"><span class="type-signature"></span>writeString<span class="signature">(message, encoding, callback)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+    <h4 class="name" id="_tryToFinalizeData"><span class="type-signature">&lt;inner> </span>_tryToFinalizeData<span class="signature">(identifier, tempMessageMemory)</span><span class="type-signature"></span></h4>
     
     
 </dt>
@@ -1526,7 +1455,9 @@ is no longer needed, keep in mind to set the buffer to <code>null</code> as soon
     
     
     <div class="description">
-        <p>Writes a string to the socket.</p>
+        <p>Calls a check on the temporary memory if the message is complete. If yes, it tries to make a readable message out
+of it and emit the <code>message</code> event. If the message is errorous, nothing is done.
+If the temporary buffer exceeds its limit, the references to the memory are dropped.</p>
     </div>
     
 
@@ -1560,7 +1491,7 @@ is no longer needed, keep in mind to set the buffer to <code>null</code> as soon
 
         <tr>
             
-                <td class="name"><code>message</code></td>
+                <td class="name"><code>identifier</code></td>
             
 
             <td class="type">
@@ -1576,20 +1507,20 @@ is no longer needed, keep in mind to set the buffer to <code>null</code> as soon
 
             
 
-            <td class="description last"></td>
+            <td class="description last"><p>TCP socket identifier</p></td>
         </tr>
 
 	
 
         <tr>
             
-                <td class="name"><code>encoding</code></td>
+                <td class="name"><code>tempMessageMemory</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type"><a href="core.protocol.messages.TemporaryMessageMemory.html">core.protocol.messages.TemporaryMessageMemory</a></span>
 
 
             
@@ -1599,30 +1530,7 @@ is no longer needed, keep in mind to set the buffer to <code>null</code> as soon
 
             
 
-            <td class="description last"><p>Optional. Defaults to 'utf8'</p></td>
-        </tr>
-
-	
-
-        <tr>
-            
-                <td class="name"><code>callback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Function</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Optional</p></td>
+            <td class="description last"><p>The temporary buffer storage slot</p></td>
         </tr>
 
 	
@@ -1654,7 +1562,7 @@ is no longer needed, keep in mind to set the buffer to <code>null</code> as soon
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/net/tcp/interfaces/TCPSocketInterface.ts
+        src/core/protocol/messages/IncomingDataPipeline.ts
     </li></ul></dd>
     
 
@@ -1675,29 +1583,6 @@ is no longer needed, keep in mind to set the buffer to <code>null</code> as soon
     
     
     
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    <p>True if flushed to kernel buffer, false if all or part was queued in memory.</p>
-</div>
-
-
-
-<dl>
-	<dt>
-		Type
-	</dt>
-	<dd>
-		
-<span class="param-type">boolean</span>
-
-
-	</dd>
-</dl>
-
-
-        
     
     
 </dd>
@@ -1723,7 +1608,7 @@ is no longer needed, keep in mind to set the buffer to <code>null</code> as soon
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a>
-		on Tue May 06 2014 13:35:51 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		on Tue May 06 2014 13:35:52 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
 			</div>
