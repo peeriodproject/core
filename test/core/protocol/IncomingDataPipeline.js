@@ -46,7 +46,7 @@ describe('CORE --> PROTOCOL --> IncomingDataPipeline @current', function () {
 
         server.listen(66666);
 
-        pipe = new IncomingDataPipeline(maxByteLength, messageEndBytes, readableMessageFactoryStub);
+        pipe = new IncomingDataPipeline(maxByteLength, messageEndBytes, 1000, readableMessageFactoryStub);
     });
 
     it('should throw an error when hooking a socket without an identifer', function (done) {
@@ -164,11 +164,29 @@ describe('CORE --> PROTOCOL --> IncomingDataPipeline @current', function () {
         pipe.unhookSocket(undefined).should.be.false;
     });
 
-    it('should unhook a TCP socket from the pipe', function (done) {
+    it('should unhook a TCP socket from the pipe but keep the data', function (done) {
         if (pipe.unhookSocket(tcpSock) && pipe.getSocketHookByIdentifier('mySockB') === undefined) {
-            if (tcpSock.listeners('data').length === 0)
+            if (tcpSock.listeners('data').length === 0 && pipe.getTemporaryMemoryByIdentifier('mySockB').data[0][0] === 0x01)
                 done();
         }
+    });
+
+    it('should hook a TCP socket again and not timeout kill the memory', function (done) {
+        pipe.hookSocket(tcpSock);
+        currentConnection.write(new Buffer([0x02]));
+        setTimeout(function () {
+            var mem = pipe.getTemporaryMemoryByIdentifier('mySockB').data;
+            if (mem[0][0] === 0x01 && mem[1][0] === 0x02)
+                done();
+        }, 1000);
+    });
+
+    it('should timeout kill the memory of an unhooked tcp socket', function (done) {
+        pipe.unhookSocket(tcpSock);
+        setTimeout(function () {
+            if (pipe.getTemporaryMemoryByIdentifier('mySockB') === undefined)
+                done();
+        }, 1000);
     });
 
     after(function () {

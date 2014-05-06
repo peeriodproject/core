@@ -15,12 +15,19 @@ var events = require('events');
 *
 * @param {number} maxByteLengthPerMessage The maximum number of bytes a message may have before the memory is discarded.
 * @param {Array<number>} messageEndBytes A byte array indicating that a message is final.
+* @oaram {number} clearTimeoutLength Number of milliseconds to keep data from an unhooked socket until it is released.
 * @param {core.protocol.messages.ReadableMessageFactoryInterface} readableMessageFactory
 */
 var IncomingDataPipeline = (function (_super) {
     __extends(IncomingDataPipeline, _super);
-    function IncomingDataPipeline(maxByteLengthPerMessage, messageEndBytes, readableMessageFactory) {
+    function IncomingDataPipeline(maxByteLengthPerMessage, messageEndBytes, clearTimeoutLength, readableMessageFactory) {
         _super.call(this);
+        /**
+        * Indicates how long to keep memory of an unhooked socket before clearing it (in ms).
+        *
+        * @member {number} core.protocol.messages.IncomingDataPipeline~_clearTimeoutLength
+        */
+        this._clearTimeoutLength = 0;
         /**
         * @member {number} core.protocol.messages.IncomingDataPipeline~_maxByteLenghtPerMessage
         */
@@ -51,11 +58,14 @@ var IncomingDataPipeline = (function (_super) {
         * @member {core.protocol.messages.TemporaryMessageMemoryList} core.protocol.messages.IncomingDataPipeline~_temporaryBufferStorage
         */
         this._temporaryBufferStorage = {};
+        this._doCleanBufferTimeouts = {};
 
         this._maxByteLengthPerMessage = maxByteLengthPerMessage;
         this._readableMessageFactory = readableMessageFactory;
 
         this._messageEndBytes = messageEndBytes;
+
+        this._clearTimeoutLength = clearTimeoutLength;
     }
     IncomingDataPipeline.prototype.getTemporaryMemoryByIdentifier = function (identifier) {
         return this._temporaryBufferStorage[identifier];
@@ -91,6 +101,7 @@ var IncomingDataPipeline = (function (_super) {
     };
 
     IncomingDataPipeline.prototype.unhookSocket = function (socket) {
+        var _this = this;
         if (socket) {
             var identifier = socket.getIdentifier();
             if (identifier) {
@@ -109,7 +120,12 @@ var IncomingDataPipeline = (function (_super) {
                     b = true;
                 }
 
-                delete this._temporaryBufferStorage[identifier];
+                // temporary buffer storage will only be deleted if no new data comes in within 10 seconds
+                if (!this._doCleanBufferTimeouts[identifier]) {
+                    this._doCleanBufferTimeouts[identifier] = setTimeout(function () {
+                        _this._freeMemory(identifier);
+                    }, this._clearTimeoutLength);
+                }
 
                 return a || b;
             }
@@ -143,10 +159,12 @@ var IncomingDataPipeline = (function (_super) {
     * @param {core.protocol.messages.TemporaryMessageMemory} tempMessageMemory The temporary buffer storage slot
     */
     IncomingDataPipeline.prototype._freeMemory = function (identifier, tempMessageMemory) {
-        var dataLen = tempMessageMemory.data.length;
+        var tempMemory = tempMessageMemory || this._temporaryBufferStorage[identifier];
+
+        var dataLen = tempMemory.data.length;
 
         for (var i = 0; i < dataLen; i++) {
-            tempMessageMemory.data[i] = null;
+            tempMemory.data[i] = null;
         }
 
         delete this._temporaryBufferStorage[identifier];
@@ -163,6 +181,12 @@ var IncomingDataPipeline = (function (_super) {
     */
     IncomingDataPipeline.prototype._handleIncomingData = function (buffer, socket) {
         var identifier = socket.getIdentifier();
+
+        if (this._doCleanBufferTimeouts[identifier]) {
+            clearTimeout(this._doCleanBufferTimeouts[identifier]);
+            delete this._doCleanBufferTimeouts[identifier];
+        }
+
         if (buffer) {
             var len = buffer.length;
             if (len) {
@@ -195,6 +219,7 @@ var IncomingDataPipeline = (function (_super) {
         var sockHook = this._socketHooks[oldIdentifier];
         var identifierHook = this._identifierHooks[oldIdentifier];
         var memorySlot = this._temporaryBufferStorage[oldIdentifier];
+        var emptyMemoryTimeout = this._doCleanBufferTimeouts[oldIdentifier];
 
         if (sockHook) {
             this._socketHooks[newIdentifier] = sockHook;
@@ -209,6 +234,11 @@ var IncomingDataPipeline = (function (_super) {
         if (memorySlot) {
             this._temporaryBufferStorage[newIdentifier] = memorySlot;
             delete this._temporaryBufferStorage[oldIdentifier];
+        }
+
+        if (emptyMemoryTimeout) {
+            this._doCleanBufferTimeouts[newIdentifier] = emptyMemoryTimeout;
+            delete this._doCleanBufferTimeouts[oldIdentifier];
         }
     };
 

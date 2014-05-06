@@ -16,9 +16,17 @@ import TCPSocketInterface = require('../../net/tcp/interfaces/TCPSocketInterface
  *
  * @param {number} maxByteLengthPerMessage The maximum number of bytes a message may have before the memory is discarded.
  * @param {Array<number>} messageEndBytes A byte array indicating that a message is final.
+ * @oaram {number} clearTimeoutLength Number of milliseconds to keep data from an unhooked socket until it is released.
  * @param {core.protocol.messages.ReadableMessageFactoryInterface} readableMessageFactory
  */
 class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPipelineInterface {
+
+	/**
+	 * Indicates how long to keep memory of an unhooked socket before clearing it (in ms).
+	 *
+	 * @member {number} core.protocol.messages.IncomingDataPipeline~_clearTimeoutLength
+	 */
+	private _clearTimeoutLength = 0;
 
 	/**
 	 * @member {number} core.protocol.messages.IncomingDataPipeline~_maxByteLenghtPerMessage
@@ -56,14 +64,18 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 	 */
 	private _temporaryBufferStorage:TemporaryMessageMemoryList = {};
 
+	private _doCleanBufferTimeouts:{[id:string]:number} = {};
 
-	constructor (maxByteLengthPerMessage:number, messageEndBytes:Array<number>, readableMessageFactory:ReadableMessageFactoryInterface) {
+
+	constructor (maxByteLengthPerMessage:number, messageEndBytes:Array<number>, clearTimeoutLength:number, readableMessageFactory:ReadableMessageFactoryInterface) {
 		super();
 
 		this._maxByteLengthPerMessage = maxByteLengthPerMessage;
 		this._readableMessageFactory = readableMessageFactory;
 
 		this._messageEndBytes = messageEndBytes;
+
+		this._clearTimeoutLength = clearTimeoutLength;
 	}
 
 	public getTemporaryMemoryByIdentifier (identifier:string):TemporaryMessageMemory {
@@ -117,7 +129,12 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 					b = true;
 				}
 
-				delete this._temporaryBufferStorage[identifier];
+				// temporary buffer storage will only be deleted if no new data comes in within 10 seconds
+				if (!this._doCleanBufferTimeouts[identifier]) {
+					this._doCleanBufferTimeouts[identifier] = setTimeout(() => {
+						this._freeMemory(identifier);
+					}, this._clearTimeoutLength);
+				}
 
 				return a || b;
 			}
@@ -150,11 +167,13 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 	 * @param {string} identifier TCP socket identifier
 	 * @param {core.protocol.messages.TemporaryMessageMemory} tempMessageMemory The temporary buffer storage slot
 	 */
-	private _freeMemory (identifier:string, tempMessageMemory:TemporaryMessageMemory):void {
-		var dataLen = tempMessageMemory.data.length;
+	private _freeMemory (identifier:string, tempMessageMemory?:TemporaryMessageMemory):void {
+		var tempMemory:TemporaryMessageMemory = tempMessageMemory || this._temporaryBufferStorage[identifier];
+
+		var dataLen = tempMemory.data.length;
 
 		for (var i = 0; i < dataLen; i++) {
-			tempMessageMemory.data[i] = null;
+			tempMemory.data[i] = null;
 		}
 
 		delete this._temporaryBufferStorage[identifier];
@@ -171,6 +190,12 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 	 */
 	private _handleIncomingData (buffer:Buffer, socket:TCPSocketInterface):void {
 		var identifier = socket.getIdentifier();
+
+		if (this._doCleanBufferTimeouts[identifier]) {
+			clearTimeout(this._doCleanBufferTimeouts[identifier]);
+			delete this._doCleanBufferTimeouts[identifier];
+		}
+
 		if (buffer) {
 			var len = buffer.length;
 			if (len) {
@@ -205,6 +230,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 		var sockHook = this._socketHooks[oldIdentifier];
 		var identifierHook = this._identifierHooks[oldIdentifier];
 		var memorySlot = this._temporaryBufferStorage[oldIdentifier];
+		var emptyMemoryTimeout = this._doCleanBufferTimeouts[oldIdentifier];
 
 		if (sockHook) {
 			this._socketHooks[newIdentifier] = sockHook;
@@ -220,6 +246,12 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 			this._temporaryBufferStorage[newIdentifier] = memorySlot;
 			delete this._temporaryBufferStorage[oldIdentifier];
 		}
+
+		if (emptyMemoryTimeout) {
+			this._doCleanBufferTimeouts[newIdentifier] = emptyMemoryTimeout;
+			delete this._doCleanBufferTimeouts[oldIdentifier];
+		}
+
 	}
 
 	/**
