@@ -38,7 +38,7 @@ var IncomingDataPipeline = (function (_super) {
         *
         * @member {Object} core.protocol.messages.IncomingDataPipeline~_socketHooks
         */
-        this._socketHooks = null;
+        this._socketHooks = {};
         /**
         * Stores the temporary buffers before merging them into a single message buffer. Identified by TCPSocket identifiers.
         *
@@ -51,6 +51,14 @@ var IncomingDataPipeline = (function (_super) {
 
         this._messageEndBytes = messageEndBytes;
     }
+    IncomingDataPipeline.prototype.getTemporaryMemoryByIdentifier = function (identifier) {
+        return this._temporaryBufferStorage[identifier];
+    };
+
+    IncomingDataPipeline.prototype.getSocketHookByIdentifier = function (identifier) {
+        return this._socketHooks[identifier];
+    };
+
     IncomingDataPipeline.prototype.hookSocket = function (socket) {
         var _this = this;
         if (!socket.getIdentifier()) {
@@ -69,11 +77,13 @@ var IncomingDataPipeline = (function (_super) {
     };
 
     IncomingDataPipeline.prototype.unhookSocket = function (socket) {
-        var identifier = socket.getIdentifier();
-        if (identifier && this._socketHooks[identifier]) {
-            socket.removeListener('data', this._socketHooks[identifier]);
-            delete this._socketHooks[identifier];
-            return true;
+        if (socket) {
+            var identifier = socket.getIdentifier();
+            if (identifier && this._socketHooks[identifier]) {
+                socket.removeListener('data', this._socketHooks[identifier]);
+                delete this._socketHooks[identifier];
+                return true;
+            }
         }
         return false;
     };
@@ -210,6 +220,7 @@ var IncomingDataPipeline = (function (_super) {
                 var msg = this._readableMessageFactory.create(messageBuffer);
                 this.emit('message', identifier, msg);
             } catch (e) {
+                this.emit('unreadableMessage', identifier);
             }
         } else if (tempMessageMemory.length > this._maxByteLengthPerMessage) {
             this._freeMemory(identifier, tempMessageMemory);

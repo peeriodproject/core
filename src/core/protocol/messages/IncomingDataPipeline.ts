@@ -40,7 +40,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 	 *
 	 * @member {Object} core.protocol.messages.IncomingDataPipeline~_socketHooks
 	 */
-	private _socketHooks:{[id:string]:Function} = null;
+	private _socketHooks:{[id:string]:Function} = {};
 
 	/**
 	 * Stores the temporary buffers before merging them into a single message buffer. Identified by TCPSocket identifiers.
@@ -57,6 +57,14 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 		this._readableMessageFactory = readableMessageFactory;
 
 		this._messageEndBytes = messageEndBytes;
+	}
+
+	public getTemporaryMemoryByIdentifier (identifier:string):TemporaryMessageMemory {
+		return this._temporaryBufferStorage[identifier];
+	}
+
+	public getSocketHookByIdentifier (identifier:string):Function {
+		return this._socketHooks[identifier];
 	}
 
 	public hookSocket (socket:TCPSocketInterface):void {
@@ -76,11 +84,13 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 	}
 
 	public unhookSocket (socket:TCPSocketInterface):boolean {
-		var identifier = socket.getIdentifier();
-		if (identifier && this._socketHooks[identifier]) {
-			socket.removeListener('data', this._socketHooks[identifier]);
-			delete this._socketHooks[identifier];
-			return true;
+		if (socket) {
+			var identifier = socket.getIdentifier();
+			if (identifier && this._socketHooks[identifier]) {
+				socket.removeListener('data', this._socketHooks[identifier]);
+				delete this._socketHooks[identifier];
+				return true;
+			}
 		}
 		return false;
 	}
@@ -221,6 +231,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 				this.emit('message', identifier, msg);
 			}
 			catch (e) {
+				this.emit('unreadableMessage', identifier);
 			}
 		}
 		else if (tempMessageMemory.length > this._maxByteLengthPerMessage) {
