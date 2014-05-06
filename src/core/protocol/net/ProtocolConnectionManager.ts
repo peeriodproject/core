@@ -37,6 +37,8 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 	private _incomingDataPipeline:IncomingDataPipelineInterface = null;
 
+	private _incomingPendingTimeoutLength:number = 0;
+
 	constructor (config:ObjectConfig, tcpSocketHandler:TCPSocketHandlerInterface) {
 		super();
 
@@ -48,6 +50,8 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			config.get('prococol.messages.msToKeepNonAddressableMemory'),
 			new ReadableMessageFactory()
 		);
+
+		this._incomingPendingTimeoutLength = config.get('protocol.net.msToWaitForIncomingMessage');
 
 		this._tcpSocketHandler.on('connected', (socket:TCPSocketInterface, direction:string) => {
 			if (direction === 'incoming') {

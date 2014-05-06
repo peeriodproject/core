@@ -31,10 +31,13 @@ var ProtocolConnectionManager = (function (_super) {
         this._outgoingPendingSockets = {};
         this._incomingPendingSockets = {};
         this._incomingDataPipeline = null;
+        this._incomingPendingTimeoutLength = 0;
 
         this._tcpSocketHandler = tcpSocketHandler;
 
         this._incomingDataPipeline = new IncomingDataPipeline(config.get('protocol.messages.maxByteLengthPerMessage'), MessageByteCheatsheet.messageEnd, config.get('prococol.messages.msToKeepNonAddressableMemory'), new ReadableMessageFactory());
+
+        this._incomingPendingTimeoutLength = config.get('protocol.net.msToWaitForIncomingMessage');
 
         this._tcpSocketHandler.on('connected', function (socket, direction) {
             if (direction === 'incoming') {
