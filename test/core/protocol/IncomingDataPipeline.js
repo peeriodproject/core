@@ -11,7 +11,7 @@ var IncomingDataPipeline = require('../../../src/core/protocol/messages/Incoming
 var TCPSocket = require('../../../src/core/net/tcp/TCPSocket');
 var ReadableMessageFactory = require('../../../src/core/protocol/messages/ReadableMessageFactory');
 
-describe('CORE --> PROTOCOL --> IncomingDataPipeline', function () {
+describe('CORE --> PROTOCOL --> IncomingDataPipeline @current', function () {
     var sandbox;
     var readableMessageFactoryStub;
     var server = null;
@@ -136,7 +136,7 @@ describe('CORE --> PROTOCOL --> IncomingDataPipeline', function () {
     });
 
     it('should free memory when the limit has exceeded', function (done) {
-        var largeBuffer = new Buffer(maxByteLength + 10);
+        var largeBuffer = new Buffer(maxByteLength + 1);
         largeBuffer.fill(1);
 
         currentConnection.write(largeBuffer, function () {
@@ -148,12 +148,24 @@ describe('CORE --> PROTOCOL --> IncomingDataPipeline', function () {
         });
     });
 
+    it('should correctly handle things on identifier change', function (done) {
+        var buf = new Buffer([0x01]);
+
+        currentConnection.write(buf);
+
+        setTimeout(function () {
+            tcpSock.setIdentifier('mySockB');
+            if (pipe.getSocketHookByIdentifier('mySockB') !== undefined && pipe.getTemporaryMemoryByIdentifier('mySockB').data[0][0] === 0x01)
+                done();
+        }, 20);
+    });
+
     it('should return false when unhooking a non-existant socket', function () {
         pipe.unhookSocket(undefined).should.be.false;
     });
 
     it('should unhook a TCP socket from the pipe', function (done) {
-        if (pipe.unhookSocket(tcpSock) && pipe.getSocketHookByIdentifier('mySock') === undefined) {
+        if (pipe.unhookSocket(tcpSock) && pipe.getSocketHookByIdentifier('mySockB') === undefined) {
             if (tcpSock.listeners('data').length === 0)
                 done();
         }
