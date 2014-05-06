@@ -40,6 +40,12 @@ var IncomingDataPipeline = (function (_super) {
         */
         this._socketHooks = {};
         /**
+        * Keeps references to the `identifierChange` listeners.
+        *
+        * @member {Object} core.protocol.messages.IncomingDataPipeline~_identifierHooks
+        */
+        this._identifierHooks = {};
+        /**
         * Stores the temporary buffers before merging them into a single message buffer. Identified by TCPSocket identifiers.
         *
         * @member {core.protocol.messages.TemporaryMessageMemoryList} core.protocol.messages.IncomingDataPipeline~_temporaryBufferStorage
@@ -61,28 +67,51 @@ var IncomingDataPipeline = (function (_super) {
 
     IncomingDataPipeline.prototype.hookSocket = function (socket) {
         var _this = this;
-        if (!socket.getIdentifier()) {
+        if (!(socket && socket.getIdentifier())) {
             throw new Error('IncomingDataPipeline#hookSocket: Can only hook sockets with identifier');
         }
 
         var identifier = socket.getIdentifier();
 
         if (!this._socketHooks[identifier]) {
-            var hook = function (buffer) {
+            var hook_a = function (buffer) {
                 _this._handleIncomingData(buffer, socket);
             };
-            this._socketHooks[identifier] = hook;
-            socket.on('data', hook);
+            this._socketHooks[identifier] = hook_a;
+            socket.on('data', hook_a);
+        }
+
+        if (!this._identifierHooks[identifier]) {
+            var hook_b = function (oldIdentifier, newIdentifier) {
+                _this._identifierChange(oldIdentifier, newIdentifier);
+            };
+            this._identifierHooks[identifier] = hook_b;
+            socket.on('identifierChange', hook_b);
         }
     };
 
     IncomingDataPipeline.prototype.unhookSocket = function (socket) {
         if (socket) {
             var identifier = socket.getIdentifier();
-            if (identifier && this._socketHooks[identifier]) {
-                socket.removeListener('data', this._socketHooks[identifier]);
-                delete this._socketHooks[identifier];
-                return true;
+            if (identifier) {
+                var a = false;
+                var b = false;
+
+                if (this._socketHooks[identifier]) {
+                    socket.removeListener('data', this._socketHooks[identifier]);
+                    delete this._socketHooks[identifier];
+                    a = true;
+                }
+
+                if (this._identifierHooks[identifier]) {
+                    socket.removeListener('identifierChange', this._identifierHooks[identifier]);
+                    delete this._identifierHooks[identifier];
+                    b = true;
+                }
+
+                delete this._temporaryBufferStorage[identifier];
+
+                return a || b;
             }
         }
         return false;
@@ -151,6 +180,35 @@ var IncomingDataPipeline = (function (_super) {
 
                 this._tryToFinalizeData(identifier, tempMessageMemory);
             }
+        }
+    };
+
+    /**
+    * The listener on a socket's `identifierChange` event. Saves the data under the new identifier to avoid stowaways.
+    *
+    * @method core.protocol.messages.IncomingDataPipeline~_identifierChange
+    *
+    * @param {string} oldIdentifier
+    * @param {string} newIdentifier
+    */
+    IncomingDataPipeline.prototype._identifierChange = function (oldIdentifier, newIdentifier) {
+        var sockHook = this._socketHooks[oldIdentifier];
+        var identifierHook = this._identifierHooks[oldIdentifier];
+        var memorySlot = this._temporaryBufferStorage[oldIdentifier];
+
+        if (sockHook) {
+            this._socketHooks[newIdentifier] = sockHook;
+            delete this._socketHooks[oldIdentifier];
+        }
+
+        if (identifierHook) {
+            this._identifierHooks[newIdentifier] = identifierHook;
+            delete this._identifierHooks[oldIdentifier];
+        }
+
+        if (memorySlot) {
+            this._temporaryBufferStorage[newIdentifier] = memorySlot;
+            delete this._temporaryBufferStorage[oldIdentifier];
         }
     };
 
