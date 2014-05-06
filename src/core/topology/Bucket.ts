@@ -203,8 +203,9 @@ class Bucket implements BucketInterface {
 
 	/**
 	 * Converts a {@link core.topology.ContactNodeObjectInterface} into a {@link core.topology.ContactNodeInterface}
+	 * by using the {@link core.topology.Bucket~_contactNodeFactory} passed in at construction.
 	 *
-	 * @method core.topology.RoutingTable~_convertToContactNodeInstance
+	 * @method core.topology.Bucket~_convertToContactNodeInstance
 	 *
 	 * @param {core.topology.ContactNodeObjectInterface} contactObject
 	 * @returns {core.topology.ContactNodeInterface}
