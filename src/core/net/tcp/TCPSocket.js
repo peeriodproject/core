@@ -94,6 +94,10 @@ var TCPSocket = (function (_super) {
     };
 
     TCPSocket.prototype.setIdentifier = function (identifier) {
+        if (this._identifier && (this._identifier !== identifier)) {
+            var oldIdentifier = this._identifier;
+            this.emit('identifierChange', oldIdentifier, identifier);
+        }
         this._identifier = identifier;
     };
 

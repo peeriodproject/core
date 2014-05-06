@@ -13,7 +13,7 @@ import ContactNodeAddress = require('../../../src/core/topology/ContactNodeAddre
 import Id = require('../../../src/core/topology/Id');
 import ReadableMessage = require('../../../src/core/protocol/messages/ReadableMessage');
 
-describe('CORE --> PROTOCOL --> READABLEMESSAGE', function () {
+describe('CORE --> PROTOCOL --> ReadableMessage', function () {
 	var sandbox:SinonSandbox;
 	var addressFactoryStub:any;
 	var nodeFactoryStub:any;

@@ -12,4 +12,3 @@ var sheet = {
 };
 
 export = sheet;
-

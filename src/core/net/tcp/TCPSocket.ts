@@ -97,6 +97,10 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	}
 
 	public setIdentifier (identifier:string):void {
+		if (this._identifier && (this._identifier !== identifier)) {
+			var oldIdentifier:string = this._identifier;
+			this.emit('identifierChange', oldIdentifier, identifier);
+		}
 		this._identifier = identifier;
 	}
 
