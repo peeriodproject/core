@@ -127,10 +127,18 @@ class RoutingTable implements RoutingTableInterface {
 		internalCallback(null);
 	}
 
-	public getClosestContactNodes (id:IdInterface, callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
+	public getClosestContactNodes (id:IdInterface, excludeId:IdInterface, callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
 		var startBucketKey:number = this._getBucketKey(id);
+
+		if (!this._isInBucketKeyRange(startBucketKey)) {
+			internalCallback(new Error('RoutingTable.getClosestContactNode: cannot get closest contact nodes for the given Id.'), null);
+			return;
+		}
+
+		var topologyK:number = this._config.get('topology.k');
+		var bitLength:number = this._config.get('topology.bitLength');
 
 		var distances:Array<Buffer> = [];
 		var distanceMap:{ [key:string]:ContactNodeInterface; } = {};
@@ -146,7 +154,7 @@ class RoutingTable implements RoutingTableInterface {
 
 
 		var crawlBucket = (crawlBucketKey:number, crawlReverse:boolean, onCrawlEnd:Function) => {
-			//console.log('crawling bucket', crawlBucketKey);
+			//console.log('bucket', crawlBucketKey);
 
 			this._getBucket(crawlBucketKey).getAll((err:Error, contacts:ContactNodeListInterface) => {
 				if (contacts.length) {
@@ -154,69 +162,59 @@ class RoutingTable implements RoutingTableInterface {
 						var contact:ContactNodeInterface = contacts[i];
 						var contactId:IdInterface = contact.getId();
 
-						// exclude target id
-						if (!id.equals(contactId)) {
-							if (!distances.length) {
-								var dist = id.distanceTo(contactId);
-								addContactToDistanceMap(dist, contact);
-							}
-							else {
-								var farestDistance = distances[distances.length - 1];
-								var contactDistance = id.distanceTo(contactId);
+						// exclude id
+						if (excludeId !== null && contactId.equals(excludeId)) {
+							//console.log('EXCLUDED excludeId!');
+							continue;
+						}
 
-								// contact is closer -> adding
-								if (contactDistance < farestDistance) {
-									addContactToDistanceMap(contactDistance, contact);
-								}
-								// still space in the list -> adding
-								else if (distances.length < this._config.get('topology.k')) {
-									addContactToDistanceMap(contactDistance, contact);
-								}
-							}
-
-							if (distances.length === this._config.get('topology.k')) {
-								break;
-							}
+						if (!distances.length) {
+							var dist = id.distanceTo(contactId);
+							addContactToDistanceMap(dist, contact);
 						}
 						else {
-							//console.log('excluded target id!');
+							var farestDistance = distances[distances.length - 1];
+							var contactDistance = id.distanceTo(contactId);
+
+							// contact is closer -> adding
+							if (contactDistance < farestDistance) {
+								addContactToDistanceMap(contactDistance, contact);
+							}
+							// still space in the list -> adding
+							else if (distances.length < topologyK) {
+								addContactToDistanceMap(contactDistance, contact);
+							}
+						}
+
+						if (crawlReverse && distances.length === topologyK) {
+							break;
 						}
 					}
 				}
 
-				// top-to-bottom search: going to crawl the next bucket
 				if (!crawlReverse) {
-					if (crawlBucketKey < this._config.get('topology.bitLength') - 1) {
-						//console.log('crawl the next (child) bucket');
-						crawlBucket(++crawlBucketKey, false, onCrawlEnd);
+					if (crawlBucketKey > 0) {
+						crawlBucket(--crawlBucketKey, false, onCrawlEnd);
 					}
-					// reached the bottom of the store.
 					else {
-						//console.log('reached the end of the bucket store.');
-
-						// we have still less then topology.k contacts.
-						// starting reverse (bottom-to-top) search at startBucketKey - 1
-						if (distances.length < this._config.get('topology.k')) {
+						//console.log('reached the first bucket.');
+						if (distances.length < topologyK && startBucketKey < bitLength - 1) {
 							//console.log('starting reverse search!');
-							crawlBucket(--startBucketKey, true, onCrawlEnd);
+							crawlBucket(++startBucketKey, true, onCrawlEnd);
 						}
-						// we found topology.k nodes. ending...
 						else {
 							//console.log('found nodes! ending...');
 							onCrawlEnd();
 						}
 					}
 				}
-				// reverse (bottom-to-top) search: going to crawl the previous bucket
 				else {
-					// crawling the previous bucket
-					if (crawlBucketKey > 0) {
-						//console.log('crawl the previous bucket', distances.length);
-						crawlBucket(--crawlBucketKey, true, onCrawlEnd);
+					if (crawlBucketKey < bitLength - 1) {
+						//console.log('crawl the next bucket', distances.length);
+						crawlBucket(++crawlBucketKey, true, onCrawlEnd);
 					}
-					// reached the top of the store. ending...
 					else {
-						//console.log('reached the top of the bucket store. ending...');
+						//console.log('reached the last bucket ' + (bitLength - 1) + '. ending...');
 						onCrawlEnd();
 					}
 				}
@@ -226,9 +224,13 @@ class RoutingTable implements RoutingTableInterface {
 		crawlBucket(startBucketKey, false, function () {
 			var closestContactNodes:ContactNodeListInterface = [];
 
+			// console.log(distances);
+
 			if (distances.length) {
 				for (var i in distances) {
-					closestContactNodes.push(getContactFromDistanceMap(distances[i]));
+					if (i < topologyK) {
+						closestContactNodes.push(getContactFromDistanceMap(distances[i]));
+					}
 				}
 			}
 
@@ -244,7 +246,12 @@ class RoutingTable implements RoutingTableInterface {
 		};
 		var bucketKey:number = this._getBucketKey(id);
 
-		this._getBucket(bucketKey).get(id, internalCallback);
+		if (this._isInBucketKeyRange(bucketKey)) {
+			this._getBucket(bucketKey).get(id, internalCallback);
+		}
+		else {
+			internalCallback(new Error('RoutingTable.getContactNode: cannot get the contact node.'), null);
+		}
 	}
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):boolean {
@@ -273,7 +280,12 @@ class RoutingTable implements RoutingTableInterface {
 		};
 		var bucketKey:number = this._getBucketKey(contact.getId());
 
-		this._getBucket(bucketKey).update(contact, internalCallback);
+		if (this._isInBucketKeyRange(bucketKey)) {
+			this._getBucket(bucketKey).update(contact, internalCallback);
+		}
+		else {
+			internalCallback(new Error('RoutingTable.updateContactNode: cannot update the given contact node.'));
+		}
 	}
 
 	// todo updateId Ideas
@@ -316,6 +328,18 @@ class RoutingTable implements RoutingTableInterface {
 
 	private _getBucket (bucketKey:number):BucketInterface {
 		return this._buckets[this._getBucketKeyString(bucketKey)]
+	}
+
+	/**
+	 * Returns `true` if the given bucket key fits into the range `0 <= bucketKey < topology.bitLength`
+	 *
+	 * @method core.topology.RoutingTable~_isInBucketKeyRange
+	 *
+	 * @param {number} bucketKey
+	 * @return {boolean}
+	 */
+	private _isInBucketKeyRange (bucketKey:number):boolean {
+		return (0 <= bucketKey && bucketKey < this._config.get('topology.bitLength'));
 	}
 
 }

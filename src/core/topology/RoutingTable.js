@@ -104,11 +104,19 @@ var RoutingTable = (function () {
         internalCallback(null);
     };
 
-    RoutingTable.prototype.getClosestContactNodes = function (id, callback) {
+    RoutingTable.prototype.getClosestContactNodes = function (id, excludeId, callback) {
         var _this = this;
         var internalCallback = callback || function (err) {
         };
         var startBucketKey = this._getBucketKey(id);
+
+        if (!this._isInBucketKeyRange(startBucketKey)) {
+            internalCallback(new Error('RoutingTable.getClosestContactNode: cannot get closest contact nodes for the given Id.'), null);
+            return;
+        }
+
+        var topologyK = this._config.get('topology.k');
+        var bitLength = this._config.get('topology.bitLength');
 
         var distances = [];
         var distanceMap = {};
@@ -123,63 +131,58 @@ var RoutingTable = (function () {
         };
 
         var crawlBucket = function (crawlBucketKey, crawlReverse, onCrawlEnd) {
-            //console.log('crawling bucket', crawlBucketKey);
+            //console.log('bucket', crawlBucketKey);
             _this._getBucket(crawlBucketKey).getAll(function (err, contacts) {
                 if (contacts.length) {
                     for (var i in contacts) {
                         var contact = contacts[i];
                         var contactId = contact.getId();
 
-                        // exclude target id
-                        if (!id.equals(contactId)) {
-                            if (!distances.length) {
-                                var dist = id.distanceTo(contactId);
-                                addContactToDistanceMap(dist, contact);
-                            } else {
-                                var farestDistance = distances[distances.length - 1];
-                                var contactDistance = id.distanceTo(contactId);
+                        // exclude id
+                        if (excludeId !== null && contactId.equals(excludeId)) {
+                            continue;
+                        }
 
-                                // contact is closer -> adding
-                                if (contactDistance < farestDistance) {
-                                    addContactToDistanceMap(contactDistance, contact);
-                                } else if (distances.length < _this._config.get('topology.k')) {
-                                    addContactToDistanceMap(contactDistance, contact);
-                                }
-                            }
-
-                            if (distances.length === _this._config.get('topology.k')) {
-                                break;
-                            }
+                        if (!distances.length) {
+                            var dist = id.distanceTo(contactId);
+                            addContactToDistanceMap(dist, contact);
                         } else {
-                            //console.log('excluded target id!');
+                            var farestDistance = distances[distances.length - 1];
+                            var contactDistance = id.distanceTo(contactId);
+
+                            // contact is closer -> adding
+                            if (contactDistance < farestDistance) {
+                                addContactToDistanceMap(contactDistance, contact);
+                            } else if (distances.length < topologyK) {
+                                addContactToDistanceMap(contactDistance, contact);
+                            }
+                        }
+
+                        if (crawlReverse && distances.length === topologyK) {
+                            break;
                         }
                     }
                 }
 
-                // top-to-bottom search: going to crawl the next bucket
                 if (!crawlReverse) {
-                    if (crawlBucketKey < _this._config.get('topology.bitLength') - 1) {
-                        //console.log('crawl the next (child) bucket');
-                        crawlBucket(++crawlBucketKey, false, onCrawlEnd);
+                    if (crawlBucketKey > 0) {
+                        crawlBucket(--crawlBucketKey, false, onCrawlEnd);
                     } else {
-                        //console.log('reached the end of the bucket store.');
-                        // we have still less then topology.k contacts.
-                        // starting reverse (bottom-to-top) search at startBucketKey - 1
-                        if (distances.length < _this._config.get('topology.k')) {
+                        //console.log('reached the first bucket.');
+                        if (distances.length < topologyK && startBucketKey < bitLength - 1) {
                             //console.log('starting reverse search!');
-                            crawlBucket(--startBucketKey, true, onCrawlEnd);
+                            crawlBucket(++startBucketKey, true, onCrawlEnd);
                         } else {
                             //console.log('found nodes! ending...');
                             onCrawlEnd();
                         }
                     }
                 } else {
-                    // crawling the previous bucket
-                    if (crawlBucketKey > 0) {
-                        //console.log('crawl the previous bucket', distances.length);
-                        crawlBucket(--crawlBucketKey, true, onCrawlEnd);
+                    if (crawlBucketKey < bitLength - 1) {
+                        //console.log('crawl the next bucket', distances.length);
+                        crawlBucket(++crawlBucketKey, true, onCrawlEnd);
                     } else {
-                        //console.log('reached the top of the bucket store. ending...');
+                        //console.log('reached the last bucket ' + (bitLength - 1) + '. ending...');
                         onCrawlEnd();
                     }
                 }
@@ -189,9 +192,12 @@ var RoutingTable = (function () {
         crawlBucket(startBucketKey, false, function () {
             var closestContactNodes = [];
 
+            // console.log(distances);
             if (distances.length) {
                 for (var i in distances) {
-                    closestContactNodes.push(getContactFromDistanceMap(distances[i]));
+                    if (i < topologyK) {
+                        closestContactNodes.push(getContactFromDistanceMap(distances[i]));
+                    }
                 }
             }
 
@@ -207,7 +213,11 @@ var RoutingTable = (function () {
         };
         var bucketKey = this._getBucketKey(id);
 
-        this._getBucket(bucketKey).get(id, internalCallback);
+        if (this._isInBucketKeyRange(bucketKey)) {
+            this._getBucket(bucketKey).get(id, internalCallback);
+        } else {
+            internalCallback(new Error('RoutingTable.getContactNode: cannot get the contact node.'), null);
+        }
     };
 
     RoutingTable.prototype.isOpen = function (callback) {
@@ -236,7 +246,11 @@ var RoutingTable = (function () {
         };
         var bucketKey = this._getBucketKey(contact.getId());
 
-        this._getBucket(bucketKey).update(contact, internalCallback);
+        if (this._isInBucketKeyRange(bucketKey)) {
+            this._getBucket(bucketKey).update(contact, internalCallback);
+        } else {
+            internalCallback(new Error('RoutingTable.updateContactNode: cannot update the given contact node.'));
+        }
     };
 
     // todo updateId Ideas
@@ -279,6 +293,18 @@ var RoutingTable = (function () {
 
     RoutingTable.prototype._getBucket = function (bucketKey) {
         return this._buckets[this._getBucketKeyString(bucketKey)];
+    };
+
+    /**
+    * Returns `true` if the given bucket key fits into the range `0 <= bucketKey < topology.bitLength`
+    *
+    * @method core.topology.RoutingTable~_isInBucketKeyRange
+    *
+    * @param {number} bucketKey
+    * @return {boolean}
+    */
+    RoutingTable.prototype._isInBucketKeyRange = function (bucketKey) {
+        return (0 <= bucketKey && bucketKey < this._config.get('topology.bitLength'));
     };
     return RoutingTable;
 })();

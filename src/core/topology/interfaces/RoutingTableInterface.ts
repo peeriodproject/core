@@ -1,6 +1,7 @@
 import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
 import IdInterface = require('./IdInterface');
 import ContactNodeInterface = require('./ContactNodeInterface');
+import ContactNodeListInterface = require('./ContactNodeListInterface');
 
 /**
  * RoutingTable Interface
@@ -20,8 +21,10 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	 * @method core.topology.RoutingTableInterface#getClosestContactNodes
 	 *
 	 * @param {core.topology.IdInterface} id
+	 * @param {core.topology.IdInterface} excludeId
+	 * @param {Function} callback(err:Error, contacts:ContactNodeListInterface)
 	 */
-	getClosestContactNodes (id:IdInterface, callback:(err:Error, contacts:Array<ContactNodeInterface>) => any):void;
+	getClosestContactNodes (id:IdInterface, excludeId:IdInterface, callback:(err:Error, contacts:ContactNodeListInterface) => any):void;
 
 	/**
 	 * Returns the specified contact code by id

@@ -197,7 +197,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 		});
 	});
 
-	describe('should correctly return the closest contact nodes', function () {
+	describe('should correctly return the closest contact nodes @joern', function () {
 		var databasePath:string = testUtils.getFixturePath('core/topology/bucketstore/db');
 
 		var bucketFactory:BucketFactoryInterface;
@@ -245,18 +245,19 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 			testUtils.deleteFolderRecursive(databasePath);
 		});
 
-		it('should correctly exclude the target id', function (done) {
+		it('should correctly exclude the exclude id', function (done) {
 			var routingTable:RoutingTableInterface;
+			var excludeContactNode:ContactNodeInterface = ContactNodeFactory.createDummy();
 
 			routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory);
 
-			routingTable.updateContactNode(targetNode, function () {
+			routingTable.updateContactNode(excludeContactNode, function () {
 				createContactNodes(routingTable, 10, function () {
-					routingTable.getClosestContactNodes(targetNode.getId(), function (err:Error, contacts:ContactNodeListInterface) {
+					routingTable.getClosestContactNodes(targetNode.getId(), excludeContactNode.getId(), function (err:Error, contacts:ContactNodeListInterface) {
 						for (var i in contacts) {
 							var contact:ContactNodeInterface = contacts[i];
 
-							targetNode.getId().equals(contact.getId()).should.be.false;
+							excludeContactNode.getId().equals(contact.getId()).should.be.false;
 						}
 
 						closeRtAndDone(routingTable, done);
@@ -271,7 +272,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 			routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory);
 
 			createContactNodes(routingTable, 100, function () {
-				routingTable.getClosestContactNodes(targetNode.getId(), function (err:Error, contacts:ContactNodeListInterface) {
+				routingTable.getClosestContactNodes(targetNode.getId(), null, function (err:Error, contacts:ContactNodeListInterface) {
 					contacts.length.should.equal(topologyK);
 
 					closeRtAndDone(routingTable, done);
@@ -285,7 +286,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 			routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory);
 
 			createContactNodes(routingTable, 10, function () {
-				routingTable.getClosestContactNodes(targetNode.getId(), function (err:Error, contacts:ContactNodeListInterface) {
+				routingTable.getClosestContactNodes(targetNode.getId(), null, function (err:Error, contacts:ContactNodeListInterface) {
 					contacts.length.should.equal(10);
 
 					closeRtAndDone(routingTable, done);
@@ -295,25 +296,82 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 
 		it('should correctly return the contact nodes in sorted order', function (done) {
 			var routingTable:RoutingTableInterface;
+			var ownerIdStr:string;
+			var targetIdStr:string;
+			var ids:Array<string>;
 
-			routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory);
+			var customTopologyK:number = 5;
 
-			createContactNodes(routingTable, 100, function () {
-				routingTable.getClosestContactNodes(targetNode.getId(), function (err:Error, contacts:ContactNodeListInterface) {
+			var customConfigStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+				get: function (key:string) {
+					key = key.toLowerCase();
+
+					if (key === 'topology.bitlength') {
+						return topologyBitLength;
+					}
+					else if (key === 'topology.k') {
+						return customTopologyK;
+					}
+				}
+			});
+
+			var createContactNodesFromIds = function (ids:Array<string>, index:number, callback:Function) {
+				var contact:ContactNodeInterface = ContactNodeFactory.createDummy(ids[index]);
+
+				routingTable.updateContactNode(contact, function (err:Error) {
+					if (!err) {
+						if (index < ids.length - 1) {
+							createContactNodesFromIds(ids, ++index, callback);
+						}
+						else {
+							callback();
+						}
+					}
+					else {
+						throw err;
+					}
+				});
+			};
+
+			ownerIdStr = '1111111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000';
+			targetIdStr = '1111111111111111100000000000000000000000000111111111111111100000000000000000000000000111111111111111100000000000000000000000000000000000000000000000000000000000';
+
+
+			ids = [
+				'1111111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000001',
+				'1111111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000011',
+				'1111111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000111',
+				'1111111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000001111',
+				'1111111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000011111',
+				'1111111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000001111111',
+				'1111111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000011111111',
+				'1111111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000111111111',
+				'1111111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000001111111111',
+				'1111111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000011111111111'
+			];
+
+			var owner:ContactNodeInterface = ContactNodeFactory.createDummy(ownerIdStr);
+			var customTargetNode:ContactNodeInterface = ContactNodeFactory.createDummy(targetIdStr);
+
+			routingTable = new RoutingTable(customConfigStub, owner.getId(), bucketFactory, bucketStore, contactNodeFactory);
+
+			createContactNodesFromIds(ids, 0, function () {
+				routingTable.getClosestContactNodes(customTargetNode.getId(), null, function (err:Error, contacts:ContactNodeListInterface) {
 					var lastDistance:Buffer = null;
 
-					contacts.length.should.equal(topologyK);
+					contacts.length.should.equal(customTopologyK);
 
 					for (var i in contacts) {
 						var contact:ContactNodeInterface = contacts[i];
+						//console.log(customTargetNode.getId().distanceTo(contact.getId()));
 
 						if (lastDistance !== null) {
-							var isGreater:boolean = targetNode.getId().distanceTo(contact.getId()) > lastDistance;
+							var isGreater:boolean = customTargetNode.getId().distanceTo(contact.getId()) > lastDistance;
 
 							isGreater.should.be.true;
 						}
 						else {
-							lastDistance = targetNode.getId().distanceTo(contact.getId());
+							lastDistance = customTargetNode.getId().distanceTo(contact.getId());
 						}
 					}
 
@@ -323,6 +381,5 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 				});
 			});
 		});
-
 	});
 });
