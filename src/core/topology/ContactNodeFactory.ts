@@ -40,7 +40,7 @@ class ContactNodeFactory implements ContactNodeFactoryInterface {
 		return this.create(new Id(idBuffer, 160), addresses, object.lastSeen);
 	}
 
-	public static createDummy ():ContactNodeInterface {
+	public static createDummy (idStr?:string):ContactNodeInterface {
 		var getId = function ():IdInterface {
 			var getRandomId = function ():string {
 				var str = '';
@@ -52,18 +52,20 @@ class ContactNodeFactory implements ContactNodeFactoryInterface {
 				return str;
 			};
 
-			return new Id(Id.byteBufferByBitString(getRandomId(), 20), 160);
+			idStr = idStr || getRandomId();
+
+			return new Id(Id.byteBufferByBitString(idStr, 20), 160);
 		};
 
-		var getAddresses =  function ():ContactNodeAddressListInterface {
+		var getAddresses = function ():ContactNodeAddressListInterface {
 			return [ContactNodeAddressFactory.createDummy()];
 		};
 
-		var getLastSeen =  function ():number {
+		var getLastSeen = function ():number {
 			// node js is too fast for javascripts millis
 			var lastSeen = Math.round(Date.now() * Math.random()) + '';
 
-			if (lastSeen.length > 10 ) {
+			if (lastSeen.length > 10) {
 				lastSeen = lastSeen.substr(0, 9);
 			}
 
