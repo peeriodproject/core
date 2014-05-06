@@ -10,18 +10,21 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var BucketStore = require('../../../src/core/topology/BucketStore');
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 
-describe('CORE --> TOPOLOGY --> BUCKET @joern', function () {
+var ContactNode = require('../../../src/core/topology/ContactNode');
+
+describe('CORE --> TOPOLOGY --> Bucket @_joern', function () {
     // http://stackoverflow.com/a/14041593
     var sandbox;
     var configStub;
     var name;
     var bucketStoreStub;
+    var contactNodeFactoryStub;
     var bucket;
     var maxBucketSize = 20;
 
     var createBucket = function (bucketStore) {
         bucketStoreStub = bucketStore;
-        bucket = new Bucket(configStub, name, maxBucketSize, bucketStoreStub);
+        bucket = new Bucket(configStub, name, maxBucketSize, bucketStoreStub, contactNodeFactoryStub);
     };
     var stubPublicApi = function (klass, apiMethodCallbacks) {
         if (typeof apiMethodCallbacks === "undefined") { apiMethodCallbacks = {}; }
@@ -38,6 +41,7 @@ describe('CORE --> TOPOLOGY --> BUCKET @joern', function () {
 
         // random bucket name (0 < name < 160
         name = Math.round(Math.random() * 160);
+        contactNodeFactoryStub = testUtils.stubPublicApi(sandbox, ContactNodeFactory);
     });
 
     afterEach(function () {
@@ -83,6 +87,72 @@ describe('CORE --> TOPOLOGY --> BUCKET @joern', function () {
                 bucketStoreStub.remove.calledOnce.should.be.true;
                 bucketStoreStub.add.called.should.be.false;
 
+                done();
+            });
+        });
+    });
+
+    describe('should correctly create contact node objects from the object from the bucket store', function () {
+        var createNodeAddressList = function (nodeAddresses) {
+            var addresses = [];
+
+            for (var i in nodeAddresses) {
+                addresses.push({
+                    _ip: nodeAddresses[i].getIp(),
+                    _port: nodeAddresses[i].getPort()
+                });
+            }
+
+            return addresses;
+        };
+
+        it('Bucket.get should correctly return a ContactNode instance', function (done) {
+            contactNodeFactoryStub = new ContactNodeFactory();
+
+            createStubbedBucketStore({
+                get: function () {
+                    var dummy = ContactNodeFactory.createDummy();
+                    var obj = {
+                        id: dummy.getId().getBuffer(),
+                        lastSeen: dummy.getLastSeen(),
+                        addresses: createNodeAddressList(dummy.getAddresses())
+                    };
+
+                    return obj;
+                }
+            });
+
+            bucket.get(ContactNodeFactory.createDummy().getId(), function (err, contact) {
+                contact.should.be.an.instanceof(ContactNode);
+                done();
+            });
+        });
+
+        it('Bucket.getAll should correctly return an array of ContactNode instances', function (done) {
+            contactNodeFactoryStub = new ContactNodeFactory();
+
+            createStubbedBucketStore({
+                getAll: function () {
+                    var dummies = [];
+
+                    for (var i = 0; i < 10; i++) {
+                        var dummy = ContactNodeFactory.createDummy();
+
+                        var dummyObject = {
+                            id: dummy.getId().getBuffer(),
+                            lastSeen: dummy.getLastSeen(),
+                            addresses: createNodeAddressList(dummy.getAddresses())
+                        };
+
+                        dummies.push(dummyObject);
+                    }
+
+                    return dummies;
+                }
+            });
+
+            bucket.getAll(function (err, contacts) {
+                contacts[0].should.be.an.instanceof(ContactNode);
                 done();
             });
         });

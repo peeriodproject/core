@@ -49,6 +49,10 @@
 						</li>
 						
 						<li>
+							<a href="core.plugin.html">plugin</a>
+						</li>
+						
+						<li>
 							<a href="core.protocol.html">protocol</a>
 						</li>
 						
@@ -155,6 +159,38 @@
 						</li>
 						
 						<li>
+							<a href="core.plugin.PluginCallbackInterface.html">PluginCallbackInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginInterface.html">PluginInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginListInterface.html">PluginListInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginLoader.html">PluginLoader</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginManager.html">PluginManager</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginMapInterface.html">PluginMapInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.messages.IncomingDataPipeline.html">IncomingDataPipeline</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.messages.IncomingDataPipelineInterface.html">IncomingDataPipelineInterface</a>
+						</li>
+						
+						<li>
 							<a href="core.protocol.messages.ReadableMessage.html">ReadableMessage</a>
 						</li>
 						
@@ -168,6 +204,22 @@
 						
 						<li>
 							<a href="core.protocol.messages.ReadableMessageInterface.html">ReadableMessageInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.messages.TemporaryMessageMemory.html">TemporaryMessageMemory</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.messages.TemporaryMessageMemoryList.html">TemporaryMessageMemoryList</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.ProtocolConnectionManager.html">ProtocolConnectionManager</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.ProtocolConnectionManagerInterface.html">ProtocolConnectionManagerInterface</a>
 						</li>
 						
 						<li>
@@ -232,6 +284,14 @@
 						
 						<li>
 							<a href="core.topology.ContactNodeListInterface.html">ContactNodeListInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.topology.ContactNodeObjectInterface.html">ContactNodeObjectInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.topology.ContactNodeObjectListInterface.html">ContactNodeObjectListInterface</a>
 						</li>
 						
 						<li>
@@ -670,6 +730,70 @@
         
             
 <dt>
+    <h4 class="name" id="_contactNodeFactory"><span class="type-signature">&lt;inner> </span>_contactNodeFactory<span class="type-signature"> :<a href="core.topology.ContactNodeFactoryInterface.html">core.topology.ContactNodeFactoryInterface</a></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>The internally used contact node factory instance. Usually just for reference and passed through to the Bucket</p>
+    </div>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type"><a href="core.topology.ContactNodeFactoryInterface.html">core.topology.ContactNodeFactoryInterface</a></span>
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/topology/RoutingTable.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+</dd>
+
+        
+            
+<dt>
     <h4 class="name" id="_id"><span class="type-signature">&lt;inner> </span>_id<span class="type-signature"> :<a href="core.topology.IdInterface.html">core.topology.IdInterface</a></span></h4>
     
     
@@ -868,7 +992,7 @@
         <dl>
             
 <dt>
-    <h4 class="name" id="_createBucket"><span class="type-signature">&lt;inner> </span>_createBucket<span class="signature">(key)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="_createBucket"><span class="type-signature">&lt;inner> </span>_createBucket<span class="signature">(bucketKey, maxBucketSize)</span><span class="type-signature"></span></h4>
     
     
 </dt>
@@ -910,13 +1034,36 @@
 
         <tr>
             
-                <td class="name"><code>key</code></td>
+                <td class="name"><code>bucketKey</code></td>
             
 
             <td class="type">
             
                 
 <span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+
+        <tr>
+            
+                <td class="name"><code>maxBucketSize</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
 
 
             
@@ -986,7 +1133,7 @@
         
             
 <dt>
-    <h4 class="name" id="_getBucketKey"><span class="type-signature">&lt;inner> </span>_getBucketKey<span class="signature">(id)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    <h4 class="name" id="_getBucketKey"><span class="type-signature">&lt;inner> </span>_getBucketKey<span class="signature">(id)</span><span class="type-signature"> &rarr; {number}</span></h4>
     
     
 </dt>
@@ -1109,7 +1256,7 @@ See <code>core.topology.Id.differsInHighestBit</code> for more information.</p>
 	</dt>
 	<dd>
 		
-<span class="param-type">string</span>
+<span class="param-type">number</span>
 
 
 	</dd>
@@ -1142,7 +1289,7 @@ See <code>core.topology.Id.differsInHighestBit</code> for more information.</p>
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a>
-		on Mon May 05 2014 13:07:41 GMT+0200 (MESZ) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		on Tue May 06 2014 13:35:54 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
 			</div>

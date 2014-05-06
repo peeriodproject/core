@@ -17,7 +17,7 @@ class Id implements IdInterface {
 	/**
 	 * @member {NodeBuffer} core.topology.Id~_buffer
 	 */
-	private _buffer:NodeBuffer = null;
+	private _buffer:Buffer = null;
 
 	/**
 	 * @member {number} core.topology.Id~_byte_length
@@ -34,12 +34,12 @@ class Id implements IdInterface {
 	 * @param {number} expected_byte_len
 	 * @returns {NodeBuffer}
 	 */
-	public static byteBufferByHexString (hex_string:string, expected_byte_len:number):NodeBuffer {
+	public static byteBufferByHexString (hex_string:string, expected_byte_len:number):Buffer {
 		if (hex_string.length / 2 !== expected_byte_len) {
 			throw new Error('Id.byteBufferByHexString: Expected ' + expected_byte_len + ', but got ' + (hex_string.length / 2) + ' bytes');
 		}
 
-		var buffer:NodeBuffer = new Buffer(expected_byte_len);
+		var buffer:Buffer = new Buffer(expected_byte_len);
 
 		buffer.fill(0);
 		buffer.write(hex_string, 0, expected_byte_len, 'hex');
@@ -59,14 +59,14 @@ class Id implements IdInterface {
 	 * @param {number} expected_byte_len
 	 * @returns {NodeBuffer}
 	 */
-	public static byteBufferByBitString (binary_string:string, expected_byte_len:number):NodeBuffer {
+	public static byteBufferByBitString (binary_string:string, expected_byte_len:number):Buffer {
 		var strLen:number = binary_string.length;
 
 		if ((strLen / 8) > expected_byte_len) {
 			throw new Error('Id.byteBufferByBitString: Bit length exceeds expected number of bytes');
 		}
 
-		var buffer:NodeBuffer = new Buffer(expected_byte_len);
+		var buffer:Buffer = new Buffer(expected_byte_len);
 
 		buffer.fill(0);
 
@@ -102,7 +102,7 @@ class Id implements IdInterface {
 		return n == div ? n : n + 1;
 	}
 
-	constructor (buffer:NodeBuffer, bit_length:number) {
+	constructor (buffer:Buffer, bit_length:number) {
 		var byte_length:number = Id.calculateByteLengthByBitLength(bit_length);
 
 		if (!((buffer instanceof Buffer) && (buffer.length === byte_length))) {
@@ -123,9 +123,9 @@ class Id implements IdInterface {
 			throw new Error('Id.compareDistance: Arguments must be of type Id');
 		}
 
-		var a:NodeBuffer = this.getBuffer();
-		var b:NodeBuffer = first.getBuffer();
-		var c:NodeBuffer = second.getBuffer();
+		var a:Buffer = this.getBuffer();
+		var b:Buffer = first.getBuffer();
+		var c:Buffer = second.getBuffer();
 
 		for (var i:number = 0; i < this._byte_length; ++i) {
 			var buf_a_b:number = a[i] ^ b[i];
@@ -146,8 +146,8 @@ class Id implements IdInterface {
 			throw new Error('Id.differsInHighestBit: Argument must be of type Id');
 		}
 
-		var a:NodeBuffer = this.getBuffer();
-		var b:NodeBuffer = other.getBuffer();
+		var a:Buffer = this.getBuffer();
+		var b:Buffer = other.getBuffer();
 
 		for (var i:number = 0; i < this._byte_length; ++i) {
 			var xor_byte:number = a[i] ^ b[i];
@@ -162,14 +162,14 @@ class Id implements IdInterface {
 		return -1;
 	}
 
-	public distanceTo (other:IdInterface):NodeBuffer {
+	public distanceTo (other:IdInterface):Buffer {
 		if (!(other instanceof Id)) {
 			throw new Error('Id.distanceTo: Can only compare to another Id.');
 		}
 
-		var response:NodeBuffer = new Buffer(this._byte_length);
-		var a:NodeBuffer = this.getBuffer();
-		var b:NodeBuffer = other.getBuffer();
+		var response:Buffer = new Buffer(this._byte_length);
+		var a:Buffer = this.getBuffer();
+		var b:Buffer = other.getBuffer();
 
 		for (var i = 0; i < this._byte_length; ++i) {
 			response[i] = a[i] ^ b[i];
@@ -183,8 +183,8 @@ class Id implements IdInterface {
 			throw new Error('Id.equals: Argument must be of type Id');
 		}
 
-		var a:NodeBuffer = this.getBuffer();
-		var b:NodeBuffer = other.getBuffer();
+		var a:Buffer = this.getBuffer();
+		var b:Buffer = other.getBuffer();
 
 		for (var i:number = 0; i < this._byte_length; ++i) {
 			if (a[i] !== b[i]) return false;
@@ -193,7 +193,7 @@ class Id implements IdInterface {
 		return true;
 	}
 
-	public getBuffer ():NodeBuffer {
+	public getBuffer ():Buffer {
 		return this._buffer;
 	}
 

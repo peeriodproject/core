@@ -1,13 +1,23 @@
 import BucketInterface = require('./interfaces/BucketInterface');
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
+import ContactNodeFactoryInterface = require('./interfaces/ContactNodeFactoryInterface');
 import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
+import ContactNodeObjectInterface = require('./interfaces/ContactNodeObjectInterface');
+import ContactNodeObjectListInterface = require('./interfaces/ContactNodeObjectListInterface');
 import ContactNodeListInterface = require('./interfaces/ContactNodeListInterface');
 import IdInterface = require('./interfaces/IdInterface');
 
 /**
  * @class core.topology.Bucket
  * @implements core.topology.BucketInterface
+ *
+ * @param {core.config.ConfigInterface} config
+ * @param {number} key
+ * @param {number} maxBucketSize
+ * @param {core.topology.BucketStoreInterface} store
+ * @param {core.topology.ContactNodeFactoryInterface} contactNodeFactory
+ * @param {Function} onOpenCallback
  */
 class Bucket implements BucketInterface {
 
@@ -17,6 +27,13 @@ class Bucket implements BucketInterface {
 	 * @member {core.config.ConfigInterface} core.topology.Bucket~_config
 	 */
 	private _config:ConfigInterface = null;
+
+	/**
+	 * The internally used contact node factory instance
+	 *
+	 * @member {core.topology.ContactNodeFactoryInterface} core.topology.Bucket~_contactNodeFactory
+	 */
+	private _contactNodeFactory:ContactNodeFactoryInterface = null;
 
 	/**
 	 * The internally used bucket store instance
@@ -46,20 +63,23 @@ class Bucket implements BucketInterface {
 	 */
 	private _maxBucketSize:number = -1;
 
-	constructor (config:ConfigInterface, key:number, maxBucketSize:number, store:BucketStoreInterface, onOpenCallback?:(err:Error) => any) {
-		var internalOpenCallback = onOpenCallback || function (err:Error) {};
+	constructor (config:ConfigInterface, key:number, maxBucketSize:number, store:BucketStoreInterface, contactNodeFactory:ContactNodeFactoryInterface, onOpenCallback?:(err:Error) => any) {
+		var internalOpenCallback = onOpenCallback || function (err:Error) {
+		};
 
 		this._config = config;
 		this._key = key;
 		this._maxBucketSize = maxBucketSize;
 		this._store = store;
+		this._contactNodeFactory = contactNodeFactory;
 		this._keyString = this._key.toString();
 
 		this.open(internalOpenCallback);
 	}
 
 	public add (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
-		var internalCallback = callback || function (err:Error) {};
+		var internalCallback = callback || function (err:Error) {
+		};
 
 		if (this._store.size(this._keyString) < this._maxBucketSize) {
 			this._store.add(
@@ -77,7 +97,8 @@ class Bucket implements BucketInterface {
 	}
 
 	public close (callback?:(err:Error) => any):void {
-		var internalCallback = callback || function (err:Error) {};
+		var internalCallback = callback || function (err:Error) {
+		};
 
 		this._store.close();
 		internalCallback(null);
@@ -88,11 +109,27 @@ class Bucket implements BucketInterface {
 	}
 
 	public get (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void {
-		callback(null, this._store.get(this._keyString, id.getBuffer()));
+		var storedObject:ContactNodeObjectInterface = this._store.get(this._keyString, id.getBuffer());
+		var contact:ContactNodeInterface = null;
+
+		if (storedObject) {
+			contact = this._convertToContactNodeInstance(storedObject);
+		}
+
+		callback(null, contact);
 	}
 
 	getAll (callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
-		callback(null, this._store.getAll(this._keyString));
+		var storedObjects:ContactNodeObjectListInterface = this._store.getAll(this._keyString);
+		var contacts:ContactNodeListInterface = [];
+
+		if (storedObjects && storedObjects.length) {
+			for (var i in storedObjects) {
+				contacts.push(this._convertToContactNodeInstance(storedObjects[i]));
+			}
+		}
+
+		callback(null, contacts);
 	}
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
@@ -100,14 +137,16 @@ class Bucket implements BucketInterface {
 	}
 
 	public open (callback?:(err:Error) => any):void {
-		var internalCallback = callback || function (err:Error) {};
+		var internalCallback = callback || function (err:Error) {
+		};
 
 		this._store.open();
 		internalCallback(null);
 	}
 
 	public remove (id:IdInterface, callback?:(err:Error) => any):void {
-		var internalCallback = callback || function (err:Error) {};
+		var internalCallback = callback || function (err:Error) {
+		};
 
 		this._store.remove(this._keyString, id.getBuffer());
 		internalCallback(null);
@@ -118,7 +157,8 @@ class Bucket implements BucketInterface {
 	}
 
 	public update (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
-		var internalCallback = callback || function (err:Error) {};
+		var internalCallback = callback || function (err:Error) {
+		};
 		var removed:boolean;
 		var added:boolean;
 		var error:Error;
@@ -159,6 +199,19 @@ class Bucket implements BucketInterface {
 				updatedCallback();
 			}
 		});
+	}
+
+	/**
+	 * Converts a {@link core.topology.ContactNodeObjectInterface} into a {@link core.topology.ContactNodeInterface}
+	 * by using the {@link core.topology.Bucket~_contactNodeFactory} passed in at construction.
+	 *
+	 * @method core.topology.Bucket~_convertToContactNodeInstance
+	 *
+	 * @param {core.topology.ContactNodeObjectInterface} contactObject
+	 * @returns {core.topology.ContactNodeInterface}
+	 */
+	private _convertToContactNodeInstance (contactObject:ContactNodeObjectInterface):ContactNodeInterface {
+		return this._contactNodeFactory.createFromObject(contactObject);
 	}
 
 }

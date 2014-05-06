@@ -127,7 +127,8 @@ var BucketStore = (function () {
             }
 
             cursor.getCurrentBinary(function (key, idBuffer) {
-                values.push(_this._get(txn, idBuffer));
+                var contact = _this._get(txn, idBuffer);
+                values.push(contact);
             });
         }
 
@@ -169,7 +170,7 @@ var BucketStore = (function () {
             return true;
         }
 
-        lastSeen = JSON.parse(contact).lastSeen;
+        lastSeen = contact['lastSeen'];
 
         txn = this._beginTransaction();
 
@@ -210,7 +211,7 @@ var BucketStore = (function () {
     *
     * todo all lastSeen keys should have the same length!
     *
-    * @method {boolean} core.topology.BucketStore~_add
+    * @method core.topology.BucketStore~_add
     *
     * @param {lmdb.Txn} txn
     * @param {string} bucketKey
@@ -230,10 +231,18 @@ var BucketStore = (function () {
 
         try  {
             // stores the object with id as it's key
+            /*
+            // multi row test
+            txn.putBinary(this._databaseInstance, this._getPropertyKey(id, 'id'), id);
+            txn.putNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'), lastSeen);
+            txn.putString(this._databaseInstance, this._getPropertyKey(id, 'addresses'), JSON.stringify(addresses));
+            */
             txn.putString(this._databaseInstance, idKey, JSON.stringify(value));
 
             // stores a shortcut for bucketwide last seen searches.
+            // node-lmdb uses the old (slow buffer)! Therefore we're using much faster strings at the moment.
             txn.putBinary(this._databaseInstance, lastSeenKey, id);
+            //txn.putString(this._databaseInstance, lastSeenKey, id.toJSON());
         } catch (err) {
             console.error(err);
         }
@@ -241,14 +250,10 @@ var BucketStore = (function () {
         return true;
     };
 
-    BucketStore.prototype._get = function (txn, id) {
-        return txn.getString(this._databaseInstance, this._getIdKey(id));
-    };
-
     /**
     * Creates a read-only transaction object on the instance environment
     *
-    * @method {boolean} core.topology.BucketStore~_beginReadOnlyTransaction
+    * @method core.topology.BucketStore~_beginReadOnlyTransaction
     *
     * @returns {lmdb.Txn}
     */
@@ -264,7 +269,7 @@ var BucketStore = (function () {
     /**
     * Creates a writable transaction object on the instance environment
     *
-    * @method {boolean} core.topology.BucketStore~_beginTransaction
+    * @method core.topology.BucketStore~_beginTransaction
     *
     * @returns {lmdb.Txn}
     */
@@ -276,9 +281,30 @@ var BucketStore = (function () {
     };
 
     /**
+    *
+    * @method core.topology.BucketStore~_get
+    *
+    * @param {lmdbTxn} txn
+    * @param {Buffer} id
+    * @returns {any}
+    */
+    BucketStore.prototype._get = function (txn, id) {
+        /*
+        multi row test
+        var contact = {
+        addresses: JSON.parse(txn.getString(this._databaseInstance, this._getPropertyKey(id, 'addresses'))),
+        id: txn.getBinary(this._databaseInstance, this._getPropertyKey(id, 'id')),
+        lastSeen: txn.getNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'))
+        };
+        
+        return contact;*/
+        return JSON.parse(txn.getString(this._databaseInstance, this._getIdKey(id)));
+    };
+
+    /**
     * Creates a Cursor on the instace database
     *
-    * @method {boolean} core.topology.BucketStore~_getCursor
+    * @method core.topology.BucketStore~_getCursor
     *
     * @returns {lmdb.Txn}
     */
@@ -289,7 +315,7 @@ var BucketStore = (function () {
     /**
     * Returns the internally used key for bucket wide searches
     *
-    * @method {boolean} core.topology.BucketStore~_getBucketKey
+    * @method core.topology.BucketStore~_getBucketKey
     
     * @param {string} key
     * @returns {string}
@@ -301,7 +327,7 @@ var BucketStore = (function () {
     /**
     * Returns the internally used key for id related searches
     *
-    * @method {boolean} core.topology.BucketStore~_getIdKey
+    * @method core.topology.BucketStore~_getIdKey
     
     * @param {Buffer} id
     * @returns {string}
@@ -313,7 +339,7 @@ var BucketStore = (function () {
     /**
     * Returns the id as a formatted string
     *
-    * @method {boolean} core.topology.BucketStore~_getIdValue
+    * @method core.topology.BucketStore~_getIdValue
     *
     * @param {Buffer} id
     * @returns {string}
@@ -325,7 +351,7 @@ var BucketStore = (function () {
     /**
     * Returns a {@link core.topology.BucketStore#_getIdKey} prefixed key to store objects within the `bucketKey` namespace
     *
-    * @method {boolean} core.topology.BucketStore#_getLastSeenKey
+    * @method core.topology.BucketStore#_getLastSeenKey
     *
     * @param {string} bucketKey
     * @param {number} lastSeen
@@ -333,6 +359,18 @@ var BucketStore = (function () {
     */
     BucketStore.prototype._getLastSeenKey = function (bucketKey, lastSeen) {
         return this._getBucketKey(bucketKey) + lastSeen;
+    };
+
+    /**
+    *
+    * @method core.topology.BucketStore~_getPropertyKey
+    *
+    * @param {Buffer} id
+    * @param {string} propertyName The name of the property
+    * @returns {string}
+    */
+    BucketStore.prototype._getPropertyKey = function (id, propertyName) {
+        return this._getIdKey(id) + '-' + propertyName;
     };
     return BucketStore;
 })();

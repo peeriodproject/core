@@ -1,4 +1,5 @@
 import ConfigInterface = require('../../config/interfaces/ConfigInterface');
+import ContactNodeFactoryInterface = require('./ContactNodeFactoryInterface');
 import BucketStoreInterface = require('./BucketStoreInterface');
 import BucketInterface = require('./BucketInterface');
 
@@ -17,9 +18,10 @@ interface BucketFactoryInterface {
 	 * @param {string} bucketKey The name of the bucket
 	 * @param {number} maxBucketSize The maximum amount of contact nodes
 	 * @param {core.topology.BucketStoreInterface} store The internally used bucket store
+	 * @param {core.topology.ContactNodeFactoryInterface} contactNodeFactory
 	 * @returns {core.topology.BucketInterface}
 	 */
-	create (config:ConfigInterface, key:number, maxBucketSize:number, store:BucketStoreInterface):BucketInterface;
+	create (config:ConfigInterface, key:number, maxBucketSize:number, store:BucketStoreInterface, contactNodeFactory:ContactNodeFactoryInterface):BucketInterface;
 
 }
 

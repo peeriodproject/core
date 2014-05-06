@@ -49,6 +49,10 @@
 						</li>
 						
 						<li>
+							<a href="core.plugin.html">plugin</a>
+						</li>
+						
+						<li>
 							<a href="core.protocol.html">protocol</a>
 						</li>
 						
@@ -155,6 +159,38 @@
 						</li>
 						
 						<li>
+							<a href="core.plugin.PluginCallbackInterface.html">PluginCallbackInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginInterface.html">PluginInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginListInterface.html">PluginListInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginLoader.html">PluginLoader</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginManager.html">PluginManager</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginMapInterface.html">PluginMapInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.messages.IncomingDataPipeline.html">IncomingDataPipeline</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.messages.IncomingDataPipelineInterface.html">IncomingDataPipelineInterface</a>
+						</li>
+						
+						<li>
 							<a href="core.protocol.messages.ReadableMessage.html">ReadableMessage</a>
 						</li>
 						
@@ -168,6 +204,22 @@
 						
 						<li>
 							<a href="core.protocol.messages.ReadableMessageInterface.html">ReadableMessageInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.messages.TemporaryMessageMemory.html">TemporaryMessageMemory</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.messages.TemporaryMessageMemoryList.html">TemporaryMessageMemoryList</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.ProtocolConnectionManager.html">ProtocolConnectionManager</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.ProtocolConnectionManagerInterface.html">ProtocolConnectionManagerInterface</a>
 						</li>
 						
 						<li>
@@ -232,6 +284,14 @@
 						
 						<li>
 							<a href="core.topology.ContactNodeListInterface.html">ContactNodeListInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.topology.ContactNodeObjectInterface.html">ContactNodeObjectInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.topology.ContactNodeObjectListInterface.html">ContactNodeObjectListInterface</a>
 						</li>
 						
 						<li>
@@ -304,6 +364,14 @@
 </dt>
 <dd>
     
+    
+    <div class="description">
+        <p>RoutingTable Interface</p>
+<ul>
+<li>creates k buckes</li>
+<li>provides a single entry point for contact nodes which should be stored within a bucket.</li>
+</ul>
+    </div>
     
 
     
@@ -456,6 +524,265 @@ This method stores the object state and could be used on app shutdown.</p>
     
     
     
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="getClosestContactNodes"><span class="type-signature"></span>getClosestContactNodes<span class="signature">(id)</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Returns the <code>topology.k</code> closest nodes to the specified id</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+
+		<th>Type</th>
+
+		
+
+		
+
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+
+	<tbody>
+	
+
+        <tr>
+            
+                <td class="name"><code>id</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="core.topology.IdInterface.html">core.topology.IdInterface</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+	</tbody>
+</table>
+
+    
+    
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/topology/interfaces/RoutingTableInterface.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="getContactNode"><span class="type-signature"></span>getContactNode<span class="signature">(id)</span><span class="type-signature"> &rarr; {ContactNodeInterface}</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Returns the specified contact code by id</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+
+		<th>Type</th>
+
+		
+
+		
+
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+
+	<tbody>
+	
+
+        <tr>
+            
+                <td class="name"><code>id</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="core.topology.IdInterface.html">core.topology.IdInterface</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The id of the contact node</p></td>
+        </tr>
+
+	
+	</tbody>
+</table>
+
+    
+    
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/topology/interfaces/RoutingTableInterface.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>The found contact node or null</p>
+</div>
+
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type">ContactNodeInterface</span>
+
+
+	</dd>
+</dl>
+
+
+        
     
     
 </dd>
@@ -749,7 +1076,7 @@ This should be the main entry point to the routing table whenever a new peer sho
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a>
-		on Mon May 05 2014 13:07:41 GMT+0200 (MESZ) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		on Tue May 06 2014 13:35:54 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
 			</div>

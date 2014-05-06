@@ -9,8 +9,8 @@ var Bucket = require('./Bucket');
 var BucketFactory = (function () {
     function BucketFactory() {
     }
-    BucketFactory.prototype.create = function (config, bucketKey, maxBucketSize, store) {
-        return new Bucket(config, bucketKey, maxBucketSize, store);
+    BucketFactory.prototype.create = function (config, bucketKey, maxBucketSize, store, contactNodeFactory) {
+        return new Bucket(config, bucketKey, maxBucketSize, store, contactNodeFactory);
     };
     return BucketFactory;
 })();
