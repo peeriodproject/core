@@ -131,8 +131,7 @@ var RoutingTable = (function () {
         };
 
         var crawlBucket = function (crawlBucketKey, crawlReverse, onCrawlEnd) {
-            //console.log('bucket', crawlBucketKey);
-            _this._getBucket(crawlBucketKey).getAll(function (err, contacts) {
+            var bucketGetAllCallback = function (err, contacts) {
                 if (contacts.length) {
                     for (var i in contacts) {
                         var contact = contacts[i];
@@ -186,7 +185,10 @@ var RoutingTable = (function () {
                         onCrawlEnd();
                     }
                 }
-            });
+            };
+
+            //console.log('bucket', crawlBucketKey);
+            _this._getBucket(crawlBucketKey).getAll(bucketGetAllCallback);
         };
 
         crawlBucket(startBucketKey, false, function () {
