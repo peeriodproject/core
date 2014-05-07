@@ -84,6 +84,7 @@ var TCPSocket = (function (_super) {
         } catch (e) {
         }
         this._socket = null;
+        this.emit('destroy');
         this.removeAllListeners();
     };
 

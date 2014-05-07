@@ -87,7 +87,7 @@ describe('CORE --> NET --> TCP --> TCPSocket', function () {
 	});
 
 	it('should successfully timeout close the socket', function (done) {
-		socket.once('close', function () {
+		socket.once('destroy', function () {
 			done();
 		});
 
@@ -102,7 +102,7 @@ describe('CORE --> NET --> TCP --> TCPSocket', function () {
 
 			socket_b.setCloseOnTimeout(false);
 
-			socket_b.once('close', function () {
+			socket_b.once('destroy', function () {
 				all_good = false;
 			});
 
