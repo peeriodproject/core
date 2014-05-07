@@ -673,6 +673,14 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this.on('confirmedSocket', this._onConfirmedSocket);
 	}
 
+	/**
+	 * Provides the socket with a temporary identifier and returns the same.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_setTemporaryIdentifier
+	 *
+	 * @param {core.net.tcp.TCPSocketInterface} socket
+	 * @returns {string} The set identifier
+	 */
 	private _setTemporaryIdentifier (socket:TCPSocketInterface):string {
 		var identifier:string = this._temporaryIdentifierPrefix + (++this._temporaryIdentifierCount);
 		socket.setIdentifier(identifier);
@@ -680,7 +688,17 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		return identifier;
 	}
 
-	private _tryToOutgoingConnectToNode (contactNode, callback:(socket:TCPSocketInterface) => any) {
+	/**
+	 * Tries to establish a client TCP connection to a contact node by iterating over its addresses and probing each one
+	 * of them until a successful socket could be established or it runs out of addresses.
+	 * A callback is called nevertheless, if success with the established socket as argument, else with `null`.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_tryToOutgoingConnectToNode
+	 *
+	 * @param {core.topology.ContactNodeInterface} contactNode Node to connect to
+	 * @param {Function} callback
+	 */
+	private _tryToOutgoingConnectToNode (contactNode:ContactNodeInterface, callback:(socket:TCPSocketInterface) => any) {
 		var addresses:ContactNodeAddressListInterface = contactNode.getAddresses();
 		var startAt:number = 0;
 		var maxIndex:number = addresses.length - 1;

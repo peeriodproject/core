@@ -641,6 +641,14 @@ var ProtocolConnectionManager = (function (_super) {
         this.on('confirmedSocket', this._onConfirmedSocket);
     };
 
+    /**
+    * Provides the socket with a temporary identifier and returns the same.
+    *
+    * @method core.protocol.net.ProtocolConnectionManager~_setTemporaryIdentifier
+    *
+    * @param {core.net.tcp.TCPSocketInterface} socket
+    * @returns {string} The set identifier
+    */
     ProtocolConnectionManager.prototype._setTemporaryIdentifier = function (socket) {
         var identifier = this._temporaryIdentifierPrefix + (++this._temporaryIdentifierCount);
         socket.setIdentifier(identifier);
@@ -648,6 +656,16 @@ var ProtocolConnectionManager = (function (_super) {
         return identifier;
     };
 
+    /**
+    * Tries to establish a client TCP connection to a contact node by iterating over its addresses and probing each one
+    * of them until a successful socket could be established or it runs out of addresses.
+    * A callback is called nevertheless, if success with the established socket as argument, else with `null`.
+    *
+    * @method core.protocol.net.ProtocolConnectionManager~_tryToOutgoingConnectToNode
+    *
+    * @param {core.topology.ContactNodeInterface} contactNode Node to connect to
+    * @param {Function} callback
+    */
     ProtocolConnectionManager.prototype._tryToOutgoingConnectToNode = function (contactNode, callback) {
         var addresses = contactNode.getAddresses();
         var startAt = 0;
