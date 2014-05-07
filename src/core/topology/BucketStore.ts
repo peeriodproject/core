@@ -177,7 +177,7 @@ class BucketStore implements BucketStoreInterface {
 
 	public remove (bucketKey:string, id:Buffer):boolean {
 		// todo Typescript: propper return type (callback vs return)
-		var contact:any = this.get(bucketKey, id);
+		var contact:ContactNodeObjectInterface = this.get(bucketKey, id);
 		var lastSeen:number;
 		var txn:lmdb.Txn;
 
@@ -185,7 +185,7 @@ class BucketStore implements BucketStoreInterface {
 			return true;
 		}
 
-		lastSeen = contact['lastSeen'];
+		lastSeen = contact.lastSeen;
 
 		txn = this._beginTransaction();
 		// remove shortcut
@@ -275,9 +275,9 @@ class BucketStore implements BucketStoreInterface {
 	 */
 	private _beginReadOnlyTransaction ():any {
 		// todo replace with propper options
-		var opts:Object = {};
-
-		opts['readOnly'] = true;
+		var opts:Object = {
+			readOnly: true
+		};
 
 		return this._databaseEnvironment.beginTxn(opts);
 	}

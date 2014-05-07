@@ -9,7 +9,7 @@
 *       foo: 'foofoo'
 *     },
 *     bar: {
-*     	 foo: 'barfoo'
+*       foo: 'barfoo'
 *     }
 *   };
 *
@@ -93,8 +93,8 @@ var ObjectConfig = (function () {
                     }
                 } else {
                     if (Array.isArray(value)) {
-                        for (var i in value) {
-                            if (typeof value[i] === 'object') {
+                        for (var j in value) {
+                            if (typeof value[j] === 'object') {
                                 throw new Error('Config~_convertObjectToDotNotation: Arrays can only contain primitives.');
                             }
                         }

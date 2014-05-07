@@ -170,7 +170,7 @@ var BucketStore = (function () {
             return true;
         }
 
-        lastSeen = contact['lastSeen'];
+        lastSeen = contact.lastSeen;
 
         txn = this._beginTransaction();
 
@@ -259,9 +259,9 @@ var BucketStore = (function () {
     */
     BucketStore.prototype._beginReadOnlyTransaction = function () {
         // todo replace with propper options
-        var opts = {};
-
-        opts['readOnly'] = true;
+        var opts = {
+            readOnly: true
+        };
 
         return this._databaseEnvironment.beginTxn(opts);
     };

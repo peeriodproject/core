@@ -14,7 +14,7 @@ import ConfigPairListInterface = require('./interfaces/ConfigPairListInterface')
  *       foo: 'foofoo'
  *     },
  *     bar: {
- *     	 foo: 'barfoo'
+ *       foo: 'barfoo'
  *     }
  *   };
  *
@@ -104,8 +104,8 @@ class ObjectConfig implements ConfigInterface {
 				// it's not an object, so set the property
 				else {
 					if (Array.isArray(value)) {
-						for (var i in value) {
-							if (typeof value[i] === 'object') {
+						for (var j in value) {
+							if (typeof value[j] === 'object') {
 								throw new Error('Config~_convertObjectToDotNotation: Arrays can only contain primitives.');
 							}
 						}

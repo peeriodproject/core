@@ -348,7 +348,8 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
                     for (var i in contacts) {
                         var contact = contacts[i];
 
-                        //console.log(customTargetNode.getId().distanceTo(contact.getId()));
+                        contact.getId().toBitString().should.equal(ids[i]);
+
                         if (lastDistance !== null) {
                             var isGreater = customTargetNode.getId().distanceTo(contact.getId()) > lastDistance;
 
