@@ -63,6 +63,12 @@ var TCPSocketHandler = (function (_super) {
         */
         this._openTCPServers = {};
         /**
+        * Number of ms to wait until an outbound socket without emitting `connected` will be considered as unsuccessful.
+        *
+        * @member {number} TCPSocketHandler~_outboundConnectionTimeout
+        */
+        this._outboundConnectionTimeout = 0;
+        /**
         * An internal list of ports used to memorize which ports have already been retried.
         *
         * @member {Array<number>} TCPSocketHandler~_retriedPorts
@@ -85,6 +91,7 @@ var TCPSocketHandler = (function (_super) {
         this._idleConnectionKillTimeout = opts.idleConnectionKillTimeout || 0;
         this._allowHalfOpenSockets = !!opts.allowHalfOpenSockets;
         this._connectionRetry = opts.connectionRetry || 3;
+        this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2;
     }
     TCPSocketHandler.prototype.autoBootstrap = function (callback) {
         var _this = this;
@@ -126,18 +133,25 @@ var TCPSocketHandler = (function (_super) {
     TCPSocketHandler.prototype.connectTo = function (port, ip, callback) {
         var _this = this;
         var sock = net.createConnection(port, ip);
+        var connectionError = function () {
+            sock.removeAllListeners();
+            sock.destroy();
 
-        sock.on('error', function () {
             if (callback) {
                 callback(null);
             } else {
-                this.emit('connection error', port, ip);
+                _this.emit('connection error', port, ip);
             }
-        });
+        };
+        var connectionTimeout = setTimeout(function () {
+            connectionError();
+        }, this._outboundConnectionTimeout);
+
+        sock.on('error', connectionError);
 
         sock.on('connect', function () {
+            clearTimeout(connectionTimeout);
             sock.removeAllListeners('error');
-
             var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
 
             if (!callback) {

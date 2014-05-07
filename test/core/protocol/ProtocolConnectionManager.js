@@ -16,6 +16,9 @@ var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory'
 
 var ProtocolConnectionManager = require('../../../src/core/protocol/net/ProtocolConnectionManager');
 
+var ContactNodeAddressFactory = require('../../../src/core/topology/ContactNodeAddressFactory');
+var Id = require('../../../src/core/topology/Id');
+
 describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', function () {
     var protoPort = 60000;
     var remotePort = 60001;
@@ -30,12 +33,16 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
 
     var manager;
 
+    var addressFactory = new ContactNodeAddressFactory();
+    var nodeFactory = new ContactNodeFactory();
+
     var handlerOpts = {
         allowHalfOpenSockets: false,
         myExternalIp: '127.0.0.1',
         myOpenPorts: [protoPort],
         doKeepAlive: true,
-        idleConnectionKillTimeout: 1.2
+        idleConnectionKillTimeout: 1.2,
+        outboundConnectionTimeout: 500
     };
 
     var tcpSocketFactory = new TCPSocketFactory();
@@ -53,7 +60,7 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
                 if (key === 'protocol.net.msToWaitForIncomingMessage')
                     return 500;
                 if (key === 'protocol.net.maxSecondsToWaitForConnection')
-                    return 1000;
+                    return 2;
             }
         });
 
@@ -157,6 +164,30 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
             if (id.toHexString() === 'fe3626caca6c84fa4e5d323b6a26b897582c57f9') {
                 if (Object.keys(manager.getConfirmedSocketList()).length === 0)
                     done();
+            }
+        });
+    });
+
+    it('should fail obtaining an outward connection to a node', function (done) {
+        var id = new Id(Id.byteBufferByHexString('fe3626caca6c84fa4e5d323b6a26b897582c57f9', 20), 160);
+        var badContactNode = nodeFactory.create(id, [addressFactory.create('14.213.160.0', 1111)]);
+
+        manager.obtainConnectionTo(badContactNode, function (err, sock) {
+            if (err && Object.keys(manager.getWaitForSocketList()).length === 0)
+                done();
+        });
+    });
+
+    it('should succeed obtaining an outward connection to a node on second try', function (done) {
+        var id = new Id(Id.byteBufferByHexString('fe3626caca6c84fa4e5d323b6a26b897582c57f9', 20), 160);
+        var goodContactNode = nodeFactory.create(id, [addressFactory.create('14.213.160.0', 1111), addressFactory.create('127.0.0.1', remotePort)]);
+
+        manager.obtainConnectionTo(goodContactNode, function (err, socket) {
+            if (socket && socket.getIdentifier() === 'fe3626caca6c84fa4e5d323b6a26b897582c57f9') {
+                if (Object.keys(manager.getOutgoingPendingSocketList()).length === 0) {
+                    if (manager.getConfirmedSocketList()['fe3626caca6c84fa4e5d323b6a26b897582c57f9'].socket === socket)
+                        done();
+                }
             }
         });
     });

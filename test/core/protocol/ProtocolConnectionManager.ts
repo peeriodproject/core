@@ -19,6 +19,9 @@ import ContactNodeFactory = require('../../../src/core/topology/ContactNodeFacto
 
 import ProtocolConnectionManager = require('../../../src/core/protocol/net/ProtocolConnectionManager');
 
+import ContactNodeAddressFactory = require('../../../src/core/topology/ContactNodeAddressFactory');
+import Id = require('../../../src/core/topology/Id');
+
 
 describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', function () {
 
@@ -35,12 +38,16 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
 
 	var manager:ProtocolConnectionManager;
 
+	var addressFactory:ContactNodeAddressFactory = new ContactNodeAddressFactory();
+	var nodeFactory:ContactNodeFactory = new ContactNodeFactory();
+
 	var handlerOpts:TCPSocketHandlerOptions = {
 		allowHalfOpenSockets:false,
 		myExternalIp:'127.0.0.1',
 		myOpenPorts:[protoPort],
 		doKeepAlive: true,
-		idleConnectionKillTimeout: 1.2
+		idleConnectionKillTimeout: 1.2,
+		outboundConnectionTimeout: 500
 	};
 
 	var tcpSocketFactory:TCPSocketFactory = new TCPSocketFactory();
@@ -55,7 +62,7 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
 				if (key === 'protocol.messages.maxByteLengthPerMessage') return 1024 * 1024;
 				if (key === 'protocol.messages.msToKeepNonAddressableMemory') return 2000;
 				if (key === 'protocol.net.msToWaitForIncomingMessage') return 500;
-				if (key === 'protocol.net.maxSecondsToWaitForConnection') return 1000;
+				if (key === 'protocol.net.maxSecondsToWaitForConnection') return 2;
 			}
 		});
 
@@ -175,6 +182,29 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
 		manager.once('terminatedConnection', function (id) {
 			if (id.toHexString() === 'fe3626caca6c84fa4e5d323b6a26b897582c57f9') {
 				if (Object.keys(manager.getConfirmedSocketList()).length === 0) done();
+			}
+		});
+	});
+
+	it('should fail obtaining an outward connection to a node', function (done) {
+		var id = new Id(Id.byteBufferByHexString('fe3626caca6c84fa4e5d323b6a26b897582c57f9', 20), 160);
+		var badContactNode = nodeFactory.create(id, [addressFactory.create('14.213.160.0', 1111)]);
+
+		manager.obtainConnectionTo(badContactNode, function (err, sock) {
+			if (err && Object.keys(manager.getWaitForSocketList()).length === 0) done();
+		});
+	});
+
+	it('should succeed obtaining an outward connection to a node on second try', function (done) {
+		var id = new Id(Id.byteBufferByHexString('fe3626caca6c84fa4e5d323b6a26b897582c57f9', 20), 160);
+		var goodContactNode = nodeFactory.create(id, [addressFactory.create('14.213.160.0', 1111),addressFactory.create('127.0.0.1', remotePort)]);
+
+		manager.obtainConnectionTo(goodContactNode, function (err, socket) {
+			if (socket && socket.getIdentifier() === 'fe3626caca6c84fa4e5d323b6a26b897582c57f9') {
+				
+				if (Object.keys(manager.getOutgoingPendingSocketList()).length === 0) {
+					if (manager.getConfirmedSocketList()['fe3626caca6c84fa4e5d323b6a26b897582c57f9'].socket === socket) done();
+				}
 			}
 		});
 	});

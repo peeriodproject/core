@@ -293,7 +293,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 	/**
 	 * Adds a callback to the 'waiting for socket' list. Provides it with an index and a timeout (which destroys
-	 * the wainting entry and calls the callback with `null`).
+	 * the waiting entry and calls the callback with `null`).
 	 *
 	 * @method core.protocol.net.ProtocolConnectionManager~_addToWaitingList
 	 *
@@ -344,14 +344,31 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 
 		if (item) {
-			item.callback(err, sock);
 			retVal = this._connectionWaitingList[identifier].splice(_i, 1)[0];
 			if (this._connectionWaitingList[identifier].length === 0) {
 				delete this._connectionWaitingList[identifier];
 			}
+			item.callback(err, sock);
 		}
 
 		return retVal;
+	}
+
+	/**
+	 * Creates a timeout for the connection waiting list. When it elapses, the callback stored next to it
+	 * will be emitted with an error stating it was unable to obtain a successful connection.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_createConnectionWaitingListTimeout
+	 *
+	 * @param {string} identifier
+	 * @param {number} index Index of the WaitForSocket-item stored in the array under the identifier
+	 * @returns {number|NodeJS.Timer}
+	 */
+	private _createConnectionWaitingListTimeout (identifier:string, index:number):number {
+
+		return setTimeout(() => {
+			this._callbackWaitingConnection(identifier, index, new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
+		}, this._msToWaitForConnection);
 	}
 
 	/**
@@ -482,23 +499,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	}
 
 	/**
-	 * Creates a timeout for the connection waiting list. When it elapses, the callback stored next to it
-	 * will be emitted with an error stating it was unable to obtain a successful connection.
-	 *
-	 * @method core.protocol.net.ProtocolConnectionManager~_createConnectionWaitingListTimeout
-	 *
-	 * @param {string} identifier
-	 * @param {number} index Index of the WaitForSocket-item stored in the array under the identifier
-	 * @returns {number|NodeJS.Timer}
-	 */
-	private _createConnectionWaitingListTimeout (identifier:string, index:number):number {
-
-		return setTimeout(() => {
-			this._callbackWaitingConnection(identifier, index, new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
-		}, this._msToWaitForConnection);
-	}
-
-	/**
 	 * When the socket is closed remotely, make sure that the socket object is cleaned up.
 	 *
 	 * @method core.protocol.net.ProtocolConnectionManager~_hookDestroyOnCloseToSocket
@@ -545,6 +545,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			this._outgoingPendingSockets[identifier] = outgoingEntry;
 
 			this._tryToOutgoingConnectToNode(contactNode, (socket:TCPSocketInterface) => {
+				delete this._outgoingPendingSockets[identifier];
 				if (socket) {
 					if (outgoingEntry.closeAtOnce) {
 						socket.forceDestroy();
@@ -555,7 +556,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 						this._addToConfirmed(identifier, 'outgoing', socket);
 					}
 				}
-				delete this._outgoingPendingSockets[identifier];
 			});
 		}
 	}
@@ -705,18 +705,17 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		var tcpSocketHandler:TCPSocketHandlerInterface = this._tcpSocketHandler;
 
 		var connectToAddressByIndex = function (i:number, callback:(socket:TCPSocketInterface) => any) {
-			var address:ContactNodeAddressInterface = address[i];
+			var address:ContactNodeAddressInterface = addresses[i];
 			tcpSocketHandler.connectTo(address.getPort(), address.getIp(), callback);
 		};
 		var theCallback = function (socket:TCPSocketInterface) {
 			if (!socket) {
 				if (++startAt <= maxIndex) {
 					connectToAddressByIndex(startAt, theCallback);
+					return;
 				}
 			}
-			else {
-				callback(socket);
-			}
+			callback(socket);
 		};
 
 		connectToAddressByIndex(startAt, theCallback);

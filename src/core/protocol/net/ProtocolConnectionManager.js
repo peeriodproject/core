@@ -261,7 +261,7 @@ var ProtocolConnectionManager = (function (_super) {
 
     /**
     * Adds a callback to the 'waiting for socket' list. Provides it with an index and a timeout (which destroys
-    * the wainting entry and calls the callback with `null`).
+    * the waiting entry and calls the callback with `null`).
     *
     * @method core.protocol.net.ProtocolConnectionManager~_addToWaitingList
     *
@@ -312,14 +312,31 @@ var ProtocolConnectionManager = (function (_super) {
         }
 
         if (item) {
-            item.callback(err, sock);
             retVal = this._connectionWaitingList[identifier].splice(_i, 1)[0];
             if (this._connectionWaitingList[identifier].length === 0) {
                 delete this._connectionWaitingList[identifier];
             }
+            item.callback(err, sock);
         }
 
         return retVal;
+    };
+
+    /**
+    * Creates a timeout for the connection waiting list. When it elapses, the callback stored next to it
+    * will be emitted with an error stating it was unable to obtain a successful connection.
+    *
+    * @method core.protocol.net.ProtocolConnectionManager~_createConnectionWaitingListTimeout
+    *
+    * @param {string} identifier
+    * @param {number} index Index of the WaitForSocket-item stored in the array under the identifier
+    * @returns {number|NodeJS.Timer}
+    */
+    ProtocolConnectionManager.prototype._createConnectionWaitingListTimeout = function (identifier, index) {
+        var _this = this;
+        return setTimeout(function () {
+            _this._callbackWaitingConnection(identifier, index, new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
+        }, this._msToWaitForConnection);
     };
 
     /**
@@ -448,23 +465,6 @@ var ProtocolConnectionManager = (function (_super) {
     };
 
     /**
-    * Creates a timeout for the connection waiting list. When it elapses, the callback stored next to it
-    * will be emitted with an error stating it was unable to obtain a successful connection.
-    *
-    * @method core.protocol.net.ProtocolConnectionManager~_createConnectionWaitingListTimeout
-    *
-    * @param {string} identifier
-    * @param {number} index Index of the WaitForSocket-item stored in the array under the identifier
-    * @returns {number|NodeJS.Timer}
-    */
-    ProtocolConnectionManager.prototype._createConnectionWaitingListTimeout = function (identifier, index) {
-        var _this = this;
-        return setTimeout(function () {
-            _this._callbackWaitingConnection(identifier, index, new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
-        }, this._msToWaitForConnection);
-    };
-
-    /**
     * When the socket is closed remotely, make sure that the socket object is cleaned up.
     *
     * @method core.protocol.net.ProtocolConnectionManager~_hookDestroyOnCloseToSocket
@@ -513,6 +513,7 @@ var ProtocolConnectionManager = (function (_super) {
             this._outgoingPendingSockets[identifier] = outgoingEntry;
 
             this._tryToOutgoingConnectToNode(contactNode, function (socket) {
+                delete _this._outgoingPendingSockets[identifier];
                 if (socket) {
                     if (outgoingEntry.closeAtOnce) {
                         socket.forceDestroy();
@@ -522,7 +523,6 @@ var ProtocolConnectionManager = (function (_super) {
                         _this._addToConfirmed(identifier, 'outgoing', socket);
                     }
                 }
-                delete _this._outgoingPendingSockets[identifier];
             });
         }
     };
@@ -673,17 +673,17 @@ var ProtocolConnectionManager = (function (_super) {
         var tcpSocketHandler = this._tcpSocketHandler;
 
         var connectToAddressByIndex = function (i, callback) {
-            var address = address[i];
+            var address = addresses[i];
             tcpSocketHandler.connectTo(address.getPort(), address.getIp(), callback);
         };
         var theCallback = function (socket) {
             if (!socket) {
                 if (++startAt <= maxIndex) {
                     connectToAddressByIndex(startAt, theCallback);
+                    return;
                 }
-            } else {
-                callback(socket);
             }
+            callback(socket);
         };
 
         connectToAddressByIndex(startAt, theCallback);

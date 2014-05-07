@@ -69,6 +69,13 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	private _openTCPServers:{[port:string]:net.Socket} = {};
 
 	/**
+	 * Number of ms to wait until an outbound socket without emitting `connected` will be considered as unsuccessful.
+	 *
+	 * @member {number} TCPSocketHandler~_outboundConnectionTimeout
+	 */
+	private _outboundConnectionTimeout:number = 0;
+
+	/**
 	 * An internal list of ports used to memorize which ports have already been retried.
 	 *
 	 * @member {Array<number>} TCPSocketHandler~_retriedPorts
@@ -94,6 +101,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		this._idleConnectionKillTimeout = opts.idleConnectionKillTimeout || 0;
 		this._allowHalfOpenSockets = !!opts.allowHalfOpenSockets;
 		this._connectionRetry = opts.connectionRetry || 3;
+		this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2;
 	}
 
 	public autoBootstrap (callback:(openPorts:Array<number>) => any):void {
@@ -135,18 +143,26 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 
 	public connectTo (port:number, ip:string, callback?:(socket:TCPSocketInterface) => any):void {
 		var sock:net.Socket = net.createConnection(port, ip);
+		var connectionError = () => {
+			sock.removeAllListeners();
+			sock.destroy();
 
-		sock.on('error', function () {
 			if (callback) {
-				callback(null);
-			} else {
+				callback(null)
+			}
+			else {
 				this.emit('connection error', port, ip);
 			}
-		});
+		};
+		var connectionTimeout = setTimeout(function () {
+			connectionError();
+		}, this._outboundConnectionTimeout);
+
+		sock.on('error', connectionError);
 
 		sock.on('connect', () => {
+			clearTimeout(connectionTimeout);
 			sock.removeAllListeners('error');
-
 			var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
 
 			if (!callback) {
@@ -157,6 +173,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			}
 
 		});
+
 	}
 
 	public createTCPServer ():net.Server {
