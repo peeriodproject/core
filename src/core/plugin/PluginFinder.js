@@ -8,28 +8,30 @@ var path = require('path');
 *
 * @param {core.config.ConfigInterface} config
 */
-var PluginLoader = (function () {
-    function PluginLoader(config) {
+var PluginFinder = (function () {
+    function PluginFinder(config) {
         /**
-        * @member {core.config.ConfigInterface} core.plugin.PluginLoader~_config
+        * The internally used config instance
+        *
+        * @member {core.config.ConfigInterface} core.plugin.PluginFinder~_config
         */
         this._config = null;
         /**
         * A list of plugin folder names that are inored within the find process
         *
-        * @member {core.config.ConfigInterface} core.plugin.PluginLoader~_ignoreFolderList
+        * @member {core.config.ConfigInterface} core.plugin.PluginFinder~_ignoreFolderList
         */
         this._ignorePluginFolderNameList = [];
         /**
         * The name of a plugin config file
         *
-        * @member {string} core.plugin.PluginLoader~_pluginConfigName
+        * @member {string} core.plugin.PluginFinder~_pluginConfigName
         */
         this._pluginConfigName = '';
         /**
         * The path to the applications plugin folder
         *
-        * @member {string} core.plugin.PluginLoader~_pluginFolderPath
+        * @member {string} core.plugin.PluginFinder~_pluginFolderPath
         */
         this._pluginFolderPath = '';
         this._config = config;
@@ -37,7 +39,7 @@ var PluginLoader = (function () {
         this._pluginConfigName = this._config.get('plugin.pluginConfigName');
         this._pluginFolderPath = this._config.get('plugin.folderPath');
     }
-    PluginLoader.prototype.addPluginFolderNamesToIgnoreList = function (pluginFolderNames, callback) {
+    PluginFinder.prototype.addPluginFolderNamesToIgnoreList = function (pluginFolderNames, callback) {
         var _this = this;
         var internalCallback = callback || function () {
         };
@@ -65,7 +67,7 @@ var PluginLoader = (function () {
         }
     };
 
-    PluginLoader.prototype.findPlugins = function (callback) {
+    PluginFinder.prototype.findPlugins = function (callback) {
         var _this = this;
         var pluginPaths = {};
         var filesLeft = 0;
@@ -129,11 +131,11 @@ var PluginLoader = (function () {
         });
     };
 
-    PluginLoader.prototype.getIgnoredPluginFolderNames = function (callback) {
+    PluginFinder.prototype.getIgnoredPluginFolderNames = function (callback) {
         callback(this._ignorePluginFolderNameList.slice());
     };
 
-    PluginLoader.prototype.getPluginFolderPath = function (callback) {
+    PluginFinder.prototype.getPluginFolderPath = function (callback) {
         var folderPath = this._pluginFolderPath;
 
         try  {
@@ -155,7 +157,7 @@ var PluginLoader = (function () {
         }
     };
 
-    PluginLoader.prototype.removePluginFolderNamesFromIgnoreList = function (pluginFolderNames, callback) {
+    PluginFinder.prototype.removePluginFolderNamesFromIgnoreList = function (pluginFolderNames, callback) {
         var _this = this;
         var internalCallback = callback || function () {
         };
@@ -191,7 +193,7 @@ var PluginLoader = (function () {
     * @param {string} pluginName
     * @param {Function} callback
     */
-    PluginLoader.prototype._ignoreListContains = function (pluginName, callback) {
+    PluginFinder.prototype._ignoreListContains = function (pluginName, callback) {
         var list = this._ignorePluginFolderNameList;
 
         return (function check(i) {
@@ -206,8 +208,8 @@ var PluginLoader = (function () {
             return process.nextTick(check.bind(null, i + 1));
         }(0));
     };
-    return PluginLoader;
+    return PluginFinder;
 })();
 
-module.exports = PluginLoader;
-//# sourceMappingURL=PluginLoader.js.map
+module.exports = PluginFinder;
+//# sourceMappingURL=PluginFinder.js.map

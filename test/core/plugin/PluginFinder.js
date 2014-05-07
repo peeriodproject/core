@@ -4,10 +4,10 @@ require('should');
 var sinon = require('sinon');
 var testUtils = require('../../utils/testUtils');
 
-var PluginLoader = require('../../../src/core/plugin/PluginLoader');
+var PluginFinder = require('../../../src/core/plugin/PluginFinder');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
+describe('CORE --> PLUGIN --> PluginFinder @joern', function () {
     var sandbox;
     var removeFolderAndDone = function (folderPath, done) {
         testUtils.deleteFolderRecursive(testUtils.getFixturePath(folderPath));
@@ -28,11 +28,11 @@ describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
             }
         });
     };
-    var createPluginLoaderWithPluginFolder = function (fixtureFolderPath) {
+    var createPluginFinderWithPluginFolder = function (fixtureFolderPath) {
         var pluginFolderPath = testUtils.getFixturePath(fixtureFolderPath);
         var config = createConfigStubWithPluginFolder(pluginFolderPath);
 
-        return new PluginLoader(config);
+        return new PluginFinder(config);
     };
 
     beforeEach(function () {
@@ -43,19 +43,19 @@ describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
         sandbox.restore();
     });
 
-    it('should correctly instantiate PluginLoader without error', function () {
+    it('should correctly instantiate PluginFinder without error', function () {
         var config = testUtils.stubPublicApi(sandbox, ObjectConfig);
 
-        (new PluginLoader(config)).should.be.an.instanceof(PluginLoader);
+        (new PluginFinder(config)).should.be.an.instanceof(PluginFinder);
     });
 
     it('should not crash on empty function calls', function (done) {
         var config = testUtils.stubPublicApi(sandbox, ObjectConfig);
-        var pluginLoader;
+        var pluginFinder;
 
-        pluginLoader = new PluginLoader(config);
-        pluginLoader.removePluginFolderNamesFromIgnoreList(null, function () {
-            pluginLoader.addPluginFolderNamesToIgnoreList(null, function () {
+        pluginFinder = new PluginFinder(config);
+        pluginFinder.removePluginFolderNamesFromIgnoreList(null, function () {
+            pluginFinder.addPluginFolderNamesToIgnoreList(null, function () {
                 done();
             });
         });
@@ -63,11 +63,11 @@ describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
 
     it('should correctly return the items in the ignored list', function (done) {
         var config = testUtils.stubPublicApi(sandbox, ObjectConfig);
-        var pluginLoader;
+        var pluginFinder;
 
-        pluginLoader = new PluginLoader(config);
-        pluginLoader.addPluginFolderNamesToIgnoreList(['foo', 'bar', 'foobar', 'foobar', 'barfoo'], function () {
-            pluginLoader.getIgnoredPluginFolderNames(function (names) {
+        pluginFinder = new PluginFinder(config);
+        pluginFinder.addPluginFolderNamesToIgnoreList(['foo', 'bar', 'foobar', 'foobar', 'barfoo'], function () {
+            pluginFinder.getIgnoredPluginFolderNames(function (names) {
                 names.length.should.equal(4);
                 names.should.be.containDeep(['foo', 'bar', 'foobar', 'barfoo']);
 
@@ -78,12 +78,12 @@ describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
 
     it('should correctly remove items from the ignore list', function (done) {
         var config = testUtils.stubPublicApi(sandbox, ObjectConfig);
-        var pluginLoader;
+        var pluginFinder;
 
-        pluginLoader = new PluginLoader(config);
-        pluginLoader.addPluginFolderNamesToIgnoreList(['foo', 'bar', 'foobar', 'barfoo'], function () {
-            pluginLoader.removePluginFolderNamesFromIgnoreList(['foo', 'bar'], function () {
-                pluginLoader.getIgnoredPluginFolderNames(function (names) {
+        pluginFinder = new PluginFinder(config);
+        pluginFinder.addPluginFolderNamesToIgnoreList(['foo', 'bar', 'foobar', 'barfoo'], function () {
+            pluginFinder.removePluginFolderNamesFromIgnoreList(['foo', 'bar'], function () {
+                pluginFinder.getIgnoredPluginFolderNames(function (names) {
                     names.length.should.equal(2);
                     names.should.be.containDeep(['foobar', 'barfoo']);
 
@@ -95,9 +95,9 @@ describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
 
     it('should correctly create the plugin folder if it does not exist', function (done) {
         var fixturePath = 'plugin/plugins/getPluginFolderTest';
-        var pluginLoader = createPluginLoaderWithPluginFolder(fixturePath);
+        var pluginFinder = createPluginFinderWithPluginFolder(fixturePath);
 
-        pluginLoader.getPluginFolderPath(function (err, folderPath) {
+        pluginFinder.getPluginFolderPath(function (err, folderPath) {
             (err === null).should.be.true;
             folderPath.should.equal(testUtils.getFixturePath(fixturePath));
 
@@ -107,10 +107,10 @@ describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
 
     it('should correctly find unloaded plugins', function (done) {
         var fixturePath = 'plugin/plugins/unloadedPluginsFolderTest';
-        var pluginLoader = createPluginLoaderWithPluginFolder(fixturePath);
+        var pluginFinder = createPluginFinderWithPluginFolder(fixturePath);
 
-        pluginLoader.addPluginFolderNamesToIgnoreList(['activePlugin'], function () {
-            pluginLoader.findPlugins(function (err, pluginPaths) {
+        pluginFinder.addPluginFolderNamesToIgnoreList(['activePlugin'], function () {
+            pluginFinder.findPlugins(function (err, pluginPaths) {
                 (err === null).should.be.true;
                 Object.keys(pluginPaths).length.should.equal(1);
 
@@ -124,4 +124,4 @@ describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
         });
     });
 });
-//# sourceMappingURL=PluginLoader.js.map
+//# sourceMappingURL=PluginFinder.js.map

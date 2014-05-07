@@ -5,7 +5,7 @@ import path = require('path');
 
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import PluginCallbackInterface = require('./interfaces/PluginCallbackInterface');
-import PluginLoaderInterface = require('./interfaces/PluginLoaderInterface');
+import PluginFinderInterface = require('./interfaces/PluginFinderInterface');
 import PluginMapInterface = require('./interfaces/PluginMapInterface');
 import PluginNameListInterface = require('./interfaces/PluginNameListInterface');
 import PluginPathListInterface = require('./interfaces/PluginPathListInterface');
@@ -16,31 +16,33 @@ import PluginPathListInterface = require('./interfaces/PluginPathListInterface')
  *
  * @param {core.config.ConfigInterface} config
  */
-class PluginLoader implements PluginLoaderInterface {
+class PluginFinder implements PluginFinderInterface {
 
 	/**
-	 * @member {core.config.ConfigInterface} core.plugin.PluginLoader~_config
+	 * The internally used config instance
+	 *
+	 * @member {core.config.ConfigInterface} core.plugin.PluginFinder~_config
 	 */
 	private _config:ConfigInterface = null;
 
 	/**
 	 * A list of plugin folder names that are inored within the find process
 	 *
-	 * @member {core.config.ConfigInterface} core.plugin.PluginLoader~_ignoreFolderList
+	 * @member {core.config.ConfigInterface} core.plugin.PluginFinder~_ignoreFolderList
 	 */
 	private _ignorePluginFolderNameList:PluginNameListInterface = [];
 
 	/**
 	 * The name of a plugin config file
 	 *
-	 * @member {string} core.plugin.PluginLoader~_pluginConfigName
+	 * @member {string} core.plugin.PluginFinder~_pluginConfigName
 	 */
 	private _pluginConfigName:string = '';
 
 	/**
 	 * The path to the applications plugin folder
 	 *
-	 * @member {string} core.plugin.PluginLoader~_pluginFolderPath
+	 * @member {string} core.plugin.PluginFinder~_pluginFolderPath
 	 */
 	private _pluginFolderPath:string = '';
 
@@ -229,4 +231,4 @@ class PluginLoader implements PluginLoaderInterface {
 
 }
 
-export = PluginLoader;
+export = PluginFinder;
