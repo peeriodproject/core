@@ -39,6 +39,12 @@ interface TCPSocketHandlerOptions {
 	 */
 	myOpenPorts?:Array<number>;
 
+	/**
+	 * Indicates the number of milliseconds which must pass until an outbound socket which has not emitted a `connected` event
+	 * is considered as unsuccessful.
+	 *
+	 */
+	outboundConnectionTimeout?:number;
 }
 
 export = TCPSocketHandlerOptions;
