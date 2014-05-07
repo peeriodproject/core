@@ -22,7 +22,9 @@
   "scripts": {
     "test": "grunt test"
   },
-  "dependencies": {},
+  "dependencies": {
+    "fs-extra": "^0.8.1"
+  },
   "devDependencies": {
     "blanket": "~1.1.5",
     "grunt": "*",
