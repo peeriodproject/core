@@ -11,7 +11,7 @@ var IncomingDataPipeline = require('../../../src/core/protocol/messages/Incoming
 var TCPSocket = require('../../../src/core/net/tcp/TCPSocket');
 var ReadableMessageFactory = require('../../../src/core/protocol/messages/ReadableMessageFactory');
 
-describe('CORE --> PROTOCOL --> IncomingDataPipeline @current', function () {
+describe('CORE --> PROTOCOL --> IncomingDataPipeline', function () {
     var sandbox;
     var readableMessageFactoryStub;
     var server = null;

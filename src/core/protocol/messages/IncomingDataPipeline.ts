@@ -147,7 +147,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 					b = true;
 				}
 
-				// temporary buffer storage will only be deleted if no new data comes in within 10 seconds
+				// temporary buffer storage will only be deleted if no new data comes in within the specified time
 				if (!this._doCleanBufferTimeouts[identifier]) {
 					this._doCleanBufferTimeouts[identifier] = setTimeout(() => {
 						this._freeMemory(identifier);
@@ -188,10 +188,12 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 	private _freeMemory (identifier:string, tempMessageMemory?:TemporaryMessageMemory):void {
 		var tempMemory:TemporaryMessageMemory = tempMessageMemory || this._temporaryBufferStorage[identifier];
 
-		var dataLen = tempMemory.data.length;
+		if (tempMemory) {
+			var dataLen = tempMemory.data.length;
 
-		for (var i = 0; i < dataLen; i++) {
-			tempMemory.data[i] = null;
+			for (var i = 0; i < dataLen; i++) {
+				tempMemory.data[i] = null;
+			}
 		}
 
 		delete this._temporaryBufferStorage[identifier];

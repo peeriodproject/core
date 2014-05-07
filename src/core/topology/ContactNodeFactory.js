@@ -33,7 +33,7 @@ var ContactNodeFactory = (function () {
         return this.create(new Id(idBuffer, 160), addresses, object.lastSeen);
     };
 
-    ContactNodeFactory.createDummy = function (idStr) {
+    ContactNodeFactory.createDummy = function (idStr, encoding, ip, port) {
         var getId = function () {
             var getRandomId = function () {
                 var str = '';
@@ -47,11 +47,17 @@ var ContactNodeFactory = (function () {
 
             idStr = idStr || getRandomId();
 
-            return new Id(Id.byteBufferByBitString(idStr, 20), 160);
+            var method = (encoding && encoding === 'hex') ? 'byteBufferByHexString' : 'byteBufferByBitString';
+
+            return new Id(Id[method](idStr, 20), 160);
         };
 
         var getAddresses = function () {
-            return [ContactNodeAddressFactory.createDummy()];
+            if (!(ip && port)) {
+                return [ContactNodeAddressFactory.createDummy()];
+            } else {
+                return [(new ContactNodeAddressFactory()).create(ip, port)];
+            }
         };
 
         var getLastSeen = function () {

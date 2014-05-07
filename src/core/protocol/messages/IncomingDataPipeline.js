@@ -136,7 +136,7 @@ var IncomingDataPipeline = (function (_super) {
                     b = true;
                 }
 
-                // temporary buffer storage will only be deleted if no new data comes in within 10 seconds
+                // temporary buffer storage will only be deleted if no new data comes in within the specified time
                 if (!this._doCleanBufferTimeouts[identifier]) {
                     this._doCleanBufferTimeouts[identifier] = setTimeout(function () {
                         _this._freeMemory(identifier);
@@ -177,10 +177,12 @@ var IncomingDataPipeline = (function (_super) {
     IncomingDataPipeline.prototype._freeMemory = function (identifier, tempMessageMemory) {
         var tempMemory = tempMessageMemory || this._temporaryBufferStorage[identifier];
 
-        var dataLen = tempMemory.data.length;
+        if (tempMemory) {
+            var dataLen = tempMemory.data.length;
 
-        for (var i = 0; i < dataLen; i++) {
-            tempMemory.data[i] = null;
+            for (var i = 0; i < dataLen; i++) {
+                tempMemory.data[i] = null;
+            }
         }
 
         delete this._temporaryBufferStorage[identifier];
