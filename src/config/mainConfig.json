@@ -22,5 +22,8 @@
     "plugin": {
         "folderPath": "plugin",
         "pluginConfigName": "plugin.json"
+    },
+    "app": {
+        "dataPath": "dataPathFolder"
     }
 }
