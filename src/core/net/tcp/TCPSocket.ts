@@ -63,6 +63,9 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		this._constructorOpts = opts;
 
+		// disable nagle algorithm
+		socket.setNoDelay();
+
 		// set keep-alive
 		if (opts.doKeepAlive) {
 			this.getSocket().setKeepAlive(true, opts.keepAliveDelay || 0);
@@ -86,6 +89,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		this.getSocket().removeAllListeners();
 		try {
 			this.getSocket().end();
+			this.getSocket().destroy();
 		}
 		catch (e) {}
 		this._socket = null;

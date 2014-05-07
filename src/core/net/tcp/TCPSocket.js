@@ -60,6 +60,9 @@ var TCPSocket = (function (_super) {
 
         this._constructorOpts = opts;
 
+        // disable nagle algorithm
+        socket.setNoDelay();
+
         // set keep-alive
         if (opts.doKeepAlive) {
             this.getSocket().setKeepAlive(true, opts.keepAliveDelay || 0);
@@ -82,6 +85,7 @@ var TCPSocket = (function (_super) {
         this.getSocket().removeAllListeners();
         try  {
             this.getSocket().end();
+            this.getSocket().destroy();
         } catch (e) {
         }
         this._socket = null;
