@@ -251,6 +251,18 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		});
 	}
 
+	/**
+	 * Adds a TCP socket to the confirmed list. Hooks an event to it that it gets destroyed when it's closed.
+	 * Replaces old socket on same identifier, except when the new one is outgoing and the old one is incoming.
+	 * Keeps it open when needed.
+	 * Emits a `confirmedSocket` event in the end.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_addToConfirmed
+	 *
+	 * @param {string} identifier
+	 * @param {stirng} direction 'incoming' or 'outgoing'
+	 * @param {TCPSocketInterface} socket
+	 */
 	private _addToConfirmed (identifier:string, direction:string, socket:TCPSocketInterface) {
 		var existingSocket = this._confirmedSockets[identifier];
 		var newConfirmedSocket:ConfirmedSocket = {
@@ -279,6 +291,15 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this.emit('confirmedSocket', identifier, socket);
 	}
 
+	/**
+	 * Adds a callback to the 'waiting for socket' list. Provides it with an index and a timeout (which destroys
+	 * the wainting entry and calls the callback with `null`).
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_addToWaitingList
+	 *
+	 * @param {string} identifier
+	 * @param {Function} callback The callback which should get called when the socket is there / an error occurs. Called with error and socket as arguments.
+	 */
 	private _addToWaitingList (identifier:string, callback:(err:Error, socket:TCPSocketInterface) => any):void {
 		var existing = this._connectionWaitingList[identifier];
 		var index = ++this._waitingListNum;
@@ -286,7 +307,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		var waitFor:WaitForSocket = {
 			index   : index,
 			callback: callback,
-			timeout : this._getConnectionWaitingListTimeout(identifier, index)
+			timeout : this._createConnectionWaitingListTimeout(identifier, index)
 		};
 
 		if (!existing) {
@@ -296,6 +317,18 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._connectionWaitingList[identifier].push(waitFor);
 	}
 
+	/**
+	 * Finds a specific waiting entry in the connection waiting list and calls its callback as well as removing it
+	 * from the array. Does not, however, clear the timeout (must be done manually).
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_callbackWaitingConnection
+	 *
+	 * @param {string} identifier Identifier under which to find the entry
+	 * @param {string} index The index of the WaitForSocket item
+	 * @param {Error} err Error paramter for the callback
+	 * @param {TCPSocketInterface} sock Socket parameter for the callback
+	 * @returns {WaitForSocket} The removed WaitForSocket entry
+	 */
 	private _callbackWaitingConnection (identifier:string, index:number, err:Error, sock:TCPSocketInterface):WaitForSocket {
 		var list:Array<WaitForSocket> = this._connectionWaitingList[identifier];
 		var item:WaitForSocket = null;
@@ -321,6 +354,16 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		return retVal;
 	}
 
+	/**
+	 * Destroys a socket connection. Removes all references within the manager, clears any incmoing pending timeouts.
+	 * unhooks it from the data pipeline and forces destroys the socket itself (removing all listeners and dumping the reference).
+	 * Emits a `terminatedConnection` event if the socket was a confirmed one and the event should not be blocked.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_destroyConnection
+	 *
+	 * @param {core.net.tcp.TCPSocketInterface} socket The socket to destroy
+	 * @param {boolean} blockTerminationEvent Indicates whether a `terminatedConnection` event should be blocked or not.
+	 */
 	private _destroyConnection (socket:TCPSocketInterface, blockTerminationEvent?:boolean):void {
 		var identifier = socket.getIdentifier();
 		var incoming:IncomingPendingSocket = this._incomingPendingSockets[identifier];
@@ -349,6 +392,13 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
+	/**
+	 * Looks for a socket entry in the incoming pending list and in the confirmed list. If one is found, it is destroyed.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_destroyConnectionByIdentifier
+	 *
+	 * @param {string} identifier
+	 */
 	private _destroyConnectionByIdentifier (identifier:string):void {
 		var socket = null;
 		var it = ['_incomingPendingSockets', '_confirmedSockets'];
@@ -368,6 +418,13 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
+	/**
+	 * Tries to emit a `terminatedConnection`-event by making a valid ID out of the hexadecimal-string-identifier.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_emitTerminatedEventByIdentifier
+	 *
+	 * @param {string} identifier
+	 */
 	private _emitTerminatedEventByIdentifier (identifier:string) {
 		try {
 			var id = new Id(Id.byteBufferByHexString(identifier, 20), 160);
@@ -377,6 +434,18 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
+	/**
+	 * Moves a socket from the incoming pending list to the confirmed list. Provides the socket with the new identifier
+	 * and checks if there are any outgoing pending connections under the same one. If yes, they are marked with the
+	 * `closeAtOnce` flag.
+	 * Calls `_addToConfirmed` in the end.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_fromIncomingPendingToConfirmed
+	 *
+	 * @param {string} newIdentifier The new identifier
+	 * @param {string} oldIdentifier The old temporary identifier
+	 * @param {core.protocol.net.IncomingPendingSocket} pending The incoming pending socket object
+	 */
 	private _fromIncomingPendingToConfirmed (newIdentifier:string, oldIdentifier:string, pending:IncomingPendingSocket):void {
 		var socket:TCPSocketInterface = pending.socket;
 		var outgoingPending:OutgoingPendingSocket = this._outgoingPendingSockets[newIdentifier];
@@ -396,6 +465,14 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._addToConfirmed(newIdentifier, 'incoming', socket);
 	}
 
+	/**
+	 * Returns a confirmed socket stored under the provided identifer. Returns `null` if there is none.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_getConfirmedSocketByIdentifier
+	 *
+	 * @param {string} identifier
+	 * @returns {core.net.tcp.TCPSocketInterface}
+	 */
 	private _getConfirmedSocketByIdentifier (identifier:string):TCPSocketInterface {
 		var existing = this._confirmedSockets[identifier];
 		if (existing) {
@@ -404,13 +481,30 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		return null;
 	}
 
-	private _getConnectionWaitingListTimeout (identifier:string, index:number):number {
+	/**
+	 * Creates a timeout for the connection waiting list. When it elapses, the callback stored next to it
+	 * will be emitted with an error stating it was unable to obtain a successful connection.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_createConnectionWaitingListTimeout
+	 *
+	 * @param {string} identifier
+	 * @param {number} index Index of the WaitForSocket-item stored in the array under the identifier
+	 * @returns {number|NodeJS.Timer}
+	 */
+	private _createConnectionWaitingListTimeout (identifier:string, index:number):number {
 
 		return setTimeout(() => {
 			this._callbackWaitingConnection(identifier, index, new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
 		}, this._msToWaitForConnection);
 	}
 
+	/**
+	 * When the socket is closed remotely, make sure that the socket object is cleaned up.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_hookDestroyOnCloseToSocket
+	 *
+	 * @param {core.net.tcp.TCPSocketInterface} socket
+	 */
 	private _hookDestroyOnCloseToSocket (socket:TCPSocketInterface) {
 		// remote close
 		socket.on('close', () => {
@@ -418,10 +512,28 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		});
 	}
 
+	/**
+	 * Checks whether the provided identifier matches with the hexadecimal string representation of the provided
+	 * node's ID.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_identifierAndContactNodeMatch
+	 *
+	 * @param {string} identifier Identifier to check
+	 * @param {core.topology.ContactNodeInterface} node ContactNode whose ID to check against the identifier
+	 * @returns {boolean} `True` if they match, else false
+	 */
 	private _identifierAndContactNodeMatch (identifier:string, node:ContactNodeInterface):boolean {
 		return identifier === this._nodeToIdentifier(node);
 	}
 
+	/**
+	 * Tries to open a client connection to the provided contactNode and adds a corresponding entry to the
+	 * outgoing pending socket list.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_initiateOutgoingConnection
+	 *
+	 * @param {core.topology.ContactNodeInterface} contactNode
+	 */
 	private _initiateOutgoingConnection (contactNode:ContactNodeInterface):void {
 		var identifier:string = this._nodeToIdentifier(contactNode);
 
@@ -448,10 +560,28 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
+	/**
+	 * Returns the hexadecimal string representation of a node's ID
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_nodeToIdentifier
+	 *
+	 * @param {core.topology.ContactNodeInterface} node
+	 * @returns {string}
+	 */
 	private _nodeToIdentifier (node:ContactNodeInterface):string {
 		return node.getId().toHexString();
 	}
 
+	/**
+	 * The listener on the class's `confirmedSocket` event. When a confirmedSocket rolls in, it checks
+	 * if there are any functions already waiting for the socket. If yes, they are iterated over and called one by one
+	 * (in their original order), clearing their timeouts as well.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_onConfirmedSocket
+	 *
+	 * @param {string} identifier The identifier of the confirmed socket
+	 * @param {core.net.tcp.TCPSocketInterface} socket The new confirmed socket itself.
+	 */
 	private _onConfirmedSocket (identifier:string, socket:TCPSocketInterface):void {
 		var waiting:Array<WaitForSocket> = this._connectionWaitingList[identifier];
 		if (waiting) {
@@ -465,20 +595,42 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
+	/**
+	 * The listener on the TCP handler's `connected` event with 'incoming' as direction.
+	 * Provides the socket with a temporary identifier, hooks it to the pipeline and adds it the incoming pending list.
+	 * It also kicks off a timeout which destroys the socket when elapsed (this is cleared as soon as the socket gets
+	 * a valid identifier)
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_onincomingConnection
+	 *
+	 * @param {core.net.tcp.TCPSocketInterface} socket
+	 */
 	private _onIncomingConnection (socket:TCPSocketInterface):void {
 		var identifier:string = this._setTemporaryIdentifier(socket);
-		if (!this._incomingPendingSockets[identifier]) {
-			var pending:IncomingPendingSocket = {
-				socket : socket,
-				timeout: setTimeout(() => {
-					this._destroyConnection(socket)
-				}, this._incomingPendingTimeoutLength)
-			};
-			this._incomingPendingSockets[identifier] = pending;
-			this._incomingDataPipeline.hookSocket(socket);
-		}
+		var pending:IncomingPendingSocket = {
+			socket : socket,
+			timeout: setTimeout(() => {
+				this._destroyConnection(socket)
+			}, this._incomingPendingTimeoutLength)
+		};
+		this._incomingPendingSockets[identifier] = pending;
+		this._incomingDataPipeline.hookSocket(socket);
 	}
 
+	/**
+	 * The listener on the pipeline's message event, when a valid readable message comes rolling in.
+	 * Checks if the message came from an incoming socket with a temporary identifier. If so, it tries to assign it
+	 * the ID of sender of the message.
+	 * Otherwise it checks if the identifier of the socket and the sender of the message match. If not, the responsible
+	 * socket is destroyed and the message not propagated, because it hints to some non-compliance with the protocol.
+	 *
+	 * Propagates the message in a `message` event if not stated otherwise.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_onMessage
+	 *
+	 * @param {string} identifier The identifier of the socket over which the message was sent
+	 * @param {core.protocol.messages.ReadableMessageInterface} message The received message
+	 */
 	private _onMessage (identifier:string, message:ReadableMessageInterface):void {
 		var propagateMessage:boolean = true;
 		var incomingPending:IncomingPendingSocket = this._incomingPendingSockets[identifier];
@@ -499,6 +651,14 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
+	/**
+	 * Sets up all needed listeners, which is:
+	 * - listening to messages of the data pipeline
+	 * - listening to incoming connections of the TCP socket handler
+	 * - internally hooking to the class's `confirmedSocket` event
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_setGlobalListeners
+	 */
 	private _setGlobalListeners ():void {
 		this._incomingDataPipeline.on('message', (identifier:string, message:ReadableMessageInterface) => {
 			this._onMessage(identifier, message);
