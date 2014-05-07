@@ -113,20 +113,69 @@ var ProtocolConnectionManager = (function (_super) {
 
         this._setGlobalListeners();
     }
+    /**
+    * Testing purposes only. Should not be used in production.
+    *
+    * @method {core.protocol.net.ProtocolConnectionManager#getOutgoingPendingSocketList
+    *
+    * @returns {OutgoingPendingSocketList}
+    */
     ProtocolConnectionManager.prototype.getOutgoingPendingSocketList = function () {
         return this._outgoingPendingSockets;
     };
 
+    /**
+    * Testing purposes only. Should not be used in production.
+    *
+    * @method {core.protocol.net.ProtocolConnectionManager#getIncomingPendingSocketList
+    *
+    * @returns {IncomingPendingSocketList}
+    */
     ProtocolConnectionManager.prototype.getIncomingPendingSocketList = function () {
         return this._incomingPendingSockets;
     };
 
+    /**
+    * Testing purposes only. Should not be used in production.
+    *
+    * @method {core.protocol.net.ProtocolConnectionManager#getConfirmedSocketList
+    *
+    * @returns {ConfirmedSocketList}
+    */
     ProtocolConnectionManager.prototype.getConfirmedSocketList = function () {
         return this._confirmedSockets;
     };
 
+    /**
+    * Testing purposes only. Should not be used in production.
+    *
+    * @method {core.protocol.net.ProtocolConnectionManager#getWaitForSocketList
+    *
+    * @returns {WaitForSocketList}
+    */
     ProtocolConnectionManager.prototype.getWaitForSocketList = function () {
         return this._connectionWaitingList;
+    };
+
+    ProtocolConnectionManager.prototype.getConfirmedSocketByContactNode = function (node) {
+        return this._getConfirmedSocketByIdentifier(this._nodeToIdentifier(node));
+    };
+
+    ProtocolConnectionManager.prototype.getConfirmedSocketById = function (id) {
+        return this._getConfirmedSocketByIdentifier(id.toHexString());
+    };
+
+    ProtocolConnectionManager.prototype.keepSocketsNoLongerOpenFromNode = function (contactNode) {
+        var identifier = this._nodeToIdentifier(contactNode);
+        var i = this._keepSocketOpenList.indexOf(identifier);
+
+        if (i > -1) {
+            var existing = this._confirmedSockets[identifier];
+            if (existing) {
+                existing.socket.setCloseOnTimeout(true);
+            }
+            this._keepSocketOpenList.splice(i, 1);
+        }
     };
 
     ProtocolConnectionManager.prototype.keepSocketsOpenFromNode = function (contactNode) {
@@ -143,25 +192,16 @@ var ProtocolConnectionManager = (function (_super) {
         }
     };
 
-    ProtocolConnectionManager.prototype.keepSocketsNoLongerOpenFromNode = function (contactNode) {
-        var identifier = this._nodeToIdentifier(contactNode);
-        var i = this._keepSocketOpenList.indexOf(identifier);
+    ProtocolConnectionManager.prototype.obtainConnectionTo = function (node, callback) {
+        var identifier = this._nodeToIdentifier(node);
+        var existing = this._getConfirmedSocketByIdentifier(identifier);
 
-        if (i > -1) {
-            var existing = this._confirmedSockets[identifier];
-            if (existing) {
-                existing.socket.setCloseOnTimeout(true);
-            }
-            this._keepSocketOpenList.splice(i, 1);
+        if (existing) {
+            callback(null, existing);
+        } else {
+            this._addToWaitingList(identifier, callback);
+            this._initiateOutgoingConnection(node);
         }
-    };
-
-    ProtocolConnectionManager.prototype.getConfirmedSocketById = function (id) {
-        return this._getConfirmedSocketByIdentifier(id.toHexString());
-    };
-
-    ProtocolConnectionManager.prototype.getConfirmedSocketByContactNode = function (node) {
-        return this._getConfirmedSocketByIdentifier(this._nodeToIdentifier(node));
     };
 
     ProtocolConnectionManager.prototype.writeBufferTo = function (node, buffer, callback) {
@@ -178,18 +218,6 @@ var ProtocolConnectionManager = (function (_super) {
                 });
             }
         });
-    };
-
-    ProtocolConnectionManager.prototype.obtainConnectionTo = function (node, callback) {
-        var identifier = this._nodeToIdentifier(node);
-        var existing = this._getConfirmedSocketByIdentifier(identifier);
-
-        if (existing) {
-            callback(null, existing);
-        } else {
-            this._addToWaitingList(identifier, callback);
-            this._initiateOutgoingConnection(node);
-        }
     };
 
     ProtocolConnectionManager.prototype._addToWaitingList = function (identifier, callback) {

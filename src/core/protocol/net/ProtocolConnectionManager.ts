@@ -141,20 +141,69 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._setGlobalListeners();
 	}
 
+	/**
+	 * Testing purposes only. Should not be used in production.
+	 *
+	 * @method {core.protocol.net.ProtocolConnectionManager#getOutgoingPendingSocketList
+	 *
+	 * @returns {OutgoingPendingSocketList}
+	 */
 	public getOutgoingPendingSocketList ():OutgoingPendingSocketList {
 		return this._outgoingPendingSockets;
 	}
 
+	/**
+	 * Testing purposes only. Should not be used in production.
+	 *
+	 * @method {core.protocol.net.ProtocolConnectionManager#getIncomingPendingSocketList
+	 *
+	 * @returns {IncomingPendingSocketList}
+	 */
 	public getIncomingPendingSocketList ():IncomingPendingSocketList {
 		return this._incomingPendingSockets;
 	}
 
+	/**
+	 * Testing purposes only. Should not be used in production.
+	 *
+	 * @method {core.protocol.net.ProtocolConnectionManager#getConfirmedSocketList
+	 *
+	 * @returns {ConfirmedSocketList}
+	 */
 	public getConfirmedSocketList ():ConfirmedSocketList {
 		return this._confirmedSockets;
 	}
 
+	/**
+	 * Testing purposes only. Should not be used in production.
+	 *
+	 * @method {core.protocol.net.ProtocolConnectionManager#getWaitForSocketList
+	 *
+	 * @returns {WaitForSocketList}
+	 */
 	public getWaitForSocketList ():WaitForSocketList {
 		return this._connectionWaitingList;
+	}
+
+	public getConfirmedSocketByContactNode (node:ContactNodeInterface):TCPSocketInterface {
+		return this._getConfirmedSocketByIdentifier(this._nodeToIdentifier(node));
+	}
+
+	public getConfirmedSocketById (id:IdInterface):TCPSocketInterface {
+		return this._getConfirmedSocketByIdentifier(id.toHexString());
+	}
+
+	public keepSocketsNoLongerOpenFromNode (contactNode:ContactNodeInterface):void {
+		var identifier:string = this._nodeToIdentifier(contactNode);
+		var i:number = this._keepSocketOpenList.indexOf(identifier);
+
+		if (i > -1) {
+			var existing:ConfirmedSocket = this._confirmedSockets[identifier];
+			if (existing) {
+				existing.socket.setCloseOnTimeout(true);
+			}
+			this._keepSocketOpenList.splice(i, 1);
+		}
 	}
 
 	public keepSocketsOpenFromNode (contactNode:ContactNodeInterface):void {
@@ -172,28 +221,20 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
-	public keepSocketsNoLongerOpenFromNode (contactNode:ContactNodeInterface):void {
-		var identifier:string = this._nodeToIdentifier(contactNode);
-		var i:number = this._keepSocketOpenList.indexOf(identifier);
+	public obtainConnectionTo (node:ContactNodeInterface, callback:(err:Error, socket:TCPSocketInterface) => any):void {
+		var identifier = this._nodeToIdentifier(node);
+		var existing = this._getConfirmedSocketByIdentifier(identifier);
 
-		if (i > -1) {
-			var existing:ConfirmedSocket = this._confirmedSockets[identifier];
-			if (existing) {
-				existing.socket.setCloseOnTimeout(true);
-			}
-			this._keepSocketOpenList.splice(i, 1);
+		if (existing) {
+			callback(null, existing);
+		}
+		else {
+			this._addToWaitingList(identifier, callback);
+			this._initiateOutgoingConnection(node);
 		}
 	}
 
-	public getConfirmedSocketById (id:IdInterface):TCPSocketInterface {
-		return this._getConfirmedSocketByIdentifier(id.toHexString());
-	}
-
-	public getConfirmedSocketByContactNode (node:ContactNodeInterface):TCPSocketInterface {
-		return this._getConfirmedSocketByIdentifier(this._nodeToIdentifier(node));
-	}
-
-	public writeBufferTo(node:ContactNodeInterface, buffer:Buffer, callback?:(err:Error) => any):void {
+	public writeBufferTo (node:ContactNodeInterface, buffer:Buffer, callback?:(err:Error) => any):void {
 		this.obtainConnectionTo(node, function (err:Error, socket:TCPSocketInterface) {
 			if (err) {
 				if (callback) {
@@ -210,27 +251,14 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		});
 	}
 
-	public obtainConnectionTo(node:ContactNodeInterface, callback:(err:Error, socket:TCPSocketInterface) => any):void {
-		var identifier = this._nodeToIdentifier(node);
-		var existing = this._getConfirmedSocketByIdentifier(identifier);
-
-		if (existing) {
-			callback(null, existing);
-		}
-		else {
-			this._addToWaitingList(identifier, callback);
-			this._initiateOutgoingConnection(node);
-		}
-	}
-
-	private _addToWaitingList(identifier:string, callback:(err:Error, socket:TCPSocketInterface) => any):void {
+	private _addToWaitingList (identifier:string, callback:(err:Error, socket:TCPSocketInterface) => any):void {
 		var existing = this._connectionWaitingList[identifier];
 		var index = ++this._waitingListNum;
 
 		var waitFor:WaitForSocket = {
-			index: index,
+			index   : index,
 			callback: callback,
-			timeout: this._getConnectionWaitingListTimeout(identifier, index)
+			timeout : this._getConnectionWaitingListTimeout(identifier, index)
 		};
 
 		if (!existing) {
@@ -240,14 +268,14 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._connectionWaitingList[identifier].push(waitFor);
 	}
 
-	private _getConnectionWaitingListTimeout(identifier:string, index:number):number {
+	private _getConnectionWaitingListTimeout (identifier:string, index:number):number {
 
 		return setTimeout(() => {
 			this._callbackWaitingConnection(identifier, index, new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
 		}, this._msToWaitForConnection);
 	}
 
-	private _getConfirmedSocketByIdentifier(identifier:string):TCPSocketInterface {
+	private _getConfirmedSocketByIdentifier (identifier:string):TCPSocketInterface {
 		var existing = this._confirmedSockets[identifier];
 		if (existing) {
 			return existing.socket;
@@ -281,7 +309,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
-	private _tryToOutgoingConnectToNode(contactNode, callback:(socket:TCPSocketInterface) => any) {
+	private _tryToOutgoingConnectToNode (contactNode, callback:(socket:TCPSocketInterface) => any) {
 		var addresses:ContactNodeAddressListInterface = contactNode.getAddresses();
 		var startAt:number = 0;
 		var maxIndex:number = addresses.length - 1;
@@ -296,7 +324,8 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 				if (++startAt <= maxIndex) {
 					connectToAddressByIndex(startAt, theCallback);
 				}
-			} else {
+			}
+			else {
 				callback(socket);
 			}
 		};
@@ -321,7 +350,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	private _onConfirmedSocket (identifier:string, socket:TCPSocketInterface):void {
 		var waiting:Array<WaitForSocket> = this._connectionWaitingList[identifier];
 		if (waiting) {
-			for (var i=0; i<waiting.length; i++) {
+			for (var i = 0; i < waiting.length; i++) {
 				var item:WaitForSocket = waiting[i];
 				clearTimeout(item.timeout);
 				item.callback(null, socket);
@@ -331,13 +360,13 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
-	private _callbackWaitingConnection(identifier:string, index:number, err:Error, sock:TCPSocketInterface):WaitForSocket {
+	private _callbackWaitingConnection (identifier:string, index:number, err:Error, sock:TCPSocketInterface):WaitForSocket {
 		var list:Array<WaitForSocket> = this._connectionWaitingList[identifier];
 		var item:WaitForSocket = null;
 		var _i:number = 0;
 		var retVal:WaitForSocket = null;
 
-		for (var i=0; i<list.length; i++) {
+		for (var i = 0; i < list.length; i++) {
 			if (list[i].index === index) {
 				item = list[i];
 				_i = i;
@@ -376,7 +405,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
-	private _fromIncomingPendingToConfirmed(newIdentifier:string, oldIdentifier:string, pending:IncomingPendingSocket):void {
+	private _fromIncomingPendingToConfirmed (newIdentifier:string, oldIdentifier:string, pending:IncomingPendingSocket):void {
 		var socket:TCPSocketInterface = pending.socket;
 		var outgoingPending:OutgoingPendingSocket = this._outgoingPendingSockets[newIdentifier];
 
@@ -395,10 +424,10 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._addToConfirmed(newIdentifier, 'incoming', socket);
 	}
 
-	private _addToConfirmed(identifier:string, direction:string, socket:TCPSocketInterface) {
+	private _addToConfirmed (identifier:string, direction:string, socket:TCPSocketInterface) {
 		var existingSocket = this._confirmedSockets[identifier];
 		var newConfirmedSocket:ConfirmedSocket = {
-			socket: socket,
+			socket   : socket,
 			direction: direction
 		};
 
@@ -423,34 +452,36 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this.emit('confirmedSocket', identifier, socket);
 	}
 
-	private _hookDestroyOnCloseToSocket(socket:TCPSocketInterface) {
+	private _hookDestroyOnCloseToSocket (socket:TCPSocketInterface) {
 		// remote close
 		socket.on('close', () => {
 			this._destroyConnection(socket);
 		});
 	}
 
-	private _identifierAndContactNodeMatch(identifier: string, node:ContactNodeInterface):boolean {
+	private _identifierAndContactNodeMatch (identifier:string, node:ContactNodeInterface):boolean {
 		return identifier === this._nodeToIdentifier(node);
 	}
 
-	private _nodeToIdentifier(node:ContactNodeInterface):string {
+	private _nodeToIdentifier (node:ContactNodeInterface):string {
 		return node.getId().toHexString();
 	}
 
-	private _onIncomingConnection(socket:TCPSocketInterface):void {
+	private _onIncomingConnection (socket:TCPSocketInterface):void {
 		var identifier:string = this._setTemporaryIdentifier(socket);
 		if (!this._incomingPendingSockets[identifier]) {
 			var pending:IncomingPendingSocket = {
-				socket: socket,
-				timeout: setTimeout(() => { this._destroyConnection(socket) }, this._incomingPendingTimeoutLength)
+				socket : socket,
+				timeout: setTimeout(() => {
+					this._destroyConnection(socket)
+				}, this._incomingPendingTimeoutLength)
 			};
 			this._incomingPendingSockets[identifier] = pending;
 			this._incomingDataPipeline.hookSocket(socket);
 		}
 	}
 
-	private _destroyConnection(socket:TCPSocketInterface, blockTerminationEvent?:boolean):void {
+	private _destroyConnection (socket:TCPSocketInterface, blockTerminationEvent?:boolean):void {
 		var identifier = socket.getIdentifier();
 		var incoming:IncomingPendingSocket = this._incomingPendingSockets[identifier];
 		var outgoing:OutgoingPendingSocket = this._outgoingPendingSockets[identifier];
@@ -478,18 +509,19 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
-	private _emitTerminatedEventByIdentifier(identifier:string) {
+	private _emitTerminatedEventByIdentifier (identifier:string) {
 		try {
 			var id = new Id(Id.byteBufferByHexString(identifier, 20), 160);
 			this.emit('terminatedConnection', id);
 		}
-		catch (e) {}
+		catch (e) {
+		}
 	}
 
-	private _destroyConnectionByIdentifier(identifier:string):void {
+	private _destroyConnectionByIdentifier (identifier:string):void {
 		var socket = null;
 		var it = ['_incomingPendingSockets', '_confirmedSockets'];
-		for (var i=0; i<3; i++) {
+		for (var i = 0; i < 3; i++) {
 			if (socket) {
 				break;
 			}
@@ -505,7 +537,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
-	private _setTemporaryIdentifier(socket:TCPSocketInterface):string {
+	private _setTemporaryIdentifier (socket:TCPSocketInterface):string {
 		var identifier:string = this._temporaryIdentifierPrefix + (++this._temporaryIdentifierCount);
 		socket.setIdentifier(identifier);
 
