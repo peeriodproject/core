@@ -220,178 +220,6 @@ var ProtocolConnectionManager = (function (_super) {
         });
     };
 
-    ProtocolConnectionManager.prototype._addToWaitingList = function (identifier, callback) {
-        var existing = this._connectionWaitingList[identifier];
-        var index = ++this._waitingListNum;
-
-        var waitFor = {
-            index: index,
-            callback: callback,
-            timeout: this._getConnectionWaitingListTimeout(identifier, index)
-        };
-
-        if (!existing) {
-            this._connectionWaitingList[identifier] = [];
-        }
-
-        this._connectionWaitingList[identifier].push(waitFor);
-    };
-
-    ProtocolConnectionManager.prototype._getConnectionWaitingListTimeout = function (identifier, index) {
-        var _this = this;
-        return setTimeout(function () {
-            _this._callbackWaitingConnection(identifier, index, new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
-        }, this._msToWaitForConnection);
-    };
-
-    ProtocolConnectionManager.prototype._getConfirmedSocketByIdentifier = function (identifier) {
-        var existing = this._confirmedSockets[identifier];
-        if (existing) {
-            return existing.socket;
-        }
-        return null;
-    };
-
-    ProtocolConnectionManager.prototype._initiateOutgoingConnection = function (contactNode) {
-        var _this = this;
-        var identifier = this._nodeToIdentifier(contactNode);
-
-        if (!this._outgoingPendingSockets[identifier]) {
-            var outgoingEntry = {
-                closeAtOnce: false
-            };
-
-            this._outgoingPendingSockets[identifier] = outgoingEntry;
-
-            this._tryToOutgoingConnectToNode(contactNode, function (socket) {
-                if (socket) {
-                    if (outgoingEntry.closeAtOnce) {
-                        socket.forceDestroy();
-                    } else {
-                        socket.setIdentifier(identifier);
-                        _this._incomingDataPipeline.hookSocket(socket);
-                        _this._addToConfirmed(identifier, 'outgoing', socket);
-                    }
-                }
-                delete _this._outgoingPendingSockets[identifier];
-            });
-        }
-    };
-
-    ProtocolConnectionManager.prototype._tryToOutgoingConnectToNode = function (contactNode, callback) {
-        var addresses = contactNode.getAddresses();
-        var startAt = 0;
-        var maxIndex = addresses.length - 1;
-        var tcpSocketHandler = this._tcpSocketHandler;
-
-        var connectToAddressByIndex = function (i, callback) {
-            var address = address[i];
-            tcpSocketHandler.connectTo(address.getPort(), address.getIp(), callback);
-        };
-        var theCallback = function (socket) {
-            if (!socket) {
-                if (++startAt <= maxIndex) {
-                    connectToAddressByIndex(startAt, theCallback);
-                }
-            } else {
-                callback(socket);
-            }
-        };
-
-        connectToAddressByIndex(startAt, theCallback);
-    };
-
-    ProtocolConnectionManager.prototype._setGlobalListeners = function () {
-        var _this = this;
-        this._incomingDataPipeline.on('message', function (identifier, message) {
-            _this._onMessage(identifier, message);
-        });
-
-        this._tcpSocketHandler.on('connected', function (socket, direction) {
-            if (direction === 'incoming') {
-                _this._onIncomingConnection(socket);
-            }
-        });
-
-        this.on('confirmedSocket', this._onConfirmedSocket);
-    };
-
-    ProtocolConnectionManager.prototype._onConfirmedSocket = function (identifier, socket) {
-        var waiting = this._connectionWaitingList[identifier];
-        if (waiting) {
-            for (var i = 0; i < waiting.length; i++) {
-                var item = waiting[i];
-                clearTimeout(item.timeout);
-                item.callback(null, socket);
-            }
-
-            delete this._connectionWaitingList[identifier];
-        }
-    };
-
-    ProtocolConnectionManager.prototype._callbackWaitingConnection = function (identifier, index, err, sock) {
-        var list = this._connectionWaitingList[identifier];
-        var item = null;
-        var _i = 0;
-        var retVal = null;
-
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].index === index) {
-                item = list[i];
-                _i = i;
-                break;
-            }
-        }
-
-        if (item) {
-            item.callback(err, sock);
-            retVal = this._connectionWaitingList[identifier].splice(_i, 1)[0];
-            if (this._connectionWaitingList[identifier].length === 0) {
-                delete this._connectionWaitingList[identifier];
-            }
-        }
-
-        return retVal;
-    };
-
-    ProtocolConnectionManager.prototype._onMessage = function (identifier, message) {
-        var propagateMessage = true;
-        var incomingPending = this._incomingPendingSockets[identifier];
-
-        if (incomingPending) {
-            var newIdentifier = this._nodeToIdentifier(message.getSender());
-            this._fromIncomingPendingToConfirmed(newIdentifier, identifier, incomingPending);
-        } else if (!(this._identifierAndContactNodeMatch(identifier, message.getSender()))) {
-            // does not seem to be the person it's supposed to be. we assume something is wrong here
-            // and destroy the connection.
-            propagateMessage = false;
-            this._destroyConnectionByIdentifier(identifier);
-        }
-
-        if (propagateMessage) {
-            this.emit('message', message);
-        }
-    };
-
-    ProtocolConnectionManager.prototype._fromIncomingPendingToConfirmed = function (newIdentifier, oldIdentifier, pending) {
-        var socket = pending.socket;
-        var outgoingPending = this._outgoingPendingSockets[newIdentifier];
-
-        if (pending.timeout) {
-            clearTimeout(pending.timeout);
-        }
-        delete this._incomingPendingSockets[oldIdentifier];
-
-        // check if any outgoing are pending
-        if (outgoingPending) {
-            outgoingPending.closeAtOnce = true;
-        }
-
-        socket.setIdentifier(newIdentifier);
-
-        this._addToConfirmed(newIdentifier, 'incoming', socket);
-    };
-
     ProtocolConnectionManager.prototype._addToConfirmed = function (identifier, direction, socket) {
         var existingSocket = this._confirmedSockets[identifier];
         var newConfirmedSocket = {
@@ -419,35 +247,46 @@ var ProtocolConnectionManager = (function (_super) {
         this.emit('confirmedSocket', identifier, socket);
     };
 
-    ProtocolConnectionManager.prototype._hookDestroyOnCloseToSocket = function (socket) {
-        var _this = this;
-        // remote close
-        socket.on('close', function () {
-            _this._destroyConnection(socket);
-        });
-    };
+    ProtocolConnectionManager.prototype._addToWaitingList = function (identifier, callback) {
+        var existing = this._connectionWaitingList[identifier];
+        var index = ++this._waitingListNum;
 
-    ProtocolConnectionManager.prototype._identifierAndContactNodeMatch = function (identifier, node) {
-        return identifier === this._nodeToIdentifier(node);
-    };
+        var waitFor = {
+            index: index,
+            callback: callback,
+            timeout: this._getConnectionWaitingListTimeout(identifier, index)
+        };
 
-    ProtocolConnectionManager.prototype._nodeToIdentifier = function (node) {
-        return node.getId().toHexString();
-    };
-
-    ProtocolConnectionManager.prototype._onIncomingConnection = function (socket) {
-        var _this = this;
-        var identifier = this._setTemporaryIdentifier(socket);
-        if (!this._incomingPendingSockets[identifier]) {
-            var pending = {
-                socket: socket,
-                timeout: setTimeout(function () {
-                    _this._destroyConnection(socket);
-                }, this._incomingPendingTimeoutLength)
-            };
-            this._incomingPendingSockets[identifier] = pending;
-            this._incomingDataPipeline.hookSocket(socket);
+        if (!existing) {
+            this._connectionWaitingList[identifier] = [];
         }
+
+        this._connectionWaitingList[identifier].push(waitFor);
+    };
+
+    ProtocolConnectionManager.prototype._callbackWaitingConnection = function (identifier, index, err, sock) {
+        var list = this._connectionWaitingList[identifier];
+        var item = null;
+        var _i = 0;
+        var retVal = null;
+
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].index === index) {
+                item = list[i];
+                _i = i;
+                break;
+            }
+        }
+
+        if (item) {
+            item.callback(err, sock);
+            retVal = this._connectionWaitingList[identifier].splice(_i, 1)[0];
+            if (this._connectionWaitingList[identifier].length === 0) {
+                delete this._connectionWaitingList[identifier];
+            }
+        }
+
+        return retVal;
     };
 
     ProtocolConnectionManager.prototype._destroyConnection = function (socket, blockTerminationEvent) {
@@ -478,14 +317,6 @@ var ProtocolConnectionManager = (function (_super) {
         }
     };
 
-    ProtocolConnectionManager.prototype._emitTerminatedEventByIdentifier = function (identifier) {
-        try  {
-            var id = new Id(Id.byteBufferByHexString(identifier, 20), 160);
-            this.emit('terminatedConnection', id);
-        } catch (e) {
-        }
-    };
-
     ProtocolConnectionManager.prototype._destroyConnectionByIdentifier = function (identifier) {
         var socket = null;
         var it = ['_incomingPendingSockets', '_confirmedSockets'];
@@ -504,11 +335,180 @@ var ProtocolConnectionManager = (function (_super) {
         }
     };
 
+    ProtocolConnectionManager.prototype._emitTerminatedEventByIdentifier = function (identifier) {
+        try  {
+            var id = new Id(Id.byteBufferByHexString(identifier, 20), 160);
+            this.emit('terminatedConnection', id);
+        } catch (e) {
+        }
+    };
+
+    ProtocolConnectionManager.prototype._fromIncomingPendingToConfirmed = function (newIdentifier, oldIdentifier, pending) {
+        var socket = pending.socket;
+        var outgoingPending = this._outgoingPendingSockets[newIdentifier];
+
+        if (pending.timeout) {
+            clearTimeout(pending.timeout);
+        }
+        delete this._incomingPendingSockets[oldIdentifier];
+
+        // check if any outgoing are pending
+        if (outgoingPending) {
+            outgoingPending.closeAtOnce = true;
+        }
+
+        socket.setIdentifier(newIdentifier);
+
+        this._addToConfirmed(newIdentifier, 'incoming', socket);
+    };
+
+    ProtocolConnectionManager.prototype._getConfirmedSocketByIdentifier = function (identifier) {
+        var existing = this._confirmedSockets[identifier];
+        if (existing) {
+            return existing.socket;
+        }
+        return null;
+    };
+
+    ProtocolConnectionManager.prototype._getConnectionWaitingListTimeout = function (identifier, index) {
+        var _this = this;
+        return setTimeout(function () {
+            _this._callbackWaitingConnection(identifier, index, new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
+        }, this._msToWaitForConnection);
+    };
+
+    ProtocolConnectionManager.prototype._hookDestroyOnCloseToSocket = function (socket) {
+        var _this = this;
+        // remote close
+        socket.on('close', function () {
+            _this._destroyConnection(socket);
+        });
+    };
+
+    ProtocolConnectionManager.prototype._identifierAndContactNodeMatch = function (identifier, node) {
+        return identifier === this._nodeToIdentifier(node);
+    };
+
+    ProtocolConnectionManager.prototype._initiateOutgoingConnection = function (contactNode) {
+        var _this = this;
+        var identifier = this._nodeToIdentifier(contactNode);
+
+        if (!this._outgoingPendingSockets[identifier]) {
+            var outgoingEntry = {
+                closeAtOnce: false
+            };
+
+            this._outgoingPendingSockets[identifier] = outgoingEntry;
+
+            this._tryToOutgoingConnectToNode(contactNode, function (socket) {
+                if (socket) {
+                    if (outgoingEntry.closeAtOnce) {
+                        socket.forceDestroy();
+                    } else {
+                        socket.setIdentifier(identifier);
+                        _this._incomingDataPipeline.hookSocket(socket);
+                        _this._addToConfirmed(identifier, 'outgoing', socket);
+                    }
+                }
+                delete _this._outgoingPendingSockets[identifier];
+            });
+        }
+    };
+
+    ProtocolConnectionManager.prototype._nodeToIdentifier = function (node) {
+        return node.getId().toHexString();
+    };
+
+    ProtocolConnectionManager.prototype._onConfirmedSocket = function (identifier, socket) {
+        var waiting = this._connectionWaitingList[identifier];
+        if (waiting) {
+            for (var i = 0; i < waiting.length; i++) {
+                var item = waiting[i];
+                clearTimeout(item.timeout);
+                item.callback(null, socket);
+            }
+
+            delete this._connectionWaitingList[identifier];
+        }
+    };
+
+    ProtocolConnectionManager.prototype._onIncomingConnection = function (socket) {
+        var _this = this;
+        var identifier = this._setTemporaryIdentifier(socket);
+        if (!this._incomingPendingSockets[identifier]) {
+            var pending = {
+                socket: socket,
+                timeout: setTimeout(function () {
+                    _this._destroyConnection(socket);
+                }, this._incomingPendingTimeoutLength)
+            };
+            this._incomingPendingSockets[identifier] = pending;
+            this._incomingDataPipeline.hookSocket(socket);
+        }
+    };
+
+    ProtocolConnectionManager.prototype._onMessage = function (identifier, message) {
+        var propagateMessage = true;
+        var incomingPending = this._incomingPendingSockets[identifier];
+
+        if (incomingPending) {
+            var newIdentifier = this._nodeToIdentifier(message.getSender());
+            this._fromIncomingPendingToConfirmed(newIdentifier, identifier, incomingPending);
+        } else if (!(this._identifierAndContactNodeMatch(identifier, message.getSender()))) {
+            // does not seem to be the person it's supposed to be. we assume something is wrong here
+            // and destroy the connection.
+            propagateMessage = false;
+            this._destroyConnectionByIdentifier(identifier);
+        }
+
+        if (propagateMessage) {
+            this.emit('message', message);
+        }
+    };
+
+    ProtocolConnectionManager.prototype._setGlobalListeners = function () {
+        var _this = this;
+        this._incomingDataPipeline.on('message', function (identifier, message) {
+            _this._onMessage(identifier, message);
+        });
+
+        this._tcpSocketHandler.on('connected', function (socket, direction) {
+            if (direction === 'incoming') {
+                _this._onIncomingConnection(socket);
+            }
+        });
+
+        this.on('confirmedSocket', this._onConfirmedSocket);
+    };
+
     ProtocolConnectionManager.prototype._setTemporaryIdentifier = function (socket) {
         var identifier = this._temporaryIdentifierPrefix + (++this._temporaryIdentifierCount);
         socket.setIdentifier(identifier);
 
         return identifier;
+    };
+
+    ProtocolConnectionManager.prototype._tryToOutgoingConnectToNode = function (contactNode, callback) {
+        var addresses = contactNode.getAddresses();
+        var startAt = 0;
+        var maxIndex = addresses.length - 1;
+        var tcpSocketHandler = this._tcpSocketHandler;
+
+        var connectToAddressByIndex = function (i, callback) {
+            var address = address[i];
+            tcpSocketHandler.connectTo(address.getPort(), address.getIp(), callback);
+        };
+        var theCallback = function (socket) {
+            if (!socket) {
+                if (++startAt <= maxIndex) {
+                    connectToAddressByIndex(startAt, theCallback);
+                }
+            } else {
+                callback(socket);
+            }
+        };
+
+        connectToAddressByIndex(startAt, theCallback);
     };
     return ProtocolConnectionManager;
 })(events.EventEmitter);

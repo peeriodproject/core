@@ -251,179 +251,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		});
 	}
 
-	private _addToWaitingList (identifier:string, callback:(err:Error, socket:TCPSocketInterface) => any):void {
-		var existing = this._connectionWaitingList[identifier];
-		var index = ++this._waitingListNum;
-
-		var waitFor:WaitForSocket = {
-			index   : index,
-			callback: callback,
-			timeout : this._getConnectionWaitingListTimeout(identifier, index)
-		};
-
-		if (!existing) {
-			this._connectionWaitingList[identifier] = [];
-		}
-
-		this._connectionWaitingList[identifier].push(waitFor);
-	}
-
-	private _getConnectionWaitingListTimeout (identifier:string, index:number):number {
-
-		return setTimeout(() => {
-			this._callbackWaitingConnection(identifier, index, new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
-		}, this._msToWaitForConnection);
-	}
-
-	private _getConfirmedSocketByIdentifier (identifier:string):TCPSocketInterface {
-		var existing = this._confirmedSockets[identifier];
-		if (existing) {
-			return existing.socket;
-		}
-		return null;
-	}
-
-	private _initiateOutgoingConnection (contactNode:ContactNodeInterface):void {
-		var identifier:string = this._nodeToIdentifier(contactNode);
-
-		if (!this._outgoingPendingSockets[identifier]) {
-			var outgoingEntry:OutgoingPendingSocket = {
-				closeAtOnce: false
-			};
-
-			this._outgoingPendingSockets[identifier] = outgoingEntry;
-
-			this._tryToOutgoingConnectToNode(contactNode, (socket:TCPSocketInterface) => {
-				if (socket) {
-					if (outgoingEntry.closeAtOnce) {
-						socket.forceDestroy();
-					}
-					else {
-						socket.setIdentifier(identifier);
-						this._incomingDataPipeline.hookSocket(socket);
-						this._addToConfirmed(identifier, 'outgoing', socket);
-					}
-				}
-				delete this._outgoingPendingSockets[identifier];
-			});
-		}
-	}
-
-	private _tryToOutgoingConnectToNode (contactNode, callback:(socket:TCPSocketInterface) => any) {
-		var addresses:ContactNodeAddressListInterface = contactNode.getAddresses();
-		var startAt:number = 0;
-		var maxIndex:number = addresses.length - 1;
-		var tcpSocketHandler:TCPSocketHandlerInterface = this._tcpSocketHandler;
-
-		var connectToAddressByIndex = function (i:number, callback:(socket:TCPSocketInterface) => any) {
-			var address:ContactNodeAddressInterface = address[i];
-			tcpSocketHandler.connectTo(address.getPort(), address.getIp(), callback);
-		};
-		var theCallback = function (socket:TCPSocketInterface) {
-			if (!socket) {
-				if (++startAt <= maxIndex) {
-					connectToAddressByIndex(startAt, theCallback);
-				}
-			}
-			else {
-				callback(socket);
-			}
-		};
-
-		connectToAddressByIndex(startAt, theCallback);
-	}
-
-	private _setGlobalListeners ():void {
-		this._incomingDataPipeline.on('message', (identifier:string, message:ReadableMessageInterface) => {
-			this._onMessage(identifier, message);
-		});
-
-		this._tcpSocketHandler.on('connected', (socket:TCPSocketInterface, direction:string) => {
-			if (direction === 'incoming') {
-				this._onIncomingConnection(socket);
-			}
-		});
-
-		this.on('confirmedSocket', this._onConfirmedSocket);
-	}
-
-	private _onConfirmedSocket (identifier:string, socket:TCPSocketInterface):void {
-		var waiting:Array<WaitForSocket> = this._connectionWaitingList[identifier];
-		if (waiting) {
-			for (var i = 0; i < waiting.length; i++) {
-				var item:WaitForSocket = waiting[i];
-				clearTimeout(item.timeout);
-				item.callback(null, socket);
-			}
-
-			delete this._connectionWaitingList[identifier];
-		}
-	}
-
-	private _callbackWaitingConnection (identifier:string, index:number, err:Error, sock:TCPSocketInterface):WaitForSocket {
-		var list:Array<WaitForSocket> = this._connectionWaitingList[identifier];
-		var item:WaitForSocket = null;
-		var _i:number = 0;
-		var retVal:WaitForSocket = null;
-
-		for (var i = 0; i < list.length; i++) {
-			if (list[i].index === index) {
-				item = list[i];
-				_i = i;
-				break;
-			}
-		}
-
-		if (item) {
-			item.callback(err, sock);
-			retVal = this._connectionWaitingList[identifier].splice(_i, 1)[0];
-			if (this._connectionWaitingList[identifier].length === 0) {
-				delete this._connectionWaitingList[identifier];
-			}
-		}
-
-		return retVal;
-	}
-
-	private _onMessage (identifier:string, message:ReadableMessageInterface):void {
-		var propagateMessage:boolean = true;
-		var incomingPending:IncomingPendingSocket = this._incomingPendingSockets[identifier];
-
-		if (incomingPending) {
-			var newIdentifier:string = this._nodeToIdentifier(message.getSender());
-			this._fromIncomingPendingToConfirmed(newIdentifier, identifier, incomingPending);
-		}
-		else if (!(this._identifierAndContactNodeMatch(identifier, message.getSender()))) {
-			// does not seem to be the person it's supposed to be. we assume something is wrong here
-			// and destroy the connection.
-			propagateMessage = false;
-			this._destroyConnectionByIdentifier(identifier);
-		}
-
-		if (propagateMessage) {
-			this.emit('message', message);
-		}
-	}
-
-	private _fromIncomingPendingToConfirmed (newIdentifier:string, oldIdentifier:string, pending:IncomingPendingSocket):void {
-		var socket:TCPSocketInterface = pending.socket;
-		var outgoingPending:OutgoingPendingSocket = this._outgoingPendingSockets[newIdentifier];
-
-		if (pending.timeout) {
-			clearTimeout(pending.timeout);
-		}
-		delete this._incomingPendingSockets[oldIdentifier];
-
-		// check if any outgoing are pending
-		if (outgoingPending) {
-			outgoingPending.closeAtOnce = true;
-		}
-
-		socket.setIdentifier(newIdentifier);
-
-		this._addToConfirmed(newIdentifier, 'incoming', socket);
-	}
-
 	private _addToConfirmed (identifier:string, direction:string, socket:TCPSocketInterface) {
 		var existingSocket = this._confirmedSockets[identifier];
 		var newConfirmedSocket:ConfirmedSocket = {
@@ -452,33 +279,46 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this.emit('confirmedSocket', identifier, socket);
 	}
 
-	private _hookDestroyOnCloseToSocket (socket:TCPSocketInterface) {
-		// remote close
-		socket.on('close', () => {
-			this._destroyConnection(socket);
-		});
-	}
+	private _addToWaitingList (identifier:string, callback:(err:Error, socket:TCPSocketInterface) => any):void {
+		var existing = this._connectionWaitingList[identifier];
+		var index = ++this._waitingListNum;
 
-	private _identifierAndContactNodeMatch (identifier:string, node:ContactNodeInterface):boolean {
-		return identifier === this._nodeToIdentifier(node);
-	}
+		var waitFor:WaitForSocket = {
+			index   : index,
+			callback: callback,
+			timeout : this._getConnectionWaitingListTimeout(identifier, index)
+		};
 
-	private _nodeToIdentifier (node:ContactNodeInterface):string {
-		return node.getId().toHexString();
-	}
-
-	private _onIncomingConnection (socket:TCPSocketInterface):void {
-		var identifier:string = this._setTemporaryIdentifier(socket);
-		if (!this._incomingPendingSockets[identifier]) {
-			var pending:IncomingPendingSocket = {
-				socket : socket,
-				timeout: setTimeout(() => {
-					this._destroyConnection(socket)
-				}, this._incomingPendingTimeoutLength)
-			};
-			this._incomingPendingSockets[identifier] = pending;
-			this._incomingDataPipeline.hookSocket(socket);
+		if (!existing) {
+			this._connectionWaitingList[identifier] = [];
 		}
+
+		this._connectionWaitingList[identifier].push(waitFor);
+	}
+
+	private _callbackWaitingConnection (identifier:string, index:number, err:Error, sock:TCPSocketInterface):WaitForSocket {
+		var list:Array<WaitForSocket> = this._connectionWaitingList[identifier];
+		var item:WaitForSocket = null;
+		var _i:number = 0;
+		var retVal:WaitForSocket = null;
+
+		for (var i = 0; i < list.length; i++) {
+			if (list[i].index === index) {
+				item = list[i];
+				_i = i;
+				break;
+			}
+		}
+
+		if (item) {
+			item.callback(err, sock);
+			retVal = this._connectionWaitingList[identifier].splice(_i, 1)[0];
+			if (this._connectionWaitingList[identifier].length === 0) {
+				delete this._connectionWaitingList[identifier];
+			}
+		}
+
+		return retVal;
 	}
 
 	private _destroyConnection (socket:TCPSocketInterface, blockTerminationEvent?:boolean):void {
@@ -509,15 +349,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
-	private _emitTerminatedEventByIdentifier (identifier:string) {
-		try {
-			var id = new Id(Id.byteBufferByHexString(identifier, 20), 160);
-			this.emit('terminatedConnection', id);
-		}
-		catch (e) {
-		}
-	}
-
 	private _destroyConnectionByIdentifier (identifier:string):void {
 		var socket = null;
 		var it = ['_incomingPendingSockets', '_confirmedSockets'];
@@ -537,11 +368,180 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
+	private _emitTerminatedEventByIdentifier (identifier:string) {
+		try {
+			var id = new Id(Id.byteBufferByHexString(identifier, 20), 160);
+			this.emit('terminatedConnection', id);
+		}
+		catch (e) {
+		}
+	}
+
+	private _fromIncomingPendingToConfirmed (newIdentifier:string, oldIdentifier:string, pending:IncomingPendingSocket):void {
+		var socket:TCPSocketInterface = pending.socket;
+		var outgoingPending:OutgoingPendingSocket = this._outgoingPendingSockets[newIdentifier];
+
+		if (pending.timeout) {
+			clearTimeout(pending.timeout);
+		}
+		delete this._incomingPendingSockets[oldIdentifier];
+
+		// check if any outgoing are pending
+		if (outgoingPending) {
+			outgoingPending.closeAtOnce = true;
+		}
+
+		socket.setIdentifier(newIdentifier);
+
+		this._addToConfirmed(newIdentifier, 'incoming', socket);
+	}
+
+	private _getConfirmedSocketByIdentifier (identifier:string):TCPSocketInterface {
+		var existing = this._confirmedSockets[identifier];
+		if (existing) {
+			return existing.socket;
+		}
+		return null;
+	}
+
+	private _getConnectionWaitingListTimeout (identifier:string, index:number):number {
+
+		return setTimeout(() => {
+			this._callbackWaitingConnection(identifier, index, new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
+		}, this._msToWaitForConnection);
+	}
+
+	private _hookDestroyOnCloseToSocket (socket:TCPSocketInterface) {
+		// remote close
+		socket.on('close', () => {
+			this._destroyConnection(socket);
+		});
+	}
+
+	private _identifierAndContactNodeMatch (identifier:string, node:ContactNodeInterface):boolean {
+		return identifier === this._nodeToIdentifier(node);
+	}
+
+	private _initiateOutgoingConnection (contactNode:ContactNodeInterface):void {
+		var identifier:string = this._nodeToIdentifier(contactNode);
+
+		if (!this._outgoingPendingSockets[identifier]) {
+			var outgoingEntry:OutgoingPendingSocket = {
+				closeAtOnce: false
+			};
+
+			this._outgoingPendingSockets[identifier] = outgoingEntry;
+
+			this._tryToOutgoingConnectToNode(contactNode, (socket:TCPSocketInterface) => {
+				if (socket) {
+					if (outgoingEntry.closeAtOnce) {
+						socket.forceDestroy();
+					}
+					else {
+						socket.setIdentifier(identifier);
+						this._incomingDataPipeline.hookSocket(socket);
+						this._addToConfirmed(identifier, 'outgoing', socket);
+					}
+				}
+				delete this._outgoingPendingSockets[identifier];
+			});
+		}
+	}
+
+	private _nodeToIdentifier (node:ContactNodeInterface):string {
+		return node.getId().toHexString();
+	}
+
+	private _onConfirmedSocket (identifier:string, socket:TCPSocketInterface):void {
+		var waiting:Array<WaitForSocket> = this._connectionWaitingList[identifier];
+		if (waiting) {
+			for (var i = 0; i < waiting.length; i++) {
+				var item:WaitForSocket = waiting[i];
+				clearTimeout(item.timeout);
+				item.callback(null, socket);
+			}
+
+			delete this._connectionWaitingList[identifier];
+		}
+	}
+
+	private _onIncomingConnection (socket:TCPSocketInterface):void {
+		var identifier:string = this._setTemporaryIdentifier(socket);
+		if (!this._incomingPendingSockets[identifier]) {
+			var pending:IncomingPendingSocket = {
+				socket : socket,
+				timeout: setTimeout(() => {
+					this._destroyConnection(socket)
+				}, this._incomingPendingTimeoutLength)
+			};
+			this._incomingPendingSockets[identifier] = pending;
+			this._incomingDataPipeline.hookSocket(socket);
+		}
+	}
+
+	private _onMessage (identifier:string, message:ReadableMessageInterface):void {
+		var propagateMessage:boolean = true;
+		var incomingPending:IncomingPendingSocket = this._incomingPendingSockets[identifier];
+
+		if (incomingPending) {
+			var newIdentifier:string = this._nodeToIdentifier(message.getSender());
+			this._fromIncomingPendingToConfirmed(newIdentifier, identifier, incomingPending);
+		}
+		else if (!(this._identifierAndContactNodeMatch(identifier, message.getSender()))) {
+			// does not seem to be the person it's supposed to be. we assume something is wrong here
+			// and destroy the connection.
+			propagateMessage = false;
+			this._destroyConnectionByIdentifier(identifier);
+		}
+
+		if (propagateMessage) {
+			this.emit('message', message);
+		}
+	}
+
+	private _setGlobalListeners ():void {
+		this._incomingDataPipeline.on('message', (identifier:string, message:ReadableMessageInterface) => {
+			this._onMessage(identifier, message);
+		});
+
+		this._tcpSocketHandler.on('connected', (socket:TCPSocketInterface, direction:string) => {
+			if (direction === 'incoming') {
+				this._onIncomingConnection(socket);
+			}
+		});
+
+		this.on('confirmedSocket', this._onConfirmedSocket);
+	}
+
 	private _setTemporaryIdentifier (socket:TCPSocketInterface):string {
 		var identifier:string = this._temporaryIdentifierPrefix + (++this._temporaryIdentifierCount);
 		socket.setIdentifier(identifier);
 
 		return identifier;
+	}
+
+	private _tryToOutgoingConnectToNode (contactNode, callback:(socket:TCPSocketInterface) => any) {
+		var addresses:ContactNodeAddressListInterface = contactNode.getAddresses();
+		var startAt:number = 0;
+		var maxIndex:number = addresses.length - 1;
+		var tcpSocketHandler:TCPSocketHandlerInterface = this._tcpSocketHandler;
+
+		var connectToAddressByIndex = function (i:number, callback:(socket:TCPSocketInterface) => any) {
+			var address:ContactNodeAddressInterface = address[i];
+			tcpSocketHandler.connectTo(address.getPort(), address.getIp(), callback);
+		};
+		var theCallback = function (socket:TCPSocketInterface) {
+			if (!socket) {
+				if (++startAt <= maxIndex) {
+					connectToAddressByIndex(startAt, theCallback);
+				}
+			}
+			else {
+				callback(socket);
+			}
+		};
+
+		connectToAddressByIndex(startAt, theCallback);
 	}
 
 }
