@@ -50,11 +50,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Total/Average Lines <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code" data-original-title="SLOC" data-container="body"></i></h2>
-      <p class="stat">3191 / 38</p>
+      <p class="stat">4054 / 45</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Average Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index" data-container="body"></i></a></h2>
-      <p class="stat">92.48</p>
+      <p class="stat">92.66</p>
     </div>
   </div>
 </div>
@@ -289,9 +289,9 @@
           <span class="col-md-4 file"><a class="file-link" href="./files/core_net_tcp_TCPSocket_js/index.html">core/net/tcp/TCPSocket.js</a></span>
         <span class="col-md-8 file-chart js-file-chart"
               data-lint="1"
-              data-sloc="160"
-              data-bugs="1.15"
-              data-complexity="8"
+              data-sloc="181"
+              data-bugs="1.28"
+              data-complexity="9"
           ></span>
         </div>
       </li>
@@ -315,8 +315,8 @@
           <span class="col-md-4 file"><a class="file-link" href="./files/core_net_tcp_TCPSocketHandler_js/index.html">core/net/tcp/TCPSocketHandler.js</a></span>
         <span class="col-md-8 file-chart js-file-chart"
               data-lint="1"
-              data-sloc="271"
-              data-bugs="1.83"
+              data-sloc="285"
+              data-bugs="1.94"
               data-complexity="14"
           ></span>
         </div>
@@ -429,12 +429,12 @@
       <li class="col-md-12">
         <div class="row">
           <span class="fade-left fadeout visible-large"></span>
-          <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_PluginLoader_js/index.html">core/plugin/PluginLoader.js</a></span>
+          <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_PluginFinder_js/index.html">core/plugin/PluginFinder.js</a></span>
         <span class="col-md-8 file-chart js-file-chart"
               data-lint="0"
-              data-sloc="53"
-              data-bugs="0.20"
-              data-complexity="1"
+              data-sloc="213"
+              data-bugs="1.18"
+              data-complexity="20"
           ></span>
         </div>
       </li>
@@ -442,7 +442,20 @@
       <li class="col-md-12">
         <div class="row">
           <span class="fade-left fadeout visible-large"></span>
-          <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_interfaces_PluginCallback_js/index.html">core/plugin/interfaces/PluginCallback.js</a></span>
+          <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_PluginManager_js/index.html">core/plugin/PluginManager.js</a></span>
+        <span class="col-md-8 file-chart js-file-chart"
+              data-lint="1"
+              data-sloc="158"
+              data-bugs="0.76"
+              data-complexity="11"
+          ></span>
+        </div>
+      </li>
+      
+      <li class="col-md-12">
+        <div class="row">
+          <span class="fade-left fadeout visible-large"></span>
+          <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_interfaces_PluginCallbackInterface_js/index.html">core/plugin/interfaces/PluginCallbackInterface.js</a></span>
         <span class="col-md-8 file-chart js-file-chart"
               data-lint="0"
               data-sloc="1"
@@ -455,7 +468,7 @@
       <li class="col-md-12">
         <div class="row">
           <span class="fade-left fadeout visible-large"></span>
-          <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_interfaces_PluginCallbackInterface_js/index.html">core/plugin/interfaces/PluginCallbackInterface.js</a></span>
+          <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_interfaces_PluginFinderInterface_js/index.html">core/plugin/interfaces/PluginFinderInterface.js</a></span>
         <span class="col-md-8 file-chart js-file-chart"
               data-lint="0"
               data-sloc="1"
@@ -494,19 +507,6 @@
       <li class="col-md-12">
         <div class="row">
           <span class="fade-left fadeout visible-large"></span>
-          <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_interfaces_PluginLoaderInterface_js/index.html">core/plugin/interfaces/PluginLoaderInterface.js</a></span>
-        <span class="col-md-8 file-chart js-file-chart"
-              data-lint="0"
-              data-sloc="1"
-              data-bugs="0.00"
-              data-complexity="1"
-          ></span>
-        </div>
-      </li>
-      
-      <li class="col-md-12">
-        <div class="row">
-          <span class="fade-left fadeout visible-large"></span>
           <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_interfaces_PluginManagerInterface_js/index.html">core/plugin/interfaces/PluginManagerInterface.js</a></span>
         <span class="col-md-8 file-chart js-file-chart"
               data-lint="0"
@@ -521,6 +521,71 @@
         <div class="row">
           <span class="fade-left fadeout visible-large"></span>
           <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_interfaces_PluginMapInterface_js/index.html">core/plugin/interfaces/PluginMapInterface.js</a></span>
+        <span class="col-md-8 file-chart js-file-chart"
+              data-lint="0"
+              data-sloc="1"
+              data-bugs="0.00"
+              data-complexity="1"
+          ></span>
+        </div>
+      </li>
+      
+      <li class="col-md-12">
+        <div class="row">
+          <span class="fade-left fadeout visible-large"></span>
+          <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_interfaces_PluginNameListInterface_js/index.html">core/plugin/interfaces/PluginNameListInterface.js</a></span>
+        <span class="col-md-8 file-chart js-file-chart"
+              data-lint="0"
+              data-sloc="1"
+              data-bugs="0.00"
+              data-complexity="1"
+          ></span>
+        </div>
+      </li>
+      
+      <li class="col-md-12">
+        <div class="row">
+          <span class="fade-left fadeout visible-large"></span>
+          <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_interfaces_PluginPathListInterface_js/index.html">core/plugin/interfaces/PluginPathListInterface.js</a></span>
+        <span class="col-md-8 file-chart js-file-chart"
+              data-lint="0"
+              data-sloc="1"
+              data-bugs="0.00"
+              data-complexity="1"
+          ></span>
+        </div>
+      </li>
+      
+      <li class="col-md-12">
+        <div class="row">
+          <span class="fade-left fadeout visible-large"></span>
+          <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_interfaces_PluginStateInterface_js/index.html">core/plugin/interfaces/PluginStateInterface.js</a></span>
+        <span class="col-md-8 file-chart js-file-chart"
+              data-lint="0"
+              data-sloc="1"
+              data-bugs="0.00"
+              data-complexity="1"
+          ></span>
+        </div>
+      </li>
+      
+      <li class="col-md-12">
+        <div class="row">
+          <span class="fade-left fadeout visible-large"></span>
+          <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_interfaces_PluginStateObjectInterface_js/index.html">core/plugin/interfaces/PluginStateObjectInterface.js</a></span>
+        <span class="col-md-8 file-chart js-file-chart"
+              data-lint="0"
+              data-sloc="1"
+              data-bugs="0.00"
+              data-complexity="1"
+          ></span>
+        </div>
+      </li>
+      
+      <li class="col-md-12">
+        <div class="row">
+          <span class="fade-left fadeout visible-large"></span>
+          <span class="col-md-4 file"><a class="file-link" href="./files/core_plugin_interfaces_PluginStateObjectListInterface_js/index.html">core/plugin/interfaces/PluginStateObjectListInterface.js</a></span>
         <span class="col-md-8 file-chart js-file-chart"
               data-lint="0"
               data-sloc="1"
@@ -549,9 +614,9 @@
           <span class="col-md-4 file"><a class="file-link" href="./files/core_protocol_messages_IncomingDataPipeline_js/index.html">core/protocol/messages/IncomingDataPipeline.js</a></span>
         <span class="col-md-8 file-chart js-file-chart"
               data-lint="1"
-              data-sloc="336"
-              data-bugs="1.99"
-              data-complexity="27"
+              data-sloc="338"
+              data-bugs="2.00"
+              data-complexity="28"
           ></span>
         </div>
       </li>
@@ -692,9 +757,9 @@
           <span class="col-md-4 file"><a class="file-link" href="./files/core_protocol_net_ProtocolConnectionManager_js/index.html">core/protocol/net/ProtocolConnectionManager.js</a></span>
         <span class="col-md-8 file-chart js-file-chart"
               data-lint="1"
-              data-sloc="200"
-              data-bugs="1.74"
-              data-complexity="20"
+              data-sloc="694"
+              data-bugs="3.96"
+              data-complexity="41"
           ></span>
         </div>
       </li>
@@ -793,6 +858,32 @@
       <li class="col-md-12">
         <div class="row">
           <span class="fade-left fadeout visible-large"></span>
+          <span class="col-md-4 file"><a class="file-link" href="./files/core_protocol_net_interfaces_WaitForSocket_js/index.html">core/protocol/net/interfaces/WaitForSocket.js</a></span>
+        <span class="col-md-8 file-chart js-file-chart"
+              data-lint="0"
+              data-sloc="1"
+              data-bugs="0.00"
+              data-complexity="1"
+          ></span>
+        </div>
+      </li>
+      
+      <li class="col-md-12">
+        <div class="row">
+          <span class="fade-left fadeout visible-large"></span>
+          <span class="col-md-4 file"><a class="file-link" href="./files/core_protocol_net_interfaces_WaitForSocketList_js/index.html">core/protocol/net/interfaces/WaitForSocketList.js</a></span>
+        <span class="col-md-8 file-chart js-file-chart"
+              data-lint="0"
+              data-sloc="1"
+              data-bugs="0.00"
+              data-complexity="1"
+          ></span>
+        </div>
+      </li>
+      
+      <li class="col-md-12">
+        <div class="row">
+          <span class="fade-left fadeout visible-large"></span>
           <span class="col-md-4 file"><a class="file-link" href="./files/core_topology_Bucket_js/index.html">core/topology/Bucket.js</a></span>
         <span class="col-md-8 file-chart js-file-chart"
               data-lint="0"
@@ -874,9 +965,9 @@
           <span class="col-md-4 file"><a class="file-link" href="./files/core_topology_ContactNodeFactory_js/index.html">core/topology/ContactNodeFactory.js</a></span>
         <span class="col-md-8 file-chart js-file-chart"
               data-lint="0"
-              data-sloc="81"
-              data-bugs="0.52"
-              data-complexity="4"
+              data-sloc="87"
+              data-bugs="0.60"
+              data-complexity="6"
           ></span>
         </div>
       </li>
@@ -900,8 +991,8 @@
           <span class="col-md-4 file"><a class="file-link" href="./files/core_topology_RoutingTable_js/index.html">core/topology/RoutingTable.js</a></span>
         <span class="col-md-8 file-chart js-file-chart"
               data-lint="1"
-              data-sloc="312"
-              data-bugs="2.02"
+              data-sloc="313"
+              data-bugs="2.04"
               data-complexity="21"
           ></span>
         </div>
@@ -1119,6 +1210,19 @@
         <div class="row">
           <span class="fade-left fadeout visible-large"></span>
           <span class="col-md-4 file"><a class="file-link" href="./files/core_utils_interfaces_ClosableAsyncInterface_js/index.html">core/utils/interfaces/ClosableAsyncInterface.js</a></span>
+        <span class="col-md-8 file-chart js-file-chart"
+              data-lint="0"
+              data-sloc="1"
+              data-bugs="0.00"
+              data-complexity="1"
+          ></span>
+        </div>
+      </li>
+      
+      <li class="col-md-12">
+        <div class="row">
+          <span class="fade-left fadeout visible-large"></span>
+          <span class="col-md-4 file"><a class="file-link" href="./files/core_utils_interfaces_ClosableAsyncOptions_js/index.html">core/utils/interfaces/ClosableAsyncOptions.js</a></span>
         <span class="col-md-8 file-chart js-file-chart"
               data-lint="0"
               data-sloc="1"

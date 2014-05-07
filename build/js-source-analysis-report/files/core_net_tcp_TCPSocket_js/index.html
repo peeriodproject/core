@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">75.09</p>
+      <p class="stat">73.55</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">160</p>
+      <p class="stat">181</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">33.58</p>
+      <p class="stat">36.63</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.15</p>
+      <p class="stat">1.28</p>
     </div>
   </div>
 </div>
@@ -137,12 +137,23 @@ var TCPSocket = (function (_super) {
         * @member {net.Socket} TCPSocket~_socket
         */
         this._socket = null;
+        /**
+        * The options passed in the constructor (for reference)
+        *
+        * @member {core.net.TCPSocketOptions} TCPSocket~_constructorOpts
+        */
+        this._constructorOpts = null;
 
         if (!(socket &amp;&amp; socket instanceof net.Socket)) {
             throw new Error(&#039;TCPSocket.constructor: Invalid or no socket specified&#039;);
         }
 
         this.setSocket(socket);
+
+        this._constructorOpts = opts;
+
+        // disable nagle algorithm
+        socket.setNoDelay();
 
         // set keep-alive
         if (opts.doKeepAlive) {
@@ -162,9 +173,15 @@ var TCPSocket = (function (_super) {
     };
 
     TCPSocket.prototype.forceDestroy = function () {
+        this._closeOnTimeout = false;
         this.getSocket().removeAllListeners();
-        this.getSocket().end();
+        try  {
+            this.getSocket().end();
+            this.getSocket().destroy();
+        } catch (e) {
+        }
         this._socket = null;
+        this.emit(&#039;destroy&#039;);
         this.removeAllListeners();
     };
 
@@ -184,11 +201,15 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.onTimeout = function () {
         if (this._closeOnTimeout) {
-            this.forceDestroy();
+            this.end();
         }
     };
 
     TCPSocket.prototype.setCloseOnTimeout = function (flag) {
+        if (!this._closeOnTimeout &amp;&amp; flag) {
+            this.getSocket().setTimeout(this._constructorOpts.idleConnectionKillTimeout * 1000);
+        }
+
         this._closeOnTimeout = flag;
     };
 

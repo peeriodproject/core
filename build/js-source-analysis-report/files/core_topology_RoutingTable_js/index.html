@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.97</p>
+      <p class="stat">68.90</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">312</p>
+      <p class="stat">313</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">70.11</p>
+      <p class="stat">69.69</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.02</p>
+      <p class="stat">2.04</p>
     </div>
   </div>
 </div>
@@ -90,7 +90,8 @@
 
 <div class="container">
   <div class="row">
-    <textarea id="file-source" class="col-md-12">var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
+    <textarea id="file-source" class="col-md-12">//import JSONConfig = require(&#039;../config/JSONConfig&#039;);
+var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
 
 /**
 * Creates a routing table with the given number of k-buckets
@@ -166,7 +167,6 @@ var RoutingTable = (function () {
         this._bucketStore = bucketStore;
         this._contactNodeFactory = contactNodeFactory;
 
-        // todo merge opts &amp; defaults
         this._options = ObjectUtils.extend(defaults, options);
         ;
 
@@ -223,8 +223,7 @@ var RoutingTable = (function () {
         };
 
         var crawlBucket = function (crawlBucketKey, crawlReverse, onCrawlEnd) {
-            //console.log(&#039;bucket&#039;, crawlBucketKey);
-            _this._getBucket(crawlBucketKey).getAll(function (err, contacts) {
+            var bucketGetAllCallback = function (err, contacts) {
                 if (contacts.length) {
                     for (var i in contacts) {
                         var contact = contacts[i];
@@ -278,7 +277,10 @@ var RoutingTable = (function () {
                         onCrawlEnd();
                     }
                 }
-            });
+            };
+
+            //console.log(&#039;bucket&#039;, crawlBucketKey);
+            _this._getBucket(crawlBucketKey).getAll(bucketGetAllCallback);
         };
 
         crawlBucket(startBucketKey, false, function () {
