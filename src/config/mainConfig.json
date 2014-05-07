@@ -21,7 +21,8 @@
     },
     "plugin": {
         "folderPath": "plugin",
-        "pluginConfigName": "plugin.json"
+        "pluginConfigName": "plugin.json",
+        "pluginManagerStateConfig": "pluginManager.json"
     },
     "app": {
         "dataPath": "dataPathFolder"
