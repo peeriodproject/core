@@ -1,6 +1,6 @@
 import events = require('events');
 
-import ObjectConfig = require('../../config/ObjectConfig');
+import ConfigInterface = require('../../config/interfaces/ConfigInterface');
 import IdInterface = require('../../topology/interfaces/IdInterface');
 import Id = require('../../topology/Id');
 import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInterface');
@@ -123,7 +123,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 */
 	private _waitingListNum:number = 0;
 
-	constructor (config:ObjectConfig, tcpSocketHandler:TCPSocketHandlerInterface) {
+	constructor (config:ConfigInterface, tcpSocketHandler:TCPSocketHandlerInterface) {
 		super();
 
 		this._tcpSocketHandler = tcpSocketHandler;
