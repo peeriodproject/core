@@ -1,0 +1,28 @@
+{
+    "plugins": {
+        "idle": [
+            {
+                "name": "foo bar idle",
+                "path": "/path",
+                "hash": "123",
+                "since": 123456
+            }
+        ],
+        "inactive": [
+            {
+                "name": "foo bar inactive",
+                "path": "/path",
+                "hash": "123",
+                "since": 123456
+            }
+        ],
+        "active": [
+            {
+                "name": "foo bar active",
+                "path": "/path",
+                "hash": "123",
+                "since": 123456
+            }
+        ]
+    }
+}

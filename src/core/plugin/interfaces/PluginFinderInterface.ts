@@ -5,7 +5,7 @@ import PluginNameListInterface = require('./PluginNameListInterface');
 import PluginPathListInterface = require('./PluginPathListInterface');
 
 /**
- * The `PluginLoaderInterface` can crawl the specified plugin folder and will find new possible plugins by looking for
+ * The `PluginFinderInterface` can crawl the specified plugin folder and will find new possible plugins by looking for
  * folders that includes a __plugin-manifest file__. In the next step the {@link core.plugin.PluginManagerInterface} can
  * trigger the {@link core.plugin.PluginValidator} to analyse the plugin folder. It also provides an interface to update
  * a list of folder names that should be ignored within the lookup process.
@@ -31,7 +31,7 @@ interface PluginLoaderInterface {
 	/**
 	 * Returns the paths of unloaded plugins found within the {@link core.plugin.PluginLoader#getPluginFolderPath}
 	 *
-	 * @method core.plugin.PluginLoader#findPlugins
+	 * @method core.plugin.PluginFinder#findPlugins
 	 *
 	 * @param {Function} callback
 	 */
@@ -47,7 +47,7 @@ interface PluginLoaderInterface {
 	/**
 	 * Creates the plugin-folder path of the application it if nessessary and returns the path in a callback.
 	 *
-	 * @method core.plugin.PluginLoader#getPluginFolderPath
+	 * @method core.plugin.PluginFinder#getPluginFolderPath
 	 *
 	 * @param {Function} callback
 	 */
