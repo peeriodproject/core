@@ -14,7 +14,7 @@ import TCPSocket = require('../../../src/core/net/tcp/TCPSocket');
 import ReadableMessageFactory = require('../../../src/core/protocol/messages/ReadableMessageFactory');
 import ReadableMessage = require('../../../src/core/protocol/messages/ReadableMessage');
 
-describe('CORE --> PROTOCOL --> IncomingDataPipeline @current', function () {
+describe('CORE --> PROTOCOL --> IncomingDataPipeline', function () {
 
 	var sandbox:SinonSandbox;
 	var readableMessageFactoryStub:any;
