@@ -20,6 +20,8 @@ import OutgoingPendingSocket = require('./interfaces/OutgoingPendingSocket');
 import OutgoingPendingSocketList = require('./interfaces/OutgoingPendingSocketList');
 import ConfirmedSocket = require('./interfaces/ConfirmedSocket');
 import ConfirmedSocketList = require('./interfaces/ConfirmedSocketList');
+import WaitForSocket = require('./interfaces/WaitForSocket');
+import WaitForSocketList = require('./interfaces/WaitForSocketList');
 
 
 /**
@@ -46,6 +48,10 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 	private _keepSocketOpenList:Array<string> = [];
 
+	private _connectionWaitingList:WaitForSocketList = {};
+
+	private _msToWaitForConnection:number = 0;
+
 	constructor (config:ObjectConfig, tcpSocketHandler:TCPSocketHandlerInterface) {
 		super();
 
@@ -59,11 +65,12 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		);
 
 		this._incomingPendingTimeoutLength = config.get('protocol.net.msToWaitForIncomingMessage');
+		this._msToWaitForConnection = config.get('protocol.net.maxSecondsToWaitForConnection') * 1000;
 
 		this._setGlobalListeners();
 	}
 
-	public keepSocketsOpenFromNode(contactNode:ContactNodeInterface) {
+	public keepSocketsOpenFromNode (contactNode:ContactNodeInterface):void {
 		var identifier:string = this._nodeToIdentifier(contactNode);
 
 		if (this._keepSocketOpenList.indexOf(identifier) > -1) {
@@ -78,7 +85,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
-	public keepSocketNoLongerOpenFromNode(contactNode:ContactNodeInterface) {
+	public keepSocketsNoLongerOpenFromNode (contactNode:ContactNodeInterface):void {
 		var identifier:string = this._nodeToIdentifier(contactNode);
 		var i:number = this._keepSocketOpenList.indexOf(identifier);
 
@@ -89,6 +96,73 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			}
 			this._keepSocketOpenList.splice(i, 1);
 		}
+	}
+
+	public getConfirmedSocketById (id:IdInterface):TCPSocketInterface {
+		return this._getConfirmedSocketByIdentifier(id.toHexString());
+	}
+
+	public getConfirmedSocketByContactNode (node:ContactNodeInterface):TCPSocketInterface {
+		return this._getConfirmedSocketByIdentifier(this._nodeToIdentifier(node));
+	}
+
+	public writeBufferTo(node:ContactNodeInterface, buffer:Buffer, callback?:(err:Error) => any):void {
+		this.obtainConnectionTo(node, function (err:Error, socket:TCPSocketInterface) {
+			if (err) {
+				if (callback) {
+					callback(err);
+				}
+			}
+			else {
+				socket.writeBuffer(buffer, function () {
+					if (callback) {
+						callback(null);
+					}
+				});
+			}
+		});
+	}
+
+	public obtainConnectionTo(node:ContactNodeInterface, callback:(err:Error, socket:TCPSocketInterface) => any):void {
+		var identifier = this._nodeToIdentifier(node);
+		var existing = this._getConfirmedSocketByIdentifier(identifier);
+
+		if (existing) {
+			callback(null, existing);
+		}
+		else {
+			this._addToWaitingList(identifier, callback);
+			this._initiateOutgoingConnection(node);
+		}
+	}
+
+	private _addToWaitingList(identifier:string, callback:(err:Error, socket:TCPSocketInterface) => any):void {
+		var existing = this._connectionWaitingList[identifier];
+
+		if (existing) {
+			clearTimeout(existing.timeout);
+			delete this._connectionWaitingList[identifier];
+		}
+
+		this._connectionWaitingList[identifier] = <WaitForSocket> {
+			callback: callback,
+			timeout: this._getConnectionWaitingListTimeout(identifier)
+		};
+	}
+
+	private _getConnectionWaitingListTimeout(identifier:string):number {
+		return setTimeout(() => {
+			this._connectionWaitingList[identifier].callback(new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
+			delete this._connectionWaitingList[identifier];
+		}, this._msToWaitForConnection);
+	}
+
+	private _getConfirmedSocketByIdentifier(identifier:string):TCPSocketInterface {
+		var existing = this._confirmedSockets[identifier];
+		if (existing) {
+			return existing.socket;
+		}
+		return null;
 	}
 
 	private _initiateOutgoingConnection (contactNode:ContactNodeInterface):void {
@@ -150,6 +224,17 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 				this._onIncomingConnection(socket);
 			}
 		});
+
+		this.on('confirmedSocket', this._onConfirmedSocket);
+	}
+
+	private _onConfirmedSocket (identifier:string, socket:TCPSocketInterface):void {
+		var waiting:WaitForSocket = this._connectionWaitingList[identifier];
+		if (waiting) {
+			clearTimeout(waiting.timeout);
+			delete this._connectionWaitingList[identifier];
+			waiting.callback(null, socket);
+		}
 	}
 
 	private _onMessage (identifier:string, message:ReadableMessageInterface):void {
@@ -210,14 +295,17 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 		this._hookDestroyOnCloseToSocket(socket);
 
-		if (this._keepSocketOpenList.indexOf(identifier)) {
+		if (this._keepSocketOpenList.indexOf(identifier) > -1) {
 			socket.setCloseOnTimeout(false);
 		}
 
 		this._confirmedSockets[identifier] = newConfirmedSocket;
+
+		this.emit('confirmedSocket', identifier, socket);
 	}
 
 	private _hookDestroyOnCloseToSocket(socket:TCPSocketInterface) {
+		// remote close
 		socket.on('close', () => {
 			this._destroyConnection(socket);
 		});

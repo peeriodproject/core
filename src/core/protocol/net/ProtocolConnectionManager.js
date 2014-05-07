@@ -34,12 +34,15 @@ var ProtocolConnectionManager = (function (_super) {
         this._incomingDataPipeline = null;
         this._incomingPendingTimeoutLength = 0;
         this._keepSocketOpenList = [];
+        this._connectionWaitingList = {};
+        this._msToWaitForConnection = 0;
 
         this._tcpSocketHandler = tcpSocketHandler;
 
         this._incomingDataPipeline = new IncomingDataPipeline(config.get('protocol.messages.maxByteLengthPerMessage'), MessageByteCheatsheet.messageEnd, config.get('prococol.messages.msToKeepNonAddressableMemory'), new ReadableMessageFactory());
 
         this._incomingPendingTimeoutLength = config.get('protocol.net.msToWaitForIncomingMessage');
+        this._msToWaitForConnection = config.get('protocol.net.maxSecondsToWaitForConnection') * 1000;
 
         this._setGlobalListeners();
     }
@@ -57,7 +60,7 @@ var ProtocolConnectionManager = (function (_super) {
         }
     };
 
-    ProtocolConnectionManager.prototype.keepSocketNoLongerOpenFromNode = function (contactNode) {
+    ProtocolConnectionManager.prototype.keepSocketsNoLongerOpenFromNode = function (contactNode) {
         var identifier = this._nodeToIdentifier(contactNode);
         var i = this._keepSocketOpenList.indexOf(identifier);
 
@@ -68,6 +71,72 @@ var ProtocolConnectionManager = (function (_super) {
             }
             this._keepSocketOpenList.splice(i, 1);
         }
+    };
+
+    ProtocolConnectionManager.prototype.getConfirmedSocketById = function (id) {
+        return this._getConfirmedSocketByIdentifier(id.toHexString());
+    };
+
+    ProtocolConnectionManager.prototype.getConfirmedSocketByContactNode = function (node) {
+        return this._getConfirmedSocketByIdentifier(this._nodeToIdentifier(node));
+    };
+
+    ProtocolConnectionManager.prototype.writeBufferTo = function (node, buffer, callback) {
+        this.obtainConnectionTo(node, function (err, socket) {
+            if (err) {
+                if (callback) {
+                    callback(err);
+                }
+            } else {
+                socket.writeBuffer(buffer, function () {
+                    if (callback) {
+                        callback(null);
+                    }
+                });
+            }
+        });
+    };
+
+    ProtocolConnectionManager.prototype.obtainConnectionTo = function (node, callback) {
+        var identifier = this._nodeToIdentifier(node);
+        var existing = this._getConfirmedSocketByIdentifier(identifier);
+
+        if (existing) {
+            callback(null, existing);
+        } else {
+            this._addToWaitingList(identifier, callback);
+            this._initiateOutgoingConnection(node);
+        }
+    };
+
+    ProtocolConnectionManager.prototype._addToWaitingList = function (identifier, callback) {
+        var existing = this._connectionWaitingList[identifier];
+
+        if (existing) {
+            clearTimeout(existing.timeout);
+            delete this._connectionWaitingList[identifier];
+        }
+
+        this._connectionWaitingList[identifier] = {
+            callback: callback,
+            timeout: this._getConnectionWaitingListTimeout(identifier)
+        };
+    };
+
+    ProtocolConnectionManager.prototype._getConnectionWaitingListTimeout = function (identifier) {
+        var _this = this;
+        return setTimeout(function () {
+            _this._connectionWaitingList[identifier].callback(new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
+            delete _this._connectionWaitingList[identifier];
+        }, this._msToWaitForConnection);
+    };
+
+    ProtocolConnectionManager.prototype._getConfirmedSocketByIdentifier = function (identifier) {
+        var existing = this._confirmedSockets[identifier];
+        if (existing) {
+            return existing.socket;
+        }
+        return null;
     };
 
     ProtocolConnectionManager.prototype._initiateOutgoingConnection = function (contactNode) {
@@ -130,6 +199,17 @@ var ProtocolConnectionManager = (function (_super) {
                 _this._onIncomingConnection(socket);
             }
         });
+
+        this.on('confirmedSocket', this._onConfirmedSocket);
+    };
+
+    ProtocolConnectionManager.prototype._onConfirmedSocket = function (identifier, socket) {
+        var waiting = this._connectionWaitingList[identifier];
+        if (waiting) {
+            clearTimeout(waiting.timeout);
+            delete this._connectionWaitingList[identifier];
+            waiting.callback(null, socket);
+        }
     };
 
     ProtocolConnectionManager.prototype._onMessage = function (identifier, message) {
@@ -188,15 +268,18 @@ var ProtocolConnectionManager = (function (_super) {
 
         this._hookDestroyOnCloseToSocket(socket);
 
-        if (this._keepSocketOpenList.indexOf(identifier)) {
+        if (this._keepSocketOpenList.indexOf(identifier) > -1) {
             socket.setCloseOnTimeout(false);
         }
 
         this._confirmedSockets[identifier] = newConfirmedSocket;
+
+        this.emit('confirmedSocket', identifier, socket);
     };
 
     ProtocolConnectionManager.prototype._hookDestroyOnCloseToSocket = function (socket) {
         var _this = this;
+        // remote close
         socket.on('close', function () {
             _this._destroyConnection(socket);
         });
