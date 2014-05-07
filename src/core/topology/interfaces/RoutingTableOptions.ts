@@ -1,11 +1,11 @@
+import ClosableAsyncOptions = require('../../utils/interfaces/ClosableAsyncOptions');
+
 /**
  * @interface
  * @class core.topology.RoutingTableOptions
  */
-interface RoutingTableOptions {
+interface RoutingTableOptions extends ClosableAsyncOptions {
 	closeOnProcessExit?: boolean;
-	onCloseCallback?: (err:Error) => any;
-	onOpenCallback?: (err:Error) => any;
 }
 
 export = RoutingTableOptions;

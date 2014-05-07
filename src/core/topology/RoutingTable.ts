@@ -11,7 +11,7 @@ import RoutingTableOptions = require('./interfaces/RoutingTableOptions');
 
 import BucketStore = require('./BucketStore');
 import Bucket = require('./Bucket');
-import JSONConfig = require('../config/JSONConfig');
+//import JSONConfig = require('../config/JSONConfig');
 import ObjectUtils = require('../utils/ObjectUtils');
 
 /**
@@ -96,7 +96,6 @@ class RoutingTable implements RoutingTableInterface {
 		this._bucketStore = bucketStore;
 		this._contactNodeFactory = contactNodeFactory;
 
-		// todo merge opts & defaults
 		this._options = ObjectUtils.extend(defaults, options);
 		;
 

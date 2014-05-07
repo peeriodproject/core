@@ -1,3 +1,4 @@
+//import JSONConfig = require('../config/JSONConfig');
 var ObjectUtils = require('../utils/ObjectUtils');
 
 /**
@@ -74,7 +75,6 @@ var RoutingTable = (function () {
         this._bucketStore = bucketStore;
         this._contactNodeFactory = contactNodeFactory;
 
-        // todo merge opts & defaults
         this._options = ObjectUtils.extend(defaults, options);
         ;
 
