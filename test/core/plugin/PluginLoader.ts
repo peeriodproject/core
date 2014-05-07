@@ -103,7 +103,7 @@ describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
 	});
 
 	it('should correctly create the plugin folder if it does not exist', function (done) {
-		var fixturePath:string = 'plugins/getPluginFolderTest';
+		var fixturePath:string = 'plugin/plugins/getPluginFolderTest';
 		var pluginLoader:PluginLoaderInterface = createPluginLoaderWithPluginFolder(fixturePath);
 
 		pluginLoader.getPluginFolderPath(function (err:Error, folderPath:string) {
@@ -115,7 +115,7 @@ describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
 	});
 
 	it('should correctly find unloaded plugins', function (done) {
-		var fixturePath:string = 'plugins/unloadedPluginsFolderTest';
+		var fixturePath:string = 'plugin/plugins/unloadedPluginsFolderTest';
 		var pluginLoader:PluginLoaderInterface = createPluginLoaderWithPluginFolder(fixturePath);
 
 		pluginLoader.addPluginFolderNamesToIgnoreList(['activePlugin'], function () {
