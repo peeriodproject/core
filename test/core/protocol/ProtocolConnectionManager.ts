@@ -201,7 +201,6 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
 
 		manager.obtainConnectionTo(goodContactNode, function (err, socket) {
 			if (socket && socket.getIdentifier() === 'fe3626caca6c84fa4e5d323b6a26b897582c57f9') {
-				
 				if (Object.keys(manager.getOutgoingPendingSocketList()).length === 0) {
 					if (manager.getConfirmedSocketList()['fe3626caca6c84fa4e5d323b6a26b897582c57f9'].socket === socket) done();
 				}
