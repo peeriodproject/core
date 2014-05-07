@@ -186,7 +186,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
         });
     });
 
-    describe('should correctly return the closest contact nodes @joern', function () {
+    describe('should correctly return the closest contact nodes', function () {
         var databasePath = testUtils.getFixturePath('core/topology/bucketstore/db');
 
         var bucketFactory;
