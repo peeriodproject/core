@@ -154,9 +154,7 @@ class RoutingTable implements RoutingTableInterface {
 
 
 		var crawlBucket = (crawlBucketKey:number, crawlReverse:boolean, onCrawlEnd:Function) => {
-			//console.log('bucket', crawlBucketKey);
-
-			this._getBucket(crawlBucketKey).getAll((err:Error, contacts:ContactNodeListInterface) => {
+			var bucketGetAllCallback = (err:Error, contacts:ContactNodeListInterface) => {
 				if (contacts.length) {
 					for (var i in contacts) {
 						var contact:ContactNodeInterface = contacts[i];
@@ -218,7 +216,10 @@ class RoutingTable implements RoutingTableInterface {
 						onCrawlEnd();
 					}
 				}
-			});
+			};
+			//console.log('bucket', crawlBucketKey);
+
+			this._getBucket(crawlBucketKey).getAll(bucketGetAllCallback);
 		};
 
 		crawlBucket(startBucketKey, false, function () {
