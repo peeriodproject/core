@@ -25,32 +25,103 @@ import WaitForSocketList = require('./interfaces/WaitForSocketList');
 
 
 /**
- * @class core.protocol.ProtocolConnectionManager
+ * ProtocolConnectionManager implementation.
+ * Detailed structuring is found in the interface comments.
  *
+ * @class core.protocol.ProtocolConnectionManager
  * @extends events.EventEmitter
  * @implements core.protocol.ProtocolConnectionManagerInterface
  *
+ * @param {core.config.ObjectConfig} config Default configuration
+ * @param {core.net.tcp.TCPSocketHandlerInterface} Fully bootstrapped TCPSocket handler to use.
  */
 class ProtocolConnectionManager extends events.EventEmitter implements ProtocolConnectionManagerInterface {
 
-	private _temporaryIdentifierPrefix = '_temp';
-	private _temporaryIdentifierCount:number = 0;
-
-	private _tcpSocketHandler:TCPSocketHandlerInterface = null;
-
+	/**
+	 * List to keep track of confirmed sockets.
+	 *
+	 * @member {core.protocol.net.ConfirmedSocketList} core.protocol.net.ProtocolConnectionManager~_confirmedSockets
+	 */
 	private _confirmedSockets:ConfirmedSocketList = {};
-	private _outgoingPendingSockets:OutgoingPendingSocketList = {};
-	private _incomingPendingSockets:IncomingPendingSocketList = {};
 
-	private _incomingDataPipeline:IncomingDataPipelineInterface = null;
-
-	private _incomingPendingTimeoutLength:number = 0;
-
-	private _keepSocketOpenList:Array<string> = [];
-
+	/**
+	 * List to keep track of waiting connections. Stores callbacks, timeouts and an indexing number under
+	 * one socket identifier.
+	 *
+	 * @member {core.protocol.net.WaitForSocketList} core.protocol.net.ProtocolConnectionManager~_connectionWaitingList
+	 */
 	private _connectionWaitingList:WaitForSocketList = {};
 
+	/**
+	 * The data pipeline sockets get hooked/unhooked to/from.
+	 *
+	 * @member {core.protocol.messages.IncomingDataPipelineInterface} core.protocol.net.ProtocolConnectionManager~_incomingDataPipeline
+	 */
+	private _incomingDataPipeline:IncomingDataPipelineInterface = null;
+
+	/**
+	 * Stores the incoming sockets which haven't been assigned a valid identifier. Store also a timeout which destroys
+	 * the socket if it is elapsed and couldn't be assiged an ID.
+	 *
+	 * @member {core.protocol.net.IncomingPendingSocketList} core.protocol.net.ProtocolConnectionManager~_incomingPendingSocketList
+	 */
+	private _incomingPendingSockets:IncomingPendingSocketList = {};
+
+	/**
+	 * Number of milliseconds to wait for a valid message until a non-assignable socket gets destroyed.
+	 *
+	 * @member {number} core.protocol.net.ProtocolConnectionManager~_incomingPendingTimeoutLength
+	 */
+	private _incomingPendingTimeoutLength:number = 0;
+
+	/**
+	 * List of identifiers whose sockets will not be closed on being idle.
+	 *
+	 * @member {string} core.protocol.net.ProtocolConnectionManager~_keepSocketOpenList
+	 */
+	private _keepSocketOpenList:Array<string> = [];
+
+	/**
+	 * The number of milliseconds to wait for a socket connection to a node until it is marked as unsuccessful.
+	 *
+	 * @member {number} core.protocol.net.ProtocolConnectionManager~_msToWaitForConnection
+	 */
 	private _msToWaitForConnection:number = 0;
+
+	/**
+	 * List to kee track of outgoing connections. Holds the `closeAtOnce` flag (see interface description).
+	 *
+	 * @member {core.protoocol.netOutgoingPendingSocketList} core.protocol.net.ProtocolConnectionManager~_outgoingPendingSocketList
+	 */
+	private _outgoingPendingSockets:OutgoingPendingSocketList = {};
+
+	/**
+	 * The TCP socket handler which passes the sockets and does the networking stuff.
+	 *
+	 * @member {core.net.tcp.TCPSocketHandlerInterface} core.protocol.net.ProtocolConnectionManager~_tcpSocketHandler
+	 */
+	private _tcpSocketHandler:TCPSocketHandlerInterface = null;
+
+	/**
+	 * Simple number which gets increased everytime to make temporary identifiers unique.
+	 *
+	 * @member {number} core.protocol.net.ProtocolConnectionManager~_temporaryIdentifierCount
+	 */
+	private _temporaryIdentifierCount:number = 0;
+
+	/**
+	 * Prefix for temporary identifiers on incoming sockets.
+	 *
+	 * @member {string} core.protocol.net.ProtocolConnectionManager~_temporaryIdentifierPrefix
+	 */
+	private _temporaryIdentifierPrefix = '_temp';
+
+	/**
+	 * Simple number which gets increased everytime to make waiting list indices unique.
+	 *
+	 * @member {number} core.protocol.net.ProtocolConnectionManager~_waitingListNum
+	 */
+	private _waitingListNum:number = 0;
 
 	constructor (config:ObjectConfig, tcpSocketHandler:TCPSocketHandlerInterface) {
 		super();
@@ -68,6 +139,22 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._msToWaitForConnection = config.get('protocol.net.maxSecondsToWaitForConnection') * 1000;
 
 		this._setGlobalListeners();
+	}
+
+	public getOutgoingPendingSocketList ():OutgoingPendingSocketList {
+		return this._outgoingPendingSockets;
+	}
+
+	public getIncomingPendingSocketList ():IncomingPendingSocketList {
+		return this._incomingPendingSockets;
+	}
+
+	public getConfirmedSocketList ():ConfirmedSocketList {
+		return this._confirmedSockets;
+	}
+
+	public getWaitForSocketList ():WaitForSocketList {
+		return this._connectionWaitingList;
 	}
 
 	public keepSocketsOpenFromNode (contactNode:ContactNodeInterface):void {
@@ -138,22 +225,25 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 	private _addToWaitingList(identifier:string, callback:(err:Error, socket:TCPSocketInterface) => any):void {
 		var existing = this._connectionWaitingList[identifier];
+		var index = ++this._waitingListNum;
 
-		if (existing) {
-			clearTimeout(existing.timeout);
-			delete this._connectionWaitingList[identifier];
+		var waitFor:WaitForSocket = {
+			index: index,
+			callback: callback,
+			timeout: this._getConnectionWaitingListTimeout(identifier, index)
+		};
+
+		if (!existing) {
+			this._connectionWaitingList[identifier] = [];
 		}
 
-		this._connectionWaitingList[identifier] = <WaitForSocket> {
-			callback: callback,
-			timeout: this._getConnectionWaitingListTimeout(identifier)
-		};
+		this._connectionWaitingList[identifier].push(waitFor);
 	}
 
-	private _getConnectionWaitingListTimeout(identifier:string):number {
+	private _getConnectionWaitingListTimeout(identifier:string, index:number):number {
+
 		return setTimeout(() => {
-			this._connectionWaitingList[identifier].callback(new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
-			delete this._connectionWaitingList[identifier];
+			this._callbackWaitingConnection(identifier, index, new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
 		}, this._msToWaitForConnection);
 	}
 
@@ -229,12 +319,41 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	}
 
 	private _onConfirmedSocket (identifier:string, socket:TCPSocketInterface):void {
-		var waiting:WaitForSocket = this._connectionWaitingList[identifier];
+		var waiting:Array<WaitForSocket> = this._connectionWaitingList[identifier];
 		if (waiting) {
-			clearTimeout(waiting.timeout);
+			for (var i=0; i<waiting.length; i++) {
+				var item:WaitForSocket = waiting[i];
+				clearTimeout(item.timeout);
+				item.callback(null, socket);
+			}
+
 			delete this._connectionWaitingList[identifier];
-			waiting.callback(null, socket);
 		}
+	}
+
+	private _callbackWaitingConnection(identifier:string, index:number, err:Error, sock:TCPSocketInterface):WaitForSocket {
+		var list:Array<WaitForSocket> = this._connectionWaitingList[identifier];
+		var item:WaitForSocket = null;
+		var _i:number = 0;
+		var retVal:WaitForSocket = null;
+
+		for (var i=0; i<list.length; i++) {
+			if (list[i].index === index) {
+				item = list[i];
+				_i = i;
+				break;
+			}
+		}
+
+		if (item) {
+			item.callback(err, sock);
+			retVal = this._connectionWaitingList[identifier].splice(_i, 1)[0];
+			if (this._connectionWaitingList[identifier].length === 0) {
+				delete this._connectionWaitingList[identifier];
+			}
+		}
+
+		return retVal;
 	}
 
 	private _onMessage (identifier:string, message:ReadableMessageInterface):void {

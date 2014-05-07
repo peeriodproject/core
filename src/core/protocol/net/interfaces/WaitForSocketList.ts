@@ -5,7 +5,7 @@ import WaitForSocket = require('./WaitForSocket');
  * @class core.protocol.net.WaitForSocketList
  */
 interface WaitForSocketList {
-	[identifier:string]:WaitForSocket;
+	[identifier:string]:Array<WaitForSocket>;
 }
 
 export = WaitForSocketList;
