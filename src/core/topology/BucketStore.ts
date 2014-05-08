@@ -101,7 +101,8 @@ class BucketStore implements BucketStoreInterface {
 		return (this.get(bucketKey, id) !== null);
 	}
 
-	public debug ():void {
+	// todo reompve debug method...
+	/*public debug ():void {
 		var txn:lmdb.Txn = this._beginReadOnlyTransaction();
 		var cursor:lmdb.Cursor = this._getCursor(txn);
 
@@ -114,7 +115,7 @@ class BucketStore implements BucketStoreInterface {
 
 		cursor.close();
 		txn.commit();
-	}
+	}*/
 
 	public get (bucketKey:string, id:Buffer):ContactNodeObjectInterface {
 		var txn:lmdb.Txn = this._beginReadOnlyTransaction();
@@ -379,6 +380,8 @@ class BucketStore implements BucketStoreInterface {
 	}
 
 	/**
+	 * We'll use this method eventually in the future when node-lmdb updates it's internall class from SlowBuffer to teh new
+	 * node Buffer implementation.
 	 *
 	 * @method core.topology.BucketStore~_getPropertyKey
 	 *
@@ -386,9 +389,9 @@ class BucketStore implements BucketStoreInterface {
 	 * @param {string} propertyName The name of the property
 	 * @returns {string}
 	 */
-	private _getPropertyKey(id:Buffer, propertyName:string):string {
+	/*private _getPropertyKey(id:Buffer, propertyName:string):string {
 		return this._getIdKey(id) + '-' + propertyName;
-	}
+	}*/
 
 }
 

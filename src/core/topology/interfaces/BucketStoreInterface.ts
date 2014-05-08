@@ -50,13 +50,6 @@ interface BucketStoreInterface extends ClosableInterface {
 	contains (bucketKey:string, id:Buffer):boolean;
 
 	/**
-	 * Debug method
-	 *
-	 * @method core.topology.BucketStoreInterface#debug
-	 */
-	debug ():void;
-
-	/**
 	 * Returns the object stored for the specified bucket/id combination as JSON-Object with sorted keys.
 	 *
 	 * todo json example
