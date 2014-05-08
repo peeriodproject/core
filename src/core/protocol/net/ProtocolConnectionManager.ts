@@ -177,6 +177,17 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	/**
 	 * Testing purposes only. Should not be used in production.
 	 *
+	 * @method {core.protocol.net.ProtocolConnectionManager#getConfirmedSocketList
+	 *
+	 * @returns {Array<string>}
+	 */
+	public getKeepOpenList ():Array<string> {
+		return this._keepSocketOpenList;
+	}
+
+	/**
+	 * Testing purposes only. Should not be used in production.
+	 *
 	 * @method {core.protocol.net.ProtocolConnectionManager#getWaitForSocketList
 	 *
 	 * @returns {WaitForSocketList}
