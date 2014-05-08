@@ -149,6 +149,17 @@ var ProtocolConnectionManager = (function (_super) {
     /**
     * Testing purposes only. Should not be used in production.
     *
+    * @method {core.protocol.net.ProtocolConnectionManager#getConfirmedSocketList
+    *
+    * @returns {Array<string>}
+    */
+    ProtocolConnectionManager.prototype.getKeepOpenList = function () {
+        return this._keepSocketOpenList;
+    };
+
+    /**
+    * Testing purposes only. Should not be used in production.
+    *
     * @method {core.protocol.net.ProtocolConnectionManager#getWaitForSocketList
     *
     * @returns {WaitForSocketList}
