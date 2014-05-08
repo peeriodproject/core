@@ -4,19 +4,29 @@ import ContactNodeInterface = require('./ContactNodeInterface');
 import ContactNodeListInterface = require('./ContactNodeListInterface');
 
 /**
- * RoutingTable Interface
+ * The RoutingTable manages the Buckets where contact nodes are stored.
+ * It creates `topology.bitLength` [buckets]{@link core.topology.BucketInterface} and stores incoming contact nodes
+ * with the help of {@link core.topology.IdInterface#differsInHighestBit} in the responsible bucket.
  *
- * - creates k buckes
- * - provides a single entry point for contact nodes which should be stored within a bucket.
+ * It also provides a single function to [get contact nodes]{@link core.topology.RoutingTableInterface#getContactNodes}
+ * out of the bucket as well as [getting closest nodes]{@link core.topology.RoutingTableInterface#getClosestContactNodes}
+ * to a given Id.
  *
  * @interface
  * @class core.topology.RoutingTableInterface
- * @extends core.utils.ClosableInterface
+ * @extends core.utils.ClosableAsyncInterface
  */
 interface RoutingTableInterface extends ClosableAsyncInterface {
 
 	/**
-	 * Returns the `topology.k` closest nodes to the specified id
+	 * Returns up to `topology.k` closest contact nodes in sorted order to the specified Id. It will only return less
+	 * than `topology.k`contact nodes if no more contact nodes are known and should exclude the given `excludeId` from
+	 * the results.
+	 *
+	 * To speed up the lookup process this method should start at the `responsible bucket` for the given id and walk all
+	 * the way down to bucket 0. If not enough contact nodes were found, the search continues at the `responsible bucket + 1`.
+	 * From there, the search continues bucket by bucket, and stops as soon as enough contact nodes were found, as we
+	 * distance ourselves with each bucket.
 	 *
 	 * @method core.topology.RoutingTableInterface#getClosestContactNodes
 	 *
@@ -37,8 +47,7 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	getContactNode (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void;
 
 	/**
-	 * Updates the specified contact node according to the protocol.
-	 * This should be the main entry point to the routing table whenever a new peer shows up.
+	 * Updates the specified contact node
 	 *
 	 * @method core.topology.RoutingTableInterface#updateContactNode
 	 *
