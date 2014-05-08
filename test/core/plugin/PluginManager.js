@@ -35,9 +35,9 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
 
     it('should correctly instantiate PluginManager without error', function (done) {
         var config = createConfig();
-        var pluginLoader = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
 
-        (new PluginManager(config, pluginLoader, {
+        (new PluginManager(config, pluginFinder, {
             onOpenCallback: function () {
                 done();
             }
@@ -46,8 +46,8 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
 
     it('should correctly call the onOpen and onClose callback', function (done) {
         var config = createConfig();
-        var pluginLoader = testUtils.stubPublicApi(sandbox, PluginFinder);
-        var pluginManager = new PluginManager(config, pluginLoader, {
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginManager = new PluginManager(config, pluginFinder, {
             onOpenCallback: function () {
                 // waiting for the next tick!
                 // The manager is still in construction and `pluginManager` will be undefined otherwise.
@@ -59,6 +59,22 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
             onCloseCallback: function () {
                 done();
             }
+        });
+    });
+
+    it('should correctly call the findPlugins method from the pluginFinder', function (done) {
+        var config = createConfig();
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder, {
+            findPlugins: function (callback) {
+                callback(null, null);
+            }
+        });
+        var pluginManager = new PluginManager(config, pluginFinder);
+
+        pluginManager.findNewPlugins(function (err) {
+            pluginFinder.findPlugins.calledOnce.should.be.true;
+
+            done();
         });
     });
 });

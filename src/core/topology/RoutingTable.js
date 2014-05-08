@@ -255,11 +255,6 @@ var RoutingTable = (function () {
         }
     };
 
-    // todo updateId Ideas
-    RoutingTable.prototype.updateId = function (id) {
-        return;
-    };
-
     /**
     * Creates a bucket with the given key.
     *
@@ -285,10 +280,11 @@ var RoutingTable = (function () {
         return this._id.differsInHighestBit(id);
     };
 
-    RoutingTable.prototype._getBucketKeyAsString = function (id) {
-        return this._getBucketKeyString(this._getBucketKey(id));
-    };
-
+    /*
+    * this method will be used whenever node-lmdb updates it's code from nodes SlowBuffer to the new node Buffer class
+    private _getBucketKeyAsString (id:IdInterface):string {
+    return    this._getBucketKeyString(this._getBucketKey(id));
+    }*/
     RoutingTable.prototype._getBucketKeyString = function (key) {
         return key.toString();
     };

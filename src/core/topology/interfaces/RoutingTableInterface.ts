@@ -55,13 +55,6 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	 */
 	updateContactNode (contact:ContactNodeInterface, callback?:(err:Error) => any):void;
 
-	/**
-	 * IDEA: should be called whenever my ip changes
-	 *
-	 * @param {core.topology.IdInterface} id
-	 */
-	updateId (id:IdInterface):void;
-
 }
 
 export = RoutingTableInterface;

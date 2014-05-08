@@ -288,11 +288,6 @@ class RoutingTable implements RoutingTableInterface {
 		}
 	}
 
-	// todo updateId Ideas
-	public updateId (id:IdInterface):void {
-		return;
-	}
-
 	/**
 	 * Creates a bucket with the given key.
 	 *
@@ -318,9 +313,11 @@ class RoutingTable implements RoutingTableInterface {
 		return this._id.differsInHighestBit(id);
 	}
 
+	/*
+	 * this method will be used whenever node-lmdb updates it's code from nodes SlowBuffer to the new node Buffer class
 	private _getBucketKeyAsString (id:IdInterface):string {
 		return    this._getBucketKeyString(this._getBucketKey(id));
-	}
+	}*/
 
 	private _getBucketKeyString (key:number):string {
 		return key.toString();

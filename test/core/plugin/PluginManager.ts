@@ -7,6 +7,9 @@ import fs = require('fs');
 import sinon = require('sinon');
 import testUtils = require('../../utils/testUtils');
 
+import PluginManagerInterface = require('../../../src/core/plugin/interfaces/PluginManagerInterface');
+import PluginPathListInterface = require('../../../src/core/plugin/interfaces/PluginPathListInterface');
+
 import PluginFinder = require('../../../src/core/plugin/PluginFinder');
 import PluginManager = require('../../../src/core/plugin/PluginManager');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
@@ -39,9 +42,9 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
 
 	it('should correctly instantiate PluginManager without error', function (done) {
 		var config:any = createConfig();
-		var pluginLoader = testUtils.stubPublicApi(sandbox, PluginFinder);
+		var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
 
-		(new PluginManager(config, pluginLoader, {
+		(new PluginManager(config, pluginFinder, {
 			onOpenCallback: function () {
 				done();
 			}
@@ -50,8 +53,8 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
 
 	it('should correctly call the onOpen and onClose callback', function (done) {
 		var config:any = createConfig();
-		var pluginLoader = testUtils.stubPublicApi(sandbox, PluginFinder);
-		var pluginManager = new PluginManager(config, pluginLoader, {
+		var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+		var pluginManager = new PluginManager(config, pluginFinder, {
 			onOpenCallback: function () {
 				// waiting for the next tick!
 				// The manager is still in construction and `pluginManager` will be undefined otherwise.
@@ -63,6 +66,22 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
 			onCloseCallback: function () {
 				done();
 			}
+		});
+	});
+
+	it ('should correctly call the findPlugins method from the pluginFinder', function (done) {
+		var config:any = createConfig();
+		var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder, {
+			findPlugins: function (callback:(err:Error, pluginPaths:PluginPathListInterface) => void) {
+				callback(null, null);
+			}
+		});
+		var pluginManager:PluginManagerInterface = new PluginManager(config, pluginFinder);
+
+		pluginManager.findNewPlugins(function (err:Error) {
+			pluginFinder.findPlugins.calledOnce.should.be.true;
+
+			done();
 		});
 	});
 

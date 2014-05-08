@@ -204,9 +204,50 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 		});
 	});
 
+	describe ('should correctly throw an error whenever you are looking for the owner Id @joern', function () {
+		var routingTable:RoutingTableInterface;
+
+		beforeEach(function () {
+			routingTable = new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub);
+		});
+
+		afterEach(function () {
+			routingTable = null;
+		});
+
+		it ('should correctly throw an error when calling the getContactNode method', function (done) {
+			routingTable.getContactNode(me.getId(), function (err:Error, contact:ContactNodeInterface) {
+				err.should.be.an.instanceof(Error);
+				err.message.should.equal('RoutingTable.getContactNode: cannot get the contact node.');
+
+				done();
+			});
+		});
+
+		it ('should correctly throw an error when calling the getClostestContactNodes method', function (done) {
+			routingTable.getClosestContactNodes(me.getId(), null, function (err:Error, contacts:ContactNodeListInterface) {
+				err.should.be.an.instanceof(Error);
+				err.message.should.equal('RoutingTable.getClosestContactNode: cannot get closest contact nodes for the given Id.');
+
+				done();
+			});
+		});
+
+		it ('should correctly throw an error when calling the updateContactNode method', function (done) {
+			var contactNode:ContactNodeInterface = ContactNodeFactory.createDummy(me.getId().toBitString());
+
+			routingTable.updateContactNode(contactNode, function (err:Error) {
+				err.should.be.an.instanceof(Error);
+				err.message.should.equal('RoutingTable.updateContactNode: cannot update the given contact node.');
+
+				done();
+			});
+		});
+
+	});
+
 	describe('should correctly return the closest contact nodes', function () {
 		var databasePath:string = testUtils.getFixturePath('core/topology/bucketstore/db');
-
 		var bucketFactory:BucketFactoryInterface;
 		var bucketStore:BucketStoreInterface;
 		var contactNodeFactory:ContactNodeFactory;
@@ -307,14 +348,12 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 			});
 		});
 
-		it('should correctly return the contact nodes in sorted order', function (done) {
+		it('should correctly return the contact nodes in sorted order @joern', function (done) {
 			var routingTable:RoutingTableInterface;
 			var ownerIdStr:string;
 			var targetIdStr:string;
 			var ids:Array<string>;
-
 			var customTopologyK:number = 5;
-
 			var customConfigStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
 				get: function (key:string) {
 					key = key.toLowerCase();
@@ -327,7 +366,6 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 					}
 				}
 			});
-
 			var createContactNodesFromIds = function (ids:Array<string>, index:number, callback:Function) {
 				var contact:ContactNodeInterface = ContactNodeFactory.createDummy(ids[index]);
 
@@ -347,8 +385,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 			};
 
 			ownerIdStr =  '1111111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000';
-			targetIdStr = '1111111111111111100000000000000000000000000111111111111111100000000000000000000000000111111111111111100000000000000000000000000000000000000000000000000000000000';
-
+			targetIdStr = '0111111111111111100000000000000000000000000111111111111111100000000000000000000000000111111111111111100000000000000000000000000000000000000000000000000000000000';
 
 			ids = [
 				'1111111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000000000000000011111111111111110000000000000001',
