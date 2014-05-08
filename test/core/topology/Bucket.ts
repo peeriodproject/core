@@ -18,7 +18,7 @@ import ContactNodeObjectListInterface = require('../../../src/core/topology/inte
 
 import ContactNode= require('../../../src/core/topology/ContactNode');
 
-describe('CORE --> TOPOLOGY --> Bucket @_joern', function () {
+describe('CORE --> TOPOLOGY --> Bucket', function () {
 	// http://stackoverflow.com/a/14041593
 	var sandbox:SinonSandbox;
 	var configStub:any;

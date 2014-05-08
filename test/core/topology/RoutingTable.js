@@ -193,7 +193,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
         });
     });
 
-    describe('should correctly throw an error whenever you are looking for the owner Id @joern', function () {
+    describe('should correctly throw an error whenever you are looking for the owner Id', function () {
         var routingTable;
 
         beforeEach(function () {
@@ -335,7 +335,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             });
         });
 
-        it('should correctly return the contact nodes in sorted order @joern', function (done) {
+        it('should correctly return the contact nodes in sorted order', function (done) {
             var routingTable;
             var ownerIdStr;
             var targetIdStr;

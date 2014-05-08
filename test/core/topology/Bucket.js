@@ -12,7 +12,7 @@ var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory'
 
 var ContactNode = require('../../../src/core/topology/ContactNode');
 
-describe('CORE --> TOPOLOGY --> Bucket @_joern', function () {
+describe('CORE --> TOPOLOGY --> Bucket', function () {
     // http://stackoverflow.com/a/14041593
     var sandbox;
     var configStub;

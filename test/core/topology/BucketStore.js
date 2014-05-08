@@ -32,11 +32,6 @@ describe('CORE --> TOPOLOGY --> BucketStore', function () {
         store.isOpen().should.be.true;
     });
 
-    // just for coverage
-    it('should debug the database', function () {
-        store.debug();
-    });
-
     it('should close the bucket store correctly', function () {
         store.close();
         store.close();
