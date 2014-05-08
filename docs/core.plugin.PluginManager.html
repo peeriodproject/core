@@ -163,6 +163,14 @@
 						</li>
 						
 						<li>
+							<a href="core.plugin.PluginFinder.html">PluginFinder</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginFinderInterface.html">PluginFinderInterface</a>
+						</li>
+						
+						<li>
 							<a href="core.plugin.PluginInterface.html">PluginInterface</a>
 						</li>
 						
@@ -171,15 +179,31 @@
 						</li>
 						
 						<li>
-							<a href="core.plugin.PluginLoader.html">PluginLoader</a>
-						</li>
-						
-						<li>
 							<a href="core.plugin.PluginManager.html">PluginManager</a>
 						</li>
 						
 						<li>
+							<a href="core.plugin.PluginManagerInterface.html">PluginManagerInterface</a>
+						</li>
+						
+						<li>
 							<a href="core.plugin.PluginMapInterface.html">PluginMapInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginNameListInterface.html">PluginNameListInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginPathListInterface.html">PluginPathListInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginStateObjectInterface.html">PluginStateObjectInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginStateObjectListInterface.html">PluginStateObjectListInterface</a>
 						</li>
 						
 						<li>
@@ -236,6 +260,14 @@
 						
 						<li>
 							<a href="core.protocol.net.OutgoingPendingSocketList.html">OutgoingPendingSocketList</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.net.WaitForSocket.html">WaitForSocket</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.net.WaitForSocketList.html">WaitForSocketList</a>
 						</li>
 						
 						<li>
@@ -343,6 +375,10 @@
 						</li>
 						
 						<li>
+							<a href="core.utils.ClosableAsyncOptions.html">ClosableAsyncOptions</a>
+						</li>
+						
+						<li>
 							<a href="core.utils.ClosableInterface.html">ClosableInterface</a>
 						</li>
 						
@@ -419,7 +455,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/plugin/interfaces/PluginManagerInterface.ts
+        src/core/plugin/PluginManager.ts
     </li></ul></dd>
     
 
@@ -458,6 +494,326 @@
     
 
     
+        <h3 class="subsection-title">Members</h3>
+
+        <dl>
+            
+<dt>
+    <h4 class="name" id="_config"><span class="type-signature">&lt;inner> </span>_config<span class="type-signature"> :<a href="core.config.ConfigInterface.html">core.config.ConfigInterface</a></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>The internally used config object instance</p>
+    </div>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type"><a href="core.config.ConfigInterface.html">core.config.ConfigInterface</a></span>
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/plugin/PluginManager.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="_isOpen"><span class="type-signature">&lt;inner> </span>_isOpen<span class="type-signature"> :boolean</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>A flag indicates weather the store is open or closed</p>
+    </div>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">boolean</span>
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/plugin/PluginManager.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="_options"><span class="type-signature">&lt;inner> </span>_options<span class="type-signature"> :<a href="core.utils.ClosableAsyncOptions.html">core.utils.ClosableAsyncOptions</a></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type"><a href="core.utils.ClosableAsyncOptions.html">core.utils.ClosableAsyncOptions</a></span>
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/plugin/PluginManager.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="_pluginFinder"><span class="type-signature">&lt;inner> </span>_pluginFinder<span class="type-signature"> :<a href="core.config.ConfigInterface.html">core.config.ConfigInterface</a></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>The internally used plugin finder instance</p>
+    </div>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type"><a href="core.config.ConfigInterface.html">core.config.ConfigInterface</a></span>
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/plugin/PluginManager.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="_pluginState"><span class="type-signature">&lt;inner> </span>_pluginState<span class="type-signature"> :core.plugin.PluginStateInterface</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Represents the state of activated, deactivated and idle plugins</p>
+    </div>
+    
+    
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">core.plugin.PluginStateInterface</span>
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/plugin/PluginManager.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+</dd>
+
+        </dl>
+    
 
     
 
@@ -479,7 +835,7 @@
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a>
-		on Tue May 06 2014 21:00:56 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		on Thu May 08 2014 10:31:10 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
 			</div>

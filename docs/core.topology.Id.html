@@ -163,6 +163,14 @@
 						</li>
 						
 						<li>
+							<a href="core.plugin.PluginFinder.html">PluginFinder</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginFinderInterface.html">PluginFinderInterface</a>
+						</li>
+						
+						<li>
 							<a href="core.plugin.PluginInterface.html">PluginInterface</a>
 						</li>
 						
@@ -171,15 +179,31 @@
 						</li>
 						
 						<li>
-							<a href="core.plugin.PluginLoader.html">PluginLoader</a>
-						</li>
-						
-						<li>
 							<a href="core.plugin.PluginManager.html">PluginManager</a>
 						</li>
 						
 						<li>
+							<a href="core.plugin.PluginManagerInterface.html">PluginManagerInterface</a>
+						</li>
+						
+						<li>
 							<a href="core.plugin.PluginMapInterface.html">PluginMapInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginNameListInterface.html">PluginNameListInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginPathListInterface.html">PluginPathListInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginStateObjectInterface.html">PluginStateObjectInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginStateObjectListInterface.html">PluginStateObjectListInterface</a>
 						</li>
 						
 						<li>
@@ -236,6 +260,14 @@
 						
 						<li>
 							<a href="core.protocol.net.OutgoingPendingSocketList.html">OutgoingPendingSocketList</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.net.WaitForSocket.html">WaitForSocket</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.net.WaitForSocketList.html">WaitForSocketList</a>
 						</li>
 						
 						<li>
@@ -340,6 +372,10 @@
 						
 						<li>
 							<a href="core.utils.ClosableAsyncInterface.html">ClosableAsyncInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.utils.ClosableAsyncOptions.html">ClosableAsyncOptions</a>
 						</li>
 						
 						<li>
@@ -535,7 +571,7 @@
         <dl>
             
 <dt>
-    <h4 class="name" id="_bit_length"><span class="type-signature">&lt;inner> </span>_bit_length<span class="type-signature"> :number</span></h4>
+    <h4 class="name" id="_bitLength"><span class="type-signature">&lt;inner> </span>_bitLength<span class="type-signature"> :number</span></h4>
     
     
 </dt>
@@ -655,7 +691,7 @@
         
             
 <dt>
-    <h4 class="name" id="_byte_length"><span class="type-signature">&lt;inner> </span>_byte_length<span class="type-signature"> :number</span></h4>
+    <h4 class="name" id="_byteLength"><span class="type-signature">&lt;inner> </span>_byteLength<span class="type-signature"> :number</span></h4>
     
     
 </dt>
@@ -721,7 +757,7 @@
         <dl>
             
 <dt>
-    <h4 class="name" id="byteBufferByBitString"><span class="type-signature">&lt;static> </span>byteBufferByBitString<span class="signature">(binary_string, expected_byte_len)</span><span class="type-signature"> &rarr; {NodeBuffer}</span></h4>
+    <h4 class="name" id="byteBufferByBitString"><span class="type-signature">&lt;static> </span>byteBufferByBitString<span class="signature">(binaryString, expectedByteLength)</span><span class="type-signature"> &rarr; {NodeBuffer}</span></h4>
     
     
 </dt>
@@ -765,7 +801,7 @@ the number of bytes expected.</p>
 
         <tr>
             
-                <td class="name"><code>binary_string</code></td>
+                <td class="name"><code>binaryString</code></td>
             
 
             <td class="type">
@@ -788,7 +824,7 @@ the number of bytes expected.</p>
 
         <tr>
             
-                <td class="name"><code>expected_byte_len</code></td>
+                <td class="name"><code>expectedByteLength</code></td>
             
 
             <td class="type">
@@ -883,7 +919,7 @@ the number of bytes expected.</p>
         
             
 <dt>
-    <h4 class="name" id="byteBufferByHexString"><span class="type-signature">&lt;static> </span>byteBufferByHexString<span class="signature">(hex_string, expected_byte_len)</span><span class="type-signature"> &rarr; {NodeBuffer}</span></h4>
+    <h4 class="name" id="byteBufferByHexString"><span class="type-signature">&lt;static> </span>byteBufferByHexString<span class="signature">(hexString, expectedByteLength)</span><span class="type-signature"> &rarr; {NodeBuffer}</span></h4>
     
     
 </dt>
@@ -926,7 +962,7 @@ equal the number of bytes expected.</p>
 
         <tr>
             
-                <td class="name"><code>hex_string</code></td>
+                <td class="name"><code>hexString</code></td>
             
 
             <td class="type">
@@ -949,7 +985,7 @@ equal the number of bytes expected.</p>
 
         <tr>
             
-                <td class="name"><code>expected_byte_len</code></td>
+                <td class="name"><code>expectedByteLength</code></td>
             
 
             <td class="type">
@@ -1044,7 +1080,7 @@ equal the number of bytes expected.</p>
         
             
 <dt>
-    <h4 class="name" id="calculateByteLengthByBitLength"><span class="type-signature">&lt;static> </span>calculateByteLengthByBitLength<span class="signature">(bl)</span><span class="type-signature"> &rarr; {number}</span></h4>
+    <h4 class="name" id="calculateByteLengthByBitLength"><span class="type-signature">&lt;static> </span>calculateByteLengthByBitLength<span class="signature">(bitLength)</span><span class="type-signature"> &rarr; {number}</span></h4>
     
     
 </dt>
@@ -1087,7 +1123,7 @@ Identical to Math.ceil(bl / 8), but faster.</p>
 
         <tr>
             
-                <td class="name"><code>bl</code></td>
+                <td class="name"><code>bitLength</code></td>
             
 
             <td class="type">
@@ -1200,7 +1236,7 @@ Identical to Math.ceil(bl / 8), but faster.</p>
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a>
-		on Tue May 06 2014 21:01:02 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		on Thu May 08 2014 10:31:14 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
 			</div>

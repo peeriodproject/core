@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Documentation Class: ProtocolConnectionManagerInterface</title>
+	<title>Documentation Class: PluginManagerInterface</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -399,14 +399,14 @@
 					
 
 
-	<h1 class="page-title">Class: ProtocolConnectionManagerInterface</h1>
+	<h1 class="page-title">Class: PluginManagerInterface</h1>
 <section>
 
 <header>
     <h2>
-        <span class="ancestors"><a href="core.html">core</a><a href="core.protocol.html">.protocol</a>.</span>
+        <span class="ancestors"><a href="core.html">core</a><a href="core.plugin.html">.plugin</a>.</span>
     
-    ProtocolConnectionManagerInterface
+    PluginManagerInterface
     </h2>
     
 </header>
@@ -418,58 +418,12 @@
     
         
 <dt>
-    <h4 class="name" id="ProtocolConnectionManagerInterface"><span class="type-signature"></span>new ProtocolConnectionManagerInterface<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="PluginManagerInterface"><span class="type-signature"></span>new PluginManagerInterface<span class="signature">()</span><span class="type-signature"></span></h4>
     
     
 </dt>
 <dd>
     
-    
-    <div class="description">
-        <p>The basic concept of the ProtocolConnectionManager is to provide the first interface between networking, messaging and
-topology. It tries to assign sockets to ContactNodes, but does not differentiate between proxys (which it may not have
-knowledge about) and 'direct' connections.
-In order to do so, it can easily assign outgoing sockets to ContactNodes, however has to wait for a first message before being
-able to assign an incoming socket to a ContactNode.</p>
-<p>Thus it strictly has to follow some rules:
-1.) Outgoing connections are directly referenced, without needing to wait for a first message.
-2.) Incoming connections have to wait for a first message before being referenced.
-3.) Only one socket per node.
-4.) As it may be that an outgoing connection is being proxied, incoming always beats outgoing.</p>
-<h6>#</h6>
-<p>The detailed flow goes like this:
-If there is a new incoming socket, it is provided with a temporary identifier und kept track of. Now it will be waited
-for an incoming message on this socket to correctly get the identifier (which is the hex-string representation of the ID).
-If a timeout elapses and the incoming message could not be assigned to an ID (and thus a node) the socket gets destroyed.</p>
-<p>If a message comes in on an incoming socket and the socket can be assigned an ID, the timeout gets invalidatet, the socket
-is updated with the new identifier, and it will be added to the confirmed sockets. The message itself is propagated.
-If there are any outgoing pending connections on the same identifier, a flag <code>closeAtOnce</code> is set on them to indicate
-it is no longer needed (as incoming connections always beat outgoing).</p>
-<p>If a message comes in and the identifier of the socket is neither a temporary identifier nor is it the same as the one
-extracted from the message, something must be not protocol compliable and the responsible socket will be destroyed.</p>
-<p>If an outgoing connection is initiated, it is kept track of until a socket is successfully connected. If it has connected,
-however an incoming socket has also been opened in the same time window (thus <code>closeAtOnce</code> is true), the outgoing connection
-is immediately closed. Otherwise the socket is added to the confirmed sockets.</p>
-<p>When a socket is added to the confirmed sockets, the only time when an old socket does not get replaced by the new one
-is when the old socket is an incoming socket and the new socket is an outgoing socket.</p>
-<p>Incoming always beats outgoing because it may be that the outgoing is being proxied on the remote end, while direct incoming
-sockets are obviously never proxied. (if one uses a proxy this simply means that the only incoming socket it will ever
-have is the one of the proxy socket)</p>
-<p>Furthermore there is a functionality to add ContactNodes to a &quot;keep open list&quot;, which says that all new confirmed sockets
-(and existing confirmed sockets) do not destroy themselves on a timeout.</p>
-<h6>#</h6>
-<p>The only method one will probably ever need is &quot;writeBufferTo&quot;. Everything is handled for you.</p>
-<h6>#</h6>
-<p>Following events are emitted:</p>
-<ul>
-<li><p>'confirmedSocket': Is emitted when a new confirmed socket was added / replaced. Argument is the identifier + socket.
-Is used internally and should probably never need listening to.</p>
-</li>
-<li><p>'terminatedConnection': Is emitted when there is no longer an open connection to an ID. Emitted with the ID as argument.
-Will probably be used for proxy handling / deciding when to use other connections etc.</p>
-</li>
-</ul>
-    </div>
     
 
     
@@ -501,7 +455,7 @@ Will probably be used for proxy handling / deciding when to use other connection
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/protocol/net/interfaces/ProtocolConnectionManagerInterface.ts
+        src/core/plugin/interfaces/PluginManagerInterface.ts
     </li></ul></dd>
     
 
@@ -542,6 +496,359 @@ Will probably be used for proxy handling / deciding when to use other connection
     
 
     
+        <h3 class="subsection-title">Methods</h3>
+
+        <dl>
+            
+<dt>
+    <h4 class="name" id="checkPluginFolderForNewPlugins"><span class="type-signature"></span>checkPluginFolderForNewPlugins<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Checks the plugin folder for new plugins and calls the specified callback</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+    
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/plugin/interfaces/PluginManagerInterface.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="loadPluginState"><span class="type-signature"></span>loadPluginState<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Loads the plugin state from a persistant storage</p>
+<p>todo define pluginState</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+    
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/plugin/interfaces/PluginManagerInterface.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="savePluginState"><span class="type-signature"></span>savePluginState<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Saves the plugin state to a persistant storage</p>
+<p>todo define pluginState</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+    
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/plugin/interfaces/PluginManagerInterface.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="savePluginState"><span class="type-signature"></span>savePluginState<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Saves the plugin state to a persistant storage</p>
+<p>todo define pluginState</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+    
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/plugin/PluginManager.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="_loadPluginState"><span class="type-signature">&lt;inner> </span>_loadPluginState<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Loads the plugin state from a persistant storage</p>
+<p>todo define pluginState</p>
+    </div>
+    
+
+    
+    
+    
+    
+    
+    
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        src/core/plugin/PluginManager.ts
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+</dd>
+
+        </dl>
+    
 
     
 
@@ -561,7 +868,7 @@ Will probably be used for proxy handling / deciding when to use other connection
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a>
-		on Thu May 08 2014 10:31:12 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		on Thu May 08 2014 10:31:10 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
 			</div>

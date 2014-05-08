@@ -163,6 +163,14 @@
 						</li>
 						
 						<li>
+							<a href="core.plugin.PluginFinder.html">PluginFinder</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginFinderInterface.html">PluginFinderInterface</a>
+						</li>
+						
+						<li>
 							<a href="core.plugin.PluginInterface.html">PluginInterface</a>
 						</li>
 						
@@ -171,15 +179,31 @@
 						</li>
 						
 						<li>
-							<a href="core.plugin.PluginLoader.html">PluginLoader</a>
-						</li>
-						
-						<li>
 							<a href="core.plugin.PluginManager.html">PluginManager</a>
 						</li>
 						
 						<li>
+							<a href="core.plugin.PluginManagerInterface.html">PluginManagerInterface</a>
+						</li>
+						
+						<li>
 							<a href="core.plugin.PluginMapInterface.html">PluginMapInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginNameListInterface.html">PluginNameListInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginPathListInterface.html">PluginPathListInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginStateObjectInterface.html">PluginStateObjectInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginStateObjectListInterface.html">PluginStateObjectListInterface</a>
 						</li>
 						
 						<li>
@@ -236,6 +260,14 @@
 						
 						<li>
 							<a href="core.protocol.net.OutgoingPendingSocketList.html">OutgoingPendingSocketList</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.net.WaitForSocket.html">WaitForSocket</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.net.WaitForSocketList.html">WaitForSocketList</a>
 						</li>
 						
 						<li>
@@ -343,6 +375,10 @@
 						</li>
 						
 						<li>
+							<a href="core.utils.ClosableAsyncOptions.html">ClosableAsyncOptions</a>
+						</li>
+						
+						<li>
 							<a href="core.utils.ClosableInterface.html">ClosableInterface</a>
 						</li>
 						
@@ -390,11 +426,12 @@
     
     
     <div class="description">
-        <p>RoutingTable Interface</p>
-<ul>
-<li>creates k buckes</li>
-<li>provides a single entry point for contact nodes which should be stored within a bucket.</li>
-</ul>
+        <p>The RoutingTable manages the Buckets where contact nodes are stored.
+It creates <code>topology.bitLength</code> [buckets]<a href="core.topology.BucketInterface.html"><code>core.topology.BucketInterface</code></a> and stores incoming contact nodes
+with the help of <a href="core.topology.IdInterface.html#differsInHighestBit"><code>core.topology.IdInterface#differsInHighestBit</code></a> in the responsible bucket.</p>
+<p>It also provides a single function to [get contact nodes]<code>core.topology.RoutingTableInterface#getContactNodes</code>
+out of the bucket as well as [getting closest nodes]<a href="core.topology.RoutingTableInterface.html#getClosestContactNodes"><code>core.topology.RoutingTableInterface#getClosestContactNodes</code></a>
+to a given Id.</p>
     </div>
     
 
@@ -459,7 +496,7 @@
         <h3 class="subsection-title">Extends</h3>
 
         <ul>
-            <li><a href="core.utils.ClosableInterface.html">core.utils.ClosableInterface</a></li>
+            <li><a href="core.utils.ClosableAsyncInterface.html">core.utils.ClosableAsyncInterface</a></li>
         </ul>
     
 
@@ -479,7 +516,7 @@
         <dl>
             
 <dt>
-    <h4 class="name" id="close"><span class="type-signature"></span>close<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="close"><span class="type-signature"></span>close<span class="signature">(callback)</span><span class="type-signature"></span></h4>
     
     
 </dt>
@@ -498,6 +535,55 @@ This method stores the object state and could be used on app shutdown.</p>
     
     
     
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+
+		<th>Type</th>
+
+		
+
+		
+
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+
+	<tbody>
+	
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+	</tbody>
+</table>
+
+    
     
     
 <dl class="details">
@@ -510,7 +596,7 @@ This method stores the object state and could be used on app shutdown.</p>
     
     <dt class="inherited-from">Inherited From:</dt>
     <dd class="inherited-from"><ul class="dummy"><li>
-        <a href="core.utils.ClosableInterface.html#close">core.utils.ClosableInterface#close</a>
+        <a href="core.utils.ClosableAsyncInterface.html#close">core.utils.ClosableAsyncInterface#close</a>
     </li></dd>
     
 
@@ -527,7 +613,7 @@ This method stores the object state and could be used on app shutdown.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/utils/interfaces/ClosableInterface.ts
+        src/core/utils/interfaces/ClosableAsyncInterface.ts
     </li></ul></dd>
     
 
@@ -563,7 +649,13 @@ This method stores the object state and could be used on app shutdown.</p>
     
     
     <div class="description">
-        <p>Returns the <code>topology.k</code> closest nodes to the specified id</p>
+        <p>Returns up to <code>topology.k</code> closest contact nodes in sorted order to the specified Id. It will only return less
+than <code>topology.k</code>contact nodes if no more contact nodes are known and should exclude the given <code>excludeId</code> from
+the results.</p>
+<p>To speed up the lookup process this method should start at the <code>responsible bucket</code> for the given id and walk all
+the way down to bucket 0. If not enough contact nodes were found, the search continues at the <code>responsible bucket + 1</code>.
+From there, the search continues bucket by bucket, and stops as soon as enough contact nodes were found, as we
+distance ourselves with each bucket.</p>
     </div>
     
 
@@ -860,7 +952,7 @@ This method stores the object state and could be used on app shutdown.</p>
         
             
 <dt>
-    <h4 class="name" id="isOpen"><span class="type-signature"></span>isOpen<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="isOpen"><span class="type-signature"></span>isOpen<span class="signature">(callback)</span><span class="type-signature"></span></h4>
     
     
 </dt>
@@ -877,6 +969,55 @@ This method stores the object state and could be used on app shutdown.</p>
     
     
     
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+
+		<th>Type</th>
+
+		
+
+		
+
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+
+	<tbody>
+	
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+	</tbody>
+</table>
+
+    
     
     
 <dl class="details">
@@ -889,7 +1030,7 @@ This method stores the object state and could be used on app shutdown.</p>
     
     <dt class="inherited-from">Inherited From:</dt>
     <dd class="inherited-from"><ul class="dummy"><li>
-        <a href="core.utils.ClosableInterface.html#isOpen">core.utils.ClosableInterface#isOpen</a>
+        <a href="core.utils.ClosableAsyncInterface.html#isOpen">core.utils.ClosableAsyncInterface#isOpen</a>
     </li></dd>
     
 
@@ -906,7 +1047,7 @@ This method stores the object state and could be used on app shutdown.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/utils/interfaces/ClosableInterface.ts
+        src/core/utils/interfaces/ClosableAsyncInterface.ts
     </li></ul></dd>
     
 
@@ -934,7 +1075,7 @@ This method stores the object state and could be used on app shutdown.</p>
         
             
 <dt>
-    <h4 class="name" id="open"><span class="type-signature"></span>open<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="open"><span class="type-signature"></span>open<span class="signature">(callback)</span><span class="type-signature"></span></h4>
     
     
 </dt>
@@ -952,6 +1093,55 @@ This method stores the object state and could be used on app shutdown.</p>
     
     
     
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+
+		<th>Type</th>
+
+		
+
+		
+
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+
+	<tbody>
+	
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+	
+	</tbody>
+</table>
+
+    
     
     
 <dl class="details">
@@ -964,7 +1154,7 @@ This method stores the object state and could be used on app shutdown.</p>
     
     <dt class="inherited-from">Inherited From:</dt>
     <dd class="inherited-from"><ul class="dummy"><li>
-        <a href="core.utils.ClosableInterface.html#open">core.utils.ClosableInterface#open</a>
+        <a href="core.utils.ClosableAsyncInterface.html#open">core.utils.ClosableAsyncInterface#open</a>
     </li></dd>
     
 
@@ -981,7 +1171,7 @@ This method stores the object state and could be used on app shutdown.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/utils/interfaces/ClosableInterface.ts
+        src/core/utils/interfaces/ClosableAsyncInterface.ts
     </li></ul></dd>
     
 
@@ -1017,8 +1207,7 @@ This method stores the object state and could be used on app shutdown.</p>
     
     
     <div class="description">
-        <p>Updates the specified contact node according to the protocol.
-This should be the main entry point to the routing table whenever a new peer shows up.</p>
+        <p>Updates the specified contact node</p>
     </div>
     
 
@@ -1146,7 +1335,7 @@ This should be the main entry point to the routing table whenever a new peer sho
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a>
-		on Tue May 06 2014 21:01:05 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		on Thu May 08 2014 10:31:15 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
 			</div>

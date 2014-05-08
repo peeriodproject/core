@@ -163,6 +163,10 @@
 						</li>
 						
 						<li>
+							<a href="core.plugin.PluginFinderInterface.html">PluginFinderInterface</a>
+						</li>
+						
+						<li>
 							<a href="core.plugin.PluginInterface.html">PluginInterface</a>
 						</li>
 						
@@ -179,7 +183,27 @@
 						</li>
 						
 						<li>
+							<a href="core.plugin.PluginManagerInterface.html">PluginManagerInterface</a>
+						</li>
+						
+						<li>
 							<a href="core.plugin.PluginMapInterface.html">PluginMapInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginNameListInterface.html">PluginNameListInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginPathListInterface.html">PluginPathListInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginStateObjectInterface.html">PluginStateObjectInterface</a>
+						</li>
+						
+						<li>
+							<a href="core.plugin.PluginStateObjectListInterface.html">PluginStateObjectListInterface</a>
 						</li>
 						
 						<li>
@@ -236,6 +260,14 @@
 						
 						<li>
 							<a href="core.protocol.net.OutgoingPendingSocketList.html">OutgoingPendingSocketList</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.net.WaitForSocket.html">WaitForSocket</a>
+						</li>
+						
+						<li>
+							<a href="core.protocol.net.WaitForSocketList.html">WaitForSocketList</a>
 						</li>
 						
 						<li>
@@ -343,6 +375,10 @@
 						</li>
 						
 						<li>
+							<a href="core.utils.ClosableAsyncOptions.html">ClosableAsyncOptions</a>
+						</li>
+						
+						<li>
 							<a href="core.utils.ClosableInterface.html">ClosableInterface</a>
 						</li>
 						
@@ -382,362 +418,53 @@
     
         
 <dt>
-    <h4 class="name" id="PluginLoader"><span class="type-signature"></span>new PluginLoader<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="PluginLoader"><span class="type-signature"></span>new PluginLoader<span class="signature">(config)</span><span class="type-signature"></span></h4>
     
     
 </dt>
 <dd>
     
     
-    <div class="description">
-        <p>The <code>PluginLoaderInterface</code> is used as an abstraction layer between the application and the file system.
-The main purpose is to provide a simple interface which validates and converts the plugin files into
-[PluginInterface-Objects]<a href="core.plugin.PluginInterface.html"><code>core.plugin.PluginInterface</code></a>.</p>
-    </div>
-    
 
     
     
     
     
     
-    
-    
-<dl class="details">
-    
+        <h5>Parameters:</h5>
+        
 
-    
+<table class="params table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
 
-    
+		<th>Type</th>
 
-    
+		
 
-    
+		
 
-    
+		<th class="last">Description</th>
+	</tr>
+	</thead>
 
-    
+	<tbody>
+	
 
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/plugin/interfaces/PluginLoaderInterface.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-</dd>
-
-    
-    </div>
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-        <h3 class="subsection-title">Members</h3>
-
-        <dl>
+        <tr>
             
-<dt>
-    <h4 class="name" id="_config"><span class="type-signature">&lt;private> </span>_config<span class="type-signature"> :<a href="core.config.ConfigInterface.html">core.config.ConfigInterface</a></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
+                <td class="name"><code>config</code></td>
+            
+
+            <td class="type">
+            
                 
 <span class="param-type"><a href="core.config.ConfigInterface.html">core.config.ConfigInterface</a></span>
 
 
-            </li>
-        </ul>
-    
-
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/plugin/PluginLoader.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="_pluginFolderPath"><span class="type-signature">&lt;private> </span>_pluginFolderPath<span class="type-signature"> :string</span></h4>
-    
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        <p>The path to the applications plugin folder</p>
-    </div>
-    
-    
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type">string</span>
-
-
-            </li>
-        </ul>
-    
-
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/plugin/PluginLoader.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="_plugins"><span class="type-signature">&lt;private> </span>_plugins<span class="type-signature"> :<a href="core.plugin.PluginMapInterface.html">core.plugin.PluginMapInterface</a></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        <p>the map of loaded plugins</p>
-    </div>
-    
-    
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type"><a href="core.plugin.PluginMapInterface.html">core.plugin.PluginMapInterface</a></span>
-
-
-            </li>
-        </ul>
-    
-
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/plugin/PluginLoader.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-</dd>
-
-        </dl>
-    
-
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        <dl>
-            
-<dt>
-    <h4 class="name" id="addPlugin"><span class="type-signature"></span>addPlugin<span class="signature">(path, callback)</span><span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        <p>Adds a Plugin from the given path to the Application and returns the loaded
-plugin as a parameter in the callback function.</p>
-    </div>
-    
-
-    
-    
-    
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-	<tr>
-		
-		<th>Name</th>
-		
-
-		<th>Type</th>
-
-		
-
-		
-
-		<th class="last">Description</th>
-	</tr>
-	</thead>
-
-	<tbody>
-	
-
-        <tr>
-            
-                <td class="name"><code>path</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-	
-
-        <tr>
-            
-                <td class="name"><code>callback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Function</span>
-
-
             
             </td>
 
@@ -777,243 +504,7 @@ plugin as a parameter in the callback function.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        src/core/plugin/interfaces/PluginLoaderInterface.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="validatePlugin"><span class="type-signature"></span>validatePlugin<span class="signature">(path, callback)</span><span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        <p>Validates the plugin stored under the given path.</p>
-    </div>
-    
-
-    
-    
-    
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-	<tr>
-		
-		<th>Name</th>
-		
-
-		<th>Type</th>
-
-		
-
-		
-
-		<th class="last">Description</th>
-	</tr>
-	</thead>
-
-	<tbody>
-	
-
-        <tr>
-            
-                <td class="name"><code>path</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-	
-
-        <tr>
-            
-                <td class="name"><code>callback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Function</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-	
-	</tbody>
-</table>
-
-    
-    
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/plugin/interfaces/PluginLoaderInterface.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-</dd>
-
-        </dl>
-    
-
-    
-
-    
-</article>
-
-</section>
-
-
-
-
-
-	<h1 class="page-title">Class: PluginLoader</h1>
-<section>
-
-<header>
-    <h2>
-        <span class="ancestors"><a href="core.html">core</a><a href="core.plugin.html">.plugin</a>.</span>
-    
-    PluginLoader
-    </h2>
-    
-</header>
-
-<article>
-    <div class="container-overview">
-    
-
-    
-        
-<dt>
-    <h4 class="name" id="PluginLoader"><span class="type-signature"></span>new PluginLoader<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/plugin/PluginLoader.ts
+        src/core/plugin/PluginFinder.ts
     </li></ul></dd>
     
 
@@ -1052,486 +543,7 @@ plugin as a parameter in the callback function.</p>
     
 
     
-        <h3 class="subsection-title">Members</h3>
 
-        <dl>
-            
-<dt>
-    <h4 class="name" id="_config"><span class="type-signature">&lt;private> </span>_config<span class="type-signature"> :<a href="core.config.ConfigInterface.html">core.config.ConfigInterface</a></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type"><a href="core.config.ConfigInterface.html">core.config.ConfigInterface</a></span>
-
-
-            </li>
-        </ul>
-    
-
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/plugin/PluginLoader.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="_pluginFolderPath"><span class="type-signature">&lt;private> </span>_pluginFolderPath<span class="type-signature"> :string</span></h4>
-    
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        <p>The path to the applications plugin folder</p>
-    </div>
-    
-    
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type">string</span>
-
-
-            </li>
-        </ul>
-    
-
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/plugin/PluginLoader.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="_plugins"><span class="type-signature">&lt;private> </span>_plugins<span class="type-signature"> :<a href="core.plugin.PluginMapInterface.html">core.plugin.PluginMapInterface</a></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        <p>the map of loaded plugins</p>
-    </div>
-    
-    
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type"><a href="core.plugin.PluginMapInterface.html">core.plugin.PluginMapInterface</a></span>
-
-
-            </li>
-        </ul>
-    
-
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/plugin/PluginLoader.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-</dd>
-
-        </dl>
-    
-
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        <dl>
-            
-<dt>
-    <h4 class="name" id="addPlugin"><span class="type-signature"></span>addPlugin<span class="signature">(path, callback)</span><span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        <p>Adds a Plugin from the given path to the Application and returns the loaded
-plugin as a parameter in the callback function.</p>
-    </div>
-    
-
-    
-    
-    
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-	<tr>
-		
-		<th>Name</th>
-		
-
-		<th>Type</th>
-
-		
-
-		
-
-		<th class="last">Description</th>
-	</tr>
-	</thead>
-
-	<tbody>
-	
-
-        <tr>
-            
-                <td class="name"><code>path</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-	
-
-        <tr>
-            
-                <td class="name"><code>callback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Function</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-	
-	</tbody>
-</table>
-
-    
-    
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/plugin/interfaces/PluginLoaderInterface.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="validatePlugin"><span class="type-signature"></span>validatePlugin<span class="signature">(path, callback)</span><span class="type-signature"></span></h4>
-    
-    
-</dt>
-<dd>
-    
-    
-    <div class="description">
-        <p>Validates the plugin stored under the given path.</p>
-    </div>
-    
-
-    
-    
-    
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-	<tr>
-		
-		<th>Name</th>
-		
-
-		<th>Type</th>
-
-		
-
-		
-
-		<th class="last">Description</th>
-	</tr>
-	</thead>
-
-	<tbody>
-	
-
-        <tr>
-            
-                <td class="name"><code>path</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-	
-
-        <tr>
-            
-                <td class="name"><code>callback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Function</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-	
-	</tbody>
-</table>
-
-    
-    
-    
-<dl class="details">
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        src/core/plugin/interfaces/PluginLoaderInterface.ts
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-    
-    
-
-    
-
-    
-    
-    
-    
-    
-    
-    
-</dd>
-
-        </dl>
     
 
     
@@ -1552,7 +564,7 @@ plugin as a parameter in the callback function.</p>
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a>
-		on Tue May 06 2014 21:00:56 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		on Thu May 08 2014 10:24:57 GMT+0200 (CEST) using the <a href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
 			</div>
