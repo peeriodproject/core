@@ -23,7 +23,7 @@ import ContactNodeAddressFactory = require('../../../src/core/topology/ContactNo
 import Id = require('../../../src/core/topology/Id');
 
 
-describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', function () {
+describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () {
 
 	this.timeout(0);
 
@@ -268,7 +268,7 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
 							manager.removeAllListeners('terminatedConnection');
 							done();
 						}
-					}, 500);
+					}, 1000);
 				}
 			}
 		});
@@ -291,7 +291,52 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
 		currentRemoteSocket.write(createWorkingMessageA());
 	});
 
+	it('should obtain an outbound connection, write the buffer successfully and keep it open', function (done) {
+		var ident = '1e3626caca6c84fa4e5d323b6a26b897582c57f9';
+		var id = new Id(Id.byteBufferByHexString(ident, 20), 160);
+		var goodContactNode = nodeFactory.create(id, [addressFactory.create('14.213.160.0', 1111),addressFactory.create('127.0.0.1', remotePort)]);
 
+		manager.keepSocketsOpenFromNode(goodContactNode);
+
+		manager.writeBufferTo(goodContactNode, new Buffer([0x01]), function (err) {
+			if (!err) {
+				manager.getConfirmedSocketList()[ident].socket.on('close', function () {
+					throw new Error('Should not happen, nope, nope');
+				});
+				setTimeout(function () {
+					done();
+				}, 1500)
+			}
+		});
+	});
+
+	it('should not change anything when keeping the same socket open', function () {
+		var ident = '1e3626caca6c84fa4e5d323b6a26b897582c57f9';
+		var id = new Id(Id.byteBufferByHexString(ident, 20), 160);
+		var goodContactNode = nodeFactory.create(id, [addressFactory.create('14.213.160.0', 1111),addressFactory.create('127.0.0.1', remotePort)]);
+		manager.keepSocketsOpenFromNode(goodContactNode);
+		var num = 0;
+		var openList = manager.getKeepOpenList();
+		for (var i=0; i<openList.length; i++) {
+			if (openList[i] === ident) num++;
+		}
+		num.should.equal(1);
+	});
+
+	it('should error out when writing buffer to a connection it cannot establish', function (done) {
+		var id = new Id(Id.byteBufferByHexString('0e3626caca6c84fa4e5d323b6a26b897582c57f9', 20), 160);
+		var badContactNode = nodeFactory.create(id, [addressFactory.create('14.213.160.0', 1111)]);
+		manager.writeBufferTo(badContactNode, new Buffer([0x01]), function (err) {
+			if (err) {
+				if (Object.keys(manager.getOutgoingPendingSocketList()).length === 0) done();
+			}
+		})
+	});
+
+	it('should return the correct confirmed socket', function () {
+		var ident = '1e3626caca6c84fa4e5d323b6a26b897582c57f9';
+		manager.getConfirmedSocketList()[ident].socket.should.equal(manager.getConfirmedSocketById(new Id(Id.byteBufferByHexString(ident, 20), 160)));
+	});
 
 
 })
