@@ -16,6 +16,8 @@ import ReadableMessage = require('../../../src/core/protocol/messages/ReadableMe
 
 describe('CORE --> PROTOCOL --> IncomingDataPipeline', function () {
 
+	this.timeout(0);
+
 	var sandbox:SinonSandbox;
 	var readableMessageFactoryStub:any;
 	var server:net.Server = null;

@@ -101,7 +101,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		this._idleConnectionKillTimeout = opts.idleConnectionKillTimeout || 0;
 		this._allowHalfOpenSockets = !!opts.allowHalfOpenSockets;
 		this._connectionRetry = opts.connectionRetry || 3;
-		this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2;
+		this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2000;
 	}
 
 	public autoBootstrap (callback:(openPorts:Array<number>) => any):void {
@@ -268,13 +268,15 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		}, 2000);
 
 		this.connectTo(server.address().port, this._myExternalIp, function (socket) {
-			socket.writeBuffer(new Buffer([20]));
-			socket.on('data', function (data) {
-				clearTimeout(connectionTimeout);
-				if (data[0] === 20) {
-					callbackWith(true, socket);
-				}
-			});
+			if (socket) {
+				socket.writeBuffer(new Buffer([20]));
+				socket.on('data', function (data) {
+					clearTimeout(connectionTimeout);
+					if (data[0] === 20) {
+						callbackWith(true, socket);
+					}
+				});
+			}
 		});
 	}
 

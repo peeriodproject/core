@@ -25,6 +25,8 @@ import Id = require('../../../src/core/topology/Id');
 
 describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', function () {
 
+	this.timeout(0);
+
 	var protoPort = 60000;
 	var remotePort = 60001;
 
@@ -279,6 +281,17 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
 		});
 		currentRemoteSocket = net.createConnection(protoPort, 'localhost');
 	});
+
+	it('should destroy the connection when an incoming message does not match the identifier of the socket', function (done) {
+		var ident = '1e3626caca6c84fa4e5d323b6a26b897582c57f9';
+		manager.once('terminatedConnection', function (id) {
+			if (id.toHexString() === ident  && manager.getConfirmedSocketList()[ident] === undefined) done();
+		});
+
+		currentRemoteSocket.write(createWorkingMessageA());
+	});
+
+
 
 
 })

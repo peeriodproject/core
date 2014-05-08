@@ -87,6 +87,7 @@ describe('CORE --> NET --> TCP --> TCPSocket', function () {
 	});
 
 	it('should successfully timeout close the socket', function (done) {
+		this.timeout(0);
 		socket.once('close', function () {
 			done();
 		});
@@ -94,6 +95,7 @@ describe('CORE --> NET --> TCP --> TCPSocket', function () {
 	});
 
 	it('should not close the socket when dynamically setting closeOnTimeout to false', function (done) {
+		this.timeout(0);
 		var sock_b = net.createConnection(9002, 'localhost');
 		var socket_b = null;
 		var all_good = true;
