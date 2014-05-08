@@ -1,3 +1,51 @@
+/// <reference path='../../../../../ts-definitions/node/node.d.ts' />
+
+import ContactNodeInterface = require('../../../topology/interfaces/ContactNodeInterface');
+import WritableMessageFactoryInterface = require('./WritableMessageFactoryInterface');
+
 /**
- * Created by Johnny on 08.05.14.
+ * The 'uppermost' wrapper around any protocol message. Adds the sender/receiver information, the type of message etc.,
+ * so that any message can be recognized as a protocol message by other participants.
+ *
+ * See {@link core.protocol.messages.ReadableMessageInterface} for more information of what constitutes a correct
+ * protocol message.
+ *
+ * @interface
+ * @class core.protocol.messages.GeneralWritableMessageFactoryInterface
+ * @class core.protocol.messages.WritableMessageFactoryInterface
  */
+interface GeneralWritableMessageFactoryInterface extends WritableMessageFactoryInterface {
+
+	/**
+	 * Sets the human-readable type of the message (which will later be substituted with the correct bytes) of the
+	 * following message.
+	 * This is reset to `null` after every message creation, so that a message isn't falsely created.
+	 *
+	 * @method core.protocol.messages.GeneralWritableMessageFactoryInterface#setMessageType
+	 *
+	 * @param {string} type Type of message
+	 */
+	setMessageType (type:string):void;
+
+	/**
+	 * Sets the receiver of the following message.
+	 * This is reset to `null` after every message creation, so that a message isn't falsely created.
+	 *
+	 * @method core.protocol.messages.GeneralWritableMessageFactoryInterface#setReceiver
+	 *
+	 * @param {core.topology.ContactNodeInterface} node The receiver
+	 */
+	setReceiver (node:ContactNodeInterface):void;
+
+	/**
+	 * Sets the sender which is used for creating messages. This can be set once and then never changed.
+	 *
+	 * @method core.protocol.messages.GeneralWritableMessageFactoryInterface#setSender
+	 *
+	 * @param {core.topology.ContactNodeInterface} node The sender
+	 */
+	setSender (node:ContactNodeInterface):void;
+
+}
+
+export = GeneralWritableMessageFactoryInterface;
