@@ -6,28 +6,28 @@
 * @param {number} bit_length
 */
 var Id = (function () {
-    function Id(buffer, bit_length) {
+    function Id(buffer, bitLength) {
         /**
-        * @member {number} core.topology.Id~_bit_length
+        * @member {number} core.topology.Id~_bitLength
         */
-        this._bit_length = 0;
+        this._bitLength = 0;
         /**
         * @member {NodeBuffer} core.topology.Id~_buffer
         */
         this._buffer = null;
         /**
-        * @member {number} core.topology.Id~_byte_length
+        * @member {number} core.topology.Id~_byteLength
         */
-        this._byte_length = 0;
-        var byte_length = Id.calculateByteLengthByBitLength(bit_length);
+        this._byteLength = 0;
+        var byteLength = Id.calculateByteLengthByBitLength(bitLength);
 
-        if (!((buffer instanceof Buffer) && (buffer.length === byte_length))) {
-            throw new Error('ID construction failed: Must be Buffer of length ' + byte_length);
+        if (!((buffer instanceof Buffer) && (buffer.length === byteLength))) {
+            throw new Error('ID construction failed: Must be Buffer of length ' + byteLength);
         }
 
         this._buffer = buffer;
-        this._bit_length = bit_length;
-        this._byte_length = byte_length;
+        this._bitLength = bitLength;
+        this._byteLength = byteLength;
     }
     /**
     * Creates a byte buffer by the hexadecimal representation (string) provided. Throws an error if the hex doesn't
@@ -35,19 +35,19 @@ var Id = (function () {
     *
     * @method core.topology.Id.byteBufferByHexString
     *
-    * @param {string} hex_string
-    * @param {number} expected_byte_len
+    * @param {string} hexString
+    * @param {number} expectedByteLength
     * @returns {NodeBuffer}
     */
-    Id.byteBufferByHexString = function (hex_string, expected_byte_len) {
-        if (hex_string.length / 2 !== expected_byte_len) {
-            throw new Error('Id.byteBufferByHexString: Expected ' + expected_byte_len + ', but got ' + (hex_string.length / 2) + ' bytes');
+    Id.byteBufferByHexString = function (hexString, expectedByteLength) {
+        if (hexString.length / 2 !== expectedByteLength) {
+            throw new Error('Id.byteBufferByHexString: Expected ' + expectedByteLength + ', but got ' + (hexString.length / 2) + ' bytes');
         }
 
-        var buffer = new Buffer(expected_byte_len);
+        var buffer = new Buffer(expectedByteLength);
 
         buffer.fill(0);
-        buffer.write(hex_string, 0, expected_byte_len, 'hex');
+        buffer.write(hexString, 0, expectedByteLength, 'hex');
 
         return buffer;
     };
@@ -60,25 +60,25 @@ var Id = (function () {
     *
     * @method core.topology.Id.byteBufferByBitString
     *
-    * @param {string} binary_string
-    * @param {number} expected_byte_len
+    * @param {string} binaryString
+    * @param {number} expectedByteLength
     * @returns {NodeBuffer}
     */
-    Id.byteBufferByBitString = function (binary_string, expected_byte_len) {
-        var strLen = binary_string.length;
+    Id.byteBufferByBitString = function (binaryString, expectedByteLength) {
+        var binaryStringLength = binaryString.length;
 
-        if ((strLen / 8) > expected_byte_len) {
+        if ((binaryStringLength / 8) > expectedByteLength) {
             throw new Error('Id.byteBufferByBitString: Bit length exceeds expected number of bytes');
         }
 
-        var buffer = new Buffer(expected_byte_len);
+        var buffer = new Buffer(expectedByteLength);
 
         buffer.fill(0);
 
-        for (var i = 0; i < strLen; ++i) {
-            var at = strLen - 1 - i, _i = expected_byte_len - 1 - (at / 8 | 0), mask = 1 << (at % 8);
+        for (var i = 0; i < binaryStringLength; ++i) {
+            var at = binaryStringLength - 1 - i, _i = expectedByteLength - 1 - (at / 8 | 0), mask = 1 << (at % 8);
 
-            if (binary_string.charAt(i) == '1') {
+            if (binaryString.charAt(i) == '1') {
                 buffer[_i] |= mask;
             } else {
                 buffer[_i] &= 255 ^ mask;
@@ -94,18 +94,18 @@ var Id = (function () {
     *
     * @method core.topology.Id.calculateByteLengthByBitLength
     *
-    * @param {number} bl bit length
+    * @param {number} bitLength bit length
     * @returns {number}
     */
-    Id.calculateByteLengthByBitLength = function (bl) {
-        var div = bl / 8;
+    Id.calculateByteLengthByBitLength = function (bitLength) {
+        var div = bitLength / 8;
         var n = div << 0;
 
         return n == div ? n : n + 1;
     };
 
     Id.prototype.at = function (index) {
-        return (this.getBuffer()[this._byte_length - 1 - (index / 8 | 0)] & (1 << (index % 8))) > 0 ? 1 : 0;
+        return (this.getBuffer()[this._byteLength - 1 - (index / 8 | 0)] & (1 << (index % 8))) > 0 ? 1 : 0;
     };
 
     Id.prototype.compareDistance = function (first, second) {
@@ -117,7 +117,7 @@ var Id = (function () {
         var b = first.getBuffer();
         var c = second.getBuffer();
 
-        for (var i = 0; i < this._byte_length; ++i) {
+        for (var i = 0; i < this._byteLength; ++i) {
             var buf_a_b = a[i] ^ b[i];
             var buf_a_c = a[i] ^ c[i];
 
@@ -141,13 +141,13 @@ var Id = (function () {
         var a = this.getBuffer();
         var b = other.getBuffer();
 
-        for (var i = 0; i < this._byte_length; ++i) {
+        for (var i = 0; i < this._byteLength; ++i) {
             var xor_byte = a[i] ^ b[i];
 
             if (xor_byte !== 0) {
                 for (var j = 0; j < 8; ++j) {
                     if (!(xor_byte >>= 1))
-                        return (this._byte_length - 1 - i) * 8 + j;
+                        return (this._byteLength - 1 - i) * 8 + j;
                 }
             }
         }
@@ -160,11 +160,11 @@ var Id = (function () {
             throw new Error('Id.distanceTo: Can only compare to another Id.');
         }
 
-        var response = new Buffer(this._byte_length);
+        var response = new Buffer(this._byteLength);
         var a = this.getBuffer();
         var b = other.getBuffer();
 
-        for (var i = 0; i < this._byte_length; ++i) {
+        for (var i = 0; i < this._byteLength; ++i) {
             response[i] = a[i] ^ b[i];
         }
 
@@ -179,7 +179,7 @@ var Id = (function () {
         var a = this.getBuffer();
         var b = other.getBuffer();
 
-        for (var i = 0; i < this._byte_length; ++i) {
+        for (var i = 0; i < this._byteLength; ++i) {
             if (a[i] !== b[i])
                 return false;
         }
@@ -192,7 +192,7 @@ var Id = (function () {
     };
 
     Id.prototype.set = function (index, value) {
-        var _i = this._byte_length - 1 - (index / 8 | 0);
+        var _i = this._byteLength - 1 - (index / 8 | 0);
         var mask = 1 << (index % 8);
 
         if (value) {
@@ -205,7 +205,7 @@ var Id = (function () {
     Id.prototype.toBitString = function () {
         var result = '';
 
-        for (var i = 0; i < this._bit_length; ++i) {
+        for (var i = 0; i < this._bitLength; ++i) {
             result = (this.at(i) ? '1' : '0') + result;
         }
 
