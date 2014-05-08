@@ -11,8 +11,8 @@ import PluginNameListInterface = require('./interfaces/PluginNameListInterface')
 import PluginPathListInterface = require('./interfaces/PluginPathListInterface');
 
 /**
- * @class core.plugin.PluginLoader
- * @implements core.plugin.PluginLoaderInterface
+ * @class core.plugin.PluginFinder
+ * @implements core.plugin.PluginFinderInterface
  *
  * @param {core.config.ConfigInterface} config
  */

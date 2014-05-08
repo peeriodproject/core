@@ -61,7 +61,7 @@ describe('CORE --> PLUGIN --> PluginFinder @joern', function () {
         });
     });
 
-    it('should correctly return the items in the ignored list', function (done) {
+    it('should correctly return the items in the ignore list', function (done) {
         var config = testUtils.stubPublicApi(sandbox, ObjectConfig);
         var pluginFinder;
 
@@ -93,7 +93,7 @@ describe('CORE --> PLUGIN --> PluginFinder @joern', function () {
         });
     });
 
-    it('should correctly create the plugin folder if it does not exist', function (done) {
+    it('should correctly create the plugin folder if it does not exists', function (done) {
         var fixturePath = 'plugin/plugins/getPluginFolderTest';
         var pluginFinder = createPluginFinderWithPluginFolder(fixturePath);
 

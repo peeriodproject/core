@@ -5,7 +5,7 @@ import PluginPathListInterface = require('./PluginPathListInterface');
 
 /**
  * @interface
- * @class core.plugin.PluginManager
+ * @class core.plugin.PluginManagerInterface
  */
 interface PluginManagerInterface extends ClosableAsyncInterface {
 

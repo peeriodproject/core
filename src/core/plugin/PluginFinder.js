@@ -3,8 +3,8 @@ var fs = require('fs-extra');
 var path = require('path');
 
 /**
-* @class core.plugin.PluginLoader
-* @implements core.plugin.PluginLoaderInterface
+* @class core.plugin.PluginFinder
+* @implements core.plugin.PluginFinderInterface
 *
 * @param {core.config.ConfigInterface} config
 */

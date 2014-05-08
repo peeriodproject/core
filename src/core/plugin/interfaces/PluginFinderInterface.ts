@@ -11,12 +11,12 @@ import PluginPathListInterface = require('./PluginPathListInterface');
  * a list of folder names that should be ignored within the lookup process.
  *
  * @interface
- * @class core.plugin.PluginLoader
+ * @class core.plugin.PluginFinderInterface
  */
-interface PluginLoaderInterface {
+interface PluginFinderInterface {
 
 	/**
-	 * Adds a folder name to the list of ignored folders.
+	 * Adds a folder name to the list of folders which should be ignored within the find process.
 	 *
 	 * There are several cases in which a plugin folder can be ignored:
 	 * - The plugin is invaid (did not pass the validation step)
@@ -31,7 +31,7 @@ interface PluginLoaderInterface {
 	/**
 	 * Returns the paths of unloaded plugins found within the {@link core.plugin.PluginLoader#getPluginFolderPath}
 	 *
-	 * @method core.plugin.PluginFinder#findPlugins
+	 * @method core.plugin.PluginFinderInterface#findPlugins
 	 *
 	 * @param {Function} callback
 	 */
@@ -47,14 +47,16 @@ interface PluginLoaderInterface {
 	/**
 	 * Creates the plugin-folder path of the application it if nessessary and returns the path in a callback.
 	 *
-	 * @method core.plugin.PluginFinder#getPluginFolderPath
+	 * @method core.plugin.PluginFinderInterface#getPluginFolderPath
 	 *
 	 * @param {Function} callback
 	 */
 	getPluginFolderPath (callback:(err:Error, path:string) => void):void;
 
 	/**
-	 * Removes a folder name from the ignored list.
+	 * Removes a folder name from the ignore list.
+	 *
+	 * @method core.plugin.PluginFinderInterface#removePluginFolderNamesFromIngoreList
 	 *
 	 * @param {core.plugin.PluginNameListInterface} pluginFolderNames
 	 * @param {Function} callback (optional)
@@ -63,4 +65,4 @@ interface PluginLoaderInterface {
 
 }
 
-export = PluginLoaderInterface;
+export = PluginFinderInterface;
