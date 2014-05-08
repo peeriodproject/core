@@ -109,6 +109,14 @@ class ContactNodeAddress implements ContactNodeAddressInterface {
 		return buf;
 	}
 
+	public isIPv4 ():boolean {
+		return this._isV4;
+	}
+
+	public isIPv6 ():boolean {
+		return this._isV6;
+	}
+
 }
 
 export = ContactNodeAddress;

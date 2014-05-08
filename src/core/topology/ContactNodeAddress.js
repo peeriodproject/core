@@ -96,6 +96,14 @@ var ContactNodeAddress = (function () {
 
         return buf;
     };
+
+    ContactNodeAddress.prototype.isIPv4 = function () {
+        return this._isV4;
+    };
+
+    ContactNodeAddress.prototype.isIPv6 = function () {
+        return this._isV6;
+    };
     return ContactNodeAddress;
 })();
 

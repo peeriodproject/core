@@ -29,6 +29,24 @@ interface ContactNodeAddressInterface {
 	 */
 	getAddressAsByteBuffer ():Buffer;
 
+	/**
+	 * Tells if the IP address is an IPv4 address.
+	 *
+	 * @method core.topology.ContactNodeAddressInterface#isIPv4
+	 *
+	 * @returns {boolean}
+	 */
+	isIPv4 ():boolean;
+
+	/**
+	 * Tells if the IP address is an IPv6 address.
+	 *
+	 * @method core.topology.ContactNodeAddressInterface#isIPv6
+	 *
+	 * @returns {boolean}
+	 */
+	isIPv6 ():boolean;
+
 }
 
 export = ContactNodeAddressInterface;
