@@ -61,9 +61,9 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () 
                     return 1024 * 1024;
                 if (key === 'protocol.messages.msToKeepNonAddressableMemory')
                     return 2000;
-                if (key === 'protocol.net.msToWaitForIncomingMessage')
+                if (key === 'protocol.messages.msToWaitForIncomingMessage')
                     return 500;
-                if (key === 'protocol.net.maxSecondsToWaitForConnection')
+                if (key === 'protocol.messages.maxSecondsToWaitForConnection')
                     return 2;
             }
         });
