@@ -8,8 +8,10 @@
     "show_in_taskbar": false
   },
   "dependencies": {
+    "follow-redirects": "*",
     "fs-extra": "^0.8.1",
     "node-lmdb": "^0.2.1",
-    "follow-redirects": "*"
+    "winston": "^0.7.3",
+    "winston-irc": "^0.3.2"
   }
 }

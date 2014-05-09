@@ -81,7 +81,8 @@ module.exports = function (grunt) {
             'ts-definitions/should/should.d.ts'        : 'https://github.com/borisyankov/DefinitelyTyped/raw/master/should/should.d.ts',
             'ts-definitions/sinon/sinon.d.ts'          : 'https://github.com/borisyankov/DefinitelyTyped/raw/master/sinon/sinon.d.ts',
             'ts-definitions/superagent/superagent.d.ts': 'https://github.com/borisyankov/DefinitelyTyped/raw/master/superagent/superagent.d.ts',
-            'ts-definitions/supertest/supertest.d.ts'  : 'https://github.com/borisyankov/DefinitelyTyped/raw/master/supertest/supertest.d.ts'
+            'ts-definitions/supertest/supertest.d.ts'  : 'https://github.com/borisyankov/DefinitelyTyped/raw/master/supertest/supertest.d.ts',
+            'ts-definitions/winston/winston.d.ts'      : 'https://github.com/borisyankov/DefinitelyTyped/raw/master/winston/winston.d.ts'
         }
     });
 
