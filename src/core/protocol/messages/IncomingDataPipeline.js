@@ -221,7 +221,6 @@ var IncomingDataPipeline = (function (_super) {
                 }
 
                 this._tryToFinalizeData(identifier, tempMessageMemory);
-                console.log('got buffer, tryigin to finalize');
             }
         }
     };
@@ -325,10 +324,8 @@ var IncomingDataPipeline = (function (_super) {
 
             try  {
                 var msg = this._readableMessageFactory.create(messageBuffer);
-                console.log('could read message, emitting.');
                 this.emit('message', identifier, msg);
             } catch (e) {
-                console.log('not readable message');
                 this.emit('unreadableMessage', identifier);
             }
         } else if (tempMessageMemory.length > this._maxByteLengthPerMessage) {

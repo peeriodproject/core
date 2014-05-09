@@ -618,8 +618,6 @@ var ProtocolConnectionManager = (function (_super) {
             var newIdentifier = this._nodeToIdentifier(message.getSender());
             this._fromIncomingPendingToConfirmed(newIdentifier, identifier, incomingPending);
         } else if (!(this._identifierAndContactNodeMatch(identifier, message.getSender()))) {
-            console.log('wont propagate message');
-
             // does not seem to be the person it's supposed to be. we assume something is wrong here
             // and destroy the connection.
             propagateMessage = false;
@@ -627,7 +625,6 @@ var ProtocolConnectionManager = (function (_super) {
         }
 
         if (propagateMessage) {
-            console.log('propagating message');
             this.emit('message', message);
         }
     };
@@ -643,7 +640,6 @@ var ProtocolConnectionManager = (function (_super) {
     ProtocolConnectionManager.prototype._setGlobalListeners = function () {
         var _this = this;
         this._incomingDataPipeline.on('message', function (identifier, message) {
-            console.log('got message from pipe.');
             _this._onMessage(identifier, message);
         });
 
