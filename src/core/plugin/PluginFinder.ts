@@ -10,8 +10,6 @@ import PluginMapInterface = require('./interfaces/PluginMapInterface');
 import PluginNameListInterface = require('./interfaces/PluginNameListInterface');
 import PluginPathListInterface = require('./interfaces/PluginPathListInterface');
 
-import Logger = require('../utils/logger/Logger');
-
 /**
  * @class core.plugin.PluginFinder
  * @implements core.plugin.PluginFinderInterface
