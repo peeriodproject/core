@@ -651,6 +651,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			this._fromIncomingPendingToConfirmed(newIdentifier, identifier, incomingPending);
 		}
 		else if (!(this._identifierAndContactNodeMatch(identifier, message.getSender()))) {
+			console.log('wont propagate message');
 			// does not seem to be the person it's supposed to be. we assume something is wrong here
 			// and destroy the connection.
 			propagateMessage = false;
@@ -658,6 +659,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 
 		if (propagateMessage) {
+			console.log('propagating message');
 			this.emit('message', message);
 		}
 	}
@@ -672,6 +674,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 */
 	private _setGlobalListeners ():void {
 		this._incomingDataPipeline.on('message', (identifier:string, message:ReadableMessageInterface) => {
+			console.log('got message from pipe.')
 			this._onMessage(identifier, message);
 		});
 

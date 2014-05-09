@@ -233,7 +233,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 				}
 
 				this._tryToFinalizeData(identifier, tempMessageMemory);
-
+				console.log('got buffer, tryigin to finalize');
 			}
 		}
 	}
@@ -339,9 +339,11 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 
 			try {
 				var msg:ReadableMessageInterface = this._readableMessageFactory.create(messageBuffer);
+				console.log('could read message, emitting.');
 				this.emit('message', identifier, msg);
 			}
 			catch (e) {
+				console.log('not readable message');
 				this.emit('unreadableMessage', identifier);
 			}
 		}
