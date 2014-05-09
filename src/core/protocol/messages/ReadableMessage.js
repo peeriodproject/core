@@ -94,6 +94,9 @@ var ReadableMessage = (function () {
     *
     * @method core.protocol.messages.ReadableMessage~_contactNodeAddressByIPv4Buffer
     *
+    * @todo From node v.0.11.x (and thus node-webkit v.0.9.x) toJSON() will return a json object with {type:'Buffer',
+    * data:[<bytes>]} and not just the array with bytes!
+    *
     * @param {Buffer} buffer
     * @returns {ContactNodeAddressInterface}
     */
