@@ -67,11 +67,11 @@ var App = {
             //contactNodeFactory = new ContactNodeFactory();
             //routingTable = new RoutingTable(topologyConfig, myId, bucketFactory, bucketStore, contactNodeFactory);
             if (myOpenPorts[0] === 30415) {
-                console.log('In Port 30415.');
+                console.log('In Port 30415. johnny');
 
                 // initializer
                 var remoteNodeId = new Id(Id.byteBufferByHexString('0a0000000000000078f406020100000005000000', 20), 160);
-                var remoteContact = new ContactNode(remoteNodeId, [new ContactNodeAddress(myIp, 50385)], Date.now());
+                var remoteContact = new ContactNode(remoteNodeId, [new ContactNodeAddress(myIp, 30414)], Date.now());
 
                 generalWritableMessageFactory.setReceiver(remoteContact);
                 generalWritableMessageFactory.setMessageType('PING');
@@ -83,7 +83,7 @@ var App = {
                     console.log('Message from ' + message.getSender().getId().toHexString() + ': ' + message.getMessageType());
                 });
             } else {
-                console.log('In Port 50385.');
+                console.log('In Port 30414. joern');
                 protocolConnectionManager.on('message', function (message) {
                     if (message.getMessageType() === 'PING') {
                         console.log('Message from ' + message.getSender().getId().toHexString() + ': ' + message.getMessageType());
