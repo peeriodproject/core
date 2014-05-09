@@ -40,6 +40,8 @@ interface PluginFinderInterface {
 	/**
 	 * Returns a copy of the list of ignored plugin folder names
 	 *
+	 * @method core.plugin.PluginFinderInterface#getIgnoredPluginFolderNames
+	 *
 	 * @param {Function} callback
 	 */
 	getIgnoredPluginFolderNames (callback:(names:PluginNameListInterface) => void):void;

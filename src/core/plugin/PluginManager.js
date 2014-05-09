@@ -73,12 +73,20 @@ var PluginManager = (function () {
         });
     };
 
+    PluginManager.prototype.findNewPlugins = function (callback) {
+        var internalCallback = callback || function (err) {
+        };
+
+        this._pluginFinder.findPlugins(internalCallback);
+    };
+
     // todo his method is copied from RoutingTable! we should have a simple Closable-Class!!!
     PluginManager.prototype.isOpen = function (callback) {
         return callback(null, this._isOpen);
     };
 
     PluginManager.prototype.open = function (callback) {
+        var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
 
         if (this._isOpen) {
@@ -92,10 +100,21 @@ var PluginManager = (function () {
             } else {
                 //console.log('got the plugin state. do something with it!');
                 // this._pluginState = pluginState
-                this._isOpen = true;
+                _this._isOpen = true;
                 internalCallback(null);
             }
         });
+    };
+
+    /**
+    * Returns the path where the manager should load/store the plugin state
+    *
+    * @method core.plugin.PluginManager~_getManagerStoragePath
+    *
+    * @returns {string} The path to load from/store to
+    */
+    PluginManager.prototype._getManagerStoragePath = function () {
+        return path.join(this._config.get('app.dataPath'), 'pluginManager.json');
     };
 
     /**
@@ -103,12 +122,12 @@ var PluginManager = (function () {
     *
     * todo define pluginState
     *
-    * @method core.plugin.PluginManagerInterface~_loadPluginState
+    * @method core.plugin.PluginManager~_loadPluginState
     */
     PluginManager.prototype._loadPluginState = function (callback) {
         //console.log('loading the plugin state from the preferences!');
         var _this = this;
-        fs.readJson(path.join(this._config.get('app.dataPath'), 'pluginManager.json'), function (err, data) {
+        fs.readJson(this._getManagerStoragePath(), function (err, data) {
             if (err) {
                 // check for syntax errors
                 console.log(err);
@@ -151,7 +170,11 @@ var PluginManager = (function () {
     */
     PluginManager.prototype._savePluginState = function (callback) {
         //console.log('saving the plugin state to the preferences!');
-        callback(null);
+        //console.log('writing json to:');
+        fs.writeJson(this._getManagerStoragePath() + '_', this._pluginState, function (err) {
+            //console.log('written...');
+            callback(err);
+        });
     };
     return PluginManager;
 })();

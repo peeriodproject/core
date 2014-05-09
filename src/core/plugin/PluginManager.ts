@@ -91,6 +91,12 @@ class PluginManager implements PluginManagerInterface {
 
 	}
 
+	public findNewPlugins (callback?:(err:Error) => void):void {
+		var internalCallback = callback || function (err:Error) {};
+
+		this._pluginFinder.findPlugins(internalCallback);
+	}
+
 	// todo his method is copied from RoutingTable! we should have a simple Closable-Class!!!
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
 		return callback(null, this._isOpen);
@@ -104,7 +110,7 @@ class PluginManager implements PluginManagerInterface {
 		}
 
 		// todo add callback and move isOpen to the callback
-		this._loadPluginState(function (err:Error, pluginState:any) {
+		this._loadPluginState((err:Error, pluginState:any) => {
 			if (err) {
 				internalCallback(err);
 			}
@@ -119,16 +125,27 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	/**
+	 * Returns the path where the manager should load/store the plugin state
+	 *
+	 * @method core.plugin.PluginManager~_getManagerStoragePath
+	 *
+	 * @returns {string} The path to load from/store to
+	 */
+	private _getManagerStoragePath ():string {
+		return path.join(this._config.get('app.dataPath'), 'pluginManager.json');
+	}
+
+	/**
 	 * Loads the plugin state from a persistant storage
 	 *
 	 * todo define pluginState
 	 *
-	 * @method core.plugin.PluginManagerInterface~_loadPluginState
+	 * @method core.plugin.PluginManager~_loadPluginState
 	 */
 	private _loadPluginState (callback:(err:Error, pluginState:any) => void):void {
 		//console.log('loading the plugin state from the preferences!');
 
-		fs.readJson(path.join(this._config.get('app.dataPath'), 'pluginManager.json'), (err:Error, data:Object) => {
+		fs.readJson(this._getManagerStoragePath(), (err:Error, data:Object) => {
 
 			if (err) {
 				// check for syntax errors
@@ -181,7 +198,11 @@ class PluginManager implements PluginManagerInterface {
 	private _savePluginState (callback:(err:Error) => void):void {
 		//console.log('saving the plugin state to the preferences!');
 
-		callback(null);
+		//console.log('writing json to:');
+		fs.writeJson(this._getManagerStoragePath() + '_', this._pluginState, function (err:Error) {
+			//console.log('written...');
+			callback(err);
+		});
 	}
 
 }
