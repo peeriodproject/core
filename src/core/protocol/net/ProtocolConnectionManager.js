@@ -106,10 +106,10 @@ var ProtocolConnectionManager = (function (_super) {
 
         this._tcpSocketHandler = tcpSocketHandler;
 
-        this._incomingDataPipeline = new IncomingDataPipeline(config.get('protocol.messages.maxByteLengthPerMessage'), MessageByteCheatsheet.messageEnd, config.get('prococol.messages.msToKeepNonAddressableMemory'), new ReadableMessageFactory());
+        this._incomingDataPipeline = new IncomingDataPipeline(config.get('protocol.messages.maxByteLengthPerMessage'), MessageByteCheatsheet.messageEnd, config.get('protocol.messages.msToKeepNonAddressableMemory'), new ReadableMessageFactory());
 
-        this._incomingPendingTimeoutLength = config.get('protocol.net.msToWaitForIncomingMessage');
-        this._msToWaitForConnection = config.get('protocol.net.maxSecondsToWaitForConnection') * 1000;
+        this._incomingPendingTimeoutLength = config.get('protocol.messages.msToWaitForIncomingMessage');
+        this._msToWaitForConnection = config.get('protocol.messages.maxSecondsToWaitForConnection') * 1000;
 
         this._setGlobalListeners();
     }

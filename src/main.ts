@@ -4,6 +4,10 @@
 
 /// <reference path='./main.d.ts' />
 
+import App = require('./core/App');
+
+App.start();
+
 
 /*import gui = require('nw.gui');
 

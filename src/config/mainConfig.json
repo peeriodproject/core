@@ -10,13 +10,15 @@
         "allowHalfOpenSockets": false,
         "connectionRetrySeconds": 4,
         "idleConnectionKillTimeout": 30,
-        "myOpenPorts": [30415]
+        "outboundConnectionTimeout": 2000,
+        "myOpenPorts": [30415, 50385]
     },
     "protocol": {
-        "nessages": {
-            "maxByteLenghtPerMessage": 1048576,
+        "messages": {
+            "maxByteLengthPerMessage": 1048576,
             "msToKeepNonAddressableMemory": 10000,
-            "msToWaitForIncomingMessage": 10000
+            "msToWaitForIncomingMessage": 10000,
+            "maxSecondsToWaitForConnection": 4
         }
     },
     "plugin": {

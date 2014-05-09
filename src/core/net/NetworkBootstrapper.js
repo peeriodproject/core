@@ -116,7 +116,8 @@ var NetworkBootstrapper = (function () {
             connectionRetry: this._config.get('net.connectionRetrySeconds'),
             idleConnectionKillTimeout: this._config.get('net.idleConnectionKillTimeout'),
             myExternalIp: this._externalIp,
-            myOpenPorts: this._config.get('net.myOpenPorts')
+            myOpenPorts: this._config.get('net.myOpenPorts'),
+            outboundConnectionTimeout: this._config.get('net.outboundConnectionTimeout')
         };
     };
     return NetworkBootstrapper;

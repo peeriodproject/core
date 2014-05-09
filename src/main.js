@@ -2,6 +2,9 @@
 * Created by joernroeder on 4/21/14.
 */
 /// <reference path='./main.d.ts' />
+var App = require('./core/App');
+
+App.start();
 /*import gui = require('nw.gui');
 var tray = new gui.Tray({
 title: 'Tray',
