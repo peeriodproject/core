@@ -41,9 +41,15 @@ var GeneralWritableMessageFactory = (function () {
         */
         this._receiver = null;
         /**
-        * @member {core.topology.ContactNodeInterface} core.protocol.messages.GeneralWritableMessageFactory~_sender
+        * @member {core.topology.MyNodeInterface} core.protocol.messages.GeneralWritableMessageFactory~_sender
         */
         this._sender = null;
+        /**
+        * Keeps track of the latest hook on the sender's `addressChange` event.
+        *
+        * @member {Function} core.protocol.messages.GeneralWritableMessageFactory~_recentChangeHook
+        */
+        this._recentAddressChangeHook = null;
         /**
         * Indicator for whether the sender has undergone changes since the last address block creation.
         *
@@ -64,7 +70,17 @@ var GeneralWritableMessageFactory = (function () {
     };
 
     GeneralWritableMessageFactory.prototype.setSender = function (node) {
+        var _this = this;
         if (this._sender !== node) {
+            if (this._sender && this._recentAddressChangeHook) {
+                this._sender.removeOnAddressChange(this._recentAddressChangeHook);
+            }
+
+            this._recentAddressChangeHook = function () {
+                _this._senderHasChanged = true;
+            };
+
+            node.onAddressChange(this._recentAddressChangeHook);
             this._senderHasChanged = true;
         }
         this._sender = node;

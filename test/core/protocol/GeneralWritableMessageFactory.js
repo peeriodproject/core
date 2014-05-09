@@ -7,11 +7,12 @@ var testUtils = require('../../utils/testUtils');
 
 var GeneralWritableMessageFactory = require('../../../src/core/protocol/messages/GeneralWritableMessageFactory');
 
+var MyNode = require('../../../src/core/topology/MyNode');
 var ContactNode = require('../../../src/core/topology/ContactNode');
 var Id = require('../../../src/core/topology/Id');
 var ContactNodeAddress = require('../../../src/core/topology/ContactNodeAddress');
 
-describe('CORE --> PROTOCOL --> MESSAGES --> GeneralWritableMessageFactory', function () {
+describe('CORE --> PROTOCOL --> MESSAGES --> GeneralWritableMessageFactory @current', function () {
     var sandbox;
     var sender;
     var receiver;
@@ -32,7 +33,7 @@ describe('CORE --> PROTOCOL --> MESSAGES --> GeneralWritableMessageFactory', fun
         });
 
         var addressList = [new ContactNodeAddress('44.123.255.7', 55555), new ContactNodeAddress('2001:db8::ff00:42:8329', 55555)];
-        sender = new ContactNode(new Id(Id.byteBufferByHexString('fe3626caca6c84fa4e5d323b6a26b897582c57f9', 20), 160), addressList, 10);
+        sender = new MyNode(new Id(Id.byteBufferByHexString('fe3626caca6c84fa4e5d323b6a26b897582c57f9', 20), 160), addressList);
 
         factory = new GeneralWritableMessageFactory(sender);
     });
@@ -57,17 +58,25 @@ describe('CORE --> PROTOCOL --> MESSAGES --> GeneralWritableMessageFactory', fun
     });
 
     it('sender has changed should be true', function () {
-        factory.setSender(receiver);
+        var addressList = [new ContactNodeAddress('2001:db8::ff00:42:8329', 55555)];
+        sender.updateAddresses(addressList);
         factory.getSenderHasChanged().should.be.true;
     });
 
     it('should throw an error that the message type is unknown', function () {
-        factory.setSender(sender);
         factory.setReceiver(receiver);
         factory.setMessageType('foobar');
         (function () {
             factory.constructMessage(new Buffer([1]), 1);
         }).should.throw('GeneralWritableMessageFactory#constructMessage: Unknown message type.');
+    });
+
+    it('should set a new node and remove the old listener', function (done) {
+        var addressList = [new ContactNodeAddress('44.123.255.7', 55555), new ContactNodeAddress('2001:db8::ff00:42:8329', 55555)];
+        var newSender = new MyNode(new Id(Id.byteBufferByHexString('fe3626caca6c84fa4e5d323b6a26b897582c57f9', 20), 160), addressList);
+
+        factory.setSender(newSender);
+        done();
     });
 
     after(function () {

@@ -1,5 +1,6 @@
 import GeneralWritableMessageFactoryInterface = require('./interfaces/GeneralWritableMessageFactoryInterface');
 import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInterface');
+import MyNodeInterface = require('../../topology/interfaces/MyNodeInterface');
 import MessageByteCheatsheet = require('./MessageByteCheatsheet');
 import IdInterface = require('../../topology/interfaces/IdInterface');
 import ContactNodeAddressInterface = require('../../topology/interfaces/ContactNodeAddressInterface');
@@ -52,9 +53,16 @@ class GeneralWritableMessageFactory implements GeneralWritableMessageFactoryInte
 	private _receiver:ContactNodeInterface = null;
 
 	/**
-	 * @member {core.topology.ContactNodeInterface} core.protocol.messages.GeneralWritableMessageFactory~_sender
+	 * @member {core.topology.MyNodeInterface} core.protocol.messages.GeneralWritableMessageFactory~_sender
 	 */
-	private _sender:ContactNodeInterface = null;
+	private _sender:MyNodeInterface = null;
+
+	/**
+	 * Keeps track of the latest hook on the sender's `addressChange` event.
+	 *
+	 * @member {Function} core.protocol.messages.GeneralWritableMessageFactory~_recentChangeHook
+	 */
+	private _recentAddressChangeHook:() => any = null;
 
 	/**
 	 * Indicator for whether the sender has undergone changes since the last address block creation.
@@ -64,7 +72,7 @@ class GeneralWritableMessageFactory implements GeneralWritableMessageFactoryInte
 	 */
 	private _senderHasChanged:boolean = false;
 
-	public constructor (sender?:ContactNodeInterface) {
+	public constructor (sender?:MyNodeInterface) {
 		if (sender) {
 			this.setSender(sender);
 		}
@@ -78,8 +86,17 @@ class GeneralWritableMessageFactory implements GeneralWritableMessageFactoryInte
 		this._receiver = node;
 	}
 
-	public setSender (node:ContactNodeInterface):void {
+	public setSender (node:MyNodeInterface):void {
 		if (this._sender !== node) {
+			if (this._sender && this._recentAddressChangeHook) {
+				this._sender.removeOnAddressChange(this._recentAddressChangeHook);
+			}
+
+			this._recentAddressChangeHook = ():any => {
+				this._senderHasChanged = true;
+			};
+
+			node.onAddressChange(this._recentAddressChangeHook);
 			this._senderHasChanged = true;
 		}
 		this._sender = node;

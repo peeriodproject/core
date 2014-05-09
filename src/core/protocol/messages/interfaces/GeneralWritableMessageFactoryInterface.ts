@@ -1,6 +1,7 @@
 /// <reference path='../../../../../ts-definitions/node/node.d.ts' />
 
 import ContactNodeInterface = require('../../../topology/interfaces/ContactNodeInterface');
+import MyNodeInterface = require('../../../topology/interfaces/MyNodeInterface');
 import WritableMessageFactoryInterface = require('./WritableMessageFactoryInterface');
 
 /**
@@ -42,9 +43,9 @@ interface GeneralWritableMessageFactoryInterface extends WritableMessageFactoryI
 	 *
 	 * @method core.protocol.messages.GeneralWritableMessageFactoryInterface#setSender
 	 *
-	 * @param {core.topology.ContactNodeInterface} node The sender
+	 * @param {core.topology.MyNodeInterface} node The sender
 	 */
-	setSender (node:ContactNodeInterface):void;
+	setSender (node:MyNodeInterface):void;
 
 }
 
