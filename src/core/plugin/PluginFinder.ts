@@ -10,8 +10,6 @@ import PluginMapInterface = require('./interfaces/PluginMapInterface');
 import PluginNameListInterface = require('./interfaces/PluginNameListInterface');
 import PluginPathListInterface = require('./interfaces/PluginPathListInterface');
 
-import Logger = require('../utils/logger/Logger');
-
 /**
  * @class core.plugin.PluginFinder
  * @implements core.plugin.PluginFinderInterface
@@ -53,8 +51,6 @@ class PluginFinder implements PluginFinderInterface {
 
 		this._pluginConfigName = this._config.get('plugin.pluginConfigName');
 		this._pluginFolderPath = this._config.get('plugin.folderPath');
-
-		Logger.winston.lo
 	}
 
 	public addPluginFolderNamesToIgnoreList (pluginFolderNames:PluginNameListInterface, callback?:Function):void {
