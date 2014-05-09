@@ -82,6 +82,10 @@ var GeneralWritableMessageFactory = (function () {
         bufferList.push(new Buffer(MessageByteCheatsheet.messageBegin));
         bufferLength += MessageByteCheatsheet.messageBegin.length;
 
+        // add the receiver ID
+        bufferList.push(this._receiver.getId().getBuffer());
+        bufferLength += 20;
+
         // add the sender ID
         bufferList.push(this._sender.getId().getBuffer());
         bufferLength += 20;
@@ -131,12 +135,15 @@ var GeneralWritableMessageFactory = (function () {
     *
     */
     GeneralWritableMessageFactory.prototype._constructSenderAddressBlock = function () {
+        var _this = this;
         this._currentAddressBlockByteList = [];
         this._currentAddressBlockLength = 0;
 
         var addressList = this._sender.getAddresses();
 
-        addressList.forEach(this._onAddressIteration);
+        addressList.forEach(function (address) {
+            _this._onAddressIteration(address);
+        });
 
         // end the block
         this._currentAddressBlockByteList.push(new Buffer([MessageByteCheatsheet.addressEnd]));

@@ -97,6 +97,10 @@ class GeneralWritableMessageFactory implements GeneralWritableMessageFactoryInte
 		bufferList.push(new Buffer(MessageByteCheatsheet.messageBegin));
 		bufferLength += MessageByteCheatsheet.messageBegin.length;
 
+		// add the receiver ID
+		bufferList.push(this._receiver.getId().getBuffer());
+		bufferLength += 20;
+
 		// add the sender ID
 		bufferList.push(this._sender.getId().getBuffer());
 		bufferLength += 20;
@@ -151,7 +155,7 @@ class GeneralWritableMessageFactory implements GeneralWritableMessageFactoryInte
 
 		var addressList:ContactNodeAddressListInterface = this._sender.getAddresses();
 
-		addressList.forEach(this._onAddressIteration);
+		addressList.forEach((address) => { this._onAddressIteration(address); });
 
 		// end the block
 		this._currentAddressBlockByteList.push(new Buffer([MessageByteCheatsheet.addressEnd]));
