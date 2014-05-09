@@ -14,7 +14,7 @@ import TCPSocket = require('../../../src/core/net/tcp/TCPSocket');
 import ReadableMessageFactory = require('../../../src/core/protocol/messages/ReadableMessageFactory');
 import ReadableMessage = require('../../../src/core/protocol/messages/ReadableMessage');
 
-describe('CORE --> PROTOCOL --> IncomingDataPipeline', function () {
+describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () {
 
 	this.timeout(0);
 
