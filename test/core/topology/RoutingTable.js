@@ -112,11 +112,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             onOpenCallback: function () {
                 bucketFactoryStub.create.callCount.should.equal(topologyBitLength);
 
-                // waiting for the next tick!
-                // The routing table is still in construction and `routingTable` will be undefined otherwise.
-                setTimeout(function () {
-                    closeRtAndDone(routingTable, done);
-                }, 0);
+                closeRtAndDone(routingTable, done);
             }
         };
 

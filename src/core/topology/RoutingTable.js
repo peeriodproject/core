@@ -91,7 +91,7 @@ var RoutingTable = (function () {
         var internalCallback = callback || this._options.onCloseCallback;
 
         if (!this._isOpen) {
-            return internalCallback(null);
+            return process.nextTick(internalCallback.bind(null, null));
         }
 
         this._isOpen = false;
@@ -101,7 +101,8 @@ var RoutingTable = (function () {
         }
 
         this._buckets = null;
-        internalCallback(null);
+
+        return process.nextTick(internalCallback.bind(null, null));
     };
 
     RoutingTable.prototype.getClosestContactNodes = function (id, excludeId, callback) {
@@ -111,8 +112,7 @@ var RoutingTable = (function () {
         var startBucketKey = this._getBucketKey(id);
 
         if (!this._isInBucketKeyRange(startBucketKey)) {
-            internalCallback(new Error('RoutingTable.getClosestContactNode: cannot get closest contact nodes for the given Id.'), null);
-            return;
+            return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.getClosestContactNode: cannot get closest contact nodes for the given Id.'), null));
         }
 
         var topologyK = this._config.get('topology.k');
@@ -218,19 +218,19 @@ var RoutingTable = (function () {
         if (this._isInBucketKeyRange(bucketKey)) {
             this._getBucket(bucketKey).get(id, internalCallback);
         } else {
-            internalCallback(new Error('RoutingTable.getContactNode: cannot get the contact node.'), null);
+            return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.getContactNode: cannot get the contact node.'), null));
         }
     };
 
     RoutingTable.prototype.isOpen = function (callback) {
-        return callback(null, this._isOpen);
+        return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
     RoutingTable.prototype.open = function (callback) {
         var internalCallback = callback || this._options.onOpenCallback;
 
         if (this._isOpen) {
-            return internalCallback(null);
+            return process.nextTick(internalCallback.bind(null, null));
         }
 
         this._buckets = {};
@@ -240,7 +240,8 @@ var RoutingTable = (function () {
         }
 
         this._isOpen = true;
-        internalCallback(null);
+
+        return process.nextTick(internalCallback.bind(null, null));
     };
 
     RoutingTable.prototype.updateContactNode = function (contact, callback) {
@@ -251,7 +252,7 @@ var RoutingTable = (function () {
         if (this._isInBucketKeyRange(bucketKey)) {
             this._getBucket(bucketKey).update(contact, internalCallback);
         } else {
-            internalCallback(new Error('RoutingTable.updateContactNode: cannot update the given contact node.'));
+            return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.updateContactNode: cannot update the given contact node.')));
         }
     };
 

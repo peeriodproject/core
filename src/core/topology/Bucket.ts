@@ -101,11 +101,14 @@ class Bucket implements BucketInterface {
 		};
 
 		this._store.close();
-		internalCallback(null);
+
+		return process.nextTick(internalCallback.bind(null, null));
 	}
 
 	public contains (contact:ContactNodeInterface, callback:(err:Error, contains:boolean) => any):void {
-		callback(null, this._store.contains(this._keyString, contact.getId().getBuffer()));
+		return process.nextTick(function () {
+			callback(null, this._store.contains(this._keyString, contact.getId().getBuffer()));
+		}.bind(this));
 	}
 
 	public get (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void {
@@ -116,7 +119,8 @@ class Bucket implements BucketInterface {
 			contact = this._convertToContactNodeInstance(storedObject);
 		}
 
-		callback(null, contact);
+		return process.nextTick(callback.bind(null, null, contact));
+
 	}
 
 	getAll (callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
@@ -129,11 +133,11 @@ class Bucket implements BucketInterface {
 			}
 		}
 
-		callback(null, contacts);
+		return process.nextTick(callback.bind(null, null, contacts));
 	}
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
-		callback(null, this._store.isOpen());
+		return process.nextTick(callback.bind(null, null, this._store.isOpen()));
 	}
 
 	public open (callback?:(err:Error) => any):void {
@@ -141,7 +145,7 @@ class Bucket implements BucketInterface {
 		};
 
 		this._store.open();
-		internalCallback(null);
+		return process.nextTick(internalCallback.bind(null, null));
 	}
 
 	public remove (id:IdInterface, callback?:(err:Error) => any):void {
@@ -149,11 +153,12 @@ class Bucket implements BucketInterface {
 		};
 
 		this._store.remove(this._keyString, id.getBuffer());
-		internalCallback(null);
+
+		return process.nextTick(internalCallback.bind(null, null));
 	}
 
 	public size (callback:(err:Error, size:number) => any):void {
-		callback(null, this._store.size(this._keyString));
+		return process.nextTick(callback.bind(null, null, this._store.size(this._keyString)));
 	}
 
 	public update (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
@@ -162,13 +167,17 @@ class Bucket implements BucketInterface {
 		var removed:boolean;
 		var added:boolean;
 		var error:Error;
+		var thrown = false;
 
 		var updatedCallback = function () {
 			if (error) {
-				internalCallback(error);
+				if (!thrown) {
+					thrown = true;
+					return process.nextTick(internalCallback.bind(null, error));
+				}
 			}
 			else if (removed && added) {
-				internalCallback(null);
+				return process.nextTick(internalCallback.bind(null, null));
 			}
 
 		};

@@ -113,7 +113,7 @@ class RoutingTable implements RoutingTableInterface {
 		var internalCallback = callback || this._options.onCloseCallback;
 
 		if (!this._isOpen) {
-			return internalCallback(null);
+			return process.nextTick(internalCallback.bind(null, null));
 		}
 
 		this._isOpen = false;
@@ -123,7 +123,8 @@ class RoutingTable implements RoutingTableInterface {
 		}
 
 		this._buckets = null;
-		internalCallback(null);
+
+		return process.nextTick(internalCallback.bind(null, null));
 	}
 
 	public getClosestContactNodes (id:IdInterface, excludeId:IdInterface, callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
@@ -132,8 +133,7 @@ class RoutingTable implements RoutingTableInterface {
 		var startBucketKey:number = this._getBucketKey(id);
 
 		if (!this._isInBucketKeyRange(startBucketKey)) {
-			internalCallback(new Error('RoutingTable.getClosestContactNode: cannot get closest contact nodes for the given Id.'), null);
-			return;
+			return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.getClosestContactNode: cannot get closest contact nodes for the given Id.'), null));
 		}
 
 		var topologyK:number = this._config.get('topology.k');
@@ -250,19 +250,19 @@ class RoutingTable implements RoutingTableInterface {
 			this._getBucket(bucketKey).get(id, internalCallback);
 		}
 		else {
-			internalCallback(new Error('RoutingTable.getContactNode: cannot get the contact node.'), null);
+			return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.getContactNode: cannot get the contact node.'), null));
 		}
 	}
 
-	public isOpen (callback:(err:Error, isOpen:boolean) => any):boolean {
-		return callback(null, this._isOpen);
+	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
+		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
 	public open (callback?:(err:Error) => any):void {
 		var internalCallback = callback || this._options.onOpenCallback;
 
 		if (this._isOpen) {
-			return internalCallback(null);
+			return process.nextTick(internalCallback.bind(null, null));
 		}
 
 		this._buckets = {};
@@ -272,7 +272,8 @@ class RoutingTable implements RoutingTableInterface {
 		}
 
 		this._isOpen = true;
-		internalCallback(null);
+
+		return process.nextTick(internalCallback.bind(null, null));
 	}
 
 	public updateContactNode (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
@@ -284,7 +285,7 @@ class RoutingTable implements RoutingTableInterface {
 			this._getBucket(bucketKey).update(contact, internalCallback);
 		}
 		else {
-			internalCallback(new Error('RoutingTable.updateContactNode: cannot update the given contact node.'));
+			return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.updateContactNode: cannot update the given contact node.')));
 		}
 	}
 

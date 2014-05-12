@@ -77,7 +77,9 @@ class PluginFinder implements PluginFinderInterface {
 			add(0);
 		}
 		else {
-			internalCallback();
+			process.nextTick(function (){
+				internalCallback();
+			}.bind(this));
 		}
 	}
 
@@ -97,8 +99,10 @@ class PluginFinder implements PluginFinderInterface {
 
 				// current filePath is ignored. skipping...
 				if (index !== -1) {
-					filesLeft--;
-					checkAndCallCallback();
+					process.nextTick(function() {
+						filesLeft--;
+						checkAndCallCallback();
+					}.bind(this));
 				}
 				else {
 					var pluginPath:string = path.join(this._pluginFolderPath, filePath);
@@ -149,32 +153,29 @@ class PluginFinder implements PluginFinderInterface {
 	}
 
 	public getIgnoredPluginFolderNames (callback:(names:PluginNameListInterface) => void):void {
-		callback(this._ignorePluginFolderNameList.slice());
+		process.nextTick(function () {
+			callback(this._ignorePluginFolderNameList.slice());
+		}.bind(this));
 	}
 
 	public getPluginFolderPath (callback:(err:Error, path:string) => void):void {
 		var folderPath:string = this._pluginFolderPath;
 
-		try {
-			fs.exists(folderPath, function (exists:boolean) {
-				if (exists) {
-					callback(null, folderPath);
-				}
-				else {
-					fs.mkdirs(folderPath, function (err:Error) {
-						if (err) {
-							callback(err, null);
-						}
-						else {
-							callback(null, folderPath);
-						}
-					});
-				}
-			});
-		}
-		catch (err) {
-			callback(err, null);
-		}
+		fs.exists(folderPath, function (exists:boolean) {
+			if (exists) {
+				callback(null, folderPath);
+			}
+			else {
+				fs.mkdirs(folderPath, function (err:Error) {
+					if (err) {
+						callback(err, null);
+					}
+					else {
+						callback(null, folderPath);
+					}
+				});
+			}
+		});
 	}
 
 	public removePluginFolderNamesFromIgnoreList (pluginFolderNames:PluginNameListInterface, callback?:Function):void {
@@ -201,7 +202,9 @@ class PluginFinder implements PluginFinderInterface {
 			remove(0);
 		}
 		else {
-			internalCallback();
+			process.nextTick(function () {
+				internalCallback();
+			}.bind(this));
 		}
 	}
 
