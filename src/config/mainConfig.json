@@ -28,5 +28,10 @@
     },
     "app": {
         "dataPath": "dataPathFolder"
+    },
+    "search": {
+        "host": "localhost",
+        "port": 9200,
+        "binaryPath": "core/search/elasticsearch"
     }
 }
