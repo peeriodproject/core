@@ -112,7 +112,6 @@ var PluginFinder = (function () {
         this.getPluginFolderPath(function (err, folderPath) {
             if (err) {
                 callback(err, null);
-                return;
             } else {
                 fs.readdir(_this._pluginFolderPath, function (err, files) {
                     if (err) {
@@ -126,7 +125,6 @@ var PluginFinder = (function () {
                                 checkPath(file);
                             });
                         } else {
-                            // nothing to do here! returning...
                             callback(null, null);
                         }
                     }

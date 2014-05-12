@@ -9,7 +9,7 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @implements PluginManagerInterface
 */
 var PluginManager = (function () {
-    function PluginManager(config, pluginFinder, options) {
+    function PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, options) {
         if (typeof options === "undefined") { options = {}; }
         /**
         * The internally used config object instance
@@ -35,11 +35,31 @@ var PluginManager = (function () {
         */
         this._pluginFinder = null;
         /**
+        *
+        * @member {core.plugin.PluginRunnerInterface} core.plugin.PluginManager~_pluginRunner
+        */
+        this._pluginRunnerFactory = null;
+        /**
+        *
+        * @member core.plugin.PluginManager~_pluginRunners
+        */
+        this._pluginRunners = {};
+        /**
         * Represents the state of activated, deactivated and idle plugins
         *
         * @member {core.plugin.PluginStateInterface} core.plugin.PluginManager~_pluginState
         */
         this._pluginState = null;
+        /**
+        * Indicates weather the state is just loaded from the storage or already processed
+        *
+        * @member {boolean} core.plugin.PluginManager~_pluginStateIsActive
+        */
+        this._pluginStateIsActive = false;
+        /**
+        * @member (core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_pluginValidator
+        */
+        this._pluginValidator = null;
         var defaults = {
             onCloseCallback: function (err) {
             },
@@ -49,25 +69,60 @@ var PluginManager = (function () {
 
         this._config = config;
         this._pluginFinder = pluginFinder;
+        this._pluginValidator = pluginValidator;
+        this._pluginRunnerFactory = pluginRunnerFactory;
         this._options = ObjectUtils.extend(defaults, options);
 
         this.open(this._options.onOpenCallback);
     }
-    /*public checkPluginFolderForNewPlugins(callback:(err:Error, pluginPaths:PluginPathListInterface) => void):void {
-    
-    }*/
+    PluginManager.prototype.activatePluginState = function (callback) {
+        var internalCallback = callback || function (err) {
+        };
+
+        if (this._pluginState && this._pluginState['active']) {
+            var plugins = this._pluginState['active'];
+            var activated = 0;
+            var errors = [];
+            var manager = this;
+
+            return (function activatePlugin(i) {
+                if (i >= plugins.length) {
+                    // callback
+                    return;
+                }
+
+                manager._activatePlugin(plugins[i], function (err) {
+                    activated++;
+
+                    if (err) {
+                        errors.push(err);
+                    }
+
+                    if (activated === plugins.length) {
+                        // todo implement error callback!
+                        internalCallback(null);
+                        manager._pluginStateIsActive = true;
+                    }
+                });
+
+                return process.nextTick(activatePlugin.bind(null, i + 1));
+            }(0));
+        }
+    };
+
     PluginManager.prototype.close = function (callback) {
+        var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
 
         if (!this._isOpen) {
-            return internalCallback(null);
+            return process.nextTick(internalCallback.bind(null, null));
         }
 
         this._savePluginState(function (err) {
             if (err) {
                 internalCallback(err);
             } else {
-                this._isOpen = false;
+                _this._isOpen = false;
                 internalCallback(null);
             }
         });
@@ -80,9 +135,27 @@ var PluginManager = (function () {
         this._pluginFinder.findPlugins(internalCallback);
     };
 
+    PluginManager.prototype.getActivePluginRunners = function (callback) {
+        return process.nextTick(callback.bind(null, this._pluginRunners));
+    };
+
+    /**
+    * @param {string} identifier
+    * @returns {core.plugin.PluginRunnerInterface}
+    */
+    PluginManager.prototype.getActivePluginRunner = function (identifier, callback) {
+        var runner = this._pluginRunners[identifier] ? this._pluginRunners[identifier] : null;
+
+        return process.nextTick(callback.bind(null, runner));
+    };
+
+    PluginManager.prototype.getPluginState = function (callback) {
+        return process.nextTick(callback.bind(null, this._pluginState));
+    };
+
     // todo his method is copied from RoutingTable! we should have a simple Closable-Class!!!
     PluginManager.prototype.isOpen = function (callback) {
-        return callback(null, this._isOpen);
+        return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
     PluginManager.prototype.open = function (callback) {
@@ -90,17 +163,36 @@ var PluginManager = (function () {
         var internalCallback = callback || this._options.onCloseCallback;
 
         if (this._isOpen) {
-            return internalCallback(null);
+            return process.nextTick(internalCallback.bind(null, null));
+            //return internalCallback(null);
         }
 
-        // todo add callback and move isOpen to the callback
         this._loadPluginState(function (err, pluginState) {
             if (err) {
                 internalCallback(err);
             } else {
-                //console.log('got the plugin state. do something with it!');
-                // this._pluginState = pluginState
+                _this._pluginState = pluginState;
                 _this._isOpen = true;
+
+                internalCallback(null);
+            }
+        });
+    };
+
+    /**
+    * The PluginManager is going to activate the plugin. But before we're going to run thirdparty code within
+    * the app we validate the code using a {@link core.plugin.PluginValidatorInterface}.
+    */
+    PluginManager.prototype._activatePlugin = function (pluginState, callback) {
+        var _this = this;
+        var internalCallback = callback || function (err) {
+        };
+
+        this._pluginValidator.validateState(pluginState, function (err) {
+            if (err) {
+                return internalCallback(err);
+            } else {
+                _this._pluginRunners[pluginState.name] = _this._pluginRunnerFactory.create(pluginState.name, pluginState.path);
                 internalCallback(null);
             }
         });
@@ -126,39 +218,18 @@ var PluginManager = (function () {
     */
     PluginManager.prototype._loadPluginState = function (callback) {
         //console.log('loading the plugin state from the preferences!');
-        var _this = this;
         fs.readJson(this._getManagerStoragePath(), function (err, data) {
             if (err) {
                 // check for syntax errors
                 console.log(err);
             } else {
                 if (data.hasOwnProperty('plugins')) {
-                    var pluginState = data['plugins'];
-                    var types = Object.keys(pluginState);
-
-                    for (var i in types) {
-                        var type = types[i];
-                        var typedPlugins = pluginState[type];
-
-                        for (var j in typedPlugins) {
-                            _this._processLoadedPlugin(type, typedPlugins[j]);
-                            // skdlf
-                        }
-                    }
+                    callback(null, data['plugins']);
                 } else {
-                    console.log('no plugins key found!');
+                    callback(null, null);
                 }
             }
-
-            callback(null, null);
         });
-    };
-
-    PluginManager.prototype._processLoadedPlugin = function (type, plugin) {
-        if (type === 'active') {
-        } else if (type === 'idle') {
-        } else if (type === 'inactive') {
-        }
     };
 
     /**
@@ -169,10 +240,11 @@ var PluginManager = (function () {
     * @method core.plugin.PluginManagerInterface#savePluginState
     */
     PluginManager.prototype._savePluginState = function (callback) {
-        //console.log('saving the plugin state to the preferences!');
-        //console.log('writing json to:');
-        fs.writeJson(this._getManagerStoragePath() + '_', this._pluginState, function (err) {
-            //console.log('written...');
+        var state = {
+            plugins: this._pluginState
+        };
+
+        fs.writeJson(this._getManagerStoragePath(), state, function (err) {
             callback(err);
         });
     };

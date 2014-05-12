@@ -126,7 +126,6 @@ class PluginFinder implements PluginFinderInterface {
 		this.getPluginFolderPath((err:Error, folderPath:string) => {
 			if (err) {
 				callback(err, null);
-				return;
 			}
 			else {
 				fs.readdir(this._pluginFolderPath, function (err:Error, files:PluginNameListInterface) {
@@ -143,7 +142,6 @@ class PluginFinder implements PluginFinderInterface {
 							});
 						}
 						else {
-							// nothing to do here! returning...
 							callback(null, null);
 						}
 					}

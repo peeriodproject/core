@@ -6,6 +6,7 @@
  */
 interface PluginStateObjectInterface {
 	name:string;
+	path:string;
 }
 
 export = PluginStateObjectInterface;

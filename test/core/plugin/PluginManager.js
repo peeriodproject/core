@@ -6,6 +6,9 @@ var testUtils = require('../../utils/testUtils');
 
 var PluginFinder = require('../../../src/core/plugin/PluginFinder');
 var PluginManager = require('../../../src/core/plugin/PluginManager');
+
+var PluginRunnerFactory = require('../../../src/core/plugin/PluginRunnerFactory');
+var PluginValidator = require('../../../src/core/plugin/PluginValidator');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
 describe('CORE --> PLUGIN --> PluginManager @joern', function () {
@@ -36,8 +39,10 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
     it('should correctly instantiate PluginManager without error', function (done) {
         var config = createConfig();
         var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
 
-        (new PluginManager(config, pluginFinder, {
+        (new PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, {
             onOpenCallback: function () {
                 done();
             }
@@ -47,17 +52,22 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
     it('should correctly call the onOpen and onClose callback', function (done) {
         var config = createConfig();
         var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
-        var pluginManager = new PluginManager(config, pluginFinder, {
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, {
             onOpenCallback: function () {
-                // waiting for the next tick!
-                // The manager is still in construction and `pluginManager` will be undefined otherwise.
-                setTimeout(function () {
-                    // todo maybe we should pass the instance as a parameter into the callback!
+                pluginManager.open(function () {
                     pluginManager.close();
-                }, 0);
+                });
             },
-            onCloseCallback: function () {
-                done();
+            onCloseCallback: function (err) {
+                pluginManager.close(function (err) {
+                    pluginManager.isOpen(function (err, isOpen) {
+                        isOpen.should.be.false;
+
+                        done();
+                    });
+                });
             }
         });
     });
@@ -69,7 +79,9 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
                 callback(null, null);
             }
         });
-        var pluginManager = new PluginManager(config, pluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory);
 
         pluginManager.findNewPlugins(function (err) {
             pluginFinder.findPlugins.calledOnce.should.be.true;
@@ -77,5 +89,104 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
             done();
         });
     });
+
+    it('should correctly load witout a pluginState file', function (done) {
+        var config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (key) {
+                if (key === 'app.dataPath') {
+                    return appDataPath;
+                } else if (key === 'pluginManagerStateConfig') {
+                    return 'invalidFileName.json';
+                }
+            }
+        });
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, {
+            onOpenCallback: function () {
+                pluginManager.getActivePluginRunners(function (pluginState) {
+                    done();
+                });
+            }
+        });
+    });
+
+    it('should correctly load the pluginState from disk', function (done) {
+        var config = createConfig();
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, {
+            onOpenCallback: function () {
+                pluginManager.getPluginState(function (pluginState) {
+                    var state = {
+                        idle: [
+                            {
+                                name: 'foo bar idle',
+                                path: '/path',
+                                hash: '123',
+                                since: 123456
+                            }
+                        ],
+                        inactive: [
+                            {
+                                name: 'foo bar inactive',
+                                path: '/path',
+                                hash: '123',
+                                since: 123456
+                            }
+                        ],
+                        active: [
+                            {
+                                name: 'foo bar active',
+                                path: '/path',
+                                hash: '123',
+                                since: 123456
+                            }
+                        ]
+                    };
+
+                    pluginState.should.containDeep(state);
+
+                    done();
+                });
+            }
+        });
+    });
+
+    it('should correctly activate the plugin and return it\'s runner', function (done) {
+        var config = createConfig();
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator, {
+            validateState: function (pluginState, callback) {
+                return process.nextTick(callback.bind(null, null));
+            }
+        });
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory, {
+            create: function () {
+                return 'pluginRunnerObject';
+            }
+        });
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, {
+            onOpenCallback: function () {
+                pluginManager.activatePluginState(function () {
+                    pluginManager.getActivePluginRunners(function (pluginRunners) {
+                        pluginRunners['foo bar active'].should.equal('pluginRunnerObject');
+                        Object.keys(pluginRunners).length.should.equal(1);
+
+                        pluginManager.getActivePluginRunner('foo bar active', function (pluginRunner) {
+                            pluginRunner.should.equal('pluginRunnerObject');
+
+                            done();
+                        });
+                    });
+                });
+            }
+        });
+    });
+    /*it('should correctly run a plugin', function () {
+    
+    });*/
 });
 //# sourceMappingURL=PluginManager.js.map

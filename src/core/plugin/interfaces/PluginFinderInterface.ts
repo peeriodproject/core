@@ -23,6 +23,8 @@ interface PluginFinderInterface {
 	 * - The plugin is already activated
 	 * - The plugin is marked as deactivated
 	 *
+	 * @method core.plugin.PluginFinderInterface#addPluginFolderNamesToIgnoreList
+	 *
 	 * @param {core.plugin.PluginNameListInterface} pluginFolderNames
 	 * @param {Function} callback (optional)
 	 */

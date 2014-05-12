@@ -2,6 +2,9 @@ import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInt
 import PluginInterface = require('./PluginInterface');
 import PluginMapInterface = require('./PluginMapInterface');
 import PluginPathListInterface = require('./PluginPathListInterface');
+import PluginRunnerInterface = require('./PluginRunnerInterface');
+import PluginRunnerListInterface = require('./PluginRunnerListInterface');
+import PluginStateInterface = require('./PluginStateInterface');
 
 /**
  * The `PluginManagerInterface` is responsible for the state of plugins loaded into the application.
@@ -19,31 +22,52 @@ import PluginPathListInterface = require('./PluginPathListInterface');
 interface PluginManagerInterface extends ClosableAsyncInterface {
 
 	/**
-	 * Checks the plugin folder for new plugins and calls the specified callback
+	 * Translates the plugin state into runnable plugin objects
 	 *
-	 * @method core.plugin.PluginManagerInterface#checkPluginFolderForNewPlugins
+	 * todo add counterpart
+	 *
+	 * @method core.plugin.PluginManagerInterface#activatePluginState
+	 *
+	 * @param {Function} callback
 	 */
-	//checkPluginFolderForNewPlugins(callback:(err:Error, pluginPaths:PluginPathListInterface) => void):void;
+	activatePluginState (callback?:(err:Error) => void):void;
 
 	/**
-	 * Loads the plugin state from a persistant storage
+	 * triggers the search to find new plugins within the plugin-folder
 	 *
-	 * todo define pluginState
+	 * @method core.plugin.PluginManagerInterface#findNewPlugins
 	 *
-	 * @method core.plugin.PluginManagerInterface#loadPluginState
+	 * @param {Function} callback
 	 */
-	//loadPluginState(callback:(err:Error, pluginState:any) => void):void;
-
-	/**
-	 * Saves the plugin state to a persistant storage
-	 *
-	 * todo define pluginState
-	 *
-	 * @method core.plugin.PluginManagerInterface#savePluginState
-	 */
-	//savePluginState(callback:(err:Error, pluginState:any) => void):void;
-
 	findNewPlugins (callback?:(err:Error) => void):void;
+
+	/**
+	 * Returns a single active plugin runner by identifier
+	 *
+	 * @method core.plugin.PluginManagerInterface#getActivePluginRunner
+	 *
+	 * @param {string} identifier
+	 * @param {Function} callback
+	 */
+	getActivePluginRunner (identifier:string, callback:(pluginRunner:PluginRunnerInterface) => void):void;
+
+	/**
+	 * Returns a list of active plugin runners
+	 *
+	 * * @method core.plugin.PluginManagerInterface#getActivePluginRunners
+	 *
+	 * @param {Function} callback
+	 */
+	getActivePluginRunners (callback:(pluginRunners:PluginRunnerListInterface) => void):void;
+
+	/**
+	 * Returns the plugin state
+	 *
+	 * @method core.plugin.PluginManagerInterface#getPluginState
+	 *
+	 * @param callback
+	 */
+	getPluginState (callback:(pluinState:PluginStateInterface) => void);
 }
 
 export = PluginManagerInterface;
