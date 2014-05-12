@@ -41,6 +41,17 @@ describe('CORE --> PROTOCOL --> ReadableMessage', function () {
 		return Buffer.concat(list);
 	};
 
+	var createHydraMessage = function ():Buffer {
+		var begin = new Buffer([0x50, 0x52, 0x44, 0x42, 0x47, 0x4e]),
+			end = new Buffer([0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]),
+			receiverId = new Buffer(20),
+			payload = new Buffer('foobar', 'utf8');
+
+		receiverId.fill(0x00);
+		var list = [begin, receiverId, payload, end];
+		return Buffer.concat(list);
+	}
+
 	beforeEach(function () {
 		sandbox = sinon.sandbox.create();
 
@@ -102,6 +113,7 @@ describe('CORE --> PROTOCOL --> ReadableMessage', function () {
 		// payload
 		readable.getPayload().toString('utf8').should.equal('foobar');
 
+		readable.isHydra().should.be.false;
 	});
 
 	it('should not recognize it as a protocol message', function () {
@@ -132,6 +144,12 @@ describe('CORE --> PROTOCOL --> ReadableMessage', function () {
 		(function () {
 			new ReadableMessage(msg, nodeFactoryStub, addressFactoryStub);
 		}).should.throw('ReadableMessage~_extractSenderAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.');
+	});
+
+	it('should recognize message as hydra message and return early', function () {
+		var msg = new ReadableMessage(createHydraMessage(), nodeFactoryStub, addressFactoryStub);
+		msg.isHydra().should.be.true;
+		msg.getPayload().toString('utf8').should.equal('foobar');
 	});
 
 

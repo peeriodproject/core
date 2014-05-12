@@ -325,7 +325,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 
 	/**
 	 * Calls a check on the temporary memory if the message is complete. If yes, it tries to make a readable message out
-	 * of it and emit the `message` event. If the message is errorous, nothing is done.
+	 * of it and emit the `message` event (or `hydraMessage` event respectively). If the message is errorous, nothing is done.
 	 * If the temporary buffer exceeds its limit, the references to the memory are dropped.
 	 *
 	 * @method core.protocol.messages.IncomingDataPipeline~_tryToFinalizeData
@@ -339,7 +339,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 
 			try {
 				var msg:ReadableMessageInterface = this._readableMessageFactory.create(messageBuffer);
-				this.emit('message', identifier, msg);
+				this.emit(msg.isHydra() ? 'hydraMessage' : 'message', identifier, msg);
 			}
 			catch (e) {
 				this.emit('unreadableMessage', identifier);
