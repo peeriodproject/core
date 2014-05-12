@@ -120,8 +120,7 @@ describe('CORE --> PLUGIN --> PluginFinder @joern', function () {
 
 		pluginFinder.findPlugins(function (err:Error, pluginPaths:PluginPathListInterface) {
 			(err === null).should.be.true;
-			pluginPaths.should.be.an.instanceof(Object);
-			Object.keys(pluginPaths).length.should.equal(0);
+			(pluginPaths === null).should.be.true;
 
 			done();
 		});
