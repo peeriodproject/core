@@ -23,6 +23,9 @@ import ConfirmedSocketList = require('./interfaces/ConfirmedSocketList');
 import WaitForSocket = require('./interfaces/WaitForSocket');
 import WaitForSocketList = require('./interfaces/WaitForSocketList');
 import HydraSocketList = require('./interfaces/HydraSocketList');
+import MyNodeInterface = require('../../topology/interfaces/MyNodeInterface');
+import GeneralWritableMessageFactoryInterface = require('./../messages/interfaces/GeneralWritableMessageFactoryInterface');
+import GeneralWritableMessageFactory = require('./../messages/GeneralWritableMessageFactory');
 
 
 /**
@@ -56,9 +59,9 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	/**
 	 * List to keep track of hydra sockets. Merely stores tcp socket under the identifier.
 	 *
-	 * @member {core.protocol.net.HydraSocketList} core.protocol.net.ProtocolConnectionManager~_hydraSocketList
+	 * @member {core.protocol.net.HydraSocketList} core.protocol.net.ProtocolConnectionManager~_hydraSockets
 	 */
-	private _hydraSocketList:HydraSocketList = {};
+	private _hydraSockets:HydraSocketList = {};
 
 	/**
 	 * The data pipeline sockets get hooked/unhooked to/from.
@@ -122,7 +125,15 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 *
 	 * @member {string} core.protocol.net.ProtocolConnectionManager~_temporaryIdentifierPrefix
 	 */
-	private _temporaryIdentifierPrefix = '_temp';
+	private _temporaryIdentifierPrefix:string = '_temp';
+
+	private _hydraIdentifierCount:number = 0;
+
+	private _hydraIdentifierPrefix:string = '_hydra';
+
+	private _myNode:MyNodeInterface = null;
+
+	private _generalWritableMessageFactory:GeneralWritableMessageFactoryInterface = null;
 
 	/**
 	 * Simple number which gets increased everytime to make waiting list indices unique.
@@ -131,9 +142,11 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 */
 	private _waitingListNum:number = 0;
 
-	constructor (config:ConfigInterface, tcpSocketHandler:TCPSocketHandlerInterface) {
+	constructor (config:ConfigInterface, myNode:MyNodeInterface, tcpSocketHandler:TCPSocketHandlerInterface) {
 		super();
 
+		this._myNode = myNode;
+		this._generalWritableMessageFactory = new GeneralWritableMessageFactory(this._myNode);
 		this._tcpSocketHandler = tcpSocketHandler;
 
 		this._incomingDataPipeline = new IncomingDataPipeline(
@@ -253,6 +266,35 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
+	public hydraConnectTo (port:number, ip:string, callback:(err:Error, identifier:string) => any):void {
+		this._tcpSocketHandler.connectTo(port, ip, (socket:TCPSocketInterface) => {
+			if (socket) {
+				var identifier:string = this._setHydraIdentifier(socket);
+				this._addToHydra(identifier, socket);
+				callback(null, identifier);
+			}
+			else {
+				callback(new Error('Could not establish connection to [' + ip + ']:' + port), null);
+			}
+		});
+	}
+
+	public hydraWriteBufferTo (identifier:string, buffer:Buffer, callback?:(err:Error) => any):void {
+		var socket:TCPSocketInterface = this._hydraSockets[identifier];
+		if (socket) {
+			if (callback) {
+				callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));
+			}
+		}
+		else {
+			socket.writeBuffer(buffer, function () {
+				if (callback) {
+					callback(null);
+				}
+			});
+		}
+	}
+
 	public writeBufferTo (node:ContactNodeInterface, buffer:Buffer, callback?:(err:Error) => any):void {
 		this.obtainConnectionTo(node, function (err:Error, socket:TCPSocketInterface) {
 			if (err) {
@@ -268,6 +310,20 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 				});
 			}
 		});
+	}
+
+	public hydraWriteMessageTo (identifier:string, payload:Buffer, callback?:(err:Error) => any):void {
+		var buffer:Buffer = this._generalWritableMessageFactory.hydraConstructMessage(payload, payload.length);
+
+		this.hydraWriteBufferTo(identifier, buffer, callback);
+	}
+
+	public writeMessageTo (node:ContactNodeInterface, messageType:string, payload:Buffer, callback?:(err:Error) => any):void {
+		this._generalWritableMessageFactory.setReceiver(node);
+		this._generalWritableMessageFactory.setMessageType(messageType);
+		var buffer:Buffer = this._generalWritableMessageFactory.constructMessage(payload, payload.length);
+
+		this.writeBufferTo(node, buffer, callback);
 	}
 
 	/**
@@ -308,6 +364,11 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._confirmedSockets[identifier] = newConfirmedSocket;
 
 		this.emit('confirmedSocket', identifier, socket);
+	}
+
+	private _addToHydra (identifier:string, socket:TCPSocketInterface) {
+		this._hookDestroyOnCloseToSocket(socket);
+		this._hydraSockets[identifier] = socket;
 	}
 
 	/**
@@ -405,6 +466,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		var incoming:IncomingPendingSocket = this._incomingPendingSockets[identifier];
 		var outgoing:OutgoingPendingSocket = this._outgoingPendingSockets[identifier];
 		var confirmed:ConfirmedSocket = this._confirmedSockets[identifier];
+		var hydra:TCPSocketInterface = this._hydraSockets[identifier];
 
 		this._incomingDataPipeline.unhookSocket(socket);
 
@@ -420,10 +482,13 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		if (confirmed) {
 			delete this._confirmedSockets[identifier];
 		}
+		if (hydra) {
+			delete this._hydraSockets[identifier];
+		}
 
 		socket.forceDestroy();
 
-		if (confirmed && !blockTerminationEvent) {
+		if ((confirmed || hydra) && !blockTerminationEvent) {
 			this._emitTerminatedEventByIdentifier(identifier);
 		}
 	}
@@ -437,15 +502,16 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 */
 	private _destroyConnectionByIdentifier (identifier:string):void {
 		var socket = null;
-		var it = ['_incomingPendingSockets', '_confirmedSockets'];
+		var it = ['_incomingPendingSockets', '_confirmedSockets', '_hydraSockets'];
 		for (var i = 0; i < 3; i++) {
 			if (socket) {
 				break;
 			}
 			else {
-				var o = this[it[i]][identifier];
+				var t = it[i];
+				var o = this[t][identifier];
 				if (o) {
-					socket = o.socket || null;
+					socket = (t === '_hydraSockets') ? o : (o.socket || null);
 				}
 			}
 		}
@@ -467,6 +533,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			this.emit('terminatedConnection', id);
 		}
 		catch (e) {
+			this.emit('terminatedConnection', identifier);
 		}
 	}
 
@@ -499,6 +566,19 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		socket.setIdentifier(newIdentifier);
 
 		this._addToConfirmed(newIdentifier, 'incoming', socket);
+	}
+
+	private _fromIncomingPendingToHydra (oldIdentifier:string, pending:IncomingPendingSocket):void {
+		var socket:TCPSocketInterface = pending.socket;
+
+		if (pending.timeout) {
+			clearTimeout(pending.timeout);
+		}
+		delete this._incomingPendingSockets[oldIdentifier];
+
+		var identifier:string = this._setHydraIdentifier(socket);
+
+		this._addToHydra(identifier, socket);
 	}
 
 	/**
@@ -636,6 +716,23 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._incomingDataPipeline.hookSocket(socket);
 	}
 
+	private _onHydraMessage (identifier:string, message:ReadableMessageInterface):void {
+		var propagateMessage:boolean = true;
+		var incomingPending:IncomingPendingSocket = this._incomingPendingSockets[identifier];
+
+		if (incomingPending) {
+			this._fromIncomingPendingToHydra(identifier, incomingPending);
+		}
+		else if (!(this._hydraSockets[identifier])) {
+			propagateMessage = false;
+			this._destroyConnectionByIdentifier(identifier);
+		}
+
+		if (propagateMessage) {
+			this.emit('hydraMessage', identifier, message);
+		}
+	}
+
 	/**
 	 * The listener on the pipeline's message event, when a valid readable message comes rolling in.
 	 * Checks if the message came from an incoming socket with a temporary identifier. If so, it tries to assign it
@@ -683,6 +780,10 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			this._onMessage(identifier, message);
 		});
 
+		this._incomingDataPipeline.on('hydraMessage', (identifier:string, message:ReadableMessageInterface) => {
+			this._onHydraMessage(identifier, message);
+		});
+
 		this._tcpSocketHandler.on('connected', (socket:TCPSocketInterface, direction:string) => {
 			if (direction === 'incoming') {
 				this._onIncomingConnection(socket);
@@ -702,6 +803,13 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 */
 	private _setTemporaryIdentifier (socket:TCPSocketInterface):string {
 		var identifier:string = this._temporaryIdentifierPrefix + (++this._temporaryIdentifierCount);
+		socket.setIdentifier(identifier);
+
+		return identifier;
+	}
+
+	private _setHydraIdentifier (socket:TCPSocketInterface):string {
+		var identifier:string = this._hydraIdentifierPrefix + (++this._hydraIdentifierCount);
 		socket.setIdentifier(identifier);
 
 		return identifier;
