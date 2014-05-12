@@ -65,5 +65,4 @@ declare module "node-lmdb" {
 		new(Txn, Dbi);
 	}
 
-	//export var Cursor:CursorInterface;
 }
