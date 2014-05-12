@@ -272,6 +272,10 @@ var TCPSocketHandler = (function (_super) {
         };
     };
 
+    TCPSocketHandler.prototype.getMyExternalIp = function () {
+        return this._myExternalIp;
+    };
+
     TCPSocketHandler.prototype.getOpenServerPortsArray = function () {
         return Object.keys(this._openTCPServers).map(function (port) {
             return parseInt(port, 10);

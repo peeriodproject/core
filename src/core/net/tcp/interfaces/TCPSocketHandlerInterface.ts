@@ -71,11 +71,20 @@ interface TCPSocketHandlerInterface extends NodeJS.EventEmitter {
 	 * Returns the default options for all TCP sockets, getting seeded by options specified in the TCPSocketHandler
 	 * constructor.
 	 *
-	 * @method core.net.tp.TCPSocketHandlerInterface#defaultSocketOptions
+	 * @method core.net.tcp.TCPSocketHandlerInterface#defaultSocketOptions
 	 *
 	 * @returns {TCPSocketOptions}
 	 */
 	getDefaultSocketOptions ():TCPSocketOptions;
+
+	/**
+	 * Returns the external ip of the machine.
+	 *
+	 * @method core.net.tcp.TCPSocketHandlerInterface#getMyExternalIp
+	 *
+	 * @returns {string} The external ip
+	 */
+	getMyExternalIp ():string;
 
 	/**
 	 * Returns an array of open TCP server ports which are reachable from outside.

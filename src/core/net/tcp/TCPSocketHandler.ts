@@ -287,6 +287,10 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		};
 	}
 
+	public getMyExternalIp ():string {
+		return this._myExternalIp;
+	}
+
 	public getOpenServerPortsArray ():Array<number> {
 		return Object.keys(this._openTCPServers).map(function (port) {
 			return parseInt(port, 10);
