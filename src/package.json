@@ -10,6 +10,7 @@
   "dependencies": {
     "follow-redirects": "*",
     "fs-extra": "^0.8.1",
+    "microtime": "^0.5.1",
     "node-lmdb": "^0.2.1",
     "winston": "^0.7.3",
     "winston-irc": "^0.3.2"

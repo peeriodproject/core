@@ -1,4 +1,7 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
+/// <reference path='../../../ts-definitions/microtime/microtime.d.ts' />
+
+import microtime = require('microtime');
 
 import ContactNodeAddressFactoryInterface = require('./interfaces/ContactNodeAddressFactoryInterface');
 import ContactNodeAddressListInterface = require('./interfaces/ContactNodeAddressListInterface');
@@ -68,18 +71,11 @@ class ContactNodeFactory implements ContactNodeFactoryInterface {
 			}
 		};
 
-		var getLastSeen = function ():number {
-			// node js is too fast for javascripts millis
-			var lastSeen = Math.round(Date.now() * Math.random()) + '';
+		/*var getLastSeen = function ():number {
+			return microtime.now();
+		};*/
 
-			if (lastSeen.length > 10) {
-				lastSeen = lastSeen.substr(0, 9);
-			}
-
-			return parseInt(lastSeen, 10);
-		};
-
-		return new ContactNode(getId(), getAddresses(), getLastSeen());
+		return new ContactNode(getId(), getAddresses(), ContactNodeFactory.getLastSeen());
 
 		/*
 		 toString: function () {
@@ -90,6 +86,10 @@ class ContactNodeFactory implements ContactNodeFactoryInterface {
 		 });
 		 }
 		 */
+	}
+
+	public static getLastSeen():number {
+		return microtime.now();
 	}
 }
 

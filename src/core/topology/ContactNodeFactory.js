@@ -1,4 +1,7 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
+/// <reference path='../../../ts-definitions/microtime/microtime.d.ts' />
+var microtime = require('microtime');
+
 var ContactNode = require('./ContactNode');
 
 var ContactNodeAddressFactory = require('./ContactNodeAddressFactory');
@@ -60,18 +63,10 @@ var ContactNodeFactory = (function () {
             }
         };
 
-        var getLastSeen = function () {
-            // node js is too fast for javascripts millis
-            var lastSeen = Math.round(Date.now() * Math.random()) + '';
-
-            if (lastSeen.length > 10) {
-                lastSeen = lastSeen.substr(0, 9);
-            }
-
-            return parseInt(lastSeen, 10);
-        };
-
-        return new ContactNode(getId(), getAddresses(), getLastSeen());
+        /*var getLastSeen = function ():number {
+        return microtime.now();
+        };*/
+        return new ContactNode(getId(), getAddresses(), ContactNodeFactory.getLastSeen());
         /*
         toString: function () {
         return JSON.stringify({
@@ -81,6 +76,10 @@ var ContactNodeFactory = (function () {
         });
         }
         */
+    };
+
+    ContactNodeFactory.getLastSeen = function () {
+        return microtime.now();
     };
     return ContactNodeFactory;
 })();
