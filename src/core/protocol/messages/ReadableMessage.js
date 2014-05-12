@@ -28,6 +28,12 @@ var ReadableMessage = (function () {
         */
         this._bufferLength = 0;
         /**
+        * Indicates whether this is a hydra message.
+        *
+        * @member {boolean} core.protocol.messages.ReadableMessage~_isHydra
+        */
+        this._isHydra = false;
+        /**
         * A helper member for remembering which bytes have already been read and processed.
         *
         * @member {number}  core.protocol.messages.ReadableMessage~_lastPosRead
@@ -89,6 +95,10 @@ var ReadableMessage = (function () {
         return this._sender;
     };
 
+    ReadableMessage.prototype.isHydra = function () {
+        return this._isHydra;
+    };
+
     /**
     * Makes a ContactNodeAddress out of a buffer representing an IPv4 address.
     *
@@ -142,6 +152,11 @@ var ReadableMessage = (function () {
         this._lastPosRead = MessageByteCheatsheet.messageBegin.length;
 
         this._lastPosRead = this._extractReceiverId(this._lastPosRead);
+
+        if (this._isHydra) {
+            this._extractPayload(this._lastPosRead);
+            return;
+        }
 
         this._lastPosRead = this._extractSenderAsContactNode(this._lastPosRead);
 
@@ -213,7 +228,7 @@ var ReadableMessage = (function () {
     };
 
     /**
-    * Extracts the ID of the intended receiver.
+    * Extracts the ID of the intended receiver. If the id is merely null bytes, the message seems to be a hydra message.
     *
     * @method core.protocol.messages.ReadableMessage~_extractReceiverId
     *
@@ -222,6 +237,18 @@ var ReadableMessage = (function () {
     */
     ReadableMessage.prototype._extractReceiverId = function (from) {
         this._receiverId = this._extractId(from);
+
+        var buffer = this._receiverId.getBuffer();
+        var isHydra = true;
+
+        for (var i = 0; i < buffer.length; i++) {
+            if (buffer[i] !== 0x00) {
+                isHydra = false;
+                break;
+            }
+        }
+
+        this._isHydra = isHydra;
 
         return from + 20;
     };

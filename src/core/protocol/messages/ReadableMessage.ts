@@ -41,6 +41,13 @@ class ReadableMessage implements ReadableMessageInterface {
 	private _bufferLength:number = 0;
 
 	/**
+	 * Indicates whether this is a hydra message.
+	 *
+	 * @member {boolean} core.protocol.messages.ReadableMessage~_isHydra
+	 */
+	private _isHydra:boolean = false;
+
+	/**
 	 * A helper member for remembering which bytes have already been read and processed.
 	 *
 	 * @member {number}  core.protocol.messages.ReadableMessage~_lastPosRead
@@ -110,6 +117,10 @@ class ReadableMessage implements ReadableMessageInterface {
 		return this._sender;
 	}
 
+	public isHydra ():boolean {
+		return this._isHydra;
+	}
+
 	/**
 	 * Makes a ContactNodeAddress out of a buffer representing an IPv4 address.
 	 *
@@ -163,6 +174,11 @@ class ReadableMessage implements ReadableMessageInterface {
 		this._lastPosRead = MessageByteCheatsheet.messageBegin.length;
 
 		this._lastPosRead = this._extractReceiverId(this._lastPosRead);
+
+		if (this._isHydra) {
+			this._extractPayload(this._lastPosRead);
+			return;
+		}
 
 		this._lastPosRead = this._extractSenderAsContactNode(this._lastPosRead);
 
@@ -235,7 +251,7 @@ class ReadableMessage implements ReadableMessageInterface {
 	}
 
 	/**
-	 * Extracts the ID of the intended receiver.
+	 * Extracts the ID of the intended receiver. If the id is merely null bytes, the message seems to be a hydra message.
 	 *
 	 * @method core.protocol.messages.ReadableMessage~_extractReceiverId
 	 *
@@ -244,6 +260,18 @@ class ReadableMessage implements ReadableMessageInterface {
 	 */
 	private _extractReceiverId (from:number):number {
 		this._receiverId = this._extractId(from);
+
+		var buffer:Buffer = this._receiverId.getBuffer();
+		var isHydra:boolean = true;
+
+		for (var i=0; i<buffer.length; i++) {
+			if (buffer[i] !== 0x00) {
+				isHydra = false;
+				break;
+			}
+		}
+
+		this._isHydra = isHydra;
 
 		return from + 20;
 	}

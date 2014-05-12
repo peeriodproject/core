@@ -47,6 +47,8 @@ interface GeneralWritableMessageFactoryInterface extends WritableMessageFactoryI
 	 */
 	setSender (node:MyNodeInterface):void;
 
+	hydraConstructMessage (payload:Buffer, payloadLength?:number):Buffer;
+
 }
 
 export = GeneralWritableMessageFactoryInterface;

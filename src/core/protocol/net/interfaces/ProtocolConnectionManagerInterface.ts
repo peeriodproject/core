@@ -17,6 +17,12 @@ import TCPSocketInterface = require('../../../net/tcp/interfaces/TCPSocketInterf
  * 3.) Only one socket per node.
  * 4.) As it may be that an outgoing connection is being proxied, incoming always beats outgoing.
  *
+ *
+ * Those rules do not, however, apply to all sockets intended for HYDRA messages. They have a special role and are not counted
+ * for a specific node. They are judged only by their temporary identifiers.
+ * HYDRA messages are only allowed on hydra sockets and vice versa. Sending regular messages on hydra sockets, or sending hydra
+ * messages on regular sockets will not be tolerated and leads to termination of the connection.
+ *
  * ################
  * The detailed flow goes like this:
  * If there is a new incoming socket, it is provided with a temporary identifier und kept track of. Now it will be waited

@@ -11,7 +11,7 @@
         "connectionRetrySeconds": 4,
         "idleConnectionKillTimeout": 30,
         "outboundConnectionTimeout": 2000,
-        "myOpenPorts": [30415, 30414]
+        "myOpenPorts": [30415]
     },
     "protocol": {
         "messages": {

@@ -36,7 +36,13 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
             "create": function (buffer) {
                 if (buffer[0] === 0x00)
                     throw new Error('Message not readable yo.');
-                var foo = 'foobar';
+                var foo = {
+                    isHydra: function () {
+                        return false;
+                    },
+                    payload: 'foobar'
+                };
+
                 return foo;
             }
         });
@@ -79,7 +85,7 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
         var msg = new Buffer([0x01, 0x02, 0x03, 0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]);
 
         pipe.once('message', function (identifier, msg) {
-            if (msg === 'foobar') {
+            if (msg.payload === 'foobar') {
                 done();
             }
         });
@@ -103,7 +109,7 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
         var msg3 = new Buffer([0x4e, 0x44]);
 
         pipe.once('message', function (identifier, message) {
-            if (message === 'foobar')
+            if (message.payload === 'foobar')
                 done();
         });
 
@@ -130,7 +136,7 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
         }
 
         pipe.once('message', function (identifier, message) {
-            if (message === 'foobar')
+            if (message.payload === 'foobar')
                 done();
         });
 

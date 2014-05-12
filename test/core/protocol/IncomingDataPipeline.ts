@@ -41,7 +41,11 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
 		readableMessageFactoryStub = testUtils.stubPublicApi(sandbox, ReadableMessageFactory, {
 			"create": function (buffer:Buffer) {
 				if (buffer[0] === 0x00) throw new Error('Message not readable yo.');
-				var foo:any = 'foobar';
+				var foo:any = {
+					isHydra: function () { return false; },
+					payload: 'foobar'
+				}
+
 				return foo;
 			}
 		});
@@ -83,7 +87,7 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
 		var msg = new Buffer([0x01, 0x02, 0x03, 0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]);
 
 		pipe.once('message', function (identifier, msg) {
-			if (msg === 'foobar') {
+			if (msg.payload === 'foobar') {
 				done();
 			}
 		});
@@ -107,7 +111,7 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
 		var msg3 = new Buffer([0x4e, 0x44]);
 
 		pipe.once('message', function (identifier, message) {
-			if (message === 'foobar') done();
+			if (message.payload === 'foobar') done();
 		});
 
 		setTimeout(function () {
@@ -134,7 +138,7 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
 		}
 
 		pipe.once('message', function (identifier, message) {
-			if (message === 'foobar') done();
+			if (message.payload === 'foobar') done();
 		});
 
 		currentConnection.write(largeBuffer);

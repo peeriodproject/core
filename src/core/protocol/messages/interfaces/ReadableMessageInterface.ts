@@ -19,6 +19,8 @@ import ContactNodeInterface = require('../../../topology/interfaces/ContactNodeI
  * - The payload
  * - 6 Bytes for indicating the end of the protocol message
  *
+ * If the 20 Bytes reserved for the ID of the intended receiver are all null-bytes, the message is marked as a hydra
+ * message and the payload is expected to follow right after (without addresses, sender etc.)
  *
  * @interface
  * @class core.protocol.messages.ReadableMessageInterface
@@ -54,11 +56,18 @@ interface ReadableMessageInterface {
 	getReceiverId ():IdInterface;
 
 	/**
-	 * Returns the extracte Contact Node-
+	 * Returns the extracted Contact Node
 	 *
 	 * @returns {core.topology.ContactNodeInterface}
 	 */
 	getSender ():ContactNodeInterface;
+
+	/**
+	 * Returns whether the message is recognized as a hydra message.
+	 *
+	 * @returns {boolean}
+	 */
+	isHydra ():boolean;
 
 }
 
