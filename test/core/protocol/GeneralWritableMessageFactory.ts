@@ -14,7 +14,7 @@ import Id = require('../../../src/core/topology/Id');
 import ContactNodeAddress = require('../../../src/core/topology/ContactNodeAddress');
 
 
-describe('CORE --> PROTOCOL --> MESSAGES --> GeneralWritableMessageFactory @current', function () {
+describe('CORE --> PROTOCOL --> MESSAGES --> GeneralWritableMessageFactory', function () {
 
 	var sandbox:SinonSandbox;
 	var sender:MyNode;

@@ -102,6 +102,30 @@ class GeneralWritableMessageFactory implements GeneralWritableMessageFactoryInte
 		this._sender = node;
 	}
 
+	public hydraConstructMessage (payload:Buffer, payloadLength?:number):Buffer {
+		var bufferLength:number = (payloadLength === undefined) ? payload.length : payloadLength;
+		var bufferList:Array<Buffer> = [];
+
+		// add the beginning bytes
+		bufferList.push(new Buffer(MessageByteCheatsheet.messageBegin));
+		bufferLength += MessageByteCheatsheet.messageBegin.length;
+
+		// add 20 null bytes
+		var nullBuf = new Buffer(20);
+		nullBuf.fill(0x00);
+		bufferList.push(nullBuf);
+		bufferLength += 20;
+
+		// add the payload
+		bufferList.push(payload);
+
+		// add the ending bytes
+		bufferList.push(new Buffer(MessageByteCheatsheet.messageEnd));
+		bufferLength += MessageByteCheatsheet.messageEnd.length;
+
+		return Buffer.concat(bufferList, bufferLength);
+	}
+
 	public constructMessage (payload:Buffer, payloadLength?:number):Buffer {
 		if (!(this._receiver && this._sender && this._messageType)) {
 			throw new Error('GeneralWritableMessageFactory#constructMessage: Sender and receiver must be specified.');

@@ -12,7 +12,7 @@ var ContactNode = require('../../../src/core/topology/ContactNode');
 var Id = require('../../../src/core/topology/Id');
 var ContactNodeAddress = require('../../../src/core/topology/ContactNodeAddress');
 
-describe('CORE --> PROTOCOL --> MESSAGES --> GeneralWritableMessageFactory @current', function () {
+describe('CORE --> PROTOCOL --> MESSAGES --> GeneralWritableMessageFactory', function () {
     var sandbox;
     var sender;
     var receiver;

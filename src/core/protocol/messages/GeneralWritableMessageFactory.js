@@ -86,6 +86,30 @@ var GeneralWritableMessageFactory = (function () {
         this._sender = node;
     };
 
+    GeneralWritableMessageFactory.prototype.hydraConstructMessage = function (payload, payloadLength) {
+        var bufferLength = (payloadLength === undefined) ? payload.length : payloadLength;
+        var bufferList = [];
+
+        // add the beginning bytes
+        bufferList.push(new Buffer(MessageByteCheatsheet.messageBegin));
+        bufferLength += MessageByteCheatsheet.messageBegin.length;
+
+        // add 20 null bytes
+        var nullBuf = new Buffer(20);
+        nullBuf.fill(0x00);
+        bufferList.push(nullBuf);
+        bufferLength += 20;
+
+        // add the payload
+        bufferList.push(payload);
+
+        // add the ending bytes
+        bufferList.push(new Buffer(MessageByteCheatsheet.messageEnd));
+        bufferLength += MessageByteCheatsheet.messageEnd.length;
+
+        return Buffer.concat(bufferList, bufferLength);
+    };
+
     GeneralWritableMessageFactory.prototype.constructMessage = function (payload, payloadLength) {
         if (!(this._receiver && this._sender && this._messageType)) {
             throw new Error('GeneralWritableMessageFactory#constructMessage: Sender and receiver must be specified.');
