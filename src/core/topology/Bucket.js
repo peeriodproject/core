@@ -77,11 +77,14 @@ var Bucket = (function () {
         };
 
         this._store.close();
-        internalCallback(null);
+
+        return process.nextTick(internalCallback.bind(null, null));
     };
 
     Bucket.prototype.contains = function (contact, callback) {
-        callback(null, this._store.contains(this._keyString, contact.getId().getBuffer()));
+        return process.nextTick(function () {
+            callback(null, this._store.contains(this._keyString, contact.getId().getBuffer()));
+        }.bind(this));
     };
 
     Bucket.prototype.get = function (id, callback) {
@@ -92,7 +95,7 @@ var Bucket = (function () {
             contact = this._convertToContactNodeInstance(storedObject);
         }
 
-        callback(null, contact);
+        return process.nextTick(callback.bind(null, null, contact));
     };
 
     Bucket.prototype.getAll = function (callback) {
@@ -105,11 +108,11 @@ var Bucket = (function () {
             }
         }
 
-        callback(null, contacts);
+        return process.nextTick(callback.bind(null, null, contacts));
     };
 
     Bucket.prototype.isOpen = function (callback) {
-        callback(null, this._store.isOpen());
+        return process.nextTick(callback.bind(null, null, this._store.isOpen()));
     };
 
     Bucket.prototype.open = function (callback) {
@@ -117,7 +120,7 @@ var Bucket = (function () {
         };
 
         this._store.open();
-        internalCallback(null);
+        return process.nextTick(internalCallback.bind(null, null));
     };
 
     Bucket.prototype.remove = function (id, callback) {
@@ -125,11 +128,12 @@ var Bucket = (function () {
         };
 
         this._store.remove(this._keyString, id.getBuffer());
-        internalCallback(null);
+
+        return process.nextTick(internalCallback.bind(null, null));
     };
 
     Bucket.prototype.size = function (callback) {
-        callback(null, this._store.size(this._keyString));
+        return process.nextTick(callback.bind(null, null, this._store.size(this._keyString)));
     };
 
     Bucket.prototype.update = function (contact, callback) {
@@ -138,12 +142,16 @@ var Bucket = (function () {
         var removed;
         var added;
         var error;
+        var thrown = false;
 
         var updatedCallback = function () {
             if (error) {
-                internalCallback(error);
+                if (!thrown) {
+                    thrown = true;
+                    return process.nextTick(internalCallback.bind(null, error));
+                }
             } else if (removed && added) {
-                internalCallback(null);
+                return process.nextTick(internalCallback.bind(null, null));
             }
         };
 

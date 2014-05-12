@@ -63,7 +63,9 @@ var PluginFinder = (function () {
         if (pluginFolderNamesLength) {
             add(0);
         } else {
-            internalCallback();
+            process.nextTick(function () {
+                internalCallback();
+            }.bind(this));
         }
     };
 
@@ -84,8 +86,10 @@ var PluginFinder = (function () {
             _this._ignoreListContains(filePath, function (index) {
                 // current filePath is ignored. skipping...
                 if (index !== -1) {
-                    filesLeft--;
-                    checkAndCallCallback();
+                    process.nextTick(function () {
+                        filesLeft--;
+                        checkAndCallCallback();
+                    }.bind(_this));
                 } else {
                     var pluginPath = path.join(_this._pluginFolderPath, filePath);
                     var pluginConfigPath = path.join(pluginPath, _this._pluginConfigName);
@@ -132,29 +136,27 @@ var PluginFinder = (function () {
     };
 
     PluginFinder.prototype.getIgnoredPluginFolderNames = function (callback) {
-        callback(this._ignorePluginFolderNameList.slice());
+        process.nextTick(function () {
+            callback(this._ignorePluginFolderNameList.slice());
+        }.bind(this));
     };
 
     PluginFinder.prototype.getPluginFolderPath = function (callback) {
         var folderPath = this._pluginFolderPath;
 
-        try  {
-            fs.exists(folderPath, function (exists) {
-                if (exists) {
-                    callback(null, folderPath);
-                } else {
-                    fs.mkdirs(folderPath, function (err) {
-                        if (err) {
-                            callback(err, null);
-                        } else {
-                            callback(null, folderPath);
-                        }
-                    });
-                }
-            });
-        } catch (err) {
-            callback(err, null);
-        }
+        fs.exists(folderPath, function (exists) {
+            if (exists) {
+                callback(null, folderPath);
+            } else {
+                fs.mkdirs(folderPath, function (err) {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        callback(null, folderPath);
+                    }
+                });
+            }
+        });
     };
 
     PluginFinder.prototype.removePluginFolderNamesFromIgnoreList = function (pluginFolderNames, callback) {
@@ -181,7 +183,9 @@ var PluginFinder = (function () {
         if (pluginFolderNamesLength) {
             remove(0);
         } else {
-            internalCallback();
+            process.nextTick(function () {
+                internalCallback();
+            }.bind(this));
         }
     };
 

@@ -91,7 +91,7 @@ var App = {
                     if (message.getMessageType() === 'PING') {
                         console.log('Message from ' + message.getSender().getId().toHexString() + ': ' + message.getMessageType());
                         generalWritableMessageFactory.setReceiver(message.getSender());
-                        generalWritableMessageFactory.setMessageType('PING');
+                        generalWritableMessageFactory.setMessageType('PONG');
                         var buf = generalWritableMessageFactory.constructMessage(new Buffer(0));
 
                         protocolConnectionManager.writeBufferTo(message.getSender(), buf);

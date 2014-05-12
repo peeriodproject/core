@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">72.94</p>
+      <p class="stat">74.00</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">87</p>
+      <p class="stat">85</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">28.88</p>
+      <p class="stat">24.20</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.60</p>
+      <p class="stat">0.55</p>
     </div>
   </div>
 </div>
@@ -91,6 +91,9 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../ts-definitions/node/node.d.ts&#039; /&gt;
+/// &lt;reference path=&#039;../../../ts-definitions/microtime/microtime.d.ts&#039; /&gt;
+var microtime = require(&#039;microtime&#039;);
+
 var ContactNode = require(&#039;./ContactNode&#039;);
 
 var ContactNodeAddressFactory = require(&#039;./ContactNodeAddressFactory&#039;);
@@ -152,18 +155,10 @@ var ContactNodeFactory = (function () {
             }
         };
 
-        var getLastSeen = function () {
-            // node js is too fast for javascripts millis
-            var lastSeen = Math.round(Date.now() * Math.random()) + &#039;&#039;;
-
-            if (lastSeen.length &gt; 10) {
-                lastSeen = lastSeen.substr(0, 9);
-            }
-
-            return parseInt(lastSeen, 10);
-        };
-
-        return new ContactNode(getId(), getAddresses(), getLastSeen());
+        /*var getLastSeen = function ():number {
+        return microtime.now();
+        };*/
+        return new ContactNode(getId(), getAddresses(), ContactNodeFactory.getLastSeen());
         /*
         toString: function () {
         return JSON.stringify({
@@ -173,6 +168,10 @@ var ContactNodeFactory = (function () {
         });
         }
         */
+    };
+
+    ContactNodeFactory.getLastSeen = function () {
+        return microtime.now();
     };
     return ContactNodeFactory;
 })();

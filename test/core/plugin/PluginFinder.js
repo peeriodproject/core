@@ -105,6 +105,18 @@ describe('CORE --> PLUGIN --> PluginFinder @joern', function () {
         });
     });
 
+    it('should correctly return if no plugins were found', function (done) {
+        var fixturePath = 'plugin/plugins/emptyPluginsFolderTest';
+        var pluginFinder = createPluginFinderWithPluginFolder(fixturePath);
+
+        pluginFinder.findPlugins(function (err, pluginPaths) {
+            (err === null).should.be.true;
+            (pluginPaths === null).should.be.true;
+
+            done();
+        });
+    });
+
     it('should correctly find unloaded plugins', function (done) {
         var fixturePath = 'plugin/plugins/unloadedPluginsFolderTest';
         var pluginFinder = createPluginFinderWithPluginFolder(fixturePath);

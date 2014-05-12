@@ -114,6 +114,18 @@ describe('CORE --> PLUGIN --> PluginFinder @joern', function () {
 		});
 	});
 
+	it('should correctly return if no plugins were found', function (done) {
+		var fixturePath:string = 'plugin/plugins/emptyPluginsFolderTest';
+		var pluginFinder:PluginFinderInterface = createPluginFinderWithPluginFolder(fixturePath);
+
+		pluginFinder.findPlugins(function (err:Error, pluginPaths:PluginPathListInterface) {
+			(err === null).should.be.true;
+			(pluginPaths === null).should.be.true;
+
+			done();
+		});
+	});
+
 	it('should correctly find unloaded plugins', function (done) {
 		var fixturePath:string = 'plugin/plugins/unloadedPluginsFolderTest';
 		var pluginFinder:PluginFinderInterface = createPluginFinderWithPluginFolder(fixturePath);
