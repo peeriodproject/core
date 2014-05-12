@@ -77,7 +77,10 @@ var App = {
                 generalWritableMessageFactory.setMessageType('PING');
                 var buf = generalWritableMessageFactory.constructMessage(new Buffer(0));
 
-                protocolConnectionManager.writeBufferTo(remoteContact, buf);
+                protocolConnectionManager.writeBufferTo(remoteContact, buf, function (err) {
+                    if (err)
+                        console.log(err);
+                });
 
                 protocolConnectionManager.on('message', function (message) {
                     console.log('Message from ' + message.getSender().getId().toHexString() + ': ' + message.getMessageType());
@@ -98,6 +101,8 @@ var App = {
 
             console.log('everything set up!');
         });
+
+        console.log('foobar');
     }
 };
 
