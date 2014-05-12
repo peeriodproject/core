@@ -7,7 +7,7 @@ var testUtils = require('../../utils/testUtils');
 var PluginFinder = require('../../../src/core/plugin/PluginFinder');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PLUGIN --> PluginFinder @joern', function () {
+describe('CORE --> PLUGIN --> PluginFinder', function () {
     var sandbox;
     var removeFolderAndDone = function (folderPath, done) {
         testUtils.deleteFolderRecursive(testUtils.getFixturePath(folderPath));

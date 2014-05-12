@@ -14,7 +14,7 @@ import PluginPathListInterface = require('../../../src/core/plugin/interfaces/Pl
 import PluginFinder = require('../../../src/core/plugin/PluginFinder');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PLUGIN --> PluginFinder @joern', function () {
+describe('CORE --> PLUGIN --> PluginFinder', function () {
 	var sandbox:SinonSandbox;
 	var removeFolderAndDone:Function = function (folderPath:string, done:Function) {
 		testUtils.deleteFolderRecursive(testUtils.getFixturePath(folderPath));

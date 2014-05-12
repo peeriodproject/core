@@ -76,7 +76,6 @@ var RoutingTable = (function () {
         this._contactNodeFactory = contactNodeFactory;
 
         this._options = ObjectUtils.extend(defaults, options);
-        ;
 
         if (this._options.closeOnProcessExit) {
             process.on('exit', function () {
