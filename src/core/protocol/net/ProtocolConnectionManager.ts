@@ -22,6 +22,7 @@ import ConfirmedSocket = require('./interfaces/ConfirmedSocket');
 import ConfirmedSocketList = require('./interfaces/ConfirmedSocketList');
 import WaitForSocket = require('./interfaces/WaitForSocket');
 import WaitForSocketList = require('./interfaces/WaitForSocketList');
+import HydraSocketList = require('./interfaces/HydraSocketList');
 
 
 /**
@@ -51,6 +52,13 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 * @member {core.protocol.net.WaitForSocketList} core.protocol.net.ProtocolConnectionManager~_connectionWaitingList
 	 */
 	private _connectionWaitingList:WaitForSocketList = {};
+
+	/**
+	 * List to keep track of hydra sockets. Merely stores tcp socket under the identifier.
+	 *
+	 * @member {core.protocol.net.HydraSocketList} core.protocol.net.ProtocolConnectionManager~_hydraSocketList
+	 */
+	private _hydraSocketList:HydraSocketList = {};
 
 	/**
 	 * The data pipeline sockets get hooked/unhooked to/from.
@@ -271,7 +279,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 * @method core.protocol.net.ProtocolConnectionManager~_addToConfirmed
 	 *
 	 * @param {string} identifier
-	 * @param {stirng} direction 'incoming' or 'outgoing'
+	 * @param {string} direction 'incoming' or 'outgoing'
 	 * @param {TCPSocketInterface} socket
 	 */
 	private _addToConfirmed (identifier:string, direction:string, socket:TCPSocketInterface) {

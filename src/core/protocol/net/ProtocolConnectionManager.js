@@ -43,6 +43,12 @@ var ProtocolConnectionManager = (function (_super) {
         */
         this._connectionWaitingList = {};
         /**
+        * List to keep track of hydra sockets. Merely stores tcp socket under the identifier.
+        *
+        * @member {core.protocol.net.HydraSocketList} core.protocol.net.ProtocolConnectionManager~_hydraSocketList
+        */
+        this._hydraSocketList = {};
+        /**
         * The data pipeline sockets get hooked/unhooked to/from.
         *
         * @member {core.protocol.messages.IncomingDataPipelineInterface} core.protocol.net.ProtocolConnectionManager~_incomingDataPipeline
@@ -240,7 +246,7 @@ var ProtocolConnectionManager = (function (_super) {
     * @method core.protocol.net.ProtocolConnectionManager~_addToConfirmed
     *
     * @param {string} identifier
-    * @param {stirng} direction 'incoming' or 'outgoing'
+    * @param {string} direction 'incoming' or 'outgoing'
     * @param {TCPSocketInterface} socket
     */
     ProtocolConnectionManager.prototype._addToConfirmed = function (identifier, direction, socket) {
