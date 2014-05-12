@@ -1,3 +1,7 @@
-/**
- * Created by Johnny on 12.05.14.
- */
+/// <reference path='../../../../ts-definitions/node/node.d.ts' />
+
+interface ProtocolGatewayInterface {
+
+}
+
+export = ProtocolGatewayInterface;
