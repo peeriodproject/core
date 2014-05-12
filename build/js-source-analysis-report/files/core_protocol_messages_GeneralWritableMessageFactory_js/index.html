@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/messages/GeneralWritableMessageFactory.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/messages/GeneralWritableMessageFactory.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">66.19</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">214</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">38.01</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.12</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var MessageByteCheatsheet = require(&#039;./MessageByteCheatsheet&#039;);
+
+/**
+* GeneralWritableMessageFactoryInterface implementation.
+*
+* @class core.protocol.messages.GeneralWritableMessageFactory
+* @implements core.protocol.messages.GeneralWritableMessageFactoryInterface
+*
+* @todo Swap the sender ContactNodeInterface with a new Class type that extends EventEmitter and that always emits
+* a &#039;change&#039; event, when the addresses are updated. This can lead to a significant performance gain, because then the
+* address block only has to be constructed when the addresses change.
+*
+* @param {core.topology.ContactNodeInterface} sender Optional sender which will be used for the messages.
+*/
+var GeneralWritableMessageFactory = (function () {
+    function GeneralWritableMessageFactory(sender) {
+        /**
+        * The address block as byte representation of the current sender.
+        *
+        * @type {Buffer} core.protocol.messages.GeneralWritableMessageFactory~_currentAddressBlockBuffer
+        */
+        this._currentAddressBlockBuffer = null;
+        /**
+        * Keeps track of the single address block buffers needed to construct the address block
+        *
+        * @type {Array&lt;Buffer&gt;} core.protocol.messages.GeneralWritableMessageFactory~_currentAddressBlockByteList
+        */
+        this._currentAddressBlockByteList = null;
+        /**
+        * Keeps track of the address block length of the current sender.
+        *
+        * @member {number} core.protocol.messages.GeneralWritableMessageFactory~_currentAddressBlockLength
+        */
+        this._currentAddressBlockLength = 0;
+        /**
+        * @member {string} core.protocol.messages.GeneralWritableMessageFactory~_messageType
+        */
+        this._messageType = null;
+        /**
+        * @member {core.topology.ContactNodeInterface} core.protocol.messages.GeneralWritableMessageFactory~_receiver
+        */
+        this._receiver = null;
+        /**
+        * @member {core.topology.MyNodeInterface} core.protocol.messages.GeneralWritableMessageFactory~_sender
+        */
+        this._sender = null;
+        /**
+        * Keeps track of the latest hook on the sender&#039;s `addressChange` event.
+        *
+        * @member {Function} core.protocol.messages.GeneralWritableMessageFactory~_recentChangeHook
+        */
+        this._recentAddressChangeHook = null;
+        /**
+        * Indicator for whether the sender has undergone changes since the last address block creation.
+        *
+        * @member {core.topology.ContactNodeInterface} core.protocol.messages.GeneralWritableMessageFactory~_senderHasChanged
+        * @private
+        */
+        this._senderHasChanged = false;
+        if (sender) {
+            this.setSender(sender);
+        }
+    }
+    GeneralWritableMessageFactory.prototype.setMessageType = function (type) {
+        this._messageType = type;
+    };
+
+    GeneralWritableMessageFactory.prototype.setReceiver = function (node) {
+        this._receiver = node;
+    };
+
+    GeneralWritableMessageFactory.prototype.setSender = function (node) {
+        var _this = this;
+        if (this._sender !== node) {
+            if (this._sender &amp;&amp; this._recentAddressChangeHook) {
+                this._sender.removeOnAddressChange(this._recentAddressChangeHook);
+            }
+
+            this._recentAddressChangeHook = function () {
+                _this._senderHasChanged = true;
+            };
+
+            node.onAddressChange(this._recentAddressChangeHook);
+            this._senderHasChanged = true;
+        }
+        this._sender = node;
+    };
+
+    GeneralWritableMessageFactory.prototype.constructMessage = function (payload, payloadLength) {
+        if (!(this._receiver &amp;&amp; this._sender &amp;&amp; this._messageType)) {
+            throw new Error(&#039;GeneralWritableMessageFactory#constructMessage: Sender and receiver must be specified.&#039;);
+        }
+
+        var bufferLength = (payloadLength === undefined) ? payload.length : payloadLength;
+        var bufferList = [];
+
+        // add the beginning bytes
+        bufferList.push(new Buffer(MessageByteCheatsheet.messageBegin));
+        bufferLength += MessageByteCheatsheet.messageBegin.length;
+
+        // add the receiver ID
+        bufferList.push(this._receiver.getId().getBuffer());
+        bufferLength += 20;
+
+        // add the sender ID
+        bufferList.push(this._sender.getId().getBuffer());
+        bufferLength += 20;
+
+        // add the address block
+        bufferList.push(this._getSenderAddressBlock());
+        bufferLength += this._currentAddressBlockLength;
+
+        // add the message type
+        var messageTypeByteArray = MessageByteCheatsheet.messageTypes[this._messageType];
+        if (!messageTypeByteArray) {
+            throw new Error(&#039;GeneralWritableMessageFactory#constructMessage: Unknown message type.&#039;);
+        }
+        bufferList.push(new Buffer(messageTypeByteArray));
+        bufferLength += messageTypeByteArray.length;
+
+        // add the payload
+        bufferList.push(payload);
+
+        // add the ending bytes
+        bufferList.push(new Buffer(MessageByteCheatsheet.messageEnd));
+        bufferLength += MessageByteCheatsheet.messageEnd.length;
+
+        // cleanup, sender can stay the same
+        this._receiver = null;
+        this._messageType = null;
+
+        return Buffer.concat(bufferList, bufferLength);
+    };
+
+    /**
+    * Only for testing purposes. Should not be used in production.
+    *
+    * @method core.protocol.messages.GeneralWritableMessageFactory#getSenderHasChanged
+    *
+    * @returns {boolean}
+    */
+    GeneralWritableMessageFactory.prototype.getSenderHasChanged = function () {
+        return this._senderHasChanged;
+    };
+
+    /**
+    * Internal method which iterates over the addresses of the sender and creates an address byte block
+    * with the needed separators which can be included in the header of the message.
+    *
+    * @method core.protocol.messages.GeneralWritableMessageFactory~_constructSenderAddressBlock
+    *
+    */
+    GeneralWritableMessageFactory.prototype._constructSenderAddressBlock = function () {
+        var _this = this;
+        this._currentAddressBlockByteList = [];
+        this._currentAddressBlockLength = 0;
+
+        var addressList = this._sender.getAddresses();
+
+        addressList.forEach(function (address) {
+            _this._onAddressIteration(address);
+        });
+
+        // end the block
+        this._currentAddressBlockByteList.push(new Buffer([MessageByteCheatsheet.addressEnd]));
+
+        this._currentAddressBlockLength++;
+
+        this._currentAddressBlockBuffer = null;
+        this._currentAddressBlockBuffer = Buffer.concat(this._currentAddressBlockByteList, this._currentAddressBlockLength);
+
+        this._currentAddressBlockByteList = null;
+    };
+
+    /**
+    * Checks if the sender has changed since the last time. If yes, a new address block is created.
+    *
+    * @method core.protocol.messages.GeneralWritableMessageFactory~_getSenderAddressBlock
+    *
+    * @returns {Buffer} The address block buffer object
+    */
+    GeneralWritableMessageFactory.prototype._getSenderAddressBlock = function () {
+        if (this._senderHasChanged) {
+            this._constructSenderAddressBlock();
+            this._senderHasChanged = false;
+        }
+        return this._currentAddressBlockBuffer;
+    };
+
+    /**
+    * Internal method used when iteration over the sender&#039;s address list.
+    *
+    * @method core.protocol.messages.GeneralWritableMessageFactory~_getSenderAddressBlock
+    */
+    GeneralWritableMessageFactory.prototype._onAddressIteration = function (address) {
+        var indicatorByte = new Buffer(1);
+        var addressBuffer = address.getAddressAsByteBuffer();
+
+        if (address.isIPv4()) {
+            indicatorByte[0] = MessageByteCheatsheet.ipv4;
+        } else if (address.isIPv6()) {
+            indicatorByte[0] = MessageByteCheatsheet.ipv6;
+        }
+
+        this._currentAddressBlockLength++;
+        this._currentAddressBlockByteList.push(indicatorByte);
+
+        this._currentAddressBlockLength += addressBuffer.length;
+        this._currentAddressBlockByteList.push(addressBuffer);
+    };
+    return GeneralWritableMessageFactory;
+})();
+
+module.exports = GeneralWritableMessageFactory;
+//# sourceMappingURL=GeneralWritableMessageFactory.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

@@ -198,10 +198,10 @@ var ProtocolConnectionManager = (function (_super) {
 
         this._tcpSocketHandler = tcpSocketHandler;
 
-        this._incomingDataPipeline = new IncomingDataPipeline(config.get(&#039;protocol.messages.maxByteLengthPerMessage&#039;), MessageByteCheatsheet.messageEnd, config.get(&#039;prococol.messages.msToKeepNonAddressableMemory&#039;), new ReadableMessageFactory());
+        this._incomingDataPipeline = new IncomingDataPipeline(config.get(&#039;protocol.messages.maxByteLengthPerMessage&#039;), MessageByteCheatsheet.messageEnd, config.get(&#039;protocol.messages.msToKeepNonAddressableMemory&#039;), new ReadableMessageFactory());
 
-        this._incomingPendingTimeoutLength = config.get(&#039;protocol.net.msToWaitForIncomingMessage&#039;);
-        this._msToWaitForConnection = config.get(&#039;protocol.net.maxSecondsToWaitForConnection&#039;) * 1000;
+        this._incomingPendingTimeoutLength = config.get(&#039;protocol.messages.msToWaitForIncomingMessage&#039;);
+        this._msToWaitForConnection = config.get(&#039;protocol.messages.maxSecondsToWaitForConnection&#039;) * 1000;
 
         this._setGlobalListeners();
     }
