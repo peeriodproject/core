@@ -93,7 +93,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 				}
 			}
 			else {
-				// if the message is not intended for us, proxy it through
+				this._proxyMessageThrough(message);
 			}
 		});
 
@@ -126,6 +126,16 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 				}
 			}
 		})
+	}
+
+	private _proxyMessageThrough (message:ReadableMessageInterface) {
+		var identifier:string = message.getReceiverId().toHexString();
+		var proxyingForNode = this._proxyingFor[identifier];
+		if (proxyingForNode) {
+			this._protocolConnectionManager.writeMessageTo(proxyingForNode, 'PROXY_THROUGH', message.getRawBuffer(), function () {
+				message.discard();
+			});
+		}
 	}
 
 	private _isProxyCapable ():boolean {
@@ -171,6 +181,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 
 				this._proxyCycle();
 			}
+			message.discard();
 		}
 		else if (msgType === 'PROXY_REQUEST') {
 			if (!this._proxyingFor[identifier] && this._isProxyCapable()) {
@@ -182,6 +193,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 			}
 			else {
 				this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_REJECT', new Buffer(0));
+				message.discard();
 			}
 		}
 		else if (msgType === 'PROXY_THROUGH') {

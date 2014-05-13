@@ -29,11 +29,15 @@ interface ReadableMessageInterface {
 
 	/**
 	 * Sets payload buffer and message buffer to `null`.
+	 *
+	 * @method core.protocol.messages.ReadableMessageInterface#discard
 	 */
 	discard ():void;
 
 	/**
 	 * Returns the extracted message type (e.g. PING, PONG etc.)
+	 *
+	 * @method core.protocol.messages.ReadableMessageInterface#getMessageType
 	 *
 	 * @returns {string}
 	 */
@@ -44,12 +48,25 @@ interface ReadableMessageInterface {
 	 * ATTENTION: Payload and message buffer reference the same memory, so altering it in one place will change it
 	 * in the other one as well.
 	 *
+	 * @method core.protocol.messages.ReadableMessageInterface#getPayload
+	 *
 	 * @returns {Buffer}
 	 */
 	getPayload ():Buffer;
 
 	/**
+	 * Returns the raw buffer object of the whole message.
+	 *
+	 * @method core.protocol.messages.ReadableMessageInterface#getRawBuffer
+	 *
+	 * @returns {Buffer}
+	 */
+	getRawBuffer ():Buffer;
+
+	/**
 	 * Returns the extracted ID of receiver.
+	 *
+	 * @method core.protocol.messages.ReadableMessageInterface#getReceiverId
 	 *
 	 * @returns {core.topology.IdInterface}
 	 */
@@ -58,12 +75,16 @@ interface ReadableMessageInterface {
 	/**
 	 * Returns the extracted Contact Node
 	 *
+	 * @method core.protocol.messages.ReadableMessageInterface#getSender
+	 *
 	 * @returns {core.topology.ContactNodeInterface}
 	 */
 	getSender ():ContactNodeInterface;
 
 	/**
 	 * Returns whether the message is recognized as a hydra message.
+	 *
+	 * @method core.protocol.messages.ReadableMessageInterface#isHydra
 	 *
 	 * @returns {boolean}
 	 */

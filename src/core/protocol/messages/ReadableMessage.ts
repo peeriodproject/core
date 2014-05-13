@@ -109,6 +109,10 @@ class ReadableMessage implements ReadableMessageInterface {
 		return this._payload;
 	}
 
+	public getRawBuffer ():Buffer {
+		return this._buffer;
+	}
+
 	public getReceiverId ():IdInterface {
 		return this._receiverId;
 	}

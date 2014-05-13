@@ -87,6 +87,10 @@ var ReadableMessage = (function () {
         return this._payload;
     };
 
+    ReadableMessage.prototype.getRawBuffer = function () {
+        return this._buffer;
+    };
+
     ReadableMessage.prototype.getReceiverId = function () {
         return this._receiverId;
     };

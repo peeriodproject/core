@@ -77,7 +77,7 @@ var ProxyManager = (function (_super) {
                     _this.emit('message', message);
                 }
             } else {
-                // if the message is not intended for us, proxy it through
+                _this._proxyMessageThrough(message);
             }
         });
 
@@ -109,6 +109,16 @@ var ProxyManager = (function (_super) {
                 }
             }
         });
+    };
+
+    ProxyManager.prototype._proxyMessageThrough = function (message) {
+        var identifier = message.getReceiverId().toHexString();
+        var proxyingForNode = this._proxyingFor[identifier];
+        if (proxyingForNode) {
+            this._protocolConnectionManager.writeMessageTo(proxyingForNode, 'PROXY_THROUGH', message.getRawBuffer(), function () {
+                message.discard();
+            });
+        }
     };
 
     ProxyManager.prototype._isProxyCapable = function () {
@@ -155,6 +165,7 @@ var ProxyManager = (function (_super) {
 
                 this._proxyCycle();
             }
+            message.discard();
         } else if (msgType === 'PROXY_REQUEST') {
             if (!this._proxyingFor[identifier] && this._isProxyCapable()) {
                 this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_ACCEPT', new Buffer(0), function (err) {
@@ -164,6 +175,7 @@ var ProxyManager = (function (_super) {
                 });
             } else {
                 this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_REJECT', new Buffer(0));
+                message.discard();
             }
         } else if (msgType === 'PROXY_THROUGH') {
             if (this._confirmedProxies[identifier]) {
