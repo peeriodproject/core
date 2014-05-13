@@ -253,6 +253,10 @@ class RoutingTable implements RoutingTableInterface {
 		}
 	}
 
+	public getRandomContactNode (callback:(err:Error, ContactNodeInterface) => any):void {
+		// todo implementation
+	}
+
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}

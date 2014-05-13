@@ -221,6 +221,10 @@ var RoutingTable = (function () {
         }
     };
 
+    RoutingTable.prototype.getRandomContactNode = function (callback) {
+        // todo implementation
+    };
+
     RoutingTable.prototype.isOpen = function (callback) {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };

@@ -47,6 +47,15 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	getContactNode (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void;
 
 	/**
+	 * Returns a random contact node
+	 *
+	 * @method core.topology.RoutingTableInterface#getContactNode
+	 *
+	 * @param {Function} callback
+	 */
+	getRandomContactNode (callback:(err:Error, ContactNodeInterface) => any):void;
+
+	/**
 	 * Updates the specified contact node
 	 *
 	 * @method core.topology.RoutingTableInterface#updateContactNode
