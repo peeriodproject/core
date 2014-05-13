@@ -37,6 +37,7 @@ import GeneralWritableMessageFactory = require('./../messages/GeneralWritableMes
  * @implements core.protocol.ProtocolConnectionManagerInterface
  *
  * @param {core.config.ObjectConfig} config Default configuration
+ * @param {core.topology.MyNodeInterface} myNode My node.
  * @param {core.net.tcp.TCPSocketHandlerInterface} Fully bootstrapped TCPSocket handler to use.
  */
 class ProtocolConnectionManager extends events.EventEmitter implements ProtocolConnectionManagerInterface {
@@ -55,6 +56,27 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 * @member {core.protocol.net.WaitForSocketList} core.protocol.net.ProtocolConnectionManager~_connectionWaitingList
 	 */
 	private _connectionWaitingList:WaitForSocketList = {};
+
+	/**
+	 * The writable message factory used for creating messages.
+	 *
+	 * @member {core.protocol.messages.GeneralWritableMessageFactoryInterface} core.protocol.net.ProtocolConnectionManager~_generalWritableMessageFactory
+	 */
+	private _generalWritableMessageFactory:GeneralWritableMessageFactoryInterface = null;
+
+	/**
+	 * Simple number which gets increased everytime to make hydra identifiers unique.
+	 *
+	 * @member {number} core.protocol.net.ProtocolConnectionManager~_hydraIdentifierCount
+	 */
+	private _hydraIdentifierCount:number = 0;
+
+	/**
+	 * Prefix for hydra identifiers on incoming and outgoing sockets.
+	 *
+	 * @member {string} core.protocol.net.ProtocolConnectionManager~_hydraIdentifierPrefix
+	 */
+	private _hydraIdentifierPrefix:string = '_hydra';
 
 	/**
 	 * List to keep track of hydra sockets. Merely stores tcp socket under the identifier.
@@ -100,6 +122,13 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	private _msToWaitForConnection:number = 0;
 
 	/**
+	 * My node. Used for generating outgoing messages.
+	 *
+	 * @member {core.topology.MyNodeInterface} core.protocol.net.ProtocolConnectionManager~_myNode
+	 */
+	private _myNode:MyNodeInterface = null;
+
+	/**
 	 * List to kee track of outgoing connections. Holds the `closeAtOnce` flag (see interface description).
 	 *
 	 * @member {core.protoocol.netOutgoingPendingSocketList} core.protocol.net.ProtocolConnectionManager~_outgoingPendingSocketList
@@ -126,14 +155,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 * @member {string} core.protocol.net.ProtocolConnectionManager~_temporaryIdentifierPrefix
 	 */
 	private _temporaryIdentifierPrefix:string = '_temp';
-
-	private _hydraIdentifierCount:number = 0;
-
-	private _hydraIdentifierPrefix:string = '_hydra';
-
-	private _myNode:MyNodeInterface = null;
-
-	private _generalWritableMessageFactory:GeneralWritableMessageFactoryInterface = null;
 
 	/**
 	 * Simple number which gets increased everytime to make waiting list indices unique.
@@ -225,6 +246,40 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		return this._getConfirmedSocketByIdentifier(id.toHexString());
 	}
 
+	public hydraConnectTo (port:number, ip:string, callback:(err:Error, identifier:string) => any):void {
+		this._tcpSocketHandler.connectTo(port, ip, (socket:TCPSocketInterface) => {
+			if (socket) {
+				var identifier:string = this._setHydraIdentifier(socket);
+				this._addToHydra(identifier, socket);
+				callback(null, identifier);
+			}
+			else {
+				callback(new Error('Could not establish connection to [' + ip + ']:' + port), null);
+			}
+		});
+	}
+
+	public hydraWriteBufferTo (identifier:string, buffer:Buffer, callback?:(err:Error) => any):void {
+		var socket:TCPSocketInterface = this._hydraSockets[identifier];
+		if (socket) {
+			if (callback) {
+				callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));
+			}
+		}
+		else {
+			socket.writeBuffer(buffer, function () {
+				if (callback) {
+					callback(null);
+				}
+			});
+		}
+	}
+
+	public hydraWriteMessageTo (identifier:string, payload:Buffer, callback?:(err:Error) => any):void {
+		var buffer:Buffer = this._generalWritableMessageFactory.hydraConstructMessage(payload, payload.length);
+		this.hydraWriteBufferTo(identifier, buffer, callback);
+	}
+
 	public keepSocketsNoLongerOpenFromNode (contactNode:ContactNodeInterface):void {
 		var identifier:string = this._nodeToIdentifier(contactNode);
 		var i:number = this._keepSocketOpenList.indexOf(identifier);
@@ -266,35 +321,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
-	public hydraConnectTo (port:number, ip:string, callback:(err:Error, identifier:string) => any):void {
-		this._tcpSocketHandler.connectTo(port, ip, (socket:TCPSocketInterface) => {
-			if (socket) {
-				var identifier:string = this._setHydraIdentifier(socket);
-				this._addToHydra(identifier, socket);
-				callback(null, identifier);
-			}
-			else {
-				callback(new Error('Could not establish connection to [' + ip + ']:' + port), null);
-			}
-		});
-	}
-
-	public hydraWriteBufferTo (identifier:string, buffer:Buffer, callback?:(err:Error) => any):void {
-		var socket:TCPSocketInterface = this._hydraSockets[identifier];
-		if (socket) {
-			if (callback) {
-				callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));
-			}
-		}
-		else {
-			socket.writeBuffer(buffer, function () {
-				if (callback) {
-					callback(null);
-				}
-			});
-		}
-	}
-
 	public writeBufferTo (node:ContactNodeInterface, buffer:Buffer, callback?:(err:Error) => any):void {
 		this.obtainConnectionTo(node, function (err:Error, socket:TCPSocketInterface) {
 			if (err) {
@@ -310,12 +336,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 				});
 			}
 		});
-	}
-
-	public hydraWriteMessageTo (identifier:string, payload:Buffer, callback?:(err:Error) => any):void {
-		var buffer:Buffer = this._generalWritableMessageFactory.hydraConstructMessage(payload, payload.length);
-
-		this.hydraWriteBufferTo(identifier, buffer, callback);
 	}
 
 	public writeMessageTo (node:ContactNodeInterface, messageType:string, payload:Buffer, callback?:(err:Error) => any):void {
@@ -336,7 +356,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 *
 	 * @param {string} identifier
 	 * @param {string} direction 'incoming' or 'outgoing'
-	 * @param {TCPSocketInterface} socket
+	 * @param {core.net.tcp.TCPSocketInterface} socket
 	 */
 	private _addToConfirmed (identifier:string, direction:string, socket:TCPSocketInterface) {
 		var existingSocket = this._confirmedSockets[identifier];
@@ -366,6 +386,14 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this.emit('confirmedSocket', identifier, socket);
 	}
 
+	/**
+	 * Adds a TCP socket to the hydra list. Hooks an event to it that it gets destrpyed when it's closed.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_addToHydra
+	 *
+	 * @param {string} identifier
+	 * @param {core.net.tcp.TCPSocketInterface} socket
+	 */
 	private _addToHydra (identifier:string, socket:TCPSocketInterface) {
 		this._hookDestroyOnCloseToSocket(socket);
 		this._hydraSockets[identifier] = socket;
@@ -568,6 +596,15 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._addToConfirmed(newIdentifier, 'incoming', socket);
 	}
 
+	/**
+	 * Moves a socket from the incoming pending list to the hydra list. Provides the socket with a new hydra identifier.
+	 * Calls `_addToHydra` in the end
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_fromIncomingPendingToHydra
+	 *
+	 * @param {string} oldIdentifier The old temporary identifier
+	 * @param {core.protocol.net.IncomingPendingSocket} pending The incoming pending socket object
+	 */
 	private _fromIncomingPendingToHydra (oldIdentifier:string, pending:IncomingPendingSocket):void {
 		var socket:TCPSocketInterface = pending.socket;
 
@@ -716,6 +753,20 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._incomingDataPipeline.hookSocket(socket);
 	}
 
+	/**
+	 * The listener on the pipeline's message event, when a valid readable hydra message comes rolling in.
+	 * Checks if the message came from an incoming socket with a temporary identifier. If so, it assigns it a
+	 * hydra identifier and adds it to the list.
+	 * Otherwise it checks if the identifier of the socket is a valid hydra identifier. If not, the responsible socket
+	 * is destroyed because of non-compliance with the protocol.
+	 *
+	 * Propagates the message in a `hydraMessage` event if not stated otherwise.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_onHydraMessage
+	 *
+	 * @param {string} identifier The identifier of the socket over which the message was sent
+	 * @param {core.protocol.messages.ReadableMessageInterface} message The received message
+	 */
 	private _onHydraMessage (identifier:string, message:ReadableMessageInterface):void {
 		var propagateMessage:boolean = true;
 		var incomingPending:IncomingPendingSocket = this._incomingPendingSockets[identifier];
@@ -794,6 +845,21 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	}
 
 	/**
+	 * Provides the socket with a hydra identifier and returns the same.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManager~_setHydraIdentifier
+	 *
+	 * @param {core.net.tcp.TCPSocketInterface} socket
+	 * @returns {string} The set identifier
+	 */
+	private _setHydraIdentifier (socket:TCPSocketInterface):string {
+		var identifier:string = this._hydraIdentifierPrefix + (++this._hydraIdentifierCount);
+		socket.setIdentifier(identifier);
+
+		return identifier;
+	}
+
+	/**
 	 * Provides the socket with a temporary identifier and returns the same.
 	 *
 	 * @method core.protocol.net.ProtocolConnectionManager~_setTemporaryIdentifier
@@ -803,13 +869,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 */
 	private _setTemporaryIdentifier (socket:TCPSocketInterface):string {
 		var identifier:string = this._temporaryIdentifierPrefix + (++this._temporaryIdentifierCount);
-		socket.setIdentifier(identifier);
-
-		return identifier;
-	}
-
-	private _setHydraIdentifier (socket:TCPSocketInterface):string {
-		var identifier:string = this._hydraIdentifierPrefix + (++this._hydraIdentifierCount);
 		socket.setIdentifier(identifier);
 
 		return identifier;

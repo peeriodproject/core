@@ -11,6 +11,8 @@ describe('CORE --> SEARCH --> SearchStore @joern', function () {
     var sandbox;
     var config;
 
+    this.timeout(0);
+
     beforeEach(function () {
         sandbox = sinon.sandbox.create();
         config = testUtils.stubPublicApi(sandbox, ObjectConfig, {

@@ -72,6 +72,43 @@ import TCPSocketInterface = require('../../../net/tcp/interfaces/TCPSocketInterf
 interface ProtocolConnectionManagerInterface {
 
 	/**
+	 * Forces an outgoing connection to the specified port and ip. It doesn't matter which node sits behind it.
+	 * If successful, the socket is saved within the hydra list, and the identifier (a prefix plus an increasing number)
+	 * used for it is returned.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManagerInterface#hydraConnectTo
+	 *
+	 * @param {number} port The port to connect to
+	 * @param {string} ip The ip to connect to
+	 * @param {Function} callback Mandatory callback which gets called with an error (if the connection was not successful)
+	 * and the identifier used as arguments.
+	 */
+	hydraConnectTo (port:number, ip:string, callback:(err:Error, identifier:string) => any):void;
+
+	/**
+	 * Writes a buffer to a socket stored under the specified hydra identifier. Generates an error if there is not socket
+	 * under this identifier.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManagerInterface#hydraWriteBufferTo
+	 *
+	 * @param {string} identifier
+	 * @param {Buffer} buffer
+	 * @param {Function} callback
+	 */
+	hydraWriteBufferTo (identifier:string, buffer:Buffer, callback?:(err:Error) => any):void;
+
+	/**
+	 * Wraps the specified payload buffer in a general hydra message and calls `hydraWriteBufferTo` afterwards.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManagerInterface#hydraWriteMessageTo
+	 *
+	 * @param {string} identifier
+	 * @param {Buffer} buffer
+	 * @param {Function} callback
+	 */
+	hydraWriteMessageTo (identifier:string, payload:Buffer, callback?:(err:Error) => any):void;
+
+	/**
 	 * Returns a confirmed socket by the speicifed contact node. Returns `null` if tehre is none.
 	 *
 	 * @method core.protocol.net.ProtocolConnectionManagerInterface#getConfirmedSocketById
@@ -137,6 +174,19 @@ interface ProtocolConnectionManagerInterface {
 	 * @param {Function} callback Optional callback function that gets called.
 	 */
 	writeBufferTo (node:ContactNodeInterface, buffer:Buffer, callback?:(err:Error) => any):void;
+
+	/**
+	 * Takes the provided messageType and payload and lets it being wrapped within a valid non-anonymous protocol message.
+	 * Calls `writeBufferTo` with the resulting buffer.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManagerInterface#writeMessageTo
+	 *
+	 * @param {core.topology.ContactNodeInterface} node
+	 * @param {string} messageType The human readable protocol message type
+	 * @param {NodeJS.Buffer} payload The buffer representing the payload
+	 * @param {Function} callback Optional callback function that gets called.
+	 */
+	writeMessageTo (node:ContactNodeInterface, messageType:string, payload:Buffer, callback?:(err:Error) => any):void;
 
 }
 

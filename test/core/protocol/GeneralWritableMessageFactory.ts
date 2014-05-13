@@ -44,6 +44,17 @@ describe('CORE --> PROTOCOL --> MESSAGES --> GeneralWritableMessageFactory', fun
 		return Buffer.concat(list);
 	};
 
+	var createWorkingHydraMessage = function ():Buffer {
+		var begin = new Buffer([0x50, 0x52, 0x44, 0x42, 0x47, 0x4e]),
+			end = new Buffer([0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]),
+			receiverId = new Buffer(20),
+			payload = new Buffer('foobar', 'utf8');
+		receiverId.fill(0x00);
+
+
+		return Buffer.concat([begin, receiverId, payload, end]);
+	};
+
 	before(function () {
 		sandbox = sinon.sandbox.create();
 		receiver = testUtils.stubPublicApi(sandbox, ContactNode, {
@@ -69,6 +80,18 @@ describe('CORE --> PROTOCOL --> MESSAGES --> GeneralWritableMessageFactory', fun
 		for (var i=0; i<msg.length; i++) {
 			msg[i].should.equal(msgCheck[i]);
 		}
+	});
+
+	it('should correctly create the hydra message', function () {
+		var msg:Buffer = factory.hydraConstructMessage(new Buffer('foobar', 'utf8'));
+		var msgCheck:Buffer = createWorkingHydraMessage();
+
+		msg.length.should.equal(msgCheck.length);
+
+		for (var i=0; i<msg.length; i++) {
+			msg[i].should.equal(msgCheck[i]);
+		}
+
 	});
 
 	it ('should throw an error when not setting a receiver/message type', function () {

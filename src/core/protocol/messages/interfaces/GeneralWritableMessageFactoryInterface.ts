@@ -47,6 +47,15 @@ interface GeneralWritableMessageFactoryInterface extends WritableMessageFactoryI
 	 */
 	setSender (node:MyNodeInterface):void;
 
+	/**
+	 * Constructs a general hydra message, i.e. a message where the bytes reserved for the receiver ID are all 0x00,
+	 * followed directly by the payload.
+	 *
+	 * @method core.protocol.messages.GeneralWritableMessageFactoryInterface#hydraConstructMessage
+	 *
+	 * @param {Buffer} payload Payload to wrap
+	 * @param {number} payloadLength Optional number of bytes of the payload
+	 */
 	hydraConstructMessage (payload:Buffer, payloadLength?:number):Buffer;
 
 }

@@ -25,6 +25,7 @@ var GeneralWritableMessageFactory = require('./../messages/GeneralWritableMessag
 * @implements core.protocol.ProtocolConnectionManagerInterface
 *
 * @param {core.config.ObjectConfig} config Default configuration
+* @param {core.topology.MyNodeInterface} myNode My node.
 * @param {core.net.tcp.TCPSocketHandlerInterface} Fully bootstrapped TCPSocket handler to use.
 */
 var ProtocolConnectionManager = (function (_super) {
@@ -44,6 +45,24 @@ var ProtocolConnectionManager = (function (_super) {
         * @member {core.protocol.net.WaitForSocketList} core.protocol.net.ProtocolConnectionManager~_connectionWaitingList
         */
         this._connectionWaitingList = {};
+        /**
+        * The writable message factory used for creating messages.
+        *
+        * @member {core.protocol.messages.GeneralWritableMessageFactoryInterface} core.protocol.net.ProtocolConnectionManager~_generalWritableMessageFactory
+        */
+        this._generalWritableMessageFactory = null;
+        /**
+        * Simple number which gets increased everytime to make hydra identifiers unique.
+        *
+        * @member {number} core.protocol.net.ProtocolConnectionManager~_hydraIdentifierCount
+        */
+        this._hydraIdentifierCount = 0;
+        /**
+        * Prefix for hydra identifiers on incoming and outgoing sockets.
+        *
+        * @member {string} core.protocol.net.ProtocolConnectionManager~_hydraIdentifierPrefix
+        */
+        this._hydraIdentifierPrefix = '_hydra';
         /**
         * List to keep track of hydra sockets. Merely stores tcp socket under the identifier.
         *
@@ -82,6 +101,12 @@ var ProtocolConnectionManager = (function (_super) {
         */
         this._msToWaitForConnection = 0;
         /**
+        * My node. Used for generating outgoing messages.
+        *
+        * @member {core.topology.MyNodeInterface} core.protocol.net.ProtocolConnectionManager~_myNode
+        */
+        this._myNode = null;
+        /**
         * List to kee track of outgoing connections. Holds the `closeAtOnce` flag (see interface description).
         *
         * @member {core.protoocol.netOutgoingPendingSocketList} core.protocol.net.ProtocolConnectionManager~_outgoingPendingSocketList
@@ -105,10 +130,6 @@ var ProtocolConnectionManager = (function (_super) {
         * @member {string} core.protocol.net.ProtocolConnectionManager~_temporaryIdentifierPrefix
         */
         this._temporaryIdentifierPrefix = '_temp';
-        this._hydraIdentifierCount = 0;
-        this._hydraIdentifierPrefix = '_hydra';
-        this._myNode = null;
-        this._generalWritableMessageFactory = null;
         /**
         * Simple number which gets increased everytime to make waiting list indices unique.
         *
@@ -190,6 +211,39 @@ var ProtocolConnectionManager = (function (_super) {
         return this._getConfirmedSocketByIdentifier(id.toHexString());
     };
 
+    ProtocolConnectionManager.prototype.hydraConnectTo = function (port, ip, callback) {
+        var _this = this;
+        this._tcpSocketHandler.connectTo(port, ip, function (socket) {
+            if (socket) {
+                var identifier = _this._setHydraIdentifier(socket);
+                _this._addToHydra(identifier, socket);
+                callback(null, identifier);
+            } else {
+                callback(new Error('Could not establish connection to [' + ip + ']:' + port), null);
+            }
+        });
+    };
+
+    ProtocolConnectionManager.prototype.hydraWriteBufferTo = function (identifier, buffer, callback) {
+        var socket = this._hydraSockets[identifier];
+        if (socket) {
+            if (callback) {
+                callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));
+            }
+        } else {
+            socket.writeBuffer(buffer, function () {
+                if (callback) {
+                    callback(null);
+                }
+            });
+        }
+    };
+
+    ProtocolConnectionManager.prototype.hydraWriteMessageTo = function (identifier, payload, callback) {
+        var buffer = this._generalWritableMessageFactory.hydraConstructMessage(payload, payload.length);
+        this.hydraWriteBufferTo(identifier, buffer, callback);
+    };
+
     ProtocolConnectionManager.prototype.keepSocketsNoLongerOpenFromNode = function (contactNode) {
         var identifier = this._nodeToIdentifier(contactNode);
         var i = this._keepSocketOpenList.indexOf(identifier);
@@ -229,34 +283,6 @@ var ProtocolConnectionManager = (function (_super) {
         }
     };
 
-    ProtocolConnectionManager.prototype.hydraConnectTo = function (port, ip, callback) {
-        var _this = this;
-        this._tcpSocketHandler.connectTo(port, ip, function (socket) {
-            if (socket) {
-                var identifier = _this._setHydraIdentifier(socket);
-                _this._addToHydra(identifier, socket);
-                callback(null, identifier);
-            } else {
-                callback(new Error('Could not establish connection to [' + ip + ']:' + port), null);
-            }
-        });
-    };
-
-    ProtocolConnectionManager.prototype.hydraWriteBufferTo = function (identifier, buffer, callback) {
-        var socket = this._hydraSockets[identifier];
-        if (socket) {
-            if (callback) {
-                callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));
-            }
-        } else {
-            socket.writeBuffer(buffer, function () {
-                if (callback) {
-                    callback(null);
-                }
-            });
-        }
-    };
-
     ProtocolConnectionManager.prototype.writeBufferTo = function (node, buffer, callback) {
         this.obtainConnectionTo(node, function (err, socket) {
             if (err) {
@@ -271,12 +297,6 @@ var ProtocolConnectionManager = (function (_super) {
                 });
             }
         });
-    };
-
-    ProtocolConnectionManager.prototype.hydraWriteMessageTo = function (identifier, payload, callback) {
-        var buffer = this._generalWritableMessageFactory.hydraConstructMessage(payload, payload.length);
-
-        this.hydraWriteBufferTo(identifier, buffer, callback);
     };
 
     ProtocolConnectionManager.prototype.writeMessageTo = function (node, messageType, payload, callback) {
@@ -297,7 +317,7 @@ var ProtocolConnectionManager = (function (_super) {
     *
     * @param {string} identifier
     * @param {string} direction 'incoming' or 'outgoing'
-    * @param {TCPSocketInterface} socket
+    * @param {core.net.tcp.TCPSocketInterface} socket
     */
     ProtocolConnectionManager.prototype._addToConfirmed = function (identifier, direction, socket) {
         var existingSocket = this._confirmedSockets[identifier];
@@ -326,6 +346,14 @@ var ProtocolConnectionManager = (function (_super) {
         this.emit('confirmedSocket', identifier, socket);
     };
 
+    /**
+    * Adds a TCP socket to the hydra list. Hooks an event to it that it gets destrpyed when it's closed.
+    *
+    * @method core.protocol.net.ProtocolConnectionManager~_addToHydra
+    *
+    * @param {string} identifier
+    * @param {core.net.tcp.TCPSocketInterface} socket
+    */
     ProtocolConnectionManager.prototype._addToHydra = function (identifier, socket) {
         this._hookDestroyOnCloseToSocket(socket);
         this._hydraSockets[identifier] = socket;
@@ -526,6 +554,15 @@ var ProtocolConnectionManager = (function (_super) {
         this._addToConfirmed(newIdentifier, 'incoming', socket);
     };
 
+    /**
+    * Moves a socket from the incoming pending list to the hydra list. Provides the socket with a new hydra identifier.
+    * Calls `_addToHydra` in the end
+    *
+    * @method core.protocol.net.ProtocolConnectionManager~_fromIncomingPendingToHydra
+    *
+    * @param {string} oldIdentifier The old temporary identifier
+    * @param {core.protocol.net.IncomingPendingSocket} pending The incoming pending socket object
+    */
     ProtocolConnectionManager.prototype._fromIncomingPendingToHydra = function (oldIdentifier, pending) {
         var socket = pending.socket;
 
@@ -676,6 +713,20 @@ var ProtocolConnectionManager = (function (_super) {
         this._incomingDataPipeline.hookSocket(socket);
     };
 
+    /**
+    * The listener on the pipeline's message event, when a valid readable hydra message comes rolling in.
+    * Checks if the message came from an incoming socket with a temporary identifier. If so, it assigns it a
+    * hydra identifier and adds it to the list.
+    * Otherwise it checks if the identifier of the socket is a valid hydra identifier. If not, the responsible socket
+    * is destroyed because of non-compliance with the protocol.
+    *
+    * Propagates the message in a `hydraMessage` event if not stated otherwise.
+    *
+    * @method core.protocol.net.ProtocolConnectionManager~_onHydraMessage
+    *
+    * @param {string} identifier The identifier of the socket over which the message was sent
+    * @param {core.protocol.messages.ReadableMessageInterface} message The received message
+    */
     ProtocolConnectionManager.prototype._onHydraMessage = function (identifier, message) {
         var propagateMessage = true;
         var incomingPending = this._incomingPendingSockets[identifier];
@@ -753,6 +804,21 @@ var ProtocolConnectionManager = (function (_super) {
     };
 
     /**
+    * Provides the socket with a hydra identifier and returns the same.
+    *
+    * @method core.protocol.net.ProtocolConnectionManager~_setHydraIdentifier
+    *
+    * @param {core.net.tcp.TCPSocketInterface} socket
+    * @returns {string} The set identifier
+    */
+    ProtocolConnectionManager.prototype._setHydraIdentifier = function (socket) {
+        var identifier = this._hydraIdentifierPrefix + (++this._hydraIdentifierCount);
+        socket.setIdentifier(identifier);
+
+        return identifier;
+    };
+
+    /**
     * Provides the socket with a temporary identifier and returns the same.
     *
     * @method core.protocol.net.ProtocolConnectionManager~_setTemporaryIdentifier
@@ -762,13 +828,6 @@ var ProtocolConnectionManager = (function (_super) {
     */
     ProtocolConnectionManager.prototype._setTemporaryIdentifier = function (socket) {
         var identifier = this._temporaryIdentifierPrefix + (++this._temporaryIdentifierCount);
-        socket.setIdentifier(identifier);
-
-        return identifier;
-    };
-
-    ProtocolConnectionManager.prototype._setHydraIdentifier = function (socket) {
-        var identifier = this._hydraIdentifierPrefix + (++this._hydraIdentifierCount);
         socket.setIdentifier(identifier);
 
         return identifier;

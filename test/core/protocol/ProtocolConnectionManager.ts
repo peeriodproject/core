@@ -21,9 +21,11 @@ import ProtocolConnectionManager = require('../../../src/core/protocol/net/Proto
 
 import ContactNodeAddressFactory = require('../../../src/core/topology/ContactNodeAddressFactory');
 import Id = require('../../../src/core/topology/Id');
+import MyNodeInterface = require('../../../src/core/topology/interfaces/MyNodeInterface');
+import MyNode = require('../../../src/core/topology/MyNode');
 
 
-describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () {
+describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', function () {
 
 	this.timeout(0);
 
@@ -56,6 +58,8 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () 
 
 	var currentRemoteSocket:net.Socket;
 
+	var myNode:MyNodeInterface = new MyNode(new Id(Id.byteBufferByHexString('0a0000000000000078f406020100000005000000', 20), 160), [addressFactory.create('127.0.0.1', 10)]);
+
 	before(function (done) {
 
 		sandbox = sinon.sandbox.create();
@@ -82,7 +86,7 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () 
 
 		tcpSocketHandler.autoBootstrap(function (openPorts:Array<number>) {
 			if (openPorts[0] === protoPort) {
-				manager = new ProtocolConnectionManager(configStub, tcpSocketHandler);
+				manager = new ProtocolConnectionManager(configStub, myNode, tcpSocketHandler);
 				handler_built = true;
 				if (server_built && handler_built) done();
 			}
