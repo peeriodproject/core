@@ -19,8 +19,21 @@ import ReadableMessageInterface = require('./ReadableMessageInterface');
 interface IncomingDataPipelineInterface extends NodeJS.EventEmitter {
 
 	/**
+	 * Deformats a buffer with the class's ReadableMessageFactoryInterface and returns the result.
+	 * If the passed buffer cannot be read properly. `undefined` is returned.
+	 *
+	 * @method core.protocol.messages.IncomingDataPipelineInterface#deformatBuffer
+	 *
+	 * @param {Buffer} buffer
+	 * @returns core.protocol.messages.ReadableMessageInterface
+	 */
+	deformatBuffer (buffer:Buffer):ReadableMessageInterface;
+
+	/**
 	 * Hook a TCP socket to the pipeline, letting it listen on the `data` event.
 	 * Socket must have an identifier.
+	 *
+	 * @method core.protocol.messages.IncomingDataPipelineInterface#hookSocket
 	 *
 	 * @param {core.net.tcp.TCPSocketInterface} socket
 	 */
@@ -30,11 +43,11 @@ interface IncomingDataPipelineInterface extends NodeJS.EventEmitter {
 	 * Unhooks a TCP socket from the pipeline, removing the `data`-listener.
 	 * The socket must have an identifier obviously.
 	 *
+	 * @method core.protocol.messages.IncomingDataPipelineInterface#unhookSocket
+	 *
 	 * @param {core.net.tcp.TCPSocketInterface} socket
 	 */
 	unhookSocket (socket:TCPSocketInterface):boolean;
-
-	deformatBuffer (buffer:Buffer):ReadableMessageInterface;
 }
 
 export = IncomingDataPipelineInterface;
