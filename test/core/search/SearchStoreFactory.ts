@@ -18,6 +18,8 @@ describe('CORE --> SEARCH --> SearchStoreFactory', function () {
 	var searchStoreDataFolder:string = testUtils.getFixturePath('search/searchStoreData');
 	var searchStore:SearchStoreInterface = null;
 
+	this.timeout(0);
+
 	before(function (done) {
 		sandbox = sinon.sandbox.create();
 		config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
