@@ -8,6 +8,8 @@ import FreeGeoIp = require('../../../src/core/net/ip/FreeGeoIp');
 
 
 describe('CORE --> NET --> IP --> FREEGEOIP', function () {
+	this.timeout(0);
+
 	var freeGeoIp = new FreeGeoIp();
 
 	it('should obtain the external IP', function (done) {

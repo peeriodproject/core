@@ -37,6 +37,12 @@ describe('CORE --> NET --> TCP --> TCPSocket', function () {
         });
     });
 
+    after(function (done) {
+        server.close(function () {
+            done();
+        });
+    });
+
     it('should inherit event emitter', function () {
         socket.should.be.instanceof(events.EventEmitter);
     });
@@ -107,8 +113,10 @@ describe('CORE --> NET --> TCP --> TCPSocket', function () {
             });
 
             setTimeout(function () {
-                if (all_good)
+                if (all_good) {
+                    socket_b.end();
                     done();
+                }
             }, 4000);
         });
     });
