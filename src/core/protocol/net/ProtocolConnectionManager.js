@@ -184,6 +184,17 @@ var ProtocolConnectionManager = (function (_super) {
     /**
     * Testing purposes only. Should not be used in production.
     *
+    * @method {core.protocol.net.ProtocolConnectionManager#getHydraSocketList
+    *
+    * @returns {core.protocol.net.HydraSocketList}
+    */
+    ProtocolConnectionManager.prototype.getHydraSocketList = function () {
+        return this._hydraSockets;
+    };
+
+    /**
+    * Testing purposes only. Should not be used in production.
+    *
     * @method {core.protocol.net.ProtocolConnectionManager#getConfirmedSocketList
     *
     * @returns {Array<string>}
@@ -226,7 +237,7 @@ var ProtocolConnectionManager = (function (_super) {
 
     ProtocolConnectionManager.prototype.hydraWriteBufferTo = function (identifier, buffer, callback) {
         var socket = this._hydraSockets[identifier];
-        if (socket) {
+        if (!socket) {
             if (callback) {
                 callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));
             }
@@ -242,6 +253,22 @@ var ProtocolConnectionManager = (function (_super) {
     ProtocolConnectionManager.prototype.hydraWriteMessageTo = function (identifier, payload, callback) {
         var buffer = this._generalWritableMessageFactory.hydraConstructMessage(payload, payload.length);
         this.hydraWriteBufferTo(identifier, buffer, callback);
+    };
+
+    ProtocolConnectionManager.prototype.keepHydraSocketNoLongerOpen = function (identifier) {
+        var socket = this._hydraSockets[identifier];
+
+        if (socket) {
+            socket.setCloseOnTimeout(true);
+        }
+    };
+
+    ProtocolConnectionManager.prototype.keepHydraSocketOpen = function (identifier) {
+        var socket = this._hydraSockets[identifier];
+
+        if (socket) {
+            socket.setCloseOnTimeout(false);
+        }
     };
 
     ProtocolConnectionManager.prototype.keepSocketsNoLongerOpenFromNode = function (contactNode) {
@@ -357,6 +384,8 @@ var ProtocolConnectionManager = (function (_super) {
     ProtocolConnectionManager.prototype._addToHydra = function (identifier, socket) {
         this._hookDestroyOnCloseToSocket(socket);
         this._hydraSockets[identifier] = socket;
+
+        this.emit('hydraSocket', identifier, socket);
     };
 
     /**
