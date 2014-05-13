@@ -332,6 +332,14 @@ var IncomingDataPipeline = (function (_super) {
             this._freeMemory(identifier, tempMessageMemory);
         }
     };
+
+    IncomingDataPipeline.prototype.deformatBuffer = function (buffer) {
+        try  {
+            return this._readableMessageFactory.create(buffer);
+        } catch (e) {
+            return undefined;
+        }
+    };
     return IncomingDataPipeline;
 })(events.EventEmitter);
 

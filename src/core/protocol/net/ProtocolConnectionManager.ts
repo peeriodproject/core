@@ -6,6 +6,8 @@ import Id = require('../../topology/Id');
 import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInterface');
 import ContactNodeAddressListInterface = require('../../topology/interfaces/ContactNodeAddressListInterface');
 import ContactNodeAddressInterface = require('../../topology/interfaces/ContactNodeAddressInterface');
+import ContactNodeAddressFactoryInterface = require('../../topology/interfaces/ContactNodeAddressFactoryInterface');
+import ContactNodeAddressFactory = require('../../topology/ContactNodeAddressFactory');
 import ProtocolConnectionManagerInterface = require('./interfaces/ProtocolConnectionManagerInterface');
 import ReadableMessageInterface = require('../messages/interfaces/ReadableMessageInterface');
 import ReadableMessageFactory = require('./../messages/ReadableMessageFactory');
@@ -41,6 +43,13 @@ import GeneralWritableMessageFactory = require('./../messages/GeneralWritableMes
  * @param {core.net.tcp.TCPSocketHandlerInterface} Fully bootstrapped TCPSocket handler to use.
  */
 class ProtocolConnectionManager extends events.EventEmitter implements ProtocolConnectionManagerInterface {
+
+	/**
+	 * Contact node address factory.
+	 *
+	 * @member {core.topology.ContactNodeAddressFactoryInterface} core.protocol.net.ProtocolConnectionManager~_addressFactory
+	 */
+	private _addressFactory:ContactNodeAddressFactoryInterface = null;
 
 	/**
 	 * List to keep track of confirmed sockets.
@@ -180,6 +189,8 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._incomingPendingTimeoutLength = config.get('protocol.messages.msToWaitForIncomingMessage');
 		this._msToWaitForConnection = config.get('protocol.messages.maxSecondsToWaitForConnection') * 1000;
 
+		this._addressFactory = new ContactNodeAddressFactory();
+
 		this._setGlobalListeners();
 	}
 
@@ -214,6 +225,22 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 */
 	public getConfirmedSocketList ():ConfirmedSocketList {
 		return this._confirmedSockets;
+	}
+
+	public getExternalAddressList ():ContactNodeAddressListInterface {
+		var openPorts:Array<number> = this._tcpSocketHandler.getOpenServerPortsArray();
+		var externalIp:string = this._tcpSocketHandler.getMyExternalIp();
+		var externalAddressList:ContactNodeAddressListInterface = [];
+
+		for (var i=0; i<openPorts.length; i++) {
+			externalAddressList.push(this._addressFactory.create(externalIp, openPorts[i]));
+		}
+
+		return externalAddressList;
+	}
+
+	public getMyNode ():MyNodeInterface {
+		return this._myNode;
 	}
 
 	/**
@@ -256,6 +283,19 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	public getConfirmedSocketById (id:IdInterface):TCPSocketInterface {
 		return this._getConfirmedSocketByIdentifier(id.toHexString());
 	}
+
+	public forceMessageThroughPipe (originalSender:ContactNodeInterface, rawBuffer:Buffer):void {
+		var msg:ReadableMessageInterface = this._incomingDataPipeline.deformatBuffer(rawBuffer);
+		if (msg) {
+			if (msg.isHydra()) {
+				this._destroyConnectionByIdentifier(this._nodeToIdentifier(originalSender));
+			}
+			else {
+				this.emit('message', msg);
+			}
+		}
+	}
+
 
 	public hydraConnectTo (port:number, ip:string, callback:(err:Error, identifier:string) => any):void {
 		this._tcpSocketHandler.connectTo(port, ip, (socket:TCPSocketInterface) => {

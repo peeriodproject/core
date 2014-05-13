@@ -132,6 +132,15 @@ var TCPSocketHandler = (function (_super) {
 
     TCPSocketHandler.prototype.connectTo = function (port, ip, callback) {
         var _this = this;
+        if (ip === this._myExternalIp && this.getOpenServerPortsArray().indexOf(port) > -1) {
+            if (callback) {
+                callback(null);
+            } else {
+                this.emit('connection error', port, ip);
+            }
+            return;
+        }
+
         var sock = net.createConnection(port, ip);
         var connectionError = function () {
             sock.removeAllListeners();

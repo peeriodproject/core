@@ -1,7 +1,9 @@
 /// <reference path='../../../../../ts-definitions/node/node.d.ts' />
 
 import ContactNodeInterface = require('../../../topology/interfaces/ContactNodeInterface');
+import ContactNodeAddressListInterface = require('../../../topology/interfaces/ContactNodeAddressListInterface');
 import IdInterface = require('../../../topology/interfaces/IdInterface');
+import MyNodeInterface = require('../../../topology/interfaces/MyNodeInterface');
 import TCPSocketInterface = require('../../../net/tcp/interfaces/TCPSocketInterface');
 
 /**
@@ -69,7 +71,9 @@ import TCPSocketInterface = require('../../../net/tcp/interfaces/TCPSocketInterf
  * @interface
  * @class core.protocol.ProtocolConnectionManagerInterface
  */
-interface ProtocolConnectionManagerInterface {
+interface ProtocolConnectionManagerInterface extends NodeJS.EventEmitter {
+
+	forceMessageThroughPipe (originalSender:ContactNodeInterface, rawBuffer:Buffer):void;
 
 	/**
 	 * Forces an outgoing connection to the specified port and ip. It doesn't matter which node sits behind it.
@@ -127,6 +131,22 @@ interface ProtocolConnectionManagerInterface {
 	 * @returns {core.net.tcp.TCPSocketInterface}
 	 */
 	getConfirmedSocketById (id:IdInterface):TCPSocketInterface;
+
+	/**
+	 * Returns a list of external addresses of the machine. Returns an empty array if it cannot be reached from outside.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManagerInterface#getExternalAddressList
+	 *
+	 * @returns {core.topology.ContactNodeAddressListInterface}
+	 */
+	getExternalAddressList ():ContactNodeAddressListInterface;
+
+	/**
+	 * Returns myNode, provided in the constructor
+	 *
+	 * @returns {core.topology.MyNodeInterface}
+	 */
+	getMyNode ():MyNodeInterface;
 
 	/**
 	 * The anti-version to {@link core.topology.net.ProtocolConnectionManagerInterface#keepHydraSocketOpen}.

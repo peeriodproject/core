@@ -14,11 +14,18 @@
         "myOpenPorts"              : [30415]
     },
     "protocol": {
+        "waitForNodeReactionInSeconds": 2,
         "messages": {
             "maxByteLengthPerMessage"      : 1048576,
             "msToKeepNonAddressableMemory" : 10000,
             "msToWaitForIncomingMessage"   : 10000,
             "maxSecondsToWaitForConnection": 4
+        },
+        "proxy": {
+            "maxNumberOfProxies": 10,
+            "proxyForMaxNumberOfNodes": 2,
+            "maxUnsuccessfulProxyTries": 4,
+            "unsuccessfulProxyTryWaitTimeInSeconds": 30
         }
     },
     "plugin"  : {
