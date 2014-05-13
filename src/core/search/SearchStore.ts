@@ -5,12 +5,14 @@ import childProcess = require('child_process');
 import path = require('path');
 
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
-import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions');
 import SearchStoreInterface = require('./interfaces/SearchStoreInterface');
+import SearchStoreOptions = require('./interfaces/SearchStoreOptions');
 
 import ObjectUtils = require('../utils/ObjectUtils');
 
 /**
+ * @see http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/
+ *
  * @class core.search.SearchStore
  * @implements core.search.SearchStoreInterface
  */
@@ -24,13 +26,14 @@ class SearchStore implements SearchStoreInterface {
 	 *
 	 * @member {core.utils.ClosableAsyncOptions} core.search.SearchStore~_options
 	 */
-	private _options:ClosableAsyncOptions = null;
+	private _options:SearchStoreOptions = null;
 
 	private _serverProcess:childProcess.ChildProcess = null;
 
-	constructor (config:ConfigInterface, options:ClosableAsyncOptions = {}) {
-		var defaults:ClosableAsyncOptions = {
+	constructor (config:ConfigInterface, options:SearchStoreOptions = {}) {
+		var defaults:SearchStoreOptions = {
 			closeOnProcessExit: true,
+			logPath           : '../../logs/searchStore.log',
 			onCloseCallback   : function (err:Error) {
 			},
 			onOpenCallback    : function (err:Error) {
@@ -40,6 +43,7 @@ class SearchStore implements SearchStoreInterface {
 		this._config = config;
 
 		this._options = ObjectUtils.extend(defaults, options);
+		this._options.logPath = path.join(__dirname, this._options.logPath);
 
 		process.on('exit', () => {
 			this.close(this._options.onCloseCallback);
@@ -64,8 +68,12 @@ class SearchStore implements SearchStoreInterface {
 		this._startUpServer();
 
 		this._client = elasticsearch.Client({
-			host: this._config.get('search.host') + ':' + this._config.get('search.port')
-			//log : 'trace'
+			host: this._config.get('search.host') + ':' + this._config.get('search.port'),
+			log : {
+				type : 'file',
+				level: 'trace',
+				path : this._options.logPath
+			}
 		});
 
 		this._waitForServer(internalCallback);
