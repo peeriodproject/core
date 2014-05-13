@@ -56,6 +56,15 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	getRandomContactNode (callback:(err:Error, ContactNodeInterface) => any):void;
 
 	/**
+	 * Removes the given contact node and adds the new node to the bucket. It returns an error in the callback if the nodes
+	 * are not stored within the same bucket.
+	 *
+	 * @param {core.topology.ContactNodeInterface} oldContactNode
+	 * @param {core.topology.ContactNodeInterface} newContactNode
+	 * @param {Function} callback
+	 */
+	replaceContactNode (oldContactNode:ContactNodeInterface, newContactNode:ContactNodeInterface, callback:(err:Error) => any):void;
+	/**
 	 * Updates the specified contact node
 	 *
 	 * @method core.topology.RoutingTableInterface#updateContactNode

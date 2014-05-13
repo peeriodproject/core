@@ -5,6 +5,7 @@ import ClosableAsyncOptions = require('../../utils/interfaces/ClosableAsyncOptio
  * @class core.search.SearchStoreOptions
  */
 interface SearchStoreOptions extends ClosableAsyncOptions {
+	closeOnProcessExit?: boolean;
 	logsPath?:string;
 	logsFileName?:string;
 }

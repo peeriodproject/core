@@ -5,6 +5,8 @@ var Sandbox = require('udibo-sandbox');
 import PluginRunnerInterface = require('./interfaces/PluginRunnerInterface');
 
 /**
+ * @see https://github.com/KyleJune/udibo-sandbox
+ *
  * @class core.plugin.PluginRunner
  * @implements core.plugin.PluginRunnerInterface
  */

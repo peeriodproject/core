@@ -279,6 +279,10 @@ class RoutingTable implements RoutingTableInterface {
 		return process.nextTick(internalCallback.bind(null, null));
 	}
 
+	public replaceContactNode (oldContactNode:ContactNodeInterface, newContactNode:ContactNodeInterface, callback:(err:Error) => any):void {
+		// todo implementation
+	}
+
 	public updateContactNode (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};

@@ -97,7 +97,7 @@ class PluginFinder implements PluginFinderInterface {
 		var checkPath = (filePath:string) => {
 			this._ignoreListContains(filePath, (index:number) => {
 
-				// current filePath is ignored. skipping...
+				// current modulePath is ignored. skipping...
 				if (index !== -1) {
 					process.nextTick(function() {
 						filesLeft--;
