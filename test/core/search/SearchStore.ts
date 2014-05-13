@@ -39,7 +39,6 @@ describe('CORE --> SEARCH --> SearchStore @joern', function () {
 	it ('should correctly instantiate the search store', function (done) {
 		(new SearchStore(config, {
 			onOpenCallback: function () {
-				console.log('DONE');
 				done();
 			}
 		})).should.be.an.instanceof(SearchStore);

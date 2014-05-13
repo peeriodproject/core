@@ -6,6 +6,8 @@ var path = require('path');
 var ObjectUtils = require('../utils/ObjectUtils');
 
 /**
+* @see http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/
+*
 * @class core.search.SearchStore
 * @implements core.search.SearchStoreInterface
 */
@@ -24,6 +26,7 @@ var SearchStore = (function () {
         this._serverProcess = null;
         var defaults = {
             closeOnProcessExit: true,
+            logPath: '../../logs/searchStore.log',
             onCloseCallback: function (err) {
             },
             onOpenCallback: function (err) {
@@ -33,6 +36,7 @@ var SearchStore = (function () {
         this._config = config;
 
         this._options = ObjectUtils.extend(defaults, options);
+        this._options.logPath = path.join(__dirname, this._options.logPath);
 
         process.on('exit', function () {
             _this.close(_this._options.onCloseCallback);
@@ -55,7 +59,12 @@ var SearchStore = (function () {
         this._startUpServer();
 
         this._client = elasticsearch.Client({
-            host: this._config.get('search.host') + ':' + this._config.get('search.port')
+            host: this._config.get('search.host') + ':' + this._config.get('search.port'),
+            log: {
+                type: 'file',
+                level: 'trace',
+                path: this._options.logPath
+            }
         });
 
         this._waitForServer(internalCallback);
