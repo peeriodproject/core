@@ -8,6 +8,8 @@ var events = require('events');
 
 var Id = require('../../topology/Id');
 
+var ContactNodeAddressFactory = require('../../topology/ContactNodeAddressFactory');
+
 var ReadableMessageFactory = require('./../messages/ReadableMessageFactory');
 
 var MessageByteCheatsheet = require('./../messages/MessageByteCheatsheet');
@@ -32,6 +34,12 @@ var ProtocolConnectionManager = (function (_super) {
     __extends(ProtocolConnectionManager, _super);
     function ProtocolConnectionManager(config, myNode, tcpSocketHandler) {
         _super.call(this);
+        /**
+        * Contact node address factory.
+        *
+        * @member {core.topology.ContactNodeAddressFactoryInterface} core.protocol.net.ProtocolConnectionManager~_addressFactory
+        */
+        this._addressFactory = null;
         /**
         * List to keep track of confirmed sockets.
         *
@@ -146,6 +154,8 @@ var ProtocolConnectionManager = (function (_super) {
         this._incomingPendingTimeoutLength = config.get('protocol.messages.msToWaitForIncomingMessage');
         this._msToWaitForConnection = config.get('protocol.messages.maxSecondsToWaitForConnection') * 1000;
 
+        this._addressFactory = new ContactNodeAddressFactory();
+
         this._setGlobalListeners();
     }
     /**
@@ -179,6 +189,22 @@ var ProtocolConnectionManager = (function (_super) {
     */
     ProtocolConnectionManager.prototype.getConfirmedSocketList = function () {
         return this._confirmedSockets;
+    };
+
+    ProtocolConnectionManager.prototype.getExternalAddressList = function () {
+        var openPorts = this._tcpSocketHandler.getOpenServerPortsArray();
+        var externalIp = this._tcpSocketHandler.getMyExternalIp();
+        var externalAddressList = [];
+
+        for (var i = 0; i < openPorts.length; i++) {
+            externalAddressList.push(this._addressFactory.create(externalIp, openPorts[i]));
+        }
+
+        return externalAddressList;
+    };
+
+    ProtocolConnectionManager.prototype.getMyNode = function () {
+        return this._myNode;
     };
 
     /**
@@ -220,6 +246,17 @@ var ProtocolConnectionManager = (function (_super) {
 
     ProtocolConnectionManager.prototype.getConfirmedSocketById = function (id) {
         return this._getConfirmedSocketByIdentifier(id.toHexString());
+    };
+
+    ProtocolConnectionManager.prototype.forceMessageThroughPipe = function (originalSender, rawBuffer) {
+        var msg = this._incomingDataPipeline.deformatBuffer(rawBuffer);
+        if (msg) {
+            if (msg.isHydra()) {
+                this._destroyConnectionByIdentifier(this._nodeToIdentifier(originalSender));
+            } else {
+                this.emit('message', msg);
+            }
+        }
     };
 
     ProtocolConnectionManager.prototype.hydraConnectTo = function (port, ip, callback) {

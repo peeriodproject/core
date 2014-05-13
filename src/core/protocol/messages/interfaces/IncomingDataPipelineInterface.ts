@@ -1,6 +1,7 @@
 /// <reference path='../../../../../ts-definitions/node/node.d.ts' />
 
 import TCPSocketInterface = require('../../../net/tcp/interfaces/TCPSocketInterface');
+import ReadableMessageInterface = require('./ReadableMessageInterface');
 
 /**
  * IncomingDataPipeline has one objective: emitting out full protcol messages.
@@ -32,6 +33,8 @@ interface IncomingDataPipelineInterface extends NodeJS.EventEmitter {
 	 * @param {core.net.tcp.TCPSocketInterface} socket
 	 */
 	unhookSocket (socket:TCPSocketInterface):boolean;
+
+	deformatBuffer (buffer:Buffer):ReadableMessageInterface;
 }
 
 export = IncomingDataPipelineInterface;

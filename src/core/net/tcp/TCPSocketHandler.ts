@@ -142,6 +142,16 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	}
 
 	public connectTo (port:number, ip:string, callback?:(socket:TCPSocketInterface) => any):void {
+		if (ip === this._myExternalIp && this.getOpenServerPortsArray().indexOf(port) > -1) {
+			if (callback) {
+				callback(null);
+			}
+			else {
+				this.emit('connection error', port, ip);
+			}
+			return;
+		}
+
 		var sock:net.Socket = net.createConnection(port, ip);
 		var connectionError = () => {
 			sock.removeAllListeners();

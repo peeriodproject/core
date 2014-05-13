@@ -350,6 +350,15 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 		}
 	}
 
+	public deformatBuffer (buffer:Buffer):ReadableMessageInterface {
+		try {
+			return this._readableMessageFactory.create(buffer);
+		}
+		catch (e) {
+			return undefined;
+		}
+	}
+
 }
 
 
