@@ -1,7 +1,5 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
 
-var elasticsearch = require('elasticsearch');
-
 import childProcess = require('child_process');
 import fs = require('fs');
 import path = require('path');
@@ -11,30 +9,26 @@ import SearchStoreInterface = require('./interfaces/SearchStoreInterface');
 import SearchStoreOptions = require('./interfaces/SearchStoreOptions');
 
 import ObjectUtils = require('../utils/ObjectUtils');
-
 /**
  * @see http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/
+ * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/setup-configuration.html
  *
  * todo restart the database server whenever it stops (aka. forever)
  *
  * @class core.search.SearchStore
  * @implements core.search.SearchStoreInterface
+ *
+ * @param {core.config.ConfigInterface} config
+ * @param {core.search.SearchStore.Options} options
  */
 class SearchStore implements SearchStoreInterface {
-
-	/**
-	 * The client which is used internally to make requests against the database api
-	 *
-	 * @member {elasticsearch.Client} core.search.SearchStore~_client
-	 */
-	private _client = null;
 
 	/**
 	 * The internally used config object
 	 *
 	 * @member {core.config.ConfigInterface} core.search.SearchStore~_config
 	 */
-	private _config = null;
+	private _config:ConfigInterface = null;
 
 	/**
 	 * The child process that starts the database server
@@ -60,24 +54,23 @@ class SearchStore implements SearchStoreInterface {
 	/**
 	 * The mix of the passed in options object and the defaults
 	 *
-	 * @member {core.utils.ClosableAsyncOptions} core.search.SearchStore~_options
+	 * @member {core.utils.SearchStoreOptions} core.search.SearchStore~_options
 	 */
 	private _options:SearchStoreOptions = null;
 
-	constructor (config:ConfigInterface, options:SearchStoreOptions = {}) {
-		var defaults:SearchStoreOptions = {
+	public static getDefaults ():SearchStoreOptions {
+		return {
 			closeOnProcessExit: true,
-			logsPath          : '../../logs',
-			logsFileName      : 'searchStore.log',
 			onCloseCallback   : function (err:Error) {
 			},
 			onOpenCallback    : function (err:Error) {
 			}
 		};
+	}
 
+	constructor (config:ConfigInterface, options:SearchStoreOptions = {}) {
 		this._config = config;
-		this._options = ObjectUtils.extend(defaults, options);
-		this._options.logsPath = path.resolve(__dirname, this._options.logsPath);
+		this._options = ObjectUtils.extend(SearchStore.getDefaults(), options);
 
 		if (this._options.closeOnProcessExit) {
 			process.on('exit', () => {
@@ -109,7 +102,6 @@ class SearchStore implements SearchStoreInterface {
 
 		this._databaseServerProcess.kill();
 		this._isOpen = false;
-		this._client = null;
 
 		return process.nextTick(internalCallback.bind(null, null));
 	}
@@ -126,29 +118,8 @@ class SearchStore implements SearchStoreInterface {
 		}
 
 		this._startUpDatabaseServer((err:Error) => {
-			if (err) {
-				return internalCallback(err);
-			}
-
-			this._client = elasticsearch.Client({
-				host: this._config.get('search.host') + ':' + this._config.get('search.port'),
-				log : {
-					type : 'file',
-					level: 'trace',
-					path : path.join(this._options.logsPath, this._options.logsFileName)
-				}
-			});
-
-			this._waitForDatabaseServer((err:Error) => {
-				if (err) {
-					console.log(err);
-					internalCallback(err);
-				}
-				else {
-					this._isOpen = true;
-					internalCallback(null);
-				}
-			});
+			this._isOpen = true;
+			internalCallback(err);
 		});
 	}
 
@@ -211,36 +182,6 @@ class SearchStore implements SearchStoreInterface {
 	 */
 	private _getDatabaseServerProcessIdPath ():string {
 		return path.join(this._getDatabaseServerModulePath(), '../elasticsearch-pid');
-	}
-
-	/**
-	 * Pings the database server in a specified interval and calls the callback after a specified timeout.
-	 *
-	 * @method core.search.SearchStore~_waitForDatabaseServer
-	 */
-	private _waitForDatabaseServer (callback):void {
-		var check = (i:number) => {
-			this._client.ping({
-				requestTimeout: 1000,
-				hello         : 'elasticsearch'
-			}, (err:Error) => {
-				if (err) {
-					if (i < 30) {
-						setTimeout(() => {
-							check(++i);
-						}, 500);
-					}
-					else {
-						callback(new Error('SearchStore~waitForServer: Server is not reachable after 15 seconds'));
-					}
-				}
-				else {
-					callback(null);
-				}
-			});
-		};
-
-		check(0);
 	}
 
 	/**

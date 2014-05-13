@@ -11,8 +11,12 @@ import SearchStore = require('./SearchStore');
  */
 class SearchStoreFactory implements SearchStoreFactoryInterface {
 
-	create (config:ConfigInterface, options?:SearchStoreOptions):SearchStoreInterface {
+	public create (config:ConfigInterface, options?:SearchStoreOptions):SearchStoreInterface {
 		return new SearchStore(config, options);
+	}
+
+	public getDefaults ():SearchStoreOptions {
+		return SearchStore.getDefaults();
 	}
 
 }

@@ -5,16 +5,17 @@ var sinon = require('sinon');
 var testUtils = require('../../utils/testUtils');
 
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
-var SearchStore = require('../../../src/core/search/SearchStore');
+var SearchClient = require('../../../src/core/search/SearchClient');
+var SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
-describe('CORE --> SEARCH --> SearchStore @_joern', function () {
+describe('CORE --> SEARCH --> SearchClient @joern', function () {
     var sandbox;
     var config;
     var searchStoreLogsFolder = testUtils.getFixturePath('search/searchStoreLogs');
     var searchStoreDataFolder = testUtils.getFixturePath('search/searchStoreData');
-    var searchStore = null;
+    var searchClient = null;
 
-    this.timeout(10000);
+    this.timeout(0);
 
     before(function (done) {
         testUtils.createFolder(searchStoreLogsFolder);
@@ -23,14 +24,11 @@ describe('CORE --> SEARCH --> SearchStore @_joern', function () {
         sandbox = sinon.sandbox.create();
         config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
             get: function (key) {
-                /*if (key === 'search.host') {
-                return 'localhost';
-                }
-                else if (key === 'search.port') {
-                return 9200;
-                }
-                else */
-                if (key === 'search.binaryPath') {
+                if (key === 'search.host') {
+                    return 'localhost';
+                } else if (key === 'search.port') {
+                    return 9200;
+                } else if (key === 'search.binaryPath') {
                     return 'core/search/elasticsearch';
                 } else if (key === 'search.searchStoreConfig') {
                     return './config/searchStore.json';
@@ -40,7 +38,7 @@ describe('CORE --> SEARCH --> SearchStore @_joern', function () {
             }
         });
 
-        searchStore = new SearchStore(config, {
+        searchClient = new SearchClient(config, new SearchStoreFactory(), {
             logPath: searchStoreLogsFolder,
             onOpenCallback: function (err) {
                 if (err) {
@@ -53,8 +51,8 @@ describe('CORE --> SEARCH --> SearchStore @_joern', function () {
     });
 
     after(function (done) {
-        searchStore.close(function () {
-            searchStore = null;
+        searchClient.close(function () {
+            searchClient = null;
             testUtils.deleteFolderRecursive(searchStoreLogsFolder);
             testUtils.deleteFolderRecursive(searchStoreDataFolder);
 
@@ -66,29 +64,13 @@ describe('CORE --> SEARCH --> SearchStore @_joern', function () {
     });
 
     beforeEach(function (done) {
-        searchStore.open(function () {
+        searchClient.open(function () {
             done();
         });
     });
 
-    it('should correctly instantiate the search store', function () {
-        searchStore.should.be.an.instanceof(SearchStore);
-    });
-
-    it('should correctly open and close the search store and return it\'s state', function (done) {
-        searchStore.isOpen(function (err, isOpen) {
-            isOpen.should.be.true;
-
-            searchStore.close(function () {
-                searchStore.close(function () {
-                    searchStore.isOpen(function (err, isOpen) {
-                        isOpen.should.be.false;
-
-                        done();
-                    });
-                });
-            });
-        });
+    it('should correctly instantiate the search client', function () {
+        searchClient.should.be.an.instanceof(SearchClient);
     });
 });
-//# sourceMappingURL=SearchStore.js.map
+//# sourceMappingURL=SearchClient.js.map

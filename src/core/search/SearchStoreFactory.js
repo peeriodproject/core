@@ -10,6 +10,10 @@ var SearchStoreFactory = (function () {
     SearchStoreFactory.prototype.create = function (config, options) {
         return new SearchStore(config, options);
     };
+
+    SearchStoreFactory.prototype.getDefaults = function () {
+        return SearchStore.getDefaults();
+    };
     return SearchStoreFactory;
 })();
 
