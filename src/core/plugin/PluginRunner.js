@@ -2,6 +2,8 @@
 var Sandbox = require('udibo-sandbox');
 
 /**
+* @see https://github.com/KyleJune/udibo-sandbox
+*
 * @class core.plugin.PluginRunner
 * @implements core.plugin.PluginRunnerInterface
 */

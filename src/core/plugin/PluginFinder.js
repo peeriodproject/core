@@ -84,7 +84,7 @@ var PluginFinder = (function () {
         // checks if the given path contains a plugin config and adds it to the list
         var checkPath = function (filePath) {
             _this._ignoreListContains(filePath, function (index) {
-                // current filePath is ignored. skipping...
+                // current modulePath is ignored. skipping...
                 if (index !== -1) {
                     process.nextTick(function () {
                         filesLeft--;
