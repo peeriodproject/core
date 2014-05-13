@@ -1,37 +1,39 @@
 {
     "topology": {
-        "bitLength": 160,
-        "k": 20,
+        "bitLength"  : 160,
+        "k"          : 20,
         "bucketStore": {
             "databasePath": "db"
         }
     },
-    "net": {
-        "allowHalfOpenSockets": false,
-        "connectionRetrySeconds": 4,
+    "net"     : {
+        "allowHalfOpenSockets"     : false,
+        "connectionRetrySeconds"   : 4,
         "idleConnectionKillTimeout": 30,
         "outboundConnectionTimeout": 2000,
-        "myOpenPorts": [30415]
+        "myOpenPorts"              : [30415]
     },
     "protocol": {
         "messages": {
-            "maxByteLengthPerMessage": 1048576,
-            "msToKeepNonAddressableMemory": 10000,
-            "msToWaitForIncomingMessage": 10000,
+            "maxByteLengthPerMessage"      : 1048576,
+            "msToKeepNonAddressableMemory" : 10000,
+            "msToWaitForIncomingMessage"   : 10000,
             "maxSecondsToWaitForConnection": 4
         }
     },
-    "plugin": {
-        "folderPath": "plugin",
-        "pluginConfigName": "plugin.json",
+    "plugin"  : {
+        "folderPath"              : "plugin",
+        "pluginConfigName"        : "plugin.json",
         "pluginManagerStateConfig": "pluginManager.json"
     },
-    "app": {
+    "app"     : {
         "dataPath": "dataPathFolder"
     },
-    "search": {
-        "host": "localhost",
-        "port": 9200,
-        "binaryPath": "core/search/elasticsearch"
+    "search"  : {
+        "host"             : "localhost",
+        "port"             : 9200,
+        "binaryPath"       : "core/search/elasticsearch",
+        "databasePath"     : "db/searchStore",
+        "searchStoreConfig": "./config/searchStore.json"
     }
 }

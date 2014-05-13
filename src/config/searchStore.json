@@ -1,0 +1,17 @@
+{
+    "node"     : {
+        "local": true
+    },
+    "discovery": {
+        "zen": {
+            "ping": {
+                "multicast": {
+                    "enabled": false
+                },
+                "unicast"  : {
+                    "hosts": ["localhost"]
+                }
+            }
+        }
+    }
+}
