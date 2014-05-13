@@ -78,6 +78,15 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 		this._clearTimeoutLength = clearTimeoutLength;
 	}
 
+	public deformatBuffer (buffer:Buffer):ReadableMessageInterface {
+		try {
+			return this._readableMessageFactory.create(buffer);
+		}
+		catch (e) {
+			return undefined;
+		}
+	}
+
 	/**
 	 * Returns the socket `data` listener by identifier. Only used for testing purposes.
 	 *
@@ -347,15 +356,6 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 		}
 		else if (tempMessageMemory.length > this._maxByteLengthPerMessage) {
 			this._freeMemory(identifier, tempMessageMemory);
-		}
-	}
-
-	public deformatBuffer (buffer:Buffer):ReadableMessageInterface {
-		try {
-			return this._readableMessageFactory.create(buffer);
-		}
-		catch (e) {
-			return undefined;
 		}
 	}
 

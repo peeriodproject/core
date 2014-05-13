@@ -67,6 +67,14 @@ var IncomingDataPipeline = (function (_super) {
 
         this._clearTimeoutLength = clearTimeoutLength;
     }
+    IncomingDataPipeline.prototype.deformatBuffer = function (buffer) {
+        try  {
+            return this._readableMessageFactory.create(buffer);
+        } catch (e) {
+            return undefined;
+        }
+    };
+
     /**
     * Returns the socket `data` listener by identifier. Only used for testing purposes.
     *
@@ -330,14 +338,6 @@ var IncomingDataPipeline = (function (_super) {
             }
         } else if (tempMessageMemory.length > this._maxByteLengthPerMessage) {
             this._freeMemory(identifier, tempMessageMemory);
-        }
-    };
-
-    IncomingDataPipeline.prototype.deformatBuffer = function (buffer) {
-        try  {
-            return this._readableMessageFactory.create(buffer);
-        } catch (e) {
-            return undefined;
         }
     };
     return IncomingDataPipeline;

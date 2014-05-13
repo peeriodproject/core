@@ -73,6 +73,18 @@ import TCPSocketInterface = require('../../../net/tcp/interfaces/TCPSocketInterf
  */
 interface ProtocolConnectionManagerInterface extends NodeJS.EventEmitter {
 
+	/**
+	 * Forces a raw buffer through the incoming data pipeline. Lets the pipeline deformat the buffer.
+	 * If a ReadableMessage will be returned, AND IT IS NO HYDRA MESSAGE, the message will be emitted in
+	 * a `message` event. If it is a hydra message, the socket to the original sender will be terminated due
+	 * to protocol non-compliance.
+	 * Used by the proxy when deformatting a proxied through message.
+	 *
+	 * @method core.protocol.ProtocolConnectionManagerInterface#forceMessageThroughPipe
+	 *
+	 * @param {core.topology.ContactNodeInterface} originalSender
+	 * @param (Buffer} rawBuffer
+	 */
 	forceMessageThroughPipe (originalSender:ContactNodeInterface, rawBuffer:Buffer):void;
 
 	/**
