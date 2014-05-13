@@ -99,8 +99,8 @@ class SearchClient implements SearchClientInterface {
 		}
 
 		this._searchStore.close((err:Error) => {
-			this._client = null;
 			this._isOpen = false;
+			this._client = null;
 
 			internalCallback(err);
 		});

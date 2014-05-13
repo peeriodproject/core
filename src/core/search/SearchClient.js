@@ -86,8 +86,8 @@ var SearchClient = (function () {
         }
 
         this._searchStore.close(function (err) {
-            _this._client = null;
             _this._isOpen = false;
+            _this._client = null;
 
             internalCallback(err);
         });
