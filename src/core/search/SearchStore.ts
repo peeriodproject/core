@@ -33,7 +33,8 @@ class SearchStore implements SearchStoreInterface {
 	constructor (config:ConfigInterface, options:SearchStoreOptions = {}) {
 		var defaults:SearchStoreOptions = {
 			closeOnProcessExit: true,
-			logPath           : '../../logs/searchStore.log',
+			logsPath          : '../../logs',
+			logsFileName      : 'searchStore.log',
 			onCloseCallback   : function (err:Error) {
 			},
 			onOpenCallback    : function (err:Error) {
@@ -43,7 +44,8 @@ class SearchStore implements SearchStoreInterface {
 		this._config = config;
 
 		this._options = ObjectUtils.extend(defaults, options);
-		this._options.logPath = path.join(__dirname, this._options.logPath);
+
+		this._options.logsPath = path.resolve(__dirname, this._options.logsPath);
 
 		process.on('exit', () => {
 			this.close(this._options.onCloseCallback);
@@ -72,7 +74,7 @@ class SearchStore implements SearchStoreInterface {
 			log : {
 				type : 'file',
 				level: 'trace',
-				path : this._options.logPath
+				path : path.join(this._options.logsPath, this._options.logsFileName)
 			}
 		});
 

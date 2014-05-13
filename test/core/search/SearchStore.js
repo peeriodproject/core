@@ -10,6 +10,7 @@ var SearchStore = require('../../../src/core/search/SearchStore');
 describe('CORE --> SEARCH --> SearchStore @joern', function () {
     var sandbox;
     var config;
+    var searchStoreLogsFolder = testUtils.getFixturePath('search/searchStoreLogs');
 
     this.timeout(0);
 
@@ -26,15 +27,18 @@ describe('CORE --> SEARCH --> SearchStore @joern', function () {
                 }
             }
         });
+        testUtils.createFolder(searchStoreLogsFolder);
     });
 
     afterEach(function () {
         sandbox.restore();
         config = null;
+        testUtils.deleteFolderRecursive(searchStoreLogsFolder);
     });
 
     it('should correctly instantiate the search store', function (done) {
         (new SearchStore(config, {
+            logPath: searchStoreLogsFolder,
             onOpenCallback: function () {
                 done();
             }

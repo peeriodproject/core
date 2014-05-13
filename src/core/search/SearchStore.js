@@ -26,7 +26,8 @@ var SearchStore = (function () {
         this._serverProcess = null;
         var defaults = {
             closeOnProcessExit: true,
-            logPath: '../../logs/searchStore.log',
+            logsPath: '../../logs',
+            logsFileName: 'searchStore.log',
             onCloseCallback: function (err) {
             },
             onOpenCallback: function (err) {
@@ -36,7 +37,8 @@ var SearchStore = (function () {
         this._config = config;
 
         this._options = ObjectUtils.extend(defaults, options);
-        this._options.logPath = path.join(__dirname, this._options.logPath);
+
+        this._options.logsPath = path.resolve(__dirname, this._options.logsPath);
 
         process.on('exit', function () {
             _this.close(_this._options.onCloseCallback);
@@ -63,7 +65,7 @@ var SearchStore = (function () {
             log: {
                 type: 'file',
                 level: 'trace',
-                path: this._options.logPath
+                path: path.join(this._options.logsPath, this._options.logsFileName)
             }
         });
 
