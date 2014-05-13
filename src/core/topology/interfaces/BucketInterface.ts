@@ -11,7 +11,8 @@ import IdInterface = require('./IdInterface');
 interface BucketInterface extends ClosableAsyncInterface {
 
 	/**
-	 * Adds the specified contact node to the bucket.
+	 * Adds the specified contact node to the bucket. It returns an error in the callback if the bucket is already full.
+	 * The Error contains the last seen contact node of the bucket.
 	 *
 	 * @method core.topology.BucketInterface#add
 	 *

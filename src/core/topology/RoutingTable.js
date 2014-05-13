@@ -247,6 +247,10 @@ var RoutingTable = (function () {
         return process.nextTick(internalCallback.bind(null, null));
     };
 
+    RoutingTable.prototype.replaceContactNode = function (oldContactNode, newContactNode, callback) {
+        // todo implementation
+    };
+
     RoutingTable.prototype.updateContactNode = function (contact, callback) {
         var internalCallback = callback || function (err) {
         };
