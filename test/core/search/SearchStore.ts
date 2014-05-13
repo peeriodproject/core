@@ -10,14 +10,14 @@ import testUtils = require('../../utils/testUtils');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchStore = require('../../../src/core/search/SearchStore');
 
-describe('CORE --> SEARCH --> SearchStore @joern', function () {
+describe('CORE --> SEARCH --> SearchStore @_joern', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
 	var searchStoreLogsFolder:string = testUtils.getFixturePath('search/searchStoreLogs');
 	var searchStoreDataFolder:string = testUtils.getFixturePath('search/searchStoreData');
 	var searchStore:SearchStore = null;
 
-	this.timeout(0);
+	this.timeout(10000);
 
 	before(function (done) {
 		testUtils.createFolder(searchStoreLogsFolder);
@@ -26,13 +26,13 @@ describe('CORE --> SEARCH --> SearchStore @joern', function () {
 		sandbox = sinon.sandbox.create();
 		config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
 			get: function (key):any {
-				if (key === 'search.host') {
+				/*if (key === 'search.host') {
 					return 'localhost';
 				}
 				else if (key === 'search.port') {
 					return 9200;
 				}
-				else if (key === 'search.binaryPath') {
+				else */if (key === 'search.binaryPath') {
 					return 'core/search/elasticsearch'
 				}
 				else if (key === 'search.searchStoreConfig') {
@@ -48,7 +48,7 @@ describe('CORE --> SEARCH --> SearchStore @joern', function () {
 			logPath       : searchStoreLogsFolder,
 			onOpenCallback: function (err:Error) {
 				if (err) {
-					throw err
+					throw err;
 				}
 				else {
 					done();
