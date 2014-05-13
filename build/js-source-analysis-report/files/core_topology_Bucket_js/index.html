@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">74.80</p>
+      <p class="stat">74.35</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">180</p>
+      <p class="stat">188</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">36.72</p>
+      <p class="stat">41.90</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.07</p>
+      <p class="stat">1.28</p>
     </div>
   </div>
 </div>
@@ -169,11 +169,14 @@ var Bucket = (function () {
         };
 
         this._store.close();
-        internalCallback(null);
+
+        return process.nextTick(internalCallback.bind(null, null));
     };
 
     Bucket.prototype.contains = function (contact, callback) {
-        callback(null, this._store.contains(this._keyString, contact.getId().getBuffer()));
+        return process.nextTick(function () {
+            callback(null, this._store.contains(this._keyString, contact.getId().getBuffer()));
+        }.bind(this));
     };
 
     Bucket.prototype.get = function (id, callback) {
@@ -184,7 +187,7 @@ var Bucket = (function () {
             contact = this._convertToContactNodeInstance(storedObject);
         }
 
-        callback(null, contact);
+        return process.nextTick(callback.bind(null, null, contact));
     };
 
     Bucket.prototype.getAll = function (callback) {
@@ -197,11 +200,11 @@ var Bucket = (function () {
             }
         }
 
-        callback(null, contacts);
+        return process.nextTick(callback.bind(null, null, contacts));
     };
 
     Bucket.prototype.isOpen = function (callback) {
-        callback(null, this._store.isOpen());
+        return process.nextTick(callback.bind(null, null, this._store.isOpen()));
     };
 
     Bucket.prototype.open = function (callback) {
@@ -209,7 +212,7 @@ var Bucket = (function () {
         };
 
         this._store.open();
-        internalCallback(null);
+        return process.nextTick(internalCallback.bind(null, null));
     };
 
     Bucket.prototype.remove = function (id, callback) {
@@ -217,11 +220,12 @@ var Bucket = (function () {
         };
 
         this._store.remove(this._keyString, id.getBuffer());
-        internalCallback(null);
+
+        return process.nextTick(internalCallback.bind(null, null));
     };
 
     Bucket.prototype.size = function (callback) {
-        callback(null, this._store.size(this._keyString));
+        return process.nextTick(callback.bind(null, null, this._store.size(this._keyString)));
     };
 
     Bucket.prototype.update = function (contact, callback) {
@@ -230,12 +234,16 @@ var Bucket = (function () {
         var removed;
         var added;
         var error;
+        var thrown = false;
 
         var updatedCallback = function () {
             if (error) {
-                internalCallback(error);
+                if (!thrown) {
+                    thrown = true;
+                    return process.nextTick(internalCallback.bind(null, error));
+                }
             } else if (removed &amp;&amp; added) {
-                internalCallback(null);
+                return process.nextTick(internalCallback.bind(null, null));
             }
         };
 

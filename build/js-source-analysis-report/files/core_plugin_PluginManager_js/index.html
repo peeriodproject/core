@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.32</p>
+      <p class="stat">73.95</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">181</p>
+      <p class="stat">253</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">27.22</p>
+      <p class="stat">43.69</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.89</p>
+      <p class="stat">1.50</p>
     </div>
   </div>
 </div>
@@ -101,7 +101,7 @@ var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
 * @implements PluginManagerInterface
 */
 var PluginManager = (function () {
-    function PluginManager(config, pluginFinder, options) {
+    function PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, options) {
         if (typeof options === &quot;undefined&quot;) { options = {}; }
         /**
         * The internally used config object instance
@@ -127,11 +127,31 @@ var PluginManager = (function () {
         */
         this._pluginFinder = null;
         /**
+        *
+        * @member {core.plugin.PluginRunnerInterface} core.plugin.PluginManager~_pluginRunner
+        */
+        this._pluginRunnerFactory = null;
+        /**
+        *
+        * @member core.plugin.PluginManager~_pluginRunners
+        */
+        this._pluginRunners = {};
+        /**
         * Represents the state of activated, deactivated and idle plugins
         *
         * @member {core.plugin.PluginStateInterface} core.plugin.PluginManager~_pluginState
         */
         this._pluginState = null;
+        /**
+        * Indicates weather the state is just loaded from the storage or already processed
+        *
+        * @member {boolean} core.plugin.PluginManager~_pluginStateIsActive
+        */
+        this._pluginStateIsActive = false;
+        /**
+        * @member (core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_pluginValidator
+        */
+        this._pluginValidator = null;
         var defaults = {
             onCloseCallback: function (err) {
             },
@@ -141,25 +161,60 @@ var PluginManager = (function () {
 
         this._config = config;
         this._pluginFinder = pluginFinder;
+        this._pluginValidator = pluginValidator;
+        this._pluginRunnerFactory = pluginRunnerFactory;
         this._options = ObjectUtils.extend(defaults, options);
 
         this.open(this._options.onOpenCallback);
     }
-    /*public checkPluginFolderForNewPlugins(callback:(err:Error, pluginPaths:PluginPathListInterface) =&gt; void):void {
-    
-    }*/
+    PluginManager.prototype.activatePluginState = function (callback) {
+        var internalCallback = callback || function (err) {
+        };
+
+        if (this._pluginState &amp;&amp; this._pluginState[&#039;active&#039;]) {
+            var plugins = this._pluginState[&#039;active&#039;];
+            var activated = 0;
+            var errors = [];
+            var manager = this;
+
+            return (function activatePlugin(i) {
+                if (i &gt;= plugins.length) {
+                    // callback
+                    return;
+                }
+
+                manager._activatePlugin(plugins[i], function (err) {
+                    activated++;
+
+                    if (err) {
+                        errors.push(err);
+                    }
+
+                    if (activated === plugins.length) {
+                        // todo implement error callback!
+                        internalCallback(null);
+                        manager._pluginStateIsActive = true;
+                    }
+                });
+
+                return process.nextTick(activatePlugin.bind(null, i + 1));
+            }(0));
+        }
+    };
+
     PluginManager.prototype.close = function (callback) {
+        var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
 
         if (!this._isOpen) {
-            return internalCallback(null);
+            return process.nextTick(internalCallback.bind(null, null));
         }
 
         this._savePluginState(function (err) {
             if (err) {
                 internalCallback(err);
             } else {
-                this._isOpen = false;
+                _this._isOpen = false;
                 internalCallback(null);
             }
         });
@@ -172,9 +227,27 @@ var PluginManager = (function () {
         this._pluginFinder.findPlugins(internalCallback);
     };
 
+    PluginManager.prototype.getActivePluginRunners = function (callback) {
+        return process.nextTick(callback.bind(null, this._pluginRunners));
+    };
+
+    /**
+    * @param {string} identifier
+    * @returns {core.plugin.PluginRunnerInterface}
+    */
+    PluginManager.prototype.getActivePluginRunner = function (identifier, callback) {
+        var runner = this._pluginRunners[identifier] ? this._pluginRunners[identifier] : null;
+
+        return process.nextTick(callback.bind(null, runner));
+    };
+
+    PluginManager.prototype.getPluginState = function (callback) {
+        return process.nextTick(callback.bind(null, this._pluginState));
+    };
+
     // todo his method is copied from RoutingTable! we should have a simple Closable-Class!!!
     PluginManager.prototype.isOpen = function (callback) {
-        return callback(null, this._isOpen);
+        return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
     PluginManager.prototype.open = function (callback) {
@@ -182,17 +255,36 @@ var PluginManager = (function () {
         var internalCallback = callback || this._options.onCloseCallback;
 
         if (this._isOpen) {
-            return internalCallback(null);
+            return process.nextTick(internalCallback.bind(null, null));
+            //return internalCallback(null);
         }
 
-        // todo add callback and move isOpen to the callback
         this._loadPluginState(function (err, pluginState) {
             if (err) {
                 internalCallback(err);
             } else {
-                //console.log(&#039;got the plugin state. do something with it!&#039;);
-                // this._pluginState = pluginState
+                _this._pluginState = pluginState;
                 _this._isOpen = true;
+
+                internalCallback(null);
+            }
+        });
+    };
+
+    /**
+    * The PluginManager is going to activate the plugin. But before we&#039;re going to run thirdparty code within
+    * the app we validate the code using a {@link core.plugin.PluginValidatorInterface}.
+    */
+    PluginManager.prototype._activatePlugin = function (pluginState, callback) {
+        var _this = this;
+        var internalCallback = callback || function (err) {
+        };
+
+        this._pluginValidator.validateState(pluginState, function (err) {
+            if (err) {
+                return internalCallback(err);
+            } else {
+                _this._pluginRunners[pluginState.name] = _this._pluginRunnerFactory.create(pluginState.name, pluginState.path);
                 internalCallback(null);
             }
         });
@@ -218,39 +310,18 @@ var PluginManager = (function () {
     */
     PluginManager.prototype._loadPluginState = function (callback) {
         //console.log(&#039;loading the plugin state from the preferences!&#039;);
-        var _this = this;
         fs.readJson(this._getManagerStoragePath(), function (err, data) {
             if (err) {
                 // check for syntax errors
                 console.log(err);
             } else {
                 if (data.hasOwnProperty(&#039;plugins&#039;)) {
-                    var pluginState = data[&#039;plugins&#039;];
-                    var types = Object.keys(pluginState);
-
-                    for (var i in types) {
-                        var type = types[i];
-                        var typedPlugins = pluginState[type];
-
-                        for (var j in typedPlugins) {
-                            _this._processLoadedPlugin(type, typedPlugins[j]);
-                            // skdlf
-                        }
-                    }
+                    callback(null, data[&#039;plugins&#039;]);
                 } else {
-                    console.log(&#039;no plugins key found!&#039;);
+                    callback(null, null);
                 }
             }
-
-            callback(null, null);
         });
-    };
-
-    PluginManager.prototype._processLoadedPlugin = function (type, plugin) {
-        if (type === &#039;active&#039;) {
-        } else if (type === &#039;idle&#039;) {
-        } else if (type === &#039;inactive&#039;) {
-        }
     };
 
     /**
@@ -261,10 +332,11 @@ var PluginManager = (function () {
     * @method core.plugin.PluginManagerInterface#savePluginState
     */
     PluginManager.prototype._savePluginState = function (callback) {
-        //console.log(&#039;saving the plugin state to the preferences!&#039;);
-        //console.log(&#039;writing json to:&#039;);
-        fs.writeJson(this._getManagerStoragePath() + &#039;_&#039;, this._pluginState, function (err) {
-            //console.log(&#039;written...&#039;);
+        var state = {
+            plugins: this._pluginState
+        };
+
+        fs.writeJson(this._getManagerStoragePath(), state, function (err) {
             callback(err);
         });
     };

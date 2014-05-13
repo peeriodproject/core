@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/search/SearchStore.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/search/SearchStore.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">73.73</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">111</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">23.60</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.86</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../ts-definitions/node/node.d.ts&#039; /&gt;
+var elasticsearch = require(&#039;elasticsearch&#039;);
+var childProcess = require(&#039;child_process&#039;);
+var path = require(&#039;path&#039;);
+
+var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
+
+/**
+* @see http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/
+*
+* @class core.search.SearchStore
+* @implements core.search.SearchStoreInterface
+*/
+var SearchStore = (function () {
+    function SearchStore(config, options) {
+        if (typeof options === &quot;undefined&quot;) { options = {}; }
+        var _this = this;
+        this._client = null;
+        this._config = null;
+        /**
+        * The mix of the passed in options object and the defaults
+        *
+        * @member {core.utils.ClosableAsyncOptions} core.search.SearchStore~_options
+        */
+        this._options = null;
+        this._serverProcess = null;
+        var defaults = {
+            closeOnProcessExit: true,
+            logPath: &#039;../../logs/searchStore.log&#039;,
+            onCloseCallback: function (err) {
+            },
+            onOpenCallback: function (err) {
+            }
+        };
+
+        this._config = config;
+
+        this._options = ObjectUtils.extend(defaults, options);
+        this._options.logPath = path.join(__dirname, this._options.logPath);
+
+        process.on(&#039;exit&#039;, function () {
+            _this.close(_this._options.onCloseCallback);
+        });
+
+        this.open(this._options.onOpenCallback);
+    }
+    SearchStore.prototype.close = function (callback) {
+        var internalCallback = callback || this._options.onCloseCallback;
+
+        this._serverProcess.kill();
+    };
+
+    SearchStore.prototype.isOpen = function (callback) {
+    };
+
+    SearchStore.prototype.open = function (callback) {
+        var internalCallback = callback || this._options.onOpenCallback;
+
+        this._startUpServer();
+
+        this._client = elasticsearch.Client({
+            host: this._config.get(&#039;search.host&#039;) + &#039;:&#039; + this._config.get(&#039;search.port&#039;),
+            log: {
+                type: &#039;file&#039;,
+                level: &#039;trace&#039;,
+                path: this._options.logPath
+            }
+        });
+
+        this._waitForServer(internalCallback);
+    };
+
+    SearchStore.prototype._waitForServer = function (callback) {
+        var _this = this;
+        var check = function (i) {
+            _this._client.ping({
+                requestTimeout: 1000,
+                hello: &#039;elasticsearch&#039;
+            }, function (err) {
+                if (err) {
+                    if (i &lt; 30) {
+                        setTimeout(function () {
+                            //console.error(&#039;elasticsearch cluster is down!&#039;);
+                            check(++i);
+                        }, 500);
+                    } else {
+                        callback(new Error(&#039;SearchStore~waitForServer: Server is after 15000ms still not reachable&#039;));
+                    }
+                } else {
+                    console.log(&#039;All is well&#039;);
+                    callback(null);
+                }
+            });
+        };
+
+        check(0);
+    };
+
+    SearchStore.prototype._startUpServer = function () {
+        // todo add windows switch to elasticsearch.bat here
+        var osPath = &#039;bin/elasticsearch&#039;;
+        var searchPath = path.join(__dirname, &#039;../../bin/&#039;, this._config.get(&#039;search.binaryPath&#039;));
+        var binaryPath = path.join(searchPath, osPath);
+
+        this._serverProcess = childProcess.execFile(binaryPath, [&#039;-p&#039;, path.join(searchPath, &#039;../elasticsearch-pid&#039;)], {}, function (err, stdout, stderr) {
+        });
+        //console.log(this._serverProcess);
+    };
+    return SearchStore;
+})();
+
+module.exports = SearchStore;
+//# sourceMappingURL=SearchStore.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

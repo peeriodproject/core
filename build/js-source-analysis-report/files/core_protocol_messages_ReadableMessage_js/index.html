@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">66.16</p>
+      <p class="stat">65.51</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">320</p>
+      <p class="stat">347</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">52.75</p>
+      <p class="stat">55.39</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.83</p>
+      <p class="stat">2.00</p>
     </div>
   </div>
 </div>
@@ -119,6 +119,12 @@ var ReadableMessage = (function () {
         * @member {number} core.protocol.messages.ReadableMessage~_bufferLength
         */
         this._bufferLength = 0;
+        /**
+        * Indicates whether this is a hydra message.
+        *
+        * @member {boolean} core.protocol.messages.ReadableMessage~_isHydra
+        */
+        this._isHydra = false;
         /**
         * A helper member for remembering which bytes have already been read and processed.
         *
@@ -181,6 +187,10 @@ var ReadableMessage = (function () {
         return this._sender;
     };
 
+    ReadableMessage.prototype.isHydra = function () {
+        return this._isHydra;
+    };
+
     /**
     * Makes a ContactNodeAddress out of a buffer representing an IPv4 address.
     *
@@ -234,6 +244,11 @@ var ReadableMessage = (function () {
         this._lastPosRead = MessageByteCheatsheet.messageBegin.length;
 
         this._lastPosRead = this._extractReceiverId(this._lastPosRead);
+
+        if (this._isHydra) {
+            this._extractPayload(this._lastPosRead);
+            return;
+        }
 
         this._lastPosRead = this._extractSenderAsContactNode(this._lastPosRead);
 
@@ -305,7 +320,7 @@ var ReadableMessage = (function () {
     };
 
     /**
-    * Extracts the ID of the intended receiver.
+    * Extracts the ID of the intended receiver. If the id is merely null bytes, the message seems to be a hydra message.
     *
     * @method core.protocol.messages.ReadableMessage~_extractReceiverId
     *
@@ -314,6 +329,18 @@ var ReadableMessage = (function () {
     */
     ReadableMessage.prototype._extractReceiverId = function (from) {
         this._receiverId = this._extractId(from);
+
+        var buffer = this._receiverId.getBuffer();
+        var isHydra = true;
+
+        for (var i = 0; i &lt; buffer.length; i++) {
+            if (buffer[i] !== 0x00) {
+                isHydra = false;
+                break;
+            }
+        }
+
+        this._isHydra = isHydra;
 
         return from + 20;
     };

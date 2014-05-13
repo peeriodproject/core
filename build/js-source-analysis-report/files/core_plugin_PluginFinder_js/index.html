@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.69</p>
+      <p class="stat">75.03</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">213</p>
+      <p class="stat">215</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">51.53</p>
+      <p class="stat">52.09</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.18</p>
+      <p class="stat">1.25</p>
     </div>
   </div>
 </div>
@@ -155,7 +155,9 @@ var PluginFinder = (function () {
         if (pluginFolderNamesLength) {
             add(0);
         } else {
-            internalCallback();
+            process.nextTick(function () {
+                internalCallback();
+            }.bind(this));
         }
     };
 
@@ -174,10 +176,12 @@ var PluginFinder = (function () {
         // checks if the given path contains a plugin config and adds it to the list
         var checkPath = function (filePath) {
             _this._ignoreListContains(filePath, function (index) {
-                // current filePath is ignored. skipping...
+                // current modulePath is ignored. skipping...
                 if (index !== -1) {
-                    filesLeft--;
-                    checkAndCallCallback();
+                    process.nextTick(function () {
+                        filesLeft--;
+                        checkAndCallCallback();
+                    }.bind(_this));
                 } else {
                     var pluginPath = path.join(_this._pluginFolderPath, filePath);
                     var pluginConfigPath = path.join(pluginPath, _this._pluginConfigName);
@@ -200,7 +204,6 @@ var PluginFinder = (function () {
         this.getPluginFolderPath(function (err, folderPath) {
             if (err) {
                 callback(err, null);
-                return;
             } else {
                 fs.readdir(_this._pluginFolderPath, function (err, files) {
                     if (err) {
@@ -214,7 +217,6 @@ var PluginFinder = (function () {
                                 checkPath(file);
                             });
                         } else {
-                            // nothing to do here! returning...
                             callback(null, null);
                         }
                     }
@@ -224,29 +226,27 @@ var PluginFinder = (function () {
     };
 
     PluginFinder.prototype.getIgnoredPluginFolderNames = function (callback) {
-        callback(this._ignorePluginFolderNameList.slice());
+        process.nextTick(function () {
+            callback(this._ignorePluginFolderNameList.slice());
+        }.bind(this));
     };
 
     PluginFinder.prototype.getPluginFolderPath = function (callback) {
         var folderPath = this._pluginFolderPath;
 
-        try  {
-            fs.exists(folderPath, function (exists) {
-                if (exists) {
-                    callback(null, folderPath);
-                } else {
-                    fs.mkdirs(folderPath, function (err) {
-                        if (err) {
-                            callback(err, null);
-                        } else {
-                            callback(null, folderPath);
-                        }
-                    });
-                }
-            });
-        } catch (err) {
-            callback(err, null);
-        }
+        fs.exists(folderPath, function (exists) {
+            if (exists) {
+                callback(null, folderPath);
+            } else {
+                fs.mkdirs(folderPath, function (err) {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        callback(null, folderPath);
+                    }
+                });
+            }
+        });
     };
 
     PluginFinder.prototype.removePluginFolderNamesFromIgnoreList = function (pluginFolderNames, callback) {
@@ -273,7 +273,9 @@ var PluginFinder = (function () {
         if (pluginFolderNamesLength) {
             remove(0);
         } else {
-            internalCallback();
+            process.nextTick(function () {
+                internalCallback();
+            }.bind(this));
         }
     };
 
