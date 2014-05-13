@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/proxy/ProxyManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/proxy/ProxyManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">67.77</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">252</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">69.10</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.71</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var events = require(&#039;events&#039;);
+
+var Id = require(&#039;../../topology/Id&#039;);
+
+var ProxyManager = (function (_super) {
+    __extends(ProxyManager, _super);
+    function ProxyManager(config, protocolConnectionManager, routingTable) {
+        _super.call(this);
+        this._protocolConnectionManager = null;
+        this._routingTable = null;
+        this._externalAddressList = null;
+        this._myNode = null;
+        this._reachableFromOutside = false;
+        this._proxyForMaxNumberOfNodes = 0;
+        this._maxNumberOfProxies = 0;
+        this._reactionTime = 0;
+        this._maxUnsuccessfulProxyTries = 0;
+        this._unsuccessfulProxyTries = 0;
+        this._unsuccessfulProxyTryWaitTime = 0;
+        this._proxyWaitTimeout = 0;
+        this._canProxyCycle = true;
+        this._requestedProxies = {};
+        this._confirmedProxies = {};
+        this._ignoreProxies = [];
+        this._proxyingFor = {};
+        this._proxyAffineMessages = [&#039;PROXY_REQUEST&#039;, &#039;PROXY_ACCEPT&#039;, &#039;PROXY_REJECT&#039;, &#039;PROXY_THROUGH&#039;];
+
+        this._maxNumberOfProxies = config.get(&#039;protocol.proxy.maxNumberOfProxies&#039;);
+        this._proxyForMaxNumberOfNodes = config.get(&#039;protocol.proxy.proxyForMaxNumberOfNodes&#039;);
+        this._reactionTime = config.get(&#039;protocol.waitForNodeReactionInSeconds&#039;) * 1000;
+        this._maxUnsuccessfulProxyTries = config.get(&#039;protocol.proxy.maxUnsuccessfulProxyTries&#039;);
+        this._unsuccessfulProxyTryWaitTime = config.get(&#039;protocol.proxy.unsuccessfulProxyTryWaitTimeInSeconds&#039;) * 1000;
+
+        this._protocolConnectionManager = protocolConnectionManager;
+        this._routingTable = routingTable;
+        this._externalAddressList = this._protocolConnectionManager.getExternalAddressList();
+        this._myNode = this._protocolConnectionManager.getMyNode();
+
+        if (this._externalAddressList.length) {
+            this._reachableFromOutside = true;
+        }
+
+        this._setupListeners();
+
+        this._proxyCycle();
+    }
+    ProxyManager.prototype._proxyCycle = function () {
+        var _this = this;
+        if (this._canProxyCycle &amp;&amp; this._needsAdditionalProxy()) {
+            this._routingTable.getRandomContactNode(function (err, potentialNode) {
+                if (err) {
+                    _this._blockProxyCycle();
+                } else if (potentialNode &amp;&amp; _this._canUseNodeAsProxy(potentialNode)) {
+                    _this._requestProxy(potentialNode);
+                }
+            });
+        }
+    };
+
+    ProxyManager.prototype._setupListeners = function () {
+        var _this = this;
+        this._protocolConnectionManager.on(&#039;message&#039;, function (message) {
+            // update the contact node in the routing table accordingly, do ping pong if necessary, but not in here
+            _this.emit(&#039;contactNodeInformation&#039;, message.getSender());
+
+            // check if the message is intended for us and if yes, and it is a proxy affine message, act accordingly
+            if (_this._messageIsIntendedForMyNode(message)) {
+                if (_this._messageIsProxyAffine(message)) {
+                    _this._handleProxyMessage(message);
+                } else {
+                    _this.emit(&#039;message&#039;, message);
+                }
+            } else {
+                // if the message is not intended for us, proxy it through
+            }
+        });
+
+        this._protocolConnectionManager.on(&#039;terminatedConnection&#039;, function (id) {
+            if (id instanceof Id) {
+                var identifier = id.toHexString();
+                var doStartCycle = false;
+                var requestedProxy = _this._requestedProxies[identifier];
+                var confirmedProxy = _this._confirmedProxies[identifier];
+                var proxyingFor = _this._proxyingFor[identifier];
+
+                if (requestedProxy) {
+                    doStartCycle = true;
+                    _this._removeFromRequestedProxies(identifier);
+                }
+                if (confirmedProxy) {
+                    doStartCycle = true;
+                    _this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(confirmedProxy);
+                    delete _this._confirmedProxies[identifier];
+                    _this._updateMyNodeAddresses();
+                }
+                if (proxyingFor) {
+                    _this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(confirmedProxy);
+                    delete _this._proxyingFor[identifier];
+                }
+
+                if (doStartCycle) {
+                    _this._proxyCycle();
+                }
+            }
+        });
+    };
+
+    ProxyManager.prototype._isProxyCapable = function () {
+        return (Object.keys(this._proxyingFor).length &lt; this._proxyForMaxNumberOfNodes) &amp;&amp; this._reachableFromOutside;
+    };
+
+    ProxyManager.prototype._needsAdditionalProxy = function () {
+        return ((Object.keys(this._confirmedProxies).length + Object.keys(this._requestedProxies).length) &lt; this._maxNumberOfProxies) &amp;&amp; !this._reachableFromOutside;
+    };
+
+    ProxyManager.prototype._removeFromRequestedProxies = function (identifier) {
+        var requestedProxy = this._requestedProxies[identifier];
+
+        clearTimeout(requestedProxy);
+        delete this._requestedProxies[identifier];
+        this._ignoreProxies.push[identifier];
+    };
+
+    ProxyManager.prototype._addToConfirmedProxies = function (identifier, node) {
+        this._confirmedProxies[identifier] = node;
+        this._protocolConnectionManager.keepSocketsOpenFromNode(node);
+        this._updateMyNodeAddresses();
+    };
+
+    ProxyManager.prototype._addToProxyingFor = function (identifier, node) {
+        this._proxyingFor[identifier] = node;
+        this._protocolConnectionManager.keepSocketsOpenFromNode(node);
+    };
+
+    ProxyManager.prototype._handleProxyMessage = function (message) {
+        var _this = this;
+        var msgType = message.getMessageType();
+        var sender = message.getSender();
+        var identifier = this._nodeToIdentifier(sender);
+
+        if (msgType === &#039;PROXY_REJECT&#039; || msgType === &#039;PROXY_ACCEPT&#039;) {
+            var requestedProxy = this._requestedProxies[identifier];
+            if (requestedProxy) {
+                this._removeFromRequestedProxies(identifier);
+
+                if (msgType === &#039;PROXY_ACCEPT&#039;) {
+                    this._addToConfirmedProxies(identifier, sender);
+                }
+
+                this._proxyCycle();
+            }
+        } else if (msgType === &#039;PROXY_REQUEST&#039;) {
+            if (!this._proxyingFor[identifier] &amp;&amp; this._isProxyCapable()) {
+                this._protocolConnectionManager.writeMessageTo(sender, &#039;PROXY_ACCEPT&#039;, new Buffer(0), function (err) {
+                    if (!err) {
+                        _this._addToProxyingFor(identifier, sender);
+                    }
+                });
+            } else {
+                this._protocolConnectionManager.writeMessageTo(sender, &#039;PROXY_REJECT&#039;, new Buffer(0));
+            }
+        } else if (msgType === &#039;PROXY_THROUGH&#039;) {
+            if (this._confirmedProxies[identifier]) {
+                // force message through the pipe
+                this._protocolConnectionManager.forceMessageThroughPipe(sender, message.getPayload());
+            }
+        }
+    };
+
+    ProxyManager.prototype._messageIsIntendedForMyNode = function (message) {
+        return message.getReceiverId().equals(this._myNode.getId());
+    };
+
+    ProxyManager.prototype._messageIsProxyAffine = function (message) {
+        return this._proxyAffineMessages.indexOf(message.getMessageType()) &gt; -1;
+    };
+
+    ProxyManager.prototype._requestProxy = function (node) {
+        var _this = this;
+        var identifier = this._nodeToIdentifier(node);
+        this._protocolConnectionManager.writeMessageTo(node, &#039;PROXY_REQUEST&#039;, new Buffer(0), function (err) {
+            if (!err) {
+                _this._requestedProxies[identifier] = setTimeout(function () {
+                    _this._requestProxyTimeout(identifier);
+                }, _this._reactionTime);
+            }
+            _this._proxyCycle();
+        });
+    };
+
+    ProxyManager.prototype._requestProxyTimeout = function (identifier) {
+        if (this._requestedProxies[identifier]) {
+            delete this._requestedProxies[identifier];
+            this._ignoreProxies.push(identifier);
+            this._proxyCycle();
+        }
+    };
+
+    ProxyManager.prototype._blockProxyCycle = function () {
+        var _this = this;
+        this._canProxyCycle = false;
+        if (this._proxyWaitTimeout) {
+            clearTimeout(this._proxyWaitTimeout);
+        }
+        this._proxyWaitTimeout = setTimeout(function () {
+            _this._canProxyCycle = true;
+            _this._unsuccessfulProxyTries = 0;
+            _this._ignoreProxies = [];
+            _this._proxyCycle();
+        }, this._unsuccessfulProxyTryWaitTime);
+    };
+
+    ProxyManager.prototype._canUseNodeAsProxy = function (node) {
+        var identifier = this._nodeToIdentifier(node);
+        var canUse = true;
+
+        canUse = this._confirmedProxies[identifier] ? false : canUse;
+        canUse = this._requestedProxies[identifier] ? false : canUse;
+        canUse = this._ignoreProxies.indexOf(identifier) &gt; -1 ? false : canUse;
+
+        if (!canUse) {
+            this._unsuccessfulProxyTries++;
+            if (this._unsuccessfulProxyTries &gt;= this._maxUnsuccessfulProxyTries) {
+                this._blockProxyCycle();
+            }
+        }
+
+        return canUse;
+    };
+
+    ProxyManager.prototype._nodeToIdentifier = function (node) {
+        return node.getId().toHexString();
+    };
+
+    ProxyManager.prototype._updateMyNodeAddresses = function () {
+        var addressList = [];
+        var keys = Object.keys(this._confirmedProxies);
+
+        for (var i = 0; i &lt; keys.length; i++) {
+            addressList.concat(this._confirmedProxies[keys[i]].getAddresses());
+        }
+
+        this._myNode.updateAddresses(addressList);
+    };
+    return ProxyManager;
+})(events.EventEmitter);
+//# sourceMappingURL=ProxyManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

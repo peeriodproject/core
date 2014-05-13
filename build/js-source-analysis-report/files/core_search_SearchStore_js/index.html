@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">71.68</p>
+      <p class="stat">73.93</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">259</p>
+      <p class="stat">204</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">36.14</p>
+      <p class="stat">31.40</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.59</p>
+      <p class="stat">1.11</p>
     </div>
   </div>
 </div>
@@ -91,8 +91,6 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../ts-definitions/node/node.d.ts&#039; /&gt;
-var elasticsearch = require(&#039;elasticsearch&#039;);
-
 var childProcess = require(&#039;child_process&#039;);
 var fs = require(&#039;fs&#039;);
 var path = require(&#039;path&#039;);
@@ -101,22 +99,20 @@ var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
 
 /**
 * @see http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/
+* @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/setup-configuration.html
 *
 * todo restart the database server whenever it stops (aka. forever)
 *
 * @class core.search.SearchStore
 * @implements core.search.SearchStoreInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.search.SearchStore.Options} options
 */
 var SearchStore = (function () {
     function SearchStore(config, options) {
         if (typeof options === &quot;undefined&quot;) { options = {}; }
         var _this = this;
-        /**
-        * The client which is used internally to make requests against the database api
-        *
-        * @member {elasticsearch.Client} core.search.SearchStore~_client
-        */
-        this._client = null;
         /**
         * The internally used config object
         *
@@ -144,22 +140,11 @@ var SearchStore = (function () {
         /**
         * The mix of the passed in options object and the defaults
         *
-        * @member {core.utils.ClosableAsyncOptions} core.search.SearchStore~_options
+        * @member {core.utils.SearchStoreOptions} core.search.SearchStore~_options
         */
         this._options = null;
-        var defaults = {
-            closeOnProcessExit: true,
-            logsPath: &#039;../../logs&#039;,
-            logsFileName: &#039;searchStore.log&#039;,
-            onCloseCallback: function (err) {
-            },
-            onOpenCallback: function (err) {
-            }
-        };
-
         this._config = config;
-        this._options = ObjectUtils.extend(defaults, options);
-        this._options.logsPath = path.resolve(__dirname, this._options.logsPath);
+        this._options = ObjectUtils.extend(SearchStore.getDefaults(), options);
 
         if (this._options.closeOnProcessExit) {
             process.on(&#039;exit&#039;, function () {
@@ -169,6 +154,16 @@ var SearchStore = (function () {
 
         this.open(this._options.onOpenCallback);
     }
+    SearchStore.getDefaults = function () {
+        return {
+            closeOnProcessExit: true,
+            onCloseCallback: function (err) {
+            },
+            onOpenCallback: function (err) {
+            }
+        };
+    };
+
     SearchStore.prototype.close = function (callback) {
         var internalCallback = callback || this._options.onCloseCallback;
 
@@ -188,7 +183,6 @@ var SearchStore = (function () {
 
         this._databaseServerProcess.kill();
         this._isOpen = false;
-        this._client = null;
 
         return process.nextTick(internalCallback.bind(null, null));
     };
@@ -206,28 +200,8 @@ var SearchStore = (function () {
         }
 
         this._startUpDatabaseServer(function (err) {
-            if (err) {
-                return internalCallback(err);
-            }
-
-            _this._client = elasticsearch.Client({
-                host: _this._config.get(&#039;search.host&#039;) + &#039;:&#039; + _this._config.get(&#039;search.port&#039;),
-                log: {
-                    type: &#039;file&#039;,
-                    level: &#039;trace&#039;,
-                    path: path.join(_this._options.logsPath, _this._options.logsFileName)
-                }
-            });
-
-            _this._waitForDatabaseServer(function (err) {
-                if (err) {
-                    console.log(err);
-                    internalCallback(err);
-                } else {
-                    _this._isOpen = true;
-                    internalCallback(null);
-                }
-            });
+            _this._isOpen = true;
+            internalCallback(err);
         });
     };
 
@@ -290,35 +264,6 @@ var SearchStore = (function () {
     */
     SearchStore.prototype._getDatabaseServerProcessIdPath = function () {
         return path.join(this._getDatabaseServerModulePath(), &#039;../elasticsearch-pid&#039;);
-    };
-
-    /**
-    * Pings the database server in a specified interval and calls the callback after a specified timeout.
-    *
-    * @method core.search.SearchStore~_waitForDatabaseServer
-    */
-    SearchStore.prototype._waitForDatabaseServer = function (callback) {
-        var _this = this;
-        var check = function (i) {
-            _this._client.ping({
-                requestTimeout: 1000,
-                hello: &#039;elasticsearch&#039;
-            }, function (err) {
-                if (err) {
-                    if (i &lt; 30) {
-                        setTimeout(function () {
-                            check(++i);
-                        }, 500);
-                    } else {
-                        callback(new Error(&#039;SearchStore~waitForServer: Server is not reachable after 15 seconds&#039;));
-                    }
-                } else {
-                    callback(null);
-                }
-            });
-        };
-
-        check(0);
     };
 
     /**

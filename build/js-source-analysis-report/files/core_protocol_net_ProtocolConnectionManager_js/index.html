@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.97</p>
+      <p class="stat">68.90</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">900</p>
+      <p class="stat">937</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">87.25</p>
+      <p class="stat">85.21</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">5.42</p>
+      <p class="stat">5.84</p>
     </div>
   </div>
 </div>
@@ -100,6 +100,8 @@ var events = require(&#039;events&#039;);
 
 var Id = require(&#039;../../topology/Id&#039;);
 
+var ContactNodeAddressFactory = require(&#039;../../topology/ContactNodeAddressFactory&#039;);
+
 var ReadableMessageFactory = require(&#039;./../messages/ReadableMessageFactory&#039;);
 
 var MessageByteCheatsheet = require(&#039;./../messages/MessageByteCheatsheet&#039;);
@@ -124,6 +126,12 @@ var ProtocolConnectionManager = (function (_super) {
     __extends(ProtocolConnectionManager, _super);
     function ProtocolConnectionManager(config, myNode, tcpSocketHandler) {
         _super.call(this);
+        /**
+        * Contact node address factory.
+        *
+        * @member {core.topology.ContactNodeAddressFactoryInterface} core.protocol.net.ProtocolConnectionManager~_addressFactory
+        */
+        this._addressFactory = null;
         /**
         * List to keep track of confirmed sockets.
         *
@@ -238,6 +246,8 @@ var ProtocolConnectionManager = (function (_super) {
         this._incomingPendingTimeoutLength = config.get(&#039;protocol.messages.msToWaitForIncomingMessage&#039;);
         this._msToWaitForConnection = config.get(&#039;protocol.messages.maxSecondsToWaitForConnection&#039;) * 1000;
 
+        this._addressFactory = new ContactNodeAddressFactory();
+
         this._setGlobalListeners();
     }
     /**
@@ -271,6 +281,22 @@ var ProtocolConnectionManager = (function (_super) {
     */
     ProtocolConnectionManager.prototype.getConfirmedSocketList = function () {
         return this._confirmedSockets;
+    };
+
+    ProtocolConnectionManager.prototype.getExternalAddressList = function () {
+        var openPorts = this._tcpSocketHandler.getOpenServerPortsArray();
+        var externalIp = this._tcpSocketHandler.getMyExternalIp();
+        var externalAddressList = [];
+
+        for (var i = 0; i &lt; openPorts.length; i++) {
+            externalAddressList.push(this._addressFactory.create(externalIp, openPorts[i]));
+        }
+
+        return externalAddressList;
+    };
+
+    ProtocolConnectionManager.prototype.getMyNode = function () {
+        return this._myNode;
     };
 
     /**
@@ -312,6 +338,17 @@ var ProtocolConnectionManager = (function (_super) {
 
     ProtocolConnectionManager.prototype.getConfirmedSocketById = function (id) {
         return this._getConfirmedSocketByIdentifier(id.toHexString());
+    };
+
+    ProtocolConnectionManager.prototype.forceMessageThroughPipe = function (originalSender, rawBuffer) {
+        var msg = this._incomingDataPipeline.deformatBuffer(rawBuffer);
+        if (msg) {
+            if (msg.isHydra()) {
+                this._destroyConnectionByIdentifier(this._nodeToIdentifier(originalSender));
+            } else {
+                this.emit(&#039;message&#039;, msg);
+            }
+        }
     };
 
     ProtocolConnectionManager.prototype.hydraConnectTo = function (port, ip, callback) {
