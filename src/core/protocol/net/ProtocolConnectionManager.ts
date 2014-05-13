@@ -219,6 +219,17 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	/**
 	 * Testing purposes only. Should not be used in production.
 	 *
+	 * @method {core.protocol.net.ProtocolConnectionManager#getHydraSocketList
+	 *
+	 * @returns {core.protocol.net.HydraSocketList}
+	 */
+	public getHydraSocketList ():HydraSocketList {
+		return this._hydraSockets;
+	}
+
+	/**
+	 * Testing purposes only. Should not be used in production.
+	 *
 	 * @method {core.protocol.net.ProtocolConnectionManager#getConfirmedSocketList
 	 *
 	 * @returns {Array<string>}
@@ -261,7 +272,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 	public hydraWriteBufferTo (identifier:string, buffer:Buffer, callback?:(err:Error) => any):void {
 		var socket:TCPSocketInterface = this._hydraSockets[identifier];
-		if (socket) {
+		if (!socket) {
 			if (callback) {
 				callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));
 			}
@@ -278,6 +289,22 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	public hydraWriteMessageTo (identifier:string, payload:Buffer, callback?:(err:Error) => any):void {
 		var buffer:Buffer = this._generalWritableMessageFactory.hydraConstructMessage(payload, payload.length);
 		this.hydraWriteBufferTo(identifier, buffer, callback);
+	}
+
+	public keepHydraSocketNoLongerOpen (identifier:string):void {
+		var socket:TCPSocketInterface = this._hydraSockets[identifier];
+
+		if (socket) {
+			socket.setCloseOnTimeout(true);
+		}
+	}
+
+	public keepHydraSocketOpen (identifier:string):void {
+		var socket:TCPSocketInterface = this._hydraSockets[identifier];
+
+		if (socket) {
+			socket.setCloseOnTimeout(false);
+		}
 	}
 
 	public keepSocketsNoLongerOpenFromNode (contactNode:ContactNodeInterface):void {
@@ -397,6 +424,8 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	private _addToHydra (identifier:string, socket:TCPSocketInterface) {
 		this._hookDestroyOnCloseToSocket(socket);
 		this._hydraSockets[identifier] = socket;
+
+		this.emit('hydraSocket', identifier, socket);
 	}
 
 	/**

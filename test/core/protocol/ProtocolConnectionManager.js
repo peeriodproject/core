@@ -55,6 +55,8 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
 
     var myNode = new MyNode(new Id(Id.byteBufferByHexString('0a0000000000000078f406020100000005000000', 20), 160), [addressFactory.create('127.0.0.1', 10)]);
 
+    var currentHydraIdentifer = null;
+
     before(function (done) {
         sandbox = sinon.sandbox.create();
 
@@ -93,8 +95,22 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
         });
     });
 
-    after(function () {
+    after(function (done) {
         sandbox.restore();
+
+        var keys_a = Object.keys(manager.getHydraSocketList());
+        var keys_b = Object.keys(manager.getConfirmedSocketList());
+        for (var i = 0; i < keys_a.length; i++) {
+            manager.getHydraSocketList()[keys_a[i]].getSocket().destroy();
+        }
+
+        for (var i = 0; i < keys_a.length; i++) {
+            manager.getConfirmedSocketList()[keys_b[i]].socket.getSocket().destroy();
+        }
+
+        remoteServer.close(function () {
+            done();
+        });
     });
 
     // ------- MESSAGES ----
@@ -108,6 +124,13 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
         var begin = new Buffer([0x50, 0x52, 0x44, 0x42, 0x47, 0x4e]), end = new Buffer([0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]), receiverId = new Buffer([0xf3, 0xec, 0x6b, 0x95, 0x29, 0x92, 0xbb, 0x07, 0xf3, 0x48, 0x62, 0xa4, 0x11, 0xbb, 0x1f, 0x83, 0x3f, 0x63, 0x62, 0x88]), senderId = new Buffer([0x1e, 0x36, 0x26, 0xca, 0xca, 0x6c, 0x84, 0xfa, 0x4e, 0x5d, 0x32, 0x3b, 0x6a, 0x26, 0xb8, 0x97, 0x58, 0x2c, 0x57, 0xf9]), ipv4Address = new Buffer([0x04, 127, 0, 0, 1, 0x17, 0x71]), addressEnd = new Buffer([0x05]), messageType = new Buffer([0x50, 0x49]), payload = new Buffer('foobar', 'utf8'), list = [begin, receiverId, senderId, ipv4Address, addressEnd, messageType, payload, end];
 
         return Buffer.concat(list);
+    };
+
+    var createWorkingHydraMessage = function () {
+        var begin = new Buffer([0x50, 0x52, 0x44, 0x42, 0x47, 0x4e]), end = new Buffer([0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]), receiverId = new Buffer(20), payload = new Buffer('foobar', 'utf8');
+        receiverId.fill(0x00);
+
+        return Buffer.concat([begin, receiverId, payload, end]);
     };
 
     // ------- TESTS -------
@@ -277,6 +300,7 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
                     throw new Error('Should not happen, nope, nope');
                 });
                 setTimeout(function () {
+                    manager.getConfirmedSocketList()[ident].socket.removeAllListeners('close');
                     done();
                 }, 1500);
             }
@@ -311,6 +335,90 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', fun
     it('should return the correct confirmed socket', function () {
         var ident = '1e3626caca6c84fa4e5d323b6a26b897582c57f9';
         manager.getConfirmedSocketList()[ident].socket.should.equal(manager.getConfirmedSocketById(new Id(Id.byteBufferByHexString(ident, 20), 160)));
+    });
+
+    it('should add the incoming socket to the hydra sockets', function (done) {
+        currentRemoteSocket = net.createConnection(protoPort, 'localhost');
+        tcpSocketHandler.once('connected', function () {
+            manager.once('hydraSocket', function (identifier, socket) {
+                currentHydraIdentifer = identifier;
+                if (manager.getHydraSocketList()[identifier] === socket)
+                    done();
+            });
+            currentRemoteSocket.write(createWorkingHydraMessage());
+        });
+    });
+
+    it('should close the hydra socket when writing a regular protocol message to it', function (done) {
+        currentRemoteSocket.write(createWorkingMessageA());
+        manager.once('terminatedConnection', function (identifier) {
+            if (identifier === currentHydraIdentifer && manager.getHydraSocketList()[identifier] === undefined)
+                done();
+        });
+    });
+
+    it('should successfully open an outgoing hydra socket', function (done) {
+        manager.hydraConnectTo(remotePort, 'localhost', function (err, identifier) {
+            currentHydraIdentifer = identifier;
+            if (!err && identifier)
+                done();
+        });
+    });
+
+    it('should keep the hydra socket open', function (done) {
+        manager.keepHydraSocketOpen(currentHydraIdentifer);
+        setTimeout(function () {
+            manager.removeAllListeners('terminatedConnection');
+            done();
+        }, 1500);
+        manager.once('terminatedConnection', function () {
+            throw new Error('Should not do that.');
+        });
+    });
+
+    it('should no longer keep the hydra socket open', function (done) {
+        manager.keepHydraSocketNoLongerOpen(currentHydraIdentifer);
+        manager.once('terminatedConnection', function (identifier) {
+            if (identifier === currentHydraIdentifer)
+                done();
+        });
+    });
+
+    it('should successfully write a hydra message to a socket ', function (done) {
+        currentRemoteSocket = net.createConnection(protoPort, 'localhost');
+        tcpSocketHandler.once('connected', function () {
+            manager.once('hydraSocket', function (identifier, socket) {
+                manager.hydraWriteMessageTo(identifier, new Buffer('foobar', 'utf8'), function (err) {
+                    if (err)
+                        console.log(err);
+                });
+
+                var msg = createWorkingHydraMessage();
+
+                currentRemoteSocket.once('data', function (buffer) {
+                    var okay = buffer.length === msg.length;
+
+                    for (var i = 0; i < buffer.length; i++) {
+                        if (buffer[i] !== msg[i])
+                            okay = false;
+                    }
+                    if (okay) {
+                        done();
+                    }
+                });
+            });
+            currentRemoteSocket.write(createWorkingHydraMessage());
+        });
+    });
+
+    it('should successfully write a regular message to a socket', function (done) {
+        var ident = '1e3626caca6c84fa4e5d323b6a26b897582cf7f9';
+        var id = new Id(Id.byteBufferByHexString(ident, 20), 160);
+        var goodContactNode = nodeFactory.create(id, [addressFactory.create('127.0.0.1', remotePort)]);
+        manager.writeMessageTo(goodContactNode, 'PING', new Buffer(0), function (err) {
+            if (!err)
+                done();
+        });
     });
 });
 //# sourceMappingURL=ProtocolConnectionManager.js.map

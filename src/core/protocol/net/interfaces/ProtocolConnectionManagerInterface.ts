@@ -129,12 +129,30 @@ interface ProtocolConnectionManagerInterface {
 	getConfirmedSocketById (id:IdInterface):TCPSocketInterface;
 
 	/**
+	 * The anti-version to {@link core.topology.net.ProtocolConnectionManagerInterface#keepHydraSocketOpen}.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManagerInterface#keepHydraSocketNoLongerOpen
+	 *
+	 * @param {string} identifier
+	 */
+	keepHydraSocketNoLongerOpen (identifier:string):void;
+
+	/**
+	 * Says that a hydra socket stored under the specified identifier should not be closed on idle timeout.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManagerInterface#keepHydraSocketOpen
+	 *
+	 * @param {string} identifier
+	 */
+	keepHydraSocketOpen (identifier:string):void;
+
+	/**
 	 * The anti-version to {@link core.topology.net.ProtocolConnectionManagerInterface#keepSocketsOpenFromNode}.
 	 * The timeout of existing confirmed sockets will be refreshed.
 	 *
 	 * @method core.protocol.net.ProtocolConnectionManagerInterface#keepSocketsNoLongerOpenFromNode
 	 *
-	 * @param {core.topology.ContactNodeInterface} }contactNode
+	 * @param {core.topology.ContactNodeInterface} contactNode
 	 */
 	keepSocketsNoLongerOpenFromNode (contactNode:ContactNodeInterface):void;
 
@@ -144,7 +162,7 @@ interface ProtocolConnectionManagerInterface {
 	 *
 	 * @method core.protocol.net.ProtocolConnectionManagerInterface#keepSocketsOpenFromNode
 	 *
-	 * @param {core.topology.ContactNodeInterface} }contactNode
+	 * @param {core.topology.ContactNodeInterface} contactNode
 	 */
 	keepSocketsOpenFromNode (contactNode:ContactNodeInterface):void;
 
