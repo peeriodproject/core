@@ -46,6 +46,26 @@ interface ProxyManagerInterface extends NodeJS.EventEmitter {
 	 * @method core.protocol.proxy.ProxyManagerInterface#kickOff
 	 */
 	kickOff ():void;
+
+	/**
+	 * Checks if the node needs another proxy, i.e. if the number of confirmed proxies plus the number of currently
+	 * requested proxies is less than the maxmimum number of proxies one is allowed to have.
+	 *
+	 * @method core.protocol.proxy.ProxyManagerInterface#needsAdditionalProxy
+	 *
+	 * @returns {boolean}
+	 */
+	needsAdditionalProxy ():boolean;
+
+	/**
+	 * Checks if the node can be a proxy, i.e. if the number of nodes it is already proxying does not exceed the proxy limit
+	 * and if the node is reachable from outside.
+	 *
+	 * @method core.protocol.proxy.ProxyManagerInterface#isProxyCapable
+	 *
+	 * @returns {boolean}
+	 */
+	isProxyCapable ():boolean;
 }
 
 export = ProxyManagerInterface;

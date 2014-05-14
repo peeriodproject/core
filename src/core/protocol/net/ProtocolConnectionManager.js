@@ -150,6 +150,8 @@ var ProtocolConnectionManager = (function (_super) {
         this._generalWritableMessageFactory = new GeneralWritableMessageFactory(this._myNode);
         this._tcpSocketHandler = tcpSocketHandler;
 
+        this._addressFactory = new ContactNodeAddressFactory();
+
         if (!this._myNode.getAddresses()) {
             this._myNode.updateAddresses(this.getExternalAddressList());
         }
@@ -158,8 +160,6 @@ var ProtocolConnectionManager = (function (_super) {
 
         this._incomingPendingTimeoutLength = config.get('protocol.messages.msToWaitForIncomingMessage');
         this._msToWaitForConnection = config.get('protocol.messages.maxSecondsToWaitForConnection') * 1000;
-
-        this._addressFactory = new ContactNodeAddressFactory();
 
         this._setGlobalListeners();
     }

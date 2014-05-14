@@ -180,6 +180,8 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._generalWritableMessageFactory = new GeneralWritableMessageFactory(this._myNode);
 		this._tcpSocketHandler = tcpSocketHandler;
 
+		this._addressFactory = new ContactNodeAddressFactory();
+
 		if (!this._myNode.getAddresses()) {
 			this._myNode.updateAddresses(this.getExternalAddressList());
 		}
@@ -193,8 +195,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 		this._incomingPendingTimeoutLength = config.get('protocol.messages.msToWaitForIncomingMessage');
 		this._msToWaitForConnection = config.get('protocol.messages.maxSecondsToWaitForConnection') * 1000;
-
-		this._addressFactory = new ContactNodeAddressFactory();
 
 		this._setGlobalListeners();
 	}
