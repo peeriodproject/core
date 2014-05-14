@@ -4,12 +4,15 @@ require('should');
 
 import testUtils = require('../../utils/testUtils');
 
+import BucketStoreInterface = require('../../../src/core/topology/interfaces/BucketStoreInterface');
+import ContactNodeInterface = require('../../../src/core/topology/interfaces/ContactNodeInterface');
+import ContactNodeListInterface = require('../../../src/core/topology/interfaces/ContactNodeListInterface');
+import ContactNodeObjectInterface = require('../../../src/core/topology/interfaces/ContactNodeObjectInterface');
+import ContactNodeObjectListInterface = require('../../../src/core/topology/interfaces/ContactNodeObjectListInterface');
+
 import Id = require('../../../src/core/topology/Id');
 import BucketStore = require('../../../src/core/topology/BucketStore');
-import BucketStoreInterface = require('../../../src/core/topology/interfaces/BucketStoreInterface');
 import ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
-import ContactNodeInterface = require('../../../src/core/topology/interfaces/ContactNodeInterface');
-import ContactNodeObjectListInterface = require('../../../src/core/topology/interfaces/ContactNodeObjectListInterface');
 
 describe('CORE --> TOPOLOGY --> BucketStore', function () {
 	var databasePath:string = testUtils.getFixturePath('core/topology/bucketstore/db');
@@ -92,6 +95,23 @@ describe('CORE --> TOPOLOGY --> BucketStore', function () {
 		}
 
 		gotAmount.should.be.equal(amount);
+	});
+
+	it ('should correctly return the contact node which was not seen for the longest time @joern', function () {
+		var contacts:ContactNodeListInterface = [];
+		var amount:number = 10;
+
+		for (var i = 0; i < amount; i++) {
+			var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
+			contacts.push(contact);
+		}
+
+		// add items
+		store.addAll('bucket1', contacts);
+
+		var lastSeenObject:ContactNodeObjectInterface = store.getLongestNotSeen('bucket1');
+
+		lastSeenObject.lastSeen.should.equal(contacts[9].getLastSeen());
 	});
 
 	it('should add multiple contacts at once', function () {

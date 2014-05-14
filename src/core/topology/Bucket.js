@@ -60,15 +60,17 @@ var Bucket = (function () {
         this.open(internalOpenCallback);
     }
     Bucket.prototype.add = function (contact, callback) {
-        var internalCallback = callback || function (err) {
+        var internalCallback = callback || function (err, longestNotSeenContact) {
         };
 
         if (this._store.size(this._keyString) < this._maxBucketSize) {
             this._store.add(this._keyString, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
 
-            internalCallback(null);
+            return process.nextTick(internalCallback.bind(null, null, null));
         } else {
-            internalCallback(new Error('Bucket.add: Cannot add another contact. The Bucket is already full.'));
+            this.getLongestNotSeen(function (err, contact) {
+                internalCallback(new Error('Bucket.add: Cannot add another contact. The Bucket is already full.'), contact);
+            });
         }
     };
 
@@ -111,6 +113,17 @@ var Bucket = (function () {
         return process.nextTick(callback.bind(null, null, contacts));
     };
 
+    Bucket.prototype.getLongestNotSeen = function (callback) {
+        var storedObject = this._store.getLongestNotSeen(this._keyString);
+        var contact = null;
+
+        if (storedObject) {
+            contact = this._convertToContactNodeInstance(storedObject);
+        }
+
+        return process.nextTick(callback.bind(null, null, contact));
+    };
+
     Bucket.prototype.isOpen = function (callback) {
         return process.nextTick(callback.bind(null, null, this._store.isOpen()));
     };
@@ -137,21 +150,22 @@ var Bucket = (function () {
     };
 
     Bucket.prototype.update = function (contact, callback) {
-        var internalCallback = callback || function (err) {
+        var internalCallback = callback || function (err, longestNotSeenContact) {
         };
         var removed;
         var added;
         var error;
+        var longestNotSeenContact;
         var thrown = false;
 
         var updatedCallback = function () {
             if (error) {
                 if (!thrown) {
                     thrown = true;
-                    return process.nextTick(internalCallback.bind(null, error));
+                    return internalCallback(error, longestNotSeenContact);
                 }
             } else if (removed && added) {
-                return process.nextTick(internalCallback.bind(null, null));
+                return internalCallback(null, null);
             }
         };
 
@@ -168,10 +182,11 @@ var Bucket = (function () {
             }
         });
 
-        this.add(contact, function (err) {
+        this.add(contact, function (err, contact) {
             if (callback) {
                 if (err) {
                     error = err;
+                    longestNotSeenContact = contact;
                 } else {
                     added = true;
                 }

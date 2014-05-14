@@ -53,27 +53,35 @@ interface BucketStoreInterface extends ClosableInterface {
 	 * Returns the object stored for the specified bucket/id combination as JSON-Object with sorted keys.
 	 *
 	 * todo json example
-	 * todo specify return value type
 	 *
 	 * @method core.topology.BucketStoreInterface#get
 	 *
 	 * @param {string} bucketKey
 	 * @param {Buffer} id
 	 *
-	 * @returns {any}
+	 * @returns {core.topology.ContactNodeObjectInterface}
 	 */
 	get (bucketKey:string, id:Buffer):ContactNodeObjectInterface;
 
 	/**
 	 * Returns all objects stored under the specified bucketKey
 	 *
-	 * todo specify return value type
+	 * @method core.topology.BucketStoreInterface#getAll
 	 *
 	 * @param {string} bucketKey
-	 * @returns {any}
+	 * @returns {core.topology.ContactNodeObjectListInterface}
 	 */
 	getAll (bucketKey:string):ContactNodeObjectListInterface;
 
+	/**
+	 * Returns the contact node object for the given bucket key which was not seen for the longest time.
+	 *
+	 * @method core.topology.BucketStoreInterface#getLongestNotSeen
+	 *
+	 * @param {string} bucketKey
+	 * @returns {core.topology.ContactNodeObjectInterface}
+	 */
+	getLongestNotSeen (bucketKey:string):ContactNodeObjectInterface;
 
 	/**
 	 * Removes the specified bucket/id combination from the store.
@@ -82,6 +90,7 @@ interface BucketStoreInterface extends ClosableInterface {
 	 *
 	 * @param {string} bucketKey
 	 * @param {Buffer} id
+	 * @returns {boolean}
 	 */
 	remove (bucketKey:string, id:Buffer):boolean;
 

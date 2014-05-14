@@ -4,7 +4,6 @@ require('should');
 var testUtils = require('../../utils/testUtils');
 
 var BucketStore = require('../../../src/core/topology/BucketStore');
-
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 
 describe('CORE --> TOPOLOGY --> BucketStore', function () {
@@ -88,6 +87,23 @@ describe('CORE --> TOPOLOGY --> BucketStore', function () {
         }
 
         gotAmount.should.be.equal(amount);
+    });
+
+    it('should correctly return the contact node which was not seen for the longest time @joern', function () {
+        var contacts = [];
+        var amount = 10;
+
+        for (var i = 0; i < amount; i++) {
+            var contact = ContactNodeFactory.createDummy();
+            contacts.push(contact);
+        }
+
+        // add items
+        store.addAll('bucket1', contacts);
+
+        var lastSeenObject = store.getLongestNotSeen('bucket1');
+
+        lastSeenObject.lastSeen.should.equal(contacts[9].getLastSeen());
     });
 
     it('should add multiple contacts at once', function () {

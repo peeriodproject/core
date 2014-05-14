@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">67.77</p>
+      <p class="stat">68.00</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">252</p>
+      <p class="stat">264</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">69.10</p>
+      <p class="stat">70.27</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.71</p>
+      <p class="stat">2.87</p>
     </div>
   </div>
 </div>
@@ -169,7 +169,7 @@ var ProxyManager = (function (_super) {
                     _this.emit(&#039;message&#039;, message);
                 }
             } else {
-                // if the message is not intended for us, proxy it through
+                _this._proxyMessageThrough(message);
             }
         });
 
@@ -201,6 +201,16 @@ var ProxyManager = (function (_super) {
                 }
             }
         });
+    };
+
+    ProxyManager.prototype._proxyMessageThrough = function (message) {
+        var identifier = message.getReceiverId().toHexString();
+        var proxyingForNode = this._proxyingFor[identifier];
+        if (proxyingForNode) {
+            this._protocolConnectionManager.writeMessageTo(proxyingForNode, &#039;PROXY_THROUGH&#039;, message.getRawBuffer(), function () {
+                message.discard();
+            });
+        }
     };
 
     ProxyManager.prototype._isProxyCapable = function () {
@@ -247,6 +257,7 @@ var ProxyManager = (function (_super) {
 
                 this._proxyCycle();
             }
+            message.discard();
         } else if (msgType === &#039;PROXY_REQUEST&#039;) {
             if (!this._proxyingFor[identifier] &amp;&amp; this._isProxyCapable()) {
                 this._protocolConnectionManager.writeMessageTo(sender, &#039;PROXY_ACCEPT&#039;, new Buffer(0), function (err) {
@@ -256,6 +267,7 @@ var ProxyManager = (function (_super) {
                 });
             } else {
                 this._protocolConnectionManager.writeMessageTo(sender, &#039;PROXY_REJECT&#039;, new Buffer(0));
+                message.discard();
             }
         } else if (msgType === &#039;PROXY_THROUGH&#039;) {
             if (this._confirmedProxies[identifier]) {

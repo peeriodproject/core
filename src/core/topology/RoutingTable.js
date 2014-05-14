@@ -248,7 +248,28 @@ var RoutingTable = (function () {
     };
 
     RoutingTable.prototype.replaceContactNode = function (oldContactNode, newContactNode, callback) {
-        // todo implementation
+        var _this = this;
+        var internalCallback = callback || function (err, longestNotSeenContact) {
+        };
+        var oldContactNodeId = oldContactNode.getId();
+        var newContactNodeId = newContactNode.getId();
+
+        var oldBucketKey = this._getBucketKey(oldContactNodeId);
+        var newBucketKey = this._getBucketKey(newContactNodeId);
+
+        if (oldBucketKey !== newBucketKey) {
+            return callback(new Error('RoutingTable.replaceContactNode: Cannot replace the given contact nodes. They dont belong to the same Bucket.'), null);
+        }
+
+        this._getBucket(newBucketKey).remove(oldContactNodeId, function (err) {
+            if (err) {
+                return internalCallback(err, null);
+            }
+
+            _this._getBucket(newBucketKey).add(newContactNode, function (err, longestNotSeenContact) {
+                return internalCallback(err, longestNotSeenContact);
+            });
+        });
     };
 
     RoutingTable.prototype.updateContactNode = function (contact, callback) {
@@ -272,7 +293,7 @@ var RoutingTable = (function () {
     * @param {number} maxBucketSize
     */
     RoutingTable.prototype._createBucket = function (bucketKey, maxBucketSize) {
-        this._buckets[this._getBucketKeyString(bucketKey)] = this._bucketFactory.create(this._config, bucketKey, maxBucketSize, this._bucketStore, this._contactNodeFactory);
+        this._buckets[this._convertBucketKeyToString(bucketKey)] = this._bucketFactory.create(this._config, bucketKey, maxBucketSize, this._bucketStore, this._contactNodeFactory);
     };
 
     /**
@@ -291,14 +312,31 @@ var RoutingTable = (function () {
     /*
     * this method will be used whenever node-lmdb updates it's code from nodes SlowBuffer to the new node Buffer class
     private _getBucketKeyAsString (id:IdInterface):string {
-    return    this._getBucketKeyString(this._getBucketKey(id));
+    return    this._convertBucketKeyToString(this._getBucketKey(id));
     }*/
-    RoutingTable.prototype._getBucketKeyString = function (key) {
+    /**
+    * Converts the bucket key from a number to a string so we can use the strinified key to make requests to the database
+    *
+    * @method core.topology.RoutingTable~_convertBucketKeyToString
+    *
+    * @param {number} key
+    * @returns {string}
+    */
+    RoutingTable.prototype._convertBucketKeyToString = function (key) {
         return key.toString();
     };
 
+    /**
+    * Returns the bucket for the given key. It uses the {@link core.topology.RoutingTable~_convertBucketKeyToString} method
+    * for convertion.
+    *
+    * @method core.topology.RoutingTable~_getBucket
+    *
+    * @param {number} bucketKey
+    * @returns {core.topology.BucketInterface}
+    */
     RoutingTable.prototype._getBucket = function (bucketKey) {
-        return this._buckets[this._getBucketKeyString(bucketKey)];
+        return this._buckets[this._convertBucketKeyToString(bucketKey)];
     };
 
     /**

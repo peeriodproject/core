@@ -279,8 +279,28 @@ class RoutingTable implements RoutingTableInterface {
 		return process.nextTick(internalCallback.bind(null, null));
 	}
 
-	public replaceContactNode (oldContactNode:ContactNodeInterface, newContactNode:ContactNodeInterface, callback:(err:Error) => any):void {
-		// todo implementation
+	public replaceContactNode (oldContactNode:ContactNodeInterface, newContactNode:ContactNodeInterface, callback:(err:Error, longestNotSeenContact:ContactNodeInterface) => any):void {
+		var internalCallback = callback || function (err:Error, longestNotSeenContact:ContactNodeInterface) {
+		};
+		var oldContactNodeId:IdInterface = oldContactNode.getId();
+		var newContactNodeId:IdInterface = newContactNode.getId();
+
+		var oldBucketKey:number = this._getBucketKey(oldContactNodeId);
+		var newBucketKey:number = this._getBucketKey(newContactNodeId);
+
+		if (oldBucketKey !== newBucketKey) {
+			return callback(new Error('RoutingTable.replaceContactNode: Cannot replace the given contact nodes. They dont belong to the same Bucket.'), null);
+		}
+
+		this._getBucket(newBucketKey).remove(oldContactNodeId, (err:Error) => {
+			if (err) {
+				return internalCallback(err, null);
+			}
+
+			this._getBucket(newBucketKey).add(newContactNode, (err:Error, longestNotSeenContact:ContactNodeInterface) => {
+				return internalCallback(err, longestNotSeenContact);
+			});
+		});
 	}
 
 	public updateContactNode (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
@@ -304,8 +324,8 @@ class RoutingTable implements RoutingTableInterface {
 	 * @param {string} bucketKey
 	 * @param {number} maxBucketSize
 	 */
-	private _createBucket (bucketKey:number, maxBucketSize:number) {
-		this._buckets[this._getBucketKeyString(bucketKey)] = this._bucketFactory.create(this._config, bucketKey, maxBucketSize, this._bucketStore, this._contactNodeFactory);
+	private _createBucket (bucketKey:number, maxBucketSize:number):void {
+		this._buckets[this._convertBucketKeyToString(bucketKey)] = this._bucketFactory.create(this._config, bucketKey, maxBucketSize, this._bucketStore, this._contactNodeFactory);
 	}
 
 	/**
@@ -324,15 +344,32 @@ class RoutingTable implements RoutingTableInterface {
 	/*
 	 * this method will be used whenever node-lmdb updates it's code from nodes SlowBuffer to the new node Buffer class
 	private _getBucketKeyAsString (id:IdInterface):string {
-		return    this._getBucketKeyString(this._getBucketKey(id));
+		return    this._convertBucketKeyToString(this._getBucketKey(id));
 	}*/
 
-	private _getBucketKeyString (key:number):string {
+	/**
+	 * Converts the bucket key from a number to a string so we can use the strinified key to make requests to the database
+	 *
+	 * @method core.topology.RoutingTable~_convertBucketKeyToString
+	 *
+	 * @param {number} key
+	 * @returns {string}
+	 */
+	private _convertBucketKeyToString (key:number):string {
 		return key.toString();
 	}
 
+	/**
+	 * Returns the bucket for the given key. It uses the {@link core.topology.RoutingTable~_convertBucketKeyToString} method
+	 * for convertion.
+	 *
+	 * @method core.topology.RoutingTable~_getBucket
+	 *
+	 * @param {number} bucketKey
+	 * @returns {core.topology.BucketInterface}
+	 */
 	private _getBucket (bucketKey:number):BucketInterface {
-		return this._buckets[this._getBucketKeyString(bucketKey)]
+		return this._buckets[this._convertBucketKeyToString(bucketKey)]
 	}
 
 	/**
