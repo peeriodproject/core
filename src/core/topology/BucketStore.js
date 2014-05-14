@@ -165,6 +165,12 @@ var BucketStore = (function () {
         return contact;
     };
 
+    BucketStore.prototype.getRandom = function (bucketKey) {
+        var all = this.getAll(bucketKey);
+
+        return all[Math.round(Math.random() * all.length - 1)];
+    };
+
     BucketStore.prototype.isOpen = function () {
         return this._isOpen;
     };

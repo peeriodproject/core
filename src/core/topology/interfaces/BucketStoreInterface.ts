@@ -84,6 +84,16 @@ interface BucketStoreInterface extends ClosableInterface {
 	getLongestNotSeen (bucketKey:string):ContactNodeObjectInterface;
 
 	/**
+	 * Returns a random contact node object for the given bucket key
+	 *
+	 * @method core.topology.BucketStoreInterface#getRandom
+	 *
+	 * @param {string} bucketKey
+	 * @returns {core.topology.ContactNodeObjectInterface}
+	 */
+	getRandom (bucketKey:string):ContactNodeObjectInterface;
+
+	/**
 	 * Removes the specified bucket/id combination from the store.
 	 * 
 	 * @method core.topology.BucketStoreInterface#remove
