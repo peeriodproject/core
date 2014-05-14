@@ -8,28 +8,129 @@ var events = require('events');
 
 var Id = require('../../topology/Id');
 
+/**
+* ProxyManagerInterface implementation.
+*
+* @class core.protocol.proxy.ProxyManager
+* @extends NodeJS.EventEmitter
+* @implements core.protocl.proxy.ProxyManagerInterface
+*
+* @param {core.config.ConfigInterface} config The configuration object
+* @apram {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager A running connection manager.
+* @param {core.topology.RoutingTableInterface} routingTable The routing table of the node.
+*/
 var ProxyManager = (function (_super) {
     __extends(ProxyManager, _super);
     function ProxyManager(config, protocolConnectionManager, routingTable) {
         _super.call(this);
-        this._protocolConnectionManager = null;
-        this._routingTable = null;
-        this._externalAddressList = null;
-        this._myNode = null;
-        this._reachableFromOutside = false;
-        this._proxyForMaxNumberOfNodes = 0;
-        this._maxNumberOfProxies = 0;
-        this._reactionTime = 0;
-        this._maxUnsuccessfulProxyTries = 0;
-        this._unsuccessfulProxyTries = 0;
-        this._unsuccessfulProxyTryWaitTime = 0;
-        this._proxyWaitTimeout = 0;
+        /**
+        * A flag indicating if a potential new proxy request can be fired off.
+        *
+        * @member {boolean} core.protocol.proxy.ProxyManager~_canProxyCycle
+        */
         this._canProxyCycle = true;
-        this._requestedProxies = {};
+        /**
+        * The list of confirmed nodes proxying for oneself.
+        *
+        * @member {core.protocol.proxy.ProxyList} core.protocol.proxy.ProxyManager~_confirmedProxies
+        */
         this._confirmedProxies = {};
+        /**
+        * The list of external addresses of my node. Used to check if the my node needs a proxy or can be a proxy.
+        *
+        * @member {core.topology.ContactNodeAddressListInterface} core.protocol.proxy.ProxyManager~_externalAddressList
+        */
+        this._externalAddressList = null;
+        /**
+        * Temporary list of node identifiers to ignore on following proxy cycles. Gets reset after the waiting timeout.
+        *
+        * @member {Array<string>} core.protocol.proxy.ProxyManager~_ignoreProxies
+        */
         this._ignoreProxies = [];
-        this._proxyingFor = {};
+        /**
+        * The maximum number of proxies the node can possibly have. Populated by config.
+        *
+        * @member {number} core.protocol.proxy.ProxyManager~_maxNumberOfProxies
+        */
+        this._maxNumberOfProxies = 0;
+        /**
+        * The maximum number of unsuccessful proxy request tries before the waiting timeout is fired. Populated by config.
+        *
+        * @member {number} core.protocol.proxy.ProxyManager~_maxUnsuccessfulProxyTries
+        */
+        this._maxUnsuccessfulProxyTries = 0;
+        /**
+        * My node.
+        *
+        * @member {core.topology.MyNodeInterface} core.protocol.proxy.ProxyManager~_myNode
+        */
+        this._myNode = null;
+        /**
+        * The running protocol connection manager. Provided in the constructor.
+        *
+        * @member {core.protocol.net.ProtocolConnectionManagerInterface} core.protocol.proxy.ProxyManager~_protocolConnectionManager
+        */
+        this._protocolConnectionManager = null;
+        /**
+        * A hardcoded list of human-readable message types which should concern the ProxyManager instance.
+        *
+        * @member {Array<string>} core.protocol.proxy.ProxyManager~_proxyAffineMessages
+        */
         this._proxyAffineMessages = ['PROXY_REQUEST', 'PROXY_ACCEPT', 'PROXY_REJECT', 'PROXY_THROUGH'];
+        /**
+        * A maximum number of nodes one can be a proxy for. Populated by config.
+        *
+        * @member {number} core.protocol.proxy.ProxyManager~_proxyForMaxNumberOfNodes
+        */
+        this._proxyForMaxNumberOfNodes = 0;
+        /**
+        * The list of nodes one proxies for.
+        *
+        * @member {core.protocol.proxy.ProxyList} core.protocol.proxy.ProxyManager~_proxyingFor
+        */
+        this._proxyingFor = {};
+        /**
+        * The waiting timeout which blocks the proxy cycle until expiration.
+        *
+        * @member {number} core.protocol.proxy.ProxyManager~_proxyWaitTimeout
+        */
+        this._proxyWaitTimeout = 0;
+        /**
+        * A flag indicating whether the machine is reachable from outside.
+        *
+        * @member {boolean} core.protocol.proxy.ProxyManager~_reachableFromOutside
+        */
+        this._reachableFromOutside = false;
+        /**
+        * The time in milliseconds a requested node has to answer before the request is discarded.
+        *
+        * @member {number} core.protocol.proxy.ProxyManager~_reactionTime
+        */
+        this._reactionTime = 0;
+        /**
+        * A list of identifiers with assigned timeouts of the requested proxy nodes.
+        *
+        * @member {Object} core.protocol.proxy.ProxyManager~_requestedProxies
+        */
+        this._requestedProxies = {};
+        /**
+        * My node's routing table.
+        *
+        * @member {core.topology.RoutingTableInterface} core.protocol.proxy.ProxyManager~_routingTable
+        */
+        this._routingTable = null;
+        /**
+        * Number keeping track of the unsuccessful proxy tries. Gets reset to 0 after the wait timeout expires.
+        *
+        * @member {number} core.protocol.proxy.ProxyManager~_unsuccessfulProxyTries
+        */
+        this._unsuccessfulProxyTries = 0;
+        /**
+        * Milliseconds to wait until a blockes proxy cycle is unblocked again. Populated by config.
+        *
+        * @member {number} core.protocol.proxy.ProxyManager~_unsuccessfulProxyTryWaitTime
+        */
+        this._unsuccessfulProxyTryWaitTime = 0;
 
         this._maxNumberOfProxies = config.get('protocol.proxy.maxNumberOfProxies');
         this._proxyForMaxNumberOfNodes = config.get('protocol.proxy.proxyForMaxNumberOfNodes');

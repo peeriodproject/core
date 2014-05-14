@@ -12,35 +12,144 @@ import ReadableMessageInterface = require('../messages/interfaces/ReadableMessag
 import IdInterface = require('../../topology/interfaces/IdInterface');
 import Id = require('../../topology/Id');
 
-
+/**
+ * ProxyManagerInterface implementation.
+ *
+ * @class core.protocol.proxy.ProxyManager
+ * @extends NodeJS.EventEmitter
+ * @implements core.protocl.proxy.ProxyManagerInterface
+ *
+ * @param {core.config.ConfigInterface} config The configuration object
+ * @apram {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager A running connection manager.
+ * @param {core.topology.RoutingTableInterface} routingTable The routing table of the node.
+ */
 class ProxyManager extends events.EventEmitter implements ProxyManagerInterface {
 
-	private _protocolConnectionManager:ProtocolConnectionManagerInterface = null;
-	private _routingTable:RoutingTableInterface = null;
-	private _externalAddressList:ContactNodeAddressListInterface = null;
-	private _myNode:MyNodeInterface = null;
-
-	private _reachableFromOutside:boolean = false;
-
-	private _proxyForMaxNumberOfNodes:number = 0;
-
-	private _maxNumberOfProxies:number = 0;
-
-	private _reactionTime:number = 0;
-
-	private _maxUnsuccessfulProxyTries:number = 0;
-	private _unsuccessfulProxyTries:number = 0;
-	private _unsuccessfulProxyTryWaitTime:number = 0;
-	private _proxyWaitTimeout:number = 0;
-
+	/**
+	 * A flag indicating if a potential new proxy request can be fired off.
+	 *
+	 * @member {boolean} core.protocol.proxy.ProxyManager~_canProxyCycle
+	 */
 	private _canProxyCycle:boolean = true;
 
-	private _requestedProxies:{[identifier:string]:number} = {};
+	/**
+	 * The list of confirmed nodes proxying for oneself.
+	 *
+	 * @member {core.protocol.proxy.ProxyList} core.protocol.proxy.ProxyManager~_confirmedProxies
+	 */
 	private _confirmedProxies:ProxyList = {};
+
+	/**
+	 * The list of external addresses of my node. Used to check if the my node needs a proxy or can be a proxy.
+	 *
+	 * @member {core.topology.ContactNodeAddressListInterface} core.protocol.proxy.ProxyManager~_externalAddressList
+	 */
+	private _externalAddressList:ContactNodeAddressListInterface = null;
+
+	/**
+	 * Temporary list of node identifiers to ignore on following proxy cycles. Gets reset after the waiting timeout.
+	 *
+	 * @member {Array<string>} core.protocol.proxy.ProxyManager~_ignoreProxies
+	 */
 	private _ignoreProxies:Array<string> = [];
+
+	/**
+	 * The maximum number of proxies the node can possibly have. Populated by config.
+	 *
+	 * @member {number} core.protocol.proxy.ProxyManager~_maxNumberOfProxies
+	 */
+	private _maxNumberOfProxies:number = 0;
+
+	/**
+	 * The maximum number of unsuccessful proxy request tries before the waiting timeout is fired. Populated by config.
+	 *
+	 * @member {number} core.protocol.proxy.ProxyManager~_maxUnsuccessfulProxyTries
+	 */
+	private _maxUnsuccessfulProxyTries:number = 0;
+
+	/**
+	 * My node.
+	 *
+	 * @member {core.topology.MyNodeInterface} core.protocol.proxy.ProxyManager~_myNode
+	 */
+	private _myNode:MyNodeInterface = null;
+
+	/**
+	 * The running protocol connection manager. Provided in the constructor.
+	 *
+	 * @member {core.protocol.net.ProtocolConnectionManagerInterface} core.protocol.proxy.ProxyManager~_protocolConnectionManager
+	 */
+	private _protocolConnectionManager:ProtocolConnectionManagerInterface = null;
+
+	/**
+	 * A hardcoded list of human-readable message types which should concern the ProxyManager instance.
+	 *
+	 * @member {Array<string>} core.protocol.proxy.ProxyManager~_proxyAffineMessages
+	 */
+	private _proxyAffineMessages:Array<string> = ['PROXY_REQUEST', 'PROXY_ACCEPT', 'PROXY_REJECT', 'PROXY_THROUGH'];
+
+	/**
+	 * A maximum number of nodes one can be a proxy for. Populated by config.
+	 *
+	 * @member {number} core.protocol.proxy.ProxyManager~_proxyForMaxNumberOfNodes
+	 */
+	private _proxyForMaxNumberOfNodes:number = 0;
+
+	/**
+	 * The list of nodes one proxies for.
+	 *
+	 * @member {core.protocol.proxy.ProxyList} core.protocol.proxy.ProxyManager~_proxyingFor
+	 */
 	private _proxyingFor:ProxyList = {};
 
-	private _proxyAffineMessages:Array<string> = ['PROXY_REQUEST', 'PROXY_ACCEPT', 'PROXY_REJECT', 'PROXY_THROUGH'];
+	/**
+	 * The waiting timeout which blocks the proxy cycle until expiration.
+	 *
+	 * @member {number} core.protocol.proxy.ProxyManager~_proxyWaitTimeout
+	 */
+	private _proxyWaitTimeout:number = 0;
+
+	/**
+	 * A flag indicating whether the machine is reachable from outside.
+	 *
+	 * @member {boolean} core.protocol.proxy.ProxyManager~_reachableFromOutside
+	 */
+	private _reachableFromOutside:boolean = false;
+
+	/**
+	 * The time in milliseconds a requested node has to answer before the request is discarded.
+	 *
+	 * @member {number} core.protocol.proxy.ProxyManager~_reactionTime
+	 */
+	private _reactionTime:number = 0;
+
+	/**
+	 * A list of identifiers with assigned timeouts of the requested proxy nodes.
+	 *
+	 * @member {Object} core.protocol.proxy.ProxyManager~_requestedProxies
+	 */
+	private _requestedProxies:{[identifier:string]:number} = {};
+
+	/**
+	 * My node's routing table.
+	 *
+	 * @member {core.topology.RoutingTableInterface} core.protocol.proxy.ProxyManager~_routingTable
+	 */
+	private _routingTable:RoutingTableInterface = null;
+
+	/**
+	 * Number keeping track of the unsuccessful proxy tries. Gets reset to 0 after the wait timeout expires.
+	 *
+	 * @member {number} core.protocol.proxy.ProxyManager~_unsuccessfulProxyTries
+	 */
+	private _unsuccessfulProxyTries:number = 0;
+
+	/**
+	 * Milliseconds to wait until a blockes proxy cycle is unblocked again. Populated by config.
+	 *
+	 * @member {number} core.protocol.proxy.ProxyManager~_unsuccessfulProxyTryWaitTime
+	 */
+	private _unsuccessfulProxyTryWaitTime:number = 0;
 
 	constructor (config:ConfigInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, routingTable:RoutingTableInterface) {
 		super();
@@ -213,7 +322,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		return this._proxyAffineMessages.indexOf(message.getMessageType()) > -1;
 	}
 
-	private _requestProxy(node:ContactNodeInterface):void {
+	private _requestProxy (node:ContactNodeInterface):void {
 		var identifier:string = this._nodeToIdentifier(node);
 		this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), (err:Error) => {
 			if (!err) {
@@ -225,7 +334,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		});
 	}
 
-	private _requestProxyTimeout(identifier:string):void {
+	private _requestProxyTimeout (identifier:string):void {
 		if (this._requestedProxies[identifier]) {
 			delete this._requestedProxies[identifier];
 			this._ignoreProxies.push(identifier);
@@ -246,7 +355,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		}, this._unsuccessfulProxyTryWaitTime);
 	}
 
-	private _canUseNodeAsProxy(node:ContactNodeInterface):boolean {
+	private _canUseNodeAsProxy (node:ContactNodeInterface):boolean {
 		var identifier:string = this._nodeToIdentifier(node);
 		var canUse:boolean = true;
 
@@ -264,7 +373,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		return canUse;
 	}
 
-	private _nodeToIdentifier(node:ContactNodeInterface):string {
+	private _nodeToIdentifier (node:ContactNodeInterface):string {
 		return node.getId().toHexString();
 	}
 
@@ -272,7 +381,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		var addressList:ContactNodeAddressListInterface = [];
 		var keys:Array<string> = Object.keys(this._confirmedProxies);
 
-		for (var i=0; i<keys.length; i++) {
+		for (var i = 0; i < keys.length; i++) {
 			addressList.concat(this._confirmedProxies[keys[i]].getAddresses());
 		}
 
