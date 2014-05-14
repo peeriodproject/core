@@ -146,8 +146,13 @@ var ProtocolConnectionManager = (function (_super) {
         this._waitingListNum = 0;
 
         this._myNode = myNode;
+
         this._generalWritableMessageFactory = new GeneralWritableMessageFactory(this._myNode);
         this._tcpSocketHandler = tcpSocketHandler;
+
+        if (!this._myNode.getAddresses()) {
+            this._myNode.updateAddresses(this.getExternalAddressList());
+        }
 
         this._incomingDataPipeline = new IncomingDataPipeline(config.get('protocol.messages.maxByteLengthPerMessage'), MessageByteCheatsheet.messageEnd, config.get('protocol.messages.msToKeepNonAddressableMemory'), new ReadableMessageFactory());
 
@@ -251,7 +256,7 @@ var ProtocolConnectionManager = (function (_super) {
     ProtocolConnectionManager.prototype.forceMessageThroughPipe = function (originalSender, rawBuffer) {
         var msg = this._incomingDataPipeline.deformatBuffer(rawBuffer);
         if (msg) {
-            if (msg.isHydra()) {
+            if (msg.isHydra() || !msg.getReceiverId().equals(this._myNode.getId())) {
                 this._destroyConnectionByIdentifier(this._nodeToIdentifier(originalSender));
             } else {
                 this.emit('message', msg);

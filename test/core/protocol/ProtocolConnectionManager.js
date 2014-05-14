@@ -21,7 +21,7 @@ var Id = require('../../../src/core/topology/Id');
 
 var MyNode = require('../../../src/core/topology/MyNode');
 
-describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', function () {
+describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () {
     this.timeout(0);
 
     var protoPort = 60000;

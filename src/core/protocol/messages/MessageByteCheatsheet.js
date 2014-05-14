@@ -5,8 +5,12 @@ var sheet = {
     ipv6: 0x06,
     addressEnd: 0x05,
     messageTypes: {
-        PING: [0x50, 0x49],
-        PONG: [0x50, 0x4f]
+        "PING": [0x50, 0x49],
+        "PONG": [0x50, 0x4f],
+        "PROXY_REQUEST": [0x50, 0x01],
+        "PROXY_ACCEPT": [0x50, 0x02],
+        "PROXY_REJECT": [0x50, 0x03],
+        "PROXY_THROUGH": [0x50, 0x04]
     }
 };
 

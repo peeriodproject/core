@@ -25,7 +25,7 @@ import MyNodeInterface = require('../../../src/core/topology/interfaces/MyNodeIn
 import MyNode = require('../../../src/core/topology/MyNode');
 
 
-describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager @current', function () {
+describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () {
 
 	this.timeout(0);
 
