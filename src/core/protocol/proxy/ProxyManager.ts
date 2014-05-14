@@ -181,6 +181,22 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		return this._myNode;
 	}
 
+	public getRequestedProxies ():any {
+		return this._requestedProxies;
+	}
+
+	public getConfirmedProxies ():ProxyList {
+		return this._confirmedProxies;
+	}
+
+	public getProxyingFor ():ProxyList {
+		return this._proxyingFor;
+	}
+
+	public getProtocolConnectionManager ():ProtocolConnectionManagerInterface {
+		return this._protocolConnectionManager;
+	}
+
 
 	/**
 	 * END TESTING PURPOSES ONLY
@@ -418,6 +434,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	 */
 	private _requestProxy (node:ContactNodeInterface):void {
 		var identifier:string = this._nodeToIdentifier(node);
+
 		this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), (err:Error) => {
 			if (!err) {
 				this._requestedProxies[identifier] = setTimeout(() => {
@@ -509,7 +526,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		var keys:Array<string> = Object.keys(this._confirmedProxies);
 
 		for (var i = 0; i < keys.length; i++) {
-			addressList.concat(this._confirmedProxies[keys[i]].getAddresses());
+			addressList = addressList.concat(this._confirmedProxies[keys[i]].getAddresses());
 		}
 
 		this._myNode.updateAddresses(addressList);

@@ -157,6 +157,22 @@ var ProxyManager = (function (_super) {
         return this._myNode;
     };
 
+    ProxyManager.prototype.getRequestedProxies = function () {
+        return this._requestedProxies;
+    };
+
+    ProxyManager.prototype.getConfirmedProxies = function () {
+        return this._confirmedProxies;
+    };
+
+    ProxyManager.prototype.getProxyingFor = function () {
+        return this._proxyingFor;
+    };
+
+    ProxyManager.prototype.getProtocolConnectionManager = function () {
+        return this._protocolConnectionManager;
+    };
+
     /**
     * END TESTING PURPOSES ONLY
     */
@@ -390,6 +406,7 @@ var ProxyManager = (function (_super) {
     ProxyManager.prototype._requestProxy = function (node) {
         var _this = this;
         var identifier = this._nodeToIdentifier(node);
+
         this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), function (err) {
             if (!err) {
                 _this._requestedProxies[identifier] = setTimeout(function () {
@@ -479,7 +496,7 @@ var ProxyManager = (function (_super) {
         var keys = Object.keys(this._confirmedProxies);
 
         for (var i = 0; i < keys.length; i++) {
-            addressList.concat(this._confirmedProxies[keys[i]].getAddresses());
+            addressList = addressList.concat(this._confirmedProxies[keys[i]].getAddresses());
         }
 
         this._myNode.updateAddresses(addressList);
