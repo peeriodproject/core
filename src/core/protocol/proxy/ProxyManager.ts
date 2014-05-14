@@ -162,8 +162,9 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 
 		this._protocolConnectionManager = protocolConnectionManager;
 		this._routingTable = routingTable;
-		this._externalAddressList = this._myNode.getAddresses();
+
 		this._myNode = this._protocolConnectionManager.getMyNode();
+		this._externalAddressList = this._myNode.getAddresses();
 
 		if (this._externalAddressList.length) {
 			this._reachableFromOutside = true;
@@ -176,12 +177,41 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	 * BEGIN TESTING PURPOSES ONLY
 	 */
 
+	public getMyNode ():MyNodeInterface {
+		return this._myNode;
+	}
+
+	public getRequestedProxies ():any {
+		return this._requestedProxies;
+	}
+
+	public getConfirmedProxies ():ProxyList {
+		return this._confirmedProxies;
+	}
+
+	public getProxyingFor ():ProxyList {
+		return this._proxyingFor;
+	}
+
+	public getProtocolConnectionManager ():ProtocolConnectionManagerInterface {
+		return this._protocolConnectionManager;
+	}
+
+
 	/**
 	 * END TESTING PURPOSES ONLY
 	 */
 
+	public isProxyCapable ():boolean {
+		return (Object.keys(this._proxyingFor).length < this._proxyForMaxNumberOfNodes) && this._reachableFromOutside;
+	}
+
 	public kickOff ():void {
 		this._proxyCycle();
+	}
+
+	public needsAdditionalProxy ():boolean {
+		return ((Object.keys(this._confirmedProxies).length + Object.keys(this._requestedProxies).length) < this._maxNumberOfProxies) && !this._reachableFromOutside;
 	}
 
 	/**
@@ -285,7 +315,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 			message.discard();
 		}
 		else if (msgType === 'PROXY_REQUEST') {
-			if (!this._proxyingFor[identifier] && this._isProxyCapable()) {
+			if (!this._proxyingFor[identifier] && this.isProxyCapable()) {
 				this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_ACCEPT', new Buffer(0), (err:Error) => {
 					if (!err) {
 						this._addToProxyingFor(identifier, sender);
@@ -303,18 +333,6 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 				this._protocolConnectionManager.forceMessageThroughPipe(sender, message.getPayload());
 			}
 		}
-	}
-
-	/**
-	 * Checks if the node can be a proxy, i.e. if the number of nodes it is already proxying does not exceed the proxy limit
-	 * and if the node is reachable from outside.
-	 *
-	 * @method core.protocol.proxy.ProxyManager~_isProxyCapable
-	 *
-	 * @returns {boolean}
-	 */
-	private _isProxyCapable ():boolean {
-		return (Object.keys(this._proxyingFor).length < this._proxyForMaxNumberOfNodes) && this._reachableFromOutside;
 	}
 
 	/**
@@ -344,18 +362,6 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	}
 
 	/**
-	 * Checks if the node needs another proxy, i.e. if the number of confirmed proxies plus the number of currently
-	 * requested proxies is less than the maxmimum number of proxies one is allowed to have.
-	 *
-	 * @method core.protocol.proxy.ProxyManager~_needsAdditionalProxy
-	 *
-	 * @returns {boolean}
-	 */
-	private _needsAdditionalProxy ():boolean {
-		return ((Object.keys(this._confirmedProxies).length + Object.keys(this._requestedProxies).length) < this._maxNumberOfProxies) && !this._reachableFromOutside;
-	}
-
-	/**
 	 * Returns the hexadecimal string representation of the provided node's ID.
 	 *
 	 * @method core.protocol.proxy.ProxyManager~_nodeToIdentifier
@@ -374,7 +380,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	 * @method core.protocol.proxy.ProxyManager~_proxyCycle
 	 */
 	private _proxyCycle ():void {
-		if (this._canProxyCycle && this._needsAdditionalProxy()) {
+		if (this._canProxyCycle && this.needsAdditionalProxy()) {
 			this._routingTable.getRandomContactNode((err:Error, potentialNode:ContactNodeInterface) => {
 				if (err) {
 					this._blockProxyCycle();
@@ -428,6 +434,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	 */
 	private _requestProxy (node:ContactNodeInterface):void {
 		var identifier:string = this._nodeToIdentifier(node);
+
 		this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), (err:Error) => {
 			if (!err) {
 				this._requestedProxies[identifier] = setTimeout(() => {
@@ -519,7 +526,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		var keys:Array<string> = Object.keys(this._confirmedProxies);
 
 		for (var i = 0; i < keys.length; i++) {
-			addressList.concat(this._confirmedProxies[keys[i]].getAddresses());
+			addressList = addressList.concat(this._confirmedProxies[keys[i]].getAddresses());
 		}
 
 		this._myNode.updateAddresses(addressList);

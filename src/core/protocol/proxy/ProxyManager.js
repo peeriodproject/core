@@ -140,8 +140,9 @@ var ProxyManager = (function (_super) {
 
         this._protocolConnectionManager = protocolConnectionManager;
         this._routingTable = routingTable;
-        this._externalAddressList = this._myNode.getAddresses();
+
         this._myNode = this._protocolConnectionManager.getMyNode();
+        this._externalAddressList = this._myNode.getAddresses();
 
         if (this._externalAddressList.length) {
             this._reachableFromOutside = true;
@@ -152,11 +153,39 @@ var ProxyManager = (function (_super) {
     /**
     * BEGIN TESTING PURPOSES ONLY
     */
+    ProxyManager.prototype.getMyNode = function () {
+        return this._myNode;
+    };
+
+    ProxyManager.prototype.getRequestedProxies = function () {
+        return this._requestedProxies;
+    };
+
+    ProxyManager.prototype.getConfirmedProxies = function () {
+        return this._confirmedProxies;
+    };
+
+    ProxyManager.prototype.getProxyingFor = function () {
+        return this._proxyingFor;
+    };
+
+    ProxyManager.prototype.getProtocolConnectionManager = function () {
+        return this._protocolConnectionManager;
+    };
+
     /**
     * END TESTING PURPOSES ONLY
     */
+    ProxyManager.prototype.isProxyCapable = function () {
+        return (Object.keys(this._proxyingFor).length < this._proxyForMaxNumberOfNodes) && this._reachableFromOutside;
+    };
+
     ProxyManager.prototype.kickOff = function () {
         this._proxyCycle();
+    };
+
+    ProxyManager.prototype.needsAdditionalProxy = function () {
+        return ((Object.keys(this._confirmedProxies).length + Object.keys(this._requestedProxies).length) < this._maxNumberOfProxies) && !this._reachableFromOutside;
     };
 
     /**
@@ -261,7 +290,7 @@ var ProxyManager = (function (_super) {
             }
             message.discard();
         } else if (msgType === 'PROXY_REQUEST') {
-            if (!this._proxyingFor[identifier] && this._isProxyCapable()) {
+            if (!this._proxyingFor[identifier] && this.isProxyCapable()) {
                 this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_ACCEPT', new Buffer(0), function (err) {
                     if (!err) {
                         _this._addToProxyingFor(identifier, sender);
@@ -277,18 +306,6 @@ var ProxyManager = (function (_super) {
                 this._protocolConnectionManager.forceMessageThroughPipe(sender, message.getPayload());
             }
         }
-    };
-
-    /**
-    * Checks if the node can be a proxy, i.e. if the number of nodes it is already proxying does not exceed the proxy limit
-    * and if the node is reachable from outside.
-    *
-    * @method core.protocol.proxy.ProxyManager~_isProxyCapable
-    *
-    * @returns {boolean}
-    */
-    ProxyManager.prototype._isProxyCapable = function () {
-        return (Object.keys(this._proxyingFor).length < this._proxyForMaxNumberOfNodes) && this._reachableFromOutside;
     };
 
     /**
@@ -316,18 +333,6 @@ var ProxyManager = (function (_super) {
     };
 
     /**
-    * Checks if the node needs another proxy, i.e. if the number of confirmed proxies plus the number of currently
-    * requested proxies is less than the maxmimum number of proxies one is allowed to have.
-    *
-    * @method core.protocol.proxy.ProxyManager~_needsAdditionalProxy
-    *
-    * @returns {boolean}
-    */
-    ProxyManager.prototype._needsAdditionalProxy = function () {
-        return ((Object.keys(this._confirmedProxies).length + Object.keys(this._requestedProxies).length) < this._maxNumberOfProxies) && !this._reachableFromOutside;
-    };
-
-    /**
     * Returns the hexadecimal string representation of the provided node's ID.
     *
     * @method core.protocol.proxy.ProxyManager~_nodeToIdentifier
@@ -347,7 +352,7 @@ var ProxyManager = (function (_super) {
     */
     ProxyManager.prototype._proxyCycle = function () {
         var _this = this;
-        if (this._canProxyCycle && this._needsAdditionalProxy()) {
+        if (this._canProxyCycle && this.needsAdditionalProxy()) {
             this._routingTable.getRandomContactNode(function (err, potentialNode) {
                 if (err) {
                     _this._blockProxyCycle();
@@ -401,6 +406,7 @@ var ProxyManager = (function (_super) {
     ProxyManager.prototype._requestProxy = function (node) {
         var _this = this;
         var identifier = this._nodeToIdentifier(node);
+
         this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), function (err) {
             if (!err) {
                 _this._requestedProxies[identifier] = setTimeout(function () {
@@ -490,7 +496,7 @@ var ProxyManager = (function (_super) {
         var keys = Object.keys(this._confirmedProxies);
 
         for (var i = 0; i < keys.length; i++) {
-            addressList.concat(this._confirmedProxies[keys[i]].getAddresses());
+            addressList = addressList.concat(this._confirmedProxies[keys[i]].getAddresses());
         }
 
         this._myNode.updateAddresses(addressList);
