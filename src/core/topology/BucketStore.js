@@ -139,6 +139,32 @@ var BucketStore = (function () {
         return values;
     };
 
+    BucketStore.prototype.getLongestNotSeen = function (bucketKey) {
+        var txn = this._beginReadOnlyTransaction();
+        var cursor = this._getCursor(txn);
+        var bucketKeyShortcut = this._getBucketKey(bucketKey);
+        var lastSeenId = null;
+        var contact = null;
+
+        for (var found = cursor.goToRange(bucketKeyShortcut); found; found = cursor.goToNext()) {
+            // Stop the loop if the current key is no longer part of the bucket
+            if (found.indexOf(bucketKeyShortcut) !== 0) {
+                break;
+            }
+
+            cursor.getCurrentBinary(function (key, idBuffer) {
+                lastSeenId = idBuffer;
+            });
+
+            contact = this._get(txn, lastSeenId);
+        }
+
+        cursor.close();
+        txn.commit();
+
+        return contact;
+    };
+
     BucketStore.prototype.isOpen = function () {
         return this._isOpen;
     };
@@ -162,7 +188,6 @@ var BucketStore = (function () {
     };
 
     BucketStore.prototype.remove = function (bucketKey, id) {
-        // todo Typescript: propper return type (callback vs return)
         var contact = this.get(bucketKey, id);
         var lastSeen;
         var txn;
@@ -209,8 +234,6 @@ var BucketStore = (function () {
 
     /**
     * Adds the given object within the specified transaction `txn` to the database
-    *
-    * todo all lastSeen keys should have the same length!
     *
     * @method core.topology.BucketStore~_add
     *

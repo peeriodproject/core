@@ -153,6 +153,32 @@ class BucketStore implements BucketStoreInterface {
 		return values;
 	}
 
+	public getLongestNotSeen (bucketKey:string):ContactNodeObjectInterface {
+		var txn:lmdb.Txn = this._beginReadOnlyTransaction();
+		var cursor:lmdb.Cursor = this._getCursor(txn);
+		var bucketKeyShortcut = this._getBucketKey(bucketKey);
+		var lastSeenId:Buffer = null;
+		var contact:ContactNodeObjectInterface = null;
+
+		for (var found = cursor.goToRange(bucketKeyShortcut); found; found = cursor.goToNext()) {
+			// Stop the loop if the current key is no longer part of the bucket
+			if (found.indexOf(bucketKeyShortcut) !== 0) {
+				break;
+			}
+
+			cursor.getCurrentBinary((key, idBuffer) => {
+				lastSeenId = idBuffer;
+			});
+
+			contact = this._get(txn, lastSeenId);
+		}
+
+		cursor.close();
+		txn.commit();
+
+		return contact;
+	}
+
 	public isOpen ():boolean {
 		return this._isOpen;
 	}
@@ -177,7 +203,6 @@ class BucketStore implements BucketStoreInterface {
 	}
 
 	public remove (bucketKey:string, id:Buffer):boolean {
-		// todo Typescript: propper return type (callback vs return)
 		var contact:ContactNodeObjectInterface = this.get(bucketKey, id);
 		var lastSeen:number;
 		var txn:lmdb.Txn;
@@ -223,8 +248,6 @@ class BucketStore implements BucketStoreInterface {
 
 	/**
 	 * Adds the given object within the specified transaction `txn` to the database
-	 *
-	 * todo all lastSeen keys should have the same length!
 	 *
 	 * @method core.topology.BucketStore~_add
 	 *
