@@ -247,6 +247,27 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 		var bucketFactory:BucketFactoryInterface;
 		var bucketStore:BucketStoreInterface;
 		var contactNodeFactory:ContactNodeFactory;
+		var createContactNodes = function (routingTable:RoutingTableInterface, amount:number, callback:Function) {
+			var addedAmount = 0;
+			var addContactNode = function () {
+				var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
+
+				routingTable.updateContactNode(contact, function (err:Error) {
+					if (!err) {
+						addedAmount++;
+					}
+
+					if (addedAmount < amount) {
+						addContactNode();
+					}
+					else {
+						callback();
+					}
+				});
+			};
+
+			addContactNode();
+		};
 
 		beforeEach(function () {
 			testUtils.createFolder(databasePath);
@@ -283,7 +304,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 
 				routingTable = new RoutingTable(configStub, owner.getId(), bucketFactory, bucketStore, contactNodeFactory, {
 					closeOnProcessExit: false,
-					onOpenCallback: function () {
+					onOpenCallback    : function () {
 						routingTable.replaceContactNode(oldContact, newContact, function (err:Error) {
 							err.should.be.an.instanceof(Error);
 							err.message.should.equal('RoutingTable.replaceContactNode: Cannot replace the given contact nodes. They dont belong to the same Bucket.');
@@ -296,7 +317,6 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 
 			it('should correctly replace the given contact nodes', function (done) {
 				var routingTable:RoutingTableInterface;
-				var myIdBitString:string = me.getId().toBitString();
 
 				var oldContact:ContactNodeInterface = ContactNodeFactory.createDummy();
 				var oldIdBitString:string = oldContact.getId().toBitString();
@@ -328,33 +348,50 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 					});
 				});
 			});
+		});
+
+		describe('should correctly return a random contact node @joern', function () {
+
+			it('should not fail if the buckets are empty', function (done) {
+				var routingTable:RoutingTableInterface;
+
+				routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
+					closeOnProcessExit: false,
+					onOpenCallback    : function () {
+
+						routingTable.getRandomContactNode(function (err:Error, contact:ContactNodeInterface) {
+							(err === null).should.be.true;
+							(contact === null).should.be.true;
+
+							closeRtAndDone(routingTable, done);
+						});
+					}
+				});
+			});
+
+			it ('should correctly return a random contact node', function (done) {
+				var routingTable:RoutingTableInterface;
+
+				routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
+					closeOnProcessExit: false,
+					onOpenCallback: function () {
+						createContactNodes(routingTable, 100, function () {
+							routingTable.getRandomContactNode(function (err:Error, contact:ContactNodeInterface) {
+								(err === null).should.be.true;
+
+								contact.should.be.an.instanceof(ContactNode);
+
+								closeRtAndDone(routingTable, done);
+							});
+						});
+					}
+				});
+			});
 
 		});
 
 		describe('should correctly return the closest contact nodes', function () {
 			var targetNode:ContactNodeInterface;
-
-			var createContactNodes = function (routingTable:RoutingTableInterface, amount:number, callback:Function) {
-				var addedAmount = 0;
-				var addContactNode = function () {
-					var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
-
-					routingTable.updateContactNode(contact, function (err:Error) {
-						if (!err) {
-							addedAmount++;
-						}
-
-						if (addedAmount < amount) {
-							addContactNode();
-						}
-						else {
-							callback();
-						}
-					});
-				};
-
-				addContactNode();
-			};
 
 			beforeEach(function () {
 				targetNode = ContactNodeFactory.createDummy();

@@ -115,7 +115,7 @@ var RoutingTable = (function () {
         }
 
         var topologyK = this._config.get('topology.k');
-        var bitLength = this._config.get('topology.bitLength');
+        var bucketAmount = this._getBucketAmount();
 
         var distances = [];
         var distanceMap = {};
@@ -167,7 +167,7 @@ var RoutingTable = (function () {
                         crawlBucket(--crawlBucketKey, false, onCrawlEnd);
                     } else {
                         //console.log('reached the first bucket.');
-                        if (distances.length < topologyK && startBucketKey < bitLength - 1) {
+                        if (distances.length < topologyK && startBucketKey < bucketAmount - 1) {
                             //console.log('starting reverse search!');
                             crawlBucket(++startBucketKey, true, onCrawlEnd);
                         } else {
@@ -176,11 +176,11 @@ var RoutingTable = (function () {
                         }
                     }
                 } else {
-                    if (crawlBucketKey < bitLength - 1) {
+                    if (crawlBucketKey < bucketAmount - 1) {
                         //console.log('crawl the next bucket', distances.length);
                         crawlBucket(++crawlBucketKey, true, onCrawlEnd);
                     } else {
-                        //console.log('reached the last bucket ' + (bitLength - 1) + '. ending...');
+                        //console.log('reached the last bucket ' + (bucketAmount - 1) + '. ending...');
                         onCrawlEnd();
                     }
                 }
@@ -222,7 +222,37 @@ var RoutingTable = (function () {
     };
 
     RoutingTable.prototype.getRandomContactNode = function (callback) {
-        // todo implementation
+        var _this = this;
+        var bucketKeysToCrawl = new Array(this._getBucketAmount());
+
+        // Crawls a random bucket from the bucketKeysToCrawlList and calls itself as long as the length is not 0
+        var crawlRandomBucket = function () {
+            var randomBucketIndex = Math.round(Math.random() * (bucketKeysToCrawl.length - 1));
+
+            if (_this._isInBucketKeyRange(randomBucketIndex)) {
+                var randomBucketKey = bucketKeysToCrawl[randomBucketIndex];
+
+                _this._buckets[randomBucketKey].getRandom(function (err, contact) {
+                    bucketKeysToCrawl.splice(randomBucketIndex, 1);
+
+                    if (contact === null) {
+                        return crawlRandomBucket();
+                    } else {
+                        bucketKeysToCrawl = null;
+                        return process.nextTick(callback.bind(null, null, contact));
+                    }
+                });
+            } else {
+                return process.nextTick(callback.bind(null, null, null));
+            }
+        };
+
+        for (var i = 0, amount = this._getBucketAmount(); i < amount; i++) {
+            bucketKeysToCrawl[i] = this._convertBucketKeyToString(i);
+        }
+
+        // start crawling
+        crawlRandomBucket();
     };
 
     RoutingTable.prototype.isOpen = function (callback) {
@@ -238,7 +268,7 @@ var RoutingTable = (function () {
 
         this._buckets = {};
 
-        for (var i = 0, k = this._config.get('topology.bitLength'); i < k; i++) {
+        for (var i = 0, k = this._getBucketAmount(); i < k; i++) {
             this._createBucket(i, this._config.get('topology.k'));
         }
 
@@ -297,24 +327,6 @@ var RoutingTable = (function () {
     };
 
     /**
-    * Returns the bucket key where the given id should be stored.
-    * See {@link core.topology.Id.differsInHighestBit} for more information.
-    *
-    * @method core.topology.RoutingTable~_getBucketKey
-    *
-    * @param {core.topology.IdInterface} id
-    * @return {number}
-    */
-    RoutingTable.prototype._getBucketKey = function (id) {
-        return this._id.differsInHighestBit(id);
-    };
-
-    /*
-    * this method will be used whenever node-lmdb updates it's code from nodes SlowBuffer to the new node Buffer class
-    private _getBucketKeyAsString (id:IdInterface):string {
-    return    this._convertBucketKeyToString(this._getBucketKey(id));
-    }*/
-    /**
     * Converts the bucket key from a number to a string so we can use the strinified key to make requests to the database
     *
     * @method core.topology.RoutingTable~_convertBucketKeyToString
@@ -340,6 +352,36 @@ var RoutingTable = (function () {
     };
 
     /**
+    * Returns the amount of buckets the routing table manages.
+    *
+    * @method core.topology.RoutingTable~_getBucketAmount
+    *
+    * @returns {number}
+    */
+    RoutingTable.prototype._getBucketAmount = function () {
+        return this._config.get('topology.bitLength');
+    };
+
+    /**
+    * Returns the bucket key where the given id should be stored.
+    * See {@link core.topology.Id.differsInHighestBit} for more information.
+    *
+    * @method core.topology.RoutingTable~_getBucketKey
+    *
+    * @param {core.topology.IdInterface} id
+    * @return {number}
+    */
+    RoutingTable.prototype._getBucketKey = function (id) {
+        return this._id.differsInHighestBit(id);
+    };
+
+    /*
+    * this method will be used whenever node-lmdb updates it's code from nodes SlowBuffer to the new node Buffer class
+    */
+    //private _getBucketKeyAsString (id:IdInterface):string {
+    //	return    this._convertBucketKeyToString(this._getBucketKey(id));
+    //}
+    /**
     * Returns `true` if the given bucket key fits into the range `0 <= bucketKey < topology.bitLength`
     *
     * @method core.topology.RoutingTable~_isInBucketKeyRange
@@ -348,7 +390,7 @@ var RoutingTable = (function () {
     * @return {boolean}
     */
     RoutingTable.prototype._isInBucketKeyRange = function (bucketKey) {
-        return (0 <= bucketKey && bucketKey < this._config.get('topology.bitLength'));
+        return (0 <= bucketKey && bucketKey < this._getBucketAmount());
     };
     return RoutingTable;
 })();

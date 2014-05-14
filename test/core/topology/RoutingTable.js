@@ -8,7 +8,7 @@ var RoutingTable = require('../../../src/core/topology/RoutingTable');
 var Bucket = require('../../../src/core/topology/Bucket');
 var BucketFactory = require('../../../src/core/topology/BucketFactory');
 var BucketStore = require('../../../src/core/topology/BucketStore');
-
+var ContactNode = require('../../../src/core/topology/ContactNode');
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
@@ -235,6 +235,26 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
         var bucketFactory;
         var bucketStore;
         var contactNodeFactory;
+        var createContactNodes = function (routingTable, amount, callback) {
+            var addedAmount = 0;
+            var addContactNode = function () {
+                var contact = ContactNodeFactory.createDummy();
+
+                routingTable.updateContactNode(contact, function (err) {
+                    if (!err) {
+                        addedAmount++;
+                    }
+
+                    if (addedAmount < amount) {
+                        addContactNode();
+                    } else {
+                        callback();
+                    }
+                });
+            };
+
+            addContactNode();
+        };
 
         beforeEach(function () {
             testUtils.createFolder(databasePath);
@@ -280,7 +300,6 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 
             it('should correctly replace the given contact nodes', function (done) {
                 var routingTable;
-                var myIdBitString = me.getId().toBitString();
 
                 var oldContact = ContactNodeFactory.createDummy();
                 var oldIdBitString = oldContact.getId().toBitString();
@@ -314,29 +333,45 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             });
         });
 
+        describe('should correctly return a random contact node @joern', function () {
+            it('should not fail if the buckets are empty', function (done) {
+                var routingTable;
+
+                routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
+                    closeOnProcessExit: false,
+                    onOpenCallback: function () {
+                        routingTable.getRandomContactNode(function (err, contact) {
+                            (err === null).should.be.true;
+                            (contact === null).should.be.true;
+
+                            closeRtAndDone(routingTable, done);
+                        });
+                    }
+                });
+            });
+
+            it('should correctly return a random contact node', function (done) {
+                var routingTable;
+
+                routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
+                    closeOnProcessExit: false,
+                    onOpenCallback: function () {
+                        createContactNodes(routingTable, 100, function () {
+                            routingTable.getRandomContactNode(function (err, contact) {
+                                (err === null).should.be.true;
+
+                                contact.should.be.an.instanceof(ContactNode);
+
+                                closeRtAndDone(routingTable, done);
+                            });
+                        });
+                    }
+                });
+            });
+        });
+
         describe('should correctly return the closest contact nodes', function () {
             var targetNode;
-
-            var createContactNodes = function (routingTable, amount, callback) {
-                var addedAmount = 0;
-                var addContactNode = function () {
-                    var contact = ContactNodeFactory.createDummy();
-
-                    routingTable.updateContactNode(contact, function (err) {
-                        if (!err) {
-                            addedAmount++;
-                        }
-
-                        if (addedAmount < amount) {
-                            addContactNode();
-                        } else {
-                            callback();
-                        }
-                    });
-                };
-
-                addContactNode();
-            };
 
             beforeEach(function () {
                 targetNode = ContactNodeFactory.createDummy();
