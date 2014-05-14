@@ -286,7 +286,7 @@ describe('CORE --> TOPOLOGY --> Bucket', function () {
 			});
 		});
 
-		it ('should call the internal getRandom method @joern', function (done) {
+		it ('should call the internal getRandom method', function (done) {
 			createStubbedBucketStore();
 
 			bucket.getRandom(function(err, contact) {

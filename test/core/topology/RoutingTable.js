@@ -272,7 +272,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             testUtils.deleteFolderRecursive(databasePath);
         });
 
-        describe('should correctly replace the given contact nodes if they belong to the same bucket @joern', function () {
+        describe('should correctly replace the given contact nodes if they belong to the same bucket', function () {
             it('should correctly return an error if the contact nodes dont belong to the same bucket', function (done) {
                 var routingTable;
 
@@ -333,7 +333,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             });
         });
 
-        describe('should correctly return a random contact node @joern', function () {
+        describe('should correctly return a random contact node', function () {
             it('should not fail if the buckets are empty', function (done) {
                 var routingTable;
 

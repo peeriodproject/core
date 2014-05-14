@@ -114,7 +114,7 @@ describe('CORE --> TOPOLOGY --> BucketStore', function () {
 		lastSeenObject.lastSeen.should.equal(contacts[9].getLastSeen());
 	});
 
-	it ('should correctly return a random item for the specified bucket key @joern', function () {
+	it ('should correctly return a random item for the specified bucket key', function () {
 		var contacts:ContactNodeListInterface = [];
 		var amount:number = 10;
 
