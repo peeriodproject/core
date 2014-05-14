@@ -52,11 +52,11 @@ describe('CORE --> TOPOLOGY --> Bucket', function () {
 	});
 
 	it('should correctly instantiate Bucket without error', function () {
-		createBucket(stubPublicApi(BucketStore));
+		createStubbedBucketStore();
 		bucket.should.be.an.instanceof(Bucket);
 	});
 
-	describe('should correctly limit the bucket size an return an error in the callback', function () {
+	describe('should correctly limit the bucket size an return an error and the longest not seen contact in the callback', function () {
 
 		it('should correctly call the add method', function (done) {
 			createStubbedBucketStore({
@@ -65,7 +65,7 @@ describe('CORE --> TOPOLOGY --> Bucket', function () {
 				}
 			});
 
-			bucket.add(ContactNodeFactory.createDummy(), function (err) {
+			bucket.add(ContactNodeFactory.createDummy(), function (err, longestNotSeenContact:ContactNodeInterface) {
 				err.should.be.an.instanceof(Error);
 				err.message.should.equal('Bucket.add: Cannot add another contact. The Bucket is already full.');
 
@@ -84,7 +84,7 @@ describe('CORE --> TOPOLOGY --> Bucket', function () {
 				}
 			});
 
-			bucket.update(contact, function (err:Error) {
+			bucket.update(contact, function (err:Error, longestNotSeenContact:ContactNodeInterface) {
 				err.should.be.an.instanceof(Error);
 				err.message.should.equal('Bucket.add: Cannot add another contact. The Bucket is already full.');
 
@@ -92,6 +92,52 @@ describe('CORE --> TOPOLOGY --> Bucket', function () {
 				bucketStoreStub.add.called.should.be.false;
 
 				done();
+			});
+		});
+
+		it('should correctly return the longest not seen contact in the callback @joern', function (done) {
+			var storedObject:ContactNodeObjectInterface = {
+				addresses: [
+					{
+						_ip  : '74.59.112.219',
+						_port: 34057,
+						_isV4: true,
+						_isV6: false
+					}
+				],
+				id       : [ 191, 1, 217, 56, 3, 157, 198, 227, 250, 234, 208, 44, 232, 174, 249, 150, 191, 111, 74, 119 ],
+				lastSeen : 1400069321681943
+			};
+
+			configStub = stubPublicApi(ObjectConfig, {
+				get: function (key) {
+					if (key === 'topology.k') {
+						return 0;
+					}
+				}
+			});
+
+			bucketStoreStub = stubPublicApi(BucketStore, {
+				getLongestNotSeen: function ():ContactNodeObjectInterface {
+					return storedObject;
+				}
+			});
+
+
+			bucket = new Bucket(configStub, name, maxBucketSize, bucketStoreStub, new ContactNodeFactory());
+
+			bucket.add(ContactNodeFactory.createDummy(), function (err:Error, contact:ContactNodeInterface) {
+				err.should.be.an.instanceof(Error);
+				contact.should.be.an.instanceof(ContactNode);
+				var longestNotSeenContact = JSON.parse(JSON.stringify(contact));
+
+				longestNotSeenContact._addresses.should.containDeep(storedObject.addresses);
+				longestNotSeenContact._id._buffer.should.containDeep(storedObject.id);
+				longestNotSeenContact._lastSeen.should.equal(storedObject.lastSeen);
+
+				bucket.close(function () {
+					done();
+				});
 			});
 		});
 
@@ -105,7 +151,7 @@ describe('CORE --> TOPOLOGY --> Bucket', function () {
 			// create address objects
 			for (var i in nodeAddresses) {
 				addresses.push({
-					_ip: nodeAddresses[i].getIp(),
+					_ip  : nodeAddresses[i].getIp(),
 					_port: nodeAddresses[i].getPort()
 				});
 			}
@@ -158,7 +204,7 @@ describe('CORE --> TOPOLOGY --> Bucket', function () {
 				}
 			});
 
-			bucket.getAll(function(err:Error, contacts:ContactNodeListInterface) {
+			bucket.getAll(function (err:Error, contacts:ContactNodeListInterface) {
 				contacts[0].should.be.an.instanceof(ContactNode);
 				done();
 			});
@@ -211,7 +257,7 @@ describe('CORE --> TOPOLOGY --> Bucket', function () {
 		it('should call the internal get method', function (done) {
 			var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
 
-			createBucket(stubPublicApi(BucketStore));
+			createStubbedBucketStore();
 
 			bucket.get(contact.getId(), function (err, contact) {
 				bucketStoreStub.get.calledOnce.should.be.true;
@@ -221,12 +267,20 @@ describe('CORE --> TOPOLOGY --> Bucket', function () {
 		});
 
 		it('should call the internal getAll method', function (done) {
-			var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
-
-			createBucket(stubPublicApi(BucketStore));
+			createStubbedBucketStore();
 
 			bucket.getAll(function (err, contact) {
 				bucketStoreStub.getAll.calledOnce.should.be.true;
+
+				done();
+			});
+		});
+
+		it('should call the internal getLongestNotSeen method', function (done) {
+			createStubbedBucketStore();
+
+			bucket.getLongestNotSeen(function (err, contact) {
+				bucketStoreStub.getLongestNotSeen.calledOnce.should.be.true;
 
 				done();
 			});
@@ -293,7 +347,7 @@ describe('CORE --> TOPOLOGY --> Bucket', function () {
 				}
 			});
 
-			bucket.update(contact, function (err:Error) {
+			bucket.update(contact, function (err:Error, longestNotSeenContact:ContactNodeInterface) {
 				bucketStoreStub.remove.calledOnce.should.be.true;
 				bucketStoreStub.add.calledOnce.should.be.true;
 

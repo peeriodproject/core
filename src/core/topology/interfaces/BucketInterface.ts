@@ -12,13 +12,15 @@ interface BucketInterface extends ClosableAsyncInterface {
 
 	/**
 	 * Adds the specified contact node to the bucket. It returns an error in the callback if the bucket is already full.
-	 * The Error contains the last seen contact node of the bucket.
+	 * In addition to the error the callback contains the contact node which was not seen for the longest time in the bucket.
 	 *
 	 * @method core.topology.BucketInterface#add
 	 *
 	 * @param {core.topology.ContactNodeInterface} contact
+	 * @param {Function} callback
+	 *
 	 */
-	add (contact:ContactNodeInterface, callback?:(err:Error) => any):void;
+	add (contact:ContactNodeInterface, callback?:(err:Error, longestNotSeenContact:ContactNodeInterface) => any):void;
 
 	/**
 	 * Returns `true` if the bucket contains the specified contact node.
@@ -26,7 +28,7 @@ interface BucketInterface extends ClosableAsyncInterface {
 	 * @method core.topology.BucketInterface#contains
 	 *
 	 * @param {core.topology.ContactNodeInterface} contact
-	 * @returns {boolean}
+	 * @param {Function} callback
 	 */
 	contains (contact:ContactNodeInterface, callback:(err:Error, contains:boolean) => any):void;
 
@@ -36,16 +38,27 @@ interface BucketInterface extends ClosableAsyncInterface {
 	 * @method core.topology.BucketInterface#get
 	 *
 	 * @param {core.topology.IdInterface} id
-	 * @returns {any}
+	 * @param {Function} callback
 	 */
 	get (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void;
 
 	/**
 	 * Returns all contacts from the bucket sorted by the last seen property.
 	 *
+	 * @method core.topology.BucketInterface#get
+	 *
 	 * @param callback
 	 */
 	getAll (callback:(err:Error, contacts:ContactNodeListInterface) => any):void;
+
+	/**
+	 * Returns the last seen contact node object for the given bucket key.
+	 *
+	 * @method core.topology.BucketInterface#getLongestNotSeen
+	 *
+	 * @param {Function} callback
+	 */
+	getLongestNotSeen (callback:(err:Error, contact:ContactNodeInterface) => any):void;
 
 	/**
 	 * Removes a contact node by id
@@ -53,6 +66,7 @@ interface BucketInterface extends ClosableAsyncInterface {
 	 * @method core.topology.BucketInterface#remove
 	 *
 	 * @param {core.topology.IdInterface} id
+	 * @param {Function} callback
 	 */
 	remove (id:IdInterface, callback?:(err:Error) => any):void;
 
@@ -61,18 +75,20 @@ interface BucketInterface extends ClosableAsyncInterface {
 	 *
 	 * @method core.topology.BucketInterface#size
 	 *
-	 * @returns {number}
+	 * @param {Function} callback
 	 */
 	size (callback:(err:Error, size:number) => any):void;
 
 	/**
-	 * Updates specified contact node.
+	 * Updates specified contact node and returns an error if the bucket is already full. In addition to the error the
+	 * callback contains the contact node which was not seen for the longest time in the bucket.
 	 *
 	 * @method core.topology.BucketInterface#update
 	 *
 	 * @param {core.topology.ContactNodeInterface} contact
+	 * @param {Function} callback
 	 */
-	update (contact:ContactNodeInterface, callback?:(err:Error) => any):void;
+	update (contact:ContactNodeInterface, callback?:(err:Error, longestNotSeenContact:ContactNodeInterface) => any):void;
 
 }
 

@@ -77,8 +77,8 @@ class Bucket implements BucketInterface {
 		this.open(internalOpenCallback);
 	}
 
-	public add (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
-		var internalCallback = callback || function (err:Error) {
+	public add (contact:ContactNodeInterface, callback?:(err:Error, longestNotSeenContact:ContactNodeInterface) => any):void {
+		var internalCallback = callback || function (err:Error, longestNotSeenContact:ContactNodeInterface) {
 		};
 
 		if (this._store.size(this._keyString) < this._maxBucketSize) {
@@ -89,10 +89,12 @@ class Bucket implements BucketInterface {
 				contact.getAddresses()
 			);
 
-			internalCallback(null);
+			return process.nextTick(internalCallback.bind(null, null, null));
 		}
 		else {
-			internalCallback(new Error('Bucket.add: Cannot add another contact. The Bucket is already full.'));
+			this.getLongestNotSeen(function (err:Error, contact:ContactNodeInterface) {
+				internalCallback(new Error('Bucket.add: Cannot add another contact. The Bucket is already full.'), contact);
+			});
 		}
 	}
 
@@ -123,7 +125,7 @@ class Bucket implements BucketInterface {
 
 	}
 
-	getAll (callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
+	public getAll (callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
 		var storedObjects:ContactNodeObjectListInterface = this._store.getAll(this._keyString);
 		var contacts:ContactNodeListInterface = [];
 
@@ -134,6 +136,17 @@ class Bucket implements BucketInterface {
 		}
 
 		return process.nextTick(callback.bind(null, null, contacts));
+	}
+
+	public getLongestNotSeen (callback:(err:Error, contact:ContactNodeInterface) => any):void {
+		var storedObject:ContactNodeObjectInterface = this._store.getLongestNotSeen(this._keyString);
+		var contact:ContactNodeInterface = null;
+
+		if (storedObject) {
+			contact = this._convertToContactNodeInstance(storedObject);
+		}
+
+		return process.nextTick(callback.bind(null, null, contact));
 	}
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
@@ -161,25 +174,25 @@ class Bucket implements BucketInterface {
 		return process.nextTick(callback.bind(null, null, this._store.size(this._keyString)));
 	}
 
-	public update (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
-		var internalCallback = callback || function (err:Error) {
+	public update (contact:ContactNodeInterface, callback?:(err:Error, longestNotSeenContact:ContactNodeInterface) => any):void {
+		var internalCallback = callback || function (err:Error, longestNotSeenContact:ContactNodeInterface) {
 		};
 		var removed:boolean;
 		var added:boolean;
 		var error:Error;
+		var longestNotSeenContact:ContactNodeInterface;
 		var thrown = false;
 
 		var updatedCallback = function () {
 			if (error) {
 				if (!thrown) {
 					thrown = true;
-					return process.nextTick(internalCallback.bind(null, error));
+					return internalCallback(error, longestNotSeenContact);
 				}
 			}
 			else if (removed && added) {
-				return process.nextTick(internalCallback.bind(null, null));
+				return internalCallback(null, null);
 			}
-
 		};
 
 		// todo Benchmark: always replace vs. check nodeaddresses and update
@@ -196,10 +209,11 @@ class Bucket implements BucketInterface {
 			}
 		});
 
-		this.add(contact, function (err:Error) {
+		this.add(contact, function (err:Error, contact:ContactNodeInterface) {
 			if (callback) {
 				if (err) {
 					error = err;
+					longestNotSeenContact = contact;
 				}
 				else {
 					added = true;
