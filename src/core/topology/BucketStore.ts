@@ -179,6 +179,13 @@ class BucketStore implements BucketStoreInterface {
 		return contact;
 	}
 
+	public getRandom (bucketKey:string):ContactNodeObjectInterface {
+		var all:ContactNodeObjectListInterface = this.getAll(bucketKey);
+		var randomIndex:number = Math.round(Math.random() * (all.length - 1));
+
+		return randomIndex > -1 ? all[randomIndex] : null;
+	}
+
 	public isOpen ():boolean {
 		return this._isOpen;
 	}

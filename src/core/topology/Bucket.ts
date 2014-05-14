@@ -114,12 +114,7 @@ class Bucket implements BucketInterface {
 	}
 
 	public get (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void {
-		var storedObject:ContactNodeObjectInterface = this._store.get(this._keyString, id.getBuffer());
-		var contact:ContactNodeInterface = null;
-
-		if (storedObject) {
-			contact = this._convertToContactNodeInstance(storedObject);
-		}
+		var contact:ContactNodeInterface = this._convertToContactNodeInstance(this._store.get(this._keyString, id.getBuffer()));
 
 		return process.nextTick(callback.bind(null, null, contact));
 
@@ -139,12 +134,13 @@ class Bucket implements BucketInterface {
 	}
 
 	public getLongestNotSeen (callback:(err:Error, contact:ContactNodeInterface) => any):void {
-		var storedObject:ContactNodeObjectInterface = this._store.getLongestNotSeen(this._keyString);
-		var contact:ContactNodeInterface = null;
+		var contact:ContactNodeInterface = this._convertToContactNodeInstance(this._store.getLongestNotSeen(this._keyString));
 
-		if (storedObject) {
-			contact = this._convertToContactNodeInstance(storedObject);
-		}
+		return process.nextTick(callback.bind(null, null, contact));
+	}
+
+	public getRandom (callback:(err:Error, contact:ContactNodeInterface) => any):void {
+		var contact:ContactNodeInterface = this._convertToContactNodeInstance(this._store.getRandom(this._keyString));
 
 		return process.nextTick(callback.bind(null, null, contact));
 	}
@@ -234,7 +230,7 @@ class Bucket implements BucketInterface {
 	 * @returns {core.topology.ContactNodeInterface}
 	 */
 	private _convertToContactNodeInstance (contactObject:ContactNodeObjectInterface):ContactNodeInterface {
-		return this._contactNodeFactory.createFromObject(contactObject);
+		return contactObject ? this._contactNodeFactory.createFromObject(contactObject) : null;
 	}
 
 }

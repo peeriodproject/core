@@ -74,7 +74,7 @@ describe('CORE --> TOPOLOGY --> BucketStore', function () {
 
 		for (var i = 0; i < amount; i++) {
 			var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
-			//store.add('bucket1', contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
+
 			contacts.push(contact);
 		}
 
@@ -97,7 +97,7 @@ describe('CORE --> TOPOLOGY --> BucketStore', function () {
 		gotAmount.should.be.equal(amount);
 	});
 
-	it ('should correctly return the contact node which was not seen for the longest time @joern', function () {
+	it ('should correctly return the contact node which was not seen for the longest time', function () {
 		var contacts:ContactNodeListInterface = [];
 		var amount:number = 10;
 
@@ -112,6 +112,31 @@ describe('CORE --> TOPOLOGY --> BucketStore', function () {
 		var lastSeenObject:ContactNodeObjectInterface = store.getLongestNotSeen('bucket1');
 
 		lastSeenObject.lastSeen.should.equal(contacts[9].getLastSeen());
+	});
+
+	it ('should correctly return a random item for the specified bucket key', function () {
+		var contacts:ContactNodeListInterface = [];
+		var amount:number = 10;
+
+		for (var i = 0; i < amount; i++) {
+			var contact:ContactNodeInterface = ContactNodeFactory.createDummy();
+			contacts.push(contact);
+		}
+
+		// add items
+		store.addAll('bucket1', contacts);
+
+		var randomObject:ContactNodeObjectInterface = store.getRandom('bucket1');
+		var found = false;
+
+		for (var i in contacts) {
+			if (contacts[i].getLastSeen() === randomObject.lastSeen) {
+				found = true;
+				break;
+			}
+		}
+
+		found.should.be.true;
 	});
 
 	it('should add multiple contacts at once', function () {

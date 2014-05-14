@@ -90,12 +90,7 @@ var Bucket = (function () {
     };
 
     Bucket.prototype.get = function (id, callback) {
-        var storedObject = this._store.get(this._keyString, id.getBuffer());
-        var contact = null;
-
-        if (storedObject) {
-            contact = this._convertToContactNodeInstance(storedObject);
-        }
+        var contact = this._convertToContactNodeInstance(this._store.get(this._keyString, id.getBuffer()));
 
         return process.nextTick(callback.bind(null, null, contact));
     };
@@ -114,12 +109,13 @@ var Bucket = (function () {
     };
 
     Bucket.prototype.getLongestNotSeen = function (callback) {
-        var storedObject = this._store.getLongestNotSeen(this._keyString);
-        var contact = null;
+        var contact = this._convertToContactNodeInstance(this._store.getLongestNotSeen(this._keyString));
 
-        if (storedObject) {
-            contact = this._convertToContactNodeInstance(storedObject);
-        }
+        return process.nextTick(callback.bind(null, null, contact));
+    };
+
+    Bucket.prototype.getRandom = function (callback) {
+        var contact = this._convertToContactNodeInstance(this._store.getRandom(this._keyString));
 
         return process.nextTick(callback.bind(null, null, contact));
     };
@@ -206,7 +202,7 @@ var Bucket = (function () {
     * @returns {core.topology.ContactNodeInterface}
     */
     Bucket.prototype._convertToContactNodeInstance = function (contactObject) {
-        return this._contactNodeFactory.createFromObject(contactObject);
+        return contactObject ? this._contactNodeFactory.createFromObject(contactObject) : null;
     };
     return Bucket;
 })();

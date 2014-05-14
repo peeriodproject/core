@@ -53,7 +53,7 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	 *
 	 * @param {Function} callback
 	 */
-	getRandomContactNode (callback:(err:Error, ContactNodeInterface) => any):void;
+	getRandomContactNode (callback:(err:Error, contact:ContactNodeInterface) => any):void;
 
 	/**
 	 * Removes the given contact node and adds the new node to the bucket. It returns an error in the callback if the nodes

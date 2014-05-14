@@ -52,13 +52,22 @@ interface BucketInterface extends ClosableAsyncInterface {
 	getAll (callback:(err:Error, contacts:ContactNodeListInterface) => any):void;
 
 	/**
-	 * Returns the last seen contact node object for the given bucket key.
+	 * Returns the last seen contact node.
 	 *
 	 * @method core.topology.BucketInterface#getLongestNotSeen
 	 *
 	 * @param {Function} callback
 	 */
 	getLongestNotSeen (callback:(err:Error, contact:ContactNodeInterface) => any):void;
+
+	/**
+	 * Returns a random contact node
+	 *
+	 * @method core.topology.BucketInterface#getRandom
+	 *
+	 * @param callback
+	 */
+	getRandom (callback:(err:Error, contact:ContactNodeInterface) => any):void;
 
 	/**
 	 * Removes a contact node by id
