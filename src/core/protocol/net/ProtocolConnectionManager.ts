@@ -287,7 +287,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	public forceMessageThroughPipe (originalSender:ContactNodeInterface, rawBuffer:Buffer):void {
 		var msg:ReadableMessageInterface = this._incomingDataPipeline.deformatBuffer(rawBuffer);
 		if (msg) {
-			if (msg.isHydra()) {
+			if (msg.isHydra() || !msg.getReceiverId().equals(this._myNode.getId())) {
 				this._destroyConnectionByIdentifier(this._nodeToIdentifier(originalSender));
 			}
 			else {

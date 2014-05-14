@@ -251,7 +251,7 @@ var ProtocolConnectionManager = (function (_super) {
     ProtocolConnectionManager.prototype.forceMessageThroughPipe = function (originalSender, rawBuffer) {
         var msg = this._incomingDataPipeline.deformatBuffer(rawBuffer);
         if (msg) {
-            if (msg.isHydra()) {
+            if (msg.isHydra() || !msg.getReceiverId().equals(this._myNode.getId())) {
                 this._destroyConnectionByIdentifier(this._nodeToIdentifier(originalSender));
             } else {
                 this.emit('message', msg);
