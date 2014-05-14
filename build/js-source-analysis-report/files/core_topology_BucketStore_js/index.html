@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">69.48</p>
+      <p class="stat">69.01</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">365</p>
+      <p class="stat">388</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">48.43</p>
+      <p class="stat">52.75</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.81</p>
+      <p class="stat">2.03</p>
     </div>
   </div>
 </div>
@@ -231,6 +231,32 @@ var BucketStore = (function () {
         return values;
     };
 
+    BucketStore.prototype.getLongestNotSeen = function (bucketKey) {
+        var txn = this._beginReadOnlyTransaction();
+        var cursor = this._getCursor(txn);
+        var bucketKeyShortcut = this._getBucketKey(bucketKey);
+        var lastSeenId = null;
+        var contact = null;
+
+        for (var found = cursor.goToRange(bucketKeyShortcut); found; found = cursor.goToNext()) {
+            // Stop the loop if the current key is no longer part of the bucket
+            if (found.indexOf(bucketKeyShortcut) !== 0) {
+                break;
+            }
+
+            cursor.getCurrentBinary(function (key, idBuffer) {
+                lastSeenId = idBuffer;
+            });
+
+            contact = this._get(txn, lastSeenId);
+        }
+
+        cursor.close();
+        txn.commit();
+
+        return contact;
+    };
+
     BucketStore.prototype.isOpen = function () {
         return this._isOpen;
     };
@@ -254,7 +280,6 @@ var BucketStore = (function () {
     };
 
     BucketStore.prototype.remove = function (bucketKey, id) {
-        // todo Typescript: propper return type (callback vs return)
         var contact = this.get(bucketKey, id);
         var lastSeen;
         var txn;
@@ -301,8 +326,6 @@ var BucketStore = (function () {
 
     /**
     * Adds the given object within the specified transaction `txn` to the database
-    *
-    * todo all lastSeen keys should have the same length!
     *
     * @method core.topology.BucketStore~_add
     *

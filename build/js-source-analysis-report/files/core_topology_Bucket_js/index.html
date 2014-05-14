@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">74.35</p>
+      <p class="stat">74.21</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">188</p>
+      <p class="stat">203</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">41.90</p>
+      <p class="stat">45.05</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.28</p>
+      <p class="stat">1.42</p>
     </div>
   </div>
 </div>
@@ -152,15 +152,17 @@ var Bucket = (function () {
         this.open(internalOpenCallback);
     }
     Bucket.prototype.add = function (contact, callback) {
-        var internalCallback = callback || function (err) {
+        var internalCallback = callback || function (err, longestNotSeenContact) {
         };
 
         if (this._store.size(this._keyString) &lt; this._maxBucketSize) {
             this._store.add(this._keyString, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
 
-            internalCallback(null);
+            return process.nextTick(internalCallback.bind(null, null, null));
         } else {
-            internalCallback(new Error(&#039;Bucket.add: Cannot add another contact. The Bucket is already full.&#039;));
+            this.getLongestNotSeen(function (err, contact) {
+                internalCallback(new Error(&#039;Bucket.add: Cannot add another contact. The Bucket is already full.&#039;), contact);
+            });
         }
     };
 
@@ -203,6 +205,17 @@ var Bucket = (function () {
         return process.nextTick(callback.bind(null, null, contacts));
     };
 
+    Bucket.prototype.getLongestNotSeen = function (callback) {
+        var storedObject = this._store.getLongestNotSeen(this._keyString);
+        var contact = null;
+
+        if (storedObject) {
+            contact = this._convertToContactNodeInstance(storedObject);
+        }
+
+        return process.nextTick(callback.bind(null, null, contact));
+    };
+
     Bucket.prototype.isOpen = function (callback) {
         return process.nextTick(callback.bind(null, null, this._store.isOpen()));
     };
@@ -229,21 +242,22 @@ var Bucket = (function () {
     };
 
     Bucket.prototype.update = function (contact, callback) {
-        var internalCallback = callback || function (err) {
+        var internalCallback = callback || function (err, longestNotSeenContact) {
         };
         var removed;
         var added;
         var error;
+        var longestNotSeenContact;
         var thrown = false;
 
         var updatedCallback = function () {
             if (error) {
                 if (!thrown) {
                     thrown = true;
-                    return process.nextTick(internalCallback.bind(null, error));
+                    return internalCallback(error, longestNotSeenContact);
                 }
             } else if (removed &amp;&amp; added) {
-                return process.nextTick(internalCallback.bind(null, null));
+                return internalCallback(null, null);
             }
         };
 
@@ -260,10 +274,11 @@ var Bucket = (function () {
             }
         });
 
-        this.add(contact, function (err) {
+        this.add(contact, function (err, contact) {
             if (callback) {
                 if (err) {
                     error = err;
+                    longestNotSeenContact = contact;
                 } else {
                     added = true;
                 }
