@@ -63,7 +63,7 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	 * @param {core.topology.ContactNodeInterface} newContactNode
 	 * @param {Function} callback
 	 */
-	replaceContactNode (oldContactNode:ContactNodeInterface, newContactNode:ContactNodeInterface, callback:(err:Error) => any):void;
+	replaceContactNode (oldContactNode:ContactNodeInterface, newContactNode:ContactNodeInterface, callback:(err:Error, longestNotSeenContact:ContactNodeInterface) => any):void;
 	/**
 	 * Updates the specified contact node
 	 *
@@ -71,7 +71,7 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	 *
 	 * @param {core.topology.ContactNodeInterface} contact
 	 */
-	updateContactNode (contact:ContactNodeInterface, callback?:(err:Error) => any):void;
+	updateContactNode (contact:ContactNodeInterface, callback?:(err:Error, longestNotSeenContact:ContactNodeInterface) => any):void;
 
 }
 
