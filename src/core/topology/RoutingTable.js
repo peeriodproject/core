@@ -227,9 +227,10 @@ var RoutingTable = (function () {
 
         // Crawls a random bucket from the bucketKeysToCrawlList and calls itself as long as the length is not 0
         var crawlRandomBucket = function () {
-            var randomBucketIndex = Math.round(Math.random() * (bucketKeysToCrawl.length - 1));
+            var bucketKeysToCrawlLength = bucketKeysToCrawl.length;
+            var randomBucketIndex = Math.round(Math.random() * (bucketKeysToCrawlLength - 1));
 
-            if (_this._isInBucketKeyRange(randomBucketIndex)) {
+            if (bucketKeysToCrawlLength && randomBucketIndex >= 0 && randomBucketIndex < bucketKeysToCrawlLength) {
                 var randomBucketKey = bucketKeysToCrawl[randomBucketIndex];
 
                 _this._buckets[randomBucketKey].getRandom(function (err, contact) {

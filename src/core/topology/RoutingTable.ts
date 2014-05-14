@@ -257,9 +257,10 @@ class RoutingTable implements RoutingTableInterface {
 		var bucketKeysToCrawl:Array<string> = new Array(this._getBucketAmount());
 		// Crawls a random bucket from the bucketKeysToCrawlList and calls itself as long as the length is not 0
 		var crawlRandomBucket = () => {
-			var randomBucketIndex:number = Math.round(Math.random() * (bucketKeysToCrawl.length - 1));
+			var bucketKeysToCrawlLength:number = bucketKeysToCrawl.length;
+			var randomBucketIndex:number = Math.round(Math.random() * (bucketKeysToCrawlLength - 1));
 
-			if (this._isInBucketKeyRange(randomBucketIndex)) {
+			if (bucketKeysToCrawlLength && randomBucketIndex >= 0 && randomBucketIndex < bucketKeysToCrawlLength) {
 				var randomBucketKey:string = bucketKeysToCrawl[randomBucketIndex];
 
 				this._buckets[randomBucketKey].getRandom(function (err:Error, contact:ContactNodeInterface) {

@@ -167,8 +167,9 @@ var BucketStore = (function () {
 
     BucketStore.prototype.getRandom = function (bucketKey) {
         var all = this.getAll(bucketKey);
+        var randomIndex = Math.round(Math.random() * (all.length - 1));
 
-        return all[Math.round(Math.random() * all.length - 1)];
+        return randomIndex > -1 ? all[randomIndex] : null;
     };
 
     BucketStore.prototype.isOpen = function () {
