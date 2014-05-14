@@ -174,6 +174,108 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		this._proxyCycle();
 	}
 
+	private _addToConfirmedProxies (identifier:string, node:ContactNodeInterface) {
+		this._confirmedProxies[identifier] = node;
+		this._protocolConnectionManager.keepSocketsOpenFromNode(node);
+		this._updateMyNodeAddresses();
+	}
+
+	private _addToProxyingFor (identifier:string, node:ContactNodeInterface) {
+		this._proxyingFor[identifier] = node;
+		this._protocolConnectionManager.keepSocketsOpenFromNode(node);
+	}
+
+	private _blockProxyCycle ():void {
+		this._canProxyCycle = false;
+		if (this._proxyWaitTimeout) {
+			clearTimeout(this._proxyWaitTimeout);
+		}
+		this._proxyWaitTimeout = setTimeout(() => {
+			this._canProxyCycle = true;
+			this._unsuccessfulProxyTries = 0;
+			this._ignoreProxies = [];
+			this._proxyCycle();
+		}, this._unsuccessfulProxyTryWaitTime);
+	}
+
+	private _canUseNodeAsProxy (node:ContactNodeInterface):boolean {
+		var identifier:string = this._nodeToIdentifier(node);
+		var canUse:boolean = true;
+
+		canUse = this._confirmedProxies[identifier] ? false : canUse;
+		canUse = this._requestedProxies[identifier] ? false : canUse;
+		canUse = this._ignoreProxies.indexOf(identifier) > -1 ? false : canUse;
+
+		if (!canUse) {
+			this._unsuccessfulProxyTries++;
+			if (this._unsuccessfulProxyTries >= this._maxUnsuccessfulProxyTries) {
+				this._blockProxyCycle();
+			}
+		}
+
+		return canUse;
+	}
+
+	private _handleProxyMessage (message:ReadableMessageInterface):void {
+		var msgType:string = message.getMessageType();
+		var sender:ContactNodeInterface = message.getSender();
+		var identifier:string = this._nodeToIdentifier(sender);
+
+		if (msgType === 'PROXY_REJECT' || msgType === 'PROXY_ACCEPT') {
+			var requestedProxy:number = this._requestedProxies[identifier];
+			if (requestedProxy) {
+				this._removeFromRequestedProxies(identifier);
+
+				if (msgType === 'PROXY_ACCEPT') {
+					this._addToConfirmedProxies(identifier, sender);
+				}
+
+				this._proxyCycle();
+			}
+			message.discard();
+		}
+		else if (msgType === 'PROXY_REQUEST') {
+			if (!this._proxyingFor[identifier] && this._isProxyCapable()) {
+				this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_ACCEPT', new Buffer(0), (err:Error) => {
+					if (!err) {
+						this._addToProxyingFor(identifier, sender);
+					}
+				});
+			}
+			else {
+				this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_REJECT', new Buffer(0));
+				message.discard();
+			}
+		}
+		else if (msgType === 'PROXY_THROUGH') {
+			if (this._confirmedProxies[identifier]) {
+				// force message through the pipe
+				this._protocolConnectionManager.forceMessageThroughPipe(sender, message.getPayload());
+			}
+		}
+	}
+
+	private _isProxyCapable ():boolean {
+		return (Object.keys(this._proxyingFor).length < this._proxyForMaxNumberOfNodes) && this._reachableFromOutside;
+	}
+
+	private _messageIsIntendedForMyNode (message:ReadableMessageInterface):boolean {
+
+		return message.getReceiverId().equals(this._myNode.getId());
+	}
+
+	private _messageIsProxyAffine (message:ReadableMessageInterface):boolean {
+		return this._proxyAffineMessages.indexOf(message.getMessageType()) > -1;
+	}
+
+	private _needsAdditionalProxy ():boolean {
+		return ((Object.keys(this._confirmedProxies).length + Object.keys(this._requestedProxies).length) < this._maxNumberOfProxies) && !this._reachableFromOutside;
+	}
+
+	private _nodeToIdentifier (node:ContactNodeInterface):string {
+		return node.getId().toHexString();
+	}
+
 	private _proxyCycle ():void {
 		if (this._canProxyCycle && this._needsAdditionalProxy()) {
 			this._routingTable.getRandomContactNode((err:Error, potentialNode:ContactNodeInterface) => {
@@ -184,6 +286,44 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 					this._requestProxy(potentialNode);
 				}
 			});
+		}
+	}
+
+	private _proxyMessageThrough (message:ReadableMessageInterface) {
+		var identifier:string = message.getReceiverId().toHexString();
+		var proxyingForNode = this._proxyingFor[identifier];
+		if (proxyingForNode) {
+			this._protocolConnectionManager.writeMessageTo(proxyingForNode, 'PROXY_THROUGH', message.getRawBuffer(), function () {
+				message.discard();
+			});
+		}
+	}
+
+	private _removeFromRequestedProxies (identifier:string):void {
+		var requestedProxy:number = this._requestedProxies[identifier];
+
+		clearTimeout(requestedProxy);
+		delete this._requestedProxies[identifier];
+		this._ignoreProxies.push[identifier];
+	}
+
+	private _requestProxy (node:ContactNodeInterface):void {
+		var identifier:string = this._nodeToIdentifier(node);
+		this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), (err:Error) => {
+			if (!err) {
+				this._requestedProxies[identifier] = setTimeout(() => {
+					this._requestProxyTimeout(identifier);
+				}, this._reactionTime);
+			}
+			this._proxyCycle();
+		});
+	}
+
+	private _requestProxyTimeout (identifier:string):void {
+		if (this._requestedProxies[identifier]) {
+			delete this._requestedProxies[identifier];
+			this._ignoreProxies.push(identifier);
+			this._proxyCycle();
 		}
 	}
 
@@ -235,146 +375,6 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 				}
 			}
 		})
-	}
-
-	private _proxyMessageThrough (message:ReadableMessageInterface) {
-		var identifier:string = message.getReceiverId().toHexString();
-		var proxyingForNode = this._proxyingFor[identifier];
-		if (proxyingForNode) {
-			this._protocolConnectionManager.writeMessageTo(proxyingForNode, 'PROXY_THROUGH', message.getRawBuffer(), function () {
-				message.discard();
-			});
-		}
-	}
-
-	private _isProxyCapable ():boolean {
-		return (Object.keys(this._proxyingFor).length < this._proxyForMaxNumberOfNodes) && this._reachableFromOutside;
-	}
-
-	private _needsAdditionalProxy ():boolean {
-		return ((Object.keys(this._confirmedProxies).length + Object.keys(this._requestedProxies).length) < this._maxNumberOfProxies) && !this._reachableFromOutside;
-	}
-
-	private _removeFromRequestedProxies (identifier:string):void {
-		var requestedProxy:number = this._requestedProxies[identifier];
-
-		clearTimeout(requestedProxy);
-		delete this._requestedProxies[identifier];
-		this._ignoreProxies.push[identifier];
-	}
-
-	private _addToConfirmedProxies (identifier:string, node:ContactNodeInterface) {
-		this._confirmedProxies[identifier] = node;
-		this._protocolConnectionManager.keepSocketsOpenFromNode(node);
-		this._updateMyNodeAddresses();
-	}
-
-	private _addToProxyingFor (identifier:string, node:ContactNodeInterface) {
-		this._proxyingFor[identifier] = node;
-		this._protocolConnectionManager.keepSocketsOpenFromNode(node);
-	}
-
-	private _handleProxyMessage (message:ReadableMessageInterface):void {
-		var msgType:string = message.getMessageType();
-		var sender:ContactNodeInterface = message.getSender();
-		var identifier:string = this._nodeToIdentifier(sender);
-
-		if (msgType === 'PROXY_REJECT' || msgType === 'PROXY_ACCEPT') {
-			var requestedProxy:number = this._requestedProxies[identifier];
-			if (requestedProxy) {
-				this._removeFromRequestedProxies(identifier);
-
-				if (msgType === 'PROXY_ACCEPT') {
-					this._addToConfirmedProxies(identifier, sender);
-				}
-
-				this._proxyCycle();
-			}
-			message.discard();
-		}
-		else if (msgType === 'PROXY_REQUEST') {
-			if (!this._proxyingFor[identifier] && this._isProxyCapable()) {
-				this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_ACCEPT', new Buffer(0), (err:Error) => {
-					if (!err) {
-						this._addToProxyingFor(identifier, sender);
-					}
-				});
-			}
-			else {
-				this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_REJECT', new Buffer(0));
-				message.discard();
-			}
-		}
-		else if (msgType === 'PROXY_THROUGH') {
-			if (this._confirmedProxies[identifier]) {
-				// force message through the pipe
-				this._protocolConnectionManager.forceMessageThroughPipe(sender, message.getPayload());
-			}
-		}
-	}
-
-	private _messageIsIntendedForMyNode (message:ReadableMessageInterface):boolean {
-
-		return message.getReceiverId().equals(this._myNode.getId());
-	}
-
-	private _messageIsProxyAffine (message:ReadableMessageInterface):boolean {
-		return this._proxyAffineMessages.indexOf(message.getMessageType()) > -1;
-	}
-
-	private _requestProxy (node:ContactNodeInterface):void {
-		var identifier:string = this._nodeToIdentifier(node);
-		this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), (err:Error) => {
-			if (!err) {
-				this._requestedProxies[identifier] = setTimeout(() => {
-					this._requestProxyTimeout(identifier);
-				}, this._reactionTime);
-			}
-			this._proxyCycle();
-		});
-	}
-
-	private _requestProxyTimeout (identifier:string):void {
-		if (this._requestedProxies[identifier]) {
-			delete this._requestedProxies[identifier];
-			this._ignoreProxies.push(identifier);
-			this._proxyCycle();
-		}
-	}
-
-	private _blockProxyCycle ():void {
-		this._canProxyCycle = false;
-		if (this._proxyWaitTimeout) {
-			clearTimeout(this._proxyWaitTimeout);
-		}
-		this._proxyWaitTimeout = setTimeout(() => {
-			this._canProxyCycle = true;
-			this._unsuccessfulProxyTries = 0;
-			this._ignoreProxies = [];
-			this._proxyCycle();
-		}, this._unsuccessfulProxyTryWaitTime);
-	}
-
-	private _canUseNodeAsProxy (node:ContactNodeInterface):boolean {
-		var identifier:string = this._nodeToIdentifier(node);
-		var canUse:boolean = true;
-
-		canUse = this._confirmedProxies[identifier] ? false : canUse;
-		canUse = this._requestedProxies[identifier] ? false : canUse;
-		canUse = this._ignoreProxies.indexOf(identifier) > -1 ? false : canUse;
-
-		if (!canUse) {
-			this._unsuccessfulProxyTries++;
-			if (this._unsuccessfulProxyTries >= this._maxUnsuccessfulProxyTries) {
-				this._blockProxyCycle();
-			}
-		}
-
-		return canUse;
-	}
-
-	private _nodeToIdentifier (node:ContactNodeInterface):string {
-		return node.getId().toHexString();
 	}
 
 	private _updateMyNodeAddresses ():void {

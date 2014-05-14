@@ -151,6 +151,106 @@ var ProxyManager = (function (_super) {
 
         this._proxyCycle();
     }
+    ProxyManager.prototype._addToConfirmedProxies = function (identifier, node) {
+        this._confirmedProxies[identifier] = node;
+        this._protocolConnectionManager.keepSocketsOpenFromNode(node);
+        this._updateMyNodeAddresses();
+    };
+
+    ProxyManager.prototype._addToProxyingFor = function (identifier, node) {
+        this._proxyingFor[identifier] = node;
+        this._protocolConnectionManager.keepSocketsOpenFromNode(node);
+    };
+
+    ProxyManager.prototype._blockProxyCycle = function () {
+        var _this = this;
+        this._canProxyCycle = false;
+        if (this._proxyWaitTimeout) {
+            clearTimeout(this._proxyWaitTimeout);
+        }
+        this._proxyWaitTimeout = setTimeout(function () {
+            _this._canProxyCycle = true;
+            _this._unsuccessfulProxyTries = 0;
+            _this._ignoreProxies = [];
+            _this._proxyCycle();
+        }, this._unsuccessfulProxyTryWaitTime);
+    };
+
+    ProxyManager.prototype._canUseNodeAsProxy = function (node) {
+        var identifier = this._nodeToIdentifier(node);
+        var canUse = true;
+
+        canUse = this._confirmedProxies[identifier] ? false : canUse;
+        canUse = this._requestedProxies[identifier] ? false : canUse;
+        canUse = this._ignoreProxies.indexOf(identifier) > -1 ? false : canUse;
+
+        if (!canUse) {
+            this._unsuccessfulProxyTries++;
+            if (this._unsuccessfulProxyTries >= this._maxUnsuccessfulProxyTries) {
+                this._blockProxyCycle();
+            }
+        }
+
+        return canUse;
+    };
+
+    ProxyManager.prototype._handleProxyMessage = function (message) {
+        var _this = this;
+        var msgType = message.getMessageType();
+        var sender = message.getSender();
+        var identifier = this._nodeToIdentifier(sender);
+
+        if (msgType === 'PROXY_REJECT' || msgType === 'PROXY_ACCEPT') {
+            var requestedProxy = this._requestedProxies[identifier];
+            if (requestedProxy) {
+                this._removeFromRequestedProxies(identifier);
+
+                if (msgType === 'PROXY_ACCEPT') {
+                    this._addToConfirmedProxies(identifier, sender);
+                }
+
+                this._proxyCycle();
+            }
+            message.discard();
+        } else if (msgType === 'PROXY_REQUEST') {
+            if (!this._proxyingFor[identifier] && this._isProxyCapable()) {
+                this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_ACCEPT', new Buffer(0), function (err) {
+                    if (!err) {
+                        _this._addToProxyingFor(identifier, sender);
+                    }
+                });
+            } else {
+                this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_REJECT', new Buffer(0));
+                message.discard();
+            }
+        } else if (msgType === 'PROXY_THROUGH') {
+            if (this._confirmedProxies[identifier]) {
+                // force message through the pipe
+                this._protocolConnectionManager.forceMessageThroughPipe(sender, message.getPayload());
+            }
+        }
+    };
+
+    ProxyManager.prototype._isProxyCapable = function () {
+        return (Object.keys(this._proxyingFor).length < this._proxyForMaxNumberOfNodes) && this._reachableFromOutside;
+    };
+
+    ProxyManager.prototype._messageIsIntendedForMyNode = function (message) {
+        return message.getReceiverId().equals(this._myNode.getId());
+    };
+
+    ProxyManager.prototype._messageIsProxyAffine = function (message) {
+        return this._proxyAffineMessages.indexOf(message.getMessageType()) > -1;
+    };
+
+    ProxyManager.prototype._needsAdditionalProxy = function () {
+        return ((Object.keys(this._confirmedProxies).length + Object.keys(this._requestedProxies).length) < this._maxNumberOfProxies) && !this._reachableFromOutside;
+    };
+
+    ProxyManager.prototype._nodeToIdentifier = function (node) {
+        return node.getId().toHexString();
+    };
+
     ProxyManager.prototype._proxyCycle = function () {
         var _this = this;
         if (this._canProxyCycle && this._needsAdditionalProxy()) {
@@ -161,6 +261,45 @@ var ProxyManager = (function (_super) {
                     _this._requestProxy(potentialNode);
                 }
             });
+        }
+    };
+
+    ProxyManager.prototype._proxyMessageThrough = function (message) {
+        var identifier = message.getReceiverId().toHexString();
+        var proxyingForNode = this._proxyingFor[identifier];
+        if (proxyingForNode) {
+            this._protocolConnectionManager.writeMessageTo(proxyingForNode, 'PROXY_THROUGH', message.getRawBuffer(), function () {
+                message.discard();
+            });
+        }
+    };
+
+    ProxyManager.prototype._removeFromRequestedProxies = function (identifier) {
+        var requestedProxy = this._requestedProxies[identifier];
+
+        clearTimeout(requestedProxy);
+        delete this._requestedProxies[identifier];
+        this._ignoreProxies.push[identifier];
+    };
+
+    ProxyManager.prototype._requestProxy = function (node) {
+        var _this = this;
+        var identifier = this._nodeToIdentifier(node);
+        this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), function (err) {
+            if (!err) {
+                _this._requestedProxies[identifier] = setTimeout(function () {
+                    _this._requestProxyTimeout(identifier);
+                }, _this._reactionTime);
+            }
+            _this._proxyCycle();
+        });
+    };
+
+    ProxyManager.prototype._requestProxyTimeout = function (identifier) {
+        if (this._requestedProxies[identifier]) {
+            delete this._requestedProxies[identifier];
+            this._ignoreProxies.push(identifier);
+            this._proxyCycle();
         }
     };
 
@@ -210,145 +349,6 @@ var ProxyManager = (function (_super) {
                 }
             }
         });
-    };
-
-    ProxyManager.prototype._proxyMessageThrough = function (message) {
-        var identifier = message.getReceiverId().toHexString();
-        var proxyingForNode = this._proxyingFor[identifier];
-        if (proxyingForNode) {
-            this._protocolConnectionManager.writeMessageTo(proxyingForNode, 'PROXY_THROUGH', message.getRawBuffer(), function () {
-                message.discard();
-            });
-        }
-    };
-
-    ProxyManager.prototype._isProxyCapable = function () {
-        return (Object.keys(this._proxyingFor).length < this._proxyForMaxNumberOfNodes) && this._reachableFromOutside;
-    };
-
-    ProxyManager.prototype._needsAdditionalProxy = function () {
-        return ((Object.keys(this._confirmedProxies).length + Object.keys(this._requestedProxies).length) < this._maxNumberOfProxies) && !this._reachableFromOutside;
-    };
-
-    ProxyManager.prototype._removeFromRequestedProxies = function (identifier) {
-        var requestedProxy = this._requestedProxies[identifier];
-
-        clearTimeout(requestedProxy);
-        delete this._requestedProxies[identifier];
-        this._ignoreProxies.push[identifier];
-    };
-
-    ProxyManager.prototype._addToConfirmedProxies = function (identifier, node) {
-        this._confirmedProxies[identifier] = node;
-        this._protocolConnectionManager.keepSocketsOpenFromNode(node);
-        this._updateMyNodeAddresses();
-    };
-
-    ProxyManager.prototype._addToProxyingFor = function (identifier, node) {
-        this._proxyingFor[identifier] = node;
-        this._protocolConnectionManager.keepSocketsOpenFromNode(node);
-    };
-
-    ProxyManager.prototype._handleProxyMessage = function (message) {
-        var _this = this;
-        var msgType = message.getMessageType();
-        var sender = message.getSender();
-        var identifier = this._nodeToIdentifier(sender);
-
-        if (msgType === 'PROXY_REJECT' || msgType === 'PROXY_ACCEPT') {
-            var requestedProxy = this._requestedProxies[identifier];
-            if (requestedProxy) {
-                this._removeFromRequestedProxies(identifier);
-
-                if (msgType === 'PROXY_ACCEPT') {
-                    this._addToConfirmedProxies(identifier, sender);
-                }
-
-                this._proxyCycle();
-            }
-            message.discard();
-        } else if (msgType === 'PROXY_REQUEST') {
-            if (!this._proxyingFor[identifier] && this._isProxyCapable()) {
-                this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_ACCEPT', new Buffer(0), function (err) {
-                    if (!err) {
-                        _this._addToProxyingFor(identifier, sender);
-                    }
-                });
-            } else {
-                this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_REJECT', new Buffer(0));
-                message.discard();
-            }
-        } else if (msgType === 'PROXY_THROUGH') {
-            if (this._confirmedProxies[identifier]) {
-                // force message through the pipe
-                this._protocolConnectionManager.forceMessageThroughPipe(sender, message.getPayload());
-            }
-        }
-    };
-
-    ProxyManager.prototype._messageIsIntendedForMyNode = function (message) {
-        return message.getReceiverId().equals(this._myNode.getId());
-    };
-
-    ProxyManager.prototype._messageIsProxyAffine = function (message) {
-        return this._proxyAffineMessages.indexOf(message.getMessageType()) > -1;
-    };
-
-    ProxyManager.prototype._requestProxy = function (node) {
-        var _this = this;
-        var identifier = this._nodeToIdentifier(node);
-        this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), function (err) {
-            if (!err) {
-                _this._requestedProxies[identifier] = setTimeout(function () {
-                    _this._requestProxyTimeout(identifier);
-                }, _this._reactionTime);
-            }
-            _this._proxyCycle();
-        });
-    };
-
-    ProxyManager.prototype._requestProxyTimeout = function (identifier) {
-        if (this._requestedProxies[identifier]) {
-            delete this._requestedProxies[identifier];
-            this._ignoreProxies.push(identifier);
-            this._proxyCycle();
-        }
-    };
-
-    ProxyManager.prototype._blockProxyCycle = function () {
-        var _this = this;
-        this._canProxyCycle = false;
-        if (this._proxyWaitTimeout) {
-            clearTimeout(this._proxyWaitTimeout);
-        }
-        this._proxyWaitTimeout = setTimeout(function () {
-            _this._canProxyCycle = true;
-            _this._unsuccessfulProxyTries = 0;
-            _this._ignoreProxies = [];
-            _this._proxyCycle();
-        }, this._unsuccessfulProxyTryWaitTime);
-    };
-
-    ProxyManager.prototype._canUseNodeAsProxy = function (node) {
-        var identifier = this._nodeToIdentifier(node);
-        var canUse = true;
-
-        canUse = this._confirmedProxies[identifier] ? false : canUse;
-        canUse = this._requestedProxies[identifier] ? false : canUse;
-        canUse = this._ignoreProxies.indexOf(identifier) > -1 ? false : canUse;
-
-        if (!canUse) {
-            this._unsuccessfulProxyTries++;
-            if (this._unsuccessfulProxyTries >= this._maxUnsuccessfulProxyTries) {
-                this._blockProxyCycle();
-            }
-        }
-
-        return canUse;
-    };
-
-    ProxyManager.prototype._nodeToIdentifier = function (node) {
-        return node.getId().toHexString();
     };
 
     ProxyManager.prototype._updateMyNodeAddresses = function () {
