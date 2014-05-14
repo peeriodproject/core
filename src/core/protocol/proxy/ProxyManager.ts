@@ -174,17 +174,39 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		this._proxyCycle();
 	}
 
-	private _addToConfirmedProxies (identifier:string, node:ContactNodeInterface) {
+	/**
+	 * Adds a node to the confirmed proxy list, tells the connection manager to keep the sockets open from this node
+	 * and updates my node addresses accordingly.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_addToConfirmedProxies
+	 *
+	 * @param {string} identifier Node identifier
+	 * @param {core.topology.ContactNodeInterface} node The contact node to add to the proxy list.
+	 */
+	private _addToConfirmedProxies (identifier:string, node:ContactNodeInterface):void {
 		this._confirmedProxies[identifier] = node;
 		this._protocolConnectionManager.keepSocketsOpenFromNode(node);
 		this._updateMyNodeAddresses();
 	}
 
-	private _addToProxyingFor (identifier:string, node:ContactNodeInterface) {
+	/**
+	 * Adds a node the list one is proxying for. Tells the connection manager to keep the sockets open from this node.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_addToProxyingFor
+	 *
+	 * @param {string} identifier Node identifier
+	 * @param {core.topology.ContactNodeInterface} node The contact node to add to the proxyingFor list.
+	 */
+	private _addToProxyingFor (identifier:string, node:ContactNodeInterface):void {
 		this._proxyingFor[identifier] = node;
 		this._protocolConnectionManager.keepSocketsOpenFromNode(node);
 	}
 
+	/**
+	 * Blocks the proxy cycle for a specific time.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_blockProxyCycle
+	 */
 	private _blockProxyCycle ():void {
 		this._canProxyCycle = false;
 		if (this._proxyWaitTimeout) {
@@ -198,6 +220,13 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		}, this._unsuccessfulProxyTryWaitTime);
 	}
 
+	/**
+	 * Checks if the node can be used as a potential proxy.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_canUseNodeAsProxy
+	 *
+	 * @param {core.topology.ContactNodeInterface} node Node to check.
+	 */
 	private _canUseNodeAsProxy (node:ContactNodeInterface):boolean {
 		var identifier:string = this._nodeToIdentifier(node);
 		var canUse:boolean = true;
@@ -216,6 +245,17 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		return canUse;
 	}
 
+	/**
+	 * The handler for all messages concerning the proxy.
+	 * If the message is of type PROXY_REJECT or PROXY_ACCEPT, the requested proxy is handled accordingly.
+	 * If it is a PROXY_REQUEST, it is checked whether one can by a proxy. If yes, a PROXY_ACCEPT message is sent back, else
+	 * a PROXY_REJECT message is sent back.
+	 * If it is a PROXY_THROUGH message, the payload is forced back through the data pipeline.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_handleProxyMessage
+	 *
+	 * @param {core.protocol.messages.ReadableMessageInterface} message The message to handle
+	 */
 	private _handleProxyMessage (message:ReadableMessageInterface):void {
 		var msgType:string = message.getMessageType();
 		var sender:ContactNodeInterface = message.getSender();
@@ -255,27 +295,74 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		}
 	}
 
+	/**
+	 * Checks if the node can be a proxy, i.e. if the number of nodes it is already proxying does not exceed the proxy limit
+	 * and if the node is reachable from outside.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_isProxyCapable
+	 *
+	 * @returns {boolean}
+	 */
 	private _isProxyCapable ():boolean {
 		return (Object.keys(this._proxyingFor).length < this._proxyForMaxNumberOfNodes) && this._reachableFromOutside;
 	}
 
+	/**
+	 * Checks if the receiver ID stated in the message is the same as the ID of my node.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_messageIsIntendedForMyNode
+	 *
+	 * @param {core.protocol.messages.ReadableMessageInterface} message
+	 * @returns {boolean}
+	 */
 	private _messageIsIntendedForMyNode (message:ReadableMessageInterface):boolean {
 
 		return message.getReceiverId().equals(this._myNode.getId());
 	}
 
+	/**
+	 * Compares the message type of the specified message with the class's hardcoded list of prxa affine message types.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_messageIsProxyAffine
+	 *
+	 * @param {core.protocol.messages.ReadableMessageInterface} message
+	 * @returns {boolean}
+	 */
 	private _messageIsProxyAffine (message:ReadableMessageInterface):boolean {
+
 		return this._proxyAffineMessages.indexOf(message.getMessageType()) > -1;
 	}
 
+	/**
+	 * Checks if the node needs another proxy, i.e. if the number of confirmed proxies plus the number of currently
+	 * requested proxies is less than the maxmimum number of proxies one is allowed to have.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_needsAdditionalProxy
+	 *
+	 * @returns {boolean}
+	 */
 	private _needsAdditionalProxy ():boolean {
 		return ((Object.keys(this._confirmedProxies).length + Object.keys(this._requestedProxies).length) < this._maxNumberOfProxies) && !this._reachableFromOutside;
 	}
 
+	/**
+	 * Returns the hexadecimal string representation of the provided node's ID.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_nodeToIdentifier
+	 *
+	 * @param {core.topology.ContactNodeInterface} node
+	 * @returns {string}
+	 */
 	private _nodeToIdentifier (node:ContactNodeInterface):string {
 		return node.getId().toHexString();
 	}
 
+	/**
+	 * The initial method. Checks if the proxy cycle is active and if the node needs an additional proxy. If yes, it chooses
+	 * a node randomly from the routing table, tests if it is usable a a potential node, and if yes, sends a proxy request to it.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_proxyCycle
+	 */
 	private _proxyCycle ():void {
 		if (this._canProxyCycle && this._needsAdditionalProxy()) {
 			this._routingTable.getRandomContactNode((err:Error, potentialNode:ContactNodeInterface) => {
@@ -289,7 +376,14 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		}
 	}
 
-	private _proxyMessageThrough (message:ReadableMessageInterface) {
+	/**
+	 * Proxies a message not intended for my node through to the actual intended receiver.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_proxyMessageThrough
+	 *
+	 * @param {core.protocol.messages.ReadableMessageInterface} message
+	 */
+	private _proxyMessageThrough (message:ReadableMessageInterface):void {
 		var identifier:string = message.getReceiverId().toHexString();
 		var proxyingForNode = this._proxyingFor[identifier];
 		if (proxyingForNode) {
@@ -299,6 +393,13 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		}
 	}
 
+	/**
+	 * Clears the timeout of a requested proxy, removes the entry and adds the identifier to the `ignoreProxies` list.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_removeFromRequestedProxies
+	 *
+	 * @param {string} identifier Identifier of the requested proxy.
+	 */
 	private _removeFromRequestedProxies (identifier:string):void {
 		var requestedProxy:number = this._requestedProxies[identifier];
 
@@ -307,6 +408,14 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		this._ignoreProxies.push[identifier];
 	}
 
+	/**
+	 * Sends a PROXY_REQUEST to the provided node and adds it to the requested proxy list with a timeout indicating how
+	 * long the requested node has time to answer.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_requestProxy
+	 *
+	 * @param {core.topology.ContactNodeInterface} node The node to request.
+	 */
 	private _requestProxy (node:ContactNodeInterface):void {
 		var identifier:string = this._nodeToIdentifier(node);
 		this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), (err:Error) => {
@@ -319,6 +428,14 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		});
 	}
 
+	/**
+	 * What happens when a requested node fails to respond n a certain time window:
+	 * It is removed from the requested proxy list and a new proxy cycle is kicked off.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_requestProxyTimeout
+	 *
+	 * @param {string} identifier Identifier of the requested proxy
+	 */
 	private _requestProxyTimeout (identifier:string):void {
 		if (this._requestedProxies[identifier]) {
 			delete this._requestedProxies[identifier];
@@ -327,6 +444,11 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		}
 	}
 
+	/**
+	 * Sets the `message` and `terminatedConnection` listeners on the ProtocolConnectionManagerInterface
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_setupListeners
+	 */
 	private _setupListeners ():void {
 		this._protocolConnectionManager.on('message', (message:ReadableMessageInterface) => {
 			// update the contact node in the routing table accordingly, do ping pong if necessary, but not in here
@@ -377,6 +499,11 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		})
 	}
 
+	/**
+	 * Updates MyNode's address list according to the list of confirmed proxies.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_updateMyNodeAddresses
+	 */
 	private _updateMyNodeAddresses ():void {
 		var addressList:ContactNodeAddressListInterface = [];
 		var keys:Array<string> = Object.keys(this._confirmedProxies);

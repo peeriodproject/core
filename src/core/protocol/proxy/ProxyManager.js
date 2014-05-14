@@ -151,17 +151,39 @@ var ProxyManager = (function (_super) {
 
         this._proxyCycle();
     }
+    /**
+    * Adds a node to the confirmed proxy list, tells the connection manager to keep the sockets open from this node
+    * and updates my node addresses accordingly.
+    *
+    * @method core.protocol.proxy.ProxyManager~_addToConfirmedProxies
+    *
+    * @param {string} identifier Node identifier
+    * @param {core.topology.ContactNodeInterface} node The contact node to add to the proxy list.
+    */
     ProxyManager.prototype._addToConfirmedProxies = function (identifier, node) {
         this._confirmedProxies[identifier] = node;
         this._protocolConnectionManager.keepSocketsOpenFromNode(node);
         this._updateMyNodeAddresses();
     };
 
+    /**
+    * Adds a node the list one is proxying for. Tells the connection manager to keep the sockets open from this node.
+    *
+    * @method core.protocol.proxy.ProxyManager~_addToProxyingFor
+    *
+    * @param {string} identifier Node identifier
+    * @param {core.topology.ContactNodeInterface} node The contact node to add to the proxyingFor list.
+    */
     ProxyManager.prototype._addToProxyingFor = function (identifier, node) {
         this._proxyingFor[identifier] = node;
         this._protocolConnectionManager.keepSocketsOpenFromNode(node);
     };
 
+    /**
+    * Blocks the proxy cycle for a specific time.
+    *
+    * @method core.protocol.proxy.ProxyManager~_blockProxyCycle
+    */
     ProxyManager.prototype._blockProxyCycle = function () {
         var _this = this;
         this._canProxyCycle = false;
@@ -176,6 +198,13 @@ var ProxyManager = (function (_super) {
         }, this._unsuccessfulProxyTryWaitTime);
     };
 
+    /**
+    * Checks if the node can be used as a potential proxy.
+    *
+    * @method core.protocol.proxy.ProxyManager~_canUseNodeAsProxy
+    *
+    * @param {core.topology.ContactNodeInterface} node Node to check.
+    */
     ProxyManager.prototype._canUseNodeAsProxy = function (node) {
         var identifier = this._nodeToIdentifier(node);
         var canUse = true;
@@ -194,6 +223,17 @@ var ProxyManager = (function (_super) {
         return canUse;
     };
 
+    /**
+    * The handler for all messages concerning the proxy.
+    * If the message is of type PROXY_REJECT or PROXY_ACCEPT, the requested proxy is handled accordingly.
+    * If it is a PROXY_REQUEST, it is checked whether one can by a proxy. If yes, a PROXY_ACCEPT message is sent back, else
+    * a PROXY_REJECT message is sent back.
+    * If it is a PROXY_THROUGH message, the payload is forced back through the data pipeline.
+    *
+    * @method core.protocol.proxy.ProxyManager~_handleProxyMessage
+    *
+    * @param {core.protocol.messages.ReadableMessageInterface} message The message to handle
+    */
     ProxyManager.prototype._handleProxyMessage = function (message) {
         var _this = this;
         var msgType = message.getMessageType();
@@ -231,26 +271,72 @@ var ProxyManager = (function (_super) {
         }
     };
 
+    /**
+    * Checks if the node can be a proxy, i.e. if the number of nodes it is already proxying does not exceed the proxy limit
+    * and if the node is reachable from outside.
+    *
+    * @method core.protocol.proxy.ProxyManager~_isProxyCapable
+    *
+    * @returns {boolean}
+    */
     ProxyManager.prototype._isProxyCapable = function () {
         return (Object.keys(this._proxyingFor).length < this._proxyForMaxNumberOfNodes) && this._reachableFromOutside;
     };
 
+    /**
+    * Checks if the receiver ID stated in the message is the same as the ID of my node.
+    *
+    * @method core.protocol.proxy.ProxyManager~_messageIsIntendedForMyNode
+    *
+    * @param {core.protocol.messages.ReadableMessageInterface} message
+    * @returns {boolean}
+    */
     ProxyManager.prototype._messageIsIntendedForMyNode = function (message) {
         return message.getReceiverId().equals(this._myNode.getId());
     };
 
+    /**
+    * Compares the message type of the specified message with the class's hardcoded list of prxa affine message types.
+    *
+    * @method core.protocol.proxy.ProxyManager~_messageIsProxyAffine
+    *
+    * @param {core.protocol.messages.ReadableMessageInterface} message
+    * @returns {boolean}
+    */
     ProxyManager.prototype._messageIsProxyAffine = function (message) {
         return this._proxyAffineMessages.indexOf(message.getMessageType()) > -1;
     };
 
+    /**
+    * Checks if the node needs another proxy, i.e. if the number of confirmed proxies plus the number of currently
+    * requested proxies is less than the maxmimum number of proxies one is allowed to have.
+    *
+    * @method core.protocol.proxy.ProxyManager~_needsAdditionalProxy
+    *
+    * @returns {boolean}
+    */
     ProxyManager.prototype._needsAdditionalProxy = function () {
         return ((Object.keys(this._confirmedProxies).length + Object.keys(this._requestedProxies).length) < this._maxNumberOfProxies) && !this._reachableFromOutside;
     };
 
+    /**
+    * Returns the hexadecimal string representation of the provided node's ID.
+    *
+    * @method core.protocol.proxy.ProxyManager~_nodeToIdentifier
+    *
+    * @param {core.topology.ContactNodeInterface} node
+    * @returns {string}
+    */
     ProxyManager.prototype._nodeToIdentifier = function (node) {
         return node.getId().toHexString();
     };
 
+    /**
+    * The initial method. Checks if the proxy cycle is active and if the node needs an additional proxy. If yes, it chooses
+    * a node randomly from the routing table, tests if it is usable a a potential node, and if yes, sends a proxy request to it.
+    *
+    * @method core.protocol.proxy.ProxyManager~_proxyCycle
+    */
     ProxyManager.prototype._proxyCycle = function () {
         var _this = this;
         if (this._canProxyCycle && this._needsAdditionalProxy()) {
@@ -264,6 +350,13 @@ var ProxyManager = (function (_super) {
         }
     };
 
+    /**
+    * Proxies a message not intended for my node through to the actual intended receiver.
+    *
+    * @method core.protocol.proxy.ProxyManager~_proxyMessageThrough
+    *
+    * @param {core.protocol.messages.ReadableMessageInterface} message
+    */
     ProxyManager.prototype._proxyMessageThrough = function (message) {
         var identifier = message.getReceiverId().toHexString();
         var proxyingForNode = this._proxyingFor[identifier];
@@ -274,6 +367,13 @@ var ProxyManager = (function (_super) {
         }
     };
 
+    /**
+    * Clears the timeout of a requested proxy, removes the entry and adds the identifier to the `ignoreProxies` list.
+    *
+    * @method core.protocol.proxy.ProxyManager~_removeFromRequestedProxies
+    *
+    * @param {string} identifier Identifier of the requested proxy.
+    */
     ProxyManager.prototype._removeFromRequestedProxies = function (identifier) {
         var requestedProxy = this._requestedProxies[identifier];
 
@@ -282,6 +382,14 @@ var ProxyManager = (function (_super) {
         this._ignoreProxies.push[identifier];
     };
 
+    /**
+    * Sends a PROXY_REQUEST to the provided node and adds it to the requested proxy list with a timeout indicating how
+    * long the requested node has time to answer.
+    *
+    * @method core.protocol.proxy.ProxyManager~_requestProxy
+    *
+    * @param {core.topology.ContactNodeInterface} node The node to request.
+    */
     ProxyManager.prototype._requestProxy = function (node) {
         var _this = this;
         var identifier = this._nodeToIdentifier(node);
@@ -295,6 +403,14 @@ var ProxyManager = (function (_super) {
         });
     };
 
+    /**
+    * What happens when a requested node fails to respond n a certain time window:
+    * It is removed from the requested proxy list and a new proxy cycle is kicked off.
+    *
+    * @method core.protocol.proxy.ProxyManager~_requestProxyTimeout
+    *
+    * @param {string} identifier Identifier of the requested proxy
+    */
     ProxyManager.prototype._requestProxyTimeout = function (identifier) {
         if (this._requestedProxies[identifier]) {
             delete this._requestedProxies[identifier];
@@ -303,6 +419,11 @@ var ProxyManager = (function (_super) {
         }
     };
 
+    /**
+    * Sets the `message` and `terminatedConnection` listeners on the ProtocolConnectionManagerInterface
+    *
+    * @method core.protocol.proxy.ProxyManager~_setupListeners
+    */
     ProxyManager.prototype._setupListeners = function () {
         var _this = this;
         this._protocolConnectionManager.on('message', function (message) {
@@ -351,6 +472,11 @@ var ProxyManager = (function (_super) {
         });
     };
 
+    /**
+    * Updates MyNode's address list according to the list of confirmed proxies.
+    *
+    * @method core.protocol.proxy.ProxyManager~_updateMyNodeAddresses
+    */
     ProxyManager.prototype._updateMyNodeAddresses = function () {
         var addressList = [];
         var keys = Object.keys(this._confirmedProxies);
