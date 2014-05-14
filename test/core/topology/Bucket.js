@@ -91,7 +91,7 @@ describe('CORE --> TOPOLOGY --> Bucket', function () {
             });
         });
 
-        it('should correctly return the longest not seen contact in the callback @joern', function (done) {
+        it('should correctly return the longest not seen contact in the callback', function (done) {
             var storedObject = {
                 addresses: [
                     {
@@ -272,6 +272,16 @@ describe('CORE --> TOPOLOGY --> Bucket', function () {
 
             bucket.getLongestNotSeen(function (err, contact) {
                 bucketStoreStub.getLongestNotSeen.calledOnce.should.be.true;
+
+                done();
+            });
+        });
+
+        it('should call the internal getRandom method @joern', function (done) {
+            createStubbedBucketStore();
+
+            bucket.getRandom(function (err, contact) {
+                bucketStoreStub.getRandom.calledOnce.should.be.true;
 
                 done();
             });
