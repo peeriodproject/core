@@ -11,7 +11,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchClient = require('../../../src/core/search/SearchClient');
 import SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
-describe('CORE --> SEARCH --> SearchClient @joern', function () {
+describe('CORE --> SEARCH --> SearchClient', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
 	var searchStoreLogsFolder:string = testUtils.getFixturePath('search/searchStoreLogs');

@@ -10,7 +10,7 @@ import testUtils = require('../../utils/testUtils');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchStore = require('../../../src/core/search/SearchStore');
 
-describe('CORE --> SEARCH --> SearchStore @_joern', function () {
+describe('CORE --> SEARCH --> SearchStore', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
 	var searchStoreLogsFolder:string = testUtils.getFixturePath('search/searchStoreLogs');
