@@ -42,6 +42,10 @@
  */
 interface ProxyManagerInterface extends NodeJS.EventEmitter {
 
+	/**
+	 * @method core.protocol.proxy.ProxyManagerInterface#kickOff
+	 */
+	kickOff ():void;
 }
 
 export = ProxyManagerInterface;

@@ -162,7 +162,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 
 		this._protocolConnectionManager = protocolConnectionManager;
 		this._routingTable = routingTable;
-		this._externalAddressList = this._protocolConnectionManager.getExternalAddressList();
+		this._externalAddressList = this._myNode.getAddresses();
 		this._myNode = this._protocolConnectionManager.getMyNode();
 
 		if (this._externalAddressList.length) {
@@ -170,7 +170,17 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		}
 
 		this._setupListeners();
+	}
 
+	/**
+	 * BEGIN TESTING PURPOSES ONLY
+	 */
+
+	/**
+	 * END TESTING PURPOSES ONLY
+	 */
+
+	public kickOff ():void {
 		this._proxyCycle();
 	}
 
@@ -516,3 +526,5 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	}
 
 }
+
+export = ProxyManager;

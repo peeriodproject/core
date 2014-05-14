@@ -176,8 +176,13 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		super();
 
 		this._myNode = myNode;
+
 		this._generalWritableMessageFactory = new GeneralWritableMessageFactory(this._myNode);
 		this._tcpSocketHandler = tcpSocketHandler;
+
+		if (!this._myNode.getAddresses()) {
+			this._myNode.updateAddresses(this.getExternalAddressList());
+		}
 
 		this._incomingDataPipeline = new IncomingDataPipeline(
 			config.get('protocol.messages.maxByteLengthPerMessage'),

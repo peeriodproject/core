@@ -140,7 +140,7 @@ var ProxyManager = (function (_super) {
 
         this._protocolConnectionManager = protocolConnectionManager;
         this._routingTable = routingTable;
-        this._externalAddressList = this._protocolConnectionManager.getExternalAddressList();
+        this._externalAddressList = this._myNode.getAddresses();
         this._myNode = this._protocolConnectionManager.getMyNode();
 
         if (this._externalAddressList.length) {
@@ -148,9 +148,17 @@ var ProxyManager = (function (_super) {
         }
 
         this._setupListeners();
-
-        this._proxyCycle();
     }
+    /**
+    * BEGIN TESTING PURPOSES ONLY
+    */
+    /**
+    * END TESTING PURPOSES ONLY
+    */
+    ProxyManager.prototype.kickOff = function () {
+        this._proxyCycle();
+    };
+
     /**
     * Adds a node to the confirmed proxy list, tells the connection manager to keep the sockets open from this node
     * and updates my node addresses accordingly.
@@ -489,4 +497,6 @@ var ProxyManager = (function (_super) {
     };
     return ProxyManager;
 })(events.EventEmitter);
+
+module.exports = ProxyManager;
 //# sourceMappingURL=ProxyManager.js.map

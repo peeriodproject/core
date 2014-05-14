@@ -146,8 +146,13 @@ var ProtocolConnectionManager = (function (_super) {
         this._waitingListNum = 0;
 
         this._myNode = myNode;
+
         this._generalWritableMessageFactory = new GeneralWritableMessageFactory(this._myNode);
         this._tcpSocketHandler = tcpSocketHandler;
+
+        if (!this._myNode.getAddresses()) {
+            this._myNode.updateAddresses(this.getExternalAddressList());
+        }
 
         this._incomingDataPipeline = new IncomingDataPipeline(config.get('protocol.messages.maxByteLengthPerMessage'), MessageByteCheatsheet.messageEnd, config.get('protocol.messages.msToKeepNonAddressableMemory'), new ReadableMessageFactory());
 
