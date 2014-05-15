@@ -15,7 +15,7 @@ var ContactNode = require('../../../src/core/topology/ContactNode');
 
 var RoutingTable = require('../../../src/core/topology/RoutingTable');
 
-describe('CORE --> PROTOCOL --> PROXY --> ProxyManager @current', function () {
+describe('CORE --> PROTOCOL --> PROXY --> ProxyManager', function () {
     this.timeout(0);
 
     var sandbox;
@@ -80,9 +80,9 @@ describe('CORE --> PROTOCOL --> PROXY --> ProxyManager @current', function () {
                     if (key === 'protocol.waitForNodeReactionInSeconds')
                         return 1;
                     if (key === 'protocol.proxy.maxUnsuccessfulProxyTries')
-                        return 1;
+                        return 2;
                     if (key === 'protocol.proxy.unsuccessfulProxyTryWaitTimeInSeconds')
-                        return 10;
+                        return 1.5;
                 }
             });
 
@@ -108,8 +108,8 @@ describe('CORE --> PROTOCOL --> PROXY --> ProxyManager @current', function () {
             needsProxyManagerA = mngr;
 
             createProxyManager(null, '0100000084220000687102020100000001000000', function (mr) {
-                needsProxyNodeA = new ContactNode(mr.getMyNode().getId(), mr.getMyNode().getAddresses(), 0);
-                needsProxyManagerA = mr;
+                needsProxyNodeB = new ContactNode(mr.getMyNode().getId(), mr.getMyNode().getAddresses(), 0);
+                needsProxyManagerB = mr;
 
                 createProxyManager(54000, '02000000aa150000f07002020100000001000000', function (manager) {
                     canProxyNodeA = new ContactNode(manager.getMyNode().getId(), manager.getMyNode().getAddresses(), 0);
@@ -170,6 +170,77 @@ describe('CORE --> PROTOCOL --> PROXY --> ProxyManager @current', function () {
         var ident = toIdent(needsProxyNodeA);
         canProxyManagerA.getProxyingFor()[ident].getId().toHexString().should.equal(ident);
         canProxyManagerB.getProxyingFor()[ident].getId().toHexString().should.equal(ident);
+    });
+
+    it('canProxyA and canProxyB should reject needProxyB\'s request', function (done) {
+        has_proxy_a = false;
+        var count = 0;
+
+        var listener = function (msg) {
+            if (msg.getMessageType() === 'PROXY_REJECT') {
+                count++;
+                if (count === 2) {
+                    needsProxyManagerB.getProtocolConnectionManager().removeListener('message', listener);
+                    process.nextTick(function () {
+                        if (Object.keys(needsProxyManagerB.getConfirmedProxies()).length === 0)
+                            done();
+                    });
+                }
+            }
+        };
+
+        needsProxyManagerB.getProtocolConnectionManager().on('message', listener);
+
+        needsProxyManagerB.kickOff();
+    });
+
+    it('proxy cycle should be blocked and later unblock', function (done) {
+        if (needsProxyManagerB.isBlocked()) {
+            var check = function () {
+                setTimeout(function () {
+                    if (needsProxyManagerB.isBlocked()) {
+                        check();
+                    } else {
+                        needsProxyManagerB.block();
+                        done();
+                    }
+                }, 0);
+            };
+
+            check();
+        }
+    });
+
+    it('needsProxyNodeA should successfully get the message from needsProxyManagerB', function (done) {
+        var nodeA = new ContactNode(needsProxyManagerA.getMyNode().getId(), needsProxyManagerA.getMyNode().getAddresses(), 0);
+        needsProxyManagerB.getProtocolConnectionManager().writeMessageTo(nodeA, 'PING', new Buffer('foobar', 'utf8'));
+        needsProxyManagerA.once('message', function (msg) {
+            if (msg.getPayload().toString('utf8') === 'foobar')
+                done();
+        });
+    });
+
+    it('should correctly remove the nodes on terminating the connections', function (done) {
+        var hydraMsg = new Buffer([0x50, 0x52, 0x44, 0x42, 0x47, 0x4e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]);
+        needsProxyManagerA.getProtocolConnectionManager().writeBufferTo(canProxyNodeA, hydraMsg);
+
+        needsProxyManagerA.getProtocolConnectionManager().once('terminatedConnection', function () {
+            if (Object.keys(needsProxyManagerA.getConfirmedProxies()).length === 1) {
+                if (needsProxyManagerA.getMyNode().getAddresses().length === 1) {
+                    if (canProxyManagerA.isProxyCapable() === true)
+                        done();
+                }
+            }
+        });
+    });
+
+    it('should timeout the proxy request', function (done) {
+        canProxyManagerA.getProtocolConnectionManager().removeAllListeners('message');
+        has_proxy_a = false;
+        needsProxyManagerA.on('requestProxyTimeout', function (identifier) {
+            if (identifier === toIdent(canProxyNodeA))
+                done();
+        });
     });
 });
 //# sourceMappingURL=ProxyManager.js.map

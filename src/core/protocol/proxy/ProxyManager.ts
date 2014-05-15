@@ -197,6 +197,18 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		return this._protocolConnectionManager;
 	}
 
+	public isBlocked ():boolean {
+		return !this._canProxyCycle;
+	}
+
+	public block ():void {
+		this._canProxyCycle = false;
+	}
+
+	public unblock ():void {
+		this._canProxyCycle = true;
+	}
+
 
 	/**
 	 * END TESTING PURPOSES ONLY
@@ -207,7 +219,8 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	}
 
 	public kickOff ():void {
-		this._proxyCycle();
+		this._canProxyCycle = true;
+		this._proxyCycleOnNextTick();
 	}
 
 	public needsAdditionalProxy ():boolean {
@@ -256,7 +269,9 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 			this._canProxyCycle = true;
 			this._unsuccessfulProxyTries = 0;
 			this._ignoreProxies = [];
-			this._proxyCycle();
+
+			this._proxyCycleOnNextTick();
+
 		}, this._unsuccessfulProxyTryWaitTime);
 	}
 
@@ -308,9 +323,13 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 
 				if (msgType === 'PROXY_ACCEPT') {
 					this._addToConfirmedProxies(identifier, sender);
+					this.emit('newProxy', sender);
+				}
+				else {
+					this.emit('proxyReject', sender);
 				}
 
-				this._proxyCycle();
+				this._proxyCycleOnNextTick();
 			}
 			message.discard();
 		}
@@ -319,6 +338,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 				this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_ACCEPT', new Buffer(0), (err:Error) => {
 					if (!err) {
 						this._addToProxyingFor(identifier, sender);
+						this.emit('proxyingFor', sender);
 					}
 				});
 			}
@@ -388,8 +408,17 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 				else if (potentialNode && this._canUseNodeAsProxy(potentialNode)) {
 					this._requestProxy(potentialNode);
 				}
+				else {
+					this._proxyCycleOnNextTick();
+				}
 			});
 		}
+	}
+
+	private _proxyCycleOnNextTick ():void {
+		process.nextTick(() => {
+			this._proxyCycle();
+		});
 	}
 
 	/**
@@ -434,19 +463,18 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	 */
 	private _requestProxy (node:ContactNodeInterface):void {
 		var identifier:string = this._nodeToIdentifier(node);
-
 		this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), (err:Error) => {
 			if (!err) {
 				this._requestedProxies[identifier] = setTimeout(() => {
 					this._requestProxyTimeout(identifier);
 				}, this._reactionTime);
 			}
-			this._proxyCycle();
+			this._proxyCycleOnNextTick();
 		});
 	}
 
 	/**
-	 * What happens when a requested node fails to respond n a certain time window:
+	 * What happens when a requested node fails to respond in a certain time window:
 	 * It is removed from the requested proxy list and a new proxy cycle is kicked off.
 	 *
 	 * @method core.protocol.proxy.ProxyManager~_requestProxyTimeout
@@ -457,7 +485,10 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		if (this._requestedProxies[identifier]) {
 			delete this._requestedProxies[identifier];
 			this._ignoreProxies.push(identifier);
-			this._proxyCycle();
+
+			// this event is for testing purposes only
+			this.emit('requestProxyTimeout', identifier);
+			this._proxyCycleOnNextTick();
 		}
 	}
 
@@ -496,21 +527,24 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 				if (requestedProxy) {
 					doStartCycle = true;
 					this._removeFromRequestedProxies(identifier);
+					this.emit('requestProxyTimeout', identifier);
 				}
 				if (confirmedProxy) {
 					doStartCycle = true;
 					this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(confirmedProxy);
 					delete this._confirmedProxies[identifier];
 					this._updateMyNodeAddresses();
+					this.emit('lostProxy', confirmedProxy);
 				}
 				if (proxyingFor) {
-					this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(confirmedProxy);
+					this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(proxyingFor);
 					delete this._proxyingFor[identifier];
+					this.emit('lostProxyingFor', proxyingFor);
 				}
 
 
 				if (doStartCycle) {
-					this._proxyCycle();
+					this._proxyCycleOnNextTick();
 				}
 			}
 		})

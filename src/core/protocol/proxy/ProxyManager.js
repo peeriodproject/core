@@ -173,6 +173,18 @@ var ProxyManager = (function (_super) {
         return this._protocolConnectionManager;
     };
 
+    ProxyManager.prototype.isBlocked = function () {
+        return !this._canProxyCycle;
+    };
+
+    ProxyManager.prototype.block = function () {
+        this._canProxyCycle = false;
+    };
+
+    ProxyManager.prototype.unblock = function () {
+        this._canProxyCycle = true;
+    };
+
     /**
     * END TESTING PURPOSES ONLY
     */
@@ -181,7 +193,8 @@ var ProxyManager = (function (_super) {
     };
 
     ProxyManager.prototype.kickOff = function () {
-        this._proxyCycle();
+        this._canProxyCycle = true;
+        this._proxyCycleOnNextTick();
     };
 
     ProxyManager.prototype.needsAdditionalProxy = function () {
@@ -231,7 +244,8 @@ var ProxyManager = (function (_super) {
             _this._canProxyCycle = true;
             _this._unsuccessfulProxyTries = 0;
             _this._ignoreProxies = [];
-            _this._proxyCycle();
+
+            _this._proxyCycleOnNextTick();
         }, this._unsuccessfulProxyTryWaitTime);
     };
 
@@ -284,9 +298,12 @@ var ProxyManager = (function (_super) {
 
                 if (msgType === 'PROXY_ACCEPT') {
                     this._addToConfirmedProxies(identifier, sender);
+                    this.emit('newProxy', sender);
+                } else {
+                    this.emit('proxyReject', sender);
                 }
 
-                this._proxyCycle();
+                this._proxyCycleOnNextTick();
             }
             message.discard();
         } else if (msgType === 'PROXY_REQUEST') {
@@ -294,6 +311,7 @@ var ProxyManager = (function (_super) {
                 this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_ACCEPT', new Buffer(0), function (err) {
                     if (!err) {
                         _this._addToProxyingFor(identifier, sender);
+                        _this.emit('proxyingFor', sender);
                     }
                 });
             } else {
@@ -358,9 +376,18 @@ var ProxyManager = (function (_super) {
                     _this._blockProxyCycle();
                 } else if (potentialNode && _this._canUseNodeAsProxy(potentialNode)) {
                     _this._requestProxy(potentialNode);
+                } else {
+                    _this._proxyCycleOnNextTick();
                 }
             });
         }
+    };
+
+    ProxyManager.prototype._proxyCycleOnNextTick = function () {
+        var _this = this;
+        process.nextTick(function () {
+            _this._proxyCycle();
+        });
     };
 
     /**
@@ -406,19 +433,18 @@ var ProxyManager = (function (_super) {
     ProxyManager.prototype._requestProxy = function (node) {
         var _this = this;
         var identifier = this._nodeToIdentifier(node);
-
         this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), function (err) {
             if (!err) {
                 _this._requestedProxies[identifier] = setTimeout(function () {
                     _this._requestProxyTimeout(identifier);
                 }, _this._reactionTime);
             }
-            _this._proxyCycle();
+            _this._proxyCycleOnNextTick();
         });
     };
 
     /**
-    * What happens when a requested node fails to respond n a certain time window:
+    * What happens when a requested node fails to respond in a certain time window:
     * It is removed from the requested proxy list and a new proxy cycle is kicked off.
     *
     * @method core.protocol.proxy.ProxyManager~_requestProxyTimeout
@@ -429,7 +455,10 @@ var ProxyManager = (function (_super) {
         if (this._requestedProxies[identifier]) {
             delete this._requestedProxies[identifier];
             this._ignoreProxies.push(identifier);
-            this._proxyCycle();
+
+            // this event is for testing purposes only
+            this.emit('requestProxyTimeout', identifier);
+            this._proxyCycleOnNextTick();
         }
     };
 
@@ -467,20 +496,23 @@ var ProxyManager = (function (_super) {
                 if (requestedProxy) {
                     doStartCycle = true;
                     _this._removeFromRequestedProxies(identifier);
+                    _this.emit('requestProxyTimeout', identifier);
                 }
                 if (confirmedProxy) {
                     doStartCycle = true;
                     _this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(confirmedProxy);
                     delete _this._confirmedProxies[identifier];
                     _this._updateMyNodeAddresses();
+                    _this.emit('lostProxy', confirmedProxy);
                 }
                 if (proxyingFor) {
-                    _this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(confirmedProxy);
+                    _this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(proxyingFor);
                     delete _this._proxyingFor[identifier];
+                    _this.emit('lostProxyingFor', proxyingFor);
                 }
 
                 if (doStartCycle) {
-                    _this._proxyCycle();
+                    _this._proxyCycleOnNextTick();
                 }
             }
         });
