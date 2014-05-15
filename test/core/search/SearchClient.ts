@@ -14,8 +14,8 @@ import SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory
 describe('CORE --> SEARCH --> SearchClient', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
-	var searchStoreLogsFolder:string = testUtils.getFixturePath('search/searchStoreLogs');
-	var searchStoreDataFolder:string = testUtils.getFixturePath('search/searchStoreData');
+	var searchStoreLogsFolder:string = testUtils.getFixturePath('core/search/searchStoreLogs');
+	var searchStoreDataFolder:string = testUtils.getFixturePath('core/search/searchStoreData');
 	var searchClient:SearchClient = null;
 
 	this.timeout(0);

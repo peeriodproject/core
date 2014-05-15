@@ -11,8 +11,8 @@ var SearchStore = require('../../../src/core/search/SearchStore');
 describe('CORE --> SEARCH --> SearchStoreFactory', function () {
     var sandbox;
     var config;
-    var searchStoreLogsFolder = testUtils.getFixturePath('search/searchStoreLogs');
-    var searchStoreDataFolder = testUtils.getFixturePath('search/searchStoreData');
+    var searchStoreLogsFolder = testUtils.getFixturePath('core/search/searchStoreLogs');
+    var searchStoreDataFolder = testUtils.getFixturePath('core/search/searchStoreData');
     var searchStore = null;
 
     this.timeout(0);

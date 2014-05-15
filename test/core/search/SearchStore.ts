@@ -13,8 +13,8 @@ import SearchStore = require('../../../src/core/search/SearchStore');
 describe('CORE --> SEARCH --> SearchStore', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
-	var searchStoreLogsFolder:string = testUtils.getFixturePath('search/searchStoreLogs');
-	var searchStoreDataFolder:string = testUtils.getFixturePath('search/searchStoreData');
+	var searchStoreLogsFolder:string = testUtils.getFixturePath('core/search/searchStoreLogs');
+	var searchStoreDataFolder:string = testUtils.getFixturePath('core/search/searchStoreData');
 	var searchStore:SearchStore = null;
 
 	this.timeout(10000);
