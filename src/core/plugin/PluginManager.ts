@@ -18,6 +18,8 @@ import PluginValidatorInterface = require('./interfaces/PluginValidatorInterface
 import ObjectUtils = require('../utils/ObjectUtils');
 
 /**
+ * todo implement StateHandler!
+ *
  * @class core.plugin.PluginManager
  * @implements PluginManagerInterface
  */
@@ -255,8 +257,6 @@ class PluginManager implements PluginManagerInterface {
 					callback(null, null);
 				}
 			}
-
-
 		});
 	}
 
