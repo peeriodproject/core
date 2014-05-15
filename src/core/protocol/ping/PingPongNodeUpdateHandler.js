@@ -75,15 +75,16 @@ var PingPongNodeUpdateHandler = (function (_super) {
 
         this._setupListeners();
     }
-    PingPongNodeUpdateHandler.prototype._newNodeInformation = function (node) {
-        var _this = this;
-        this._routingTable.updateContactNode(node, function (err, longestNotSeenContact) {
-            if (err && longestNotSeenContact) {
-                _this._addToWaitingList(node, longestNotSeenContact);
-            }
-        });
-    };
-
+    /**
+    * Adds new node information to the waiting list for the right bucket. Checks if it is the first and if so, fires off
+    * the ping.
+    * The passed `possibleNodeToCheck` can however differ later, if the waiting list isn't empty.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_addToWaitingList
+    *
+    * @param {core.topology.ContactNodeInterface} node The new node information to add to the waiting list
+    * @param {core.topology.ContactNodeInterface} possibleNodeToCheck The currently least recently seen node for the right bucket.
+    */
     PingPongNodeUpdateHandler.prototype._addToWaitingList = function (node, possibleNodeToCheck) {
         var waitingListNumber = this._getWaitingListNumberByNode(node);
 
@@ -95,10 +96,6 @@ var PingPongNodeUpdateHandler = (function (_super) {
                 this._waitingLists[waitingListNumber] = existingWaitingList = [];
             }
 
-            /**
-            * @todo stop! timeout und listener dürfen erst später gesetzt werden
-            *
-            */
             if (existingWaitingList.length < this._maxWaitingListSize) {
                 var slot = {
                     newNode: node,
@@ -114,6 +111,49 @@ var PingPongNodeUpdateHandler = (function (_super) {
         }
     };
 
+    /**
+    * Creates the timeout for a specific waitingListNumber. If it elapses, the first slot of the specified waiting list
+    * is removed and the 'old' node of the slot is replaced by the 'new' one in the routing table.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_createSlotTimeout
+    *
+    * @param {number} waitingListNumber
+    * @returns {number|NodeJS.Timer}
+    */
+    PingPongNodeUpdateHandler.prototype._createSlotTimeout = function (waitingListNumber) {
+        var _this = this;
+        return setTimeout(function () {
+            var slot = _this._waitingLists[waitingListNumber].splice(0, 1)[0];
+
+            _this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
+            _this._handleNextInWaitingList(waitingListNumber);
+        }, this._reactionTime);
+    };
+
+    /**
+    * Returns the waiting list index of the passed node. Checks it agains my node, so it is actually the bucket
+    * number the node should be stored in.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_getWaitingListNumberByNode
+    *
+    * @param {core.topology.ContactNodeInterface} node Node to check against
+    * @returns {number}
+    */
+    PingPongNodeUpdateHandler.prototype._getWaitingListNumberByNode = function (node) {
+        return this._myNode.getId().differsInHighestBit(node.getId());
+    };
+
+    /**
+    * Takes the first entry of the waiting list with the specified index. If there is an entry, it checks whether
+    * the `nodeToCheck` is already set (this is when a slot is put into an empty list). If yes, it PINGs the same.
+    * If not, it checks the routing table again for the least recently seen node. If there is none (e.g. the new node
+    * could be added), the slot is removed and the next slot is getting checked.
+    * If there is one, it is PINGed all the same.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_handleNextInWaitingList
+    *
+    * @param {number} waitingListNumber
+    */
     PingPongNodeUpdateHandler.prototype._handleNextInWaitingList = function (waitingListNumber) {
         var _this = this;
         var slot = this._waitingLists[waitingListNumber][0];
@@ -127,6 +167,7 @@ var PingPongNodeUpdateHandler = (function (_super) {
                         slot.nodeToCheck = longestNotSeenContact;
                         _this._pingNodeByWaitingSlot(slot, waitingListNumber);
                     } else {
+                        _this._waitingLists[waitingListNumber].splice(0, 1);
                         _this._handleNextInWaitingList(waitingListNumber);
                     }
                 });
@@ -134,6 +175,55 @@ var PingPongNodeUpdateHandler = (function (_super) {
         }
     };
 
+    /**
+    * Handles a PONG message. Checks if the PONGing node can be referenced to the first slot in the right waiting list.
+    * If yes, nothing is done except removing the slo (and thus discarding the information about the new node).
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_handlePong
+    *
+    * @param {core.topology.ContactNodeInterface} node The PONGing node
+    */
+    PingPongNodeUpdateHandler.prototype._handlePong = function (node) {
+        var waitingListNumber = this._getWaitingListNumberByNode(node);
+        var list = this._waitingLists[waitingListNumber];
+
+        if (list && list.length) {
+            var first = list[0];
+
+            if (node.getId().equals(first.nodeToCheck.getId())) {
+                list.splice(0, 1);
+                clearTimeout(first.timeout);
+                this._handleNextInWaitingList(waitingListNumber);
+            }
+        }
+    };
+
+    /**
+    * The handler for the proxy's `contactNodeInformation` event. Tries to update it in the routing table. If it is not
+    * present yet, but the bucket is full, it is added to the waiting list.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_newNodeInformation
+    *
+    * @param {core.topology.ContactNodeInterface} node The new contact node info.
+    */
+    PingPongNodeUpdateHandler.prototype._newNodeInformation = function (node) {
+        var _this = this;
+        this._routingTable.updateContactNode(node, function (err, longestNotSeenContact) {
+            if (err && longestNotSeenContact) {
+                _this._addToWaitingList(node, longestNotSeenContact);
+            }
+        });
+    };
+
+    /**
+    * Sends a PING message to the `nodeToCheck` in a waiting slot and act accordingly. If the sending fails,
+    * the slot is immediately removed and the `nodeToCheck` replaced with the `newNode`. If not, the timeout is set.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_pingNodeByWaitingSlot
+    *
+    * @param {core.protocol.ping.PongWaitingSlot} slot
+    * @param {number} waitingListNumber
+    */
     PingPongNodeUpdateHandler.prototype._pingNodeByWaitingSlot = function (slot, waitingListNumber) {
         var _this = this;
         this._protocolConnectionManager.writeMessageTo(slot.nodeToCheck, 'PING', new Buffer(0), function (err) {
@@ -142,40 +232,27 @@ var PingPongNodeUpdateHandler = (function (_super) {
                 _this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
             } else {
                 slot.timeout = _this._createSlotTimeout(waitingListNumber);
-                _this.once(_this._pongEventName(slot.nodeToCheck), _this._createSlotListener(waitingListNumber));
             }
         });
     };
 
-    PingPongNodeUpdateHandler.prototype._pongEventName = function (node) {
-        return 'pong' + this._nodeToIdentifier(node);
+    /**
+    * Sends a PONG message to the specified node.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_sendPongTo
+    *
+    * @param {core.topology.ContactNodeInterface} node
+    */
+    PingPongNodeUpdateHandler.prototype._sendPongTo = function (node) {
+        this._protocolConnectionManager.writeMessageTo(node, 'PONG', new Buffer(0));
     };
 
-    PingPongNodeUpdateHandler.prototype._createSlotTimeout = function (waitingListNumber) {
-        var _this = this;
-        return setTimeout(function () {
-            var slot = _this._waitingLists[waitingListNumber].splice(0, 1)[0];
-
-            _this.removeAllListeners(_this._pongEventName(slot.nodeToCheck));
-            _this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
-            _this._handleNextInWaitingList(waitingListNumber);
-        }, this._reactionTime);
-    };
-
-    PingPongNodeUpdateHandler.prototype._createSlotListener = function (waitingListNumber) {
-        var _this = this;
-        return function () {
-            var slot = _this._waitingLists[waitingListNumber].splice(0, 1)[0];
-
-            clearTimeout(slot.timeout);
-            _this._handleNextInWaitingList(waitingListNumber);
-        };
-    };
-
-    PingPongNodeUpdateHandler.prototype._getWaitingListNumberByNode = function (node) {
-        return this._myNode.getId().differsInHighestBit(node.getId());
-    };
-
+    /**
+    * Initially sets up the listeners on the proxy's `message` and `contactNodeInformation` event.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_setupListeners
+    *
+    */
     PingPongNodeUpdateHandler.prototype._setupListeners = function () {
         var _this = this;
         this._proxyManager.on('message', function (message) {
@@ -183,21 +260,13 @@ var PingPongNodeUpdateHandler = (function (_super) {
             if (type === 'PING') {
                 _this._sendPongTo(message.getSender());
             } else if (type === 'PONG') {
-                _this.emit(_this._pongEventName(message.getSender()));
+                _this._handlePong(message.getSender());
             }
         });
 
         this._proxyManager.on('contactNodeInformation', function (node) {
             _this._newNodeInformation(node);
         });
-    };
-
-    PingPongNodeUpdateHandler.prototype._sendPongTo = function (node) {
-        this._protocolConnectionManager.writeMessageTo(node, 'PONG', new Buffer(0));
-    };
-
-    PingPongNodeUpdateHandler.prototype._nodeToIdentifier = function (node) {
-        return node.getId().toHexString();
     };
     return PingPongNodeUpdateHandler;
 })(events.EventEmitter);
