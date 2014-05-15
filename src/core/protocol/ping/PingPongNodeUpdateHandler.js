@@ -7,20 +7,63 @@ var __extends = this.__extends || function (d, b) {
 var events = require('events');
 
 /**
+* PingPongNodeUpdateHandlerInterface implementation.
 *
 * @class core.protocol.ping.PingPongNodeUpdateHandler
+* @extends NodeJS.EventEmitter
 * @implements core.protocol.ping.PingPongNodeUpdateHandlerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.topology.MyNodeInterface} myNode
+* @param {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager Running protocol connection manager
+* @oaram {core.protocol.proxy.ProxyManagerInterface} proxyManager
+* @param {core.topology.RoutingTableInterface} routingTable
 */
 var PingPongNodeUpdateHandler = (function (_super) {
     __extends(PingPongNodeUpdateHandler, _super);
     function PingPongNodeUpdateHandler(config, myNode, protocolConnectionManager, proxyManager, routingTable) {
         _super.call(this);
-        this._proxyManager = null;
-        this._routingTable = null;
-        this._protocolConnectionManager = null;
-        this._reactionTime = 0;
+        /**
+        * The maximum size a waiting list of a bucket can grow to until all incoming nodes for this list are simply discarded.
+        *
+        * @member {number} core.protocol.ping.PingPongNodeUpdateHandler~_maxWaitingListSize
+        */
         this._maxWaitingListSize = 0;
+        /**
+        * My node.
+        *
+        * @member {core.topology.MyNodeInterface} core.protocol.ping.PingPongNodeUpdateHandler~_myNode
+        */
         this._myNode = null;
+        /**
+        * The running protocol connection manager instance.
+        *
+        * @member {core.protocol.net.ProtocolConnectionManagerInterface} core.protocol.ping.PingPongNodeUpdateHandler~_protocolConnectionManager
+        */
+        this._protocolConnectionManager = null;
+        /**
+        * The running proxy manager instance.
+        *
+        * @member {core.protocol.proxy.ProxyManagerInterface} core.protocol.ping.PingPongNodeUpdateHandler~_proxyManager
+        */
+        this._proxyManager = null;
+        /**
+        * Number of milliseconds a PINGed node has to respond until the PING is considered a fail.
+        *
+        * @member {number} core.protocol.ping.PingPongNodeUpdateHandler~_reactionTime
+        */
+        this._reactionTime = 0;
+        /**
+        * Routing table of the peer.
+        *
+        * @member {core.topology.RoutingTableInterface} core.protocol.ping.PingPongNodeUpdateHandler~_routingTable
+        */
+        this._routingTable = null;
+        /**
+        * The array holding the waiting lists for the buckets.
+        *
+        * @member {Array<core.protocol.ping.PongWaitingList} core.protocol.ping.PingPongNodeUpdateHandler~_waitingLists
+        */
         this._waitingLists = [];
 
         this._myNode = myNode;

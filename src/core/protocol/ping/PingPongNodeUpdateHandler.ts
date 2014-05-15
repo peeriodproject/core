@@ -12,19 +12,67 @@ import PongWaitingList = require('./interfaces/PongWaitingList');
 import PongWaitingSlot = require('./interfaces/PongWaitingSlot');
 
 /**
+ * PingPongNodeUpdateHandlerInterface implementation.
  *
  * @class core.protocol.ping.PingPongNodeUpdateHandler
+ * @extends NodeJS.EventEmitter
  * @implements core.protocol.ping.PingPongNodeUpdateHandlerInterface
+ *
+ * @param {core.config.ConfigInterface} config
+ * @param {core.topology.MyNodeInterface} myNode
+ * @param {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager Running protocol connection manager
+ * @oaram {core.protocol.proxy.ProxyManagerInterface} proxyManager
+ * @param {core.topology.RoutingTableInterface} routingTable
  */
 class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongNodeUpdateHandlerInterface {
 
-	private _proxyManager:ProxyManagerInterface = null;
-	private _routingTable:RoutingTableInterface = null;
-	private _protocolConnectionManager:ProtocolConnectionManagerInterface = null;
-	private _reactionTime:number = 0;
+	/**
+	 * The maximum size a waiting list of a bucket can grow to until all incoming nodes for this list are simply discarded.
+	 *
+	 * @member {number} core.protocol.ping.PingPongNodeUpdateHandler~_maxWaitingListSize
+	 */
 	private _maxWaitingListSize:number = 0;
+
+	/**
+	 * My node.
+	 *
+	 * @member {core.topology.MyNodeInterface} core.protocol.ping.PingPongNodeUpdateHandler~_myNode
+	 */
 	private _myNode:MyNodeInterface = null;
 
+	/**
+	 * The running protocol connection manager instance.
+	 *
+	 * @member {core.protocol.net.ProtocolConnectionManagerInterface} core.protocol.ping.PingPongNodeUpdateHandler~_protocolConnectionManager
+	 */
+	private _protocolConnectionManager:ProtocolConnectionManagerInterface = null;
+
+	/**
+	 * The running proxy manager instance.
+	 *
+	 * @member {core.protocol.proxy.ProxyManagerInterface} core.protocol.ping.PingPongNodeUpdateHandler~_proxyManager
+	 */
+	private _proxyManager:ProxyManagerInterface = null;
+
+	/**
+	 * Number of milliseconds a PINGed node has to respond until the PING is considered a fail.
+	 *
+	 * @member {number} core.protocol.ping.PingPongNodeUpdateHandler~_reactionTime
+	 */
+	private _reactionTime:number = 0;
+
+	/**
+	 * Routing table of the peer.
+	 *
+	 * @member {core.topology.RoutingTableInterface} core.protocol.ping.PingPongNodeUpdateHandler~_routingTable
+	 */
+	private _routingTable:RoutingTableInterface = null;
+
+	/**
+	 * The array holding the waiting lists for the buckets.
+	 *
+	 * @member {Array<core.protocol.ping.PongWaitingList} core.protocol.ping.PingPongNodeUpdateHandler~_waitingLists
+	 */
 	private _waitingLists:Array<PongWaitingList> = [];
 
 	constructor (config:ConfigInterface, myNode:MyNodeInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, proxyManager:ProxyManagerInterface, routingTable:RoutingTableInterface) {
@@ -65,9 +113,9 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 			 */
 			if (existingWaitingList.length < this._maxWaitingListSize) {
 				var slot:PongWaitingSlot = {
-					newNode: node,
+					newNode    : node,
 					nodeToCheck: isFirst ? possibleNodeToCheck : null,
-					timeout: 0
+					timeout    : 0
 				};
 				existingWaitingList.push(slot);
 
@@ -102,7 +150,7 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 	private _pingNodeByWaitingSlot (slot:PongWaitingSlot, waitingListNumber:number):void {
 		this._protocolConnectionManager.writeMessageTo(slot.nodeToCheck, 'PING', new Buffer(0), (err:Error) => {
 			if (err) {
-				this._waitingLists[waitingListNumber].splice(0,1);
+				this._waitingLists[waitingListNumber].splice(0, 1);
 				this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
 			}
 			else {
@@ -116,9 +164,9 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 		return 'pong' + this._nodeToIdentifier(node);
 	}
 
-	private _createSlotTimeout(waitingListNumber:number):number {
+	private _createSlotTimeout (waitingListNumber:number):number {
 		return setTimeout(() => {
-			var slot:PongWaitingSlot = this._waitingLists[waitingListNumber].splice(0,1)[0];
+			var slot:PongWaitingSlot = this._waitingLists[waitingListNumber].splice(0, 1)[0];
 
 			this.removeAllListeners(this._pongEventName(slot.nodeToCheck));
 			this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
@@ -128,7 +176,7 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 
 	private _createSlotListener (waitingListNumber:number):Function {
 		return () => {
-			var slot:PongWaitingSlot = this._waitingLists[waitingListNumber].splice(0,1)[0];
+			var slot:PongWaitingSlot = this._waitingLists[waitingListNumber].splice(0, 1)[0];
 
 			clearTimeout(slot.timeout);
 			this._handleNextInWaitingList(waitingListNumber);
