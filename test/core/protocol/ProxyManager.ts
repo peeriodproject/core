@@ -16,7 +16,7 @@ import ContactNodeAddress = require('../../../src/core/topology/ContactNodeAddre
 import RoutingTable = require('../../../src/core/topology/RoutingTable');
 import ReadableMessage = require('../../../src/core/protocol/messages/ReadableMessage');
 
-describe('CORE --> PROTOCOL --> PROXY --> ProxyManager @current', function () {
+describe('CORE --> PROTOCOL --> PROXY --> ProxyManager', function () {
 
 	this.timeout(0);
 

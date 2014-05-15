@@ -15,7 +15,7 @@ var ContactNode = require('../../../src/core/topology/ContactNode');
 
 var RoutingTable = require('../../../src/core/topology/RoutingTable');
 
-describe('CORE --> PROTOCOL --> PROXY --> ProxyManager @current', function () {
+describe('CORE --> PROTOCOL --> PROXY --> ProxyManager', function () {
     this.timeout(0);
 
     var sandbox;
