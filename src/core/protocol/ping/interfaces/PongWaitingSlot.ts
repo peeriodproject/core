@@ -8,7 +8,6 @@ interface PongWaitingSlot {
 	newNode:ContactNodeInterface;
 	nodeToCheck:ContactNodeInterface;
 	timeout:number;
-	listener:Function;
 }
 
 export = PongWaitingSlot;
