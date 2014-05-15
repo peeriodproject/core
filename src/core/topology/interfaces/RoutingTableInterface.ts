@@ -64,6 +64,7 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	 * @param {Function} callback
 	 */
 	replaceContactNode (oldContactNode:ContactNodeInterface, newContactNode:ContactNodeInterface, callback:(err:Error, longestNotSeenContact:ContactNodeInterface) => any):void;
+
 	/**
 	 * Updates the specified contact node
 	 *
