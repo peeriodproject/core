@@ -40,6 +40,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 
         searchClient = new SearchClient(config, new SearchStoreFactory(), {
             logPath: searchStoreLogsFolder,
+            closeOnProcessExit: false,
             onOpenCallback: function (err) {
                 if (err) {
                     throw err;

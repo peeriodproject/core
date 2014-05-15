@@ -42,6 +42,7 @@ describe('CORE --> SEARCH --> SearchStoreFactory', function () {
 			}
 		});
 		searchStore = (new SearchStoreFactory()).create(config, {
+			closeOnProcessExit: false,
 			logPath       : searchStoreLogsFolder,
 			onOpenCallback: function (err:Error) {
 				if (err) {
@@ -56,12 +57,12 @@ describe('CORE --> SEARCH --> SearchStoreFactory', function () {
 
 	after(function (done) {
 		searchStore.close(function () {
-			searchStore = null;
 			testUtils.deleteFolderRecursive(searchStoreLogsFolder);
 			testUtils.deleteFolderRecursive(searchStoreDataFolder);
 
 			sandbox.restore();
 			config = null;
+			searchStore = null;
 
 			done();
 		});
