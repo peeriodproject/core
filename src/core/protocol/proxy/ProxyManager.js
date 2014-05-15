@@ -298,6 +298,9 @@ var ProxyManager = (function (_super) {
 
                 if (msgType === 'PROXY_ACCEPT') {
                     this._addToConfirmedProxies(identifier, sender);
+                    this.emit('newProxy', sender);
+                } else {
+                    this.emit('proxyReject', sender);
                 }
 
                 this._proxyCycleOnNextTick();
@@ -308,6 +311,7 @@ var ProxyManager = (function (_super) {
                 this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_ACCEPT', new Buffer(0), function (err) {
                     if (!err) {
                         _this._addToProxyingFor(identifier, sender);
+                        _this.emit('proxyingFor', sender);
                     }
                 });
             } else {
@@ -440,7 +444,7 @@ var ProxyManager = (function (_super) {
     };
 
     /**
-    * What happens when a requested node fails to respond n a certain time window:
+    * What happens when a requested node fails to respond in a certain time window:
     * It is removed from the requested proxy list and a new proxy cycle is kicked off.
     *
     * @method core.protocol.proxy.ProxyManager~_requestProxyTimeout
@@ -492,16 +496,19 @@ var ProxyManager = (function (_super) {
                 if (requestedProxy) {
                     doStartCycle = true;
                     _this._removeFromRequestedProxies(identifier);
+                    _this.emit('requestProxyTimeout', identifier);
                 }
                 if (confirmedProxy) {
                     doStartCycle = true;
                     _this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(confirmedProxy);
                     delete _this._confirmedProxies[identifier];
                     _this._updateMyNodeAddresses();
+                    _this.emit('lostProxy', confirmedProxy);
                 }
                 if (proxyingFor) {
                     _this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(proxyingFor);
                     delete _this._proxyingFor[identifier];
+                    _this.emit('lostProxyingFor', proxyingFor);
                 }
 
                 if (doStartCycle) {

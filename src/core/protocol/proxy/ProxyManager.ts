@@ -323,6 +323,10 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 
 				if (msgType === 'PROXY_ACCEPT') {
 					this._addToConfirmedProxies(identifier, sender);
+					this.emit('newProxy', sender);
+				}
+				else {
+					this.emit('proxyReject', sender);
 				}
 
 				this._proxyCycleOnNextTick();
@@ -334,6 +338,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 				this._protocolConnectionManager.writeMessageTo(sender, 'PROXY_ACCEPT', new Buffer(0), (err:Error) => {
 					if (!err) {
 						this._addToProxyingFor(identifier, sender);
+						this.emit('proxyingFor', sender);
 					}
 				});
 			}
@@ -469,7 +474,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	}
 
 	/**
-	 * What happens when a requested node fails to respond n a certain time window:
+	 * What happens when a requested node fails to respond in a certain time window:
 	 * It is removed from the requested proxy list and a new proxy cycle is kicked off.
 	 *
 	 * @method core.protocol.proxy.ProxyManager~_requestProxyTimeout
@@ -522,16 +527,19 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 				if (requestedProxy) {
 					doStartCycle = true;
 					this._removeFromRequestedProxies(identifier);
+					this.emit('requestProxyTimeout', identifier);
 				}
 				if (confirmedProxy) {
 					doStartCycle = true;
 					this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(confirmedProxy);
 					delete this._confirmedProxies[identifier];
 					this._updateMyNodeAddresses();
+					this.emit('lostProxy', confirmedProxy);
 				}
 				if (proxyingFor) {
 					this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(proxyingFor);
 					delete this._proxyingFor[identifier];
+					this.emit('lostProxyingFor', proxyingFor);
 				}
 
 
