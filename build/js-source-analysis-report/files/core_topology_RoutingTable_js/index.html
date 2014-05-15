@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">69.24</p>
+      <p class="stat">68.85</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">355</p>
+      <p class="stat">398</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">72.37</p>
+      <p class="stat">78.26</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.41</p>
+      <p class="stat">2.81</p>
     </div>
   </div>
 </div>
@@ -207,7 +207,7 @@ var RoutingTable = (function () {
         }
 
         var topologyK = this._config.get(&#039;topology.k&#039;);
-        var bitLength = this._config.get(&#039;topology.bitLength&#039;);
+        var bucketAmount = this._getBucketAmount();
 
         var distances = [];
         var distanceMap = {};
@@ -259,7 +259,7 @@ var RoutingTable = (function () {
                         crawlBucket(--crawlBucketKey, false, onCrawlEnd);
                     } else {
                         //console.log(&#039;reached the first bucket.&#039;);
-                        if (distances.length &lt; topologyK &amp;&amp; startBucketKey &lt; bitLength - 1) {
+                        if (distances.length &lt; topologyK &amp;&amp; startBucketKey &lt; bucketAmount - 1) {
                             //console.log(&#039;starting reverse search!&#039;);
                             crawlBucket(++startBucketKey, true, onCrawlEnd);
                         } else {
@@ -268,11 +268,11 @@ var RoutingTable = (function () {
                         }
                     }
                 } else {
-                    if (crawlBucketKey &lt; bitLength - 1) {
+                    if (crawlBucketKey &lt; bucketAmount - 1) {
                         //console.log(&#039;crawl the next bucket&#039;, distances.length);
                         crawlBucket(++crawlBucketKey, true, onCrawlEnd);
                     } else {
-                        //console.log(&#039;reached the last bucket &#039; + (bitLength - 1) + &#039;. ending...&#039;);
+                        //console.log(&#039;reached the last bucket &#039; + (bucketAmount - 1) + &#039;. ending...&#039;);
                         onCrawlEnd();
                     }
                 }
@@ -314,7 +314,38 @@ var RoutingTable = (function () {
     };
 
     RoutingTable.prototype.getRandomContactNode = function (callback) {
-        // todo implementation
+        var _this = this;
+        var bucketKeysToCrawl = new Array(this._getBucketAmount());
+
+        // Crawls a random bucket from the bucketKeysToCrawlList and calls itself as long as the length is not 0
+        var crawlRandomBucket = function () {
+            var bucketKeysToCrawlLength = bucketKeysToCrawl.length;
+            var randomBucketIndex = Math.round(Math.random() * (bucketKeysToCrawlLength - 1));
+
+            if (bucketKeysToCrawlLength &amp;&amp; randomBucketIndex &gt;= 0 &amp;&amp; randomBucketIndex &lt; bucketKeysToCrawlLength) {
+                var randomBucketKey = bucketKeysToCrawl[randomBucketIndex];
+
+                _this._buckets[randomBucketKey].getRandom(function (err, contact) {
+                    bucketKeysToCrawl.splice(randomBucketIndex, 1);
+
+                    if (contact === null) {
+                        return crawlRandomBucket();
+                    } else {
+                        bucketKeysToCrawl = null;
+                        return process.nextTick(callback.bind(null, null, contact));
+                    }
+                });
+            } else {
+                return process.nextTick(callback.bind(null, null, null));
+            }
+        };
+
+        for (var i = 0, amount = this._getBucketAmount(); i &lt; amount; i++) {
+            bucketKeysToCrawl[i] = this._convertBucketKeyToString(i);
+        }
+
+        // start crawling
+        crawlRandomBucket();
     };
 
     RoutingTable.prototype.isOpen = function (callback) {
@@ -330,7 +361,7 @@ var RoutingTable = (function () {
 
         this._buckets = {};
 
-        for (var i = 0, k = this._config.get(&#039;topology.bitLength&#039;); i &lt; k; i++) {
+        for (var i = 0, k = this._getBucketAmount(); i &lt; k; i++) {
             this._createBucket(i, this._config.get(&#039;topology.k&#039;));
         }
 
@@ -389,24 +420,6 @@ var RoutingTable = (function () {
     };
 
     /**
-    * Returns the bucket key where the given id should be stored.
-    * See {@link core.topology.Id.differsInHighestBit} for more information.
-    *
-    * @method core.topology.RoutingTable~_getBucketKey
-    *
-    * @param {core.topology.IdInterface} id
-    * @return {number}
-    */
-    RoutingTable.prototype._getBucketKey = function (id) {
-        return this._id.differsInHighestBit(id);
-    };
-
-    /*
-    * this method will be used whenever node-lmdb updates it&#039;s code from nodes SlowBuffer to the new node Buffer class
-    private _getBucketKeyAsString (id:IdInterface):string {
-    return    this._convertBucketKeyToString(this._getBucketKey(id));
-    }*/
-    /**
     * Converts the bucket key from a number to a string so we can use the strinified key to make requests to the database
     *
     * @method core.topology.RoutingTable~_convertBucketKeyToString
@@ -432,6 +445,36 @@ var RoutingTable = (function () {
     };
 
     /**
+    * Returns the amount of buckets the routing table manages.
+    *
+    * @method core.topology.RoutingTable~_getBucketAmount
+    *
+    * @returns {number}
+    */
+    RoutingTable.prototype._getBucketAmount = function () {
+        return this._config.get(&#039;topology.bitLength&#039;);
+    };
+
+    /**
+    * Returns the bucket key where the given id should be stored.
+    * See {@link core.topology.Id.differsInHighestBit} for more information.
+    *
+    * @method core.topology.RoutingTable~_getBucketKey
+    *
+    * @param {core.topology.IdInterface} id
+    * @return {number}
+    */
+    RoutingTable.prototype._getBucketKey = function (id) {
+        return this._id.differsInHighestBit(id);
+    };
+
+    /*
+    * this method will be used whenever node-lmdb updates it&#039;s code from nodes SlowBuffer to the new node Buffer class
+    */
+    //private _getBucketKeyAsString (id:IdInterface):string {
+    //	return    this._convertBucketKeyToString(this._getBucketKey(id));
+    //}
+    /**
     * Returns `true` if the given bucket key fits into the range `0 &lt;= bucketKey &lt; topology.bitLength`
     *
     * @method core.topology.RoutingTable~_isInBucketKeyRange
@@ -440,7 +483,7 @@ var RoutingTable = (function () {
     * @return {boolean}
     */
     RoutingTable.prototype._isInBucketKeyRange = function (bucketKey) {
-        return (0 &lt;= bucketKey &amp;&amp; bucketKey &lt; this._config.get(&#039;topology.bitLength&#039;));
+        return (0 &lt;= bucketKey &amp;&amp; bucketKey &lt; this._getBucketAmount());
     };
     return RoutingTable;
 })();
