@@ -26,6 +26,9 @@
             "proxyForMaxNumberOfNodes": 2,
             "maxUnsuccessfulProxyTries": 4,
             "unsuccessfulProxyTryWaitTimeInSeconds": 30
+        },
+        "pingpong": {
+            "maxWaitingListSize": 20
         }
     },
     "plugin"  : {
