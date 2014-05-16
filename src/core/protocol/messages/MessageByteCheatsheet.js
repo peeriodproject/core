@@ -10,7 +10,9 @@ var sheet = {
         "PROXY_REQUEST": [0x50, 0x01],
         "PROXY_ACCEPT": [0x50, 0x02],
         "PROXY_REJECT": [0x50, 0x03],
-        "PROXY_THROUGH": [0x50, 0x04]
+        "PROXY_THROUGH": [0x50, 0x04],
+        "FIND_CLOSEST_NODES": [0x46, 0x49],
+        "FOUND_CLOSEST_NODES": [0x46, 0x4f]
     }
 };
 
