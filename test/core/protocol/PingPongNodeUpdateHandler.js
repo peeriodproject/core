@@ -5,6 +5,7 @@ var sinon = require('sinon');
 
 var testUtils = require('../../utils/testUtils');
 
+var PingPongNodeUpdateHandler = require('../../../src/core/protocol/ping/PingPongNodeUpdateHandler');
 var Id = require('../../../src/core/topology/Id');
 var MyNode = require('../../../src/core/topology/MyNode');
 var ContactNode = require('../../../src/core/topology/ContactNode');
@@ -105,10 +106,16 @@ describe('CORE --> PROTOCOL --> PING --> PingPongNodeUpdateHandler @current', fu
                 }
             }
         });
+
+        pingPongHandler = new PingPongNodeUpdateHandler(configStub, myNodeStub, connectionManagerStub, proxyManagerStub, routingTableStub);
     });
 
     after(function () {
         sandbox.restore();
+    });
+
+    it('should correctly instantiate ping pong handler', function () {
+        pingPongHandler.should.be.instanceof(PingPongNodeUpdateHandler);
     });
 });
 //# sourceMappingURL=PingPongNodeUpdateHandler.js.map

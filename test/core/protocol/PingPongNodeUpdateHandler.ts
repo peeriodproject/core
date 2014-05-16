@@ -112,11 +112,15 @@ describe('CORE --> PROTOCOL --> PING --> PingPongNodeUpdateHandler @current', fu
 			}
 		});
 
-		
+		pingPongHandler = new PingPongNodeUpdateHandler(configStub, myNodeStub, connectionManagerStub, proxyManagerStub, routingTableStub);
 	});
 
 	after(function () {
 		sandbox.restore();
+	});
+
+	it('should correctly instantiate ping pong handler', function () {
+		pingPongHandler.should.be.instanceof(PingPongNodeUpdateHandler);
 	});
 
 
