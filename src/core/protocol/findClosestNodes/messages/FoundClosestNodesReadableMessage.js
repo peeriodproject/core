@@ -38,12 +38,19 @@ var FoundClosestNodesReadableMessage = (function () {
         */
         this._payload = null;
         /**
+        * Stores the length of the payload.
+        *
+        * @member {number} core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_payloadLength
+        */
+        this._payloadLength = 0;
+        /**
         * The extracted originally searched for ID.
         *
         * @member {core.topology.IdInterface} core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_searchedForId
         */
         this._searchedForId = null;
         this._payload = payload;
+        this._payloadLength = this._payload.length;
         this._nodeFactory = nodeFactory;
         this._addressFactory = addressFactory;
 
@@ -83,10 +90,9 @@ var FoundClosestNodesReadableMessage = (function () {
         var pos = 20;
 
         while (doRead) {
-            if (!this._followedByDelimiter(pos)) {
+            if (this._payloadLength <= pos) {
                 doRead = false;
             } else {
-                pos += 20;
                 var id = this._extractId(pos);
                 pos += 20;
                 var res = ContactNodeAddressExtractor.extractAddressesAndBytesReadAsArray(this._payload, this._addressFactory, pos);
@@ -113,25 +119,6 @@ var FoundClosestNodesReadableMessage = (function () {
         this._payload.copy(idBuffer, 0, from, from + 20);
 
         return new Id(idBuffer, 160);
-    };
-
-    /**
-    * Checks if from the given position the next 20 bytes are null bytes.
-    *
-    * @method core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_followedByDelimiter
-    *
-    * @param {number} from The position in the buffer to start from.
-    * @returns {boolean}
-    */
-    FoundClosestNodesReadableMessage.prototype._followedByDelimiter = function (from) {
-        var is = true;
-
-        for (var i = 0; i < 20; i++) {
-            if (this._payload[from + i] === undefined || this._payload[from + i] !== 0x00) {
-                is = false;
-            }
-        }
-        return is;
     };
     return FoundClosestNodesReadableMessage;
 })();

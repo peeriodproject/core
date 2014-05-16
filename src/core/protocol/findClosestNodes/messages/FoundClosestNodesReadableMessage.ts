@@ -51,6 +51,13 @@ class FoundClosestNodesReadableMessage implements FoundClosestNodesReadableMessa
 	_payload:Buffer = null;
 
 	/**
+	 * Stores the length of the payload.
+	 *
+	 * @member {number} core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_payloadLength
+	 */
+	_payloadLength:number = 0;
+
+	/**
 	 * The extracted originally searched for ID.
 	 *
 	 * @member {core.topology.IdInterface} core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_searchedForId
@@ -59,6 +66,7 @@ class FoundClosestNodesReadableMessage implements FoundClosestNodesReadableMessa
 
 	constructor (payload:Buffer, nodeFactory:ContactNodeFactoryInterface, addressFactory:ContactNodeAddressFactoryInterface) {
 		this._payload = payload;
+		this._payloadLength = this._payload.length;
 		this._nodeFactory = nodeFactory;
 		this._addressFactory = addressFactory;
 
@@ -99,11 +107,10 @@ class FoundClosestNodesReadableMessage implements FoundClosestNodesReadableMessa
 		var pos = 20;
 
 		while (doRead) {
-			if (!this._followedByDelimiter(pos)) {
+			if (this._payloadLength <= pos) {
 				doRead = false;
 			}
 			else {
-				pos += 20;
 				var id:IdInterface = this._extractId(pos);
 				pos += 20;
 				var res:any = ContactNodeAddressExtractor.extractAddressesAndBytesReadAsArray(this._payload, this._addressFactory, pos);
@@ -130,25 +137,6 @@ class FoundClosestNodesReadableMessage implements FoundClosestNodesReadableMessa
 		this._payload.copy(idBuffer, 0, from, from + 20);
 
 		return new Id(idBuffer, 160);
-	}
-
-	/**
-	 * Checks if from the given position the next 20 bytes are null bytes.
-	 *
-	 * @method core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_followedByDelimiter
-	 *
-	 * @param {number} from The position in the buffer to start from.
-	 * @returns {boolean}
-	 */
-	private _followedByDelimiter (from:number):boolean {
-		var is = true;
-
-		for (var i = 0; i < 20; i++) {
-			if (this._payload[from + i] === undefined || this._payload[from + i] !== 0x00) {
-				is = false;
-			}
-		}
-		return is;
 	}
 
 }
