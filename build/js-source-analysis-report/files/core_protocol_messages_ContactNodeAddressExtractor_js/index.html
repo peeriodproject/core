@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/messages/ContactNodeAddressExtractor.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/messages/ContactNodeAddressExtractor.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">64.98</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">94</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">27.39</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.47</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../../ts-definitions/node/node.d.ts&#039; /&gt;
+var MessageByteCheatsheet = require(&#039;./MessageByteCheatsheet&#039;);
+
+/**
+* Helper class for extracting address blocks from a byte buffer as specified in
+* {@link core.protocol.messages.ReadableMessageInterface}
+*
+* @class core.protocol.message.ContactNodeAddressExtractor
+*/
+var ContactNodeAddressExtractor = (function () {
+    function ContactNodeAddressExtractor() {
+    }
+    /**
+    * Makes a ContactNodeAddress out of a buffer representing an IPv4 address.
+    *
+    * @method core.protocol.messages.ContactNodeAddressExtractor.contactNodeAddressByIPv4Buffer
+    *
+    * @todo From node v.0.11.x (and thus node-webkit v.0.9.x) toJSON() will return a json object with {type:&#039;Buffer&#039;,
+    * data:[&lt;bytes&gt;]} and not just the array with bytes!
+    *
+    * @param {Buffer} buffer
+    * @returns {ContactNodeAddressInterface}
+    */
+    ContactNodeAddressExtractor.contactNodeAddressByIPv4Buffer = function (buffer, addressFactory) {
+        var ip = buffer.slice(0, 4).toJSON().join(&#039;.&#039;);
+        var port = buffer.readUInt16BE(4);
+
+        return addressFactory.create(ip, port);
+    };
+
+    /**
+    * Makes a ContactNodeAddress out of a buffer representing an IPv6 address.
+    *
+    * @method core.protocol.messages.ContactNodeAddressExtractor.contactNodeAddressByIPv6Buffer
+    *
+    * @param {Buffer} buffer
+    * @returns {ContactNodeAddressInterface}
+    */
+    ContactNodeAddressExtractor.contactNodeAddressByIPv6Buffer = function (buffer, addressFactory) {
+        var ip = &#039;&#039;;
+        var port = buffer.readUInt16BE(16);
+
+        for (var i = 0; i &lt; 8; i++) {
+            ip += buffer.slice(i * 2, i * 2 + 2).toString(&#039;hex&#039;);
+            if (i !== 7) {
+                ip += &#039;:&#039;;
+            }
+        }
+
+        return addressFactory.create(ip, port);
+    };
+
+    /**
+    * Extract addresses from a buffer and return them in an array
+    *
+    * @method core.protocol.messages.ContactNodeAddressExtractor#extractSenderAddressesAndBytesReadAsArray
+    *
+    * @param {Buffer} buffer The buffer to extract from
+    * @param {core.topology.ContactNodeAddressFactoryInterface} addressFactory Address factory to create the addresses with
+    * @param {number} from The index of bytes to start from
+    * @returns {Array} Returns an array with two items: First is the array of addresses, second is the index of the last byte read.
+    */
+    ContactNodeAddressExtractor.extractAddressesAndBytesReadAsArray = function (buffer, addressFactory, from) {
+        var doRead = true;
+        var result = [];
+
+        while (doRead) {
+            var identByte = buffer[from];
+
+            from++;
+
+            if (identByte === MessageByteCheatsheet.ipv4) {
+                var bytesToRead = 6;
+
+                result.push(ContactNodeAddressExtractor.contactNodeAddressByIPv4Buffer(buffer.slice(from, from + bytesToRead), addressFactory));
+                from += bytesToRead;
+            } else if (identByte === MessageByteCheatsheet.ipv6) {
+                var bytesToRead = 18;
+
+                result.push(ContactNodeAddressExtractor.contactNodeAddressByIPv6Buffer(buffer.slice(from, from + bytesToRead), addressFactory));
+                from += bytesToRead;
+            } else if (identByte === MessageByteCheatsheet.addressEnd) {
+                doRead = false;
+            } else {
+                doRead = false;
+                throw new Error(&#039;ContactNodeAddressExtractor~_extractAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.&#039;);
+            }
+        }
+
+        return [result, from];
+    };
+    return ContactNodeAddressExtractor;
+})();
+
+module.exports = ContactNodeAddressExtractor;
+//# sourceMappingURL=ContactNodeAddressExtractor.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>
