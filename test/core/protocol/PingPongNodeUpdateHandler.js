@@ -16,6 +16,8 @@ var ProxyManager = require('../../../src/core/protocol/proxy/ProxyManager');
 var ReadableMessage = require('../../../src/core/protocol/messages/ReadableMessage');
 
 describe('CORE --> PROTOCOL --> PING --> PingPongNodeUpdateHandler @current', function () {
+    this.timeout(0);
+
     var sandbox;
 
     var pingPongHandler = null;
@@ -23,8 +25,9 @@ describe('CORE --> PROTOCOL --> PING --> PingPongNodeUpdateHandler @current', fu
 
     // checkers used in tests
     var errorWhenPinging = null;
-    var sentPong = false;
+
     var sentPongTo = null;
+    var sentPingTo = null;
     var recentlyReplacedNode = null;
     var longestNotSeenNode = null;
 
@@ -33,18 +36,19 @@ describe('CORE --> PROTOCOL --> PING --> PingPongNodeUpdateHandler @current', fu
 
     var fireMessageEvent = function (type, bitstring) {
         var msg = testUtils.stubPublicApi(sandbox, ReadableMessage, {
-            getMesageType: function () {
+            getMessageType: function () {
                 return type;
             },
             getSender: function () {
                 return createContactNodeStub(bitstring);
             }
         });
+
         onMessageCallback(msg);
     };
 
     var fireNewNodeInfo = function (bitstring) {
-        return createContactNodeStub(bitstring);
+        onContactNodeInfoCallback(createContactNodeStub(bitstring));
     };
 
     var createContactNodeStub = function (bitstring) {
@@ -61,7 +65,7 @@ describe('CORE --> PROTOCOL --> PING --> PingPongNodeUpdateHandler @current', fu
         var configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
             get: function (what) {
                 if (what === 'protocol.waitForNodeReactionInSeconds')
-                    return 0.1;
+                    return 1;
                 if (what === 'protocol.pingpong.maxWaitingListSize')
                     return 2;
             }
@@ -76,9 +80,9 @@ describe('CORE --> PROTOCOL --> PING --> PingPongNodeUpdateHandler @current', fu
         var connectionManagerStub = testUtils.stubPublicApi(sandbox, ProtocolConnectionManager, {
             writeMessageTo: function (node, type, payload, callback) {
                 if (type === 'PONG') {
-                    sentPong = true;
                     sentPongTo = node;
                 } else if (type === 'PING') {
+                    sentPingTo = node;
                     callback(errorWhenPinging);
                 }
             }
@@ -116,6 +120,103 @@ describe('CORE --> PROTOCOL --> PING --> PingPongNodeUpdateHandler @current', fu
 
     it('should correctly instantiate ping pong handler', function () {
         pingPongHandler.should.be.instanceof(PingPongNodeUpdateHandler);
+    });
+
+    it('should pong the other node', function (done) {
+        var bits = '11111111';
+        fireMessageEvent('PING', bits);
+        process.nextTick(function () {
+            if (sentPongTo.getId().toBitString() === bits) {
+                sentPongTo = null;
+                done();
+            }
+        });
+    });
+
+    it('should ping a node and timeout on no response, as well as correctly handling the waiting lists', function (done) {
+        longestNotSeenNode = createContactNodeStub('11000000');
+        fireNewNodeInfo('11100000');
+
+        process.nextTick(function () {
+            if (sentPingTo.getId().toBitString() === '11000000') {
+                var waitingLists = pingPongHandler.getWaitingLists();
+                if (waitingLists[6][0].nodeToCheck.getId().toBitString() === '11000000') {
+                    pingPongHandler.once('pingTimeout', function () {
+                        sentPingTo = null;
+                        if (!waitingLists[6][0] && recentlyReplacedNode.getId().toBitString() === '11000000')
+                            done();
+                    });
+                }
+            }
+        });
+    });
+
+    it('should replace the node when not being able to send a ping', function (done) {
+        longestNotSeenNode = createContactNodeStub('10100000');
+        errorWhenPinging = new Error();
+        fireNewNodeInfo('10110000');
+
+        process.nextTick(function () {
+            errorWhenPinging = null;
+            if (pingPongHandler.getWaitingLists()[5].length === 0 && recentlyReplacedNode.getId().toBitString() === '10100000')
+                done();
+        });
+    });
+
+    it('should receive a pong', function (done) {
+        longestNotSeenNode = createContactNodeStub('10100000');
+        fireNewNodeInfo('10110000');
+
+        pingPongHandler.once('gotPonged', function (node) {
+            if (node.getId().toBitString() === '10100000' && pingPongHandler.getWaitingLists()[5].length === 0)
+                done();
+        });
+
+        process.nextTick(function () {
+            fireMessageEvent('PONG', '10100000');
+        });
+    });
+
+    it('should work its way through the waiting list', function (done) {
+        longestNotSeenNode = createContactNodeStub('10100000');
+        fireNewNodeInfo('10110000');
+
+        process.nextTick(function () {
+            longestNotSeenNode = createContactNodeStub('10111000');
+            fireNewNodeInfo('10111100');
+
+            pingPongHandler.once('pingTimeout', function (node) {
+                if (node.getId().toBitString() === '10100000') {
+                    process.nextTick(function () {
+                        pingPongHandler.on('gotPonged', function (node) {
+                            if (node.getId().toBitString() === '10111000' && pingPongHandler.getWaitingLists()[5].length === 0)
+                                done();
+                        });
+                        fireMessageEvent('PONG', '10111000');
+                    });
+                }
+            });
+        });
+    });
+
+    it('should be able to add the new node when the bucket is no longer full', function (done) {
+        longestNotSeenNode = createContactNodeStub('10100000');
+        fireNewNodeInfo('10110000');
+
+        process.nextTick(function () {
+            longestNotSeenNode = createContactNodeStub('10111000');
+            fireNewNodeInfo('10111100');
+
+            longestNotSeenNode = null;
+            pingPongHandler.once('pingTimeout', function (node) {
+                if (node.getId().toBitString() === '10100000') {
+                    process.nextTick(function () {
+                        if (pingPongHandler.getWaitingLists()[5].length === 0)
+                            done();
+                    });
+                }
+            });
+        });
     });
 });
 //# sourceMappingURL=PingPongNodeUpdateHandler.js.map

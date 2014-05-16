@@ -75,6 +75,10 @@ var PingPongNodeUpdateHandler = (function (_super) {
 
         this._setupListeners();
     }
+    PingPongNodeUpdateHandler.prototype.getWaitingLists = function () {
+        return this._waitingLists;
+    };
+
     /**
     * Adds new node information to the waiting list for the right bucket. Checks if it is the first and if so, fires off
     * the ping.
@@ -126,6 +130,9 @@ var PingPongNodeUpdateHandler = (function (_super) {
             var slot = _this._waitingLists[waitingListNumber].splice(0, 1)[0];
 
             _this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
+
+            _this.emit('pingTimeout', slot.nodeToCheck);
+
             _this._handleNextInWaitingList(waitingListNumber);
         }, this._reactionTime);
     };
@@ -193,6 +200,9 @@ var PingPongNodeUpdateHandler = (function (_super) {
             if (node.getId().equals(first.nodeToCheck.getId())) {
                 list.splice(0, 1);
                 clearTimeout(first.timeout);
+
+                this.emit('gotPonged', node);
+
                 this._handleNextInWaitingList(waitingListNumber);
             }
         }
@@ -257,6 +267,7 @@ var PingPongNodeUpdateHandler = (function (_super) {
         var _this = this;
         this._proxyManager.on('message', function (message) {
             var type = message.getMessageType();
+
             if (type === 'PING') {
                 _this._sendPongTo(message.getSender());
             } else if (type === 'PONG') {

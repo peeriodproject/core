@@ -88,6 +88,10 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 		this._setupListeners();
 	}
 
+	public getWaitingLists ():Array<PongWaitingList> {
+		return this._waitingLists;
+	}
+
 	/**
 	 * Adds new node information to the waiting list for the right bucket. Checks if it is the first and if so, fires off
 	 * the ping.
@@ -140,6 +144,9 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 			var slot:PongWaitingSlot = this._waitingLists[waitingListNumber].splice(0, 1)[0];
 
 			this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
+
+			this.emit('pingTimeout', slot.nodeToCheck);
+
 			this._handleNextInWaitingList(waitingListNumber);
 		}, this._reactionTime);
 	}
@@ -208,6 +215,9 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 			if (node.getId().equals(first.nodeToCheck.getId())) {
 				list.splice(0, 1);
 				clearTimeout(first.timeout);
+
+				this.emit('gotPonged', node);
+
 				this._handleNextInWaitingList(waitingListNumber);
 			}
 		}
@@ -270,6 +280,7 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 	private _setupListeners ():void {
 		this._proxyManager.on('message', (message:ReadableMessageInterface) => {
 			var type:string = message.getMessageType();
+
 			if (type === 'PING') {
 				this._sendPongTo(message.getSender());
 			}
