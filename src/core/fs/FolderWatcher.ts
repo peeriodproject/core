@@ -125,9 +125,9 @@ class FolderWatcher implements FolderWatcherInterface {
 		this._isOpen = true;
 	}
 
+	// todo bind to seperate event listeners.
 	private _registerWatcherEvents ():void {
 		this._watcher.on('all', (eventName:string, changedPath:string) => {
-			console.log(eventName);
 			if (['add', 'change', 'unlink'].indexOf(eventName) !== -1) {
 				this._processDelayedEvent(eventName, changedPath);
 			}
@@ -138,12 +138,12 @@ class FolderWatcher implements FolderWatcherInterface {
 				//console.log('removed directory', this._logPath(changedPath));
 			}
 			else if (eventName !== 'error') {
-				console.log('=== Undelayed Event ===');
-				console.error(eventName, changedPath);
+				//console.log('=== Undelayed Event ===');
+				//console.error(eventName, changedPath);
 			}
 			else {
-				console.log('=== Unhandled Event ===');
-				console.error(eventName, changedPath);
+				//console.log('=== Unhandled Event ===');
+				//console.error(eventName, changedPath);
 			}
 		});
 	}
@@ -282,9 +282,9 @@ class FolderWatcher implements FolderWatcherInterface {
 	 * @private
 	 */
 	private _triggerEvent (eventName:string, filePath:string, stats:fs.Stats):void {
-		console.log("\n" + '=== EVENT ===');
-		console.log(eventName, this._logPath(filePath));
-		console.log("\n\n");
+		//console.log("\n" + '=== EVENT ===');
+		//console.log(eventName, this._logPath(filePath));
+		//console.log("\n\n");
 
 		this._eventEmitter.emit(eventName, filePath, stats);
 	}

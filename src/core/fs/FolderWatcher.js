@@ -107,10 +107,10 @@ var FolderWatcher = (function () {
         this._isOpen = true;
     };
 
+    // todo bind to seperate event listeners.
     FolderWatcher.prototype._registerWatcherEvents = function () {
         var _this = this;
         this._watcher.on('all', function (eventName, changedPath) {
-            console.log(eventName);
             if (['add', 'change', 'unlink'].indexOf(eventName) !== -1) {
                 _this._processDelayedEvent(eventName, changedPath);
             } else if (eventName === 'addDir') {
@@ -118,11 +118,11 @@ var FolderWatcher = (function () {
             } else if (eventName === 'unlinkDir') {
                 //console.log('removed directory', this._logPath(changedPath));
             } else if (eventName !== 'error') {
-                console.log('=== Undelayed Event ===');
-                console.error(eventName, changedPath);
+                //console.log('=== Undelayed Event ===');
+                //console.error(eventName, changedPath);
             } else {
-                console.log('=== Unhandled Event ===');
-                console.error(eventName, changedPath);
+                //console.log('=== Unhandled Event ===');
+                //console.error(eventName, changedPath);
             }
         });
     };
@@ -259,10 +259,9 @@ var FolderWatcher = (function () {
     * @private
     */
     FolderWatcher.prototype._triggerEvent = function (eventName, filePath, stats) {
-        console.log("\n" + '=== EVENT ===');
-        console.log(eventName, this._logPath(filePath));
-        console.log("\n\n");
-
+        //console.log("\n" + '=== EVENT ===');
+        //console.log(eventName, this._logPath(filePath));
+        //console.log("\n\n");
         this._eventEmitter.emit(eventName, filePath, stats);
     };
 

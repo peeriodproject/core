@@ -11,7 +11,12 @@ import ClosableInterface = require('../../utils/interfaces/ClosableInterface');
 interface FolderWatcherInterface extends ClosableInterface {
 
 	/**
-	 * Adds the callback to the event emitter for the specified event name
+	 * Adds the callback to the event emitter for the specified event name.
+	 *
+	 * Possible file events are:
+	 *  - add
+	 *  - change
+	 *  - unlink
 	 *
 	 * @method core.fs.FolderWatcherInterface#on
 	 *

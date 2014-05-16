@@ -8,14 +8,17 @@ var testUtils = require('../../utils/testUtils');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var FolderWatcher = require('../../../src/core/fs/FolderWatcher');
 
-describe('CORE --> FS --> FolderWatcher @joern', function () {
+describe('CORE --> FS --> FolderWatcher', function () {
     var sandbox;
     var configStub;
     var validPathToWatch = testUtils.getFixturePath('core/fs/folderWatcherTest/folderToWatch');
+    var fileContent = "if (humans!=robots) {\n\treality();\n}\n\n// code {poems}\n// David Sjunnesson";
     var options = {
         closeOnProcessExit: false
     };
     var folderWatcher;
+
+    this.timeout(0);
 
     beforeEach(function () {
         sandbox = sinon.sandbox.create();
@@ -60,22 +63,55 @@ describe('CORE --> FS --> FolderWatcher @joern', function () {
     });
 
     it('should correctly trigger one add event', function (done) {
+        var filePath = validPathToWatch + '/message.txt';
+
         folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
         folderWatcher.on('add', function (path, stats) {
+            path.should.equal(filePath);
+            stats.isFile().should.be.true;
+
             done();
         });
 
-        fs.writeFileSync(validPathToWatch + '/message.txt', 'Hello Node');
+        fs.writeFileSync(filePath, fileContent);
     });
-    /*it('should correctly trigger one add event', function (done) {
-    fs.writeFileSync(validPathToWatch + '/message.txt', 'Hello Node');
-    
-    folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
-    
-    folderWatcher.on('add', function (path:string, stats:fs.Stats) {
-    
-    done();
+
+    it('should correctly emit one unlink event', function (done) {
+        var filePath = validPathToWatch + '/message.txt';
+
+        folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+
+        folderWatcher.on('add', function (path, stats) {
+            fs.unlinkSync(filePath);
+        });
+
+        folderWatcher.on('unlink', function (path, stats) {
+            path.should.equal(filePath);
+            (stats === undefined).should.be.true;
+
+            done();
+        });
+
+        fs.writeFileSync(filePath, fileContent);
     });
-    });*/
+
+    it('should correctly emit one change event', function (done) {
+        var filePath = validPathToWatch + '/message.txt';
+
+        folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+
+        folderWatcher.on('add', function (path, stats) {
+            fs.writeFileSync(filePath, fileContent);
+        });
+
+        folderWatcher.on('change', function (path, stats) {
+            path.should.equal(filePath);
+            (stats !== undefined).should.be.true;
+
+            done();
+        });
+
+        fs.writeFileSync(filePath, 'Hello FolderWatcher!');
+    });
 });
 //# sourceMappingURL=FolderWatcher.js.map

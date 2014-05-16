@@ -10,14 +10,17 @@ import testUtils = require('../../utils/testUtils');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import FolderWatcher = require('../../../src/core/fs/FolderWatcher');
 
-describe('CORE --> FS --> FolderWatcher @joern', function () {
+describe('CORE --> FS --> FolderWatcher', function () {
 	var sandbox:SinonSandbox;
 	var configStub:any
 	var validPathToWatch:string = testUtils.getFixturePath('core/fs/folderWatcherTest/folderToWatch');
+	var fileContent = "if (humans!=robots) {\n\treality();\n}\n\n// code {poems}\n// David Sjunnesson";
 	var options = {
 		closeOnProcessExit: false
 	};
 	var folderWatcher:FolderWatcher;
+
+	this.timeout(0);
 
 	beforeEach(function () {
 		sandbox = sinon.sandbox.create();
@@ -64,22 +67,55 @@ describe('CORE --> FS --> FolderWatcher @joern', function () {
 	});
 
 	it('should correctly trigger one add event', function (done) {
+		var filePath:string = validPathToWatch + '/message.txt';
+
 		folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
 		folderWatcher.on('add', function (path:string, stats:fs.Stats) {
+
+			path.should.equal(filePath);
+			stats.isFile().should.be.true;
+
 			done();
 		});
 
-		fs.writeFileSync(validPathToWatch + '/message.txt', 'Hello Node');
+		fs.writeFileSync(filePath, fileContent);
 	});
 
-	/*it('should correctly trigger one add event', function (done) {
-		fs.writeFileSync(validPathToWatch + '/message.txt', 'Hello Node');
+	it('should correctly emit one unlink event', function (done) {
+		var filePath:string = validPathToWatch + '/message.txt';
 
 		folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
 
 		folderWatcher.on('add', function (path:string, stats:fs.Stats) {
+			fs.unlinkSync(filePath);
+		});
+
+		folderWatcher.on('unlink', function (path:string, stats:fs.Stats) {
+			path.should.equal(filePath);
+			(stats === undefined).should.be.true;
 
 			done();
 		});
-	});*/
+
+		fs.writeFileSync(filePath, fileContent);
+	});
+
+	it ('should correctly emit one change event', function (done) {
+		var filePath:string = validPathToWatch + '/message.txt';
+
+		folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+
+		folderWatcher.on('add', function (path:string, stats:fs.Stats) {
+			fs.writeFileSync(filePath, fileContent);
+		});
+
+		folderWatcher.on('change', function (path:string, stats:fs.Stats) {
+			path.should.equal(filePath);
+			(stats !== undefined).should.be.true;
+
+			done();
+		});
+
+		fs.writeFileSync(filePath, 'Hello FolderWatcher!');
+	});
 });
