@@ -7,6 +7,7 @@ import ContactNodeFactoryInterface = require('../../topology/interfaces/ContactN
 import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInterface');
 import IdInterface = require('../../topology/interfaces/IdInterface');
 import ReadableMessageInterface = require('./interfaces/ReadableMessageInterface');
+import ContactNodeAddressExtractor = require('./ContactNodeAddressExtractor');
 
 import Id = require('../../topology/Id');
 import MessageByteCheatsheet = require('./MessageByteCheatsheet');
@@ -126,46 +127,6 @@ class ReadableMessage implements ReadableMessageInterface {
 	}
 
 	/**
-	 * Makes a ContactNodeAddress out of a buffer representing an IPv4 address.
-	 *
-	 * @method core.protocol.messages.ReadableMessage~_contactNodeAddressByIPv4Buffer
-	 *
-	 * @todo From node v.0.11.x (and thus node-webkit v.0.9.x) toJSON() will return a json object with {type:'Buffer',
-	 * data:[<bytes>]} and not just the array with bytes!
-	 *
-	 * @param {Buffer} buffer
-	 * @returns {ContactNodeAddressInterface}
-	 */
-	private _contactNodeAddressByIPv4Buffer (buffer:Buffer):ContactNodeAddressInterface {
-		var ip:string = buffer.slice(0, 4).toJSON().join('.');
-		var port:number = buffer.readUInt16BE(4);
-
-		return this._addressFactory.create(ip, port);
-	}
-
-	/**
-	 * Makes a ContactNodeAddress out of a buffer representing an IPv6 address.
-	 *
-	 * @method core.protocol.messages.ReadableMessage~_contactNodeAddressByIPv6Buffer
-	 *
-	 * @param {Buffer} buffer
-	 * @returns {ContactNodeAddressInterface}
-	 */
-	private _contactNodeAddressByIPv6Buffer (buffer:Buffer):ContactNodeAddressInterface {
-		var ip:string = '';
-		var port:number = buffer.readUInt16BE(16);
-
-		for (var i=0; i<8; i++) {
-			ip += buffer.slice(i * 2, i*2 + 2).toString('hex');
-			if (i !== 7) {
-				ip += ':';
-			}
-		}
-
-		return this._addressFactory.create(ip, port);
-	}
-
-	/**
 	 * Kicks off the extracting process.
 	 *
 	 * @method core.protocol.messages.ReadableMessage~_deformat
@@ -201,7 +162,7 @@ class ReadableMessage implements ReadableMessageInterface {
 	 * @returns {Id} The created ID
 	 */
 	private _extractId (from:number):IdInterface {
-		var idBuffer = new Buffer(20);
+		var idBuffer:Buffer = new Buffer(20);
 
 		this._buffer.copy(idBuffer, 0, from, from + 20);
 
@@ -280,47 +241,6 @@ class ReadableMessage implements ReadableMessageInterface {
 		return from + 20;
 	}
 
-	/**
-	 * Extract the sender addresses and returns them in an array
-	 *
-	 * @method core.protocol.messages.ReadableMessage~_extractSenderAddressesAndBytesReadAsArray
-	 *
-	 * @param {number} from The index of bytes to start from
-	 * @returns {Array} Returns an array with two items: First is the array of the sender's addresses, second is the index of the last byte read.
-	 */
-	private _extractSenderAddressesAndBytesReadAsArray (from):any {
-		var doRead = true;
-		var result:ContactNodeAddressListInterface = [];
-
-		while (doRead) {
-			var identByte = this._buffer[from];
-
-			from++;
-
-			if (identByte === MessageByteCheatsheet.ipv4) {
-				var bytesToRead = 6;
-
-				result.push(this._contactNodeAddressByIPv4Buffer(this._buffer.slice(from, from + bytesToRead)));
-				from += bytesToRead;
-			}
-			else if (identByte === MessageByteCheatsheet.ipv6) {
-				var bytesToRead = 18;
-
-				result.push(this._contactNodeAddressByIPv6Buffer(this._buffer.slice(from, from + bytesToRead)));
-				from += bytesToRead;
-			}
-			else if (identByte === MessageByteCheatsheet.addressEnd) {
-				doRead = false;
-			}
-			else {
-				doRead = false;
-				throw new Error('ReadableMessage~_extractSenderAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.');
-			}
-		}
-
-		return [result, from];
-	}
-
 
 	/**
 	 * Extracts the sender ID and address block and makes ContactNode out of it.
@@ -335,7 +255,7 @@ class ReadableMessage implements ReadableMessageInterface {
 
 		from += 20;
 
-		var res = this._extractSenderAddressesAndBytesReadAsArray(from);
+		var res = ContactNodeAddressExtractor.extractAddressesAndBytesReadAsArray(this._buffer, this._addressFactory, from);
 		var senderAddresses:ContactNodeAddressListInterface = res[0];
 
 		this._sender = this._nodeFactory.create(senderId, senderAddresses);

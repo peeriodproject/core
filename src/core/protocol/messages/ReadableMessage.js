@@ -1,3 +1,5 @@
+var ContactNodeAddressExtractor = require('./ContactNodeAddressExtractor');
+
 var Id = require('../../topology/Id');
 var MessageByteCheatsheet = require('./MessageByteCheatsheet');
 
@@ -101,46 +103,6 @@ var ReadableMessage = (function () {
 
     ReadableMessage.prototype.isHydra = function () {
         return this._isHydra;
-    };
-
-    /**
-    * Makes a ContactNodeAddress out of a buffer representing an IPv4 address.
-    *
-    * @method core.protocol.messages.ReadableMessage~_contactNodeAddressByIPv4Buffer
-    *
-    * @todo From node v.0.11.x (and thus node-webkit v.0.9.x) toJSON() will return a json object with {type:'Buffer',
-    * data:[<bytes>]} and not just the array with bytes!
-    *
-    * @param {Buffer} buffer
-    * @returns {ContactNodeAddressInterface}
-    */
-    ReadableMessage.prototype._contactNodeAddressByIPv4Buffer = function (buffer) {
-        var ip = buffer.slice(0, 4).toJSON().join('.');
-        var port = buffer.readUInt16BE(4);
-
-        return this._addressFactory.create(ip, port);
-    };
-
-    /**
-    * Makes a ContactNodeAddress out of a buffer representing an IPv6 address.
-    *
-    * @method core.protocol.messages.ReadableMessage~_contactNodeAddressByIPv6Buffer
-    *
-    * @param {Buffer} buffer
-    * @returns {ContactNodeAddressInterface}
-    */
-    ReadableMessage.prototype._contactNodeAddressByIPv6Buffer = function (buffer) {
-        var ip = '';
-        var port = buffer.readUInt16BE(16);
-
-        for (var i = 0; i < 8; i++) {
-            ip += buffer.slice(i * 2, i * 2 + 2).toString('hex');
-            if (i !== 7) {
-                ip += ':';
-            }
-        }
-
-        return this._addressFactory.create(ip, port);
     };
 
     /**
@@ -258,44 +220,6 @@ var ReadableMessage = (function () {
     };
 
     /**
-    * Extract the sender addresses and returns them in an array
-    *
-    * @method core.protocol.messages.ReadableMessage~_extractSenderAddressesAndBytesReadAsArray
-    *
-    * @param {number} from The index of bytes to start from
-    * @returns {Array} Returns an array with two items: First is the array of the sender's addresses, second is the index of the last byte read.
-    */
-    ReadableMessage.prototype._extractSenderAddressesAndBytesReadAsArray = function (from) {
-        var doRead = true;
-        var result = [];
-
-        while (doRead) {
-            var identByte = this._buffer[from];
-
-            from++;
-
-            if (identByte === MessageByteCheatsheet.ipv4) {
-                var bytesToRead = 6;
-
-                result.push(this._contactNodeAddressByIPv4Buffer(this._buffer.slice(from, from + bytesToRead)));
-                from += bytesToRead;
-            } else if (identByte === MessageByteCheatsheet.ipv6) {
-                var bytesToRead = 18;
-
-                result.push(this._contactNodeAddressByIPv6Buffer(this._buffer.slice(from, from + bytesToRead)));
-                from += bytesToRead;
-            } else if (identByte === MessageByteCheatsheet.addressEnd) {
-                doRead = false;
-            } else {
-                doRead = false;
-                throw new Error('ReadableMessage~_extractSenderAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.');
-            }
-        }
-
-        return [result, from];
-    };
-
-    /**
     * Extracts the sender ID and address block and makes ContactNode out of it.
     *
     * @method core.protocol.messages.ReadableMessage~_extractSenderAsContactNode
@@ -308,7 +232,7 @@ var ReadableMessage = (function () {
 
         from += 20;
 
-        var res = this._extractSenderAddressesAndBytesReadAsArray(from);
+        var res = ContactNodeAddressExtractor.extractAddressesAndBytesReadAsArray(this._buffer, this._addressFactory, from);
         var senderAddresses = res[0];
 
         this._sender = this._nodeFactory.create(senderId, senderAddresses);
