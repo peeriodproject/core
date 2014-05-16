@@ -88,41 +88,6 @@ class FoundClosestNodesReadableMessage implements FoundClosestNodesReadableMessa
 	}
 
 	/**
-	 * Extracts an ID from the given position in the payload.
-	 *
-	 * @method core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_extractId
-	 *
-	 * @param {number} from The position in the buffer to start from.
-	 * @returns {core.topology.IdInterface}
-	 */
-	private _extractId (from:number):IdInterface {
-		var idBuffer:Buffer = new Buffer(20);
-
-		this._payload.copy(idBuffer, 0, from, from + 20);
-
-		return new Id(idBuffer, 160);
-	}
-
-	/**
-	 * Checks if from the given position the next 20 bytes are null bytes.
-	 *
-	 * @method core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_followedByDelimiter
-	 *
-	 * @param {number} from The position in the buffer to start from.
-	 * @returns {boolean}
-	 */
-	private _followedByDelimiter (from:number):boolean {
-		var is = true;
-
-		for (var i=0; i<20; i++) {
-			if (this._payload[from + i] === undefined || this._payload[from + i] !== 0x00) {
-				is = false;
-			}
-		}
-		return is;
-	}
-
-	/**
 	 * Extracts the found node list from the payload.
 	 *
 	 * @method core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_extractFoundNodeList
@@ -151,6 +116,40 @@ class FoundClosestNodesReadableMessage implements FoundClosestNodesReadableMessa
 		this._foundNodeList = result;
 	}
 
+	/**
+	 * Extracts an ID from the given position in the payload.
+	 *
+	 * @method core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_extractId
+	 *
+	 * @param {number} from The position in the buffer to start from.
+	 * @returns {core.topology.IdInterface}
+	 */
+	private _extractId (from:number):IdInterface {
+		var idBuffer:Buffer = new Buffer(20);
+
+		this._payload.copy(idBuffer, 0, from, from + 20);
+
+		return new Id(idBuffer, 160);
+	}
+
+	/**
+	 * Checks if from the given position the next 20 bytes are null bytes.
+	 *
+	 * @method core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_followedByDelimiter
+	 *
+	 * @param {number} from The position in the buffer to start from.
+	 * @returns {boolean}
+	 */
+	private _followedByDelimiter (from:number):boolean {
+		var is = true;
+
+		for (var i = 0; i < 20; i++) {
+			if (this._payload[from + i] === undefined || this._payload[from + i] !== 0x00) {
+				is = false;
+			}
+		}
+		return is;
+	}
 
 }
 

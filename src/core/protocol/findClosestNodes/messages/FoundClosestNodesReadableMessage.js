@@ -72,6 +72,34 @@ var FoundClosestNodesReadableMessage = (function () {
     };
 
     /**
+    * Extracts the found node list from the payload.
+    *
+    * @method core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_extractFoundNodeList
+    */
+    FoundClosestNodesReadableMessage.prototype._extractFoundNodeList = function () {
+        var doRead = true;
+        var result = [];
+
+        var pos = 20;
+
+        while (doRead) {
+            if (!this._followedByDelimiter(pos)) {
+                doRead = false;
+            } else {
+                pos += 20;
+                var id = this._extractId(pos);
+                pos += 20;
+                var res = ContactNodeAddressExtractor.extractAddressesAndBytesReadAsArray(this._payload, this._addressFactory, pos);
+                result.push(this._nodeFactory.create(id, res[0]));
+
+                pos = res[1];
+            }
+        }
+
+        this._foundNodeList = result;
+    };
+
+    /**
     * Extracts an ID from the given position in the payload.
     *
     * @method core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_extractId
@@ -104,34 +132,6 @@ var FoundClosestNodesReadableMessage = (function () {
             }
         }
         return is;
-    };
-
-    /**
-    * Extracts the found node list from the payload.
-    *
-    * @method core.protocol.findClosestNodes.FoundClosestNodesReadableMessage~_extractFoundNodeList
-    */
-    FoundClosestNodesReadableMessage.prototype._extractFoundNodeList = function () {
-        var doRead = true;
-        var result = [];
-
-        var pos = 20;
-
-        while (doRead) {
-            if (!this._followedByDelimiter(pos)) {
-                doRead = false;
-            } else {
-                pos += 20;
-                var id = this._extractId(pos);
-                pos += 20;
-                var res = ContactNodeAddressExtractor.extractAddressesAndBytesReadAsArray(this._payload, this._addressFactory, pos);
-                result.push(this._nodeFactory.create(id, res[0]));
-
-                pos = res[1];
-            }
-        }
-
-        this._foundNodeList = result;
     };
     return FoundClosestNodesReadableMessage;
 })();
