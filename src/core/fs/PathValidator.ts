@@ -48,6 +48,32 @@ class PathValidator implements PathValidatorInterface {
 			}
 		});
 	}
+
+	validateStats (filePath:string, statsToValidate:fs.Stats, callback:(err:Error, isValid, fileStats:fs.Stats) => any):void {
+		fs.stat(filePath, (err:Error, stats:fs.Stats) => {
+			if (err) {
+				return callback(err, false, null);
+			}
+			else if (!stats.isFile() && !stats.isDirectory()) {
+				return callback(new Error('PathValidator.validateStats: The specified path is not a valid file or directory. "' + filePath + '"'), false, null);
+			}
+
+			// remove current date from stats
+			if (statsToValidate['atime']) {
+				delete statsToValidate['atime'];
+			}
+
+			delete stats['atime'];
+
+			// @see http://stackoverflow.com/a/1144249
+			var isValid:boolean = JSON.stringify(stats) === JSON.stringify(statsToValidate);
+
+			callback(null, isValid, stats);
+
+		});
+	}
+
+
 }
 
 export = PathValidator;

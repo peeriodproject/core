@@ -64,4 +64,18 @@ describe('CORE --> FS --> PathValidator @joern', function () {
 		});
 	});
 
+	it ('should return that the specified stats object is correct for the given path', function (done) {
+		var filePath:string = testUtils.getFixturePath('core/fs/pathValidator/file.txt');
+		var validator = new PathValidator();
+		var validStatsJSON = '{"dev":16777222,"mode":33188,"nlink":1,"uid":501,"gid":20,"rdev":0,"blksize":4096,"ino":27724859,"size":6985,"blocks":16,"mtime":"2014-05-16T21:16:41.000Z","ctime":"2014-05-16T21:16:41.000Z"}';
+
+		validator.validateStats(filePath, JSON.parse(validStatsJSON), function (err:Error, isValid:boolean, fileStats:fs.Stats) {
+			(err === null).should.be.true;
+			isValid.should.be.true;
+			JSON.stringify(fileStats).should.equal(validStatsJSON);
+
+			done();
+		});
+	});
+
 });
