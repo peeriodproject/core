@@ -227,10 +227,22 @@ class FolderWatcher implements FolderWatcherInterface {
 		});
 	}
 
+	/**
+	 * Returns true if a event exists for the the given path
+	 *
+	 * @param {string} changedPath
+	 * @returns {boolean}
+	 */
 	private _eventExists (changedPath:string):boolean {
 		return this._currentDelayedEvents[changedPath] ? true : false;
 	}
 
+	/**
+	 *
+	 * @param eventName
+	 * @param changedPath
+	 * @private
+	 */
 	private _triggerDelayedEvent (eventName:string, changedPath:string):void {
 		this._updateDelayedEvent(eventName, changedPath, setTimeout(() => {
 			this._getFileSize(changedPath, (fileSize:number, stats:fs.Stats) => {
@@ -272,20 +284,27 @@ class FolderWatcher implements FolderWatcherInterface {
 	}
 
 	/**
-	 * Triggers the event to the outside wrold :)
-	 * @param eventName
-	 * @param filePath
-	 * @param stats
-	 * @private
+	 * Triggers the event to registered event listeners.
+	 *
+	 * @param {string} eventName
+	 * @param {string} filePath
+	 * @param {fs.Stats} stats
 	 */
 	private _triggerEvent (eventName:string, filePath:string, stats:fs.Stats):void {
 		//console.log("\n" + '=== EVENT ===');
 		//console.log(eventName, this._logPath(filePath));
 		//console.log("\n\n");
 
-		this._eventEmitter.emit(eventName, filePath, stats);
+		if (this.isOpen()) {
+			this._eventEmitter.emit(eventName, filePath, stats);
+		}
 	}
 
+	/**
+	 *
+	 * @param changedPath
+	 * @private
+	 */
 	private _deleteFromDelayedEvents (changedPath:string) {
 		this._currentDelayedEvents[changedPath] = null;
 

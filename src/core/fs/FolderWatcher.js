@@ -208,10 +208,22 @@ var FolderWatcher = (function () {
         });
     };
 
+    /**
+    * Returns true if a event exists for the the given path
+    *
+    * @param {string} changedPath
+    * @returns {boolean}
+    */
     FolderWatcher.prototype._eventExists = function (changedPath) {
         return this._currentDelayedEvents[changedPath] ? true : false;
     };
 
+    /**
+    *
+    * @param eventName
+    * @param changedPath
+    * @private
+    */
     FolderWatcher.prototype._triggerDelayedEvent = function (eventName, changedPath) {
         var _this = this;
         this._updateDelayedEvent(eventName, changedPath, setTimeout(function () {
@@ -249,19 +261,26 @@ var FolderWatcher = (function () {
     };
 
     /**
-    * Triggers the event to the outside wrold :)
-    * @param eventName
-    * @param filePath
-    * @param stats
-    * @private
+    * Triggers the event to registered event listeners.
+    *
+    * @param {string} eventName
+    * @param {string} filePath
+    * @param {fs.Stats} stats
     */
     FolderWatcher.prototype._triggerEvent = function (eventName, filePath, stats) {
         //console.log("\n" + '=== EVENT ===');
         //console.log(eventName, this._logPath(filePath));
         //console.log("\n\n");
-        this._eventEmitter.emit(eventName, filePath, stats);
+        if (this.isOpen()) {
+            this._eventEmitter.emit(eventName, filePath, stats);
+        }
     };
 
+    /**
+    *
+    * @param changedPath
+    * @private
+    */
     FolderWatcher.prototype._deleteFromDelayedEvents = function (changedPath) {
         this._currentDelayedEvents[changedPath] = null;
 
