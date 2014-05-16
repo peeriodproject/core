@@ -20,15 +20,9 @@ module testUtils {
 		var stubbed:any = {};
 
 		var p = klass.prototype;
-		var it = true;
-		while (it) {
-			if (p.__proto__) {
-				p = p.__proto__;
-				keys = keys.concat(Object.keys(p));
-			}
-			else {
-				it = false;
-			}
+		while (p) {
+			p = p.__proto__;
+			if (p) keys = keys.concat(Object.keys(p));
 		}
 
 		for (var attr in klass.prototype) {

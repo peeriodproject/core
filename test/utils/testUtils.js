@@ -17,14 +17,10 @@ var testUtils;
         var stubbed = {};
 
         var p = klass.prototype;
-        var it = true;
-        while (it) {
-            if (p.__proto__) {
-                p = p.__proto__;
+        while (p) {
+            p = p.__proto__;
+            if (p)
                 keys = keys.concat(Object.keys(p));
-            } else {
-                it = false;
-            }
         }
 
         for (var attr in klass.prototype) {
