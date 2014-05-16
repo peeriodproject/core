@@ -22,6 +22,10 @@ describe('CORE --> FS --> FolderWatcher', function () {
 
 	this.timeout(0);
 
+	before(function () {
+		testUtils.createFolder(testUtils.getFixturePath('core/fs/folderWatcherTest'));
+	});
+
 	beforeEach(function () {
 		sandbox = sinon.sandbox.create();
 		configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
