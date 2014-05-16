@@ -44,6 +44,28 @@ var PathValidator = (function () {
             }
         });
     };
+
+    PathValidator.prototype.validateStats = function (filePath, statsToValidate, callback) {
+        fs.stat(filePath, function (err, stats) {
+            if (err) {
+                return callback(err, false, null);
+            } else if (!stats.isFile() && !stats.isDirectory()) {
+                return callback(new Error('PathValidator.validateStats: The specified path is not a valid file or directory. "' + filePath + '"'), false, null);
+            }
+
+            // remove current date from stats
+            if (statsToValidate['atime']) {
+                delete statsToValidate['atime'];
+            }
+
+            delete stats['atime'];
+
+            // @see http://stackoverflow.com/a/1144249
+            var isValid = JSON.stringify(stats) === JSON.stringify(statsToValidate);
+
+            callback(null, isValid, stats);
+        });
+    };
     return PathValidator;
 })();
 
