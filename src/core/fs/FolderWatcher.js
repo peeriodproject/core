@@ -1,8 +1,12 @@
 /// <reference path='../../main.d.ts' />
+var events = require('events');
 var fs = require('fs');
 
 //var monitor = require('usb-detection');
 var chokidar = require('chokidar');
+var EventEmitter = events.EventEmitter;
+
+var ObjectUtils = require('../utils/ObjectUtils');
 
 /**
 * @class core.fs.FolderWatcher
@@ -11,17 +15,21 @@ var chokidar = require('chokidar');
 * @param {string} pathToWatch The absolute path to the folder the watcher should manage.
 */
 var FolderWatcher = (function () {
-    function FolderWatcher(config, pathToWatch) {
+    function FolderWatcher(config, pathToWatch, options) {
+        if (typeof options === "undefined") { options = {}; }
+        var _this = this;
         this._config = null;
         this._currentEmptyFilePaths = [];
         this._currentDelayedEvents = {};
         this._eventDelayOptions = null;
+        this._eventEmitter = null;
         /**
         * A flag indicates weather the watcher is open (active) or closed (inactive)
         *
         * @member {boolean} core.fs.FolderWatcher~_isOpen
         */
         this._isOpen = false;
+        this._options = null;
         /**
         * The folder path the watcher is watching
         *
@@ -30,8 +38,13 @@ var FolderWatcher = (function () {
         this._path = null;
         // todo implement chokidar.d.ts
         this._watcher = null;
+        var defaults = {
+            closeOnProcessExit: true
+        };
+
         this._config = config;
         this._path = pathToWatch;
+        this._options = ObjectUtils.extend(defaults, options);
 
         this._eventDelayOptions = {
             interval: this._config.get('fs.folderWatcher.interval'),
@@ -39,24 +52,49 @@ var FolderWatcher = (function () {
             eventDelay: this._config.get('fs.folderWatcher.eventDelay')
         };
 
+        if (this._options.closeOnProcessExit) {
+            process.on('exit', function () {
+                _this.close();
+            });
+        }
+
         this.open();
     }
     FolderWatcher.prototype.close = function () {
+        if (!this._isOpen) {
+            return;
+        }
+
+        // clean up watcher
         this._watcher.close();
         this._watcher = null;
 
-        this._isOpen = false;
-    };
+        // clean up event emitter
+        this._eventEmitter.removeAllListeners();
+        this._eventEmitter = null;
 
-    FolderWatcher.prototype.getState = function () {
-        return undefined;
+        this._isOpen = false;
     };
 
     FolderWatcher.prototype.isOpen = function () {
         return this._isOpen;
     };
 
+    FolderWatcher.prototype.off = function (eventName, callback) {
+        this._eventEmitter.removeListener(eventName, callback);
+    };
+
+    FolderWatcher.prototype.on = function (eventName, callback) {
+        this._eventEmitter.addListener(eventName, callback);
+    };
+
     FolderWatcher.prototype.open = function () {
+        if (this._isOpen) {
+            return;
+        }
+
+        this._eventEmitter = new EventEmitter();
+
         this._watcher = chokidar.watch(this._path, {
             ignored: /[\/\\]\./,
             persistent: true,
@@ -64,14 +102,15 @@ var FolderWatcher = (function () {
             binaryInterval: this._eventDelayOptions.binaryInterval
         });
 
-        this._registerEvents();
+        this._registerWatcherEvents();
 
         this._isOpen = true;
     };
 
-    FolderWatcher.prototype._registerEvents = function () {
+    FolderWatcher.prototype._registerWatcherEvents = function () {
         var _this = this;
         this._watcher.on('all', function (eventName, changedPath) {
+            console.log(eventName);
             if (['add', 'change', 'unlink'].indexOf(eventName) !== -1) {
                 _this._processDelayedEvent(eventName, changedPath);
             } else if (eventName === 'addDir') {
@@ -81,7 +120,6 @@ var FolderWatcher = (function () {
             } else if (eventName !== 'error') {
                 console.log('=== Undelayed Event ===');
                 console.error(eventName, changedPath);
-                //this._processEvent(eventName, changedPath);
             } else {
                 console.log('=== Unhandled Event ===');
                 console.error(eventName, changedPath);
@@ -224,6 +262,8 @@ var FolderWatcher = (function () {
         console.log("\n" + '=== EVENT ===');
         console.log(eventName, this._logPath(filePath));
         console.log("\n\n");
+
+        this._eventEmitter.emit(eventName, filePath, stats);
     };
 
     FolderWatcher.prototype._deleteFromDelayedEvents = function (changedPath) {

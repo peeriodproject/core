@@ -1,5 +1,6 @@
 /// <reference path='../../main.d.ts' />
 
+import events = require('events');
 import fs = require('fs');
 
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
@@ -7,11 +8,14 @@ import FolderWatcherDelayedEventInterface = require('./interfaces/FolderWatcherD
 import FolderWatcherDelayedEventListInterface = require('./interfaces/FolderWatcherDelayedEventListInterface');
 import FolderWatcherDelaysInterface = require('./interfaces/FolderWatcherDelaysInterface');
 import FolderWatcherInterface = require('./interfaces/FolderWatcherInterface');
+import ClosableOptions = require('../utils/interfaces/ClosableOptions');
 import PathListInterface = require('./interfaces/PathListInterface');
-
 
 //var monitor = require('usb-detection');
 var chokidar = require('chokidar');
+var EventEmitter = events.EventEmitter;
+
+import ObjectUtils = require('../utils/ObjectUtils');
 
 /**
  * @class core.fs.FolderWatcher
@@ -29,12 +33,16 @@ class FolderWatcher implements FolderWatcherInterface {
 
 	private _eventDelayOptions:FolderWatcherDelaysInterface = null;
 
+	private _eventEmitter:events.EventEmitter = null;
+
 	/**
 	 * A flag indicates weather the watcher is open (active) or closed (inactive)
 	 *
 	 * @member {boolean} core.fs.FolderWatcher~_isOpen
 	 */
 	private _isOpen:boolean = false;
+
+	private _options:ClosableOptions = null;
 
 	/**
 	 * The folder path the watcher is watching
@@ -46,9 +54,14 @@ class FolderWatcher implements FolderWatcherInterface {
 	// todo implement chokidar.d.ts
 	private _watcher:any = null;
 
-	constructor (config:ConfigInterface, pathToWatch:string) {
+	constructor (config:ConfigInterface, pathToWatch:string, options:ClosableOptions = {}) {
+		var defaults:ClosableOptions = {
+			closeOnProcessExit: true
+		};
+
 		this._config = config;
 		this._path = pathToWatch;
+		this._options = ObjectUtils.extend(defaults, options);
 
 		this._eventDelayOptions = {
 			interval      : this._config.get('fs.folderWatcher.interval'),
@@ -56,25 +69,50 @@ class FolderWatcher implements FolderWatcherInterface {
 			eventDelay    : this._config.get('fs.folderWatcher.eventDelay')
 		}
 
+		if (this._options.closeOnProcessExit) {
+			process.on('exit', () => {
+				this.close();
+			})
+		}
+
 		this.open();
 	}
 
 	public close ():void {
+		if (!this._isOpen) {
+			return;
+		}
+
+		// clean up watcher
 		this._watcher.close();
 		this._watcher = null;
 
-		this._isOpen = false;
-	}
+		// clean up event emitter
+		this._eventEmitter.removeAllListeners();
+		this._eventEmitter = null;
 
-	getState ():any {
-		return undefined;
+		this._isOpen = false;
 	}
 
 	public isOpen ():boolean {
 		return this._isOpen;
 	}
 
+	public off (eventName:string, callback:Function):void {
+		this._eventEmitter.removeListener(eventName, callback);
+	}
+
+	public on (eventName:string, callback:Function):void {
+		this._eventEmitter.addListener(eventName, callback);
+	}
+
 	public open ():void {
+		if (this._isOpen) {
+			return;
+		}
+
+		this._eventEmitter = new EventEmitter();
+
 		this._watcher = chokidar.watch(this._path, {
 			ignored       : /[\/\\]\./,
 			persistent    : true,
@@ -82,13 +120,14 @@ class FolderWatcher implements FolderWatcherInterface {
 			binaryInterval: this._eventDelayOptions.binaryInterval
 		});
 
-		this._registerEvents();
+		this._registerWatcherEvents();
 
 		this._isOpen = true;
 	}
 
-	private _registerEvents ():void {
+	private _registerWatcherEvents ():void {
 		this._watcher.on('all', (eventName:string, changedPath:string) => {
+			console.log(eventName);
 			if (['add', 'change', 'unlink'].indexOf(eventName) !== -1) {
 				this._processDelayedEvent(eventName, changedPath);
 			}
@@ -101,7 +140,6 @@ class FolderWatcher implements FolderWatcherInterface {
 			else if (eventName !== 'error') {
 				console.log('=== Undelayed Event ===');
 				console.error(eventName, changedPath);
-				//this._processEvent(eventName, changedPath);
 			}
 			else {
 				console.log('=== Unhandled Event ===');
@@ -247,6 +285,8 @@ class FolderWatcher implements FolderWatcherInterface {
 		console.log("\n" + '=== EVENT ===');
 		console.log(eventName, this._logPath(filePath));
 		console.log("\n\n");
+
+		this._eventEmitter.emit(eventName, filePath, stats);
 	}
 
 	private _deleteFromDelayedEvents (changedPath:string) {
