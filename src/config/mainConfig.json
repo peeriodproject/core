@@ -45,5 +45,12 @@
         "binaryPath"       : "core/search/elasticsearch",
         "databasePath"     : "db/searchStore",
         "searchStoreConfig": "./config/searchStore.json"
+    },
+    "fs": {
+        "folderWatcher": {
+            "interval": 1000,
+            "binaryInterval": 5000,
+            "eventDelay": 1000
+        }
     }
 }

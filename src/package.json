@@ -8,6 +8,7 @@
     "show_in_taskbar": false
   },
   "dependencies": {
+    "chokidar": "^0.8.2",
     "elasticsearch": "^2.1.4",
     "follow-redirects": "*",
     "fs-extra": "^0.8.1",

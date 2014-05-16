@@ -1,6 +1,7 @@
 /// <reference path='../../test.d.ts' />
 
 require('should');
+
 import testUtils = require('../../utils/testUtils');
 
 import PluginRunnerFactory = require('../../../src/core/plugin/PluginRunnerFactory');

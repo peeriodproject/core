@@ -1,3 +1,4 @@
+import ConfigInterface = require('../../config/interfaces/ConfigInterface');
 import FolderWatcherInterface = require('./FolderWatcherInterface');
 
 /**
@@ -6,7 +7,7 @@ import FolderWatcherInterface = require('./FolderWatcherInterface');
  */
 interface FolderWatcherFactoryInterface {
 
-	create(pathToWatch:string):FolderWatcherInterface;
+	create (config:ConfigInterface, pathToWatch:string):FolderWatcherInterface;
 
 }
 

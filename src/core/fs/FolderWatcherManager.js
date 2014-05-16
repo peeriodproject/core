@@ -282,7 +282,7 @@ var FolderWatcherManager = (function () {
         var created = false;
 
         if (!this._watchers[pathToWatch] && fs.existsSync(pathToWatch)) {
-            this._watchers[pathToWatch] = this._folderWatcherFactory.create(pathToWatch);
+            this._watchers[pathToWatch] = this._folderWatcherFactory.create(this._config, pathToWatch);
             this._removeFromInvalidWatcherPaths(pathToWatch);
 
             created = true;
