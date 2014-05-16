@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">65.98</p>
+      <p class="stat">67.78</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">351</p>
+      <p class="stat">275</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">55.56</p>
+      <p class="stat">45.71</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.03</p>
+      <p class="stat">1.46</p>
     </div>
   </div>
 </div>
@@ -90,7 +90,9 @@
 
 <div class="container">
   <div class="row">
-    <textarea id="file-source" class="col-md-12">var Id = require(&#039;../../topology/Id&#039;);
+    <textarea id="file-source" class="col-md-12">var ContactNodeAddressExtractor = require(&#039;./ContactNodeAddressExtractor&#039;);
+
+var Id = require(&#039;../../topology/Id&#039;);
 var MessageByteCheatsheet = require(&#039;./MessageByteCheatsheet&#039;);
 
 /**
@@ -193,46 +195,6 @@ var ReadableMessage = (function () {
 
     ReadableMessage.prototype.isHydra = function () {
         return this._isHydra;
-    };
-
-    /**
-    * Makes a ContactNodeAddress out of a buffer representing an IPv4 address.
-    *
-    * @method core.protocol.messages.ReadableMessage~_contactNodeAddressByIPv4Buffer
-    *
-    * @todo From node v.0.11.x (and thus node-webkit v.0.9.x) toJSON() will return a json object with {type:&#039;Buffer&#039;,
-    * data:[&lt;bytes&gt;]} and not just the array with bytes!
-    *
-    * @param {Buffer} buffer
-    * @returns {ContactNodeAddressInterface}
-    */
-    ReadableMessage.prototype._contactNodeAddressByIPv4Buffer = function (buffer) {
-        var ip = buffer.slice(0, 4).toJSON().join(&#039;.&#039;);
-        var port = buffer.readUInt16BE(4);
-
-        return this._addressFactory.create(ip, port);
-    };
-
-    /**
-    * Makes a ContactNodeAddress out of a buffer representing an IPv6 address.
-    *
-    * @method core.protocol.messages.ReadableMessage~_contactNodeAddressByIPv6Buffer
-    *
-    * @param {Buffer} buffer
-    * @returns {ContactNodeAddressInterface}
-    */
-    ReadableMessage.prototype._contactNodeAddressByIPv6Buffer = function (buffer) {
-        var ip = &#039;&#039;;
-        var port = buffer.readUInt16BE(16);
-
-        for (var i = 0; i &lt; 8; i++) {
-            ip += buffer.slice(i * 2, i * 2 + 2).toString(&#039;hex&#039;);
-            if (i !== 7) {
-                ip += &#039;:&#039;;
-            }
-        }
-
-        return this._addressFactory.create(ip, port);
     };
 
     /**
@@ -350,44 +312,6 @@ var ReadableMessage = (function () {
     };
 
     /**
-    * Extract the sender addresses and returns them in an array
-    *
-    * @method core.protocol.messages.ReadableMessage~_extractSenderAddressesAndBytesReadAsArray
-    *
-    * @param {number} from The index of bytes to start from
-    * @returns {Array} Returns an array with two items: First is the array of the sender&#039;s addresses, second is the index of the last byte read.
-    */
-    ReadableMessage.prototype._extractSenderAddressesAndBytesReadAsArray = function (from) {
-        var doRead = true;
-        var result = [];
-
-        while (doRead) {
-            var identByte = this._buffer[from];
-
-            from++;
-
-            if (identByte === MessageByteCheatsheet.ipv4) {
-                var bytesToRead = 6;
-
-                result.push(this._contactNodeAddressByIPv4Buffer(this._buffer.slice(from, from + bytesToRead)));
-                from += bytesToRead;
-            } else if (identByte === MessageByteCheatsheet.ipv6) {
-                var bytesToRead = 18;
-
-                result.push(this._contactNodeAddressByIPv6Buffer(this._buffer.slice(from, from + bytesToRead)));
-                from += bytesToRead;
-            } else if (identByte === MessageByteCheatsheet.addressEnd) {
-                doRead = false;
-            } else {
-                doRead = false;
-                throw new Error(&#039;ReadableMessage~_extractSenderAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.&#039;);
-            }
-        }
-
-        return [result, from];
-    };
-
-    /**
     * Extracts the sender ID and address block and makes ContactNode out of it.
     *
     * @method core.protocol.messages.ReadableMessage~_extractSenderAsContactNode
@@ -400,7 +324,7 @@ var ReadableMessage = (function () {
 
         from += 20;
 
-        var res = this._extractSenderAddressesAndBytesReadAsArray(from);
+        var res = ContactNodeAddressExtractor.extractAddressesAndBytesReadAsArray(this._buffer, this._addressFactory, from);
         var senderAddresses = res[0];
 
         this._sender = this._nodeFactory.create(senderId, senderAddresses);

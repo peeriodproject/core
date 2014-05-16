@@ -36,7 +36,7 @@ describe('CORE --> FS --> FolderWatcher', function () {
 					return 3000;
 				}
 			}
-		})
+		});
 		testUtils.createFolder(validPathToWatch);
 	});
 
@@ -47,6 +47,10 @@ describe('CORE --> FS --> FolderWatcher', function () {
 		sandbox.restore();
 		configStub = null;
 		testUtils.deleteFolderRecursive(validPathToWatch);
+	});
+
+	after(function () {
+		testUtils.getFixturePath('core/fs/folderWatcherTest');
 	});
 
 	it('should correctly instantiate the folder watcher', function () {
@@ -76,6 +80,9 @@ describe('CORE --> FS --> FolderWatcher', function () {
 
 		testUtils.createFolder(validPathToWatch + '/new-folder');
 		testUtils.deleteFolderRecursive(validPathToWatch + '/new-folder');
+
+		folderWatcher.off('add', onAddCallback);
+		folderWatcher.off('unlink', onUnlinkCallback);
 
 		onAddCallback.called.should.be.false;
 		onUnlinkCallback.called.should.be.false;
