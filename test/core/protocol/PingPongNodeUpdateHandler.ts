@@ -222,4 +222,14 @@ describe('CORE --> PROTOCOL --> PING --> PingPongNodeUpdateHandler @current', fu
 		});
 	});
 
+	it('should not add a node to the waiting list if it is full', function (done) {
+		longestNotSeenNode = createContactNodeStub('10100000');
+		fireNewNodeInfo('10110000');
+		fireNewNodeInfo('10110000');
+		fireNewNodeInfo('10110000');
+		process.nextTick(function () {
+			if (pingPongHandler.getWaitingLists()[5].length === 2) done();
+		});
+	});
+
 });
