@@ -111,6 +111,7 @@ var FolderWatcher = (function () {
     FolderWatcher.prototype._registerWatcherEvents = function () {
         var _this = this;
         this._watcher.on('all', function (eventName, changedPath) {
+            //console.log(eventName);
             if (['add', 'change', 'unlink'].indexOf(eventName) !== -1) {
                 _this._processDelayedEvent(eventName, changedPath);
             } else if (eventName === 'addDir') {
@@ -161,10 +162,6 @@ var FolderWatcher = (function () {
                 _this._currentDelayedEvents[changedPath].timeout = timeoutIdentifier;
             });
         }
-    };
-
-    FolderWatcher.prototype._logPath = function (filePath) {
-        return '"' + filePath.replace('/Volumes/HDD/Users/joernroeder/Projects/__Abschluss__/git_app/test/fixtures/core/fs/folderWatcherTest/folderToWatch/', '') + '"';
     };
 
     /**
@@ -239,7 +236,7 @@ var FolderWatcher = (function () {
                             _this._currentEmptyFilePaths.splice(emptyFilePathIndex, 1);
                         }
 
-                        _this._triggerEvent(eventName, changedPath, stats);
+                        _this._triggerEvent(delayedEvent.initialEventName, changedPath, stats);
 
                         _this._checkEmptyFilePaths();
                     }

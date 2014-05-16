@@ -128,6 +128,7 @@ class FolderWatcher implements FolderWatcherInterface {
 	// todo bind to seperate event listeners.
 	private _registerWatcherEvents ():void {
 		this._watcher.on('all', (eventName:string, changedPath:string) => {
+			//console.log(eventName);
 			if (['add', 'change', 'unlink'].indexOf(eventName) !== -1) {
 				this._processDelayedEvent(eventName, changedPath);
 			}
@@ -182,10 +183,6 @@ class FolderWatcher implements FolderWatcherInterface {
 				this._currentDelayedEvents[changedPath].timeout = timeoutIdentifier;
 			});
 		}
-	}
-
-	private _logPath (filePath:string):string {
-		return '"' + filePath.replace('/Volumes/HDD/Users/joernroeder/Projects/__Abschluss__/git_app/test/fixtures/core/fs/folderWatcherTest/folderToWatch/', '') + '"';
 	}
 
 	/**
@@ -261,7 +258,7 @@ class FolderWatcher implements FolderWatcherInterface {
 							this._currentEmptyFilePaths.splice(emptyFilePathIndex, 1);
 						}
 
-						this._triggerEvent(eventName, changedPath, stats);
+						this._triggerEvent(delayedEvent.initialEventName, changedPath, stats);
 
 						this._checkEmptyFilePaths();
 					}

@@ -66,6 +66,21 @@ describe('CORE --> FS --> FolderWatcher', function () {
 		folderWatcher.isOpen().should.be.true;
 	});
 
+	it ('should correctly ignore the folder updates', function () {
+		var onAddCallback = sinon.spy();
+		var onUnlinkCallback = sinon.spy();
+		folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+
+		folderWatcher.on('add', onAddCallback);
+		folderWatcher.on('unlink', onUnlinkCallback);
+
+		testUtils.createFolder(validPathToWatch + '/new-folder');
+		testUtils.deleteFolderRecursive(validPathToWatch + '/new-folder');
+
+		onAddCallback.called.should.be.false;
+		onUnlinkCallback.called.should.be.false;
+	});
+
 	it('should correctly trigger one add event', function (done) {
 		var filePath:string = validPathToWatch + '/message.txt';
 
@@ -117,5 +132,32 @@ describe('CORE --> FS --> FolderWatcher', function () {
 		});
 
 		fs.writeFileSync(filePath, 'Hello FolderWatcher!');
+	});
+
+	it ('should correctly emit a single event after the file is updated multiple times', function (done) {
+		var filePath:string = validPathToWatch + '/message.txt';
+		var written = true;
+		var writeFile = function (i:number) {
+			fs.writeFileSync(filePath, new Buffer(1000 * i));
+
+			if (i < 3) {
+				setTimeout(function () {
+					writeFile(++i);
+				}, 3000);
+			}
+			else {
+				written = true;
+			}
+		};
+
+		folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+
+		folderWatcher.on('add', function (path:string, stats:fs.Stats) {
+			written.should.be.true;
+
+			done();
+		});
+
+		writeFile(1);
 	});
 });
