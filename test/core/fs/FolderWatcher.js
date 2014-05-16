@@ -154,5 +154,42 @@ describe('CORE --> FS --> FolderWatcher', function () {
 
         writeFile(1);
     });
+
+    it('should correctly analyse 0 byte files after delayed event queue is handled (handles/simulates bulk copies on OS X)', function (done) {
+        var validZeroByetFilePath = validPathToWatch + '/validZeroByteFile.txt';
+        var invalidZeroByetFilePath = validPathToWatch + '/invalidZeroByteFile.txt';
+        var largeFilePath = validPathToWatch + '/largeFile.txt';
+        var added = 0;
+        var written = true;
+        var writeFile = function (i) {
+            fs.writeFileSync(largeFilePath, new Buffer(1000 * i));
+
+            if (i === 3) {
+                fs.writeFileSync(validZeroByetFilePath, new Buffer(100));
+            }
+
+            if (i < 4) {
+                setTimeout(function () {
+                    writeFile(++i);
+                }, 3000);
+            } else {
+                written = true;
+            }
+        };
+
+        folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+        folderWatcher.on('add', function (path, stats) {
+            added++;
+
+            if (added === 2) {
+                done();
+            }
+        });
+
+        fs.writeFileSync(validZeroByetFilePath, new Buffer(0));
+        fs.writeFileSync(invalidZeroByetFilePath, new Buffer(0));
+
+        writeFile(1);
+    });
 });
 //# sourceMappingURL=FolderWatcher.js.map
