@@ -6,7 +6,7 @@ var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory'
 
 var FoundClosestNodeReadableMessage = require('../../../src/core/protocol/findClosestNodes/messages/FoundClosestNodesReadableMessage');
 
-describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FoundClosestNodesReadableMessage @current', function () {
+describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FoundClosestNodesReadableMessage', function () {
     var nodeFactory = new ContactNodeFactory();
     var addressFactory = new ContactNodeAddressFactory();
 
