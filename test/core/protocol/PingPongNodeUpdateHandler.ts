@@ -16,7 +16,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import ProxyManager = require('../../../src/core/protocol/proxy/ProxyManager');
 import ReadableMessage = require('../../../src/core/protocol/messages/ReadableMessage');
 
-describe('CORE --> PROTOCOL --> PING --> PingPongNodeUpdateHandler @current', function () {
+describe('CORE --> PROTOCOL --> PING --> PingPongNodeUpdateHandler', function () {
 
 	this.timeout(0);
 

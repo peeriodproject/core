@@ -143,7 +143,7 @@ describe('CORE --> PROTOCOL --> ReadableMessage', function () {
 		msg[72] = 0x00;
 		(function () {
 			new ReadableMessage(msg, nodeFactoryStub, addressFactoryStub);
-		}).should.throw('ReadableMessage~_extractSenderAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.');
+		}).should.throw('ContactNodeAddressExtractor~_extractAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.');
 	});
 
 	it('should recognize message as hydra message and return early', function () {

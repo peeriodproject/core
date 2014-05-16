@@ -15,7 +15,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var ProxyManager = require('../../../src/core/protocol/proxy/ProxyManager');
 var ReadableMessage = require('../../../src/core/protocol/messages/ReadableMessage');
 
-describe('CORE --> PROTOCOL --> PING --> PingPongNodeUpdateHandler @current', function () {
+describe('CORE --> PROTOCOL --> PING --> PingPongNodeUpdateHandler', function () {
     this.timeout(0);
 
     var sandbox;
