@@ -76,7 +76,7 @@ var FindClosestNodesManager = (function (_super) {
         var _this = this;
         if (this._myNode.getId().equals(searchForId)) {
             var idBuffer = searchForId.getBuffer();
-            idBuffer[19] === 255 ? idBuffer[19]-- : idBuffer[19]++;
+            idBuffer[19] === 0xff ? idBuffer[19]-- : idBuffer[19]++;
         }
 
         this._routingTable.getClosestContactNodes(searchForId, requestingNode.getId(), function (err, contacts) {

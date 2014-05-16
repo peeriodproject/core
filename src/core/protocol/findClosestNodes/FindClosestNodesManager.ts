@@ -88,7 +88,7 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 	private _replyToFindNodesFor(requestingNode:ContactNodeInterface, searchForId:IdInterface):void {
 		if (this._myNode.getId().equals(searchForId)) {
 			var idBuffer = searchForId.getBuffer();
-			idBuffer[19] === 255 ? idBuffer[19]-- : idBuffer[19]++;
+			idBuffer[19] === 0xff ? idBuffer[19]-- : idBuffer[19]++;
 		}
 
 		this._routingTable.getClosestContactNodes (searchForId, requestingNode.getId(), (err:Error, contacts:ContactNodeListInterface) => {
