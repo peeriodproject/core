@@ -311,7 +311,7 @@ var RoutingTable = (function () {
         if (this._isInBucketKeyRange(bucketKey)) {
             this._getBucket(bucketKey).update(contact, internalCallback);
         } else {
-            return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.updateContactNode: cannot update the given contact node.')));
+            return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.updateContactNode: cannot update the given contact node.'), null));
         }
     };
 

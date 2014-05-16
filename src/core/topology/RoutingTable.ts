@@ -335,7 +335,7 @@ class RoutingTable implements RoutingTableInterface {
 		});
 	}
 
-	public updateContactNode (contact:ContactNodeInterface, callback?:(err:Error) => any):void {
+	public updateContactNode (contact:ContactNodeInterface, callback?:(err:Error, longestNotSeenContact:ContactNodeInterface) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
 		var bucketKey:number = this._getBucketKey(contact.getId());
@@ -344,7 +344,7 @@ class RoutingTable implements RoutingTableInterface {
 			this._getBucket(bucketKey).update(contact, internalCallback);
 		}
 		else {
-			return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.updateContactNode: cannot update the given contact node.')));
+			return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.updateContactNode: cannot update the given contact node.'), null));
 		}
 	}
 
