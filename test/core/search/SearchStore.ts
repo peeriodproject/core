@@ -13,8 +13,8 @@ import SearchStore = require('../../../src/core/search/SearchStore');
 describe('CORE --> SEARCH --> SearchStore', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
-	var searchStoreLogsFolder:string = testUtils.getFixturePath('search/searchStoreLogs');
-	var searchStoreDataFolder:string = testUtils.getFixturePath('search/searchStoreData');
+	var searchStoreLogsFolder:string = testUtils.getFixturePath('core/search/searchStoreLogs');
+	var searchStoreDataFolder:string = testUtils.getFixturePath('core/search/searchStoreData');
 	var searchStore:SearchStore = null;
 
 	this.timeout(10000);
@@ -26,13 +26,7 @@ describe('CORE --> SEARCH --> SearchStore', function () {
 		sandbox = sinon.sandbox.create();
 		config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
 			get: function (key):any {
-				/*if (key === 'search.host') {
-					return 'localhost';
-				}
-				else if (key === 'search.port') {
-					return 9200;
-				}
-				else */if (key === 'search.binaryPath') {
+				if (key === 'search.binaryPath') {
 					return 'core/search/elasticsearch'
 				}
 				else if (key === 'search.searchStoreConfig') {
@@ -45,8 +39,9 @@ describe('CORE --> SEARCH --> SearchStore', function () {
 		});
 
 		searchStore = new SearchStore(config, {
-			logPath       : searchStoreLogsFolder,
-			onOpenCallback: function (err:Error) {
+			logPath           : searchStoreLogsFolder,
+			closeOnProcessExit: false,
+			onOpenCallback    : function (err:Error) {
 				if (err) {
 					throw err;
 				}

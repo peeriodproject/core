@@ -13,7 +13,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
 describe('CORE --> PLUGIN --> PluginManager', function () {
     var sandbox;
-    var appDataPath = testUtils.getFixturePath('plugin/appDataPath');
+    var appDataPath = testUtils.getFixturePath('core/plugin/appDataPath');
     var createConfig = function () {
         return testUtils.stubPublicApi(sandbox, ObjectConfig, {
             get: function (key) {

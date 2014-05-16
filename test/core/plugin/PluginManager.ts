@@ -19,7 +19,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
 describe('CORE --> PLUGIN --> PluginManager', function () {
 	var sandbox:SinonSandbox;
-	var appDataPath:string = testUtils.getFixturePath('plugin/appDataPath');
+	var appDataPath:string = testUtils.getFixturePath('core/plugin/appDataPath');
 	var createConfig:any = function ():any {
 		return testUtils.stubPublicApi(sandbox, ObjectConfig, {
 			get: function (key:string) {

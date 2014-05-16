@@ -14,8 +14,8 @@ import SearchStore = require('../../../src/core/search/SearchStore');
 describe('CORE --> SEARCH --> SearchStoreFactory', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
-	var searchStoreLogsFolder:string = testUtils.getFixturePath('search/searchStoreLogs');
-	var searchStoreDataFolder:string = testUtils.getFixturePath('search/searchStoreData');
+	var searchStoreLogsFolder:string = testUtils.getFixturePath('core/search/searchStoreLogs');
+	var searchStoreDataFolder:string = testUtils.getFixturePath('core/search/searchStoreData');
 	var searchStore:SearchStoreInterface = null;
 
 	this.timeout(0);
@@ -42,6 +42,7 @@ describe('CORE --> SEARCH --> SearchStoreFactory', function () {
 			}
 		});
 		searchStore = (new SearchStoreFactory()).create(config, {
+			closeOnProcessExit: false,
 			logPath       : searchStoreLogsFolder,
 			onOpenCallback: function (err:Error) {
 				if (err) {
@@ -56,12 +57,12 @@ describe('CORE --> SEARCH --> SearchStoreFactory', function () {
 
 	after(function (done) {
 		searchStore.close(function () {
-			searchStore = null;
 			testUtils.deleteFolderRecursive(searchStoreLogsFolder);
 			testUtils.deleteFolderRecursive(searchStoreDataFolder);
 
 			sandbox.restore();
 			config = null;
+			searchStore = null;
 
 			done();
 		});

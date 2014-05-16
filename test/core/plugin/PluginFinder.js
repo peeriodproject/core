@@ -94,7 +94,7 @@ describe('CORE --> PLUGIN --> PluginFinder', function () {
     });
 
     it('should correctly create the plugin folder if it does not exists', function (done) {
-        var fixturePath = 'plugin/plugins/getPluginFolderTest';
+        var fixturePath = 'core/plugin/plugins/getPluginFolderTest';
         var pluginFinder = createPluginFinderWithPluginFolder(fixturePath);
 
         pluginFinder.getPluginFolderPath(function (err, folderPath) {
@@ -106,7 +106,7 @@ describe('CORE --> PLUGIN --> PluginFinder', function () {
     });
 
     it('should correctly return if no plugins were found', function (done) {
-        var fixturePath = 'plugin/plugins/emptyPluginsFolderTest';
+        var fixturePath = 'core/plugin/plugins/emptyPluginsFolderTest';
         var pluginFinder = createPluginFinderWithPluginFolder(fixturePath);
 
         pluginFinder.findPlugins(function (err, pluginPaths) {
@@ -118,7 +118,7 @@ describe('CORE --> PLUGIN --> PluginFinder', function () {
     });
 
     it('should correctly find unloaded plugins', function (done) {
-        var fixturePath = 'plugin/plugins/unloadedPluginsFolderTest';
+        var fixturePath = 'core/plugin/plugins/unloadedPluginsFolderTest';
         var pluginFinder = createPluginFinderWithPluginFolder(fixturePath);
 
         pluginFinder.addPluginFolderNamesToIgnoreList(['activePlugin'], function () {

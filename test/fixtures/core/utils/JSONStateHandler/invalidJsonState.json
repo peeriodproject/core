@@ -1,0 +1,9 @@
+{
+    "a": {
+        valid: {
+            "json": {
+                "document": false
+            }
+        }
+    }
+}

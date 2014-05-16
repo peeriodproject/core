@@ -9,7 +9,7 @@ import PluginRunner = require('../../../src/core/plugin/PluginRunner');
 describe('CORE --> PLUGIN --> PluginRunnerFactory', function () {
 
 	it ('should correctly create plugin runners', function () {
-		var pluginRunner = (new PluginRunnerFactory()).create('identifier', testUtils.getFixturePath('/plugin/pluginRunner/emptyFile.js'));
+		var pluginRunner = (new PluginRunnerFactory()).create('identifier', testUtils.getFixturePath('core/plugin/pluginRunner/emptyFile.js'));
 		pluginRunner.should.be.an.instanceof(PluginRunner);
 	});
 

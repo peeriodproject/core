@@ -5,6 +5,8 @@ var path = require('path');
 var ObjectUtils = require('../utils/ObjectUtils');
 
 /**
+* todo implement StateHandler!
+*
 * @class core.plugin.PluginManager
 * @implements PluginManagerInterface
 */

@@ -11,8 +11,8 @@ var SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 describe('CORE --> SEARCH --> SearchClient', function () {
     var sandbox;
     var config;
-    var searchStoreLogsFolder = testUtils.getFixturePath('search/searchStoreLogs');
-    var searchStoreDataFolder = testUtils.getFixturePath('search/searchStoreData');
+    var searchStoreLogsFolder = testUtils.getFixturePath('core/search/searchStoreLogs');
+    var searchStoreDataFolder = testUtils.getFixturePath('core/search/searchStoreData');
     var searchClient = null;
 
     this.timeout(0);
@@ -40,6 +40,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 
         searchClient = new SearchClient(config, new SearchStoreFactory(), {
             logPath: searchStoreLogsFolder,
+            closeOnProcessExit: false,
             onOpenCallback: function (err) {
                 if (err) {
                     throw err;
