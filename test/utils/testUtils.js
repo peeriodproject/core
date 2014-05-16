@@ -11,8 +11,21 @@ var testUtils;
     function stubPublicApi(sandbox, klass, apiMethodCallbacks) {
         if (typeof apiMethodCallbacks === "undefined") { apiMethodCallbacks = {}; }
         var proto = klass.constructor();
+
         var keys = Object.keys(klass.prototype);
+
         var stubbed = {};
+
+        var p = klass.prototype;
+        var it = true;
+        while (it) {
+            if (p.__proto__) {
+                p = p.__proto__;
+                keys = keys.concat(Object.keys(p));
+            } else {
+                it = false;
+            }
+        }
 
         for (var attr in klass.prototype) {
             proto[attr] = klass.prototype[attr];
