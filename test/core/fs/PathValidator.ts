@@ -7,7 +7,7 @@ import testUtils = require('../../utils/testUtils');
 
 import PathValidator = require('../../../src/core/fs/PathValidator');
 
-describe('CORE --> FS --> PathValidator @joern', function () {
+describe('CORE --> FS --> PathValidator', function () {
 
 	it ('should correctly instantiate the validator', function () {
 		(new PathValidator()).should.be.an.instanceof(PathValidator);
