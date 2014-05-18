@@ -203,6 +203,7 @@ var FolderWatcher = (function () {
     FolderWatcher.prototype._getFileSize = function (filePath, callback) {
         fs.stat(filePath, function (err, stats) {
             var fileSize = err ? -1 : stats.size;
+            stats = stats || null;
 
             callback(fileSize, stats);
         });

@@ -1,3 +1,6 @@
+import fs = require('fs');
+
+import FolderWatcherListInterface = require('./FolderWatcherListInterface');
 import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
 
 /**
@@ -25,10 +28,34 @@ interface FolderWatcherManagerInterface extends ClosableAsyncInterface {
 	/**
 	 * Returns all folder watchers
 	 *
-	 * todo folderWatchers:FolderWatcherListInterface
 	 * @param {Function} callback
 	 */
-	getFolderWatchers (callback:(folderWatchers:any) => any):any;
+	getFolderWatchers (callback:(folderWatchers:FolderWatcherListInterface) => any):void;
+
+	/**
+	 * Adds the callback to the event emitter for the specified event name.
+	 *
+	 * Possible file events are:
+	 *  - add
+	 *  - change
+	 *  - unlink
+	 *
+	 * @method core.fs.FolderWatcherManagerInterface#on
+	 *
+	 * @param {string} eventName
+	 * @param {Function} callback
+	 */
+	on (eventName:string, callback:(filePath?:string, stats?:fs.Stats) => any):void;
+
+	/**
+	 * Removes the callback from the event emitter for the specified event name
+	 *
+	 * @method core.fs.FolderWatcherManagerInterface#off
+	 *
+	 * @param {string} eventName
+	 * @param {Function} callback
+	 */
+	off (eventName:string, callback:(filePath?:string, stats?:fs.Stats) => any):void;
 
 	/**
 	 * Removes an active folder watcher for the specified path

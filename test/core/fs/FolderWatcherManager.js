@@ -1,7 +1,8 @@
 /// <reference path='../../test.d.ts' />
 require('should');
 
-//import fs = require('fs');
+var fs = require('fs');
+
 var sinon = require('sinon');
 var testUtils = require('../../utils/testUtils');
 
@@ -262,6 +263,124 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
                     });
                 });
             }
+        });
+    });
+
+    describe('implementation tests: should correctly forward the events from the watchers @joern', function () {
+        var folderWatcherConfigStub;
+
+        this.timeout(0);
+
+        beforeEach(function () {
+            folderWatcherConfigStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+                get: function (key) {
+                    if (key === 'fs.folderWatcher.interval') {
+                        return 1000;
+                    } else if (key === 'fs.folderWatcher.binaryInterval') {
+                        return 5000;
+                    } else if (key === 'fs.folderWatcher.eventDelay') {
+                        return 3000;
+                    }
+                }
+            });
+
+            folderWatcherFactoryStub = testUtils.stubPublicApi(sandbox, FolderWatcherFactory, {
+                create: function (config, pathToWatch, options) {
+                    options = options || {};
+                    options.closeOnProcessExit = false;
+                    return new FolderWatcher(folderWatcherConfigStub, pathToWatch, options);
+                }
+            });
+
+            testUtils.createFolder(validPathToWatch);
+        });
+
+        afterEach(function () {
+            testUtils.deleteFolderRecursive(validPathToWatch);
+        });
+
+        it('should correctly forward the add event', function (done) {
+            createStateHandlerStub({
+                paths: [
+                    validPathToWatch
+                ]
+            });
+
+            var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+                closeOnProcessExit: false,
+                onOpenCallback: function (err) {
+                    folderWatcherManager.on('add', function (changedPath, stats) {
+                        changedPath.should.equal(validPathToWatch + '/foo.txt');
+                        (stats !== null).should.be.true;
+
+                        closeAndDone(folderWatcherManager, done);
+                    });
+
+                    fs.writeFileSync(validPathToWatch + '/foo.txt', new Buffer(100));
+                }
+            });
+        });
+
+        it('should correctly forward the change event', function (done) {
+            var filePath = validPathToWatch + '/foo.txt';
+
+            createStateHandlerStub({
+                paths: [
+                    validPathToWatch
+                ]
+            });
+
+            fs.writeFileSync(filePath, new Buffer(100));
+
+            var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+                closeOnProcessExit: false,
+                onOpenCallback: function (err) {
+                    folderWatcherManager.on('add', function (changedPath, stats) {
+                        fs.writeFileSync(filePath, new Buffer(500));
+                    });
+
+                    folderWatcherManager.on('change', function (changedPath, stats) {
+                        changedPath.should.equal(filePath);
+                        (stats !== null).should.be.true;
+
+                        closeAndDone(folderWatcherManager, done);
+                    });
+                }
+            });
+        });
+
+        it('should correctly forward the unlink event', function (done) {
+            var filePath = validPathToWatch + '/foo.txt';
+
+            createStateHandlerStub({
+                paths: [
+                    validPathToWatch
+                ]
+            });
+
+            fs.writeFileSync(filePath, new Buffer(100));
+
+            var onAddChangeCallback = function () {
+            };
+            var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+                closeOnProcessExit: false,
+                onOpenCallback: function (err) {
+                    // on/off test
+                    folderWatcherManager.on('change', onAddChangeCallback);
+                    folderWatcherManager.off('change', onAddChangeCallback);
+
+                    folderWatcherManager.on('add', function (changedPath, stats) {
+                        fs.unlinkSync(filePath);
+                    });
+
+                    folderWatcherManager.on('unlink', function (changedPath, stats) {
+                        changedPath.should.equal(filePath);
+                        (stats === null).should.be.true;
+
+                        closeAndDone(folderWatcherManager, done);
+                    });
+                }
+            });
         });
     });
 });

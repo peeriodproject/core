@@ -222,6 +222,7 @@ class FolderWatcher implements FolderWatcherInterface {
 	private _getFileSize (filePath:string, callback:(fileSize:number, stats:fs.Stats) => void):void {
 		fs.stat(filePath, function (err:Error, stats:fs.Stats) {
 			var fileSize:number = err ? -1 : stats.size;
+			stats = stats || null;
 
 			callback(fileSize, stats);
 		});

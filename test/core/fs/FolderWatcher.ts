@@ -118,7 +118,7 @@ describe('CORE --> FS --> FolderWatcher', function () {
 
 		folderWatcher.on('unlink', function (path:string, stats:fs.Stats) {
 			path.should.equal(filePath);
-			(stats === undefined).should.be.true;
+			(stats === null).should.be.true;
 
 			done();
 		});
@@ -137,7 +137,7 @@ describe('CORE --> FS --> FolderWatcher', function () {
 
 		folderWatcher.on('change', function (path:string, stats:fs.Stats) {
 			path.should.equal(filePath);
-			(stats !== undefined).should.be.true;
+			(stats !== null).should.be.true;
 
 			done();
 		});

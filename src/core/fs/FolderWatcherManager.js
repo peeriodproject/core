@@ -1,8 +1,11 @@
 /// <reference path='../../main.d.ts' />
+var events = require('events');
 var fs = require('fs-extra');
 var path = require('path');
 
 var ObjectUtils = require('../utils/ObjectUtils');
+
+var EventEmitter = events.EventEmitter;
 
 /**
 * @class core.fs.FolderWatcherManager
@@ -13,6 +16,7 @@ var FolderWatcherManager = (function () {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
         this._config = null;
+        this._eventEmitter = null;
         // todo :FolderWatcherFactoryInterface
         this._folderWatcherFactory = null;
         /**
@@ -25,10 +29,13 @@ var FolderWatcherManager = (function () {
         this._options = null;
         /**
         *
-        * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_statLoader
+        * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_stateLoader
         */
         this._stateHandler = null;
-        // todo :FolderWatcherListInterface
+        /**
+        *
+        * @member {core.fs.FolderWatcherListInterface} core.fs.FolderWatcherManager~_watchers
+        */
         this._watchers = null;
         var defaults = {
             closeOnProcessExit: true,
@@ -139,6 +146,9 @@ var FolderWatcherManager = (function () {
             return process.nextTick(internalCallback.bind(null, null));
         }
 
+        this._eventEmitter.removeAllListeners();
+        this._eventEmitter = null;
+
         for (var pathToWatch in this._watchers) {
             this._watchers[pathToWatch].close();
         }
@@ -159,6 +169,14 @@ var FolderWatcherManager = (function () {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
+    FolderWatcherManager.prototype.off = function (eventName, callback) {
+        this._eventEmitter.removeListener(eventName, callback);
+    };
+
+    FolderWatcherManager.prototype.on = function (eventName, callback) {
+        this._eventEmitter.addListener(eventName, callback);
+    };
+
     FolderWatcherManager.prototype.open = function (callback) {
         var _this = this;
         var internalCallback = function (err) {
@@ -170,6 +188,8 @@ var FolderWatcherManager = (function () {
         if (this._isOpen) {
             return internalCallback(null);
         }
+
+        this._eventEmitter = new EventEmitter();
 
         this._watchers = {};
 
@@ -230,6 +250,28 @@ var FolderWatcherManager = (function () {
         }
     };
 
+    /**
+    * Binds to the add, change and unlink event from the file watcher and triggers the corresponding event.
+    *
+    * todo Add the ability to detect file movements a rename operations
+    *
+    * @method core.fs.FolderWatcherManager~_bindToWatcherEvents
+    *
+    * @param {core.fs.FolderWatcherInterface} watcher
+    */
+    FolderWatcherManager.prototype._bindToWatcherEvents = function (watcher) {
+        var _this = this;
+        watcher.on('add', function (changedPath, stats) {
+            _this._triggerEvent('add', changedPath, stats);
+        });
+        watcher.on('change', function (changedPath, stats) {
+            _this._triggerEvent('change', changedPath, stats);
+        });
+        watcher.on('unlink', function (changedPath, stats) {
+            _this._triggerEvent('unlink', changedPath, stats);
+        });
+    };
+
     FolderWatcherManager.prototype._checkFolderWatcherPaths = function (pathsToWatch, callback) {
         var validPaths = [];
         var invalidPaths = [];
@@ -285,6 +327,8 @@ var FolderWatcherManager = (function () {
             this._watchers[pathToWatch] = this._folderWatcherFactory.create(this._config, pathToWatch);
             this._removeFromInvalidWatcherPaths(pathToWatch);
 
+            this._bindToWatcherEvents(this._watchers[pathToWatch]);
+
             created = true;
         }
 
@@ -332,6 +376,12 @@ var FolderWatcherManager = (function () {
 
         if (index !== -1) {
             this._invalidWatcherPaths.splice(index, 1);
+        }
+    };
+
+    FolderWatcherManager.prototype._triggerEvent = function (eventName, changedPath, stats) {
+        if (this._isOpen) {
+            this._eventEmitter.emit(eventName, changedPath, stats);
         }
     };
 

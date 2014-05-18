@@ -1,10 +1,13 @@
 /// <reference path='../../main.d.ts' />
 
+import events = require('events');
 import fs = require('fs-extra');
 import path = require('path');
 
 import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
+import FolderWatcherInterface = require('./interfaces/FolderWatcherInterface');
+import FolderWatcherListInterface = require('./interfaces/FolderWatcherListInterface');
 import FolderWatcherManagerInterface = require('./interfaces/FolderWatcherManagerInterface');
 import PathListInterface = require('./interfaces/PathListInterface');
 import StateHandlerInterface = require('../utils/interfaces/StateHandlerInterface');
@@ -12,12 +15,16 @@ import StateHandlerFactoryInterface = require('../utils/interfaces/StateHandlerF
 
 import ObjectUtils = require('../utils/ObjectUtils');
 
+var EventEmitter = events.EventEmitter;
+
 /**
  * @class core.fs.FolderWatcherManager
  * @implements core.fs.FolderWatcherManagerInterface
  */
 class FolderWatcherManager implements FolderWatcherManagerInterface {
 	private _config:ConfigInterface = null;
+
+	private _eventEmitter:events.EventEmitter = null;
 
 	// todo :FolderWatcherFactoryInterface
 	private _folderWatcherFactory:any = null;
@@ -35,12 +42,15 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 
 	/**
 	 *
-	 * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_statLoader
+	 * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_stateLoader
 	 */
 	private _stateHandler:StateHandlerInterface = null;
 
-	// todo :FolderWatcherListInterface
-	private _watchers:any = null;
+	/**
+	 *
+	 * @member {core.fs.FolderWatcherListInterface} core.fs.FolderWatcherManager~_watchers
+	 */
+	private _watchers:FolderWatcherListInterface = null;
 
 	constructor (config:ConfigInterface, stateLoaderFactory:StateHandlerFactoryInterface, folderWatcherFactory:any, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
@@ -151,6 +161,9 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 			return process.nextTick(internalCallback.bind(null, null));
 		}
 
+		this._eventEmitter.removeAllListeners();
+		this._eventEmitter = null;
+
 		for (var pathToWatch in this._watchers) {
 			this._watchers[pathToWatch].close();
 		}
@@ -171,6 +184,14 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
+	public off (eventName:string, callback:Function):void {
+		this._eventEmitter.removeListener(eventName, callback);
+	}
+
+	public on (eventName:string, callback:Function):void {
+		this._eventEmitter.addListener(eventName, callback);
+	}
+
 	public open (callback?:(err:Error) => any):void {
 		var internalCallback:Function = (err:Error) => {
 			var _callback:Function = callback || this._options.onOpenCallback;
@@ -181,6 +202,8 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		if (this._isOpen) {
 			return internalCallback(null);
 		}
+
+		this._eventEmitter = new EventEmitter();
 
 		this._watchers = {};
 
@@ -243,6 +266,27 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		}
 	}
 
+	/**
+	 * Binds to the add, change and unlink event from the file watcher and triggers the corresponding event.
+	 *
+	 * todo Add the ability to detect file movements a rename operations
+	 *
+	 * @method core.fs.FolderWatcherManager~_bindToWatcherEvents
+	 *
+	 * @param {core.fs.FolderWatcherInterface} watcher
+	 */
+	private _bindToWatcherEvents (watcher:FolderWatcherInterface):void {
+		watcher.on('add', (changedPath:string, stats:fs.Stats) => {
+			this._triggerEvent('add', changedPath, stats);
+		});
+		watcher.on('change', (changedPath:string, stats:fs.Stats) => {
+			this._triggerEvent('change', changedPath, stats);
+		});
+		watcher.on('unlink', (changedPath:string, stats:fs.Stats) => {
+			this._triggerEvent('unlink', changedPath, stats);
+		});
+	}
+
 	private _checkFolderWatcherPaths (pathsToWatch:PathListInterface, callback:(err:Error, invalidPaths:PathListInterface, validPaths:PathListInterface) => any):void {
 		var validPaths:PathListInterface = [];
 		var invalidPaths:PathListInterface = [];
@@ -302,6 +346,8 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 			this._watchers[pathToWatch] = this._folderWatcherFactory.create(this._config, pathToWatch);
 			this._removeFromInvalidWatcherPaths(pathToWatch);
 
+			this._bindToWatcherEvents(this._watchers[pathToWatch]);
+
 			created = true;
 		}
 
@@ -349,6 +395,12 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 
 		if (index !== -1) {
 			this._invalidWatcherPaths.splice(index, 1);
+		}
+	}
+
+	private _triggerEvent (eventName:string, changedPath:string, stats:fs.Stats) {
+		if (this._isOpen) {
+			this._eventEmitter.emit(eventName, changedPath, stats);
 		}
 	}
 
