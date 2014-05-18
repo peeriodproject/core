@@ -58,12 +58,19 @@ class PathValidator implements PathValidatorInterface {
 				return callback(new Error('PathValidator.validateStats: The specified path is not a valid file or directory. "' + filePath + '"'), false, null);
 			}
 
-			// remove current date from stats
-			if (statsToValidate['atime']) {
-				delete statsToValidate['atime'];
+			// remove device id from stats
+			if (statsToValidate.dev) {
+				delete statsToValidate.dev;
 			}
 
-			delete stats['atime'];
+			delete stats.dev;
+
+			// remove time of last access from stats
+			if (statsToValidate.atime) {
+				delete statsToValidate.atime;
+			}
+
+			delete stats.atime;
 
 			// @see http://stackoverflow.com/a/1144249
 			var isValid:boolean = JSON.stringify(stats) === JSON.stringify(statsToValidate);

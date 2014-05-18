@@ -34,6 +34,8 @@ interface PathValidatorInterface {
 	/**
 	 * Gets the `fs.Stats` for the specified path and validates it against the specified `fs.Stats` object
 	 *
+	 * @see http://stackoverflow.com/a/11787294 for a list of fs.Stats properties
+	 *
 	 * @method core.fs.PathValidatorInterface
 	 *
 	 * @param {string} filePath
