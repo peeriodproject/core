@@ -17,7 +17,7 @@ describe('CORE --> SEARCH --> SearchStore', function () {
 	var searchStoreDataFolder:string = testUtils.getFixturePath('core/search/searchStoreData');
 	var searchStore:SearchStore = null;
 
-	this.timeout(10000);
+	this.timeout(0);
 
 	before(function (done) {
 		testUtils.createFolder(searchStoreLogsFolder);

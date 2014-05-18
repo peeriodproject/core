@@ -12,6 +12,8 @@ import ObjectUtils = require('../utils/ObjectUtils');
 /**
  * @see http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/
  * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/setup-configuration.html
+ * @see https://github.com/medcl/elasticsearch-partialupdate
+ * @see https://github.com/jprante/elasticsearch-transport-websocket
  *
  * todo restart the database server whenever it stops (aka. forever)
  *
@@ -152,9 +154,9 @@ class SearchStore implements SearchStoreInterface {
 	/**
 	 * Returns the arguments the database server should start with. The following options are currently included:
 	 *
-	 * - -p:
-	 * - -Des.config:
-	 * - -Des.path.data:
+	 * - __-p__: The path where elasticsearch should save it's process id
+	 * - __-Des.config__: The path to the config file
+	 * - __-Des.path.data__: The path where the indexes should be stored
 	 *
 	 * @method core.search.SearchStore~_getDatabaseServerProcessArgs
 	 *
@@ -185,7 +187,7 @@ class SearchStore implements SearchStoreInterface {
 	}
 
 	/**
-	 * Uses a child process to start up the database server and reads it process id from the {@link core.search.SearchStore~_getDatabaseServerProcessIdPath}
+	 * Uses a child process to start up the database server, reads the process id from the {@link core.search.SearchStore~_getDatabaseServerProcessIdPath}
 	 * and stores it in {@link core.search.SearchStore~_databaseServerProcessId} before calling the callback function.
 	 *
 	 * @method core.search.SearchStore~_startUpDatabaseServer
