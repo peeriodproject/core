@@ -2,6 +2,9 @@
     "node"     : {
         "local": true
     },
+    "network": {
+        "host": "127.0.0.1"
+    },
     "discovery": {
         "zen": {
             "ping": {
