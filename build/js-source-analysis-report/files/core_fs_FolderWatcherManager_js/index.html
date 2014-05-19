@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.67</p>
+      <p class="stat">71.60</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">343</p>
+      <p class="stat">393</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">68.00</p>
+      <p class="stat">67.79</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.34</p>
+      <p class="stat">2.79</p>
     </div>
   </div>
 </div>
@@ -91,10 +91,13 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../main.d.ts&#039; /&gt;
+var events = require(&#039;events&#039;);
 var fs = require(&#039;fs-extra&#039;);
 var path = require(&#039;path&#039;);
 
 var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
+
+var EventEmitter = events.EventEmitter;
 
 /**
 * @class core.fs.FolderWatcherManager
@@ -105,6 +108,7 @@ var FolderWatcherManager = (function () {
         if (typeof options === &quot;undefined&quot;) { options = {}; }
         var _this = this;
         this._config = null;
+        this._eventEmitter = null;
         // todo :FolderWatcherFactoryInterface
         this._folderWatcherFactory = null;
         /**
@@ -117,10 +121,13 @@ var FolderWatcherManager = (function () {
         this._options = null;
         /**
         *
-        * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_statLoader
+        * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_stateLoader
         */
         this._stateHandler = null;
-        // todo :FolderWatcherListInterface
+        /**
+        *
+        * @member {core.fs.FolderWatcherListInterface} core.fs.FolderWatcherManager~_watchers
+        */
         this._watchers = null;
         var defaults = {
             closeOnProcessExit: true,
@@ -231,6 +238,9 @@ var FolderWatcherManager = (function () {
             return process.nextTick(internalCallback.bind(null, null));
         }
 
+        this._eventEmitter.removeAllListeners();
+        this._eventEmitter = null;
+
         for (var pathToWatch in this._watchers) {
             this._watchers[pathToWatch].close();
         }
@@ -251,6 +261,14 @@ var FolderWatcherManager = (function () {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
+    FolderWatcherManager.prototype.off = function (eventName, callback) {
+        this._eventEmitter.removeListener(eventName, callback);
+    };
+
+    FolderWatcherManager.prototype.on = function (eventName, callback) {
+        this._eventEmitter.addListener(eventName, callback);
+    };
+
     FolderWatcherManager.prototype.open = function (callback) {
         var _this = this;
         var internalCallback = function (err) {
@@ -262,6 +280,8 @@ var FolderWatcherManager = (function () {
         if (this._isOpen) {
             return internalCallback(null);
         }
+
+        this._eventEmitter = new EventEmitter();
 
         this._watchers = {};
 
@@ -322,6 +342,28 @@ var FolderWatcherManager = (function () {
         }
     };
 
+    /**
+    * Binds to the add, change and unlink event from the file watcher and triggers the corresponding event.
+    *
+    * todo Add the ability to detect file movements a rename operations
+    *
+    * @method core.fs.FolderWatcherManager~_bindToWatcherEvents
+    *
+    * @param {core.fs.FolderWatcherInterface} watcher
+    */
+    FolderWatcherManager.prototype._bindToWatcherEvents = function (watcher) {
+        var _this = this;
+        watcher.on(&#039;add&#039;, function (changedPath, stats) {
+            _this._triggerEvent(&#039;add&#039;, changedPath, stats);
+        });
+        watcher.on(&#039;change&#039;, function (changedPath, stats) {
+            _this._triggerEvent(&#039;change&#039;, changedPath, stats);
+        });
+        watcher.on(&#039;unlink&#039;, function (changedPath, stats) {
+            _this._triggerEvent(&#039;unlink&#039;, changedPath, stats);
+        });
+    };
+
     FolderWatcherManager.prototype._checkFolderWatcherPaths = function (pathsToWatch, callback) {
         var validPaths = [];
         var invalidPaths = [];
@@ -377,6 +419,8 @@ var FolderWatcherManager = (function () {
             this._watchers[pathToWatch] = this._folderWatcherFactory.create(this._config, pathToWatch);
             this._removeFromInvalidWatcherPaths(pathToWatch);
 
+            this._bindToWatcherEvents(this._watchers[pathToWatch]);
+
             created = true;
         }
 
@@ -424,6 +468,12 @@ var FolderWatcherManager = (function () {
 
         if (index !== -1) {
             this._invalidWatcherPaths.splice(index, 1);
+        }
+    };
+
+    FolderWatcherManager.prototype._triggerEvent = function (eventName, changedPath, stats) {
+        if (this._isOpen) {
+            this._eventEmitter.emit(eventName, changedPath, stats);
         }
     };
 

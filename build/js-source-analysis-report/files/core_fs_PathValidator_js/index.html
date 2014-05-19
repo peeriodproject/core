@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.16</p>
+      <p class="stat">72.09</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">71</p>
+      <p class="stat">78</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">23.48</p>
+      <p class="stat">24.00</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.49</p>
+      <p class="stat">0.52</p>
     </div>
   </div>
 </div>
@@ -145,12 +145,19 @@ var PathValidator = (function () {
                 return callback(new Error(&#039;PathValidator.validateStats: The specified path is not a valid file or directory. &quot;&#039; + filePath + &#039;&quot;&#039;), false, null);
             }
 
-            // remove current date from stats
-            if (statsToValidate[&#039;atime&#039;]) {
-                delete statsToValidate[&#039;atime&#039;];
+            // remove device id from stats
+            if (statsToValidate.dev) {
+                delete statsToValidate.dev;
             }
 
-            delete stats[&#039;atime&#039;];
+            delete stats.dev;
+
+            // remove time of last access from stats
+            if (statsToValidate.atime) {
+                delete statsToValidate.atime;
+            }
+
+            delete stats.atime;
 
             // @see http://stackoverflow.com/a/1144249
             var isValid = JSON.stringify(stats) === JSON.stringify(statsToValidate);
