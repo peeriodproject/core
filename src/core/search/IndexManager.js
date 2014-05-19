@@ -37,7 +37,6 @@ var IndexManager = (function () {
 
     IndexManager.prototype.close = function (callback) {
         var _this = this;
-        debugger;
         var internalCallback = callback || function (err) {
         };
 

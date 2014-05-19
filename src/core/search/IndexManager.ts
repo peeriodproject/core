@@ -55,7 +55,6 @@ class IndexManager implements IndexManagerInterface {
 	}
 
 	close (callback?:(err:Error) => any):void {
-		debugger;
 		var internalCallback = callback || function (err:Error) {
 		};
 
