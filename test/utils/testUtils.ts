@@ -1,6 +1,6 @@
 /// <reference path='../test.d.ts' />
 
-import fs = require('fs');
+import fs = require('fs-extra');
 import sinon = require('sinon');
 import path = require('path');
 
@@ -62,6 +62,12 @@ module testUtils {
 			fs.mkdirSync(folderPath);
 		}
 	};
+
+	export function copyFolder(from:string, to:string) {
+		var to:string = (path.resolve(to) === to) ? to : testUtils.getFixturePath(to);
+
+		fs.copySync(path.resolve(process.cwd(), from), to);
+	}
 
 	/**
 	 * @see http://www.geedew.com/2012/10/24/remove-a-directory-that-is-not-empty-in-nodejs/

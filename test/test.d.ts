@@ -1,4 +1,5 @@
 /// <reference path='../src/main.d.ts' />
+/// <reference path='../ts-definitions/fs-extra/fs-extra.d.ts' />
 /// <reference path='../ts-definitions/mocha/mocha.d.ts' />
 /// <reference path='../ts-definitions/should/should.d.ts' />
 /// <reference path='../ts-definitions/sinon/sinon.d.ts' />

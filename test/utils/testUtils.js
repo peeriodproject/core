@@ -1,5 +1,5 @@
 /// <reference path='../test.d.ts' />
-var fs = require('fs');
+var fs = require('fs-extra');
 
 var path = require('path');
 
@@ -63,6 +63,13 @@ var testUtils;
     }
     testUtils.createFolder = createFolder;
     ;
+
+    function copyFolder(from, to) {
+        var to = (path.resolve(to) === to) ? to : testUtils.getFixturePath(to);
+
+        fs.copySync(path.resolve(process.cwd(), from), to);
+    }
+    testUtils.copyFolder = copyFolder;
 
     /**
     * @see http://www.geedew.com/2012/10/24/remove-a-directory-that-is-not-empty-in-nodejs/
