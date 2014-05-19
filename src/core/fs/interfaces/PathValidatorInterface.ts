@@ -42,7 +42,7 @@ interface PathValidatorInterface {
 	 * @param {fs.Stats} statsToValidate
 	 * @param {Function} callback
 	 */
-	validateStats (filePath:string, statsToValidate:fs.Stats, callback:(err:Error, isValid, fileStats:fs.Stats) => any):void;
+	validateStats (filePath:string, statsToValidate:fs.Stats, callback:(err:Error, isValid:boolean, fileStats:fs.Stats) => any):void;
 
 }
 

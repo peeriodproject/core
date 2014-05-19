@@ -8,8 +8,6 @@ interface ClosableAsyncInterface {
 	 * Closes the Object and prevent any further updates.
 	 * This method stores the object state and could be used on app shutdown.
 	 *
-	 * todo: add throw exeption
-	 *
 	 * @method core.utils.ClosableAsyncInterface#close
 	 *
 	 * @param {Function} callback
@@ -27,8 +25,6 @@ interface ClosableAsyncInterface {
 
 	/**
 	 * (Re)-opens a closed Object and restores the previous state.
-	 *
-	 * todo: add throw exeption
 	 *
 	 * @method core.utils.ClosableAsyncInterface#open
 	 *

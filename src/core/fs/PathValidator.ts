@@ -49,7 +49,7 @@ class PathValidator implements PathValidatorInterface {
 		});
 	}
 
-	validateStats (filePath:string, statsToValidate:fs.Stats, callback:(err:Error, isValid, fileStats:fs.Stats) => any):void {
+	validateStats (filePath:string, statsToValidate:fs.Stats, callback:(err:Error, isValid:boolean, fileStats:fs.Stats) => any):void {
 		fs.stat(filePath, (err:Error, stats:fs.Stats) => {
 			if (err) {
 				return callback(err, false, null);

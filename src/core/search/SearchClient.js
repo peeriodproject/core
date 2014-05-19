@@ -9,6 +9,8 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @class core.search.SearchClient
 * @implements core.search.SearchClientInterface
 *
+* @see https://www.npmjs.org/package/base64-stream
+*
 * @param {core.config.ConfigInterface} config
 * @param {core.search.SearchStoreFactory} searchStoreFactory
 * @param {core.search.SearchClientOptions} options

@@ -266,7 +266,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 		});
 	});
 
-	describe('implementation tests: should correctly forward the events from the watchers @joern', function () {
+	describe('implementation tests: should correctly forward the events from the watchers', function () {
 		var folderWatcherConfigStub:any;
 
 		this.timeout(0);
