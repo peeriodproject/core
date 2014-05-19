@@ -49,7 +49,11 @@
         "port"             : 9200,
         "binaryPath"       : "core/search/elasticsearch",
         "databasePath"     : "db/searchStore",
-        "searchStoreConfig": "./config/searchStore.json"
+        "searchStoreConfig": "./config/searchStore.json",
+        "indexManager": {
+            "indexRunnerDelayInMilliSeconds": 10000,
+            "indexRunnersInParallel": 3
+        }
     },
     "fs"      : {
         "folderWatcher": {
