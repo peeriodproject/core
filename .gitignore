@@ -29,3 +29,4 @@ node_modules
 /build/coverage.html
 /test/fixtures/core/utils/JSONStateHandler/save/
 /src/bin/core/search/elasticsearch-pid
+/utils/apacheTikaMimeTypesParser/fileTypes.json
