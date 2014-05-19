@@ -22,6 +22,12 @@ import ObjectUtils = require('../utils/ObjectUtils');
  *
  * @class core.plugin.PluginManager
  * @implements PluginManagerInterface
+ *
+ * @param {core.config.ConfigInterface} config
+ * @param {core.plugin.PluginFinderInterface} pluginFinder
+ * @param {core.plugin.PluginValidatorInterface} pluginValidator
+ * @param {core.plugin.PluginRunnerFactoryInterface} pluginRunnerFactory
+ * @param {core.utils.ClosableAsyncOptions} options (optional)
  */
 class PluginManager implements PluginManagerInterface {
 
@@ -103,8 +109,8 @@ class PluginManager implements PluginManagerInterface {
 	activatePluginState (callback?:(err:Error) => void):void {
 		var internalCallback = callback || function (err:Error) {};
 
-		if (this._pluginState && this._pluginState['active']) {
-			var plugins:PluginStateObjectListInterface = this._pluginState['active'];
+		if (this._pluginState && this._pluginState.active) {
+			var plugins:PluginStateObjectListInterface = this._pluginState.active;
 			var activated:number = 0;
 			var errors:Array<Error> = [];
 			var manager = this;

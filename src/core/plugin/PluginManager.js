@@ -9,6 +9,12 @@ var ObjectUtils = require('../utils/ObjectUtils');
 *
 * @class core.plugin.PluginManager
 * @implements PluginManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.plugin.PluginFinderInterface} pluginFinder
+* @param {core.plugin.PluginValidatorInterface} pluginValidator
+* @param {core.plugin.PluginRunnerFactoryInterface} pluginRunnerFactory
+* @param {core.utils.ClosableAsyncOptions} options (optional)
 */
 var PluginManager = (function () {
     function PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, options) {
@@ -81,8 +87,8 @@ var PluginManager = (function () {
         var internalCallback = callback || function (err) {
         };
 
-        if (this._pluginState && this._pluginState['active']) {
-            var plugins = this._pluginState['active'];
+        if (this._pluginState && this._pluginState.active) {
+            var plugins = this._pluginState.active;
             var activated = 0;
             var errors = [];
             var manager = this;
