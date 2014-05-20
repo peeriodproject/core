@@ -13,7 +13,6 @@ var PluginLoader = (function () {
         this._pluginPath = '';
         this._configRequiredKeysMap = {
             description: String,
-            fileTypes: String,
             identifier: String,
             main: String,
             name: String,
@@ -21,6 +20,12 @@ var PluginLoader = (function () {
             version: String
         };
         this._configOptionalKeysMap = {
+            fileTypes: Array,
+            fileTypes_item: String,
+            fileMimeTypes: Array,
+            fileMimeTypes_item: String,
+            fileExtensions: Array,
+            fileExtensions_item: String,
             modules: Array,
             modules_item: String,
             dependencies: Array,
@@ -31,6 +36,12 @@ var PluginLoader = (function () {
 
         // todo send pull request to https://github.com/borisyankov/DefinitelyTyped to fix fs-extra.readJsonSync return type
         this._configData = fs.readJsonSync(path.resolve(pluginPath, this._config.get('plugin.pluginConfigName')));
+
+        var isValid = this._checkAndLoadFileTypes();
+
+        if (!isValid) {
+            throw new Error('PluginLoader.constructor: No file extensions or mime types specified.');
+        }
 
         this._checkRequiredConfigFields();
         this._checkOptionalConfigFields();
@@ -43,10 +54,12 @@ var PluginLoader = (function () {
         return this._configData.description;
     };
 
-    PluginLoader.prototype.getFileTypes = function () {
-        var key = this._getPluginConfigKey('fileTypes');
+    PluginLoader.prototype.getFileExtensions = function () {
+        return this._configData[this._getPluginConfigKey('fileExtensions')];
+    };
 
-        return this._configData[key];
+    PluginLoader.prototype.getFileMimeTypes = function () {
+        return this._configData[this._getPluginConfigKey('fileMimeTypes')];
     };
 
     PluginLoader.prototype.getIdentifier = function () {
@@ -128,6 +141,30 @@ var PluginLoader = (function () {
                 }
             }
         }
+    };
+
+    PluginLoader.prototype._checkAndLoadFileTypes = function () {
+        var fileTypes = this._configData[this._getPluginConfigKey('fileTypes')];
+
+        if (fileTypes && typeof fileTypes === 'string') {
+            if (fileTypes.indexOf('.') === 0) {
+                var data = fs.readJsonSync(path.resolve(this._pluginPath, fileTypes));
+
+                this._configData['fileExtensions'] = data.extensions || [];
+                this._configData['fileMimeTypes'] = data.mimeTypes || data.mimetypes || [];
+
+                // cleaning up the fileTypes path
+                delete this._configData['fileTypes'];
+
+                return true;
+            } else {
+                // todo parse fieldTypes Array
+            }
+        } else if (this.getFileMimeTypes().length || this.getFileExtensions().length) {
+            return true;
+        }
+
+        return false;
     };
     return PluginLoader;
 })();

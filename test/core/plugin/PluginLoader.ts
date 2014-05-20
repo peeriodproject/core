@@ -74,7 +74,7 @@ describe('CORE --> PLUGIN --> PluginLoader', function () {
 			pluginLoader.getMain().should.equal('lib/main.js');
 		});
 
-		it ('should correctly return the main file', function () {
+		it ('should correctly return the modules', function () {
 			pluginLoader.getModules().should.containDeep([]);
 		});
 
