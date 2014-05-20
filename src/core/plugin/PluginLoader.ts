@@ -79,7 +79,7 @@ class PluginLoader implements PluginLoaderInterface {
 	}
 
 	getMain ():string {
-		return this._configData.main;
+		return path.resolve(this._pluginPath, this._configData.main);
 	}
 
 	getModules ():Array<string> {

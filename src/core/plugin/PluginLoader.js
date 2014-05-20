@@ -67,7 +67,7 @@ var PluginLoader = (function () {
     };
 
     PluginLoader.prototype.getMain = function () {
-        return this._configData.main;
+        return path.resolve(this._pluginPath, this._configData.main);
     };
 
     PluginLoader.prototype.getModules = function () {

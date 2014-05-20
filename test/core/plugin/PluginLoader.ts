@@ -1,5 +1,7 @@
 /// <reference path='../../test.d.ts' />
 
+import path = require('path');
+
 require('should');
 
 import sinon = require('sinon');
@@ -71,7 +73,9 @@ describe('CORE --> PLUGIN --> PluginLoader', function () {
 		});
 
 		it ('should correctly return the main file', function () {
-			pluginLoader.getMain().should.equal('lib/main.js');
+			var mainPath = path.resolve(pluginsFolderPath, pluginFolderName, 'lib/main.js');
+
+			pluginLoader.getMain().should.equal(mainPath);
 		});
 
 		it ('should correctly return the modules', function () {

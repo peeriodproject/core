@@ -3,13 +3,24 @@ require('should');
 
 var testUtils = require('../../utils/testUtils');
 
-var PluginRunnerFactory = require('../../../src/core/plugin/PluginRunnerFactory');
-var PluginRunner = require('../../../src/core/plugin/PluginRunner');
+var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
 describe('CORE --> PLUGIN --> PluginRunnerFactory', function () {
-    it('should correctly create plugin runners', function () {
-        var pluginRunner = (new PluginRunnerFactory()).create('identifier', testUtils.getFixturePath('core/plugin/pluginRunner/emptyFile.js'));
-        pluginRunner.should.be.an.instanceof(PluginRunner);
+    var sandbox;
+    var configStub;
+
+    beforeEach(function () {
+        sandbox = sinon.sandbox.create();
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig);
     });
+
+    afterEach(function () {
+        sandbox.restore();
+    });
+    /*
+    it ('should correctly create plugin runners', function () {
+    var pluginRunner = (new PluginRunnerFactory()).create('identifier', testUtils.getFixturePath('core/plugin/pluginRunner/emptyFile.js'));
+    pluginRunner.should.be.an.instanceof(PluginRunner);
+    });*/
 });
 //# sourceMappingURL=PluginRunnerFactory.js.map

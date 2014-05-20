@@ -27,7 +27,7 @@ var PluginRunner = (function () {
         });
 
         var script = fs.readFileSync(pluginScriptPath, 'utf-8');
-        console.log(script);
+
         this._sandboxScript = this._sandbox.createScript(script);
 
         var foo = false;
