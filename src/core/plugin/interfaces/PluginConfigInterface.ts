@@ -5,7 +5,9 @@
 interface PluginConfigInterface {
 	dependencies?:Array<string>;
 	description:string;
-	filetypes:Array<string>;
+	filetypes?:Array<string>;
+	filemimetypes?:Array<string>;
+	fileextensions?:Array<string>;
 	identifier:string;
 	main:string;
 	modules?:Array<string>;

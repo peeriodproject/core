@@ -39,7 +39,11 @@
     "plugin"  : {
         "folderPath"              : "plugin",
         "pluginConfigName"        : "plugin.json",
-        "pluginManagerStateConfig": "pluginManager.json"
+        "pluginManagerStateConfig": "pluginManager.json",
+        "api": {
+            "basePath": "core/plugin/api",
+            "pluginApiName": "PluginApi.js"
+        }
     },
     "app"     : {
         "dataPath": "dataPathFolder"

@@ -1,0 +1,1 @@
+{"version":3,"file":"PluginGlobalsFactory.js","sourceRoot":"","sources":["PluginGlobalsFactory.ts"],"names":["PluginGlobalsFactory","PluginGlobalsFactory.constructor","PluginGlobalsFactory.create"],"mappings":"AAAA;IAICA;IACAC,CAACA;IAEDD,wCAAAA;QACCE,OAAOA;YACNA,GAAGA,EAAEA,UAAUA;SACfA;IACFA,CAACA;IAEFF,4BAACA;AAADA,CAACA,IAAA;;AAED,qCAA8B,CAAA"}

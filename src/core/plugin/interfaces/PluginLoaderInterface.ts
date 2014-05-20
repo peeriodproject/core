@@ -6,7 +6,8 @@ interface PluginLoaderInterface {
 
 	getDependencies ():Array<string>;
 	getDescription ():string;
-	getFileTypes ():Array<string>;
+	getFileExtensions ():Array<string>;
+	getFileMimeTypes ():Array<string>;
 	getIdentifier ():string;
 	getMain ():string;
 	getModules ():Array<string>;

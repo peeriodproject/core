@@ -1,3 +1,4 @@
+import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import PluginRunnerFactoryInterface = require('./interfaces/PluginRunnerFactoryInterface');
 import PluginRunnerInterface = require('./interfaces/PluginRunnerInterface');
 
@@ -9,8 +10,8 @@ import PluginRunner = require('./PluginRunner');
  */
 class PluginRunnerFactory implements PluginRunnerFactoryInterface {
 
-	create (identifier:string, path:string):PluginRunnerInterface {
-		return new PluginRunner(identifier, path);
+	create (config:ConfigInterface, identifier:string, path:string):PluginRunnerInterface {
+		return new PluginRunner(config, identifier, path);
 	}
 
 }

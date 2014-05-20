@@ -7,8 +7,8 @@ var PluginRunner = require('./PluginRunner');
 var PluginRunnerFactory = (function () {
     function PluginRunnerFactory() {
     }
-    PluginRunnerFactory.prototype.create = function (identifier, path) {
-        return new PluginRunner(identifier, path);
+    PluginRunnerFactory.prototype.create = function (config, identifier, path) {
+        return new PluginRunner(config, identifier, path);
     };
     return PluginRunnerFactory;
 })();

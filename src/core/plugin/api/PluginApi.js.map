@@ -1,0 +1,1 @@
+{"version":3,"file":"PluginApi.js","sourceRoot":"","sources":["PluginApi.ts"],"names":[],"mappings":"AAAA,IAEI,MAAM,GAAG,EAAE;;AAER,QAAI,GAAG,GAAsB;IAEnC,QAAQ,EAAE;QACT,OAAO,MAAM;IACd,CAAC;IAED,QAAQ,EAAE,UAAU,KAAY;QAC/B,OAAO,CAAC,GAAG,CAAC,mBAAmB,EAAE,KAAK,CAAC;IACxC,CAAC;CAED;AAAC"}

@@ -1,3 +1,4 @@
+import ConfigInterface = require('../../config/interfaces/ConfigInterface');
 import PluginRunnerInterface = require('./PluginRunnerInterface');
 
 /**
@@ -12,7 +13,7 @@ interface PluginRunnerFactoryInterface {
 	 * @param {string} identifier
 	 * @param {string} path
 	 */
-	create(identifier:string, path:string):PluginRunnerInterface;
+	create(config:ConfigInterface, identifier:string, path:string):PluginRunnerInterface;
 
 }
 
