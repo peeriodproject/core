@@ -1,6 +1,6 @@
 import PluginApiInterface = require('./interfaces/PluginApiInterface');
 
-var _state = {};
+var _state:Object = {};
 
 export var api:PluginApiInterface = {
 
@@ -10,6 +10,7 @@ export var api:PluginApiInterface = {
 
 	setState: function (state:Object):void {
 		console.log('setting the state', state);
+		_state = state;
 	}
 
 };
