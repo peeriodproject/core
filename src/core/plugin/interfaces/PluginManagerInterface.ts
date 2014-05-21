@@ -1,3 +1,7 @@
+/// <reference path='../../../../ts-definitions/node/node.d.ts' />
+
+import fs = require('fs');
+
 import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface')
 import PluginInterface = require('./PluginInterface');
 import PluginMapInterface = require('./PluginMapInterface');
@@ -54,7 +58,7 @@ interface PluginManagerInterface extends ClosableAsyncInterface {
 	/**
 	 * Returns a list of active plugin runners
 	 *
-	 * * @method core.plugin.PluginManagerInterface#getActivePluginRunners
+	 * @method core.plugin.PluginManagerInterface#getActivePluginRunners
 	 *
 	 * @param {Function} callback
 	 */
@@ -67,7 +71,16 @@ interface PluginManagerInterface extends ClosableAsyncInterface {
 	 *
 	 * @param callback
 	 */
-	getPluginState (callback:(pluinState:PluginStateInterface) => void);
+	getPluginState (callback:(pluinState:PluginStateInterface) => void):void;
+
+	/**
+	 * todo specify callback params
+	 *
+	 * @param itemPath
+	 * @param stats
+	 * @param callback
+	 */
+	onBeforeItemAdd (itemPath:string, stats:fs.Stats, callback:Function):void;
 }
 
 export = PluginManagerInterface;

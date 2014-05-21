@@ -12,12 +12,13 @@ import PluginPathListInterface = require('../../../src/core/plugin/interfaces/Pl
 
 import PluginFinder = require('../../../src/core/plugin/PluginFinder');
 import PluginManager = require('../../../src/core/plugin/PluginManager');
-import PluginRunner = require('../../../src/core/plugin/PluginRunner');
+//import PluginRunner = require('../../../src/core/plugin/PluginRunner');
+import PluginLoaderFactory = require('../../../src/core/plugin/PluginLoaderFactory');
 import PluginRunnerFactory = require('../../../src/core/plugin/PluginRunnerFactory');
 import PluginValidator = require('../../../src/core/plugin/PluginValidator');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PLUGIN --> PluginManager', function () {
+describe('CORE --> PLUGIN --> PluginManager @joern', function () {
 	var sandbox:SinonSandbox;
 	var appDataPath:string = testUtils.getFixturePath('core/plugin/appDataPath');
 	var createConfig:any = function ():any {
@@ -47,9 +48,10 @@ describe('CORE --> PLUGIN --> PluginManager', function () {
 		var config:any = createConfig();
 		var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
 		var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+		var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
 		var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
 
-		(new PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, {
+		(new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
 			onOpenCallback: function () {
 				done();
 			}
@@ -60,8 +62,9 @@ describe('CORE --> PLUGIN --> PluginManager', function () {
 		var config:any = createConfig();
 		var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
 		var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+		var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
 		var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
-		var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, {
+		var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
 			onOpenCallback : function () {
 				pluginManager.open(function () {
 					pluginManager.close();
@@ -87,8 +90,9 @@ describe('CORE --> PLUGIN --> PluginManager', function () {
 			}
 		});
 		var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+		var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
 		var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
-		var pluginManager:PluginManagerInterface = new PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory);
+		var pluginManager:PluginManagerInterface = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory);
 
 		pluginManager.findNewPlugins(function (err:Error) {
 			pluginFinder.findPlugins.calledOnce.should.be.true;
@@ -110,8 +114,9 @@ describe('CORE --> PLUGIN --> PluginManager', function () {
 		});
 		var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
 		var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+		var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
 		var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
-		var pluginManager:PluginManagerInterface = new PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, {
+		var pluginManager:PluginManagerInterface = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
 			onOpenCallback: function () {
 				pluginManager.getActivePluginRunners(function (pluginState) {
 					done();
@@ -125,8 +130,9 @@ describe('CORE --> PLUGIN --> PluginManager', function () {
 		var config:any = createConfig();
 		var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
 		var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+		var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
 		var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
-		var pluginManager:PluginManagerInterface = new PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, {
+		var pluginManager:PluginManagerInterface = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
 			onOpenCallback: function () {
 				pluginManager.getPluginState(function (pluginState) {
 					var state = {
@@ -172,12 +178,13 @@ describe('CORE --> PLUGIN --> PluginManager', function () {
 				return process.nextTick(callback.bind(null, null));
 			}
 		});
+		var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
 		var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory, {
 			create: function () {
 				return 'pluginRunnerObject'
 			}
 		});
-		var pluginManager:PluginManagerInterface = new PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, {
+		var pluginManager:PluginManagerInterface = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
 			onOpenCallback: function () {
 				pluginManager.activatePluginState(function () {
 					pluginManager.getActivePluginRunners(function (pluginRunners) {

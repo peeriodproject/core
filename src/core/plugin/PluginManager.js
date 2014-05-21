@@ -17,7 +17,7 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @param {core.utils.ClosableAsyncOptions} options (optional)
 */
 var PluginManager = (function () {
-    function PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, options) {
+    function PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, options) {
         if (typeof options === "undefined") { options = {}; }
         /**
         * The internally used config object instance
@@ -42,6 +42,8 @@ var PluginManager = (function () {
         * @member {core.config.ConfigInterface} core.plugin.PluginManager~_pluginFinder
         */
         this._pluginFinder = null;
+        this._pluginLoaderFactory = null;
+        this._pluginLoaders = {};
         /**
         *
         * @member {core.plugin.PluginRunnerInterface} core.plugin.PluginManager~_pluginRunner
@@ -78,6 +80,7 @@ var PluginManager = (function () {
         this._config = config;
         this._pluginFinder = pluginFinder;
         this._pluginValidator = pluginValidator;
+        this._pluginLoaderFactory = pluginLoaderFactory;
         this._pluginRunnerFactory = pluginRunnerFactory;
         this._options = ObjectUtils.extend(defaults, options);
 
@@ -118,13 +121,17 @@ var PluginManager = (function () {
         }
     };
 
+    // todo clean up _pluginRunners[].cleanup()
     PluginManager.prototype.close = function (callback) {
         var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
 
-        if (!this._isOpen) {
-            return process.nextTick(internalCallback.bind(null, null));
+        for (var key in this._pluginRunners) {
+            this._pluginRunners[key].cleanup();
         }
+
+        this._pluginLoaders = null;
+        this._pluginLoaders = null;
 
         this._savePluginState(function (err) {
             if (err) {
@@ -166,6 +173,29 @@ var PluginManager = (function () {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
+    PluginManager.prototype.onBeforeItemAdd = function (itemPath, stats, callback) {
+        this.getActivePluginRunners(function (runners) {
+            var runnersLength = Object.keys(runners).length;
+            var counter = 0;
+            var testCallback = function () {
+                if (counter == runnersLength - 1) {
+                    // trigger callback
+                    callback();
+                }
+            };
+
+            for (var key in runners) {
+                // call the plugin!
+                runners[key].onBeforeItemAdd(itemPath, stats, function (err, data) {
+                    counter++;
+
+                    // todo parse data and merge them together
+                    testCallback();
+                });
+            }
+        });
+    };
+
     PluginManager.prototype.open = function (callback) {
         var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
@@ -197,10 +227,14 @@ var PluginManager = (function () {
         };
 
         this._pluginValidator.validateState(pluginState, function (err) {
+            var identifier = pluginState.name;
+
             if (err) {
                 return internalCallback(err);
             } else {
-                _this._pluginRunners[pluginState.name] = _this._pluginRunnerFactory.create(pluginState.name, pluginState.path);
+                _this._pluginRunners[identifier] = _this._pluginRunnerFactory.create(_this._config, pluginState.name, pluginState.path);
+                _this._pluginLoaders[identifier] = _this._pluginLoaderFactory.create(_this._config, pluginState.path);
+
                 internalCallback(null);
             }
         });

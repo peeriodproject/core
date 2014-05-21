@@ -6,7 +6,11 @@ import path = require('path');
 import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import PluginFinderInterface = require('./interfaces/PluginFinderInterface');
+import PluginInterface = require('./interfaces/PluginInterface');
 import PluginManagerInterface = require('./interfaces/PluginManagerInterface');
+import PluginLoaderFactoryInterface = require('./interfaces/PluginLoaderFactoryInterface');
+import PluginLoaderInterface = require('./interfaces/PluginLoaderInterface');
+import PluginLoaderListInterface = require('./interfaces/PluginLoaderListInterface');
 import PluginRunnerFactoryInterface = require('./interfaces/PluginRunnerFactoryInterface');
 import PluginRunnerInterface = require('./interfaces/PluginRunnerInterface');
 import PluginRunnerListInterface = require('./interfaces/PluginRunnerListInterface');
@@ -29,7 +33,7 @@ import ObjectUtils = require('../utils/ObjectUtils');
  * @param {core.plugin.PluginRunnerFactoryInterface} pluginRunnerFactory
  * @param {core.utils.ClosableAsyncOptions} options (optional)
  */
-class PluginManager implements PluginManagerInterface {
+class PluginManager implements PluginManagerInterface, PluginInterface {
 
 	/**
 	 * The internally used config object instance
@@ -57,6 +61,11 @@ class PluginManager implements PluginManagerInterface {
 	 * @member {core.config.ConfigInterface} core.plugin.PluginManager~_pluginFinder
 	 */
 	private _pluginFinder:PluginFinderInterface = null;
+
+
+	private _pluginLoaderFactory:PluginLoaderFactoryInterface = null;
+
+	private _pluginLoaders:PluginLoaderListInterface = {};
 
 	/**
 	 *
@@ -89,7 +98,7 @@ class PluginManager implements PluginManagerInterface {
 	 */
 	private _pluginValidator:PluginValidatorInterface = null;
 
-	constructor (config:ConfigInterface, pluginFinder:PluginFinderInterface, pluginValidator:PluginValidatorInterface, pluginRunnerFactory:PluginRunnerFactoryInterface, options:ClosableAsyncOptions = {}) {
+	constructor (config:ConfigInterface, pluginFinder:PluginFinderInterface, pluginValidator:PluginValidatorInterface, pluginLoaderFactory:PluginLoaderFactoryInterface , pluginRunnerFactory:PluginRunnerFactoryInterface, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
 			onCloseCallback: function (err:Error) {
 			},
@@ -100,6 +109,7 @@ class PluginManager implements PluginManagerInterface {
 		this._config = config;
 		this._pluginFinder = pluginFinder;
 		this._pluginValidator = pluginValidator;
+		this._pluginLoaderFactory = pluginLoaderFactory;
 		this._pluginRunnerFactory = pluginRunnerFactory;
 		this._options = ObjectUtils.extend(defaults, options);
 
@@ -140,12 +150,20 @@ class PluginManager implements PluginManagerInterface {
 		}
 	}
 
+	// todo clean up _pluginRunners[].cleanup()
 	public close (callback?:(err:Error) => any):void {
 		var internalCallback = callback || this._options.onCloseCallback;
 
-		if (!this._isOpen) {
+		/*if (!this._isOpen) {
 			return process.nextTick(internalCallback.bind(null, null));
+		}*/
+
+		for (var key in this._pluginRunners) {
+			this._pluginRunners[key].cleanup();
 		}
+
+		this._pluginLoaders = null;
+		this._pluginLoaders = null;
 
 		this._savePluginState((err:Error) => {
 			if (err) {
@@ -190,6 +208,30 @@ class PluginManager implements PluginManagerInterface {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
+	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, callback:Function):void {
+		this.getActivePluginRunners((runners:PluginRunnerListInterface) => {
+			var runnersLength = Object.keys(runners).length;
+			var counter:number = 0;
+			var testCallback:Function = function () {
+				if (counter == runnersLength - 1) {
+					// trigger callback
+					callback();
+				}
+			};
+
+			for (var key in runners) {
+				// call the plugin!
+				runners[key].onBeforeItemAdd(itemPath, stats, (err:Error, data:Object) => {
+					counter++;
+
+					// todo parse data and merge them together
+
+					testCallback();
+				});
+			}
+		});
+	}
+
 	public open (callback?:(err:Error) => any):void {
 		var internalCallback = callback || this._options.onCloseCallback;
 
@@ -219,12 +261,15 @@ class PluginManager implements PluginManagerInterface {
 		var internalCallback = callback || function (err:Error) {};
 
 		this._pluginValidator.validateState(pluginState, (err:Error) => {
+			var identifier:string = pluginState.name;
 
 			if (err) {
 				return internalCallback(err);
 			}
 			else {
-				this._pluginRunners[pluginState.name] = this._pluginRunnerFactory.create(pluginState.name, pluginState.path);
+				this._pluginRunners[identifier] = this._pluginRunnerFactory.create(this._config, pluginState.name, pluginState.path);
+				this._pluginLoaders[identifier] = this._pluginLoaderFactory.create(this._config, pluginState.path);
+
 				internalCallback(null);
 			}
 		});
