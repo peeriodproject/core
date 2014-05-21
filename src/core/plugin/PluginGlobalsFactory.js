@@ -4,12 +4,8 @@ var PluginGlobalsFactory = (function () {
     }
     PluginGlobalsFactory.prototype.create = function (itemPath, stats) {
         return {
-            getItemFileName: function () {
-                return itemPath;
-            },
-            getStats: function () {
-                return Object.freeze(stats);
-            }
+            fileName: itemPath,
+            fileStats: Object.freeze(stats)
         };
     };
     return PluginGlobalsFactory;

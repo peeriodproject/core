@@ -8,15 +8,8 @@ class PluginGlobalsFactory implements PluginGlobalsFactoryInterface {
 
 	public create (itemPath:string, stats:fs.Stats):Object {
 		return {
-			getItemFileName: function ():string {
-				return itemPath;
-			},
-
-			getStats: function ():Object {
-				return Object.freeze(stats);
-			}
-
-			//request: function (type:string, )
+			fileName: itemPath,
+			fileStats: Object.freeze(stats)
 		};
 	}
 
