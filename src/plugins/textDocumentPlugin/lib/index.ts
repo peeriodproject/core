@@ -1,28 +1,29 @@
-// todo create propper ts module
-declare var exit;
-declare var getItemData;
-declare var foo;
-declare var getState;
-declare var setState;
+// sandbox exit callback
+declare function exit(output:any):void;
+
+// api methods
+declare function getState():any;
+declare function setState(state:any):void;
+
+// plugin globals
+declare function getFileName():string;
+declare function getStats():Object;
 
 export module main {
-
-	export function onInit() {
-		exit(foo);
-		/*var foo = getState();
-
-		exit(foo);*/
-	}
 
 	export function onTest() {
 		setState('foobar');
 		var bar = getState();
 
-		exit({ foo: foo, bar: bar });
+		exit({ foo: 'foo', bar: bar });
 	}
 
-	/*export function onNewItemWillBeAdded () {
-		var data = getItemData();
-		exit('foobar');
-	}*/
+	export function onBeforeItemAdd () {
+		var data = {
+			name: getFileName(),
+			stats: getStats()
+		};
+
+		exit(data);
+	}
 }

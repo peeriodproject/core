@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.95</p>
+      <p class="stat">73.49</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">255</p>
+      <p class="stat">295</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">43.69</p>
+      <p class="stat">48.49</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.50</p>
+      <p class="stat">1.81</p>
     </div>
   </div>
 </div>
@@ -101,9 +101,15 @@ var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
 *
 * @class core.plugin.PluginManager
 * @implements PluginManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.plugin.PluginFinderInterface} pluginFinder
+* @param {core.plugin.PluginValidatorInterface} pluginValidator
+* @param {core.plugin.PluginRunnerFactoryInterface} pluginRunnerFactory
+* @param {core.utils.ClosableAsyncOptions} options (optional)
 */
 var PluginManager = (function () {
-    function PluginManager(config, pluginFinder, pluginValidator, pluginRunnerFactory, options) {
+    function PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, options) {
         if (typeof options === &quot;undefined&quot;) { options = {}; }
         /**
         * The internally used config object instance
@@ -128,6 +134,8 @@ var PluginManager = (function () {
         * @member {core.config.ConfigInterface} core.plugin.PluginManager~_pluginFinder
         */
         this._pluginFinder = null;
+        this._pluginLoaderFactory = null;
+        this._pluginLoaders = {};
         /**
         *
         * @member {core.plugin.PluginRunnerInterface} core.plugin.PluginManager~_pluginRunner
@@ -164,6 +172,7 @@ var PluginManager = (function () {
         this._config = config;
         this._pluginFinder = pluginFinder;
         this._pluginValidator = pluginValidator;
+        this._pluginLoaderFactory = pluginLoaderFactory;
         this._pluginRunnerFactory = pluginRunnerFactory;
         this._options = ObjectUtils.extend(defaults, options);
 
@@ -173,8 +182,8 @@ var PluginManager = (function () {
         var internalCallback = callback || function (err) {
         };
 
-        if (this._pluginState &amp;&amp; this._pluginState[&#039;active&#039;]) {
-            var plugins = this._pluginState[&#039;active&#039;];
+        if (this._pluginState &amp;&amp; this._pluginState.active) {
+            var plugins = this._pluginState.active;
             var activated = 0;
             var errors = [];
             var manager = this;
@@ -204,13 +213,17 @@ var PluginManager = (function () {
         }
     };
 
+    // todo clean up _pluginRunners[].cleanup()
     PluginManager.prototype.close = function (callback) {
         var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
 
-        if (!this._isOpen) {
-            return process.nextTick(internalCallback.bind(null, null));
+        for (var key in this._pluginRunners) {
+            this._pluginRunners[key].cleanup();
         }
+
+        this._pluginLoaders = null;
+        this._pluginLoaders = null;
 
         this._savePluginState(function (err) {
             if (err) {
@@ -252,6 +265,29 @@ var PluginManager = (function () {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
+    PluginManager.prototype.onBeforeItemAdd = function (itemPath, stats, callback) {
+        this.getActivePluginRunners(function (runners) {
+            var runnersLength = Object.keys(runners).length;
+            var counter = 0;
+            var testCallback = function () {
+                if (counter == runnersLength - 1) {
+                    // trigger callback
+                    callback();
+                }
+            };
+
+            for (var key in runners) {
+                // call the plugin!
+                runners[key].onBeforeItemAdd(itemPath, stats, function (err, data) {
+                    counter++;
+
+                    // todo parse data and merge them together
+                    testCallback();
+                });
+            }
+        });
+    };
+
     PluginManager.prototype.open = function (callback) {
         var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
@@ -283,10 +319,14 @@ var PluginManager = (function () {
         };
 
         this._pluginValidator.validateState(pluginState, function (err) {
+            var identifier = pluginState.name;
+
             if (err) {
                 return internalCallback(err);
             } else {
-                _this._pluginRunners[pluginState.name] = _this._pluginRunnerFactory.create(pluginState.name, pluginState.path);
+                _this._pluginRunners[identifier] = _this._pluginRunnerFactory.create(_this._config, pluginState.name, pluginState.path);
+                _this._pluginLoaders[identifier] = _this._pluginLoaderFactory.create(_this._config, pluginState.path);
+
                 internalCallback(null);
             }
         });

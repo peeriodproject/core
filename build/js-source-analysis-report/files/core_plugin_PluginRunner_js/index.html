@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">82.21</p>
+      <p class="stat">73.23</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">21</p>
+      <p class="stat">143</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">6.78</p>
+      <p class="stat">20.28</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.09</p>
+      <p class="stat">0.61</p>
     </div>
   </div>
 </div>
@@ -91,22 +91,144 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../main.d.ts&#039; /&gt;
-var Sandbox = require(&#039;udibo-sandbox&#039;);
+var fs = require(&#039;fs&#039;);
+var path = require(&#039;path&#039;);
+
+var SandCastle = require(&#039;sandcastle&#039;).SandCastle;
+
+var PluginGlobalsFactory = require(&#039;./PluginGlobalsFactory&#039;);
 
 /**
 * @see https://github.com/KyleJune/udibo-sandbox
 *
 * @class core.plugin.PluginRunner
 * @implements core.plugin.PluginRunnerInterface
+*
+* @params {core.config.ConfigInterface} config
+* @params {string} identifier todo remove identifer
+* @params {plugnScriptPath}
 */
 var PluginRunner = (function () {
-    function PluginRunner(identifier, path) {
+    // todo plugin-type PluginGlobalsFactory factory parameter
+    function PluginRunner(config, identifier, pluginScriptPath) {
+        this._config = null;
         this._sandbox = null;
-        this._sandbox = new Sandbox();
-        this._sandbox.addVm(identifier, path);
+        this._sandboxScripts = [];
+        this._pluginCode = null;
+        this._pluginGlobalsFactory = null;
+        this._pluginScriptPath = null;
+        this._config = config;
+        this._pluginScriptPath = pluginScriptPath;
+
+        this._sandbox = new SandCastle({
+            memoryLimitMB: 100,
+            timeout: 5000,
+            useStrictMode: true,
+            api: this._getPluginApiPath()
+        });
+        this._pluginGlobalsFactory = new PluginGlobalsFactory();
+        this._pluginCode = fs.readFileSync(this._pluginScriptPath, &#039;utf-8&#039;);
+        /*this._sandboxScript = this._sandbox.createScript(script);
+        
+        var foo = false;
+        // todo begin independent methods
+        var globals:Object = this._pluginGlobalsFactory.create(null, null) || {};
+        
+        this._sandboxScript.on(&#039;exit&#039;, (err, output, methodName) =&gt; {
+        /*console.log(&#039;--- EXIT ---&#039;);
+        if (err) {
+        console.log(err.message);
+        console.log(err.stack);
+        }
+        console.log(&#039;methodName&#039;, methodName);
+        console.log(output);
+        
+        if (!foo) {
+        this._sandboxScript.run(&#039;main.onTest&#039;, Object.freeze(globals));
+        foo = true;
+        }* /
+        //this._sandboxScript.reset();
+        });
+        
+        this._sandboxScript.on(&#039;timeout&#039;, function () {
+        //console.log(&#039;--- TIMEOUT ---&#039;);
+        //console.log(&#039;I timed out, oh what a silly script I am!&#039;);
+        });
+        
+        this._sandboxScript.run(&#039;main.onInit&#039;, Object.freeze(globals));
+        /*this._sandboxScript.run(&#039;onInit&#039;);
+        this._sandboxScript.run(&#039;onInit&#039;, {
+        foo: &quot;bar&quot;
+        });* /
+        */
     }
-    PluginRunner.prototype.runPlugin = function (identifier) {
-        this._sandbox.reload();
+    PluginRunner.prototype.cleanup = function () {
+        for (var key in this._sandboxScripts) {
+            // todo ts-definitions
+            //this._sandboxScripts.reset();
+        }
+
+        this._sandboxScripts = null;
+        this._sandbox = null;
+        this._pluginGlobalsFactory = null;
+    };
+
+    PluginRunner.prototype.onBeforeItemAdd = function (itemPath, stats, callback) {
+        var script = this._createSandbox(itemPath);
+
+        this._registerSandboxErrorAndTimeoutHandler(itemPath, callback);
+
+        script.on(&#039;exit&#039;, function (err, output, methodName) {
+            // todo check ob exit auch nach einem timeout getriggert wird
+            if (err) {
+                // todo handle error
+                callback(err, null);
+            } else {
+                callback(null, output);
+            }
+        });
+
+        script.run(&#039;main.onBeforeItemAdd&#039;, this._pluginGlobalsFactory.create(itemPath, stats));
+    };
+
+    /**
+    * Creates a sandbox for the given item path. Each sandbox provides a persistent state
+    * between lookups as long as the PluginRunner is active.
+    *
+    * @method core.plugin.PluginRunner~_createSandbox
+    *
+    * @param {string} itemPath
+    * @returns {any}
+    */
+    PluginRunner.prototype._createSandbox = function (itemPath) {
+        return this._sandboxScripts[itemPath] ? this._sandboxScripts[itemPath] : this._sandbox.createScript(this._pluginCode);
+    };
+
+    /**
+    * Registers a error an timeout handler for the sandbox which belongs to the given path
+    *
+    * @method core.plugin.PluginRunner~_registerSandboxErrorAndTimeoutHandler
+    *
+    * @param {string} itemPath
+    * @param {Function} callback
+    */
+    PluginRunner.prototype._registerSandboxErrorAndTimeoutHandler = function (itemPath, callback) {
+        if (this._sandboxScripts[itemPath]) {
+            this._sandboxScripts[itemPath].on(&#039;timeout&#039;, function () {
+                // todo callback
+            });
+        }
+    };
+
+    /**
+    * Returns an absolute path to the PluginApi file
+    *
+    * @method core.plugin.PluginRunner~_getPluginApiPath
+    *
+    * @returns {string}
+    */
+    PluginRunner.prototype._getPluginApiPath = function () {
+        return path.resolve(this._config.get(&#039;plugin.api.basePath&#039;), this._config.get(&#039;plugin.api.pluginApiName&#039;));
     };
     return PluginRunner;
 })();
