@@ -79,6 +79,11 @@ var SearchClient = (function () {
 
         this.open(this._options.onOpenCallback);
     }
+    SearchClient.prototype.addItem = function (pathToIndex, stats, callback) {
+        // todo iplementation
+        return process.nextTick(callback.bind(null, null, null));
+    };
+
     SearchClient.prototype.close = function (callback) {
         var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
@@ -95,8 +100,18 @@ var SearchClient = (function () {
         });
     };
 
+    SearchClient.prototype.getItem = function (pathToIndex, callback) {
+        // todo iplementation
+        return process.nextTick(callback.bind(null, null, null));
+    };
+
     SearchClient.prototype.isOpen = function (callback) {
         return process.nextTick(callback.bind(null, null, this._isOpen));
+    };
+
+    SearchClient.prototype.itemExists = function (pathToIndex, callback) {
+        // todo iplementation
+        return process.nextTick(callback.bind(null, null, null));
     };
 
     SearchClient.prototype.open = function (callback) {

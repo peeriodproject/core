@@ -1,12 +1,11 @@
-import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
+import SearchApiInterface = require('./SearchApiInterface');
 
 /**
  * The
  * @interface
  * @class core.search.SearchClientInterface
  */
-interface SearchClientInterface extends ClosableAsyncInterface {
-
+interface SearchClientInterface extends SearchApiInterface {
 }
 
 export = SearchClientInterface;

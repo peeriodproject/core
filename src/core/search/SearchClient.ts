@@ -1,5 +1,6 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
 
+import fs = require('fs');
 import path = require('path');
 
 var elasticsearch = require('elasticsearch');
@@ -93,6 +94,11 @@ class SearchClient implements SearchClientInterface {
 		this.open(this._options.onOpenCallback);
 	}
 
+	public addItem (pathToIndex:string, stats:fs.Stats, callback?:(err:Error) => any):void {
+		// todo iplementation
+		return process.nextTick(callback.bind(null, null, null));
+	}
+
 	public close (callback?:(err:Error) => any):void {
 		var internalCallback = callback || this._options.onCloseCallback;
 
@@ -108,8 +114,18 @@ class SearchClient implements SearchClientInterface {
 		});
 	}
 
+	public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
+		// todo iplementation
+		return process.nextTick(callback.bind(null, null, null));
+	}
+
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
+	}
+
+	public itemExists (pathToIndex:string, callback:(exists:boolean) => void):void {
+		// todo iplementation
+		return process.nextTick(callback.bind(null, null, null));
 	}
 
 	public open (callback?:(err:Error) => any):void {
