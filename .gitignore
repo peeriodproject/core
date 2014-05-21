@@ -30,3 +30,5 @@ node_modules
 /test/fixtures/core/utils/JSONStateHandler/save/
 /src/bin/core/search/elasticsearch-pid
 /utils/apacheTikaMimeTypesParser/fileTypes.json
+/utils/topologyTestRunner/zmap-results.json
+/utils/topologyTestRunner/configBuilder.pyc
