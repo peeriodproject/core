@@ -52,7 +52,7 @@ class PluginRunner implements PluginRunnerInterface {
 
 	public cleanup ():void {
 		for (var key in this._sandboxScripts) {
-			this._sandboxScripts[key].reset();
+			this._sandboxScripts[key].kill();
 		}
 
 		this._sandboxScripts = null;

@@ -39,7 +39,7 @@ var PluginRunner = (function () {
     }
     PluginRunner.prototype.cleanup = function () {
         for (var key in this._sandboxScripts) {
-            this._sandboxScripts[key].reset();
+            this._sandboxScripts[key].kill();
         }
 
         this._sandboxScripts = null;
