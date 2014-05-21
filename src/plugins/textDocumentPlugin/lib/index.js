@@ -11,12 +11,19 @@
     main.onTest = onTest;
 
     function onBeforeItemAdd() {
-        var data = {
+        setState('foobar');
+        /*var data = {
             name: getFileName(),
             stats: getStats()
+        };*/
+
+        var data = {
+            name: fileName,
+            stats: fileStats,
+            state: getState()
         };
 
-        exit(data);
+        //exit(data);
     }
     main.onBeforeItemAdd = onBeforeItemAdd;
 })(exports.main || (exports.main = {}));

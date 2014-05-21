@@ -9,7 +9,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import PluginLoaderFactory = require('../../../src/core/plugin/PluginLoaderFactory');
 import PluginLoader = require('../../../src/core/plugin/PluginLoader');
 
-describe('CORE --> PLUGIN --> PluginLoaderFactory @joern', function () {
+describe('CORE --> PLUGIN --> PluginLoaderFactory', function () {
 	var sandbox:SinonSandbox;
 	var pluginToLoadPath:string = 'src/plugins/textDocumentPlugin';
 	var pluginsFolderPath:string = testUtils.getFixturePath('core/plugin/pluginLoader/plugins');

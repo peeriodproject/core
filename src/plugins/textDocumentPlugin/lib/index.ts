@@ -1,5 +1,5 @@
 // sandbox exit callback
-declare function exit(output:any):void;
+declare function exit(output?:any):void;
 
 // api methods
 declare function getState():any;

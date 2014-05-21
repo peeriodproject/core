@@ -8,7 +8,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var PluginLoaderFactory = require('../../../src/core/plugin/PluginLoaderFactory');
 var PluginLoader = require('../../../src/core/plugin/PluginLoader');
 
-describe('CORE --> PLUGIN --> PluginLoaderFactory @joern', function () {
+describe('CORE --> PLUGIN --> PluginLoaderFactory', function () {
     var sandbox;
     var pluginToLoadPath = 'src/plugins/textDocumentPlugin';
     var pluginsFolderPath = testUtils.getFixturePath('core/plugin/pluginLoader/plugins');
