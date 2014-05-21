@@ -7,6 +7,9 @@
     "main": "lib/main.js",
     "private": true,
     "fileTypes": "./lib/fileTypes.json",
+    "settings": {
+        "useApacheTika": true
+    },
     "modules": [
     ],
     "dependencies": [
