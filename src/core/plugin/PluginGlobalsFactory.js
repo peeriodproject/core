@@ -1,9 +1,15 @@
+/// <reference path='../../../ts-definitions/node/node.d.ts' />
 var PluginGlobalsFactory = (function () {
     function PluginGlobalsFactory() {
     }
-    PluginGlobalsFactory.prototype.create = function () {
+    PluginGlobalsFactory.prototype.create = function (itemPath, stats) {
         return {
-            foo: 'barvaria'
+            getItemFileName: function () {
+                return itemPath;
+            },
+            getStats: function () {
+                return Object.freeze(stats);
+            }
         };
     };
     return PluginGlobalsFactory;
