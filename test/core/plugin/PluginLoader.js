@@ -84,6 +84,10 @@ describe('CORE --> PLUGIN --> PluginLoader', function () {
             pluginLoader.getName().should.equal('Text-Document Analyser');
         });
 
+        it('should correctly return the settings', function () {
+            pluginLoader.getSettings().should.containDeep({ useApacheTika: true });
+        });
+
         it('should correctly return the type', function () {
             pluginLoader.getType().should.equal('searchPlugin');
         });

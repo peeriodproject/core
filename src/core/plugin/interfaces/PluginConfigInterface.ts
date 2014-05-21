@@ -13,6 +13,7 @@ interface PluginConfigInterface {
 	modules?:Array<string>;
 	name:string;
 	private?:boolean;
+	settings?:Object;
 	type:string;
 	version:string;
 }

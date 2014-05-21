@@ -12,6 +12,7 @@ interface PluginLoaderInterface {
 	getMain ():string;
 	getModules ():Array<string>;
 	getName ():string;
+	getSettings ():Object;
 	getType ():string;
 	getVersion ():string;
 

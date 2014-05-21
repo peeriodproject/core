@@ -29,7 +29,8 @@ var PluginLoader = (function () {
             modules: Array,
             modules_item: String,
             dependencies: Array,
-            dependencies_item: String
+            dependencies_item: String,
+            settings: Object
         };
         this._config = config;
         this._pluginPath = pluginPath;
@@ -76,6 +77,10 @@ var PluginLoader = (function () {
 
     PluginLoader.prototype.getName = function () {
         return this._configData.name;
+    };
+
+    PluginLoader.prototype.getSettings = function () {
+        return this._configData.settings || {};
     };
 
     PluginLoader.prototype.getType = function () {

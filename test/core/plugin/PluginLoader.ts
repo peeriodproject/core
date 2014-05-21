@@ -11,7 +11,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import PluginLoader = require('../../../src/core/plugin/PluginLoader');
 
 // todo add json error tests
-describe('CORE --> PLUGIN --> PluginLoader', function () {
+describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
 	var sandbox:SinonSandbox;
 	var pluginToLoadPath:string = 'src/plugins/textDocumentPlugin';
 	var pluginsFolderPath:string = testUtils.getFixturePath('core/plugin/pluginLoader/plugins');
@@ -56,45 +56,49 @@ describe('CORE --> PLUGIN --> PluginLoader', function () {
 			pluginLoader = null;
 		});
 
-		it ('should correctly return the dependencies', function () {
+		it('should correctly return the dependencies', function () {
 			pluginLoader.getDependencies().should.containDeep([]);
 		});
 
-		it ('should correctly return the description', function () {
+		it('should correctly return the description', function () {
 			pluginLoader.getDescription().should.equal('Analyses text documents with [Apache Tika](https://tika.apache.org)');
 		});
 
 		/*it ('should correctly return the file types', function () {
-			pluginLoader.getFileTypes();
-		});*/
+		 pluginLoader.getFileTypes();
+		 });*/
 
-		it ('should correctly return the identifier', function () {
+		it('should correctly return the identifier', function () {
 			pluginLoader.getIdentifier().should.equal('jj.core.documentAnalyser');
 		});
 
-		it ('should correctly return the main file', function () {
+		it('should correctly return the main file', function () {
 			var mainPath = path.resolve(pluginsFolderPath, pluginFolderName, 'lib/main.js');
 
 			pluginLoader.getMain().should.equal(mainPath);
 		});
 
-		it ('should correctly return the modules', function () {
+		it('should correctly return the modules', function () {
 			pluginLoader.getModules().should.containDeep([]);
 		});
 
-		it ('should correctly return the name', function () {
+		it('should correctly return the name', function () {
 			pluginLoader.getName().should.equal('Text-Document Analyser');
 		});
 
-		it ('should correctly return the type', function () {
+		it('should correctly return the settings', function () {
+			pluginLoader.getSettings().should.containDeep({ useApacheTika: true });
+		});
+
+		it('should correctly return the type', function () {
 			pluginLoader.getType().should.equal('searchPlugin');
 		});
 
-		it ('should correctly return the version', function () {
+		it('should correctly return the version', function () {
 			pluginLoader.getVersion().should.equal('0.0.1');
 		});
 
-		it ('should correctly return if the plugin is private', function () {
+		it('should correctly return if the plugin is private', function () {
 			pluginLoader.isPrivate().should.be.true;
 		});
 	});

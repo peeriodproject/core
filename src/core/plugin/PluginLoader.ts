@@ -20,12 +20,12 @@ class PluginLoader implements PluginLoaderInterface {
 	private _pluginPath:string = '';
 
 	private _configRequiredKeysMap:{ [key:string]:any } = {
-		description        : String,
-		identifier         : String,
-		main               : String,
-		name               : String,
-		type               : String,
-		version            : String
+		description: String,
+		identifier : String,
+		main       : String,
+		name       : String,
+		type       : String,
+		version    : String
 	};
 
 	private _configOptionalKeysMap:{ [key:string]:any } = {
@@ -35,10 +35,11 @@ class PluginLoader implements PluginLoaderInterface {
 		fileMimeTypes_item : String,
 		fileExtensions     : Array,
 		fileExtensions_item: String,
-		modules          : Array,
-		modules_item     : String,
-		dependencies     : Array,
-		dependencies_item: String
+		modules            : Array,
+		modules_item       : String,
+		dependencies       : Array,
+		dependencies_item  : String,
+		settings           : Object
 	};
 
 	constructor (config:ConfigInterface, pluginPath:string) {
@@ -88,6 +89,10 @@ class PluginLoader implements PluginLoaderInterface {
 
 	getName ():string {
 		return this._configData.name;
+	}
+
+	getSettings ():Object {
+		return this._configData.settings || {};
 	}
 
 	getType ():string {
