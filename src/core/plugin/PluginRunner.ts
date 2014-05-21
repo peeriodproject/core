@@ -42,52 +42,17 @@ class PluginRunner implements PluginRunnerInterface {
 
 		this._sandbox = new SandCastle({
 			memoryLimitMB: 100,
-			timeout      : 5000,
+			timeout      : 2000,
 			useStrictMode: true,
 			api          : this._getPluginApiPath()
 		});
 		this._pluginGlobalsFactory = new PluginGlobalsFactory();
 		this._pluginCode = fs.readFileSync(this._pluginScriptPath, 'utf-8');
-
-		/*this._sandboxScript = this._sandbox.createScript(script);
-
-		 var foo = false;
-		 // todo begin independent methods
-		 var globals:Object = this._pluginGlobalsFactory.create(null, null) || {};
-
-		 this._sandboxScript.on('exit', (err, output, methodName) => {
-		 /*console.log('--- EXIT ---');
-		 if (err) {
-		 console.log(err.message);
-		 console.log(err.stack);
-		 }
-		 console.log('methodName', methodName);
-		 console.log(output);
-
-		 if (!foo) {
-		 this._sandboxScript.run('main.onTest', Object.freeze(globals));
-		 foo = true;
-		 }* /
-		 //this._sandboxScript.reset();
-		 });
-
-		 this._sandboxScript.on('timeout', function () {
-		 //console.log('--- TIMEOUT ---');
-		 //console.log('I timed out, oh what a silly script I am!');
-		 });
-
-		 this._sandboxScript.run('main.onInit', Object.freeze(globals));
-		 /*this._sandboxScript.run('onInit');
-		 this._sandboxScript.run('onInit', {
-		 foo: "bar"
-		 });* /
-		 */
 	}
 
 	public cleanup ():void {
 		for (var key in this._sandboxScripts) {
-			// todo ts-definitions
-			//this._sandboxScripts.reset();
+			this._sandboxScripts[key].reset();
 		}
 
 		this._sandboxScripts = null;
@@ -96,13 +61,10 @@ class PluginRunner implements PluginRunnerInterface {
 	}
 
 	onBeforeItemAdd (itemPath:string, stats:fs.Stats, callback:Function):void {
-		var script = this._createSandbox(itemPath);
-
-		this._registerSandboxErrorAndTimeoutHandler(itemPath, callback);
-
-		script.on('exit', function (err:Error, output, methodName:string) {
-			// todo check ob exit auch nach einem timeout getriggert wird
+		this._createAndRunSandbox(itemPath, stats, 'main.onBeforeItemAdd', callback, function (err:Error, output:any, methodName:string) {
 			if (err) {
+				console.log(err.message);
+				console.log(err['stack']);
 				// todo handle error
 				callback(err, null);
 			}
@@ -110,8 +72,24 @@ class PluginRunner implements PluginRunnerInterface {
 				callback(null, output);
 			}
 		});
+	}
 
-		script.run('main.onBeforeItemAdd', this._pluginGlobalsFactory.create(itemPath, stats));
+	/**
+	 * Creates a sandbox, registers a timeout handler, addes the onExit callback and runs the specified method name.
+	 *
+	 * @method core.plugin.PluginRunner~_createAndRunSandbox
+	 *
+	 * @param {string} itemPath
+	 * @param {fs.Stats} stats
+	 * @param {string} methodName
+	 * @param {Function} callback
+	 * @param {Function} onExit
+	 */
+	private _createAndRunSandbox (itemPath:string, stats:fs.Stats, methodName:string, callback:Function, onExit:(err:Error, output:any, methodName:string) => void):void {
+		this._createSandbox(itemPath);
+		this._registerSandboxTimeoutHandler(itemPath, callback);
+		this._sandboxScripts[itemPath].on('exit', onExit);
+		this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats));
 	}
 
 	/**
@@ -121,24 +99,27 @@ class PluginRunner implements PluginRunnerInterface {
 	 * @method core.plugin.PluginRunner~_createSandbox
 	 *
 	 * @param {string} itemPath
+	 *
 	 * @returns {any}
 	 */
-	private _createSandbox (itemPath) {
-		return this._sandboxScripts[itemPath] ? this._sandboxScripts[itemPath] : this._sandbox.createScript(this._pluginCode);
+	private _createSandbox (itemPath:string):void {
+		if (!this._sandboxScripts[itemPath]) {
+			this._sandboxScripts[itemPath] = this._sandbox.createScript(this._pluginCode);
+		}
 	}
 
 	/**
-	 * Registers a error an timeout handler for the sandbox which belongs to the given path
+	 * Registers a timeout handler for the sandbox which belongs to the given path
 	 *
-	 * @method core.plugin.PluginRunner~_registerSandboxErrorAndTimeoutHandler
+	 * @method core.plugin.PluginRunner~_registerSandboxTimeoutHandler
 	 *
 	 * @param {string} itemPath
 	 * @param {Function} callback
 	 */
-	private _registerSandboxErrorAndTimeoutHandler (itemPath, callback:Function) {
+	private _registerSandboxTimeoutHandler (itemPath:string, callback:Function):void {
 		if (this._sandboxScripts[itemPath]) {
-			this._sandboxScripts[itemPath].on('timeout', function () {
-				// todo callback
+			this._sandboxScripts[itemPath].on('timeout', function (methodName) {
+				callback(new Error('PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call "' + methodName), null);
 			});
 		}
 	}
