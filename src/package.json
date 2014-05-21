@@ -14,7 +14,7 @@
     "fs-extra": "^0.8.1",
     "microtime": "^0.5.1",
     "node-lmdb": "^0.2.1",
-    "sandcastle":"https://github.com/joernroeder/sandcastle/tarball/59ab687cc18765b84c08a012b6b5c23f7ef2a73f",
+    "sandcastle":"https://github.com/joernroeder/sandcastle/tarball/master",
     "usb-detection": "^1.0.3",
     "winston": "^0.7.3",
     "winston-irc": "^0.3.2"
