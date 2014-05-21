@@ -29,10 +29,8 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
         configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
             get: function (key) {
                 if (key === 'plugin.api.basePath') {
-                    console.log(1);
                     return path.resolve(process.cwd(), './src/core/plugin/api');
                 } else if (key === 'plugin.api.pluginApiName') {
-                    console.log(2);
                     return 'PluginApi.js';
                 }
             }
