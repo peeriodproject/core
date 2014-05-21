@@ -38,10 +38,7 @@ var PluginRunner = (function () {
         this._pluginCode = fs.readFileSync(this._pluginScriptPath, 'utf-8');
     }
     PluginRunner.prototype.cleanup = function () {
-        for (var key in this._sandboxScripts) {
-            this._sandboxScripts[key].kill();
-        }
-
+        this._sandbox.kill();
         this._sandboxScripts = null;
         this._sandbox = null;
         this._pluginGlobalsFactory = null;
