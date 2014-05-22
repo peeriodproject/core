@@ -20,7 +20,7 @@ module.exports = function (grunt) {
                 options: {
                     exclude: /node_modules|reports|interfaces|namespace\.js|\.json/
                 },
-                files: {
+                files  : {
                     'build/js-source-analysis-report': ['src/**/*.js']
                 }
             }
@@ -76,6 +76,7 @@ module.exports = function (grunt) {
         // execute 'grunt curl' manually to refresh the external definition files
         curl      : {
             'ts-definitions/fs-extra/fs-extra.d.ts'    : 'https://github.com/borisyankov/DefinitelyTyped/raw/master/fs-extra/fs-extra.d.ts',
+            'ts-definitions/mime/mime.d.ts'            : 'https://github.com/borisyankov/DefinitelyTyped/raw/master/mime/mime.d.ts',
             'ts-definitions/mocha/mocha.d.ts'          : 'https://github.com/borisyankov/DefinitelyTyped/raw/master/mocha/mocha.d.ts',
             'ts-definitions/node/node.d.ts'            : 'https://github.com/borisyankov/DefinitelyTyped/raw/master/node/node.d.ts',
             'ts-definitions/should/should.d.ts'        : 'https://github.com/borisyankov/DefinitelyTyped/raw/master/should/should.d.ts',
