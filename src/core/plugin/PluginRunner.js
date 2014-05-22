@@ -45,16 +45,8 @@ var PluginRunner = (function () {
     };
 
     PluginRunner.prototype.onBeforeItemAdd = function (itemPath, stats, callback) {
-        this._createAndRunSandbox(itemPath, stats, 'main.onBeforeItemAdd', callback, function (err, output, methodName) {
-            if (err) {
-                console.log(err.message);
-                console.log(err['stack']);
-
-                // todo handle error
-                callback(err, null);
-            } else {
-                callback(null, output);
-            }
+        this._createAndRunSandbox(itemPath, stats, 'main.onBeforeItemAdd', callback, function (output) {
+            callback(null, output);
         });
     };
 
@@ -72,7 +64,13 @@ var PluginRunner = (function () {
     PluginRunner.prototype._createAndRunSandbox = function (itemPath, stats, methodName, callback, onExit) {
         this._createSandbox(itemPath);
         this._registerSandboxTimeoutHandler(itemPath, callback);
-        this._sandboxScripts[itemPath].on('exit', onExit);
+        this._sandboxScripts[itemPath].on('exit', function (err, output, methodName) {
+            if (err) {
+                return callback(err, null, methodName);
+            } else {
+                return onExit(output);
+            }
+        });
         this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats));
     };
 

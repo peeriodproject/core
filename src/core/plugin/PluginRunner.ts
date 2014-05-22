@@ -58,16 +58,8 @@ class PluginRunner implements PluginRunnerInterface {
 	}
 
 	onBeforeItemAdd (itemPath:string, stats:fs.Stats, callback:Function):void {
-		this._createAndRunSandbox(itemPath, stats, 'main.onBeforeItemAdd', callback, function (err:Error, output:any, methodName:string) {
-			if (err) {
-				console.log(err.message);
-				console.log(err['stack']);
-				// todo handle error
-				callback(err, null);
-			}
-			else {
-				callback(null, output);
-			}
+		this._createAndRunSandbox(itemPath, stats, 'main.onBeforeItemAdd', callback, function (output:any) {
+			callback(null, output);
 		});
 	}
 
@@ -82,10 +74,17 @@ class PluginRunner implements PluginRunnerInterface {
 	 * @param {Function} callback
 	 * @param {Function} onExit
 	 */
-	private _createAndRunSandbox (itemPath:string, stats:fs.Stats, methodName:string, callback:Function, onExit:(err:Error, output:any, methodName:string) => void):void {
+	private _createAndRunSandbox (itemPath:string, stats:fs.Stats, methodName:string, callback:Function, onExit:(output:any) => void):void {
 		this._createSandbox(itemPath);
 		this._registerSandboxTimeoutHandler(itemPath, callback);
-		this._sandboxScripts[itemPath].on('exit', onExit);
+		this._sandboxScripts[itemPath].on('exit', function (err, output, methodName) {
+			if (err) {
+				return callback(err, null, methodName);
+			}
+			else {
+				return onExit(output);
+			}
+		});
 		this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats));
 	}
 

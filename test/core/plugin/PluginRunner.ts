@@ -79,9 +79,29 @@ describe('CORE --> PLUGIN --> PluginRunner @joern', function () {
 			});
 		});
 
-		/*it ('should correctly return a "timed out" error', function () {
+		it ('should correctly return a "timed out" error', function (done) {
+			var pluginRunner = new PluginRunner(configStub, 'identifier', testUtils.getFixturePath('core/plugin/pluginRunner/timeoutPlugin.js'));
 
-		});*/
+			pluginRunner.onBeforeItemAdd('/path/to/item', JSON.parse(statsJson), function (err, output) {
+				// todo check message
+				err.should.be.an.instanceof(Error);
+				(output === null).should.be.true;
+
+				cleanupAndDone(pluginRunner, done);
+			});
+		});
+
+		it ('should correctly return the script error', function (done) {
+			var pluginRunner = new PluginRunner(configStub, 'identifier', testUtils.getFixturePath('core/plugin/pluginRunner/invalidPlugin.js'));
+
+			pluginRunner.onBeforeItemAdd('/path/to/item', JSON.parse(statsJson), function (err, output) {
+				err.should.be.an.instanceof(Error);
+				err.message.should.equal('invalidFunctonCall is not defined');
+				(output === null).should.be.true;
+
+				cleanupAndDone(pluginRunner, done);
+			});
+		});
 	});
 
 });
