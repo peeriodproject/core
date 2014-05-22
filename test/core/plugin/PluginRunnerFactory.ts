@@ -2,6 +2,7 @@
 
 require('should');
 
+import sinon = require('sinon');
 import testUtils = require('../../utils/testUtils');
 
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
@@ -14,17 +15,26 @@ describe('CORE --> PLUGIN --> PluginRunnerFactory', function () {
 
 	beforeEach(function () {
 		sandbox = sinon.sandbox.create();
-		configStub = testUtils.stubPublicApi(sandbox, ObjectConfig);
+		configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+			get: function (key) {
+				if (key === 'plugin.api.basePath') {
+					return 'src/core/plugin/api';
+				}
+				else if (key === 'plugin.api.pluginApiName') {
+					return 'PluginApi.js';
+				}
+			}
+		});
 	});
 
 	afterEach(function () {
 		sandbox.restore();
 	});
 
-	/*
 	it ('should correctly create plugin runners', function () {
-		var pluginRunner = (new PluginRunnerFactory()).create('identifier', testUtils.getFixturePath('core/plugin/pluginRunner/emptyFile.js'));
+		var pluginRunner = (new PluginRunnerFactory()).create(configStub, 'identifier', testUtils.getFixturePath('core/plugin/pluginRunner/emptyFile.js'));
 		pluginRunner.should.be.an.instanceof(PluginRunner);
-	});*/
+		pluginRunner.cleanup();
+	});
 
 });
