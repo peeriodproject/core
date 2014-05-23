@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.49</p>
+      <p class="stat">71.18</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">295</p>
+      <p class="stat">441</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">48.49</p>
+      <p class="stat">56.38</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.81</p>
+      <p class="stat">2.87</p>
     </div>
   </div>
 </div>
@@ -91,8 +91,11 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../main.d.ts&#039; /&gt;
+var events = require(&#039;events&#039;);
 var fs = require(&#039;fs-extra&#039;);
 var path = require(&#039;path&#039;);
+
+var mime = require(&#039;mime&#039;);
 
 var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
 
@@ -118,11 +121,22 @@ var PluginManager = (function () {
         */
         this._config = null;
         /**
+        * Emits the following events
+        *
+        * - pluginAdded
+        * - pluginRemoved
+        */
+        this._eventEmitter = null;
+        /**
         * A flag indicates weather the store is open or closed
         *
         * @member {boolean} core.plugin.PluginManager~_isOpen
         */
         this._isOpen = false;
+        /**
+        *
+        */
+        this._mimeTypeMap = {};
         /**
         *
         * @member {core.utils.ClosableAsyncOptions} core.plugin.PluginManager~_options
@@ -134,16 +148,23 @@ var PluginManager = (function () {
         * @member {core.config.ConfigInterface} core.plugin.PluginManager~_pluginFinder
         */
         this._pluginFinder = null;
+        /**
+        * @member {core.plugin.PluginLoaderFactoryInterface} core.plugin.PluginManager~_pluginLoaderFactory
+        */
         this._pluginLoaderFactory = null;
+        /**
+        *
+        * @member {core.plugin.PluginLoadersListInterface} core.plugin.PluginManager~_pluginLoaders
+        */
         this._pluginLoaders = {};
         /**
         *
-        * @member {core.plugin.PluginRunnerInterface} core.plugin.PluginManager~_pluginRunner
+        * @member {core.plugin.PluginRunnerFactoryInterface} core.plugin.PluginManager~_pluginRunnerFactory
         */
         this._pluginRunnerFactory = null;
         /**
         *
-        * @member core.plugin.PluginManager~_pluginRunners
+        * @member {core.plugin.PluginRunnerListInterface} core.plugin.PluginManager~_pluginRunners
         */
         this._pluginRunners = {};
         /**
@@ -159,7 +180,7 @@ var PluginManager = (function () {
         */
         this._pluginStateIsActive = false;
         /**
-        * @member (core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_pluginValidator
+        * @member {core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_pluginValidator
         */
         this._pluginValidator = null;
         var defaults = {
@@ -176,8 +197,18 @@ var PluginManager = (function () {
         this._pluginRunnerFactory = pluginRunnerFactory;
         this._options = ObjectUtils.extend(defaults, options);
 
+        this._eventEmitter = new events.EventEmitter();
+
         this.open(this._options.onOpenCallback);
     }
+    PluginManager.prototype.addEventListener = function (eventName, listener) {
+        this._eventEmitter.addListener(eventName, listener);
+    };
+
+    PluginManager.prototype.removeEventListener = function (eventName, listener) {
+        this._eventEmitter.removeListener(eventName, listener);
+    };
+
     PluginManager.prototype.activatePluginState = function (callback) {
         var internalCallback = callback || function (err) {
         };
@@ -213,23 +244,33 @@ var PluginManager = (function () {
         }
     };
 
-    // todo clean up _pluginRunners[].cleanup()
     PluginManager.prototype.close = function (callback) {
         var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
 
-        for (var key in this._pluginRunners) {
-            this._pluginRunners[key].cleanup();
+        if (!this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null));
         }
-
-        this._pluginLoaders = null;
-        this._pluginLoaders = null;
 
         this._savePluginState(function (err) {
             if (err) {
                 internalCallback(err);
             } else {
                 _this._isOpen = false;
+
+                for (var key in _this._pluginRunners) {
+                    _this._pluginRunners[key].cleanup();
+                }
+
+                //if (this._eventEmitter) {
+                _this._eventEmitter.removeAllListeners();
+
+                //}
+                _this._eventEmitter = null;
+
+                _this._pluginLoaders = null;
+                _this._pluginRunners = null;
+
                 internalCallback(null);
             }
         });
@@ -256,6 +297,39 @@ var PluginManager = (function () {
         return process.nextTick(callback.bind(null, runner));
     };
 
+    PluginManager.prototype.getPluginRunnersForItem = function (itemPath, callback) {
+        var mimeType = this._getMimeType(itemPath);
+        var responsibleRunners = {};
+
+        // todo replace array&lt;string&gt; with PluginIdentifierListInterface
+        var map = this._mimeTypeMap[mimeType];
+
+        if (map &amp;&amp; map.length) {
+            for (var i in map) {
+                var key = map[i];
+
+                responsibleRunners[key] = this._pluginRunners[key];
+            }
+        }
+
+        //_isResponsibleForMimeType
+        /*this.getActivePluginRunners((pluginRunners:PluginRunnerListInterface) =&gt; {
+        var responsibleRunners:PluginRunnerListInterface = {};
+        
+        if (Object.keys(pluginRunners).length) {
+        for (var key in pluginRunners) {
+        var pluginLoader:PluginLoaderInterface = this._pluginLoaders[key];
+        
+        if (this._isResponsibleForFile(itemPath, pluginLoader)) {
+        responsibleRunners[key] = this._pluginRunners[key];
+        }
+        }
+        }
+        
+        });*/
+        return process.nextTick(callback.bind(null, responsibleRunners));
+    };
+
     PluginManager.prototype.getPluginState = function (callback) {
         return process.nextTick(callback.bind(null, this._pluginState));
     };
@@ -266,24 +340,58 @@ var PluginManager = (function () {
     };
 
     PluginManager.prototype.onBeforeItemAdd = function (itemPath, stats, callback) {
-        this.getActivePluginRunners(function (runners) {
+        var _this = this;
+        this.getPluginRunnersForItem(itemPath, function (runners) {
             var runnersLength = Object.keys(runners).length;
             var counter = 0;
-            var testCallback = function () {
-                if (counter == runnersLength - 1) {
-                    // trigger callback
-                    callback();
+            var useApacheTika = [];
+            var mergedPluginData = {};
+            var sendCallback = function () {
+                // trigger callback
+                callback(mergedPluginData);
+            };
+            var checkAndSendCallback = function () {
+                if (counter == runnersLength) {
+                    sendCallback();
+                }
+            };
+            var runPlugins = function (tikaGlobals) {
+                if (runnersLength) {
+                    for (var key in runners) {
+                        // call the plugin!
+                        runners[key].onBeforeItemAdd(itemPath, stats, tikaGlobals, function (data) {
+                            counter++;
+
+                            // todo parse data and merge them together
+                            mergedPluginData[key] = data;
+
+                            checkAndSendCallback();
+                        });
+                    }
+                } else {
+                    sendCallback();
                 }
             };
 
             for (var key in runners) {
-                // call the plugin!
-                runners[key].onBeforeItemAdd(itemPath, stats, function (err, data) {
-                    counter++;
+                var pluginLoader = _this._pluginLoaders[key];
+                var settings = pluginLoader.getSettings();
 
-                    // todo parse data and merge them together
-                    testCallback();
+                if (settings.useApacheTika) {
+                    useApacheTika.push(key);
+                }
+            }
+
+            if (useApacheTika.length) {
+                _this._loadApacheTikaGlobals(itemPath, function (err, tikaGlobals) {
+                    if (err) {
+                        console.error(err);
+                    } else {
+                        runPlugins(tikaGlobals);
+                    }
                 });
+            } else {
+                runPlugins(null);
             }
         });
     };
@@ -299,8 +407,13 @@ var PluginManager = (function () {
 
         this._loadPluginState(function (err, pluginState) {
             if (err) {
+                console.log(err);
                 internalCallback(err);
             } else {
+                if (!_this._eventEmitter) {
+                    _this._eventEmitter = new events.EventEmitter();
+                }
+
                 _this._pluginState = pluginState;
                 _this._isOpen = true;
 
@@ -325,7 +438,27 @@ var PluginManager = (function () {
                 return internalCallback(err);
             } else {
                 _this._pluginRunners[identifier] = _this._pluginRunnerFactory.create(_this._config, pluginState.name, pluginState.path);
-                _this._pluginLoaders[identifier] = _this._pluginLoaderFactory.create(_this._config, pluginState.path);
+
+                // register plugin to mime type list
+                // todo create extensions list
+                var pluginLoader = _this._pluginLoaderFactory.create(_this._config, pluginState.path);
+                var mimeTypes = pluginLoader.getFileMimeTypes();
+
+                if (mimeTypes.length) {
+                    for (var i in mimeTypes) {
+                        var mimeType = mimeTypes[i];
+
+                        if (!_this._mimeTypeMap[mimeType]) {
+                            _this._mimeTypeMap[mimeType] = [identifier];
+                        } else {
+                            _this._mimeTypeMap[mimeType].push(identifier);
+                        }
+                    }
+                }
+
+                _this._pluginLoaders[identifier] = pluginLoader;
+
+                _this._eventEmitter.emit(&#039;pluginAdded&#039;, identifier);
 
                 internalCallback(null);
             }
@@ -341,6 +474,14 @@ var PluginManager = (function () {
     */
     PluginManager.prototype._getManagerStoragePath = function () {
         return path.join(this._config.get(&#039;app.dataPath&#039;), &#039;pluginManager.json&#039;);
+    };
+
+    PluginManager.prototype._getMimeType = function (filePath) {
+        return mime.lookup(filePath);
+    };
+
+    PluginManager.prototype._isResponsibleForMimeType = function (mimeType, pluginLoader) {
+        return (pluginLoader.getFileMimeTypes().indexOf(mimeType) !== 1) ? true : false;
     };
 
     /**
@@ -381,6 +522,11 @@ var PluginManager = (function () {
         fs.writeJson(this._getManagerStoragePath(), state, function (err) {
             callback(err);
         });
+    };
+
+    PluginManager.prototype._loadApacheTikaGlobals = function (itemPath, callback) {
+        console.log(&#039;loading tika globals for&#039;, itemPath);
+        callback(null);
     };
     return PluginManager;
 })();

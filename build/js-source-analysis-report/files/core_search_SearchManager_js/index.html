@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">82.30</p>
+      <p class="stat">81.50</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">41</p>
+      <p class="stat">76</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">9.96</p>
+      <p class="stat">15.00</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.27</p>
+      <p class="stat">0.50</p>
     </div>
   </div>
 </div>
@@ -91,6 +91,10 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../ts-definitions/node/node.d.ts&#039; /&gt;
+/**
+* @class core.search.SearchManager
+* @implements core.search.SearchManagerInterface
+*/
 var SearchManager = (function () {
     function SearchManager(config, pluginManager, searchClient) {
         this._config = null;
@@ -100,6 +104,8 @@ var SearchManager = (function () {
         this._config = config;
         this._pluginManager = pluginManager;
         this._searchClient = searchClient;
+
+        this._registerPluginManagerEvents();
     }
     SearchManager.prototype.addItem = function (pathToIndex, stats, callback) {
         this._pluginManager.onBeforeItemAdd(pathToIndex, stats, function () {
@@ -110,6 +116,10 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype.close = function (callback) {
+        var internalCallback = callback || function () {
+        };
+
+        return process.nextTick(callback.bind(null, null));
     };
 
     SearchManager.prototype.getItem = function (pathToIndex, callback) {
@@ -127,6 +137,35 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype.open = function (callback) {
+    };
+
+    SearchManager.prototype._registerPluginManagerEvents = function () {
+        // todo register on plugin delete handler and remove type from index
+        this._pluginManager.addEventListener(&#039;pluginAdded&#039;, this._onPluginAddedListener);
+    };
+
+    SearchManager.prototype._onPluginAddedListener = function (pluginIdentifier) {
+        var _this = this;
+        this._searchClient.typeExists(pluginIdentifier, function (exists) {
+            if (exists) {
+                return;
+            }
+
+            _this._pluginManager.getActivePluginRunner(pluginIdentifier, function (pluginRunner) {
+                pluginRunner.getMapping(function (mapping) {
+                    if (mapping) {
+                        _this._searchClient.addMapping(pluginIdentifier, mapping, function (err) {
+                            if (err) {
+                                console.error(err);
+                            }
+                        });
+                    } else {
+                        // plugin uses elasticsearch auto mapping feature!
+                        // maybe it&#039;s better to throw an error here?
+                    }
+                });
+            });
+        });
     };
     return SearchManager;
 })();
