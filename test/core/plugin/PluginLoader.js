@@ -10,7 +10,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var PluginLoader = require('../../../src/core/plugin/PluginLoader');
 
 // todo add json error tests
-describe('CORE --> PLUGIN --> PluginLoader', function () {
+describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
     var sandbox;
     var pluginToLoadPath = 'src/plugins/textDocumentPlugin';
     var pluginsFolderPath = testUtils.getFixturePath('core/plugin/pluginLoader/plugins');
@@ -61,6 +61,14 @@ describe('CORE --> PLUGIN --> PluginLoader', function () {
 
         it('should correctly return the description', function () {
             pluginLoader.getDescription().should.equal('Analyses text documents with [Apache Tika](https://tika.apache.org)');
+        });
+
+        it('should correctly return the file extensions', function () {
+            pluginLoader.getFileExtensions().length.should.be.greaterThan(0);
+        });
+
+        it('should correctly return the file mime types', function () {
+            pluginLoader.getFileMimeTypes().length.should.be.greaterThan(0);
         });
 
         /*it ('should correctly return the file types', function () {

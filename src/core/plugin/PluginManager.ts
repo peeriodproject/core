@@ -135,6 +135,8 @@ class PluginManager implements PluginManagerInterface {
 		this._pluginRunnerFactory = pluginRunnerFactory;
 		this._options = ObjectUtils.extend(defaults, options);
 
+		this._eventEmitter = new events.EventEmitter();
+
 		this.open(this._options.onOpenCallback);
 	}
 
@@ -181,13 +183,12 @@ class PluginManager implements PluginManagerInterface {
 		}
 	}
 
-	// todo clean up _pluginRunners[].cleanup()
 	public close (callback?:(err:Error) => any):void {
 		var internalCallback = callback || this._options.onCloseCallback;
 
-		/*if (!this._isOpen) {
-		 return process.nextTick(internalCallback.bind(null, null));
-		 }*/
+		if (!this._isOpen) {
+			return process.nextTick(internalCallback.bind(null, null));
+		}
 
 		this._savePluginState((err:Error) => {
 			if (err) {
@@ -200,9 +201,9 @@ class PluginManager implements PluginManagerInterface {
 					this._pluginRunners[key].cleanup();
 				}
 
-				if (this._eventEmitter) {
-					this._eventEmitter.removeAllListeners();
-				}
+				//if (this._eventEmitter) {
+				this._eventEmitter.removeAllListeners();
+				//}
 				this._eventEmitter = null;
 
 				this._pluginLoaders = null;
@@ -340,10 +341,14 @@ class PluginManager implements PluginManagerInterface {
 
 		this._loadPluginState((err:Error, pluginState:any) => {
 			if (err) {
+				console.log(err);
 				internalCallback(err);
 			}
 			else {
-				this._eventEmitter = new events.EventEmitter();
+				if (!this._eventEmitter) {
+					this._eventEmitter = new events.EventEmitter();
+				}
+
 				this._pluginState = pluginState;
 				this._isOpen = true;
 
@@ -375,7 +380,9 @@ class PluginManager implements PluginManagerInterface {
 				var mimeTypes:Array<string> = pluginLoader.getFileMimeTypes();
 
 				if (mimeTypes.length) {
-					for (var mimeType in mimeTypes) {
+					for (var i in mimeTypes) {
+						var mimeType:string = mimeTypes[i];
+
 						if (!this._mimeTypeMap[mimeType]) {
 							this._mimeTypeMap[mimeType] = [identifier];
 						}

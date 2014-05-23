@@ -37,7 +37,11 @@ interface PluginManagerInterface extends ClosableAsyncInterface {
 	activatePluginState (callback?:(err:Error) => void):void;
 
 	/**
-	 * Adds a listener to the specified event
+	 * Adds a listener to the specified event.
+	 *
+	 * EventList:
+	 * - pluginAdded
+	 *
 	 *
 	 * @param {string} eventName
 	 * @param {Function} listener

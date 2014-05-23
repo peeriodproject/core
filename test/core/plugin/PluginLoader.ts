@@ -64,6 +64,14 @@ describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
 			pluginLoader.getDescription().should.equal('Analyses text documents with [Apache Tika](https://tika.apache.org)');
 		});
 
+		it('should correctly return the file extensions', function () {
+			pluginLoader.getFileExtensions().length.should.be.greaterThan(0);
+		});
+
+		it('should correctly return the file mime types', function () {
+			pluginLoader.getFileMimeTypes().length.should.be.greaterThan(0);
+		});
+
 		/*it ('should correctly return the file types', function () {
 		 pluginLoader.getFileTypes();
 		 });*/

@@ -32,6 +32,13 @@ var SearchClient = (function () {
         * @member {core.config.ConfigInterface} core.search.SearchClient~_config
         */
         this._config = null;
+        /**
+        * The index name this client is managing.
+        *
+        * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/1.x/indices.html
+        *
+        * @member {core.config.ConfigInterface} core.search.SearchClient~_indexName
+        */
         this._indexName = null;
         /**
         * A flag indicates weather the client is closed or open

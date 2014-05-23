@@ -105,6 +105,8 @@ var PluginManager = (function () {
         this._pluginRunnerFactory = pluginRunnerFactory;
         this._options = ObjectUtils.extend(defaults, options);
 
+        this._eventEmitter = new events.EventEmitter();
+
         this.open(this._options.onOpenCallback);
     }
     PluginManager.prototype.addEventListener = function (eventName, listener) {
@@ -150,14 +152,14 @@ var PluginManager = (function () {
         }
     };
 
-    // todo clean up _pluginRunners[].cleanup()
     PluginManager.prototype.close = function (callback) {
         var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
 
-        /*if (!this._isOpen) {
-        return process.nextTick(internalCallback.bind(null, null));
-        }*/
+        if (!this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+
         this._savePluginState(function (err) {
             if (err) {
                 internalCallback(err);
@@ -168,9 +170,10 @@ var PluginManager = (function () {
                     _this._pluginRunners[key].cleanup();
                 }
 
-                if (_this._eventEmitter) {
-                    _this._eventEmitter.removeAllListeners();
-                }
+                //if (this._eventEmitter) {
+                _this._eventEmitter.removeAllListeners();
+
+                //}
                 _this._eventEmitter = null;
 
                 _this._pluginLoaders = null;
@@ -304,9 +307,13 @@ var PluginManager = (function () {
 
         this._loadPluginState(function (err, pluginState) {
             if (err) {
+                console.log(err);
                 internalCallback(err);
             } else {
-                _this._eventEmitter = new events.EventEmitter();
+                if (!_this._eventEmitter) {
+                    _this._eventEmitter = new events.EventEmitter();
+                }
+
                 _this._pluginState = pluginState;
                 _this._isOpen = true;
 
@@ -338,7 +345,9 @@ var PluginManager = (function () {
                 var mimeTypes = pluginLoader.getFileMimeTypes();
 
                 if (mimeTypes.length) {
-                    for (var mimeType in mimeTypes) {
+                    for (var i in mimeTypes) {
+                        var mimeType = mimeTypes[i];
+
                         if (!_this._mimeTypeMap[mimeType]) {
                             _this._mimeTypeMap[mimeType] = [identifier];
                         } else {

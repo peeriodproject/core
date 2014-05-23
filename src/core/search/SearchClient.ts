@@ -42,6 +42,13 @@ class SearchClient implements SearchClientInterface {
 	 */
 	private _config:ConfigInterface = null;
 
+	/**
+	 * The index name this client is managing.
+	 *
+	 * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/1.x/indices.html
+	 *
+	 * @member {core.config.ConfigInterface} core.search.SearchClient~_indexName
+	 */
 	private _indexName:string = null;
 	/**
 	 * A flag indicates weather the client is closed or open
@@ -104,7 +111,7 @@ class SearchClient implements SearchClientInterface {
 		return process.nextTick(callback.bind(null, null, null));
 	}
 
-	addMapping (type:string, mapping:Object, callback?:(err:Error) => any):void {
+	public addMapping (type:string, mapping:Object, callback?:(err:Error) => any):void {
 		var internalCallback:Function = callback || function () {
 		};
 
