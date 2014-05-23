@@ -1,5 +1,9 @@
 var _state = {};
 
+/**
+* // todo docs
+* @type {{getState: (function(): Object), setState: (function(Object): void)}}
+*/
 exports.api = {
     getState: function () {
         return _state;

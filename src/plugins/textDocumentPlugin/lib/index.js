@@ -10,20 +10,25 @@
     }
     main.onTest = onTest;
 
+    /**
+    * Returns the mapping used in the elasticsearch index to store the plugin data
+    *
+    * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/indices-put-mapping.html
+    */
+    function getMapping() {
+        var mapping = {};
+
+        exit(mapping);
+    }
+    main.getMapping = getMapping;
+
     function onBeforeItemAdd() {
-        setState('foobar');
-        /*var data = {
+        var data = {
             name: getFileName(),
             stats: getStats()
-        };*/
-
-        var data = {
-            name: fileName,
-            stats: fileStats,
-            state: getState()
         };
 
-        //exit(data);
+        exit(data);
     }
     main.onBeforeItemAdd = onBeforeItemAdd;
 })(exports.main || (exports.main = {}));

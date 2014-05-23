@@ -1,4 +1,5 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
+/// <reference path='../../../ts-definitions/elasticsearch/elasticsearch.d.ts' />
 var path = require('path');
 
 var elasticsearch = require('elasticsearch');
@@ -16,7 +17,7 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @param {core.search.SearchClientOptions} options
 */
 var SearchClient = (function () {
-    function SearchClient(config, searchStoreFactory, options) {
+    function SearchClient(config, indexName, searchStoreFactory, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
         /**
@@ -31,6 +32,7 @@ var SearchClient = (function () {
         * @member {core.config.ConfigInterface} core.search.SearchClient~_config
         */
         this._config = null;
+        this._indexName = null;
         /**
         * A flag indicates weather the client is closed or open
         *
@@ -66,6 +68,7 @@ var SearchClient = (function () {
         };
 
         this._config = config;
+        this._indexName = indexName.toLowerCase();
         this._searchStoreFactory = searchStoreFactory;
 
         this._options = ObjectUtils.extend(defaults, options);
@@ -82,6 +85,18 @@ var SearchClient = (function () {
     SearchClient.prototype.addItem = function (pathToIndex, stats, callback) {
         // todo iplementation
         return process.nextTick(callback.bind(null, null, null));
+    };
+
+    SearchClient.prototype.addMapping = function (type, mapping, callback) {
+        var internalCallback = callback || function () {
+        };
+
+        this._client.indices.putMapping({
+            index: this._indexName,
+            type: type
+        }, function (err, response, status) {
+            internalCallback(err);
+        });
     };
 
     SearchClient.prototype.close = function (callback) {
@@ -128,6 +143,7 @@ var SearchClient = (function () {
             }
 
             _this._client = elasticsearch.Client({
+                apiVersion: _this._config.get('search.apiVersion', '1.1'),
                 host: _this._config.get('search.host') + ':' + _this._config.get('search.port'),
                 log: {
                     type: 'file',
@@ -141,8 +157,14 @@ var SearchClient = (function () {
                     console.log(err);
                     internalCallback(err);
                 } else {
-                    _this._isOpen = true;
-                    internalCallback(null);
+                    _this._createIndex(function (err) {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            _this._isOpen = true;
+                            internalCallback(null);
+                        }
+                    });
                 }
             });
         };
@@ -154,6 +176,33 @@ var SearchClient = (function () {
         }));
 
         this._searchStore = this._searchStoreFactory.create(this._config, searchStoreOptions);
+    };
+
+    SearchClient.prototype.typeExists = function (type, callback) {
+        this._client.indices.existsType({
+            index: this._indexName,
+            type: type
+        }, function (err, response, status) {
+            //console.log(err, response, status);
+            callback(response);
+        });
+    };
+
+    /**
+    * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
+    *
+    * @param {string} name
+    * @param {Function} callback
+    */
+    SearchClient.prototype._createIndex = function (callback) {
+        this._client.indices.create({ index: this._indexName }, function (err, response, status) {
+            // everything went fine or index already exists
+            if (status === 200 || (status === 400 && err && err.message.indexOf('IndexAlreadyExistsException') === 0)) {
+                callback(null);
+            } else {
+                callback(err);
+            }
+        });
     };
 
     /**

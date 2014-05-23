@@ -8,7 +8,7 @@ import fs = require('fs');
  */
 interface PluginInterface {
 
-	onBeforeItemAdd (itemPath:string, stats:fs.Stats, callback:Function):void;
+	onBeforeItemAdd (itemPath:string, stats:fs.Stats, tikaGlobals:Object, callback:Function):void;
 
 }
 

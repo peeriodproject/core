@@ -13,6 +13,7 @@
     "follow-redirects": "*",
     "fs-extra": "^0.8.1",
     "microtime": "^0.6.0",
+    "mime": "^1.2.11",
     "node-lmdb": "^0.2.1",
     "sandcastle": "https://github.com/joernroeder/sandcastle/tarball/master",
     "usb-detection": "^1.0.3",

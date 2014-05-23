@@ -18,6 +18,17 @@ export module main {
 		exit({ foo: 'foo', bar: bar });
 	}
 
+	/**
+	 * Returns the mapping used in the elasticsearch index to store the plugin data
+	 *
+	 * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/indices-put-mapping.html
+	 */
+	export function getMapping () {
+		var mapping = {};
+
+		exit(mapping);
+	}
+
 	export function onBeforeItemAdd () {
 		var data = {
 			name: getFileName(),

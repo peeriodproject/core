@@ -13,14 +13,12 @@ import PluginGlobalsFactoryInterface = require('./interfaces/PluginGlobalsFactor
 import PluginGlobalsFactory = require('./PluginGlobalsFactory');
 
 /**
- * @see https://github.com/KyleJune/udibo-sandbox
- *
  * @class core.plugin.PluginRunner
  * @implements core.plugin.PluginRunnerInterface
  *
  * @params {core.config.ConfigInterface} config
  * @params {string} identifier todo remove identifer
- * @params {plugnScriptPath}
+ * @params {string} plugnScriptPath
  */
 class PluginRunner implements PluginRunnerInterface {
 
@@ -57,8 +55,14 @@ class PluginRunner implements PluginRunnerInterface {
 		this._pluginGlobalsFactory = null;
 	}
 
-	onBeforeItemAdd (itemPath:string, stats:fs.Stats, callback:Function):void {
-		this._createAndRunSandbox(itemPath, stats, 'main.onBeforeItemAdd', callback, function (output:any) {
+	public getMapping (callback:Function):void {
+		this._createAndRunSandbox(null, null, null, 'main.getMapping', callback, function (output:any) {
+			callback(null, output);
+		});
+	}
+
+	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, tikaGlobals:Object, callback:Function):void {
+		this._createAndRunSandbox(itemPath, stats, tikaGlobals, 'main.onBeforeItemAdd', callback, function (output:any) {
 			callback(null, output);
 		});
 	}
@@ -70,11 +74,12 @@ class PluginRunner implements PluginRunnerInterface {
 	 *
 	 * @param {string} itemPath
 	 * @param {fs.Stats} stats
+	 * @param {Object} tikaGlobals
 	 * @param {string} methodName
 	 * @param {Function} callback
 	 * @param {Function} onExit
 	 */
-	private _createAndRunSandbox (itemPath:string, stats:fs.Stats, methodName:string, callback:Function, onExit:(output:any) => void):void {
+	private _createAndRunSandbox (itemPath:string, stats:fs.Stats, tikaGlobals:Object, methodName:string, callback:Function, onExit:(output:any) => void):void {
 		this._createSandbox(itemPath);
 		this._registerSandboxTimeoutHandler(itemPath, callback);
 		this._sandboxScripts[itemPath].on('exit', function (err, output, methodName) {
@@ -85,18 +90,18 @@ class PluginRunner implements PluginRunnerInterface {
 				return onExit(output);
 			}
 		});
-		this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats));
+		this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, tikaGlobals));
 	}
 
 	/**
-	 * Creates a sandbox for the given item path. Each sandbox provides a persistent state
+	 * Creates a sandbox for the given item path. Each sandbox provides a persistent state storage
 	 * between lookups as long as the PluginRunner is active.
+	 *
+	 * @see core.plugin.PluginApi
 	 *
 	 * @method core.plugin.PluginRunner~_createSandbox
 	 *
 	 * @param {string} itemPath
-	 *
-	 * @returns {any}
 	 */
 	private _createSandbox (itemPath:string):void {
 		if (!this._sandboxScripts[itemPath]) {

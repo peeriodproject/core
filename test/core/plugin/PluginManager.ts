@@ -101,7 +101,7 @@ describe('CORE --> PLUGIN --> PluginManager', function () {
 		});
 	});
 
-	it ('should correctly load witout a pluginState file', function (done) {
+	it ('should correctly load without a pluginState file', function (done) {
 		var config:any = testUtils.stubPublicApi(sandbox, ObjectConfig, {
 			get: function (key:string) {
 				if (key === 'app.dataPath') {
@@ -178,7 +178,15 @@ describe('CORE --> PLUGIN --> PluginManager', function () {
 				return process.nextTick(callback.bind(null, null));
 			}
 		});
-		var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
+		var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory, {
+			create: function () {
+				return {
+					getFileMimeTypes: function () {
+						return ['application/pdf'];
+					}
+				}
+			}
+		});
 		var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory, {
 			create: function () {
 				return 'pluginRunnerObject'

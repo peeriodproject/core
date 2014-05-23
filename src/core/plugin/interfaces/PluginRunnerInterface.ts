@@ -8,6 +8,7 @@ import PluginInterface = require('./PluginInterface');
  */
 interface PluginRunnerInterface extends PluginInterface  {
 	cleanup():void;
+	getMapping(callback:Function):void;
 }
 
 export = PluginRunnerInterface;

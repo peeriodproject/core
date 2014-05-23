@@ -1,9 +1,10 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
+/// <reference path='../../../ts-definitions/elasticsearch/elasticsearch.d.ts' />
 
 import fs = require('fs');
 import path = require('path');
 
-var elasticsearch = require('elasticsearch');
+import elasticsearch = require('elasticsearch');
 
 import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
@@ -32,7 +33,7 @@ class SearchClient implements SearchClientInterface {
 	 *
 	 * @member {elasticsearch.Client} core.search.SearchClient~_client
 	 */
-	private _client = null;
+	private _client:elasticsearch.ClientInterface = null;
 
 	/**
 	 * The internally used config object
@@ -41,6 +42,7 @@ class SearchClient implements SearchClientInterface {
 	 */
 	private _config:ConfigInterface = null;
 
+	private _indexName:string = null;
 	/**
 	 * A flag indicates weather the client is closed or open
 	 *
@@ -70,16 +72,19 @@ class SearchClient implements SearchClientInterface {
 	private _searchStoreFactory:SearchStoreFactoryInterface = null;
 
 
-	constructor(config:ConfigInterface, searchStoreFactory:SearchStoreFactoryInterface, options:SearchClientOptions = {}) {
+	constructor (config:ConfigInterface, indexName:string, searchStoreFactory:SearchStoreFactoryInterface, options:SearchClientOptions = {}) {
 		var defaults:SearchClientOptions = {
 			logsPath          : '../../logs',
 			logsFileName      : 'searchStore.log',
 			closeOnProcessExit: true,
-			onCloseCallback: function (err:Error) {},
-			onOpenCallback: function (err:Error) {}
+			onCloseCallback   : function (err:Error) {
+			},
+			onOpenCallback    : function (err:Error) {
+			}
 		};
 
 		this._config = config;
+		this._indexName = indexName.toLowerCase();
 		this._searchStoreFactory = searchStoreFactory;
 
 		this._options = ObjectUtils.extend(defaults, options);
@@ -97,6 +102,18 @@ class SearchClient implements SearchClientInterface {
 	public addItem (pathToIndex:string, stats:fs.Stats, callback?:(err:Error) => any):void {
 		// todo iplementation
 		return process.nextTick(callback.bind(null, null, null));
+	}
+
+	addMapping (type:string, mapping:Object, callback?:(err:Error) => any):void {
+		var internalCallback:Function = callback || function () {
+		};
+
+		this._client.indices.putMapping({
+			index: this._indexName,
+			type : type
+		}, function (err, response, status) {
+			internalCallback(err);
+		});
 	}
 
 	public close (callback?:(err:Error) => any):void {
@@ -141,8 +158,9 @@ class SearchClient implements SearchClientInterface {
 			}
 
 			this._client = elasticsearch.Client({
-				host: this._config.get('search.host') + ':' + this._config.get('search.port'),
-				log : {
+				apiVersion: this._config.get('search.apiVersion', '1.1'),
+				host      : this._config.get('search.host') + ':' + this._config.get('search.port'),
+				log       : {
 					type : 'file',
 					level: 'trace',
 					path : path.join(this._options.logsPath, this._options.logsFileName)
@@ -155,8 +173,15 @@ class SearchClient implements SearchClientInterface {
 					internalCallback(err);
 				}
 				else {
-					this._isOpen = true;
-					internalCallback(null);
+					this._createIndex((err:Error) => {
+						if (err) {
+							console.log(err);
+						}
+						else {
+							this._isOpen = true;
+							internalCallback(null);
+						}
+					});
 				}
 			});
 		};
@@ -164,10 +189,38 @@ class SearchClient implements SearchClientInterface {
 		var searchStoreOptions:SearchStoreOptions = ObjectUtils.extend(this._searchStoreFactory.getDefaults(), ObjectUtils.extend(this._options, {
 			// we are calling the searchStore#close already in our close method.
 			closeOnProcessExit: !this._options.closeOnProcessExit,
-			onOpenCallback: onSearchStoreOpen
+			onOpenCallback    : onSearchStoreOpen
 		}));
 
 		this._searchStore = this._searchStoreFactory.create(this._config, searchStoreOptions);
+	}
+
+	public typeExists (type:string, callback:(exists:boolean) => any):void {
+		this._client.indices.existsType({
+			index: this._indexName,
+			type : type
+		}, function (err, response, status) {
+			//console.log(err, response, status);
+			callback(response);
+		});
+	}
+
+	/**
+	 * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
+	 *
+	 * @param {string} name
+	 * @param {Function} callback
+	 */
+	private _createIndex (callback:(err:Error) => any):void {
+		this._client.indices.create({ index: this._indexName }, function (err, response, status) {
+			// everything went fine or index already exists
+			if (status === 200 || (status === 400 && err && err.message.indexOf('IndexAlreadyExistsException') === 0)) {
+				callback(null);
+			}
+			else {
+				callback(err);
+			}
+		});
 	}
 
 	/**

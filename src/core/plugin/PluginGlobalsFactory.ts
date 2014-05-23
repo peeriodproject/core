@@ -4,13 +4,25 @@ import fs = require('fs');
 
 import PluginGlobalsFactoryInterface = require('./interfaces/PluginGlobalsFactoryInterface');
 
+import ObjectUtils = require('../utils/ObjectUtils');
+
+/**
+ * @class core.plugin.PluginGlobalsFactory
+ * @implements core.plugin.PluginGlobalsFactoryInterface
+ *
+ * @param {string} itemPath
+ * @param {fs.Stats} stats
+ * @param {Object} tikaGlobals
+ */
 class PluginGlobalsFactory implements PluginGlobalsFactoryInterface {
 
-	public create (itemPath:string, stats:fs.Stats):Object {
-		return {
+	private _cache = {};
+
+	public create (itemPath:string, stats:fs.Stats, tikaGlobals:Object):Object {
+		return ObjectUtils.extend({
 			fileName: itemPath,
-			fileStats: Object.freeze(stats)
-		};
+			fileStats: stats ? Object.freeze(stats) : stats
+		}, tikaGlobals);
 	}
 
 }

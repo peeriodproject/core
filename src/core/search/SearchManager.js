@@ -1,4 +1,8 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
+/**
+* @class core.search.SearchManager
+* @implements core.search.SearchManagerInterface
+*/
 var SearchManager = (function () {
     function SearchManager(config, pluginManager, searchClient) {
         this._config = null;
@@ -8,6 +12,8 @@ var SearchManager = (function () {
         this._config = config;
         this._pluginManager = pluginManager;
         this._searchClient = searchClient;
+
+        this._registerPluginManagerEvents();
     }
     SearchManager.prototype.addItem = function (pathToIndex, stats, callback) {
         this._pluginManager.onBeforeItemAdd(pathToIndex, stats, function () {
@@ -35,6 +41,35 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype.open = function (callback) {
+    };
+
+    SearchManager.prototype._registerPluginManagerEvents = function () {
+        // todo register on plugin delete handler and remove type from index
+        this._pluginManager.addEventListener('pluginAdded', this._onPluginAddedListener);
+    };
+
+    SearchManager.prototype._onPluginAddedListener = function (pluginIdentifier) {
+        var _this = this;
+        this._searchClient.typeExists(pluginIdentifier, function (exists) {
+            if (exists) {
+                return;
+            }
+
+            _this._pluginManager.getActivePluginRunner(pluginIdentifier, function (pluginRunner) {
+                pluginRunner.getMapping(function (mapping) {
+                    if (mapping) {
+                        _this._searchClient.addMapping(pluginIdentifier, mapping, function (err) {
+                            if (err) {
+                                console.error(err);
+                            }
+                        });
+                    } else {
+                        // plugin uses elasticsearch auto mapping feature!
+                        // maybe it's better to throw an error here?
+                    }
+                });
+            });
+        });
     };
     return SearchManager;
 })();

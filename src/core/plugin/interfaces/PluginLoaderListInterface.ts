@@ -1,11 +1,11 @@
-import PluginLoaderInerface = require('./PluginLoaderInterface');
+import PluginLoaderInterface = require('./PluginLoaderInterface');
 
 /**
  * @interface
- * @class core.plugin.PluginLoaderListInerface
+ * @class core.plugin.PluginLoaderListInterface
  */
-interface PluginLoaderListInerface {
-	[identifier:string]: PluginLoaderInerface
+interface PluginLoaderListInterface {
+	[identifier:string]: PluginLoaderInterface
 }
 
-export = PluginLoaderListInerface;
+export = PluginLoaderListInterface;

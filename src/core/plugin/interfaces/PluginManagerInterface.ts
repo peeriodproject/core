@@ -37,6 +37,14 @@ interface PluginManagerInterface extends ClosableAsyncInterface {
 	activatePluginState (callback?:(err:Error) => void):void;
 
 	/**
+	 * Adds a listener to the specified event
+	 *
+	 * @param {string} eventName
+	 * @param {Function} listener
+	 */
+	addEventListener (eventName:string, listener:Function):void;
+
+	/**
 	 * triggers the search to find new plugins within the plugin-folder
 	 *
 	 * @method core.plugin.PluginManagerInterface#findNewPlugins
@@ -65,6 +73,15 @@ interface PluginManagerInterface extends ClosableAsyncInterface {
 	getActivePluginRunners (callback:(pluginRunners:PluginRunnerListInterface) => void):void;
 
 	/**
+	 * Returns a list of plugins which are responsible for the given path
+	 *
+	 * @method core.plugin.PluginManagerInterface#getActivePluginRunners
+	 *
+	 * @param {string} itemPath
+	 * @param {Function} callback
+	 */
+	getPluginRunnersForItem (itemPath:string, callback:(pluginRunners:PluginRunnerListInterface) => void):void;
+	/**
 	 * Returns the plugin state
 	 *
 	 * @method core.plugin.PluginManagerInterface#getPluginState
@@ -81,6 +98,13 @@ interface PluginManagerInterface extends ClosableAsyncInterface {
 	 * @param callback
 	 */
 	onBeforeItemAdd (itemPath:string, stats:fs.Stats, callback:Function):void;
+
+	/**
+	 *
+	 * @param eventName
+	 * @param listener
+	 */
+	removeEventListener (eventName:string, listener:Function):void;
 }
 
 export = PluginManagerInterface;

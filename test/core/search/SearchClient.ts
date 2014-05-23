@@ -11,7 +11,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchClient = require('../../../src/core/search/SearchClient');
 import SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
-describe('CORE --> SEARCH --> SearchClient', function () {
+describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
 	var searchStoreLogsFolder:string = testUtils.getFixturePath('core/search/searchStoreLogs');
@@ -45,7 +45,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 			}
 		});
 
-		searchClient = new SearchClient(config, new SearchStoreFactory(), {
+		searchClient = new SearchClient(config, 'mainIndex', new SearchStoreFactory(), {
 			logPath           : searchStoreLogsFolder,
 			closeOnProcessExit: false,
 			onOpenCallback    : function (err:Error) {
@@ -81,5 +81,27 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 	it('should correctly instantiate the search client', function () {
 		searchClient.should.be.an.instanceof(SearchClient);
 	});
+
+	it ('should correctly return if an item with the specified type exists', function (done) {
+		searchClient.typeExists('foobar', function (exists) {
+			exists.should.be.false;
+
+			// todo add item and check again
+
+			done();
+		});
+	});
+
+	/*it('should correctly create an index with the specified name and handle "already exists" errors gracefully', function (done) {
+		searchClient.createIndex('foobar', function (err:Error) {
+			(err === null).should.be.true;
+
+			searchClient.createIndex('foobar', function (err:Error) {
+				(err === null).should.be.true;
+
+				done();
+			});
+		});
+	});*/
 
 });

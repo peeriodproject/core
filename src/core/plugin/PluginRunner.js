@@ -7,14 +7,12 @@ var SandCastle = require('sandcastle').SandCastle;
 var PluginGlobalsFactory = require('./PluginGlobalsFactory');
 
 /**
-* @see https://github.com/KyleJune/udibo-sandbox
-*
 * @class core.plugin.PluginRunner
 * @implements core.plugin.PluginRunnerInterface
 *
 * @params {core.config.ConfigInterface} config
 * @params {string} identifier todo remove identifer
-* @params {plugnScriptPath}
+* @params {string} plugnScriptPath
 */
 var PluginRunner = (function () {
     // todo plugin-type PluginGlobalsFactory factory parameter
@@ -44,8 +42,14 @@ var PluginRunner = (function () {
         this._pluginGlobalsFactory = null;
     };
 
-    PluginRunner.prototype.onBeforeItemAdd = function (itemPath, stats, callback) {
-        this._createAndRunSandbox(itemPath, stats, 'main.onBeforeItemAdd', callback, function (output) {
+    PluginRunner.prototype.getMapping = function (callback) {
+        this._createAndRunSandbox(null, null, null, 'main.getMapping', callback, function (output) {
+            callback(null, output);
+        });
+    };
+
+    PluginRunner.prototype.onBeforeItemAdd = function (itemPath, stats, tikaGlobals, callback) {
+        this._createAndRunSandbox(itemPath, stats, tikaGlobals, 'main.onBeforeItemAdd', callback, function (output) {
             callback(null, output);
         });
     };
@@ -57,11 +61,12 @@ var PluginRunner = (function () {
     *
     * @param {string} itemPath
     * @param {fs.Stats} stats
+    * @param {Object} tikaGlobals
     * @param {string} methodName
     * @param {Function} callback
     * @param {Function} onExit
     */
-    PluginRunner.prototype._createAndRunSandbox = function (itemPath, stats, methodName, callback, onExit) {
+    PluginRunner.prototype._createAndRunSandbox = function (itemPath, stats, tikaGlobals, methodName, callback, onExit) {
         this._createSandbox(itemPath);
         this._registerSandboxTimeoutHandler(itemPath, callback);
         this._sandboxScripts[itemPath].on('exit', function (err, output, methodName) {
@@ -71,18 +76,18 @@ var PluginRunner = (function () {
                 return onExit(output);
             }
         });
-        this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats));
+        this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, tikaGlobals));
     };
 
     /**
-    * Creates a sandbox for the given item path. Each sandbox provides a persistent state
+    * Creates a sandbox for the given item path. Each sandbox provides a persistent state storage
     * between lookups as long as the PluginRunner is active.
+    *
+    * @see core.plugin.PluginApi
     *
     * @method core.plugin.PluginRunner~_createSandbox
     *
     * @param {string} itemPath
-    *
-    * @returns {any}
     */
     PluginRunner.prototype._createSandbox = function (itemPath) {
         if (!this._sandboxScripts[itemPath]) {

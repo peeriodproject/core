@@ -8,7 +8,7 @@ import fs = require('fs');
  */
 interface PluginGlobalsFactoryInterface {
 
-	create(itemPath:string, stats:fs.Stats):Object;
+	create(itemPath:string, stats:fs.Stats, tikaGlobals:Object):Object;
 
 }
 

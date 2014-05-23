@@ -1,7 +1,10 @@
 /// <reference path='../../main.d.ts' />
 
+import events = require('events');
 import fs = require('fs-extra');
 import path = require('path');
+
+import mime = require('mime');
 
 import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
@@ -33,7 +36,7 @@ import ObjectUtils = require('../utils/ObjectUtils');
  * @param {core.plugin.PluginRunnerFactoryInterface} pluginRunnerFactory
  * @param {core.utils.ClosableAsyncOptions} options (optional)
  */
-class PluginManager implements PluginManagerInterface, PluginInterface {
+class PluginManager implements PluginManagerInterface {
 
 	/**
 	 * The internally used config object instance
@@ -43,11 +46,24 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 	private _config:ConfigInterface = null;
 
 	/**
+	 * Emits the following events
+	 *
+	 * - pluginAdded
+	 * - pluginRemoved
+	 */
+	private _eventEmitter:events.EventEmitter = null;
+
+	/**
 	 * A flag indicates weather the store is open or closed
 	 *
 	 * @member {boolean} core.plugin.PluginManager~_isOpen
 	 */
 	private _isOpen:boolean = false;
+
+	/**
+	 *
+	 */
+	private _mimeTypeMap:{ [mimeType:string]:Array<string>; } = {};
 
 	/**
 	 *
@@ -62,22 +78,28 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 	 */
 	private _pluginFinder:PluginFinderInterface = null;
 
-
+	/**
+	 * @member {core.plugin.PluginLoaderFactoryInterface} core.plugin.PluginManager~_pluginLoaderFactory
+	 */
 	private _pluginLoaderFactory:PluginLoaderFactoryInterface = null;
 
+	/**
+	 *
+	 * @member {core.plugin.PluginLoadersListInterface} core.plugin.PluginManager~_pluginLoaders
+	 */
 	private _pluginLoaders:PluginLoaderListInterface = {};
 
 	/**
 	 *
-	 * @member {core.plugin.PluginRunnerInterface} core.plugin.PluginManager~_pluginRunner
+	 * @member {core.plugin.PluginRunnerFactoryInterface} core.plugin.PluginManager~_pluginRunnerFactory
 	 */
 	private _pluginRunnerFactory:PluginRunnerFactoryInterface = null;
 
 	/**
 	 *
-	 * @member core.plugin.PluginManager~_pluginRunners
+	 * @member {core.plugin.PluginRunnerListInterface} core.plugin.PluginManager~_pluginRunners
 	 */
-	private _pluginRunners:PluginRunnerListInterface  = {};
+	private _pluginRunners:PluginRunnerListInterface = {};
 
 	/**
 	 * Represents the state of activated, deactivated and idle plugins
@@ -94,11 +116,11 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 	private _pluginStateIsActive:boolean = false;
 
 	/**
-	 * @member (core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_pluginValidator
+	 * @member {core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_pluginValidator
 	 */
 	private _pluginValidator:PluginValidatorInterface = null;
 
-	constructor (config:ConfigInterface, pluginFinder:PluginFinderInterface, pluginValidator:PluginValidatorInterface, pluginLoaderFactory:PluginLoaderFactoryInterface , pluginRunnerFactory:PluginRunnerFactoryInterface, options:ClosableAsyncOptions = {}) {
+	constructor (config:ConfigInterface, pluginFinder:PluginFinderInterface, pluginValidator:PluginValidatorInterface, pluginLoaderFactory:PluginLoaderFactoryInterface, pluginRunnerFactory:PluginRunnerFactoryInterface, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
 			onCloseCallback: function (err:Error) {
 			},
@@ -116,8 +138,17 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 		this.open(this._options.onOpenCallback);
 	}
 
+	addEventListener (eventName:string, listener:Function) {
+		this._eventEmitter.addListener(eventName, listener);
+	}
+
+	removeEventListener (eventName:string, listener:Function) {
+		this._eventEmitter.removeListener(eventName, listener);
+	}
+
 	activatePluginState (callback?:(err:Error) => void):void {
-		var internalCallback = callback || function (err:Error) {};
+		var internalCallback = callback || function (err:Error) {
+		};
 
 		if (this._pluginState && this._pluginState.active) {
 			var plugins:PluginStateObjectListInterface = this._pluginState.active;
@@ -155,15 +186,8 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 		var internalCallback = callback || this._options.onCloseCallback;
 
 		/*if (!this._isOpen) {
-			return process.nextTick(internalCallback.bind(null, null));
-		}*/
-
-		for (var key in this._pluginRunners) {
-			this._pluginRunners[key].cleanup();
-		}
-
-		this._pluginLoaders = null;
-		this._pluginLoaders = null;
+		 return process.nextTick(internalCallback.bind(null, null));
+		 }*/
 
 		this._savePluginState((err:Error) => {
 			if (err) {
@@ -171,6 +195,19 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 			}
 			else {
 				this._isOpen = false;
+
+				for (var key in this._pluginRunners) {
+					this._pluginRunners[key].cleanup();
+				}
+
+				if (this._eventEmitter) {
+					this._eventEmitter.removeAllListeners();
+				}
+				this._eventEmitter = null;
+
+				this._pluginLoaders = null;
+				this._pluginRunners = null;
+
 				internalCallback(null);
 			}
 		});
@@ -199,6 +236,38 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 
 	}
 
+	public getPluginRunnersForItem (itemPath:string, callback:(pluginRunners:PluginRunnerListInterface) => void):void {
+		var mimeType = this._getMimeType(itemPath);
+		var responsibleRunners:PluginRunnerListInterface = {};
+		// todo replace array<string> with PluginIdentifierListInterface
+		var map:Array<string> = this._mimeTypeMap[mimeType];
+
+		if (map && map.length) {
+			for (var i in map) {
+				var key:string = map[i];
+
+				responsibleRunners[key] = this._pluginRunners[key];
+			}
+		}
+		//_isResponsibleForMimeType
+		/*this.getActivePluginRunners((pluginRunners:PluginRunnerListInterface) => {
+			var responsibleRunners:PluginRunnerListInterface = {};
+
+			if (Object.keys(pluginRunners).length) {
+				for (var key in pluginRunners) {
+					var pluginLoader:PluginLoaderInterface = this._pluginLoaders[key];
+
+					if (this._isResponsibleForFile(itemPath, pluginLoader)) {
+						responsibleRunners[key] = this._pluginRunners[key];
+					}
+				}
+			}
+
+		});*/
+
+		return process.nextTick(callback.bind(null, responsibleRunners));
+	}
+
 	public getPluginState (callback:(pluginState:PluginStateInterface) => void):void {
 		return process.nextTick(callback.bind(null, this._pluginState));
 	}
@@ -209,8 +278,8 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 	}
 
 	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, callback:Function):void {
-		this.getActivePluginRunners((runners:PluginRunnerListInterface) => {
-			var runnersLength = Object.keys(runners).length;
+		this.getPluginRunnersForItem(itemPath, (runners:PluginRunnerListInterface) => {
+			var runnersLength:number = Object.keys(runners).length;
 			var counter:number = 0;
 			var testCallback:Function = function () {
 				if (counter == runnersLength - 1) {
@@ -218,16 +287,45 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 					callback();
 				}
 			};
+			var runPlugins = (tikaGlobals) => {
+				for (var key in runners) {
+					// call the plugin!
+					runners[key].onBeforeItemAdd(itemPath, stats, tikaGlobals, (err:Error, data:Object) => {
+						counter++;
 
+						// todo parse data and merge them together
+
+						testCallback();
+					});
+				}
+			};
+
+			var useApacheTika:Array<string> = [];
+			var tikaGlobals = null;
+
+			// collect runners which depend on apache tika
 			for (var key in runners) {
-				// call the plugin!
-				runners[key].onBeforeItemAdd(itemPath, stats, (err:Error, data:Object) => {
-					counter++;
+				var pluginLoader:PluginLoaderInterface = this._pluginLoaders[key];
+				var settings:any = pluginLoader.getSettings();
 
-					// todo parse data and merge them together
+				if (settings.useApacheTika) {
+					useApacheTika.push(key);
+				}
 
-					testCallback();
+			}
+
+			if (useApacheTika.length) {
+				this._loadApacheTikaGlobals(itemPath, (err:Error, tikaGlobals) => {
+					if (err) {
+						console.error(err);
+					}
+					else {
+						runPlugins(tikaGlobals);
+					}
 				});
+			}
+			else {
+				runPlugins(null);
 			}
 		});
 	}
@@ -245,6 +343,7 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 				internalCallback(err);
 			}
 			else {
+				this._eventEmitter = new events.EventEmitter();
 				this._pluginState = pluginState;
 				this._isOpen = true;
 
@@ -258,7 +357,8 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 	 * the app we validate the code using a {@link core.plugin.PluginValidatorInterface}.
 	 */
 	private _activatePlugin (pluginState:PluginStateObjectInterface, callback:(err:Error) => void):void {
-		var internalCallback = callback || function (err:Error) {};
+		var internalCallback = callback || function (err:Error) {
+		};
 
 		this._pluginValidator.validateState(pluginState, (err:Error) => {
 			var identifier:string = pluginState.name;
@@ -268,7 +368,26 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 			}
 			else {
 				this._pluginRunners[identifier] = this._pluginRunnerFactory.create(this._config, pluginState.name, pluginState.path);
-				this._pluginLoaders[identifier] = this._pluginLoaderFactory.create(this._config, pluginState.path);
+
+				// register plugin to mime type list
+				// todo create extensions list
+				var pluginLoader:PluginLoaderInterface = this._pluginLoaderFactory.create(this._config, pluginState.path);
+				var mimeTypes:Array<string> = pluginLoader.getFileMimeTypes();
+
+				if (mimeTypes.length) {
+					for (var mimeType in mimeTypes) {
+						if (!this._mimeTypeMap[mimeType]) {
+							this._mimeTypeMap[mimeType] = [identifier];
+						}
+						else {
+							this._mimeTypeMap[mimeType].push(identifier);
+						}
+					}
+				}
+
+				this._pluginLoaders[identifier] = pluginLoader;
+
+				this._eventEmitter.emit('pluginAdded', identifier);
 
 				internalCallback(null);
 			}
@@ -284,6 +403,14 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 	 */
 	private _getManagerStoragePath ():string {
 		return path.join(this._config.get('app.dataPath'), 'pluginManager.json');
+	}
+
+	private _getMimeType (filePath:string):string {
+		return mime.lookup(filePath);
+	}
+
+	private _isResponsibleForMimeType (mimeType:string, pluginLoader:PluginLoaderInterface):boolean {
+		return (pluginLoader.getFileMimeTypes().indexOf(mimeType) !== 1) ? true : false;
 	}
 
 	/**
@@ -326,6 +453,11 @@ class PluginManager implements PluginManagerInterface, PluginInterface {
 		fs.writeJson(this._getManagerStoragePath(), state, function (err:Error) {
 			callback(err);
 		});
+	}
+
+	private _loadApacheTikaGlobals (itemPath:string, callback:Function):void {
+		console.log('loading tika globals for', itemPath);
+		callback(null);
 	}
 
 }
