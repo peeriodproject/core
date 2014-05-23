@@ -295,7 +295,6 @@ class PluginManager implements PluginManagerInterface {
 			};
 			var runPlugins:Function = (tikaGlobals) => {
 				if (runnersLength) {
-
 					for (var key in runners) {
 						// call the plugin!
 						runners[key].onBeforeItemAdd(itemPath, stats, tikaGlobals, (data:Object) => {
