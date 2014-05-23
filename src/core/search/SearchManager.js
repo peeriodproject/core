@@ -24,6 +24,10 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype.close = function (callback) {
+        var internalCallback = callback || function () {
+        };
+
+        return process.nextTick(callback.bind(null, null));
     };
 
     SearchManager.prototype.getItem = function (pathToIndex, callback) {

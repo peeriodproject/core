@@ -41,7 +41,9 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	close (callback?:(err:Error) => any):void {
+		var internalCallback = callback || function () {};
 
+		return process.nextTick(callback.bind(null, null));
 	}
 
 	public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
