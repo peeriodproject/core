@@ -252,26 +252,34 @@ var PluginManager = (function () {
         this.getPluginRunnersForItem(itemPath, function (runners) {
             var runnersLength = Object.keys(runners).length;
             var counter = 0;
-            var testCallback = function () {
-                if (counter == runnersLength - 1) {
-                    // trigger callback
-                    callback();
+            var useApacheTika = [];
+            var mergedPluginData = {};
+            var sendCallback = function () {
+                // trigger callback
+                callback(mergedPluginData);
+            };
+            var checkAndSendCallback = function () {
+                if (counter == runnersLength) {
+                    sendCallback();
                 }
             };
             var runPlugins = function (tikaGlobals) {
-                for (var key in runners) {
-                    // call the plugin!
-                    runners[key].onBeforeItemAdd(itemPath, stats, tikaGlobals, function (err, data) {
-                        counter++;
+                if (runnersLength) {
+                    for (var key in runners) {
+                        // call the plugin!
+                        runners[key].onBeforeItemAdd(itemPath, stats, tikaGlobals, function (data) {
+                            counter++;
 
-                        // todo parse data and merge them together
-                        testCallback();
-                    });
+                            // todo parse data and merge them together
+                            mergedPluginData[key] = data;
+
+                            checkAndSendCallback();
+                        });
+                    }
+                } else {
+                    sendCallback();
                 }
             };
-
-            var useApacheTika = [];
-            var tikaGlobals = null;
 
             for (var key in runners) {
                 var pluginLoader = _this._pluginLoaders[key];

@@ -257,5 +257,60 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
             }
         });
     });
+
+    it('should correctly return additional fields provided by the plugins', function (done) {
+        var config = createConfig();
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator, {
+            validateState: function (pluginState, callback) {
+                return process.nextTick(callback.bind(null, null));
+            }
+        });
+        var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory, {
+            create: function () {
+                return {
+                    getFileMimeTypes: function () {
+                        return ['image/jpeg'];
+                    },
+                    getSettings: function () {
+                        return {
+                            useApacheTika: true
+                        };
+                    }
+                };
+            }
+        });
+        var pluginDataStub = {
+            model: {
+                properties: {
+                    foo: "string"
+                }
+            }
+        };
+        var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
+            onBeforeItemAdd: function (itemPath, stats, tikaGlobals, callback) {
+                callback(pluginDataStub);
+            }
+        });
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory, {
+            create: function () {
+                return pluginRunnerStub;
+            }
+        });
+        var statsJson = '{"dev":16777222,"mode":33188,"nlink":1,"uid":501,"gid":20,"rdev":0,"blksize":4096,"ino":27724859,"size":6985,"blocks":16,"atime":"2014-05-18T11:59:13.000Z","mtime":"2014-05-16T21:16:41.000Z","ctime":"2014-05-16T21:16:41.000Z"}';
+
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+            onOpenCallback: function () {
+                pluginManager.activatePluginState(function () {
+                    pluginManager.onBeforeItemAdd(testUtils.getFixturePath('core/plugin/pluginManager/image.jpeg'), JSON.parse(statsJson), function (pluginData) {
+                        Object.keys(pluginData).length.should.equal(1);
+                        pluginData['foo bar active'].should.containDeep(pluginDataStub);
+
+                        closeAndDone(pluginManager, done);
+                    });
+                });
+            }
+        });
+    });
 });
 //# sourceMappingURL=PluginManager.js.map

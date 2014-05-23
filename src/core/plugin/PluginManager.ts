@@ -282,27 +282,36 @@ class PluginManager implements PluginManagerInterface {
 		this.getPluginRunnersForItem(itemPath, (runners:PluginRunnerListInterface) => {
 			var runnersLength:number = Object.keys(runners).length;
 			var counter:number = 0;
-			var testCallback:Function = function () {
-				if (counter == runnersLength - 1) {
-					// trigger callback
-					callback();
-				}
-			};
-			var runPlugins = (tikaGlobals) => {
-				for (var key in runners) {
-					// call the plugin!
-					runners[key].onBeforeItemAdd(itemPath, stats, tikaGlobals, (err:Error, data:Object) => {
-						counter++;
-
-						// todo parse data and merge them together
-
-						testCallback();
-					});
-				}
-			};
-
 			var useApacheTika:Array<string> = [];
-			var tikaGlobals = null;
+			var mergedPluginData = {};
+			var sendCallback:Function = function () {
+				// trigger callback
+				callback(mergedPluginData);
+			};
+			var checkAndSendCallback:Function = function () {
+				if (counter == runnersLength) {
+					sendCallback();
+				}
+			};
+			var runPlugins:Function = (tikaGlobals) => {
+				if (runnersLength) {
+
+					for (var key in runners) {
+						// call the plugin!
+						runners[key].onBeforeItemAdd(itemPath, stats, tikaGlobals, (data:Object) => {
+							counter++;
+
+							// todo parse data and merge them together
+							mergedPluginData[key] = data;
+
+							checkAndSendCallback();
+						});
+					}
+				}
+				else {
+					sendCallback();
+				}
+			};
 
 			// collect runners which depend on apache tika
 			for (var key in runners) {
