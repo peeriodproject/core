@@ -239,6 +239,7 @@ var ProxyManager = (function (_super) {
         this._canProxyCycle = false;
         if (this._proxyWaitTimeout) {
             clearTimeout(this._proxyWaitTimeout);
+            this._proxyWaitTimeout = 0;
         }
         this._proxyWaitTimeout = setTimeout(function () {
             _this._canProxyCycle = true;
