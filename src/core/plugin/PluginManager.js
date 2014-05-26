@@ -293,6 +293,7 @@ var PluginManager = (function () {
             if (useApacheTika.length) {
                 _this._loadApacheTikaGlobals(itemPath, function (err, tikaGlobals) {
                     if (err) {
+                        console.log('PluginManager.onBeforeItemAdd. MISSING CALLBACK');
                         console.error(err);
                     } else {
                         runPlugins(tikaGlobals);
@@ -440,8 +441,19 @@ var PluginManager = (function () {
     };
 
     PluginManager.prototype._loadApacheTikaGlobals = function (itemPath, callback) {
-        console.log('loading tika globals for', itemPath);
-        callback(null);
+        var fileStream = fs.createReadStream(itemPath);
+        fileStream.once('readable', function () {
+            fileStream.pause();
+        });
+
+        // do not leak the absolute file path to the plugin...
+        delete fileStream['path'];
+
+        var tikaGlobals = {
+            fileStream: fileStream
+        };
+
+        callback(null, tikaGlobals);
     };
     return PluginManager;
 })();

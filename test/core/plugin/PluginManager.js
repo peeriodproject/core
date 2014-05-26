@@ -247,7 +247,7 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
         var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
                 pluginManager.activatePluginState(function () {
-                    pluginManager.getPluginRunnersForItem(testUtils.getFixturePath('core/plugin/pluginManager/image.jpeg'), function (pluginRunners) {
+                    pluginManager.getPluginRunnersForItem(testUtils.getFixturePath('core/plugin/pluginManager/image.jpg'), function (pluginRunners) {
                         Object.keys(pluginRunners).length.should.equal(1);
                         pluginRunners['foo bar active'].should.equal(pluginRunnerStub);
 
@@ -289,6 +289,7 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
         };
         var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
             onBeforeItemAdd: function (itemPath, stats, tikaGlobals, callback) {
+                //console.log(tikaGlobals.fileStream);
                 callback(pluginDataStub);
             }
         });
@@ -298,11 +299,10 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
             }
         });
         var statsJson = '{"dev":16777222,"mode":33188,"nlink":1,"uid":501,"gid":20,"rdev":0,"blksize":4096,"ino":27724859,"size":6985,"blocks":16,"atime":"2014-05-18T11:59:13.000Z","mtime":"2014-05-16T21:16:41.000Z","ctime":"2014-05-16T21:16:41.000Z"}';
-
         var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
                 pluginManager.activatePluginState(function () {
-                    pluginManager.onBeforeItemAdd(testUtils.getFixturePath('core/plugin/pluginManager/image.jpeg'), JSON.parse(statsJson), function (pluginData) {
+                    pluginManager.onBeforeItemAdd(testUtils.getFixturePath('core/plugin/pluginManager/image.jpg'), JSON.parse(statsJson), function (pluginData) {
                         Object.keys(pluginData).length.should.equal(1);
                         pluginData['foo bar active'].should.containDeep(pluginDataStub);
 

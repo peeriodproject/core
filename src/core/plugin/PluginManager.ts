@@ -326,6 +326,7 @@ class PluginManager implements PluginManagerInterface {
 			if (useApacheTika.length) {
 				this._loadApacheTikaGlobals(itemPath, (err:Error, tikaGlobals) => {
 					if (err) {
+						console.log('PluginManager.onBeforeItemAdd. MISSING CALLBACK');
 						console.error(err);
 					}
 					else {
@@ -479,8 +480,19 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	private _loadApacheTikaGlobals (itemPath:string, callback:Function):void {
-		console.log('loading tika globals for', itemPath);
-		callback(null);
+		var fileStream = fs.createReadStream(itemPath);
+		fileStream.once('readable', function () {
+			fileStream.pause();
+		});
+
+		// do not leak the absolute file path to the plugin...
+		delete fileStream['path'];
+
+		var tikaGlobals = {
+			fileStream: fileStream
+		};
+
+		callback(null, tikaGlobals);
 	}
 
 }
