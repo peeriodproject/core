@@ -90,8 +90,6 @@ var SearchClient = (function () {
         this.open(this._options.onOpenCallback);
     }
     SearchClient.prototype.addItem = function (objectToIndex, callback) {
-        // todo iplementation
-        console.log(objectToIndex);
         var pluginIdentifiers = Object.keys(objectToIndex);
         var amount = pluginIdentifiers.length;
         var processed = 0;
@@ -106,16 +104,21 @@ var SearchClient = (function () {
             }
         };
 
-        for (var i in pluginIdentifiers) {
-            var identifier = pluginIdentifiers[i];
+        if (pluginIdentifiers.length) {
+            for (var i in pluginIdentifiers) {
+                var identifier = pluginIdentifiers[i];
 
-            this._addItemToPluginIndex(identifier, objectToIndex[identifier], function (err) {
-                processed++;
+                console.log(identifier);
 
-                checkCallback(err);
-            });
+                this._addItemToPluginIndex(identifier, objectToIndex[identifier], function (err) {
+                    processed++;
+
+                    checkCallback(err);
+                });
+            }
+        } else {
+            return process.nextTick(callback.bind(null, null, null));
         }
-        return process.nextTick(callback.bind(null, null, null));
     };
 
     SearchClient.prototype.addMapping = function (type, mapping, callback) {

@@ -107,9 +107,7 @@ class SearchClient implements SearchClientInterface {
 	}
 
 	public addItem (objectToIndex:Object, callback?:(err:Error) => any):void {
-		// todo iplementation
-		console.log(objectToIndex);
-		var pluginIdentifiers = Object.keys(objectToIndex);
+		var pluginIdentifiers:Array<string> = Object.keys(objectToIndex);
 		var amount:number = pluginIdentifiers.length;
 		var processed:number = 0;
 
@@ -123,16 +121,22 @@ class SearchClient implements SearchClientInterface {
 			}
 		};
 
-		for (var i in pluginIdentifiers) {
-			var identifier:string = pluginIdentifiers[i];
+		if (pluginIdentifiers.length) {
+			for (var i in pluginIdentifiers) {
+				var identifier:string = pluginIdentifiers[i];
 
-			this._addItemToPluginIndex(identifier, objectToIndex[identifier], function (err) {
-				processed++;
+				console.log(identifier);
 
-				checkCallback(err);
-			});
+				this._addItemToPluginIndex(identifier, objectToIndex[identifier], function (err) {
+					processed++;
+
+					checkCallback(err);
+				});
+			}
 		}
-		return process.nextTick(callback.bind(null, null, null));
+		else {
+			return process.nextTick(callback.bind(null, null, null));
+		}
 	}
 
 	public addMapping (type:string, mapping:Object, callback?:(err:Error) => any):void {

@@ -11,7 +11,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchClient = require('../../../src/core/search/SearchClient');
 import SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
-describe('CORE --> SEARCH --> SearchClient @_joern', function () {
+describe('CORE --> SEARCH --> SearchClient @joern', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
 	var searchStoreLogsFolder:string = testUtils.getFixturePath('core/search/searchStoreLogs');
@@ -95,7 +95,7 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 		});
 	});
 
-	/*it('should correctly add an item to the datastore which uses the attachment mapper plugin', function (done) {
+	it('should correctly add an item to the datastore which uses the attachment mapper plugin', function (done) {
 		var mapping = {
 			"pluginidentifier" : {
 				"properties" : {
@@ -126,7 +126,7 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 					}
 				}
 			}
-		};* /
+		};*/
 
 		var dataToIndex = {
 			pluginidentifier: {
@@ -141,11 +141,10 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 			searchClient.addItem(dataToIndex, function (err:Error) {
 				console.log(err);
 
-				console.log('done!');
 				done();
 			});
 		});
-	});*/
+	});
 
 	/*it('should correctly create an index with the specified name and handle "already exists" errors gracefully', function (done) {
 	 searchClient.createIndex('foobar', function (err:Error) {
