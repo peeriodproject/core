@@ -4,6 +4,10 @@
 
 declare module "elasticsearch" {
 
+	interface Callback {
+		(err:Error, response, status:number): any;
+	}
+
 	interface getParams {
 		index: string;
 		type?:string;
@@ -11,14 +15,14 @@ declare module "elasticsearch" {
 	}
 
 	interface Indices {
-		create (params, callback: (err, response, status) => any):void;
-		existsType (params, callback: (err, response, status) => any):void;
-		putMapping (params, callback: (err, response, status) => any):void;
+		create (params, callback:Callback):void;
+		existsType (params, callback:Callback):void;
+		putMapping (params, callback:Callback):void;
 	}
 
 	interface ClientInterface {
-		get (params:getParams, callback:(err, response, status) => any):void;
-		ping (params, callback:(err, response, status) => any):void;
+		get (params:getParams, callback:Callback):void;
+		ping (params, callback:Callback):void;
 		indices:Indices;
 	}
 
