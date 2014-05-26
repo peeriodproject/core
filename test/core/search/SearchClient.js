@@ -20,6 +20,8 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
     this.timeout(0);
 
     before(function (done) {
+        testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+        testUtils.deleteFolderRecursive(searchStoreDataFolder);
         testUtils.createFolder(searchStoreLogsFolder);
         testUtils.createFolder(searchStoreDataFolder);
 
@@ -58,9 +60,9 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
     after(function (done) {
         searchClient.close(function () {
             searchClient = null;
-            testUtils.deleteFolderRecursive(searchStoreLogsFolder);
-            testUtils.deleteFolderRecursive(searchStoreDataFolder);
 
+            //testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+            //testUtils.deleteFolderRecursive(searchStoreDataFolder);
             sandbox.restore();
             config = null;
 
@@ -107,44 +109,42 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
         }
         };*/
         var mapping = {
-            "pluginidentifier": {
-                "_source": {
-                    "excludes": ["file"]
-                },
-                "properties": {
-                    "file": {
-                        "type": "attachment",
-                        "indexed_chars": -1,
-                        "detect_anguage": true,
-                        "fields": {
-                            "file": {
-                                "store": "yes",
-                                "term_vector": "with_positions_offsets",
-                                "analyzer": "english"
-                            },
-                            "author": {
-                                "store": "yes"
-                            },
-                            "title": {
-                                "store": "yes",
-                                "analyzer": "english"
-                            },
-                            "date": {
-                                "store": "yes"
-                            },
-                            "keywords": {
-                                "store": "yes",
-                                "analyzer": "keyword"
-                            },
-                            "content_type": {
-                                "store": "yes"
-                            },
-                            "content_length": {
-                                "store": "yes"
-                            },
-                            "language": {
-                                "store": "yes"
-                            }
+            "_source": {
+                "excludes": ["file"]
+            },
+            "properties": {
+                "file": {
+                    "type": "attachment",
+                    "indexed_chars": -1,
+                    "detect_anguage": true,
+                    "fields": {
+                        "file": {
+                            "store": "yes",
+                            "term_vector": "with_positions_offsets",
+                            "analyzer": "english"
+                        },
+                        "author": {
+                            "store": "yes"
+                        },
+                        "title": {
+                            "store": "yes",
+                            "analyzer": "english"
+                        },
+                        "date": {
+                            "store": "yes"
+                        },
+                        "keywords": {
+                            "store": "yes",
+                            "analyzer": "keyword"
+                        },
+                        "content_type": {
+                            "store": "yes"
+                        },
+                        "content_length": {
+                            "store": "yes"
+                        },
+                        "language": {
+                            "store": "yes"
                         }
                     }
                 }
@@ -152,7 +152,7 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
         };
 
         var dataToIndex = {
-            pluginidentifier: {
+            pluginIdentifier: {
                 file: fs.readFileSync(testUtils.getFixturePath('core/search/searchManager/Peeriod_Anonymous_decentralized_network.pdf')).toString('base64')
             }
         };

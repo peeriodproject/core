@@ -125,13 +125,22 @@ var SearchClient = (function () {
         };
 
         this._createIndex(function (err) {
+            var map = null;
+            if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
+                // wrap mapping in type root
+                map = {};
+                map[type] = mapping;
+            } else {
+                map = mapping;
+            }
+
             if (err) {
                 internalCallback(err);
             } else {
                 _this._client.indices.putMapping({
                     index: _this._indexName,
                     type: type.toLowerCase(),
-                    body: mapping
+                    body: map
                 }, function (err, response, status) {
                     err = err || null;
                     internalCallback(err);
@@ -254,6 +263,7 @@ var SearchClient = (function () {
             refresh: true,
             body: data
         }, function (err, response, status) {
+            console.log(status);
             callback(err);
         });
     };

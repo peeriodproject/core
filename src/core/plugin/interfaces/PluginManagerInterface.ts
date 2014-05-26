@@ -101,7 +101,7 @@ interface PluginManagerInterface extends ClosableAsyncInterface {
 	 * @param stats
 	 * @param callback
 	 */
-	onBeforeItemAdd (itemPath:string, stats:fs.Stats, callback:(pluginDatas:Object) => any):void;
+	onBeforeItemAdd (itemPath:string, stats:fs.Stats, fileHash:string, callback:(pluginDatas:Object) => any):void;
 
 	/**
 	 *

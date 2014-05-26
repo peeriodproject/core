@@ -248,7 +248,7 @@ var PluginManager = (function () {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
-    PluginManager.prototype.onBeforeItemAdd = function (itemPath, stats, callback) {
+    PluginManager.prototype.onBeforeItemAdd = function (itemPath, stats, fileHash, callback) {
         var _this = this;
         this.getPluginRunnersForItem(itemPath, function (runners) {
             var runnersLength = Object.keys(runners).length;
@@ -266,7 +266,7 @@ var PluginManager = (function () {
             };
             var runPlugins = function (tikaGlobals) {
                 if (runnersLength) {
-                    _this._loadGlobals(itemPath, function (err, globals) {
+                    _this._loadGlobals(itemPath, fileHash, function (err, globals) {
                         if (err) {
                             console.log(err);
                             return sendCallback();
@@ -280,18 +280,19 @@ var PluginManager = (function () {
                                 counter++;
 
                                 // todo parse data and merge them together
-                                console.log(JSON.stringify(data));
+                                //console.log(JSON.stringify(data));
                                 if (data && Object.keys(data).length == 1) {
-                                    mergedPluginData[key] = _this._createRestrictedMapping(data, useApacheTika.indexOf(key) !== -1);
+                                    mergedPluginData[key] = data;
+                                    //var mapping:Object = this._createRestrictedMapping(data, useApacheTika.indexOf(key) !== -1);
+                                    //mergedPluginData[key] = this._updateMapping(mapping, itemPath, stats, fileHash);
                                 } else {
-                                    console.error('Invalid mapping "' + key + '"');
+                                    console.error('Invalid data "' + key + '"');
                                 }
 
                                 checkAndSendCallback();
                             });
                         }
-
-                        console.log(JSON.stringify(mergedPluginData));
+                        //console.log(JSON.stringify(mergedPluginData));
                     });
                 } else {
                     sendCallback();
@@ -465,9 +466,10 @@ var PluginManager = (function () {
         callback(null, tikaGlobals);
     };
 
-    PluginManager.prototype._loadGlobals = function (itemPath, callback) {
+    PluginManager.prototype._loadGlobals = function (itemPath, fileHash, callback) {
         var globals = {
-            fileBuffer: null
+            fileBuffer: null,
+            fileHash: fileHash
         };
 
         fs.stat(itemPath, function (err, stats) {
@@ -484,31 +486,6 @@ var PluginManager = (function () {
                 });
             }
         });
-    };
-
-    /**
-    * Updates the given mapping and restrict some fields.
-    *
-    * @param {Object} mapping
-    * @param {boolean} isApacheTikaPlugin
-    * @returns {Object} the restricted mapping
-    */
-    PluginManager.prototype._createRestrictedMapping = function (mapping, isApacheTikaPlugin) {
-        var docKey = Object.keys(mapping)[0];
-        var source = mapping[docKey]._source || {};
-
-        var attachmentKey = null;
-
-        // todo iterate over mapping and find attachment filed by type
-        if (mapping[docKey]['properties'] && mapping[docKey]['properties']['file']) {
-            mapping[docKey]._source = ObjectUtils.extend(source, {
-                excludes: 'file'
-            });
-        }
-
-        console.log(mapping);
-
-        return mapping;
     };
     return PluginManager;
 })();

@@ -14,7 +14,7 @@ var PluginRunnerFactory = require('../../../src/core/plugin/PluginRunnerFactory'
 var PluginValidator = require('../../../src/core/plugin/PluginValidator');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
+describe('CORE --> PLUGIN --> PluginManager @joern', function () {
     var sandbox;
     var appDataPath = testUtils.getFixturePath('core/plugin/appDataPath');
     var createConfig = function () {
@@ -281,18 +281,13 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
             }
         });
         var pluginDataStub = {
-            model: {
-                properties: {
-                    foo: 'string',
-                    file_attachment: {
-                        type: 'attachment'
-                    }
-                }
+            properties: {
+                foo: 'foobar',
+                bar: 'barfoo'
             }
         };
         var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
             onBeforeItemAdd: function (itemPath, stats, tikaGlobals, callback) {
-                //console.log(tikaGlobals.fileStream);
                 callback(pluginDataStub);
             }
         });
@@ -305,7 +300,7 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
         var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
                 pluginManager.activatePluginState(function () {
-                    pluginManager.onBeforeItemAdd(testUtils.getFixturePath('core/plugin/pluginManager/image.jpg'), JSON.parse(statsJson), function (pluginData) {
+                    pluginManager.onBeforeItemAdd(testUtils.getFixturePath('core/plugin/pluginManager/image.jpg'), JSON.parse(statsJson), 'fileHash', function (pluginData) {
                         Object.keys(pluginData).length.should.equal(1);
                         pluginData['foo bar active'].should.containDeep(pluginDataStub);
 

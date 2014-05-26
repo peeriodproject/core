@@ -93,6 +93,14 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
             properties: {
                 file_attachment: {
                     type: 'attachment'
+                },
+                itemHash: {
+                    type: 'string',
+                    store: 'yes'
+                },
+                itemPath: {
+                    type: 'string',
+                    store: 'yes'
                 }
             }
         };

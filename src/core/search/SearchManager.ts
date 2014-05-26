@@ -8,6 +8,8 @@ import PluginRunnerInterface = require('../plugin/interfaces/PluginRunnerInterfa
 import SearchClientInterface = require('./interfaces/SearchClientInterface');
 import SearchManagerInterface = require('./interfaces/SearchManagerInterface');
 
+import ObjectUtils = require('../utils/ObjectUtils');
+
 /**
  * @class core.search.SearchManager
  * @implements core.search.SearchManagerInterface
@@ -30,14 +32,15 @@ class SearchManager implements SearchManagerInterface {
 		this._registerPluginManagerEvents();
 	}
 
-	addItem (pathToIndex:string, stats:fs.Stats, callback?:(err:Error) => any):void {
+	addItem (pathToIndex:string, stats:fs.Stats, fileHash:string, callback?:(err:Error) => any):void {
 		var internalCallback:Function = callback || function () {};
 
-		this._pluginManager.onBeforeItemAdd(pathToIndex, stats, (pluginDatas:Object) => {
+		this._pluginManager.onBeforeItemAdd(pathToIndex, stats, fileHash, (pluginData:Object) => {
 
-			//console.log(JSON.stringify(pluginDatas));
+			pluginData = this._updatePluginData(pluginData, pathToIndex, stats, fileHash);
+			console.log(JSON.stringify(pluginData));
 			// to the request to the database
-			this._searchClient.addItem({}, function(err) {
+			this._searchClient.addItem(pluginData, function(err) {
 				callback(err);
 			});
 		});
@@ -83,8 +86,11 @@ class SearchManager implements SearchManagerInterface {
 			this._pluginManager.getActivePluginRunner(pluginIdentifier, (pluginRunner:PluginRunnerInterface) => {
 				pluginRunner.getMapping((mapping:Object) => {
 					if (mapping) {
+						mapping = this._updateMapping(mapping);
+						console.log(mapping);
 						this._searchClient.addMapping(pluginIdentifier, mapping, function (err) {
 							if (err) {
+								console.log('after search client added mapping');
 								console.error(err);
 							}
 						});
@@ -95,6 +101,60 @@ class SearchManager implements SearchManagerInterface {
 				});
 			});
 		});
+	}
+
+	/**
+	 * Updates the given mapping.
+	 *
+	 * @param {Object} mapping
+	 * @param {boolean} isApacheTikaPlugin
+	 * @returns {Object} the restricted mapping
+	 */
+	private _updateMapping(mapping:Object):Object {
+		var source:Object = mapping['_source'] || {};
+		var properties:Object = mapping['properties'] || {};
+
+		// remove file content from source
+		// todo iterate over mapping and find attachment filed by type
+		if (properties && properties['file']) {
+			mapping['_source'] = ObjectUtils.extend(source, {
+				excludes: 'file'
+			});
+		}
+
+		// update properties
+		mapping['properties'] = ObjectUtils.extend(properties, {
+			itemHash: {
+				type: 'string',
+				store: 'yes'
+			},
+			itemPath: {
+				type: 'string',
+				store: 'yes'
+			}/*,
+			itemStats: {
+				type:Object
+			}*/
+		});
+
+		return mapping;
+	}
+
+	private _updatePluginData (pluginData:Object, itemPath:string, stats:fs.Stats, fileHash:string):Object {
+		var identifiers:Array<string> = Object.keys(pluginData);
+
+		if (identifiers.length) {
+			for (var i in identifiers) {
+				var identifier:string = identifiers[i];
+
+				pluginData[identifier] = ObjectUtils.extend(pluginData[identifier], {
+					itemHash: fileHash,
+					itemPath: itemPath,
+					itemStats: stats
+				});
+			}
+		}
+		return pluginData;
 	}
 
 }
