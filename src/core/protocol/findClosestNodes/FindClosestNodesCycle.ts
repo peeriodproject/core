@@ -1,3 +1,5 @@
+/// <reference path='../../../../ts-definitions/node/node.d.ts' />
+
 import FindClosestNodesCycleInterface = require('./interfaces/FindClosestNodesCycleInterface');
 import FindClosestNodesManagerInterface = require('./interfaces/FindClosestNodesManagerInterface');
 import FoundClosestNodesReadableMessageInterface = require('./messages/interfaces/FoundClosestNodesReadableMessageInterface');
@@ -9,8 +11,8 @@ import IdInterface = require('../../topology/interfaces/IdInterface');
 /**
  * FindClosestNodesCycleInterface implementation.
  *
- * @class core.protocol.findClosestNodes.FindClosestNodeCycle
- * @implements core.protocol.findClosestNodes.FindClosestNodeCycleInterface
+ * @class core.protocol.findClosestNodes.FindClosestNodesCycle
+ * @implements core.protocol.findClosestNodes.FindClosestNodesCycleInterface
  *
  * @param {core.topology.IdInterface} searchForId The ID to search for.
  * @param {core.topology.ContactNodeListInterface} startWithList A list of nodes to request in the beginning (up to alpha).
@@ -153,7 +155,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 	private _bindListener ():void {
 		this._listener = (from:ContactNodeInterface, message:FoundClosestNodesReadableMessageInterface) => {
 			this._handleReply(from, message);
-		}
+		};
 
 		this._manager.on(this._searchForId.toHexString(), this._listener);
 	}

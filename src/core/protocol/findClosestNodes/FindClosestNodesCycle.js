@@ -1,8 +1,9 @@
+/// <reference path='../../../../ts-definitions/node/node.d.ts' />
 /**
 * FindClosestNodesCycleInterface implementation.
 *
-* @class core.protocol.findClosestNodes.FindClosestNodeCycle
-* @implements core.protocol.findClosestNodes.FindClosestNodeCycleInterface
+* @class core.protocol.findClosestNodes.FindClosestNodesCycle
+* @implements core.protocol.findClosestNodes.FindClosestNodesCycleInterface
 *
 * @param {core.topology.IdInterface} searchForId The ID to search for.
 * @param {core.topology.ContactNodeListInterface} startWithList A list of nodes to request in the beginning (up to alpha).

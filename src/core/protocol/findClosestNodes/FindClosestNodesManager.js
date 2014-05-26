@@ -210,6 +210,7 @@ var FindClosestNodesManager = (function (_super) {
                 }
             } else if (type === 'FOUND_CLOSEST_NODES') {
                 var foundClosestNodesMsg = null;
+
                 try  {
                     foundClosestNodesMsg = _this._readableMessageFactory.create(message.getPayload());
                 } catch (e) {
