@@ -16,10 +16,12 @@ var SearchManager = (function () {
         this._registerPluginManagerEvents();
     }
     SearchManager.prototype.addItem = function (pathToIndex, stats, callback) {
-        this._pluginManager.onBeforeItemAdd(pathToIndex, stats, function () {
+        var _this = this;
+        this._pluginManager.onBeforeItemAdd(pathToIndex, stats, function (pluginDatas) {
             // to the request to the database
-            //this._searchClient
-            // call callback
+            _this._searchClient.addItem(null, null, function (err) {
+                callback(err);
+            });
         });
     };
 

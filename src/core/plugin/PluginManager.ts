@@ -278,7 +278,7 @@ class PluginManager implements PluginManagerInterface {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
-	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, callback:Function):void {
+	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, callback:(pluginDatas:Object) => any):void {
 		this.getPluginRunnersForItem(itemPath, (runners:PluginRunnerListInterface) => {
 			var runnersLength:number = Object.keys(runners).length;
 			var counter:number = 0;

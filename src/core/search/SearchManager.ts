@@ -31,12 +31,11 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	addItem (pathToIndex:string, stats:fs.Stats, callback?:(err:Error) => any):void {
-
-		this._pluginManager.onBeforeItemAdd(pathToIndex, stats, () => {
+		this._pluginManager.onBeforeItemAdd(pathToIndex, stats, (pluginDatas:Object) => {
 			// to the request to the database
-			//this._searchClient
-
-			// call callback
+			this._searchClient.addItem(null, null, function(err) {
+				callback(err);
+			});
 		});
 	}
 
