@@ -307,7 +307,9 @@ class IndexManager implements IndexManagerInterface {
 			}
 			else {
 				// adding new item
-				this._addItem(pathToIndex, stats, fileHash, callback);
+				this._pathValidator.getHash(pathToIndex, (err:Error, fileHash:string) => {
+					this._addItem(pathToIndex, stats, fileHash, callback);
+				});
 			}
 		});
 	}

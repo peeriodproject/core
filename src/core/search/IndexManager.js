@@ -284,7 +284,9 @@ var IndexManager = (function () {
                 /**/
             } else {
                 // adding new item
-                _this._addItem(pathToIndex, stats, fileHash, callback);
+                _this._pathValidator.getHash(pathToIndex, function (err, fileHash) {
+                    _this._addItem(pathToIndex, stats, fileHash, callback);
+                });
             }
         });
     };
