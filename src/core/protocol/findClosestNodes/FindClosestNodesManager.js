@@ -107,6 +107,81 @@ var FindClosestNodesManager = (function (_super) {
 
         this._setupListeners();
     }
+    FindClosestNodesManager.prototype.getAlpha = function () {
+        return this._alpha;
+    };
+
+    FindClosestNodesManager.prototype.getCycleExpirationMillis = function () {
+        return this._cycleExpirationMillis;
+    };
+
+    FindClosestNodesManager.prototype.getK = function () {
+        return this._k;
+    };
+
+    FindClosestNodesManager.prototype.getParallelismDelayMillis = function () {
+        return this._parallelismDelayMillis;
+    };
+
+    FindClosestNodesManager.prototype.startCycleFor = function (searchForId) {
+        var _this = this;
+        this._routingTable.getClosestContactNodes(searchForId, null, function (err, contacts) {
+            if (!err && contacts && contacts.length) {
+                var identifier = searchForId.toHexString();
+
+                if (_this._pendingCycles.indexOf(identifier) === -1) {
+                    var startWithList = contacts.splice(0, Math.min(contacts.length, _this._alpha));
+
+                    _this._pendingCycles.push(identifier);
+
+                    new FindClosestNodesCycle(searchForId, startWithList, _this, _this._protocolConnectionManager, function (resultingList) {
+                        _this._pendingCycles.splice(_this._pendingCycles.indexOf(identifier), 1);
+
+                        _this.emit('foundClosestNodes', searchForId, resultingList);
+                    });
+                }
+            }
+        });
+    };
+
+    /**
+    * Generates a 'FOUND_CLOSEST_NODES' reply for a given searched for ID and sends it back to the requesting node,
+    * by trying to get the maximum `k` closest nodes to the given ID the routing table has knowledge of.
+    *
+    * @method core.protocol.findClosestNodes.FindClosestNodesManager~_replyToFindNodesFor
+    *
+    * @param {core.topology.ContactNodeInterface} requestingNode
+    * @param {core.topology.IdInterface} searchForId
+    */
+    FindClosestNodesManager.prototype._replyToFindNodesFor = function (requestingNode, searchForId) {
+        var _this = this;
+        if (this._myNode.getId().equals(searchForId)) {
+            var idBuffer = searchForId.getBuffer();
+            idBuffer[19] === 0xff ? idBuffer[19]-- : idBuffer[19]++;
+        }
+
+        this._routingTable.getClosestContactNodes(searchForId, requestingNode.getId(), function (err, contacts) {
+            if (!err && contacts && contacts.length) {
+                var payload = null;
+                try  {
+                    payload = _this._writableMessageFactory.constructPayload(searchForId, contacts);
+                } catch (e) {
+                }
+
+                if (payload) {
+                    _this._protocolConnectionManager.writeMessageTo(requestingNode, 'FOUND_CLOSEST_NODES', payload);
+                }
+            }
+        });
+    };
+
+    /**
+    * Sets up the listeners on the message events. 'FOUND_CLOSEST_NODES' emits merely an event constituted by the hex string
+    * representation of the searched for ID, with the list of received nodes as arguments, so that a protential FindClosestNodesCycle
+    * can process it.
+    *
+    * @member core.protocol.findClosestNodes.FindClosestNodesManager~_setupListeners
+    */
     FindClosestNodesManager.prototype._setupListeners = function () {
         var _this = this;
         this._proxyManager.on('message', function (message) {
@@ -135,65 +210,6 @@ var FindClosestNodesManager = (function (_super) {
                 }
             }
         });
-    };
-
-    FindClosestNodesManager.prototype._replyToFindNodesFor = function (requestingNode, searchForId) {
-        var _this = this;
-        if (this._myNode.getId().equals(searchForId)) {
-            var idBuffer = searchForId.getBuffer();
-            idBuffer[19] === 0xff ? idBuffer[19]-- : idBuffer[19]++;
-        }
-
-        this._routingTable.getClosestContactNodes(searchForId, requestingNode.getId(), function (err, contacts) {
-            if (!err && contacts && contacts.length) {
-                var payload = null;
-                try  {
-                    payload = _this._writableMessageFactory.constructPayload(searchForId, contacts);
-                } catch (e) {
-                }
-
-                if (payload) {
-                    _this._protocolConnectionManager.writeMessageTo(requestingNode, 'FOUND_CLOSEST_NODES', payload);
-                }
-            }
-        });
-    };
-
-    FindClosestNodesManager.prototype.startCycleFor = function (searchForId) {
-        var _this = this;
-        this._routingTable.getClosestContactNodes(searchForId, null, function (err, contacts) {
-            if (!err && contacts && contacts.length) {
-                var identifier = searchForId.toHexString();
-
-                if (_this._pendingCycles.indexOf(identifier) === -1) {
-                    var startWithList = contacts.splice(0, Math.min(contacts.length, _this._alpha));
-
-                    _this._pendingCycles.push(identifier);
-
-                    new FindClosestNodesCycle(searchForId, startWithList, _this, _this._protocolConnectionManager, function (resultingList) {
-                        _this._pendingCycles.splice(_this._pendingCycles.indexOf(identifier), 1);
-
-                        _this.emit('foundClosestNodes', searchForId, resultingList);
-                    });
-                }
-            }
-        });
-    };
-
-    FindClosestNodesManager.prototype.getK = function () {
-        return this._k;
-    };
-
-    FindClosestNodesManager.prototype.getAlpha = function () {
-        return this._alpha;
-    };
-
-    FindClosestNodesManager.prototype.getCycleExpirationMillis = function () {
-        return this._cycleExpirationMillis;
-    };
-
-    FindClosestNodesManager.prototype.getParallelismDelayMillis = function () {
-        return this._parallelismDelayMillis;
     };
     return FindClosestNodesManager;
 })(events.EventEmitter);
