@@ -52,65 +52,63 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 	});
 
 	/*it('should correctly call the addItem method', function (done) {
-		var configStub = createConfig();
-		var pluginsData:Object = {
-			'foo bar active': {
-				textdocument: {
-					properties: {
-						file_attachment: fs.readFileSync(testUtils.getFixturePath('core/search/searchManager/tumblr_n2kwdmGLW81rkcs9uo1_400.jpg')).toString('base64')
-					}
-				}
-			}
-		};
+	 var configStub = createConfig();
+	 var pluginsData:Object = {
+	 'foo bar active': {
+	 textdocument: {
+	 properties: {
+	 file_attachment: fs.readFileSync(testUtils.getFixturePath('core/search/searchManager/tumblr_n2kwdmGLW81rkcs9uo1_400.jpg')).toString('base64')
+	 }
+	 }
+	 }
+	 };
 
-		var pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager, {
-			onBeforeItemAdd: function (itemPath, stats, callback) {
-				itemPath.should.equal('/path/to/item');
-				stats.should.containDeep(JSON.parse(statsJson));
+	 var pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager, {
+	 onBeforeItemAdd: function (itemPath, stats, callback) {
+	 itemPath.should.equal('/path/to/item');
+	 stats.should.containDeep(JSON.parse(statsJson));
 
-				callback(pluginsData);
-			}
-		});
-		var searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
-			addItem: function (item, stats, callback) {
-				callback(null);
-			}
-		});
-		var statsJson:string = '{"dev":16777222," mode":33188,"nlink":1,"uid":501,"gid":20,"rdev":0,"blksize":4096,"ino":27724859,"size":6985,"blocks":16,"atime":"2014-05-18T11:59:13.000Z","mtime":"2014-05-16T21:16:41.000Z","ctime":"2014-05-16T21:16:41.000Z"}';
+	 callback(pluginsData);
+	 }
+	 });
+	 var searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
+	 addItem: function (item, stats, callback) {
+	 callback(null);
+	 }
+	 });
+	 var statsJson:string = '{"dev":16777222," mode":33188,"nlink":1,"uid":501,"gid":20,"rdev":0,"blksize":4096,"ino":27724859,"size":6985,"blocks":16,"atime":"2014-05-18T11:59:13.000Z","mtime":"2014-05-16T21:16:41.000Z","ctime":"2014-05-16T21:16:41.000Z"}';
 
-		var searchManager:SearchManagerInterface = new SearchManager(configStub, pluginManagerStub, searchClientStub);
+	 var searchManager:SearchManagerInterface = new SearchManager(configStub, pluginManagerStub, searchClientStub);
 
-		searchManager.addItem('/path/to/item', JSON.parse(statsJson), function (err) {
-			(err === null).should.be.true;
+	 searchManager.addItem('/path/to/item', JSON.parse(statsJson), function (err) {
+	 (err === null).should.be.true;
 
-			pluginManagerStub.onBeforeItemAdd.calledOnce.should.be.true;
-			searchClientStub.addItem.calledOnce.should.be.true;
-			pluginManagerStub.onBeforeItemAdd.calledBefore(searchClientStub.addItem).should.be.true;
+	 pluginManagerStub.onBeforeItemAdd.calledOnce.should.be.true;
+	 searchClientStub.addItem.calledOnce.should.be.true;
+	 pluginManagerStub.onBeforeItemAdd.calledBefore(searchClientStub.addItem).should.be.true;
 
-			// todo test pluginDatas passed to searchClient
+	 // todo test pluginDatas passed to searchClient
 
-			closeAndDone(searchManager, done);
-		});
-	});*/
+	 closeAndDone(searchManager, done);
+	 });
+	 });*/
 
-	it ('should correctly create a mapping for the given plugin identifier if it does not exists', function (done) {
+	it('should correctly create a mapping for the given plugin identifier if it does not exists', function (done) {
 		var configStub = createConfig();
 		var pluginMapping = {
-			textdocument: {
-				properties: {
-					file_attachment: {
-						type: 'attachment'
-					}
+			properties: {
+				file_attachment: {
+					type: 'attachment'
 				}
 			}
 		};
 		var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
-			getMapping: function(callback) {
+			getMapping: function (callback) {
 				callback(pluginMapping);
 			}
 		});
 		var pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager, {
-			addEventListener: function(eventName, listener) {
+			addEventListener     : function (eventName, listener) {
 				return process.nextTick(listener.bind(null, 'pluginIdentifier'));
 			},
 			getActivePluginRunner: function (identifier, callback) {

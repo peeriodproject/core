@@ -49,7 +49,7 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
                 if (err) {
                     throw err;
                 } else {
-                    done();
+                    return process.nextTick(done.bind(null));
                 }
             }
         });
@@ -70,7 +70,9 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 
     beforeEach(function (done) {
         searchClient.open(function () {
-            done();
+            searchClient.deleteIndex(function () {
+                done();
+            });
         });
     });
 
@@ -88,50 +90,78 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
     });
 
     it('should correctly add an item to the datastore which uses the attachment mapper plugin', function (done) {
+        /*var mapping = {
+        "properties": {
+        "content": {
+        "type"  : "attachment",
+        "fields": {
+        "content"       : { "store": "yes", "term_vector": "with_positions_offsets"},
+        "author"        : { "store": "yes" },
+        "title"         : { "store": "yes", "analyzer": "english"},
+        "date"          : { "store": "yes" },
+        "keywords"      : { "store": "yes", "analyzer": "keyword" },
+        "content_type"  : { "store": "yes" },
+        "content_length": { "store": "yes" }
+        }
+        }
+        }
+        };*/
         var mapping = {
             "pluginidentifier": {
+                "_source": {
+                    "excludes": ["file"]
+                },
                 "properties": {
-                    "content": {
+                    "file": {
                         "type": "attachment",
+                        "indexed_chars": -1,
+                        "detect_anguage": true,
                         "fields": {
-                            "content": { "store": "yes", "term_vector": "with_positions_offsets" },
-                            "author": { "store": "yes" },
-                            "title": { "store": "yes", "analyzer": "english" },
-                            "date": { "store": "yes" },
-                            "keywords": { "store": "yes", "analyzer": "keyword" },
-                            "content_type": { "store": "yes" },
-                            "content_length": { "store": "yes" }
+                            "file": {
+                                "store": "yes",
+                                "term_vector": "with_positions_offsets",
+                                "analyzer": "english"
+                            },
+                            "author": {
+                                "store": "yes"
+                            },
+                            "title": {
+                                "store": "yes",
+                                "analyzer": "english"
+                            },
+                            "date": {
+                                "store": "yes"
+                            },
+                            "keywords": {
+                                "store": "yes",
+                                "analyzer": "keyword"
+                            },
+                            "content_type": {
+                                "store": "yes"
+                            },
+                            "content_length": {
+                                "store": "yes"
+                            },
+                            "language": {
+                                "store": "yes"
+                            }
                         }
                     }
                 }
             }
         };
 
-        /*var mapping = {
-        pluginidentifier: {
-        properties: {
-        file_attachment: {
-        type    : 'attachment',
-        "fields": {
-        "title" : { "store" : "yes" },
-        "file" : { "term_vector":"with_positions_offsets", "store":"yes" }
-        }
-        }
-        }
-        }
-        };*/
         var dataToIndex = {
             pluginidentifier: {
-                title: 'Peeriod_Anonymous_decentralized_network.pdf',
-                content: fs.readFileSync(testUtils.getFixturePath('core/search/searchManager/Peeriod_Anonymous_decentralized_network.pdf')).toString('base64')
+                file: fs.readFileSync(testUtils.getFixturePath('core/search/searchManager/Peeriod_Anonymous_decentralized_network.pdf')).toString('base64')
             }
         };
 
         searchClient.addMapping('pluginidentifier', mapping, function (err) {
-            console.log(err);
+            (err === null).should.be.true;
 
             searchClient.addItem(dataToIndex, function (err) {
-                console.log(err);
+                (err === null).should.be.true;
 
                 done();
             });

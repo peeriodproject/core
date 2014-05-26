@@ -543,11 +543,13 @@ class PluginManager implements PluginManagerInterface {
 		var attachmentKey = null;
 
 		// todo iterate over mapping and find attachment filed by type
-		/*if (mapping[docKey]['properties'] && mapping[docKey]['properties']['file_attachment']) {
+		if (mapping[docKey]['properties'] && mapping[docKey]['properties']['file']) {
 			mapping[docKey]._source = ObjectUtils.extend(source, {
-				excludes: 'properties.file_attachment'
+				excludes: 'file'
 			});
-		}*/
+		}
+
+		console.log(mapping);
 
 		return mapping;
 	}

@@ -500,11 +500,14 @@ var PluginManager = (function () {
         var attachmentKey = null;
 
         // todo iterate over mapping and find attachment filed by type
-        /*if (mapping[docKey]['properties'] && mapping[docKey]['properties']['file_attachment']) {
-        mapping[docKey]._source = ObjectUtils.extend(source, {
-        excludes: 'properties.file_attachment'
-        });
-        }*/
+        if (mapping[docKey]['properties'] && mapping[docKey]['properties']['file']) {
+            mapping[docKey]._source = ObjectUtils.extend(source, {
+                excludes: 'file'
+            });
+        }
+
+        console.log(mapping);
+
         return mapping;
     };
     return PluginManager;

@@ -90,11 +90,9 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
     it('should correctly create a mapping for the given plugin identifier if it does not exists', function (done) {
         var configStub = createConfig();
         var pluginMapping = {
-            textdocument: {
-                properties: {
-                    file_attachment: {
-                        type: 'attachment'
-                    }
+            properties: {
+                file_attachment: {
+                    type: 'attachment'
                 }
             }
         };

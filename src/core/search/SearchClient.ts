@@ -125,8 +125,6 @@ class SearchClient implements SearchClientInterface {
 			for (var i in pluginIdentifiers) {
 				var identifier:string = pluginIdentifiers[i];
 
-				console.log(identifier);
-
 				this._addItemToPluginIndex(identifier, objectToIndex[identifier], function (err) {
 					processed++;
 
@@ -143,13 +141,20 @@ class SearchClient implements SearchClientInterface {
 		var internalCallback:Function = callback || function () {
 		};
 
-		this._client.indices.putMapping({
-			index: this._indexName,
-			type : type.toLowerCase(),
-			body: mapping
-		}, function (err, response, status) {
-			console.log(err, response, status);
-			internalCallback(err);
+		this._createIndex((err:Error) => {
+			if (err) {
+				internalCallback(err);
+			}
+			else {
+				this._client.indices.putMapping({
+					index: this._indexName,
+					type : type.toLowerCase(),
+					body : mapping
+				}, function (err, response, status) {
+					err = err || null;
+					internalCallback(err);
+				});
+			}
 		});
 	}
 
@@ -166,6 +171,27 @@ class SearchClient implements SearchClientInterface {
 
 			internalCallback(err);
 		});
+	}
+
+	public deleteIndex (callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {
+		};
+
+		if (this._isOpen) {
+			this._client.indices.delete({
+				index: this._indexName
+			}, function (err:Error, response, status) {
+				if (status === 200 || (status === 400 && err && err.message.indexOf('IndexMissingException') === 0)) {
+					internalCallback(null);
+				}
+				else {
+					internalCallback(err);
+				}
+			});
+		}
+		else {
+			return process.nextTick(internalCallback.bind(null, null));
+		}
 	}
 
 	public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
@@ -189,7 +215,7 @@ class SearchClient implements SearchClientInterface {
 			return process.nextTick(internalCallback.bind(null, null));
 		}
 
-		var onSearchStoreOpen = (err:Error) => {
+		var onSearchStoreOpen:Function = (err:Error) => {
 			if (err) {
 				return internalCallback(err);
 			}
@@ -206,13 +232,13 @@ class SearchClient implements SearchClientInterface {
 
 			this._waitForDatabaseServer((err:Error) => {
 				if (err) {
-					console.log(err);
+					console.error(err);
 					internalCallback(err);
 				}
 				else {
 					this._createIndex((err:Error) => {
 						if (err) {
-							console.log(err);
+							console.error(err);
 						}
 						else {
 							this._isOpen = true;
@@ -237,19 +263,17 @@ class SearchClient implements SearchClientInterface {
 			index: this._indexName,
 			type : type
 		}, function (err, response, status) {
-			//console.log(err, response, status);
 			callback(response);
 		});
 	}
 
 	private _addItemToPluginIndex (type:string, data:Object, callback:(err:Error) => any):void {
 		this._client.index({
-			index: this._indexName,
-			type: type,
+			index  : this._indexName,
+			type   : type,
 			refresh: true,
-			body: data
+			body   : data
 		}, function (err:Error, response, status) {
-			console.log(err, response, status);
 
 			callback(err);
 		});
@@ -263,11 +287,7 @@ class SearchClient implements SearchClientInterface {
 	 */
 	private _createIndex (callback:(err:Error) => any):void {
 		this._client.indices.create({
-			index: this._indexName,
-			body: {
-				"number_of_shards" : 1,
-				"number_of_replicas" : 0
-			}
+			index: this._indexName
 		}, function (err, response, status) {
 			// everything went fine or index already exists
 			if (status === 200 || (status === 400 && err && err.message.indexOf('IndexAlreadyExistsException') === 0)) {

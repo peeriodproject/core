@@ -108,8 +108,6 @@ var SearchClient = (function () {
             for (var i in pluginIdentifiers) {
                 var identifier = pluginIdentifiers[i];
 
-                console.log(identifier);
-
                 this._addItemToPluginIndex(identifier, objectToIndex[identifier], function (err) {
                     processed++;
 
@@ -122,16 +120,23 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.addMapping = function (type, mapping, callback) {
+        var _this = this;
         var internalCallback = callback || function () {
         };
 
-        this._client.indices.putMapping({
-            index: this._indexName,
-            type: type.toLowerCase(),
-            body: mapping
-        }, function (err, response, status) {
-            console.log(err, response, status);
-            internalCallback(err);
+        this._createIndex(function (err) {
+            if (err) {
+                internalCallback(err);
+            } else {
+                _this._client.indices.putMapping({
+                    index: _this._indexName,
+                    type: type.toLowerCase(),
+                    body: mapping
+                }, function (err, response, status) {
+                    err = err || null;
+                    internalCallback(err);
+                });
+            }
         });
     };
 
@@ -149,6 +154,25 @@ var SearchClient = (function () {
 
             internalCallback(err);
         });
+    };
+
+    SearchClient.prototype.deleteIndex = function (callback) {
+        var internalCallback = callback || function (err) {
+        };
+
+        if (this._isOpen) {
+            this._client.indices.delete({
+                index: this._indexName
+            }, function (err, response, status) {
+                if (status === 200 || (status === 400 && err && err.message.indexOf('IndexMissingException') === 0)) {
+                    internalCallback(null);
+                } else {
+                    internalCallback(err);
+                }
+            });
+        } else {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
     };
 
     SearchClient.prototype.getItem = function (pathToIndex, callback) {
@@ -190,12 +214,12 @@ var SearchClient = (function () {
 
             _this._waitForDatabaseServer(function (err) {
                 if (err) {
-                    console.log(err);
+                    console.error(err);
                     internalCallback(err);
                 } else {
                     _this._createIndex(function (err) {
                         if (err) {
-                            console.log(err);
+                            console.error(err);
                         } else {
                             _this._isOpen = true;
                             internalCallback(null);
@@ -219,7 +243,6 @@ var SearchClient = (function () {
             index: this._indexName,
             type: type
         }, function (err, response, status) {
-            //console.log(err, response, status);
             callback(response);
         });
     };
@@ -231,8 +254,6 @@ var SearchClient = (function () {
             refresh: true,
             body: data
         }, function (err, response, status) {
-            console.log(err, response, status);
-
             callback(err);
         });
     };
@@ -245,11 +266,7 @@ var SearchClient = (function () {
     */
     SearchClient.prototype._createIndex = function (callback) {
         this._client.indices.create({
-            index: this._indexName,
-            body: {
-                "number_of_shards": 1,
-                "number_of_replicas": 0
-            }
+            index: this._indexName
         }, function (err, response, status) {
             // everything went fine or index already exists
             if (status === 200 || (status === 400 && err && err.message.indexOf('IndexAlreadyExistsException') === 0)) {
