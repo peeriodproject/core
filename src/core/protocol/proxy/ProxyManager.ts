@@ -264,6 +264,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		this._canProxyCycle = false;
 		if (this._proxyWaitTimeout) {
 			clearTimeout(this._proxyWaitTimeout);
+			this._proxyWaitTimeout = 0;
 		}
 		this._proxyWaitTimeout = setTimeout(() => {
 			this._canProxyCycle = true;
