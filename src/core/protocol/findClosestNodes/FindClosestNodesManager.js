@@ -14,21 +14,83 @@ var Id = require('../../topology/Id');
 
 var FindClosestNodesCycle = require('./FindClosestNodesCycle');
 
+/**
+*
+* @class core.protocol.findClosestNodes.FindClosestNodesManager
+* @implements core.protocol.findClosestNodes.FindClosestNodesManagerInterface
+*
+* FindClosestNodesManagerInterface implementation.
+*
+* @param {core.config.ConfigInterface} topologyConfig Configuration object of the topology namespace.
+* @param {core.config.ConfigInterface} protocolConfig Configuration object of the protocol namespace.
+* @param {core.topology.MyNodeInterface} myNode My node.
+* @param {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager A working protocol connection manager instance.
+* @param {core.protocol.proxy.ProxyManagerInterface} proxyManager A working proxy manager instance.
+* @param {core.protocol.topology.RoutingTableInterface} routingtable A routing table.
+*/
 var FindClosestNodesManager = (function (_super) {
     __extends(FindClosestNodesManager, _super);
     function FindClosestNodesManager(topologyConfig, protocolConfig, myNode, protocolConnectionManager, proxyManager, routingTable) {
         _super.call(this);
-        this._myNode = null;
-        this._protocolConnectionManager = null;
-        this._proxyManager = null;
-        this._routingTable = null;
-        this._k = 0;
+        /**
+        * Number indicating how many nodes to request in a cycle in one go.
+        *
+        * @member {number} core.protocol.findClosestNodes.FindClosestNodesManager~_alpha
+        */
         this._alpha = 0;
+        /**
+        * Milliseconds indicating how long a cycle should wait when all nodes have been probed and the
+        * confirmed list is not full yet, until the cycle is considered finished.
+        *
+        * @member {number} core.protocol.findClosestNodes.FindClosestNodesManager~_cycleExpirationMillis
+        */
         this._cycleExpirationMillis = 0;
+        /**
+        * Number of nodes a cycle should return in the best case, and how many nodes one should return when being requested.
+        *
+        * @member {number} core.protocol.findClosestNodes.FindClosestNodesManager~_k
+        */
+        this._k = 0;
+        /**
+        * @member {core.topology.MyNodeInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_myNode
+        */
+        this._myNode = null;
+        /**
+        * Milliseconds indicating how much time should pass between two alpha-requests in a cycle.
+        *
+        * @member {number} core.protocol.findClosestNodes.FindClosestNodesManager~_parallelismDelayMillis
+        */
         this._parallelismDelayMillis = 0;
-        this._writableMessageFactory = null;
-        this._readableMessageFactory = null;
+        /**
+        * An array keeping track of the IDs being currently searched for.
+        *
+        * @member {Array<string>} core.protocol.findClosestNodes.FindClosestNodesManager~_pendingCycles
+        */
         this._pendingCycles = [];
+        /**
+        * @member {core.protocol.net.ProtocolConnectionManagerInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_protocolConnectionManager
+        */
+        this._protocolConnectionManager = null;
+        /**
+        * @member {core.protocol.proxy.ProxyManagerInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_proxyManager
+        */
+        this._proxyManager = null;
+        /**
+        * A readable message factory for incoming 'FOUND_CLOSEST_NODES' messages
+        *
+        * @member {core.protocol.findClosestNodes.messages.FoundClosestNodesReadableMessageFactoryInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_readableMessageFactory
+        */
+        this._readableMessageFactory = null;
+        /**
+        * @member {core.topology.RoutingTableInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_routingTable
+        */
+        this._routingTable = null;
+        /**
+        * A writable message factory for outgoing 'FOUND_CLOSEST_NODES' messages
+        *
+        * @member {core.protocol.findClosestNodes.messages.FoundClosestNodesWritableMessageFactoryInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_writableMessageFactory
+        */
+        this._writableMessageFactory = null;
 
         this._k = topologyConfig.get('topology.k');
         this._alpha = topologyConfig.get('topology.alpha');
@@ -104,7 +166,7 @@ var FindClosestNodesManager = (function (_super) {
                 var identifier = searchForId.toHexString();
 
                 if (_this._pendingCycles.indexOf(identifier) === -1) {
-                    var startWithList = contacts.splice(0, contacts.length > _this._alpha ? _this._alpha : contacts.length);
+                    var startWithList = contacts.splice(0, Math.min(contacts.length, _this._alpha));
 
                     _this._pendingCycles.push(identifier);
 

@@ -19,23 +19,91 @@ import Id = require('../../topology/Id');
 import FindClosestNodesCycleInterface = require('./interfaces/FindClosestNodesCycleInterface');
 import FindClosestNodesCycle = require('./FindClosestNodesCycle');
 
+/**
+ *
+ * @class core.protocol.findClosestNodes.FindClosestNodesManager
+ * @implements core.protocol.findClosestNodes.FindClosestNodesManagerInterface
+ *
+ * FindClosestNodesManagerInterface implementation.
+ *
+ * @param {core.config.ConfigInterface} topologyConfig Configuration object of the topology namespace.
+ * @param {core.config.ConfigInterface} protocolConfig Configuration object of the protocol namespace.
+ * @param {core.topology.MyNodeInterface} myNode My node.
+ * @param {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager A working protocol connection manager instance.
+ * @param {core.protocol.proxy.ProxyManagerInterface} proxyManager A working proxy manager instance.
+ * @param {core.protocol.topology.RoutingTableInterface} routingtable A routing table.
+ */
 class FindClosestNodesManager extends events.EventEmitter implements FindClosestNodesManagerInterface {
 
-	_myNode:MyNodeInterface = null;
-	_protocolConnectionManager:ProtocolConnectionManagerInterface = null;
-	_proxyManager:ProxyManagerInterface = null;
-	_routingTable:RoutingTableInterface = null;
-
-	_k:number = 0;
+	/**
+	 * Number indicating how many nodes to request in a cycle in one go.
+	 *
+	 * @member {number} core.protocol.findClosestNodes.FindClosestNodesManager~_alpha
+	 */
 	_alpha:number = 0;
+
+	/**
+	 * Milliseconds indicating how long a cycle should wait when all nodes have been probed and the
+	 * confirmed list is not full yet, until the cycle is considered finished.
+	 *
+	 * @member {number} core.protocol.findClosestNodes.FindClosestNodesManager~_cycleExpirationMillis
+	 */
 	_cycleExpirationMillis:number = 0;
+
+	/**
+	 * Number of nodes a cycle should return in the best case, and how many nodes one should return when being requested.
+	 *
+	 * @member {number} core.protocol.findClosestNodes.FindClosestNodesManager~_k
+	 */
+	_k:number = 0;
+
+	/**
+	 * @member {core.topology.MyNodeInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_myNode
+	 */
+	_myNode:MyNodeInterface = null;
+
+	/**
+	 * Milliseconds indicating how much time should pass between two alpha-requests in a cycle.
+	 *
+	 * @member {number} core.protocol.findClosestNodes.FindClosestNodesManager~_parallelismDelayMillis
+	 */
 	_parallelismDelayMillis:number = 0;
 
-	_writableMessageFactory:FoundClosestNodesWritableMessageFactoryInterface = null;
-	_readableMessageFactory:FoundClosestNodesReadableMessageFactoryInterface = null;
-
+	/**
+	 * An array keeping track of the IDs being currently searched for.
+	 *
+	 * @member {Array<string>} core.protocol.findClosestNodes.FindClosestNodesManager~_pendingCycles
+	 */
 	_pendingCycles:Array<string> = [];
 
+	/**
+	 * @member {core.protocol.net.ProtocolConnectionManagerInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_protocolConnectionManager
+	 */
+	_protocolConnectionManager:ProtocolConnectionManagerInterface = null;
+
+	/**
+	 * @member {core.protocol.proxy.ProxyManagerInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_proxyManager
+	 */
+	_proxyManager:ProxyManagerInterface = null;
+
+	/**
+	 * A readable message factory for incoming 'FOUND_CLOSEST_NODES' messages
+	 *
+	 * @member {core.protocol.findClosestNodes.messages.FoundClosestNodesReadableMessageFactoryInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_readableMessageFactory
+	 */
+	_readableMessageFactory:FoundClosestNodesReadableMessageFactoryInterface = null;
+
+	/**
+	 * @member {core.topology.RoutingTableInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_routingTable
+	 */
+	_routingTable:RoutingTableInterface = null;
+
+	/**
+	 * A writable message factory for outgoing 'FOUND_CLOSEST_NODES' messages
+	 *
+	 * @member {core.protocol.findClosestNodes.messages.FoundClosestNodesWritableMessageFactoryInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_writableMessageFactory
+	 */
+	_writableMessageFactory:FoundClosestNodesWritableMessageFactoryInterface = null;
 
 	constructor (topologyConfig:ConfigInterface, protocolConfig:ConfigInterface, myNode:MyNodeInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, proxyManager:ProxyManagerInterface, routingTable:RoutingTableInterface) {
 
