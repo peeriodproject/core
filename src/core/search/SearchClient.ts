@@ -284,7 +284,8 @@ class SearchClient implements SearchClientInterface {
 			refresh: true,
 			body   : data
 		}, function (err:Error, response, status) {
-			console.log(status);
+			// todo check status >= 200 < 300
+			//console.log(status);
 			callback(err);
 		});
 	}

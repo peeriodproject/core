@@ -67,8 +67,8 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 	after(function (done) {
 		searchClient.close(function () {
 			searchClient = null;
-			//testUtils.deleteFolderRecursive(searchStoreLogsFolder);
-			//testUtils.deleteFolderRecursive(searchStoreDataFolder);
+			testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+			testUtils.deleteFolderRecursive(searchStoreDataFolder);
 
 			sandbox.restore();
 			config = null;

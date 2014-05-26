@@ -263,7 +263,8 @@ var SearchClient = (function () {
             refresh: true,
             body: data
         }, function (err, response, status) {
-            console.log(status);
+            // todo check status >= 200 < 300
+            //console.log(status);
             callback(err);
         });
     };

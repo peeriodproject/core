@@ -24,8 +24,8 @@ var SearchManager = (function () {
 
         this._pluginManager.onBeforeItemAdd(pathToIndex, stats, fileHash, function (pluginData) {
             pluginData = _this._updatePluginData(pluginData, pathToIndex, stats, fileHash);
-            console.log(JSON.stringify(pluginData));
 
+            //console.log(JSON.stringify(pluginData));
             // to the request to the database
             _this._searchClient.addItem(pluginData, function (err) {
                 callback(err);
@@ -76,10 +76,9 @@ var SearchManager = (function () {
                 pluginRunner.getMapping(function (mapping) {
                     if (mapping) {
                         mapping = _this._updateMapping(mapping);
-                        console.log(mapping);
+
                         _this._searchClient.addMapping(pluginIdentifier, mapping, function (err) {
                             if (err) {
-                                console.log('after search client added mapping');
                                 console.error(err);
                             }
                         });

@@ -138,7 +138,6 @@ describe('CORE --> SEARCH --> IndexManager @joern', function () {
             createIndexManager({
                 pathValidator: {
                     getHash: function (filePath, callback) {
-                        console.log('get hash for', filePath);
                         return process.nextTick(callback.bind(null, null, 'fileHash'));
                     }
                 },

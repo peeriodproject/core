@@ -38,7 +38,7 @@ class SearchManager implements SearchManagerInterface {
 		this._pluginManager.onBeforeItemAdd(pathToIndex, stats, fileHash, (pluginData:Object) => {
 
 			pluginData = this._updatePluginData(pluginData, pathToIndex, stats, fileHash);
-			console.log(JSON.stringify(pluginData));
+			//console.log(JSON.stringify(pluginData));
 			// to the request to the database
 			this._searchClient.addItem(pluginData, function(err) {
 				callback(err);
@@ -87,10 +87,9 @@ class SearchManager implements SearchManagerInterface {
 				pluginRunner.getMapping((mapping:Object) => {
 					if (mapping) {
 						mapping = this._updateMapping(mapping);
-						console.log(mapping);
+
 						this._searchClient.addMapping(pluginIdentifier, mapping, function (err) {
 							if (err) {
-								console.log('after search client added mapping');
 								console.error(err);
 							}
 						});
