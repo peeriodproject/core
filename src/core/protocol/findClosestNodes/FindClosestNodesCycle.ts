@@ -6,27 +6,122 @@ import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInte
 import ContactNodeListInterface = require('../../topology/interfaces/ContactNodeListInterface');
 import IdInterface = require('../../topology/interfaces/IdInterface');
 
+/**
+ * FindClosestNodesCycleInterface implementation.
+ *
+ * @class core.protocol.findClosestNodes.FindClosestNodeCycle
+ * @implements core.protocol.findClosestNodes.FindClosestNodeCycleInterface
+ *
+ * @param {core.topology.IdInterface} searchForId The ID to search for.
+ * @param {core.topology.ContactNodeListInterface} startWithList A list of nodes to request in the beginning (up to alpha).
+ * @param {core.protocol.findClosestNodes.FindClosestNodesManagerInterface} A FindClosestNodesManagerInterface instance to obtain configuration details from.
+ * @param {core.protocol.net.ProtocolConnectionManagerInterface} Protocol connection manager, used to write messages.
+ * @param {Function} callback Function to call when the cycle is finished. Gets called with a list of the up to `k` closest confirmed nodes.
+ */
 class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 
-	private _manager:FindClosestNodesManagerInterface = null;
-	private _protocolConnectionManager:ProtocolConnectionManagerInterface = null;
-
-	private _k:number = 0;
+	/**
+	 * Number indicating how many nodes from the probeList to request in one go.
+	 *
+	 * @member {number} core.protocol.findClosestNodes.FindClosestNodesCycle~_alpha
+	 */
 	private _alpha:number = 0;
-	private _cycleExpirationMillis:number = 0;
-	private _parallelismDelayMillis:number = 0;
-	private _searchForId:IdInterface = null;
 
-	private _confirmedList:ContactNodeListInterface = [];
-	private _probeList:ContactNodeListInterface = null;
-	private _registeredIdentifiers:Array<string> = [];
+	/**
+	 * Holds the timeout, which requests further node when elapsed.
+	 *
+	 * @member {NodeJS.Timer|number} core.protocol.findClosestNodes.FindClosestNodesCycle~_alphaTimeout
+	 */
+	private _alphaTimeout:number = 0;
 
+	/**
+	 * Holds the function which gets called when the cycle is finished. Passed in constructor
+	 *
+	 * @member {Function} core.protocol.findClosestsNodes.FindClosestNodesCycle~_callback
+	 */
 	private _callback:(resultingList:ContactNodeListInterface) => any;
 
+	/**
+	 * The resulting list of close nodes, which have been successfully probed.
+	 *
+	 * @member {core.topology.ContactNodeListInterface} core.protocol.findClosestsNodes.FindClosestNodesCycle~_confirmedList
+	 */
+	private _confirmedList:ContactNodeListInterface = [];
+
+	/**
+	 * Milliseconds indicating how long the cycle should wait when all nodes from the probeList have been requested and
+	 * the confirmedList is not full yet, until the cycle is considered finished
+	 *
+	 * @member {number} core.protocol.findClosestsNodes.FindClosestNodesCycle~_cycleExpirationMillis
+	 */
+	private _cycleExpirationMillis:number = 0;
+
+	/**
+	 * Holds the timeout, which finishes a cycle when elapsed.
+	 *
+	 * @member {NodeJS.Timer|number} core.protocol.findClosestsNodes.FindClosestNodesCycle~_cycleTimeout
+	 */
+	private _cycleTimeout:number = 0;
+
+	/**
+	 * Maxmimum number of close nodes to return. Cycle is considered finished as soon as the confirmedList holds `k`
+	 * entries.
+	 *
+	 * @member {number} core.protocol.findClosestsNodes.FindClosestNodesCycle~_k
+	 */
+	private _k:number = 0;
+
+	/**
+	 * The listener function on the cycle manager's event which gets emitted as the hex string representation
+	 * of the searched for ID.
+	 *
+	 * @member {Function} core.protocol.findClosestsNodes.FindClosestNodesCycle~_listener
+	 */
 	private _listener:Function = null;
 
-	private _cycleTimeout:number = 0;
-	private _alphaTimeout:number = 0;
+	/**
+	 * The manager emitting the events on 'FOUND_CLOSEST_NODES' messages and which holds the configuration details.
+	 *
+	 * @member {core.protocol.findClosestsNodes.FindClosestNodesManagerInterface} core.protocol.findClosestsNodes.FindClosestNodesCycle~_manager
+	 */
+	private _manager:FindClosestNodesManagerInterface = null;
+
+	/**
+	 * Milliseconds indicating how much time should pass between to request flights.
+	 *
+	 * @member {number} core.protocol.findClosestsNodes.FindClosestNodesCycle~_parallelismDelayMillis
+	 */
+	private _parallelismDelayMillis:number = 0;
+
+	/**
+	 * The list of nodes who need probing. As soon as a node has been requested, it is removed from the list.
+	 *
+	 * @member {core.topology.ContactNodeListInterface} core.protocol.findClosestNodes.FindClosestNodesCycle~_probeList
+	 */
+	private _probeList:ContactNodeListInterface = null;
+
+	/**
+	 * Protocol connection manager used for writing out 'FIND_CLOSEST_NODES' requests
+	 *
+	 * @member {core.protocol.net.ProtocolConnectionManagerInterface} core.protocol.findClosestNodes.FindClosestNodesCycle~_protocolConnectionManager
+	 */
+	private _protocolConnectionManager:ProtocolConnectionManagerInterface = null;
+
+	/**
+	 * As requested nodes are instantaneously removed from the probeList, this list of hex string represenations keeps track of
+	 * nodes which have either been probed or are still in the probeList. Used to avoid requesting nodes multiple times or cluttering
+	 * the lists with duplicated.
+	 *
+	 * @member {Array<string>} core.protocol.findClosestNodes.FindClosestNodesCycle~_registeredIdentifiers
+	 */
+	private _registeredIdentifiers:Array<string> = [];
+
+	/**
+	 * The ID to search for.
+	 *
+	 * @member {core.topology.IdInterface} core.protocol.findClosestNodes.FindClosestNodesCycle~_searchForId
+	 */
+	private _searchForId:IdInterface = null;
 
 	constructor (searchForId:IdInterface, startWithList:ContactNodeListInterface, manager:FindClosestNodesManagerInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, callback:(resultingList:ContactNodeListInterface) => any) {
 
@@ -41,7 +136,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 		this._cycleExpirationMillis = this._manager.getCycleExpirationMillis();
 		this._parallelismDelayMillis = this._manager.getParallelismDelayMillis();
 
-		for (var i=0; i<this._probeList.length; i++) {
+		for (var i = 0; i < this._probeList.length; i++) {
 			this._registeredIdentifiers.push(this._probeList[i].getId().toHexString());
 		}
 
@@ -72,7 +167,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 			var returnedList:ContactNodeListInterface = message.getFoundNodeList();
 			var probedPrevLength:number = this._probeList.length;
 
-			for (var i=0; i<returnedList.length; i++) {
+			for (var i = 0; i < returnedList.length; i++) {
 				var node:ContactNodeInterface = returnedList[i];
 				var identifier:string = node.getId().toHexString();
 
@@ -98,7 +193,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 		var nodeId:IdInterface = node.getId();
 		var doReturn:boolean = false;
 
-		for (var i=0; i<list.length; i++) {
+		for (var i = 0; i < list.length; i++) {
 			var dist:number = this._searchForId.compareDistance(nodeId, list[i].getId());
 			if (dist > 0) {
 				index = i;
@@ -126,7 +221,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 		var times:number = Math.min(this._probeList.length, this._alpha);
 
 		while (times--) {
-			this._protocolConnectionManager.writeMessageTo(this._probeList.splice(0,1)[0], 'FIND_CLOSEST_NODES', this._searchForId.getBuffer());
+			this._protocolConnectionManager.writeMessageTo(this._probeList.splice(0, 1)[0], 'FIND_CLOSEST_NODES', this._searchForId.getBuffer());
 		}
 
 		if (!this._probeList.length) {
