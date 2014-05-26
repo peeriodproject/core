@@ -11,7 +11,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import PluginLoader = require('../../../src/core/plugin/PluginLoader');
 
 // todo add json error tests
-describe('CORE --> PLUGIN --> PluginLoader @joern', function () {
+describe('CORE --> PLUGIN --> PluginLoader', function () {
 	var sandbox:SinonSandbox;
 	var pluginToLoadPath:string = 'src/plugins/textDocumentPlugin';
 	var pluginsFolderPath:string = testUtils.getFixturePath('core/plugin/pluginLoader/plugins');

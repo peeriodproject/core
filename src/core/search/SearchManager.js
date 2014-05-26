@@ -21,8 +21,9 @@ var SearchManager = (function () {
         };
 
         this._pluginManager.onBeforeItemAdd(pathToIndex, stats, function (pluginDatas) {
+            //console.log(JSON.stringify(pluginDatas));
             // to the request to the database
-            _this._searchClient.addItem(null, null, function (err) {
+            _this._searchClient.addItem({}, function (err) {
                 callback(err);
             });
         });
@@ -76,8 +77,7 @@ var SearchManager = (function () {
                             }
                         });
                     } else {
-                        // plugin uses elasticsearch auto mapping feature!
-                        // maybe it's better to throw an error here?
+                        // todo plugin uses elasticsearch auto mapping feature! Maybe it's better to throw an error here?
                     }
                 });
             });

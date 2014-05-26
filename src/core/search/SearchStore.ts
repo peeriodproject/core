@@ -171,6 +171,7 @@ class SearchStore implements SearchStoreInterface {
 			this._getDatabaseServerProcessIdPath(),
 			('-Des.config=' + configPath),
 			('-Des.path.data=' + storagePath),
+			('-Des.logger.level=DEBUG'),
 			'-d'
 		];
 	}

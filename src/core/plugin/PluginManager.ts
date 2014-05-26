@@ -237,6 +237,7 @@ class PluginManager implements PluginManagerInterface {
 
 	}
 
+	// todo check file extension
 	public getPluginRunnersForItem (itemPath:string, callback:(pluginRunners:PluginRunnerListInterface) => void):void {
 		var mimeType = this._getMimeType(itemPath);
 		var responsibleRunners:PluginRunnerListInterface = {};
@@ -309,11 +310,19 @@ class PluginManager implements PluginManagerInterface {
 								counter++;
 
 								// todo parse data and merge them together
-								mergedPluginData[key] = data;
+								console.log(JSON.stringify(data));
+								if (data && Object.keys(data).length == 1) {
+									mergedPluginData[key] = this._createRestrictedMapping(data, useApacheTika.indexOf(key) !== -1);
+								}
+								else {
+									console.error('Invalid mapping "' + key + '"');
+								}
 
 								checkAndSendCallback();
 							});
 						}
+
+						console.log(JSON.stringify(mergedPluginData));
 					});
 				}
 				else {
@@ -378,6 +387,8 @@ class PluginManager implements PluginManagerInterface {
 	/**
 	 * The PluginManager is going to activate the plugin. But before we're going to run thirdparty code within
 	 * the app we validate the plugin using a {@link core.plugin.PluginValidatorInterface}.
+	 *
+	 * todo deactivate plugin
 	 */
 	private _activatePlugin (pluginState:PluginStateObjectInterface, callback:(err:Error) => void):void {
 		var internalCallback = callback || function (err:Error) {
@@ -496,7 +507,9 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	private _loadGlobals (itemPath:string, callback:(err:Error, globals:Object) => any):void {
-		var globals = {};
+		var globals = {
+			fileBuffer: null
+		};
 
 		fs.stat(itemPath, function (err:Error, stats:fs.Stats) {
 			if (err) {
@@ -514,6 +527,29 @@ class PluginManager implements PluginManagerInterface {
 				})
 			}
 		});
+	}
+
+	/**
+	 * Updates the given mapping and restrict some fields.
+	 *
+	 * @param {Object} mapping
+	 * @param {boolean} isApacheTikaPlugin
+	 * @returns {Object} the restricted mapping
+	 */
+	private _createRestrictedMapping (mapping:Object, isApacheTikaPlugin:boolean):Object {
+		var docKey = Object.keys(mapping)[0];
+		var source = mapping[docKey]._source || {};
+
+		var attachmentKey = null;
+
+		// todo iterate over mapping and find attachment filed by type
+		/*if (mapping[docKey]['properties'] && mapping[docKey]['properties']['file_attachment']) {
+			mapping[docKey]._source = ObjectUtils.extend(source, {
+				excludes: 'properties.file_attachment'
+			});
+		}*/
+
+		return mapping;
 	}
 
 }

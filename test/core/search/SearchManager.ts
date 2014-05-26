@@ -51,15 +51,13 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 		closeAndDone(searchManager, done);
 	});
 
-	it('should correctly call the addItem method', function (done) {
+	/*it('should correctly call the addItem method', function (done) {
 		var configStub = createConfig();
-		var pluginsMapping:Object = {
+		var pluginsData:Object = {
 			'foo bar active': {
 				textdocument: {
 					properties: {
-						file_attachment: {
-							type: 'attachment'
-						}
+						file_attachment: fs.readFileSync(testUtils.getFixturePath('core/search/searchManager/tumblr_n2kwdmGLW81rkcs9uo1_400.jpg')).toString('base64')
 					}
 				}
 			}
@@ -70,7 +68,7 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 				itemPath.should.equal('/path/to/item');
 				stats.should.containDeep(JSON.parse(statsJson));
 
-				callback(pluginsMapping);
+				callback(pluginsData);
 			}
 		});
 		var searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
@@ -93,7 +91,7 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 
 			closeAndDone(searchManager, done);
 		});
-	});
+	});*/
 
 	it ('should correctly create a mapping for the given plugin identifier if it does not exists', function (done) {
 		var configStub = createConfig();
@@ -134,7 +132,6 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 		});
 
 		var searchManager:SearchManagerInterface = new SearchManager(configStub, pluginManagerStub, searchClientStub);
-
 	});
 
 });

@@ -10,7 +10,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var PluginRunner = require('../../../src/core/plugin/PluginRunner');
 
 // todo add json error tests
-describe('CORE --> PLUGIN --> PluginRunner @joern', function () {
+describe('CORE --> PLUGIN --> PluginRunner', function () {
     var sandbox;
     var pluginToLoadPath = 'src/plugins/textDocumentPlugin';
     var pluginsFolderPath = testUtils.getFixturePath('core/plugin/pluginRunner/plugins');
@@ -18,11 +18,12 @@ describe('CORE --> PLUGIN --> PluginRunner @joern', function () {
     var pluginPath = pluginsFolderPath + '/' + pluginFolderName;
     var pluginFilePath = pluginPath + '/lib/index.js';
     var configStub;
-
     var cleanupAndDone = function (pluginRunner, done) {
         pluginRunner.cleanup();
         done();
     };
+
+    this.timeout(0);
 
     before(function () {
         testUtils.deleteFolderRecursive(pluginsFolderPath);

@@ -205,6 +205,7 @@ var PluginManager = (function () {
         return process.nextTick(callback.bind(null, runner));
     };
 
+    // todo check file extension
     PluginManager.prototype.getPluginRunnersForItem = function (itemPath, callback) {
         var mimeType = this._getMimeType(itemPath);
         var responsibleRunners = {};
@@ -279,11 +280,18 @@ var PluginManager = (function () {
                                 counter++;
 
                                 // todo parse data and merge them together
-                                mergedPluginData[key] = data;
+                                console.log(JSON.stringify(data));
+                                if (data && Object.keys(data).length == 1) {
+                                    mergedPluginData[key] = _this._createRestrictedMapping(data, useApacheTika.indexOf(key) !== -1);
+                                } else {
+                                    console.error('Invalid mapping "' + key + '"');
+                                }
 
                                 checkAndSendCallback();
                             });
                         }
+
+                        console.log(JSON.stringify(mergedPluginData));
                     });
                 } else {
                     sendCallback();
@@ -343,6 +351,8 @@ var PluginManager = (function () {
     /**
     * The PluginManager is going to activate the plugin. But before we're going to run thirdparty code within
     * the app we validate the plugin using a {@link core.plugin.PluginValidatorInterface}.
+    *
+    * todo deactivate plugin
     */
     PluginManager.prototype._activatePlugin = function (pluginState, callback) {
         var _this = this;
@@ -456,7 +466,9 @@ var PluginManager = (function () {
     };
 
     PluginManager.prototype._loadGlobals = function (itemPath, callback) {
-        var globals = {};
+        var globals = {
+            fileBuffer: null
+        };
 
         fs.stat(itemPath, function (err, stats) {
             if (err) {
@@ -472,6 +484,28 @@ var PluginManager = (function () {
                 });
             }
         });
+    };
+
+    /**
+    * Updates the given mapping and restrict some fields.
+    *
+    * @param {Object} mapping
+    * @param {boolean} isApacheTikaPlugin
+    * @returns {Object} the restricted mapping
+    */
+    PluginManager.prototype._createRestrictedMapping = function (mapping, isApacheTikaPlugin) {
+        var docKey = Object.keys(mapping)[0];
+        var source = mapping[docKey]._source || {};
+
+        var attachmentKey = null;
+
+        // todo iterate over mapping and find attachment filed by type
+        /*if (mapping[docKey]['properties'] && mapping[docKey]['properties']['file_attachment']) {
+        mapping[docKey]._source = ObjectUtils.extend(source, {
+        excludes: 'properties.file_attachment'
+        });
+        }*/
+        return mapping;
     };
     return PluginManager;
 })();
