@@ -114,6 +114,11 @@ var FindClosestNodesCycle = (function () {
 
         this._requestAlphaNodes();
     }
+    /**
+    * Binds the correct listener to the FindClosestNodesManager instance for received 'FOUND_CLOSEST_NODES' messages.
+    *
+    * @method core.protocol.findClosestNodes.FindClosestNodesCycle~_bindListener
+    */
     FindClosestNodesCycle.prototype._bindListener = function () {
         var _this = this;
         this._listener = function (from, message) {
@@ -123,10 +128,51 @@ var FindClosestNodesCycle = (function () {
         this._manager.on(this._searchForId.toHexString(), this._listener);
     };
 
-    FindClosestNodesCycle.prototype._unbindListener = function () {
-        this._manager.removeListener(this._searchForId.toHexString(), this._listener);
+    /**
+    * Sets the timeout, which requests the next alpha nodes in the probeList when elapsed.
+    *
+    * @method core.protocol.findClosestNodes.FindClosestNodesCycle~_doAlphaTimeout
+    */
+    FindClosestNodesCycle.prototype._doAlphaTimeout = function () {
+        var _this = this;
+        if (!this._alphaTimeout) {
+            this._alphaTimeout = setTimeout(function () {
+                _this._alphaTimeout = 0;
+                _this._requestAlphaNodes();
+            }, this._parallelismDelayMillis);
+        }
     };
 
+    /**
+    * Finishes up the cycle and calls the callback-function provided in the constructor.
+    *
+    * @method core.protocol.findClosestNodes.FindClosestNodesCycle~_finish
+    */
+    FindClosestNodesCycle.prototype._finish = function () {
+        this._unbindListener();
+
+        if (this._cycleTimeout) {
+            clearTimeout(this._cycleTimeout);
+            this._cycleTimeout = 0;
+        }
+        if (this._alphaTimeout) {
+            clearTimeout(this._alphaTimeout);
+            this._alphaTimeout = 0;
+        }
+
+        this._callback(this._confirmedList);
+    };
+
+    /**
+    * Handles a reply on the searched for ID, i.e. a 'FOUND_CLOSEST_NODES' message.
+    * Adds the originating node to the confirmedList. If it is full, the cycle is finished.
+    * Otherwise the specified contact node information in the message is added to the probeList (if not yet present).
+    *
+    * @method core.protocol.findClosestNodes.FindClosestNodesCycle~_handleReply
+    *
+    * @param {core.topology.ContactNodeInterface} from The sender of the FOUND_CLOSEST_NODES message
+    * @param {core.protocol.findClosestNodes.messages.FoundClosestNodesReadableMessageInterface} message The message payload.
+    */
     FindClosestNodesCycle.prototype._handleReply = function (from, message) {
         this._sortInsertNodeInList(from, this._confirmedList);
 
@@ -156,6 +202,44 @@ var FindClosestNodesCycle = (function () {
         }
     };
 
+    /**
+    * Takes up to alpha nodes from the probeList and writes a 'FIND_CLOSEST_NODES' request to them, thus removing them
+    * from the probeList.
+    * If at the end the probeList is empty, a timeout is set which finishes up the cycle when elapsed (and no new nodes to probe fly in).
+    *
+    * @method core.protocol.findClosestNodes.FindClosestNodesCycle~_requestAlphaNodes
+    */
+    FindClosestNodesCycle.prototype._requestAlphaNodes = function () {
+        var _this = this;
+        var times = Math.min(this._probeList.length, this._alpha);
+
+        while (times--) {
+            this._protocolConnectionManager.writeMessageTo(this._probeList.splice(0, 1)[0], 'FIND_CLOSEST_NODES', this._searchForId.getBuffer());
+        }
+
+        if (!this._probeList.length) {
+            if (this._cycleTimeout) {
+                clearTimeout(this._cycleTimeout);
+                this._cycleTimeout = 0;
+            }
+
+            this._cycleTimeout = setTimeout(function () {
+                _this._finish();
+            }, this._cycleExpirationMillis);
+        } else {
+            this._doAlphaTimeout();
+        }
+    };
+
+    /**
+    * Inserts a node in a list at the correct position. Correct position means that the list is sorted by distance to
+    * the searched for ID, from shorter distance to longer distance.
+    *
+    * @method core.protocol.findClosestNodes.FindClosestNodesCycle~_sortInsertNodeList
+    *
+    * @param {core.topology.ContactNodeInterface} node The node to insert.
+    * @param {core.topology.ContactNodeListInterface} list The list in which to insert the node.
+    */
     FindClosestNodesCycle.prototype._sortInsertNodeInList = function (node, list) {
         var index = -1;
         var nodeId = node.getId();
@@ -183,51 +267,13 @@ var FindClosestNodesCycle = (function () {
         }
     };
 
-    FindClosestNodesCycle.prototype._requestAlphaNodes = function () {
-        var _this = this;
-        var times = Math.min(this._probeList.length, this._alpha);
-
-        while (times--) {
-            this._protocolConnectionManager.writeMessageTo(this._probeList.splice(0, 1)[0], 'FIND_CLOSEST_NODES', this._searchForId.getBuffer());
-        }
-
-        if (!this._probeList.length) {
-            if (this._cycleTimeout) {
-                clearTimeout(this._cycleTimeout);
-                this._cycleTimeout = 0;
-            }
-
-            this._cycleTimeout = setTimeout(function () {
-                _this._finish();
-            }, this._cycleExpirationMillis);
-        } else {
-            this._doAlphaTimeout();
-        }
-    };
-
-    FindClosestNodesCycle.prototype._doAlphaTimeout = function () {
-        var _this = this;
-        if (!this._alphaTimeout) {
-            this._alphaTimeout = setTimeout(function () {
-                _this._alphaTimeout = 0;
-                _this._requestAlphaNodes();
-            }, this._parallelismDelayMillis);
-        }
-    };
-
-    FindClosestNodesCycle.prototype._finish = function () {
-        this._unbindListener();
-
-        if (this._cycleTimeout) {
-            clearTimeout(this._cycleTimeout);
-            this._cycleTimeout = 0;
-        }
-        if (this._alphaTimeout) {
-            clearTimeout(this._alphaTimeout);
-            this._alphaTimeout = 0;
-        }
-
-        this._callback(this._confirmedList);
+    /**
+    * Removes the bound listener from the FindClosestNodesManager
+    *
+    * @method core.protocol.findClosestNodes.FindClosestNodesCycle~_unbindListener
+    */
+    FindClosestNodesCycle.prototype._unbindListener = function () {
+        this._manager.removeListener(this._searchForId.toHexString(), this._listener);
     };
     return FindClosestNodesCycle;
 })();
