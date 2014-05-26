@@ -18,6 +18,6 @@
     "sandcastle": "https://github.com/joernroeder/sandcastle/tarball/master",
     "usb-detection": "^1.0.3",
     "winston": "^0.7.3",
-    "winston-irc": "^0.3.2"
+    "winston-irc": "^0.3.4"
   }
 }
