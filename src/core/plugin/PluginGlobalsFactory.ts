@@ -12,17 +12,17 @@ import ObjectUtils = require('../utils/ObjectUtils');
  *
  * @param {string} itemPath
  * @param {fs.Stats} stats
- * @param {Object} tikaGlobals
+ * @param {Object} globals
  */
 class PluginGlobalsFactory implements PluginGlobalsFactoryInterface {
 
 	private _cache = {};
 
-	public create (itemPath:string, stats:fs.Stats, tikaGlobals:Object):Object {
+	public create (itemPath:string, stats:fs.Stats, globals:Object):Object {
 		return ObjectUtils.extend({
-			fileName: itemPath,
-			fileStats: stats ? Object.freeze(stats) : stats
-		}, tikaGlobals);
+			fileName  : itemPath, // todo remove path
+			fileStats : stats ? Object.freeze(stats) : stats
+		}, globals);
 	}
 
 }

@@ -61,8 +61,8 @@ class PluginRunner implements PluginRunnerInterface {
 		});
 	}
 
-	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, tikaGlobals:Object, callback:Function):void {
-		this._createAndRunSandbox(itemPath, stats, tikaGlobals, 'main.onBeforeItemAdd', callback, function (output:any) {
+	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, globals:Object, callback:Function):void {
+		this._createAndRunSandbox(itemPath, stats, globals, 'main.onBeforeItemAdd', callback, function (output:any) {
 			callback(null, output);
 		});
 	}
@@ -74,12 +74,12 @@ class PluginRunner implements PluginRunnerInterface {
 	 *
 	 * @param {string} itemPath
 	 * @param {fs.Stats} stats
-	 * @param {Object} tikaGlobals
+	 * @param {Object} globals
 	 * @param {string} methodName
 	 * @param {Function} callback
 	 * @param {Function} onExit
 	 */
-	private _createAndRunSandbox (itemPath:string, stats:fs.Stats, tikaGlobals:Object, methodName:string, callback:Function, onExit:(output:any) => void):void {
+	private _createAndRunSandbox (itemPath:string, stats:fs.Stats, globals:Object, methodName:string, callback:Function, onExit:(output:any) => void):void {
 		this._createSandbox(itemPath);
 		this._registerSandboxTimeoutHandler(itemPath, callback);
 		this._sandboxScripts[itemPath].on('exit', function (err, output, methodName) {
@@ -90,7 +90,8 @@ class PluginRunner implements PluginRunnerInterface {
 				return onExit(output);
 			}
 		});
-		this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, tikaGlobals));
+
+		this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
 	}
 
 	/**

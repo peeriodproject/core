@@ -252,19 +252,19 @@ class PluginManager implements PluginManagerInterface {
 		}
 		//_isResponsibleForMimeType
 		/*this.getActivePluginRunners((pluginRunners:PluginRunnerListInterface) => {
-			var responsibleRunners:PluginRunnerListInterface = {};
+		 var responsibleRunners:PluginRunnerListInterface = {};
 
-			if (Object.keys(pluginRunners).length) {
-				for (var key in pluginRunners) {
-					var pluginLoader:PluginLoaderInterface = this._pluginLoaders[key];
+		 if (Object.keys(pluginRunners).length) {
+		 for (var key in pluginRunners) {
+		 var pluginLoader:PluginLoaderInterface = this._pluginLoaders[key];
 
-					if (this._isResponsibleForFile(itemPath, pluginLoader)) {
-						responsibleRunners[key] = this._pluginRunners[key];
-					}
-				}
-			}
+		 if (this._isResponsibleForFile(itemPath, pluginLoader)) {
+		 responsibleRunners[key] = this._pluginRunners[key];
+		 }
+		 }
+		 }
 
-		});*/
+		 });*/
 
 		return process.nextTick(callback.bind(null, responsibleRunners));
 	}
@@ -295,17 +295,26 @@ class PluginManager implements PluginManagerInterface {
 			};
 			var runPlugins:Function = (tikaGlobals) => {
 				if (runnersLength) {
-					for (var key in runners) {
-						// call the plugin!
-						runners[key].onBeforeItemAdd(itemPath, stats, tikaGlobals, (data:Object) => {
-							counter++;
+					this._loadGlobals(itemPath, (err:Error, globals:Object) => {
+						if (err) {
+							console.log(err);
+							return sendCallback();
+						}
 
-							// todo parse data and merge them together
-							mergedPluginData[key] = data;
+						globals = ObjectUtils.extend(globals, tikaGlobals);
 
-							checkAndSendCallback();
-						});
-					}
+						for (var key in runners) {
+							// call the plugin!
+							runners[key].onBeforeItemAdd(itemPath, stats, globals, (data:Object) => {
+								counter++;
+
+								// todo parse data and merge them together
+								mergedPluginData[key] = data;
+
+								checkAndSendCallback();
+							});
+						}
+					});
 				}
 				else {
 					sendCallback();
@@ -434,8 +443,8 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	/*private _isResponsibleForMimeType (mimeType:string, pluginLoader:PluginLoaderInterface):boolean {
-		return (pluginLoader.getFileMimeTypes().indexOf(mimeType) !== 1) ? true : false;
-	}*/
+	 return (pluginLoader.getFileMimeTypes().indexOf(mimeType) !== 1) ? true : false;
+	 }*/
 
 	/**
 	 * Loads the plugin state from a persistant storage
@@ -480,19 +489,31 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	private _loadApacheTikaGlobals (itemPath:string, callback:Function):void {
-		var fileStream = fs.createReadStream(itemPath);
-		fileStream.once('readable', function () {
-			fileStream.pause();
-		});
-
-		// do not leak the absolute file path to the plugin...
-		delete fileStream['path'];
-
 		var tikaGlobals = {
-			fileStream: fileStream
 		};
 
 		callback(null, tikaGlobals);
+	}
+
+	private _loadGlobals (itemPath:string, callback:(err:Error, globals:Object) => any):void {
+		var globals = {};
+
+		fs.stat(itemPath, function (err:Error, stats:fs.Stats) {
+			if (err) {
+				return callback(err, null);
+			}
+			else if (stats.isFile()) {
+				fs.readFile(itemPath, function (err:Error, data:Buffer) {
+					if (err) {
+						return callback(err, null);
+					}
+					else {
+						globals['fileBuffer'] = data;
+						return callback(null, globals);
+					}
+				})
+			}
+		});
 	}
 
 }

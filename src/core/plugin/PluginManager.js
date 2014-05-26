@@ -265,17 +265,26 @@ var PluginManager = (function () {
             };
             var runPlugins = function (tikaGlobals) {
                 if (runnersLength) {
-                    for (var key in runners) {
-                        // call the plugin!
-                        runners[key].onBeforeItemAdd(itemPath, stats, tikaGlobals, function (data) {
-                            counter++;
+                    _this._loadGlobals(itemPath, function (err, globals) {
+                        if (err) {
+                            console.log(err);
+                            return sendCallback();
+                        }
 
-                            // todo parse data and merge them together
-                            mergedPluginData[key] = data;
+                        globals = ObjectUtils.extend(globals, tikaGlobals);
 
-                            checkAndSendCallback();
-                        });
-                    }
+                        for (var key in runners) {
+                            // call the plugin!
+                            runners[key].onBeforeItemAdd(itemPath, stats, globals, function (data) {
+                                counter++;
+
+                                // todo parse data and merge them together
+                                mergedPluginData[key] = data;
+
+                                checkAndSendCallback();
+                            });
+                        }
+                    });
                 } else {
                     sendCallback();
                 }
@@ -441,19 +450,28 @@ var PluginManager = (function () {
     };
 
     PluginManager.prototype._loadApacheTikaGlobals = function (itemPath, callback) {
-        var fileStream = fs.createReadStream(itemPath);
-        fileStream.once('readable', function () {
-            fileStream.pause();
-        });
-
-        // do not leak the absolute file path to the plugin...
-        delete fileStream['path'];
-
-        var tikaGlobals = {
-            fileStream: fileStream
-        };
+        var tikaGlobals = {};
 
         callback(null, tikaGlobals);
+    };
+
+    PluginManager.prototype._loadGlobals = function (itemPath, callback) {
+        var globals = {};
+
+        fs.stat(itemPath, function (err, stats) {
+            if (err) {
+                return callback(err, null);
+            } else if (stats.isFile()) {
+                fs.readFile(itemPath, function (err, data) {
+                    if (err) {
+                        return callback(err, null);
+                    } else {
+                        globals['fileBuffer'] = data;
+                        return callback(null, globals);
+                    }
+                });
+            }
+        });
     };
     return PluginManager;
 })();

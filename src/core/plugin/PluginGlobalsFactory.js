@@ -7,17 +7,17 @@ var ObjectUtils = require('../utils/ObjectUtils');
 *
 * @param {string} itemPath
 * @param {fs.Stats} stats
-* @param {Object} tikaGlobals
+* @param {Object} globals
 */
 var PluginGlobalsFactory = (function () {
     function PluginGlobalsFactory() {
         this._cache = {};
     }
-    PluginGlobalsFactory.prototype.create = function (itemPath, stats, tikaGlobals) {
+    PluginGlobalsFactory.prototype.create = function (itemPath, stats, globals) {
         return ObjectUtils.extend({
             fileName: itemPath,
             fileStats: stats ? Object.freeze(stats) : stats
-        }, tikaGlobals);
+        }, globals);
     };
     return PluginGlobalsFactory;
 })();
