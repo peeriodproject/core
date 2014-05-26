@@ -89,8 +89,32 @@ var SearchClient = (function () {
 
         this.open(this._options.onOpenCallback);
     }
-    SearchClient.prototype.addItem = function (pathToIndex, stats, callback) {
+    SearchClient.prototype.addItem = function (objectToIndex, callback) {
         // todo iplementation
+        console.log(objectToIndex);
+        var pluginIdentifiers = Object.keys(objectToIndex);
+        var amount = pluginIdentifiers.length;
+        var processed = 0;
+
+        var checkCallback = function (err) {
+            if (err) {
+                console.error(err);
+            }
+
+            if (processed === amount) {
+                callback(null);
+            }
+        };
+
+        for (var i in pluginIdentifiers) {
+            var identifier = pluginIdentifiers[i];
+
+            this._addItemToPluginIndex(identifier, objectToIndex[identifier], function (err) {
+                processed++;
+
+                checkCallback(err);
+            });
+        }
         return process.nextTick(callback.bind(null, null, null));
     };
 
@@ -100,8 +124,10 @@ var SearchClient = (function () {
 
         this._client.indices.putMapping({
             index: this._indexName,
-            type: type
+            type: type.toLowerCase(),
+            body: mapping
         }, function (err, response, status) {
+            console.log(err, response, status);
             internalCallback(err);
         });
     };
@@ -195,6 +221,19 @@ var SearchClient = (function () {
         });
     };
 
+    SearchClient.prototype._addItemToPluginIndex = function (type, data, callback) {
+        this._client.index({
+            index: this._indexName,
+            type: type,
+            refresh: true,
+            body: data
+        }, function (err, response, status) {
+            console.log(err, response, status);
+
+            callback(err);
+        });
+    };
+
     /**
     * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
     *
@@ -202,7 +241,13 @@ var SearchClient = (function () {
     * @param {Function} callback
     */
     SearchClient.prototype._createIndex = function (callback) {
-        this._client.indices.create({ index: this._indexName }, function (err, response, status) {
+        this._client.indices.create({
+            index: this._indexName,
+            body: {
+                "number_of_shards": 1,
+                "number_of_replicas": 0
+            }
+        }, function (err, response, status) {
             // everything went fine or index already exists
             if (status === 200 || (status === 400 && err && err.message.indexOf('IndexAlreadyExistsException') === 0)) {
                 callback(null);

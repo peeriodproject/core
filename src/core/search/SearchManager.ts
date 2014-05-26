@@ -34,8 +34,10 @@ class SearchManager implements SearchManagerInterface {
 		var internalCallback:Function = callback || function () {};
 
 		this._pluginManager.onBeforeItemAdd(pathToIndex, stats, (pluginDatas:Object) => {
+
+			//console.log(JSON.stringify(pluginDatas));
 			// to the request to the database
-			this._searchClient.addItem(null, null, function(err) {
+			this._searchClient.addItem({}, function(err) {
 				callback(err);
 			});
 		});
@@ -88,8 +90,7 @@ class SearchManager implements SearchManagerInterface {
 						});
 					}
 					else {
-						// plugin uses elasticsearch auto mapping feature!
-						// maybe it's better to throw an error here?
+						// todo plugin uses elasticsearch auto mapping feature! Maybe it's better to throw an error here?
 					}
 				});
 			});

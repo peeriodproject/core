@@ -7,7 +7,7 @@ import testUtils = require('../../utils/testUtils');
 
 import PathValidator = require('../../../src/core/fs/PathValidator');
 
-describe('CORE --> FS --> PathValidator', function () {
+describe('CORE --> FS --> PathValidator @joern', function () {
 
 	it ('should correctly instantiate the validator @joern', function () {
 		(new PathValidator()).should.be.an.instanceof(PathValidator);
@@ -77,7 +77,7 @@ describe('CORE --> FS --> PathValidator', function () {
 		validator.validateStats(filePath, validStats, function (err:Error, isValid:boolean, fileStats:fs.Stats) {
 			(err === null).should.be.true;
 			isValid.should.be.true;
-			JSON.stringify(fileStats).should.equal(expectedStats);
+			JSON.stringify(fileStats).should.equal(JSON.stringify(expectedStats));
 
 			done();
 		});

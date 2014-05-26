@@ -25,6 +25,8 @@ describe('CORE --> SEARCH --> SearchStore', function () {
             get: function (key) {
                 if (key === 'search.binaryPath') {
                     return 'core/search/elasticsearch';
+                } else if (key === 'search.pidFilename') {
+                    return '../elasticsearch-pid-store';
                 } else if (key === 'search.searchStoreConfig') {
                     return './config/searchStore.json';
                 } else if (key === 'search.databasePath') {

@@ -40,8 +40,8 @@
         "folderPath"              : "plugin",
         "pluginConfigName"        : "plugin.json",
         "pluginManagerStateConfig": "pluginManager.json",
-        "api": {
-            "basePath": "core/plugin/api",
+        "api"                     : {
+            "basePath"     : "core/plugin/api",
             "pluginApiName": "PluginApi.js"
         }
     },
@@ -54,9 +54,10 @@
         "binaryPath"       : "core/search/elasticsearch",
         "databasePath"     : "db/searchStore",
         "searchStoreConfig": "./config/searchStore.json",
-        "indexManager": {
+        "pidFilename"      : "elasticsearch-pid",
+        "indexManager"     : {
             "indexRunnerDelayInMilliSeconds": 10000,
-            "indexRunnersInParallel": 3
+            "indexRunnersInParallel"        : 3
         }
     },
     "fs"      : {

@@ -161,6 +161,7 @@ var SearchStore = (function () {
             this._getDatabaseServerProcessIdPath(),
             ('-Des.config=' + configPath),
             ('-Des.path.data=' + storagePath),
+            ('-Des.logger.level=DEBUG'),
             '-d'
         ];
     };
@@ -173,7 +174,7 @@ var SearchStore = (function () {
     * @returns {string}
     */
     SearchStore.prototype._getDatabaseServerProcessIdPath = function () {
-        return path.join(this._getDatabaseServerModulePath(), '../elasticsearch-pid');
+        return path.join(this._getDatabaseServerModulePath(), this._config.get('search.pidFilename'));
     };
 
     /**

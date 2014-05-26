@@ -48,8 +48,8 @@ var PluginRunner = (function () {
         });
     };
 
-    PluginRunner.prototype.onBeforeItemAdd = function (itemPath, stats, tikaGlobals, callback) {
-        this._createAndRunSandbox(itemPath, stats, tikaGlobals, 'main.onBeforeItemAdd', callback, function (output) {
+    PluginRunner.prototype.onBeforeItemAdd = function (itemPath, stats, globals, callback) {
+        this._createAndRunSandbox(itemPath, stats, globals, 'main.onBeforeItemAdd', callback, function (output) {
             callback(null, output);
         });
     };
@@ -61,12 +61,12 @@ var PluginRunner = (function () {
     *
     * @param {string} itemPath
     * @param {fs.Stats} stats
-    * @param {Object} tikaGlobals
+    * @param {Object} globals
     * @param {string} methodName
     * @param {Function} callback
     * @param {Function} onExit
     */
-    PluginRunner.prototype._createAndRunSandbox = function (itemPath, stats, tikaGlobals, methodName, callback, onExit) {
+    PluginRunner.prototype._createAndRunSandbox = function (itemPath, stats, globals, methodName, callback, onExit) {
         this._createSandbox(itemPath);
         this._registerSandboxTimeoutHandler(itemPath, callback);
         this._sandboxScripts[itemPath].on('exit', function (err, output, methodName) {
@@ -76,7 +76,8 @@ var PluginRunner = (function () {
                 return onExit(output);
             }
         });
-        this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, tikaGlobals));
+
+        this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
     };
 
     /**

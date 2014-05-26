@@ -30,6 +30,8 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
                     return 9200;
                 } else if (key === 'search.binaryPath') {
                     return 'core/search/elasticsearch';
+                } else if (key === 'search.pidFilename') {
+                    return '../elasticsearch-pid-client';
                 } else if (key === 'search.searchStoreConfig') {
                     return './config/searchStore.json';
                 } else if (key === 'search.databasePath') {
@@ -39,7 +41,7 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
         });
 
         searchClient = new SearchClient(config, 'mainIndex', new SearchStoreFactory(), {
-            logPath: searchStoreLogsFolder,
+            logsPath: searchStoreLogsFolder,
             closeOnProcessExit: false,
             onOpenCallback: function (err) {
                 if (err) {
@@ -82,6 +84,57 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
             done();
         });
     });
+    /*it('should correctly add an item to the datastore which uses the attachment mapper plugin', function (done) {
+    var mapping = {
+    "pluginidentifier" : {
+    "properties" : {
+    "content" : {
+    "type" : "attachment",
+    "fields" : {
+    "content"  : { "store" : "yes", "term_vector":"with_positions_offsets"},
+    "author"   : { "store" : "yes" },
+    "title"    : { "store" : "yes", "analyzer" : "english"},
+    "date"     : { "store" : "yes" },
+    "keywords" : { "store" : "yes", "analyzer" : "keyword" },
+    "content_type" : { "store" : "yes" },
+    "content_length" : { "store" : "yes" }
+    }
+    }
+    }
+    }
+    };
+    /*var mapping = {
+    pluginidentifier: {
+    properties: {
+    file_attachment: {
+    type    : 'attachment',
+    "fields": {
+    "title" : { "store" : "yes" },
+    "file" : { "term_vector":"with_positions_offsets", "store":"yes" }
+    }
+    }
+    }
+    }
+    };* /
+    
+    var dataToIndex = {
+    pluginidentifier: {
+    title: 'Peeriod_Anonymous_decentralized_network.pdf',
+    content: fs.readFileSync(testUtils.getFixturePath('core/search/searchManager/Peeriod_Anonymous_decentralized_network.pdf')).toString('base64')
+    }
+    };
+    
+    searchClient.addMapping('pluginidentifier', mapping, function (err:Error) {
+    console.log(err);
+    
+    searchClient.addItem(dataToIndex, function (err:Error) {
+    console.log(err);
+    
+    console.log('done!');
+    done();
+    });
+    });
+    });*/
     /*it('should correctly create an index with the specified name and handle "already exists" errors gracefully', function (done) {
     searchClient.createIndex('foobar', function (err:Error) {
     (err === null).should.be.true;

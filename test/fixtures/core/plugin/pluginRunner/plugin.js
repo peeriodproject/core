@@ -11,9 +11,9 @@ exports.main = {
 
     onBeforeItemAdd: function () {
         exit({
-            fileStream: fileStream,
-            foo: 'bar',
-            bar: 'foo'
+            fileBuffer: fileBuffer,
+            foo       : 'bar',
+            bar       : 'foo'
         });
     }
 };

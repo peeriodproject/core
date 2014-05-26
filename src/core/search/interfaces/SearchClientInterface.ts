@@ -1,11 +1,22 @@
-import SearchApiInterface = require('./SearchApiInterface');
+/// <reference path='../../../../ts-definitions/node/node.d.ts' />
+
+import fs = require('fs');
+
+import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
 
 /**
  * The
  * @interface
  * @class core.search.SearchClientInterface
  */
-interface SearchClientInterface extends SearchApiInterface {
+interface SearchClientInterface extends ClosableAsyncInterface {
+
+	/**
+	 *
+	 * @param {Object} objectToIndex
+	 * @param {Function} callback
+	 */
+	addItem (objectToIndex:Object, callback?:(err:Error) => any):void;
 
 	/**
 	 * @param type
@@ -20,6 +31,9 @@ interface SearchClientInterface extends SearchApiInterface {
 	 * @param {Function} callback
 	 */
 	typeExists (type:string, callback:(exists:boolean) => any):void
+
+	getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void;
+	itemExists (pathToIndex:string, callback:(exists:boolean) => void):void;
 }
 
 export = SearchClientInterface;

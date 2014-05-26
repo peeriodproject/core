@@ -11,7 +11,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import PluginRunner = require('../../../src/core/plugin/PluginRunner');
 
 // todo add json error tests
-describe('CORE --> PLUGIN --> PluginRunner @_joern', function () {
+describe('CORE --> PLUGIN --> PluginRunner', function () {
 	var sandbox:SinonSandbox;
 	var pluginToLoadPath:string = 'src/plugins/textDocumentPlugin';
 	var pluginsFolderPath:string = testUtils.getFixturePath('core/plugin/pluginRunner/plugins');
@@ -19,11 +19,12 @@ describe('CORE --> PLUGIN --> PluginRunner @_joern', function () {
 	var pluginPath:string = pluginsFolderPath + '/' + pluginFolderName;
 	var pluginFilePath:string = pluginPath + '/lib/index.js';
 	var configStub:any;
-
-	var cleanupAndDone = function (pluginRunner, done) {
+	var cleanupAndDone:Function = function (pluginRunner, done) {
 		pluginRunner.cleanup();
 		done();
 	};
+
+	this.timeout(0);
 
 	before(function () {
 		testUtils.deleteFolderRecursive(pluginsFolderPath);
@@ -52,7 +53,7 @@ describe('CORE --> PLUGIN --> PluginRunner @_joern', function () {
 		testUtils.deleteFolderRecursive(pluginsFolderPath);
 	});
 
-	it ('should correctly instantiate without errror', function (done) {
+	it('should correctly instantiate without errror', function (done) {
 		var pluginRunner = new PluginRunner(configStub, 'identifier', pluginFilePath);
 		pluginRunner.should.be.an.instanceof(PluginRunner);
 
@@ -61,17 +62,20 @@ describe('CORE --> PLUGIN --> PluginRunner @_joern', function () {
 		}, 500);
 	});
 
-	describe ('should correctly run the provided script', function () {
+	describe('should correctly run the provided script', function () {
 		var statsJson:string = '{"dev":16777222,"mode":33188,"nlink":1,"uid":501,"gid":20,"rdev":0,"blksize":4096,"ino":27724859,"size":6985,"blocks":16,"atime":"2014-05-18T11:59:13.000Z","mtime":"2014-05-16T21:16:41.000Z","ctime":"2014-05-16T21:16:41.000Z"}';
 		var pluginPath:string = testUtils.getFixturePath('core/plugin/pluginRunner/plugin.js');
-		var tikaGlobals = null;
+		var filePath:string = testUtils.getFixturePath('core/plugin/pluginRunner/file.jpg');
+		var globals = {
+			fileBuffer: new Buffer(1000)
+		};
 
-		it ('should correctly return a "timed out" error', function (done) {
+		it('should correctly return a "timed out" error', function (done) {
 			this.timeout(0);
 
 			var pluginRunner = new PluginRunner(configStub, 'identifier', testUtils.getFixturePath('core/plugin/pluginRunner/timeoutPlugin.js'));
 
-			pluginRunner.onBeforeItemAdd('/path/to/item', JSON.parse(statsJson), tikaGlobals, function (err, output) {
+			pluginRunner.onBeforeItemAdd(filePath, JSON.parse(statsJson), globals, function (err, output) {
 				// todo check message
 				err.should.be.an.instanceof(Error);
 				(output === null).should.be.true;
@@ -80,10 +84,10 @@ describe('CORE --> PLUGIN --> PluginRunner @_joern', function () {
 			});
 		});
 
-		it ('should correctly return the script error', function (done) {
+		it('should correctly return the script error', function (done) {
 			var pluginRunner = new PluginRunner(configStub, 'identifier', testUtils.getFixturePath('core/plugin/pluginRunner/invalidPlugin.js'));
 
-			pluginRunner.onBeforeItemAdd('/path/to/item', JSON.parse(statsJson), tikaGlobals, function (err, output) {
+			pluginRunner.onBeforeItemAdd(filePath, JSON.parse(statsJson), globals, function (err, output) {
 				err.should.be.an.instanceof(Error);
 				err.message.should.equal('invalidFunctonCall is not defined');
 				(output === null).should.be.true;
@@ -92,21 +96,22 @@ describe('CORE --> PLUGIN --> PluginRunner @_joern', function () {
 			});
 		});
 
-		it ('should correctly call the onNewItemWillBeAdded method', function (done) {
+		it('should correctly call the onNewItemWillBeAdded method', function (done) {
 			var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
 
-			pluginRunner.onBeforeItemAdd('/path/to/item', JSON.parse(statsJson), tikaGlobals, function (err, output) {
+			pluginRunner.onBeforeItemAdd(filePath, JSON.parse(statsJson), globals, function (err, output) {
 				(err === null).should.be.true;
 				output.should.containDeep({
-					foo: 'bar',
-					bar: 'foo'
+					fileBuffer: globals.fileBuffer.toJSON(),
+					foo       : 'bar',
+					bar       : 'foo'
 				});
 
 				cleanupAndDone(pluginRunner, done);
 			});
 		});
 
-		it ('should correctly call the getMapping method', function (done) {
+		it('should correctly call the getMapping method', function (done) {
 			var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
 
 			pluginRunner.getMapping(function (err:Error, output) {
