@@ -110,6 +110,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		var checkAndCallback:Function = (port:number, server:net.Server) => {
 				if (callbackTimeout) {
 					clearTimeout(callbackTimeout);
+					callbackTimeout = 0;
 				}
 
 				if (Object.keys(this._openTCPServers).length === this._myOpenPorts.length) {

@@ -100,6 +100,7 @@ var TCPSocketHandler = (function (_super) {
         var checkAndCallback = function (port, server) {
             if (callbackTimeout) {
                 clearTimeout(callbackTimeout);
+                callbackTimeout = 0;
             }
 
             if (Object.keys(_this._openTCPServers).length === _this._myOpenPorts.length) {
