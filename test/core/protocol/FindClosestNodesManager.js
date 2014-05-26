@@ -10,12 +10,14 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var ProtocolConnectionManager = require('../../../src/core/protocol/net/ProtocolConnectionManager');
 var ProxyManager = require('../../../src/core/protocol/proxy/ProxyManager');
 var MyNode = require('../../../src/core/topology/MyNode');
+var ContactNode = require('../../../src/core/topology/ContactNode');
 var FoundClosestNodesReadableMessageFactory = require('../../../src/core/protocol/findClosestNodes/messages/FoundClosestNodesReadableMessageFactory');
 var FoundClosestNodesReadableMessage = require('../../../src/core/protocol/findClosestNodes/messages/FoundClosestNodesReadableMessage');
 var FoundClosestNodesWritableMessageFactory = require('../../../src/core/protocol/findClosestNodes/messages/FoundClosestNodesWritableMessageFactory');
 var Id = require('../../../src/core/topology/Id');
 var RoutingTable = require('../../../src/core/topology/RoutingTable');
 var FindClosestNodesCycleFactory = require('../../../src/core/protocol/findClosestNodes/FindClosestNodesCycleFactory');
+var ReadableMessage = require('../../../src/core/protocol/messages/ReadableMessage');
 
 describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesManager @current', function () {
     var sandbox = null;
@@ -41,6 +43,8 @@ describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesManager @
     var getClosestResult = ['foobar'];
 
     var startWithList = null;
+
+    var searchedForId = null;
 
     before(function () {
         sandbox = sinon.sandbox.create();
@@ -80,6 +84,7 @@ describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesManager @
 
         writableMessageFactoryStub = testUtils.stubPublicApi(sandbox, FoundClosestNodesWritableMessageFactory, {
             constructPayload: function (searchForId, anArray) {
+                searchedForId = searchForId;
                 return new Buffer(anArray[0], 'utf8');
             }
         });
@@ -96,14 +101,14 @@ describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesManager @
 
         myNodeStub = testUtils.stubPublicApi(sandbox, MyNode, {
             getId: function () {
-                return new Id(Id.byteBufferByHexString('eeee', 2), 16);
+                return new Id(Id.byteBufferByHexString('eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', 20), 160);
             }
         });
 
         cycleFactoryStub = testUtils.stubPublicApi(sandbox, FindClosestNodesCycleFactory, {
             'create': function (a, startList, callback) {
                 startWithList = startList;
-                callback();
+                callback(a);
             }
         });
     });
@@ -118,6 +123,61 @@ describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesManager @
         manager.getK().should.equal(5);
         manager.getCycleExpirationMillis().should.equal(1000);
         manager.getParallelismDelayMillis().should.equal(500);
+    });
+
+    it('should emit the right event when a FOUND_CLOSEST_NODES msg rolls in', function (done) {
+        var msg = testUtils.stubPublicApi(sandbox, ReadableMessage, {
+            getMessageType: function () {
+                return 'FOUND_CLOSEST_NODES';
+            }
+        });
+
+        manager.once('ffff', function () {
+            done();
+        });
+
+        gotMessage(msg);
+    });
+
+    it('should adjust the searched for id when searching for its own id', function (done) {
+        var msg = testUtils.stubPublicApi(sandbox, ReadableMessage, {
+            getMessageType: function () {
+                return 'FIND_CLOSEST_NODES';
+            },
+            getPayload: function () {
+                return new Buffer('eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', 'hex');
+            },
+            getSender: function () {
+                return testUtils.stubPublicApi(sandbox, ContactNode, {
+                    getId: function () {
+                        return new Id(Id.byteBufferByHexString('1e1e', 2), 16);
+                    }
+                });
+            }
+        });
+
+        gotMessage(msg);
+
+        process.nextTick(function () {
+            if (searchedForId.toHexString() === 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeef')
+                done();
+        });
+    });
+
+    it('should have written out the payload', function () {
+        writtenPayload.toString().should.equal('foobar');
+    });
+
+    it('should correctly start / perform a cycle and emit when done', function (done) {
+        getClosestResult = ['a', 'b', 'c'];
+
+        manager.once('foundClosestNodes', function (id) {
+            if (id.toHexString() === '1111') {
+                if (startWithList.length === 2 && manager.getPendingCycles().length === 0)
+                    done();
+            }
+        });
+        manager.startCycleFor(new Id(Id.byteBufferByHexString('1111', 2), 16));
     });
 
     after(function () {

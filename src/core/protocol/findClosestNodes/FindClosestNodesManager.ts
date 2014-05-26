@@ -174,7 +174,6 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 					this._pendingCycles.push(identifier);
 
 					this._findClosestNodesCycleFactory.create(searchForId, startWithList, (resultingList:ContactNodeListInterface) => {
-
 						this._pendingCycles.splice(this._pendingCycles.indexOf(identifier), 1);
 
 						this.emit('foundClosestNodes', searchForId, resultingList);
