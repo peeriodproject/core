@@ -16,8 +16,8 @@ import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInte
 import ContactNodeListInterface = require('../../topology/interfaces/ContactNodeListInterface');
 import IdInterface = require('../../topology/interfaces/IdInterface');
 import Id = require('../../topology/Id');
-import FindClosestNodesCycleInterface = require('./interfaces/FindClosestNodesCycleInterface');
-import FindClosestNodesCycle = require('./FindClosestNodesCycle');
+import FindClosestNodesCycleFactoryInterface = require('./interfaces/FindClosestNodesCycleFactoryInterface');
+import FindClosestNodesCycleFactory = require('./FindClosestNodesCycleFactory');
 
 /**
  *
@@ -32,6 +32,9 @@ import FindClosestNodesCycle = require('./FindClosestNodesCycle');
  * @param {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager A working protocol connection manager instance.
  * @param {core.protocol.proxy.ProxyManagerInterface} proxyManager A working proxy manager instance.
  * @param {core.protocol.topology.RoutingTableInterface} routingtable A routing table.
+ * @param {core.protocol.findClosestNodes.FindClosestNodesCycleFactoryInterface} findClosestNodesCycleFactory A cycle factory.
+ * @param {core.protocol.findClosestNodes.FoundClosestNodesWritableMessageFactoryInterface} writableMessageFactory A found closest nodes writable message factory.
+ * @param {core.protocol.findClosestNodes.FoundClosestNodesReadableMessageFactoryInterface} readableMessageFactory A found closest nodes readable message factory.
  */
 class FindClosestNodesManager extends events.EventEmitter implements FindClosestNodesManagerInterface {
 
@@ -49,6 +52,11 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 	 * @member {number} core.protocol.findClosestNodes.FindClosestNodesManager~_cycleExpirationMillis
 	 */
 	_cycleExpirationMillis:number = 0;
+
+	/**
+	 * @member {core.protocol.findClosestNodes.FindClosestNodesCycleFactoryInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_findClosestNodesCycleFactory
+	 */
+	_findClosestNodesCycleFactory:FindClosestNodesCycleFactoryInterface = null;
 
 	/**
 	 * Number of nodes a cycle should return in the best case, and how many nodes one should return when being requested.
@@ -105,7 +113,10 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 	 */
 	_writableMessageFactory:FoundClosestNodesWritableMessageFactoryInterface = null;
 
-	constructor (topologyConfig:ConfigInterface, protocolConfig:ConfigInterface, myNode:MyNodeInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, proxyManager:ProxyManagerInterface, routingTable:RoutingTableInterface) {
+
+	constructor (topologyConfig:ConfigInterface, protocolConfig:ConfigInterface, myNode:MyNodeInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, proxyManager:ProxyManagerInterface,
+		routingTable:RoutingTableInterface, findClosestNodesCycleFactory:FindClosestNodesCycleFactoryInterface, writableMessageFactory:FoundClosestNodesWritableMessageFactoryInterface,
+		readableMessageFactory:FoundClosestNodesReadableMessageFactoryInterface) {
 
 		super();
 
@@ -118,9 +129,11 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 		this._protocolConnectionManager = protocolConnectionManager;
 		this._proxyManager = proxyManager;
 		this._routingTable = routingTable;
+		this._findClosestNodesCycleFactory = findClosestNodesCycleFactory;
+		this._findClosestNodesCycleFactory.setManager(this);
 
-		this._writableMessageFactory = new FoundClosestNodesWritableMessageFactory();
-		this._readableMessageFactory = new FoundClosestNodesReadableMessageFactory();
+		this._writableMessageFactory = writableMessageFactory;
+		this._readableMessageFactory = readableMessageFactory;
 
 		this._setupListeners();
 	}
@@ -141,6 +154,13 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 		return this._parallelismDelayMillis;
 	}
 
+	/**
+	 * Testing purposes only. Should not be used in production.
+	 */
+	public getPendingCycles ():Array<string> {
+		return this._pendingCycles;
+	}
+
 	public startCycleFor (searchForId:IdInterface):void {
 		this._routingTable.getClosestContactNodes (searchForId, null, (err:Error, contacts:ContactNodeListInterface) => {
 			if (!err && contacts && contacts.length) {
@@ -153,7 +173,7 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 
 					this._pendingCycles.push(identifier);
 
-					new FindClosestNodesCycle(searchForId, startWithList, this, this._protocolConnectionManager, (resultingList:ContactNodeListInterface) => {
+					this._findClosestNodesCycleFactory.create(searchForId, startWithList, (resultingList:ContactNodeListInterface) => {
 
 						this._pendingCycles.splice(this._pendingCycles.indexOf(identifier), 1);
 

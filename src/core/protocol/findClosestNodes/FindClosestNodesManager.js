@@ -6,13 +6,7 @@ var __extends = this.__extends || function (d, b) {
 };
 var events = require('events');
 
-var FoundClosestNodesReadableMessageFactory = require('./messages/FoundClosestNodesReadableMessageFactory');
-
-var FoundClosestNodesWritableMessageFactory = require('./messages/FoundClosestNodesWritableMessageFactory');
-
 var Id = require('../../topology/Id');
-
-var FindClosestNodesCycle = require('./FindClosestNodesCycle');
 
 /**
 *
@@ -27,10 +21,13 @@ var FindClosestNodesCycle = require('./FindClosestNodesCycle');
 * @param {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager A working protocol connection manager instance.
 * @param {core.protocol.proxy.ProxyManagerInterface} proxyManager A working proxy manager instance.
 * @param {core.protocol.topology.RoutingTableInterface} routingtable A routing table.
+* @param {core.protocol.findClosestNodes.FindClosestNodesCycleFactoryInterface} findClosestNodesCycleFactory A cycle factory.
+* @param {core.protocol.findClosestNodes.FoundClosestNodesWritableMessageFactoryInterface} writableMessageFactory A found closest nodes writable message factory.
+* @param {core.protocol.findClosestNodes.FoundClosestNodesReadableMessageFactoryInterface} readableMessageFactory A found closest nodes readable message factory.
 */
 var FindClosestNodesManager = (function (_super) {
     __extends(FindClosestNodesManager, _super);
-    function FindClosestNodesManager(topologyConfig, protocolConfig, myNode, protocolConnectionManager, proxyManager, routingTable) {
+    function FindClosestNodesManager(topologyConfig, protocolConfig, myNode, protocolConnectionManager, proxyManager, routingTable, findClosestNodesCycleFactory, writableMessageFactory, readableMessageFactory) {
         _super.call(this);
         /**
         * Number indicating how many nodes to request in a cycle in one go.
@@ -45,6 +42,10 @@ var FindClosestNodesManager = (function (_super) {
         * @member {number} core.protocol.findClosestNodes.FindClosestNodesManager~_cycleExpirationMillis
         */
         this._cycleExpirationMillis = 0;
+        /**
+        * @member {core.protocol.findClosestNodes.FindClosestNodesCycleFactoryInterface} core.protocol.findClosestNodes.FindClosestNodesManager~_findClosestNodesCycleFactory
+        */
+        this._findClosestNodesCycleFactory = null;
         /**
         * Number of nodes a cycle should return in the best case, and how many nodes one should return when being requested.
         *
@@ -101,9 +102,11 @@ var FindClosestNodesManager = (function (_super) {
         this._protocolConnectionManager = protocolConnectionManager;
         this._proxyManager = proxyManager;
         this._routingTable = routingTable;
+        this._findClosestNodesCycleFactory = findClosestNodesCycleFactory;
+        this._findClosestNodesCycleFactory.setManager(this);
 
-        this._writableMessageFactory = new FoundClosestNodesWritableMessageFactory();
-        this._readableMessageFactory = new FoundClosestNodesReadableMessageFactory();
+        this._writableMessageFactory = writableMessageFactory;
+        this._readableMessageFactory = readableMessageFactory;
 
         this._setupListeners();
     }
@@ -123,6 +126,13 @@ var FindClosestNodesManager = (function (_super) {
         return this._parallelismDelayMillis;
     };
 
+    /**
+    * Testing purposes only. Should not be used in production.
+    */
+    FindClosestNodesManager.prototype.getPendingCycles = function () {
+        return this._pendingCycles;
+    };
+
     FindClosestNodesManager.prototype.startCycleFor = function (searchForId) {
         var _this = this;
         this._routingTable.getClosestContactNodes(searchForId, null, function (err, contacts) {
@@ -134,7 +144,7 @@ var FindClosestNodesManager = (function (_super) {
 
                     _this._pendingCycles.push(identifier);
 
-                    new FindClosestNodesCycle(searchForId, startWithList, _this, _this._protocolConnectionManager, function (resultingList) {
+                    _this._findClosestNodesCycleFactory.create(searchForId, startWithList, function (resultingList) {
                         _this._pendingCycles.splice(_this._pendingCycles.indexOf(identifier), 1);
 
                         _this.emit('foundClosestNodes', searchForId, resultingList);
