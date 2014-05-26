@@ -27,6 +27,8 @@ describe('CORE --> SEARCH --> SearchStoreFactory', function () {
                     return 9200;
                 } else if (key === 'search.binaryPath') {
                     return 'core/search/elasticsearch';
+                } else if (key === 'search.pidFilename') {
+                    return '../elasticsearch-pid-factory';
                 } else if (key === 'search.searchStoreConfig') {
                     return './config/searchStore.json';
                 } else if (key === 'search.databasePath') {

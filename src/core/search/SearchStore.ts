@@ -184,7 +184,7 @@ class SearchStore implements SearchStoreInterface {
 	 * @returns {string}
 	 */
 	private _getDatabaseServerProcessIdPath ():string {
-		return path.join(this._getDatabaseServerModulePath(), '../elasticsearch-pid');
+		return path.join(this._getDatabaseServerModulePath(), this._config.get('search.pidFilename'));
 	}
 
 	/**

@@ -36,6 +36,9 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 				else if (key === 'search.binaryPath') {
 					return 'core/search/elasticsearch'
 				}
+				else if (key === 'search.pidFilename') {
+					return '../elasticsearch-pid-client';
+				}
 				else if (key === 'search.searchStoreConfig') {
 					return './config/searchStore.json';
 				}
@@ -92,7 +95,7 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 		});
 	});
 
-	it('should correctly add an item to the datastore which uses the attachment mapper plugin', function (done) {
+	/*it('should correctly add an item to the datastore which uses the attachment mapper plugin', function (done) {
 		var mapping = {
 			"pluginidentifier" : {
 				"properties" : {
@@ -123,7 +126,7 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 					}
 				}
 			}
-		};*/
+		};* /
 
 		var dataToIndex = {
 			pluginidentifier: {
@@ -142,7 +145,7 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 				done();
 			});
 		});
-	});
+	});*/
 
 	/*it('should correctly create an index with the specified name and handle "already exists" errors gracefully', function (done) {
 	 searchClient.createIndex('foobar', function (err:Error) {
