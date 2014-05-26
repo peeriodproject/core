@@ -16,6 +16,8 @@ import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInte
 import ContactNodeListInterface = require('../../topology/interfaces/ContactNodeListInterface');
 import IdInterface = require('../../topology/interfaces/IdInterface');
 import Id = require('../../topology/Id');
+import FindClosestNodesCycleInterface = require('./interfaces/FindClosestNodesCycleInterface');
+import FindClosestNodesCycle = require('./FindClosestNodesCycle');
 
 class FindClosestNodesManager extends events.EventEmitter implements FindClosestNodesManagerInterface {
 
@@ -32,6 +34,7 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 	_writableMessageFactory:FoundClosestNodesWritableMessageFactoryInterface = null;
 	_readableMessageFactory:FoundClosestNodesReadableMessageFactoryInterface = null;
 
+	_pendingCycles:Array<string> = [];
 
 
 	constructor (topologyConfig:ConfigInterface, protocolConfig:ConfigInterface, myNode:MyNodeInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, proxyManager:ProxyManagerInterface, routingTable:RoutingTableInterface) {
@@ -85,7 +88,7 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 		});
 	}
 
-	private _replyToFindNodesFor(requestingNode:ContactNodeInterface, searchForId:IdInterface):void {
+	private _replyToFindNodesFor (requestingNode:ContactNodeInterface, searchForId:IdInterface):void {
 		if (this._myNode.getId().equals(searchForId)) {
 			var idBuffer = searchForId.getBuffer();
 			idBuffer[19] === 0xff ? idBuffer[19]-- : idBuffer[19]++;
@@ -104,6 +107,46 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 				}
 			}
 		});
+	}
+
+	public startCycleFor (searchForId:IdInterface):void {
+		this._routingTable.getClosestContactNodes (searchForId, null, (err:Error, contacts:ContactNodeListInterface) => {
+			if (!err && contacts && contacts.length) {
+
+				var identifier:string = searchForId.toHexString();
+
+				if (this._pendingCycles.indexOf(identifier) === -1) {
+
+					var startWithList:ContactNodeListInterface = contacts.splice(0, Math.min(contacts.length, this._alpha));
+
+					this._pendingCycles.push(identifier);
+
+					new FindClosestNodesCycle(searchForId, startWithList, this, this._protocolConnectionManager, (resultingList:ContactNodeListInterface) => {
+
+						this._pendingCycles.splice(this._pendingCycles.indexOf(identifier), 1);
+
+						this.emit('foundClosestNodes', searchForId, resultingList);
+					});
+				}
+
+			}
+		});
+	}
+
+	public getK ():number {
+		return this._k;
+	}
+
+	public getAlpha ():number {
+		return this._alpha;
+	}
+
+	public getCycleExpirationMillis ():number {
+		return this._cycleExpirationMillis;
+	}
+
+	public getParallelismDelayMillis ():number {
+		return this._parallelismDelayMillis;
 	}
 
 

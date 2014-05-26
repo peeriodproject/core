@@ -12,6 +12,8 @@ var FoundClosestNodesWritableMessageFactory = require('./messages/FoundClosestNo
 
 var Id = require('../../topology/Id');
 
+var FindClosestNodesCycle = require('./FindClosestNodesCycle');
+
 var FindClosestNodesManager = (function (_super) {
     __extends(FindClosestNodesManager, _super);
     function FindClosestNodesManager(topologyConfig, protocolConfig, myNode, protocolConnectionManager, proxyManager, routingTable) {
@@ -26,6 +28,7 @@ var FindClosestNodesManager = (function (_super) {
         this._parallelismDelayMillis = 0;
         this._writableMessageFactory = null;
         this._readableMessageFactory = null;
+        this._pendingCycles = [];
 
         this._k = topologyConfig.get('topology.k');
         this._alpha = topologyConfig.get('topology.alpha');
@@ -92,6 +95,43 @@ var FindClosestNodesManager = (function (_super) {
                 }
             }
         });
+    };
+
+    FindClosestNodesManager.prototype.startCycleFor = function (searchForId) {
+        var _this = this;
+        this._routingTable.getClosestContactNodes(searchForId, null, function (err, contacts) {
+            if (!err && contacts && contacts.length) {
+                var identifier = searchForId.toHexString();
+
+                if (_this._pendingCycles.indexOf(identifier) === -1) {
+                    var startWithList = contacts.splice(0, contacts.length > _this._alpha ? _this._alpha : contacts.length);
+
+                    _this._pendingCycles.push(identifier);
+
+                    new FindClosestNodesCycle(searchForId, startWithList, _this, _this._protocolConnectionManager, function (resultingList) {
+                        _this._pendingCycles.splice(_this._pendingCycles.indexOf(identifier), 1);
+
+                        _this.emit('foundClosestNodes', searchForId, resultingList);
+                    });
+                }
+            }
+        });
+    };
+
+    FindClosestNodesManager.prototype.getK = function () {
+        return this._k;
+    };
+
+    FindClosestNodesManager.prototype.getAlpha = function () {
+        return this._alpha;
+    };
+
+    FindClosestNodesManager.prototype.getCycleExpirationMillis = function () {
+        return this._cycleExpirationMillis;
+    };
+
+    FindClosestNodesManager.prototype.getParallelismDelayMillis = function () {
+        return this._parallelismDelayMillis;
     };
     return FindClosestNodesManager;
 })(events.EventEmitter);
