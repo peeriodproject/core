@@ -17,6 +17,9 @@ var SearchManager = (function () {
     }
     SearchManager.prototype.addItem = function (pathToIndex, stats, callback) {
         var _this = this;
+        var internalCallback = callback || function () {
+        };
+
         this._pluginManager.onBeforeItemAdd(pathToIndex, stats, function (pluginDatas) {
             // to the request to the database
             _this._searchClient.addItem(null, null, function (err) {
@@ -50,8 +53,11 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype._registerPluginManagerEvents = function () {
+        var _this = this;
         // todo register on plugin delete handler and remove type from index
-        this._pluginManager.addEventListener('pluginAdded', this._onPluginAddedListener);
+        this._pluginManager.addEventListener('pluginAdded', function (pluginIdentifier) {
+            _this._onPluginAddedListener(pluginIdentifier);
+        });
     };
 
     SearchManager.prototype._onPluginAddedListener = function (pluginIdentifier) {

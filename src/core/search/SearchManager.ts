@@ -31,6 +31,8 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	addItem (pathToIndex:string, stats:fs.Stats, callback?:(err:Error) => any):void {
+		var internalCallback:Function = callback || function () {};
+
 		this._pluginManager.onBeforeItemAdd(pathToIndex, stats, (pluginDatas:Object) => {
 			// to the request to the database
 			this._searchClient.addItem(null, null, function(err) {
@@ -65,7 +67,9 @@ class SearchManager implements SearchManagerInterface {
 
 	private _registerPluginManagerEvents ():void {
 		// todo register on plugin delete handler and remove type from index
-		this._pluginManager.addEventListener('pluginAdded', this._onPluginAddedListener);
+		this._pluginManager.addEventListener('pluginAdded', (pluginIdentifier) => {
+			this._onPluginAddedListener(pluginIdentifier);
+		});
 	}
 
 	private _onPluginAddedListener (pluginIdentifier:string):void {

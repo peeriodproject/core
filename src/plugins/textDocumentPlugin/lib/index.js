@@ -16,7 +16,15 @@
     * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/indices-put-mapping.html
     */
     function getMapping() {
-        var mapping = {};
+        var mapping = {
+            textdocument: {
+                properties: {
+                    file_attachment: {
+                        type: 'attachment'
+                    }
+                }
+            }
+        };
 
         exit(mapping);
     }

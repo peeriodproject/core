@@ -367,7 +367,7 @@ class PluginManager implements PluginManagerInterface {
 
 	/**
 	 * The PluginManager is going to activate the plugin. But before we're going to run thirdparty code within
-	 * the app we validate the code using a {@link core.plugin.PluginValidatorInterface}.
+	 * the app we validate the plugin using a {@link core.plugin.PluginValidatorInterface}.
 	 */
 	private _activatePlugin (pluginState:PluginStateObjectInterface, callback:(err:Error) => void):void {
 		var internalCallback = callback || function (err:Error) {
@@ -420,13 +420,21 @@ class PluginManager implements PluginManagerInterface {
 		return path.join(this._config.get('app.dataPath'), 'pluginManager.json');
 	}
 
+	/**
+	 * Returns the mimetype for the given path.
+	 *
+	 * @method core.plugin.PluginManager~_getMimeType
+	 *
+	 * @param {string} filePath
+	 * @returns {string}
+	 */
 	private _getMimeType (filePath:string):string {
 		return mime.lookup(filePath);
 	}
 
-	private _isResponsibleForMimeType (mimeType:string, pluginLoader:PluginLoaderInterface):boolean {
+	/*private _isResponsibleForMimeType (mimeType:string, pluginLoader:PluginLoaderInterface):boolean {
 		return (pluginLoader.getFileMimeTypes().indexOf(mimeType) !== 1) ? true : false;
-	}
+	}*/
 
 	/**
 	 * Loads the plugin state from a persistant storage

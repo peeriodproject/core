@@ -5,6 +5,7 @@ var sinon = require('sinon');
 var testUtils = require('../../utils/testUtils');
 
 var PluginManager = require('../../../src/core/plugin/PluginManager');
+var PluginRunner = require('../../../src/core/plugin/PluginRunner');
 var SearchClient = require('../../../src/core/search/SearchClient');
 var SearchManager = require('../../../src/core/search/SearchManager');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
@@ -47,12 +48,24 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 
     it('should correctly call the addItem method', function (done) {
         var configStub = createConfig();
+        var pluginsMapping = {
+            'foo bar active': {
+                textdocument: {
+                    properties: {
+                        file_attachment: {
+                            type: 'attachment'
+                        }
+                    }
+                }
+            }
+        };
+
         var pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager, {
             onBeforeItemAdd: function (itemPath, stats, callback) {
                 itemPath.should.equal('/path/to/item');
                 stats.should.containDeep(JSON.parse(statsJson));
 
-                callback();
+                callback(pluginsMapping);
             }
         });
         var searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
@@ -60,7 +73,7 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
                 callback(null);
             }
         });
-        var statsJson = '{"dev":16777222,"mode":33188,"nlink":1,"uid":501,"gid":20,"rdev":0,"blksize":4096,"ino":27724859,"size":6985,"blocks":16,"atime":"2014-05-18T11:59:13.000Z","mtime":"2014-05-16T21:16:41.000Z","ctime":"2014-05-16T21:16:41.000Z"}';
+        var statsJson = '{"dev":16777222," mode":33188,"nlink":1,"uid":501,"gid":20,"rdev":0,"blksize":4096,"ino":27724859,"size":6985,"blocks":16,"atime":"2014-05-18T11:59:13.000Z","mtime":"2014-05-16T21:16:41.000Z","ctime":"2014-05-16T21:16:41.000Z"}';
 
         var searchManager = new SearchManager(configStub, pluginManagerStub, searchClientStub);
 
@@ -74,6 +87,46 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
             // todo test pluginDatas passed to searchClient
             closeAndDone(searchManager, done);
         });
+    });
+
+    it('should correctly create a mapping for the given plugin identifier if it does not exists', function (done) {
+        var configStub = createConfig();
+        var pluginMapping = {
+            textdocument: {
+                properties: {
+                    file_attachment: {
+                        type: 'attachment'
+                    }
+                }
+            }
+        };
+        var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
+            getMapping: function (callback) {
+                callback(pluginMapping);
+            }
+        });
+        var pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager, {
+            addEventListener: function (eventName, listener) {
+                return process.nextTick(listener.bind(null, 'pluginIdentifier'));
+            },
+            getActivePluginRunner: function (identifier, callback) {
+                callback(pluginRunnerStub);
+            }
+        });
+        var searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
+            typeExists: function (identifier, callback) {
+                identifier.should.equal('pluginIdentifier');
+                callback(false);
+            },
+            addMapping: function (pluginIdentifier, mapping, callback) {
+                pluginIdentifier.should.equal('pluginIdentifier');
+                mapping.should.containDeep(pluginMapping);
+
+                closeAndDone(searchManager, done);
+            }
+        });
+
+        var searchManager = new SearchManager(configStub, pluginManagerStub, searchClientStub);
     });
 });
 //# sourceMappingURL=SearchManager.js.map
