@@ -165,6 +165,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 			this._alphaTimeout = 0;
 		}
 
+		this._callback(this._confirmedList);
 	}
 
 }

@@ -144,6 +144,8 @@ var FindClosestNodesCycle = (function () {
             clearTimeout(this._alphaTimeout);
             this._alphaTimeout = 0;
         }
+
+        this._callback(this._confirmedList);
     };
     return FindClosestNodesCycle;
 })();
