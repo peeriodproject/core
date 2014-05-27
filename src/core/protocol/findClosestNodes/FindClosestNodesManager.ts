@@ -159,27 +159,34 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 		return this._pendingCycles;
 	}
 
-	public startCycleFor (searchForId:IdInterface):void {
-		this._routingTable.getClosestContactNodes(searchForId, null, (err:Error, contacts:ContactNodeListInterface) => {
-			if (!err && contacts && contacts.length) {
-
-				var identifier:string = searchForId.toHexString();
-
-				if (this._pendingCycles.indexOf(identifier) === -1) {
-
-					var startWithList:ContactNodeListInterface = contacts.splice(0, Math.min(contacts.length, this._alpha));
-
-					this._pendingCycles.push(identifier);
-
-					this._findClosestNodesCycleFactory.create(searchForId, startWithList, (resultingList:ContactNodeListInterface) => {
-						this._pendingCycles.splice(this._pendingCycles.indexOf(identifier), 1);
-
-						this.emit('foundClosestNodes', searchForId, resultingList);
-					});
+	public startCycleFor (searchForId:IdInterface, forceList?:ContactNodeListInterface):void {
+		if (forceList && forceList.length) {
+			this._startCycleWithList(searchForId, forceList);
+		}
+		else {
+			this._routingTable.getClosestContactNodes(searchForId, null, (err:Error, contacts:ContactNodeListInterface) => {
+				if (!err && contacts && contacts.length) {
+					this._startCycleWithList(searchForId, contacts);
 				}
+			});
+		}
+	}
 
-			}
-		});
+	private _startCycleWithList (searchForId:IdInterface, contacts:ContactNodeListInterface):void {
+		var identifier:string = searchForId.toHexString();
+
+		if (this._pendingCycles.indexOf(identifier) === -1) {
+
+			var startWithList:ContactNodeListInterface = contacts.splice(0, Math.min(contacts.length, this._alpha));
+
+			this._pendingCycles.push(identifier);
+
+			this._findClosestNodesCycleFactory.create(searchForId, startWithList, (resultingList:ContactNodeListInterface) => {
+				this._pendingCycles.splice(this._pendingCycles.indexOf(identifier), 1);
+
+				this.emit('foundClosestNodes', searchForId, resultingList);
+			});
+		}
 	}
 
 	/**

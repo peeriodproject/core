@@ -133,25 +133,34 @@ var FindClosestNodesManager = (function (_super) {
         return this._pendingCycles;
     };
 
-    FindClosestNodesManager.prototype.startCycleFor = function (searchForId) {
+    FindClosestNodesManager.prototype.startCycleFor = function (searchForId, forceList) {
         var _this = this;
-        this._routingTable.getClosestContactNodes(searchForId, null, function (err, contacts) {
-            if (!err && contacts && contacts.length) {
-                var identifier = searchForId.toHexString();
-
-                if (_this._pendingCycles.indexOf(identifier) === -1) {
-                    var startWithList = contacts.splice(0, Math.min(contacts.length, _this._alpha));
-
-                    _this._pendingCycles.push(identifier);
-
-                    _this._findClosestNodesCycleFactory.create(searchForId, startWithList, function (resultingList) {
-                        _this._pendingCycles.splice(_this._pendingCycles.indexOf(identifier), 1);
-
-                        _this.emit('foundClosestNodes', searchForId, resultingList);
-                    });
+        if (forceList && forceList.length) {
+            this._startCycleWithList(searchForId, forceList);
+        } else {
+            this._routingTable.getClosestContactNodes(searchForId, null, function (err, contacts) {
+                if (!err && contacts && contacts.length) {
+                    _this._startCycleWithList(searchForId, contacts);
                 }
-            }
-        });
+            });
+        }
+    };
+
+    FindClosestNodesManager.prototype._startCycleWithList = function (searchForId, contacts) {
+        var _this = this;
+        var identifier = searchForId.toHexString();
+
+        if (this._pendingCycles.indexOf(identifier) === -1) {
+            var startWithList = contacts.splice(0, Math.min(contacts.length, this._alpha));
+
+            this._pendingCycles.push(identifier);
+
+            this._findClosestNodesCycleFactory.create(searchForId, startWithList, function (resultingList) {
+                _this._pendingCycles.splice(_this._pendingCycles.indexOf(identifier), 1);
+
+                _this.emit('foundClosestNodes', searchForId, resultingList);
+            });
+        }
     };
 
     /**
