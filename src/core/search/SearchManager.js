@@ -41,8 +41,12 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype.getItem = function (pathToIndex, callback) {
-        // todo iplementation
-        return process.nextTick(callback.bind(null, null, null));
+        this._searchClient.getItemByPath(pathToIndex, function (err, item) {
+            console.log(err);
+            console.log(item);
+
+            callback(null, null);
+        });
     };
 
     SearchManager.prototype.isOpen = function (callback) {

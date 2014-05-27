@@ -53,8 +53,12 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
-		// todo iplementation
-		return process.nextTick(callback.bind(null, null, null));
+		this._searchClient.getItemByPath(pathToIndex, function (err:Error, item:Object) {
+			console.log(err);
+			console.log(item);
+
+			callback(null, null);
+		});
 	}
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
@@ -131,6 +135,7 @@ class SearchManager implements SearchManagerInterface {
 				type: 'string',
 				store: 'yes'
 			}/*,
+			todo add item stats inner object to mapping
 			itemStats: {
 				type:Object
 			}*/

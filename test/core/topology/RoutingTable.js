@@ -12,7 +12,7 @@ var ContactNode = require('../../../src/core/topology/ContactNode');
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> TOPOLOGY --> RoutingTable', function () {
+describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
     var sandbox;
     var configStub;
     var me;
@@ -156,6 +156,32 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
                     });
                 });
             });
+        });
+    });
+
+    it('should correctly call the internal bucket.size method of k buckets', function (done) {
+        var routingTable;
+        var size = 0;
+
+        bucketStub = testUtils.stubPublicApi(sandbox, Bucket, {
+            size: function (callback) {
+                var bucketSize = 10;
+
+                size += bucketSize;
+
+                callback(null, bucketSize);
+            }
+        });
+
+        routingTable = new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub, {
+            closeOnProcessExit: false
+        });
+
+        routingTable.getAllContactNodesSize(function (err, size) {
+            size.should.equal(topologyBitLength * 10);
+            bucketStub.size.callCount.should.equal(topologyBitLength);
+
+            done();
         });
     });
 

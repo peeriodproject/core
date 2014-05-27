@@ -3,6 +3,7 @@
 import fs = require('fs');
 
 import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
+import SearchItemIdListInterface = require('./SearchItemIdListInterface');
 
 /**
  * The SearchClient acts as a wrapper around the search database and starts up the server automagically.
@@ -20,7 +21,7 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 * @param {Object} objectToIndex
 	 * @param {Function} callback
 	 */
-	addItem (objectToIndex:Object, callback?:(err:Error, ids:Array<string>) => any):void;
+	addItem (objectToIndex:Object, callback?:(err:Error, ids:SearchItemIdListInterface) => any):void;
 
 	/**
 	 * Add the mapping for the specified type to the search index.

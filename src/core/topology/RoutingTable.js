@@ -104,6 +104,29 @@ var RoutingTable = (function () {
         return process.nextTick(internalCallback.bind(null, null));
     };
 
+    RoutingTable.prototype.getAllContactNodesSize = function (callback) {
+        var bucketAmount = Object.keys(this._buckets).length;
+        var processed = 0;
+        var contactNodeCount = 0;
+
+        var checkCallback = function (err) {
+            if (processed === bucketAmount) {
+                callback(null, contactNodeCount);
+            }
+        };
+
+        if (bucketAmount) {
+            for (var i in this._buckets) {
+                this._buckets[i].size(function (err, size) {
+                    processed++;
+                    contactNodeCount += size;
+
+                    checkCallback(err);
+                });
+            }
+        }
+    };
+
     RoutingTable.prototype.getClosestContactNodes = function (id, excludeId, callback) {
         var _this = this;
         var internalCallback = callback || function (err) {

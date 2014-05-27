@@ -6,6 +6,7 @@ import path = require('path');
 
 import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
+import FolderWatcherFactoryInterface = require('./interfaces/FolderWatcherFactoryInterface');
 import FolderWatcherInterface = require('./interfaces/FolderWatcherInterface');
 import FolderWatcherListInterface = require('./interfaces/FolderWatcherListInterface');
 import FolderWatcherManagerInterface = require('./interfaces/FolderWatcherManagerInterface');
@@ -26,8 +27,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 
 	private _eventEmitter:events.EventEmitter = null;
 
-	// todo :FolderWatcherFactoryInterface
-	private _folderWatcherFactory:any = null;
+	private _folderWatcherFactory:FolderWatcherFactoryInterface = null;
 
 	/**
 	 * Contains invalid absolute paths that are (currently) not available in the file system.

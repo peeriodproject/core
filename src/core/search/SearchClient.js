@@ -166,6 +166,7 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.deleteIndex = function (callback) {
+        var _this = this;
         var internalCallback = callback || function (err) {
         };
 
@@ -173,7 +174,7 @@ var SearchClient = (function () {
             this._client.indices.delete({
                 index: this._indexName
             }, function (err, response, status) {
-                if (status === 200 || (status === 400 && err && err.message.indexOf('IndexMissingException') === 0)) {
+                if (_this._isValidResponse(err, status, 'IndexMissingException')) {
                     internalCallback(null);
                 } else {
                     internalCallback(err);
@@ -189,6 +190,7 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.getItemById = function (id, callback) {
+        var _this = this;
         this._client.get({
             index: this._indexName,
             type: '_all',
@@ -196,11 +198,16 @@ var SearchClient = (function () {
         }, function (err, response, status) {
             err = err || null;
 
-            callback(err, response);
+            if (_this._isValidResponse(err, status, 'IndexMissingException')) {
+                callback(null, response);
+            } else {
+                callback(err, null);
+            }
         });
     };
 
     SearchClient.prototype.getItemByPath = function (itemPath, callback) {
+        var _this = this;
         var searchQuery = {
             query: {
                 match: {
@@ -217,8 +224,12 @@ var SearchClient = (function () {
 
             var hits = response['hits'];
 
-            if (!err && status === 200 && hits && hits['total']) {
-                callback(err, hits['hits'][0]);
+            if (_this._isValidResponse(err, status, 'IndexMissingException')) {
+                if (hits && hits['total']) {
+                    callback(null, hits['hits'][0]);
+                } else {
+                    callback(null, null);
+                }
             } else {
                 callback(err, null);
             }
@@ -322,8 +333,6 @@ var SearchClient = (function () {
             refresh: true,
             body: data
         }, function (err, response, status) {
-            // todo check status >= 200 < 300
-            //console.log(status);
             if (response['created']) {
                 callback(err, response['_id']);
             } else {
@@ -341,11 +350,12 @@ var SearchClient = (function () {
     * @param {Function} callback
     */
     SearchClient.prototype._createIndex = function (callback) {
+        var _this = this;
         this._client.indices.create({
             index: this._indexName
         }, function (err, response, status) {
             // everything went fine or index already exists
-            if (status === 200 || (status === 400 && err && err.message.indexOf('IndexAlreadyExistsException') === 0)) {
+            if (_this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
                 callback(null);
             } else {
                 callback(err);
@@ -382,6 +392,16 @@ var SearchClient = (function () {
         };
 
         check(0);
+    };
+
+    /**
+    * @param {Error} err
+    * @param {number} status
+    * @param {string} errorNameToIgnore
+    * @returns {boolean}
+    */
+    SearchClient.prototype._isValidResponse = function (err, status, errorNameToIgnore) {
+        return ((status >= 200 && status < 300) || (status >= 400 && err && err.message.indexOf(errorNameToIgnore) === 0)) ? true : false;
     };
     return SearchClient;
 })();

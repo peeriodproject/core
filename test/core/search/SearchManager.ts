@@ -41,9 +41,9 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 	});
 
 	it('should correctly instantiate SearchManager without error', function (done) {
-		var configStub = createConfig();
-		var pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager);
-		var searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient);
+		var configStub:any = createConfig();
+		var pluginManagerStub:any = testUtils.stubPublicApi(sandbox, PluginManager);
+		var searchClientStub:any = testUtils.stubPublicApi(sandbox, SearchClient);
 
 		var searchManager:SearchManagerInterface = new SearchManager(configStub, pluginManagerStub, searchClientStub);
 		searchManager.should.be.an.instanceof(SearchManager);
@@ -52,13 +52,13 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 	});
 
 	it('should correctly call the addItem method', function (done) {
-		var configStub = createConfig();
+		var configStub:any = createConfig();
 		var pluginsData:Object = {
 			'foo bar active': {
 				file: fs.readFileSync(testUtils.getFixturePath('core/search/searchManager/tumblr_n2kwdmGLW81rkcs9uo1_400.jpg')).toString('base64')
 			}
 		};
-		var pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager, {
+		var pluginManagerStub:any = testUtils.stubPublicApi(sandbox, PluginManager, {
 			onBeforeItemAdd: function (itemPath, stats, fileHash, callback) {
 				itemPath.should.equal('/path/to/item');
 				stats.should.containDeep(JSON.parse(statsJson));
@@ -67,7 +67,7 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 				callback(pluginsData);
 			}
 		});
-		var searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
+		var searchClientStub:any = testUtils.stubPublicApi(sandbox, SearchClient, {
 			addItem: function (objectToIndex, callback) {
 				callback(null);
 			}
@@ -89,28 +89,28 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 	});
 
 	it('should correctly create a mapping for the given plugin identifier if it does not exists', function (done) {
-		var configStub = createConfig();
-		var pluginMapping = {
+		var configStub:any = createConfig();
+		var pluginMapping:Object = {
 			properties: {
-				file: {
+				file    : {
 					type: 'attachment'
 				},
-				itemHash       : {
+				itemHash: {
 					type : 'string',
 					store: 'yes'
 				},
-				itemPath       : {
+				itemPath: {
 					type : 'string',
 					store: 'yes'
 				}
 			}
 		};
-		var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
+		var pluginRunnerStub:any = testUtils.stubPublicApi(sandbox, PluginRunner, {
 			getMapping: function (callback) {
 				callback(pluginMapping);
 			}
 		});
-		var pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager, {
+		var pluginManagerStub:any = testUtils.stubPublicApi(sandbox, PluginManager, {
 			addEventListener     : function (eventName, listener) {
 				return process.nextTick(listener.bind(null, 'pluginIdentifier'));
 			},
@@ -118,7 +118,7 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 				callback(pluginRunnerStub);
 			}
 		});
-		var searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
+		var searchClientStub:any = testUtils.stubPublicApi(sandbox, SearchClient, {
 			typeExists: function (identifier, callback) {
 				identifier.should.equal('pluginIdentifier');
 				callback(false);
@@ -133,6 +133,22 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 		});
 
 		var searchManager:SearchManagerInterface = new SearchManager(configStub, pluginManagerStub, searchClientStub);
+	});
+
+	it('should correctly return the stored item hash and stats', function (done) {
+		var configStub = createConfig();
+		var pluginManagerStub:any = testUtils.stubPublicApi(sandbox, PluginManager);
+		var searchClientStub:any = testUtils.stubPublicApi(sandbox, SearchClient, {
+			getItemByPath: function (pathToIndex, callback:(err:Error, item:Object) => any):void {
+				var item = {};
+
+				return callback(null, item);
+			}
+		});
+		var searchManager:SearchManagerInterface = new SearchManager(configStub, pluginManagerStub, searchClientStub);
+		searchManager.getItem('/path/to/item.txt', function (hash:string, stats:fs.Stats) {
+			done();
+		});
 	});
 
 });

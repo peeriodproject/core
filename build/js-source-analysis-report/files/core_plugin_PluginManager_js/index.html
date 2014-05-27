@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.85</p>
+      <p class="stat">71.02</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">492</p>
+      <p class="stat">471</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">55.74</p>
+      <p class="stat">55.64</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.14</p>
+      <p class="stat">3.08</p>
     </div>
   </div>
 </div>
@@ -158,11 +158,13 @@ var PluginManager = (function () {
         */
         this._pluginLoaders = {};
         /**
+        * The internally used {@link core.plugin.PluginRunnerFactoryInterface} instance
         *
         * @member {core.plugin.PluginRunnerFactoryInterface} core.plugin.PluginManager~_pluginRunnerFactory
         */
         this._pluginRunnerFactory = null;
         /**
+        * The list of (active) {@link core.plugin.PluginRunnerInterface}
         *
         * @member {core.plugin.PluginRunnerListInterface} core.plugin.PluginManager~_pluginRunners
         */
@@ -313,21 +315,6 @@ var PluginManager = (function () {
             }
         }
 
-        //_isResponsibleForMimeType
-        /*this.getActivePluginRunners((pluginRunners:PluginRunnerListInterface) =&gt; {
-        var responsibleRunners:PluginRunnerListInterface = {};
-        
-        if (Object.keys(pluginRunners).length) {
-        for (var key in pluginRunners) {
-        var pluginLoader:PluginLoaderInterface = this._pluginLoaders[key];
-        
-        if (this._isResponsibleForFile(itemPath, pluginLoader)) {
-        responsibleRunners[key] = this._pluginRunners[key];
-        }
-        }
-        }
-        
-        });*/
         return process.nextTick(callback.bind(null, responsibleRunners));
     };
 
@@ -371,15 +358,7 @@ var PluginManager = (function () {
                             runners[key].onBeforeItemAdd(itemPath, stats, globals, function (data) {
                                 counter++;
 
-                                // todo parse data and merge them together
-                                //console.log(JSON.stringify(data));
-                                if (data &amp;&amp; Object.keys(data).length == 1) {
-                                    mergedPluginData[key] = data;
-                                    //var mapping:Object = this._createRestrictedMapping(data, useApacheTika.indexOf(key) !== -1);
-                                    //mergedPluginData[key] = this._updateMapping(mapping, itemPath, stats, fileHash);
-                                } else {
-                                    console.error(&#039;Invalid data &quot;&#039; + key + &#039;&quot;&#039;);
-                                }
+                                mergedPluginData[key] = data;
 
                                 checkAndSendCallback();
                             });

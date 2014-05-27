@@ -129,5 +129,21 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 
         var searchManager = new SearchManager(configStub, pluginManagerStub, searchClientStub);
     });
+
+    it('should correctly return the stored item hash and stats', function (done) {
+        var configStub = createConfig();
+        var pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager);
+        var searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
+            getItemByPath: function (pathToIndex, callback) {
+                var item = {};
+
+                return callback(null, item);
+            }
+        });
+        var searchManager = new SearchManager(configStub, pluginManagerStub, searchClientStub);
+        searchManager.getItem('/path/to/item.txt', function (hash, stats) {
+            done();
+        });
+    });
 });
 //# sourceMappingURL=SearchManager.js.map

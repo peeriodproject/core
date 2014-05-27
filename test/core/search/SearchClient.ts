@@ -7,6 +7,8 @@ import fs = require('fs');
 import sinon = require('sinon');
 import testUtils = require('../../utils/testUtils');
 
+import SearchItemIdListInterface = require('../../../src/core/search/interfaces/SearchItemIdListInterface');
+
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchClient = require('../../../src/core/search/SearchClient');
 import SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
@@ -129,7 +131,7 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 		searchClient.itemExistsById('randomId', function (exists) {
 			exists.should.be.false;
 
-			searchClient.addItem(dataToIndex, function (err:Error, ids:Array<string>) {
+			searchClient.addItem(dataToIndex, function (err:Error, ids:SearchItemIdListInterface) {
 				searchClient.itemExistsById(ids[0], function (exists) {
 					exists.should.be.true;
 
@@ -167,7 +169,7 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 		searchClient.itemExistsById('randomId', function (exists) {
 			exists.should.be.false;
 
-			searchClient.addItem(pluginDataToIndex, function (err:Error, ids:Array<string>) {
+			searchClient.addItem(pluginDataToIndex, function (err:Error, ids:SearchItemIdListInterface) {
 				searchClient.getItemById(ids[0], function (err, item) {
 					item['_source'].should.containDeep(dataToIndex);
 
@@ -191,12 +193,17 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 		var pluginDataToIndex = {
 			pluginidentifier: dataToIndex
 		};
+		searchClient.getItemByPath('../path/file.txt', function (err:Error, ids:SearchItemIdListInterface) {
+			(err === null).should.be.true;
+			(ids === null).should.be.true;
 
-		searchClient.addItem(pluginDataToIndex, function (err:Error, ids:Array<string>) {
-			searchClient.getItemByPath('../path/file.txt', function (err, item) {
-				item['_source'].should.containDeep(dataToIndex);
+			searchClient.addItem(pluginDataToIndex, function (err:Error, ids:SearchItemIdListInterface) {
+				searchClient.getItemByPath('../path/file.txt', function (err, item) {
+					console.log(JSON.stringify(item));
+					item['_source'].should.containDeep(dataToIndex);
 
-				done();
+					done();
+				});
 			});
 		});
 	});
@@ -259,7 +266,7 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 		searchClient.addMapping('pluginidentifier', mapping, function (err:Error) {
 			(err === null).should.be.true;
 
-			searchClient.addItem(dataToIndex, function (err:Error, ids:Array<string>) {
+			searchClient.addItem(dataToIndex, function (err:Error, ids:SearchItemIdListInterface) {
 				(err === null).should.be.true;
 				(ids !== null).should.be.true;
 				ids.length.should.equal(1);

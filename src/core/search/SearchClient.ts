@@ -10,6 +10,7 @@ import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions'
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import SearchClientInterface = require('./interfaces/SearchClientInterface');
 import SearchClientOptions = require('./interfaces/SearchClientOptions');
+import SearchItemIdListInterface = require('./interfaces/SearchItemIdListInterface');
 import SearchStoreFactoryInterface = require('./interfaces/SearchStoreFactoryInterface');
 import SearchStoreInterface = require('./interfaces/SearchStoreInterface');
 import SearchStoreOptions = require('./interfaces/SearchStoreOptions');
@@ -105,7 +106,7 @@ class SearchClient implements SearchClientInterface {
 		this.open(this._options.onOpenCallback);
 	}
 
-	public addItem (objectToIndex:Object, callback?:(err:Error, ids:Array<string>) => any):void {
+	public addItem (objectToIndex:Object, callback?:(err:Error, ids:SearchItemIdListInterface) => any):void {
 		var pluginIdentifiers:Array<string> = Object.keys(objectToIndex);
 		var amount:number = pluginIdentifiers.length;
 		var itemIds:Array<string> = [];
@@ -189,8 +190,8 @@ class SearchClient implements SearchClientInterface {
 		if (this._isOpen) {
 			this._client.indices.delete({
 				index: this._indexName
-			}, function (err:Error, response, status) {
-				if (status === 200 || (status === 400 && err && err.message.indexOf('IndexMissingException') === 0)) {
+			}, (err:Error, response, status) => {
+				if (this._isValidResponse(err, status, 'IndexMissingException')) {
 					internalCallback(null);
 				}
 				else {
@@ -212,10 +213,15 @@ class SearchClient implements SearchClientInterface {
 			index: this._indexName,
 			type: '_all',
 			id: id
-		}, function (err:Error, response:Object, status:number) {
+		}, (err:Error, response:Object, status:number) => {
 			err = err || null;
 
-			callback(err, response);
+			if (this._isValidResponse(err, status, 'IndexMissingException')) {
+				callback(null, response);
+			}
+			else {
+				callback(err, null);
+			}
 		});
 	}
 
@@ -231,13 +237,18 @@ class SearchClient implements SearchClientInterface {
 		this._client.search({
 			index: this._indexName,
 			body: searchQuery
-		}, function (err:Error, response:Object, status:number) {
+		}, (err:Error, response:Object, status:number) => {
 			err = err || null;
 
-			var hits = response['hits'];
+			var hits:Object = response['hits'];
 
-			if (!err && status === 200 && hits && hits['total']) {
-				callback(err, hits['hits'][0]);
+			if (this._isValidResponse(err, status, 'IndexMissingException')) {
+				if (hits && hits['total']) {
+					callback(null, hits['hits'][0]);
+				}
+				else {
+					callback(null, null);
+				}
 			}
 			else {
 				callback(err, null);
@@ -344,8 +355,6 @@ class SearchClient implements SearchClientInterface {
 			refresh: true,
 			body   : data
 		}, function (err:Error, response, status) {
-			// todo check status >= 200 < 300
-			//console.log(status);
 			if (response['created']) {
 				callback(err, response['_id']);
 			}
@@ -366,9 +375,9 @@ class SearchClient implements SearchClientInterface {
 	private _createIndex (callback:(err:Error) => any):void {
 		this._client.indices.create({
 			index: this._indexName
-		}, function (err, response, status) {
+		}, (err, response, status) => {
 			// everything went fine or index already exists
-			if (status === 200 || (status === 400 && err && err.message.indexOf('IndexAlreadyExistsException') === 0)) {
+			if (this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
 				callback(null);
 			}
 			else {
@@ -407,6 +416,16 @@ class SearchClient implements SearchClientInterface {
 		};
 
 		check(0);
+	}
+
+	/**
+	 * @param {Error} err
+	 * @param {number} status
+	 * @param {string} errorNameToIgnore
+	 * @returns {boolean}
+	 */
+	private _isValidResponse(err:Error, status:number, errorNameToIgnore:string):boolean {
+		return ((status >= 200 && status < 300) || (status >= 400 && err && err.message.indexOf(errorNameToIgnore) === 0)) ? true : false;
 	}
 
 }
