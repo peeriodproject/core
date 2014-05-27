@@ -17,7 +17,6 @@ var FolderWatcherManager = (function () {
         var _this = this;
         this._config = null;
         this._eventEmitter = null;
-        // todo :FolderWatcherFactoryInterface
         this._folderWatcherFactory = null;
         /**
         * Contains invalid absolute paths that are (currently) not available in the file system.
