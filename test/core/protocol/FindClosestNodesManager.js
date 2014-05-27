@@ -19,7 +19,7 @@ var RoutingTable = require('../../../src/core/topology/RoutingTable');
 var FindClosestNodesCycleFactory = require('../../../src/core/protocol/findClosestNodes/FindClosestNodesCycleFactory');
 var ReadableMessage = require('../../../src/core/protocol/messages/ReadableMessage');
 
-describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesManager @current', function () {
+describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesManager', function () {
     var sandbox = null;
 
     var manager = null;

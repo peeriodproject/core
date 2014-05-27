@@ -12,7 +12,7 @@
 * @param {Function} callback Function to call when the cycle is finished. Gets called with a list of the up to `k` closest confirmed nodes.
 */
 var FindClosestNodesCycle = (function () {
-    function FindClosestNodesCycle(searchForId, startWithList, manager, protocolConnectionManager, callback) {
+    function FindClosestNodesCycle(myNode, searchForId, startWithList, manager, protocolConnectionManager, callback) {
         /**
         * Number indicating how many nodes from the probeList to request in one go.
         *
@@ -65,6 +65,10 @@ var FindClosestNodesCycle = (function () {
         */
         this._manager = null;
         /**
+        * @member {core.topology.MyNodeInterface} core.protocol.findClosestsNodes.FindClosestNodesCycle~_myNode
+        */
+        this._myNode = null;
+        /**
         * Milliseconds indicating how much time should pass between to request flights.
         *
         * @member {number} core.protocol.findClosestsNodes.FindClosestNodesCycle~_parallelismDelayMillis
@@ -96,6 +100,7 @@ var FindClosestNodesCycle = (function () {
         * @member {core.topology.IdInterface} core.protocol.findClosestNodes.FindClosestNodesCycle~_searchForId
         */
         this._searchForId = null;
+        this._myNode = myNode;
         this._searchForId = searchForId;
         this._probeList = startWithList;
         this._manager = manager;
@@ -185,6 +190,11 @@ var FindClosestNodesCycle = (function () {
 
             for (var i = 0; i < returnedList.length; i++) {
                 var node = returnedList[i];
+
+                if (node.getId().equals(this._myNode.getId())) {
+                    continue;
+                }
+
                 var identifier = node.getId().toHexString();
 
                 if (this._registeredIdentifiers.indexOf(identifier) === -1) {

@@ -389,6 +389,7 @@ var ProtocolConnectionManager = (function (_super) {
     * @param {core.net.tcp.TCPSocketInterface} socket
     */
     ProtocolConnectionManager.prototype._addToConfirmed = function (identifier, direction, socket) {
+        var _this = this;
         var existingSocket = this._confirmedSockets[identifier];
         var newConfirmedSocket = {
             socket: socket,
@@ -412,11 +413,13 @@ var ProtocolConnectionManager = (function (_super) {
 
         this._confirmedSockets[identifier] = newConfirmedSocket;
 
-        this.emit('confirmedSocket', identifier, socket);
+        process.nextTick(function () {
+            _this.emit('confirmedSocket', identifier, socket);
+        });
     };
 
     /**
-    * Adds a TCP socket to the hydra list. Hooks an event to it that it gets destrpyed when it's closed.
+    * Adds a TCP socket to the hydra list. Hooks an event to it that it gets destroyed when it's closed.
     *
     * @method core.protocol.net.ProtocolConnectionManager~_addToHydra
     *
@@ -424,10 +427,13 @@ var ProtocolConnectionManager = (function (_super) {
     * @param {core.net.tcp.TCPSocketInterface} socket
     */
     ProtocolConnectionManager.prototype._addToHydra = function (identifier, socket) {
+        var _this = this;
         this._hookDestroyOnCloseToSocket(socket);
         this._hydraSockets[identifier] = socket;
 
-        this.emit('hydraSocket', identifier, socket);
+        process.nextTick(function () {
+            _this.emit('hydraSocket', identifier, socket);
+        });
     };
 
     /**

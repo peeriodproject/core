@@ -21,7 +21,7 @@ import FindClosestNodesCycleFactory = require('../../../src/core/protocol/findCl
 import ReadableMessage = require('../../../src/core/protocol/messages/ReadableMessage');
 
 
-describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesManager @current', function () {
+describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesManager', function () {
 	var sandbox:SinonSandbox = null;
 
 	var manager:FindClosestNodesManager = null;

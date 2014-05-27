@@ -455,11 +455,13 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 		this._confirmedSockets[identifier] = newConfirmedSocket;
 
-		this.emit('confirmedSocket', identifier, socket);
+		process.nextTick(() => {
+			this.emit('confirmedSocket', identifier, socket);
+		});
 	}
 
 	/**
-	 * Adds a TCP socket to the hydra list. Hooks an event to it that it gets destrpyed when it's closed.
+	 * Adds a TCP socket to the hydra list. Hooks an event to it that it gets destroyed when it's closed.
 	 *
 	 * @method core.protocol.net.ProtocolConnectionManager~_addToHydra
 	 *
@@ -470,7 +472,9 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._hookDestroyOnCloseToSocket(socket);
 		this._hydraSockets[identifier] = socket;
 
-		this.emit('hydraSocket', identifier, socket);
+		process.nextTick(() => {
+			this.emit('hydraSocket', identifier, socket);
+		});
 	}
 
 	/**

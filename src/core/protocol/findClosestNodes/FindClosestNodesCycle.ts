@@ -7,6 +7,7 @@ import ProtocolConnectionManagerInterface = require('../net/interfaces/ProtocolC
 import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInterface');
 import ContactNodeListInterface = require('../../topology/interfaces/ContactNodeListInterface');
 import IdInterface = require('../../topology/interfaces/IdInterface');
+import MyNodeInterface = require('../../topology/interfaces/MyNodeInterface');
 
 /**
  * FindClosestNodesCycleInterface implementation.
@@ -89,6 +90,11 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 	private _manager:FindClosestNodesManagerInterface = null;
 
 	/**
+	 * @member {core.topology.MyNodeInterface} core.protocol.findClosestsNodes.FindClosestNodesCycle~_myNode
+	 */
+	private _myNode:MyNodeInterface = null;
+
+	/**
 	 * Milliseconds indicating how much time should pass between to request flights.
 	 *
 	 * @member {number} core.protocol.findClosestsNodes.FindClosestNodesCycle~_parallelismDelayMillis
@@ -125,8 +131,9 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 	 */
 	private _searchForId:IdInterface = null;
 
-	constructor (searchForId:IdInterface, startWithList:ContactNodeListInterface, manager:FindClosestNodesManagerInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, callback:(resultingList:ContactNodeListInterface) => any) {
+	constructor (myNode:MyNodeInterface, searchForId:IdInterface, startWithList:ContactNodeListInterface, manager:FindClosestNodesManagerInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, callback:(resultingList:ContactNodeListInterface) => any) {
 
+		this._myNode = myNode;
 		this._searchForId = searchForId;
 		this._probeList = startWithList;
 		this._manager = manager;
@@ -216,6 +223,11 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 
 			for (var i = 0; i < returnedList.length; i++) {
 				var node:ContactNodeInterface = returnedList[i];
+
+				if (node.getId().equals(this._myNode.getId())) {
+					continue;
+				}
+
 				var identifier:string = node.getId().toHexString();
 
 				if (this._registeredIdentifiers.indexOf(identifier) === -1) {

@@ -240,7 +240,7 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 			}
 			else if (type === 'FOUND_CLOSEST_NODES') {
 				var foundClosestNodesMsg:FoundClosestNodesReadableMessageInterface = null;
-				
+
 				try {
 					foundClosestNodesMsg = this._readableMessageFactory.create(message.getPayload());
 				}
