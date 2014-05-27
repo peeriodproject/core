@@ -4,6 +4,7 @@ import ProtocolConnectionManagerInterface = require('../net/interfaces/ProtocolC
 import FindClosestNodesCycleInterface = require('./interfaces/FindClosestNodesCycleInterface');
 import FindClosestNodesCycle = require('./FindClosestNodesCycle');
 import IdInterface = require('../../topology/interfaces/IdInterface');
+import MyNodeInterface = require('../../topology/interfaces/MyNodeInterface');
 import ContactNodeListInterface = require('../../topology/interfaces/ContactNodeListInterface');
 
 /**
@@ -24,13 +25,19 @@ class FindClosestNodesCycleFactory implements FindClosestNodesCycleFactoryInterf
 	 */
 	private _findClosestNodesManager:FindClosestNodesManagerInterface = null;
 
-	constructor (protocolConnectionManager:ProtocolConnectionManagerInterface) {
+	/**
+	 * @member {core.topology.MyNodeInterface} core.protocol.findClosestNodes.FindClosestNodesCycleFactory~_myNode
+	 */
+	private _myNode:MyNodeInterface = null;
+
+	constructor (myNode:MyNodeInterface, protocolConnectionManager:ProtocolConnectionManagerInterface) {
+		this._myNode = myNode;
 		this._protocolConnectionManager = protocolConnectionManager;
 	}
 
 	public create (searchForId:IdInterface, startWithList:ContactNodeListInterface, callback:(resultingList:ContactNodeListInterface) => any):FindClosestNodesCycleInterface {
 
-		return new FindClosestNodesCycle(searchForId, startWithList, this._findClosestNodesManager, this._protocolConnectionManager, callback);
+		return new FindClosestNodesCycle(this._myNode, searchForId, startWithList, this._findClosestNodesManager, this._protocolConnectionManager, callback);
 	}
 
 	public setManager (manager:FindClosestNodesManagerInterface):void {

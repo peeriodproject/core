@@ -7,7 +7,7 @@ var FindClosestNodesCycle = require('./FindClosestNodesCycle');
 * @param {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager
 */
 var FindClosestNodesCycleFactory = (function () {
-    function FindClosestNodesCycleFactory(protocolConnectionManager) {
+    function FindClosestNodesCycleFactory(myNode, protocolConnectionManager) {
         /**
         * @member {core.protocol.net.ProtocolConnectionManagerInterface} core.protocol.findClosestNodes.FindClosestNodesCycleFactory~_protocolConnectionManager
         */
@@ -16,10 +16,15 @@ var FindClosestNodesCycleFactory = (function () {
         * @member {core.protocol.findClosestNodes.FindClosestNodesManagerInterface} core.protocol.findClosestNodes.FindClosestNodesCycleFactory~_findClosestNodesManager
         */
         this._findClosestNodesManager = null;
+        /**
+        * @member {core.topology.MyNodeInterface} core.protocol.findClosestNodes.FindClosestNodesCycleFactory~_myNode
+        */
+        this._myNode = null;
+        this._myNode = myNode;
         this._protocolConnectionManager = protocolConnectionManager;
     }
     FindClosestNodesCycleFactory.prototype.create = function (searchForId, startWithList, callback) {
-        return new FindClosestNodesCycle(searchForId, startWithList, this._findClosestNodesManager, this._protocolConnectionManager, callback);
+        return new FindClosestNodesCycle(this._myNode, searchForId, startWithList, this._findClosestNodesManager, this._protocolConnectionManager, callback);
     };
 
     FindClosestNodesCycleFactory.prototype.setManager = function (manager) {
