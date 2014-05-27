@@ -8,9 +8,11 @@ var testUtils = require('../../utils/testUtils');
 
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var SearchClient = require('../../../src/core/search/SearchClient');
+var SearchItem = require('../../../src/core/search/SearchItem');
+var SearchItemFactory = require('../../../src/core/search/SearchItemFactory');
 var SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
-describe('CORE --> SEARCH --> SearchClient @joern', function () {
+describe('CORE --> SEARCH --> SearchClient @_joern', function () {
     var sandbox;
     var config;
     var searchStoreLogsFolder = testUtils.getFixturePath('core/search/searchStoreLogs');
@@ -44,7 +46,7 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
             }
         });
 
-        searchClient = new SearchClient(config, 'mainIndex', new SearchStoreFactory(), {
+        searchClient = new SearchClient(config, 'mainIndex', new SearchStoreFactory(), new SearchItemFactory(), {
             logsPath: searchStoreLogsFolder,
             closeOnProcessExit: false,
             onOpenCallback: function (err) {
@@ -143,17 +145,16 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 
     it('should correctly return the added item by id', function (done) {
         var dataToIndex = {
-            pluginidentifier: {
-                itemHash: 'fileHash',
-                itemPath: '../path/file.txt',
-                itemStats: {
-                    stats: true
-                }
+            itemHash: 'fileHash',
+            itemPath: '../path/file.txt',
+            itemStats: {
+                stats: true
             }
         };
 
         var pluginDataToIndex = {
-            pluginidentifier: dataToIndex
+            pluginidentifier: dataToIndex,
+            pluginidentifier2: dataToIndex
         };
 
         searchClient.itemExistsById('randomId', function (exists) {
@@ -161,7 +162,11 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 
             searchClient.addItem(pluginDataToIndex, function (err, ids) {
                 searchClient.getItemById(ids[0], function (err, item) {
-                    item['_source'].should.containDeep(dataToIndex);
+                    item.should.be.an.instanceof(SearchItem);
+
+                    item.getHash().should.equal('fileHash');
+                    item.getPath().should.equal('../path/file.txt');
+                    item.getStats().should.containDeep({ stats: true });
 
                     done();
                 });
@@ -171,26 +176,33 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 
     it('should correctly return the added item by path', function (done) {
         var dataToIndex = {
-            pluginidentifier: {
-                itemHash: 'fileHash',
-                itemPath: '../path/file.txt',
-                itemStats: {
-                    stats: true
-                }
-            }
+            itemHash: 'fileHash',
+            itemPath: '../path/file.txt',
+            itemStats: {
+                stats: true
+            },
+            foo: 'bar'
         };
 
         var pluginDataToIndex = {
-            pluginidentifier: dataToIndex
+            pluginidentifier: dataToIndex,
+            pluginidentifier2: dataToIndex
         };
-        searchClient.getItemByPath('../path/file.txt', function (err, ids) {
+        searchClient.getItemByPath('../path/file.txt', function (err, items) {
             (err === null).should.be.true;
-            (ids === null).should.be.true;
+            (items === null).should.be.true;
 
             searchClient.addItem(pluginDataToIndex, function (err, ids) {
                 searchClient.getItemByPath('../path/file.txt', function (err, item) {
-                    console.log(JSON.stringify(item));
-                    item['_source'].should.containDeep(dataToIndex);
+                    var identifiers = item.getPluginIdentifiers();
+
+                    identifiers.length.should.equal(2);
+
+                    for (var i in identifiers) {
+                        var identifier = identifiers[i];
+
+                        item.getPluginData(identifier).should.containDeep({ foo: 'bar' });
+                    }
 
                     done();
                 });
@@ -264,11 +276,11 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
                 searchClient.getItemById(ids[0], function (err, item) {
                     (err === null).should.be.true;
 
-                    var itemSource = item['_source'];
+                    item.should.be.an.instanceof(SearchItem);
 
-                    itemSource['itemPath'].should.equal(filePath);
-                    itemSource['itemStats'].should.containDeep({ stats: true });
-                    itemSource['itemHash'].should.equal('fileHash');
+                    item.getPath().should.equal(filePath);
+                    item.getStats().should.containDeep({ stats: true });
+                    item.getHash().should.equal('fileHash');
 
                     done();
                 });

@@ -8,12 +8,16 @@ import sinon = require('sinon');
 import testUtils = require('../../utils/testUtils');
 
 import SearchItemIdListInterface = require('../../../src/core/search/interfaces/SearchItemIdListInterface');
+import SearchItemInterface = require('../../../src/core/search/interfaces/SearchItemInterface');
 
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchClient = require('../../../src/core/search/SearchClient');
+import SearchItem = require('../../../src/core/search/SearchItem');
+import SearchItemFactory = require('../../../src/core/search/SearchItemFactory');
 import SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
-describe('CORE --> SEARCH --> SearchClient @joern', function () {
+
+describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
 	var searchStoreLogsFolder:string = testUtils.getFixturePath('core/search/searchStoreLogs');
@@ -52,7 +56,7 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 			}
 		});
 
-		searchClient = new SearchClient(config, 'mainIndex', new SearchStoreFactory(), {
+		searchClient = new SearchClient(config, 'mainIndex', new SearchStoreFactory(), new SearchItemFactory(), {
 			logsPath          : searchStoreLogsFolder,
 			closeOnProcessExit: false,
 			onOpenCallback    : function (err:Error) {
@@ -96,7 +100,7 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 			(err === null).should.be.true;
 			isOpen.should.be.true;
 
-			searchClient.close(function(err) {
+			searchClient.close(function (err) {
 				searchClient.isOpen(function (err, isOpen) {
 					(err === null).should.be.true;
 					isOpen.should.be.false;
@@ -120,8 +124,8 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 	it('should correctly return if an item exists in the index', function (done) {
 		var dataToIndex:Object = {
 			pluginidentifier: {
-				itemHash: 'fileHash',
-				itemPath: '../path/file.txt',
+				itemHash : 'fileHash',
+				itemPath : '../path/file.txt',
 				itemStats: {
 					stats: true
 				}
@@ -141,8 +145,8 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 		});
 	});
 
-	it ('should correctly prevent the creation of empty items', function (done) {
-		searchClient.addItem({}, function(err, ids) {
+	it('should correctly prevent the creation of empty items', function (done) {
+		searchClient.addItem({}, function (err, ids) {
 			err.should.be.an.instanceof(Error);
 			err.message.should.equal('SearchClient.addItem: No item data specified! Preventing item creation.');
 			(ids === null).should.be.true;
@@ -151,27 +155,31 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 		});
 	});
 
-	it ('should correctly return the added item by id', function (done) {
+	it('should correctly return the added item by id', function (done) {
 		var dataToIndex:Object = {
-			pluginidentifier: {
-				itemHash: 'fileHash',
-				itemPath: '../path/file.txt',
-				itemStats: {
-					stats: true
-				}
+			itemHash : 'fileHash',
+			itemPath : '../path/file.txt',
+			itemStats: {
+				stats: true
 			}
+
 		};
 
 		var pluginDataToIndex = {
-			pluginidentifier: dataToIndex
+			pluginidentifier : dataToIndex,
+			pluginidentifier2: dataToIndex
 		};
 
 		searchClient.itemExistsById('randomId', function (exists) {
 			exists.should.be.false;
 
 			searchClient.addItem(pluginDataToIndex, function (err:Error, ids:SearchItemIdListInterface) {
-				searchClient.getItemById(ids[0], function (err, item) {
-					item['_source'].should.containDeep(dataToIndex);
+				searchClient.getItemById(ids[0], function (err:Error, item:SearchItemInterface) {
+					item.should.be.an.instanceof(SearchItem);
+
+					item.getHash().should.equal('fileHash');
+					item.getPath().should.equal('../path/file.txt');
+					item.getStats().should.containDeep({ stats: true });
 
 					done();
 				});
@@ -181,26 +189,33 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 
 	it('should correctly return the added item by path', function (done) {
 		var dataToIndex:Object = {
-			pluginidentifier: {
-				itemHash: 'fileHash',
-				itemPath: '../path/file.txt',
-				itemStats: {
-					stats: true
-				}
-			}
+			itemHash : 'fileHash',
+			itemPath : '../path/file.txt',
+			itemStats: {
+				stats: true
+			},
+			foo      : 'bar'
 		};
 
 		var pluginDataToIndex = {
-			pluginidentifier: dataToIndex
+			pluginidentifier : dataToIndex,
+			pluginidentifier2: dataToIndex
 		};
-		searchClient.getItemByPath('../path/file.txt', function (err:Error, ids:SearchItemIdListInterface) {
+		searchClient.getItemByPath('../path/file.txt', function (err:Error, items:SearchItemInterface) {
 			(err === null).should.be.true;
-			(ids === null).should.be.true;
+			(items === null).should.be.true;
 
 			searchClient.addItem(pluginDataToIndex, function (err:Error, ids:SearchItemIdListInterface) {
-				searchClient.getItemByPath('../path/file.txt', function (err, item) {
-					console.log(JSON.stringify(item));
-					item['_source'].should.containDeep(dataToIndex);
+				searchClient.getItemByPath('../path/file.txt', function (err, item:SearchItemInterface) {
+					var identifiers = item.getPluginIdentifiers();
+
+					identifiers.length.should.equal(2);
+
+					for (var i in identifiers) {
+						var identifier:string = identifiers[i];
+
+						item.getPluginData(identifier).should.containDeep({ foo: 'bar' });
+					}
 
 					done();
 				});
@@ -254,9 +269,9 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 		};
 		var dataToIndex:Object = {
 			pluginidentifier: {
-				 file: fs.readFileSync(filePath).toString('base64'),
-				itemHash: 'fileHash',
-				itemPath: filePath,
+				file     : fs.readFileSync(filePath).toString('base64'),
+				itemHash : 'fileHash',
+				itemPath : filePath,
 				itemStats: {
 					stats: true
 				}
@@ -271,14 +286,14 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 				(ids !== null).should.be.true;
 				ids.length.should.equal(1);
 
-				searchClient.getItemById (ids[0], function (err:Error, item:Object) {
+				searchClient.getItemById(ids[0], function (err:Error, item:SearchItemInterface) {
 					(err === null).should.be.true;
 
-					var itemSource:Object = item['_source'];
+					item.should.be.an.instanceof(SearchItem);
 
-					itemSource['itemPath'].should.equal(filePath);
-					itemSource['itemStats'].should.containDeep({stats: true});
-					itemSource['itemHash'].should.equal('fileHash');
+					item.getPath().should.equal(filePath);
+					item.getStats().should.containDeep({stats: true});
+					item.getHash().should.equal('fileHash');
 
 					done();
 				});

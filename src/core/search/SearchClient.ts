@@ -10,7 +10,9 @@ import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions'
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import SearchClientInterface = require('./interfaces/SearchClientInterface');
 import SearchClientOptions = require('./interfaces/SearchClientOptions');
+import SearchItemFactoryInterface = require('./interfaces/SearchItemFactoryInterface');
 import SearchItemIdListInterface = require('./interfaces/SearchItemIdListInterface');
+import SearchItemInterface = require('./interfaces/SearchItemInterface');
 import SearchStoreFactoryInterface = require('./interfaces/SearchStoreFactoryInterface');
 import SearchStoreInterface = require('./interfaces/SearchStoreInterface');
 import SearchStoreOptions = require('./interfaces/SearchStoreOptions');
@@ -66,7 +68,13 @@ class SearchClient implements SearchClientInterface {
 	private _options:SearchClientOptions = null;
 
 	/**
-	 * The inernally used search store created via the passed in `searchStoreFactory`
+	 * The internally used search item factory
+	 *
+	 * @member {core.search.SearchItemFactoryInterface} core.search.SearchClient~_searchItemFactory
+	 */
+	private _searchItemFactory:SearchItemFactoryInterface = null;
+	/**
+	 * The internally used search store created via the passed in `searchStoreFactory`
 	 *
 	 * @member {core.utils.SearchStoreInterface} core.search.SearchClient~_searchStore
 	 */
@@ -79,7 +87,7 @@ class SearchClient implements SearchClientInterface {
 	 */
 	private _searchStoreFactory:SearchStoreFactoryInterface = null;
 
-	constructor (config:ConfigInterface, indexName:string, searchStoreFactory:SearchStoreFactoryInterface, options:SearchClientOptions = {}) {
+	constructor (config:ConfigInterface, indexName:string, searchStoreFactory:SearchStoreFactoryInterface, searchItemFactory:SearchItemFactoryInterface, options:SearchClientOptions = {}) {
 		var defaults:SearchClientOptions = {
 			logsPath          : '../../logs',
 			logsFileName      : 'searchStore.log',
@@ -93,6 +101,7 @@ class SearchClient implements SearchClientInterface {
 		this._config = config;
 		this._indexName = indexName.toLowerCase();
 		this._searchStoreFactory = searchStoreFactory;
+		this._searchItemFactory = searchItemFactory;
 
 		this._options = ObjectUtils.extend(defaults, options);
 		this._options.logsPath = path.resolve(__dirname, this._options.logsPath);
@@ -204,11 +213,11 @@ class SearchClient implements SearchClientInterface {
 		}
 	}
 
-	public getItem (query:Object, callback:(err:Error, item:Object) => any):void {
+	public getItem (query:Object, callback:(err:Error, item:SearchItemInterface) => any):void {
 		return process.nextTick(callback.bind(null, null, null));
 	}
 
-	public getItemById (id:string, callback:(err:Error, item:Object) => any):void {
+	public getItemById (id:string, callback:(err:Error, item:SearchItemInterface) => any):void {
 		this._client.get({
 			index: this._indexName,
 			type: '_all',
@@ -217,7 +226,7 @@ class SearchClient implements SearchClientInterface {
 			err = err || null;
 
 			if (this._isValidResponse(err, status, 'IndexMissingException')) {
-				callback(null, response);
+				callback(null, this._createSearchItemFromResponse(response));
 			}
 			else {
 				callback(err, null);
@@ -225,7 +234,7 @@ class SearchClient implements SearchClientInterface {
 		});
 	}
 
-	public getItemByPath (itemPath:string, callback:(err:Error, item:Object) => any):void {
+	public getItemByPath (itemPath:string, callback:(err:Error, item:SearchItemInterface) => any):void {
 		var searchQuery:Object = {
 			query: {
 				match: {
@@ -244,7 +253,7 @@ class SearchClient implements SearchClientInterface {
 
 			if (this._isValidResponse(err, status, 'IndexMissingException')) {
 				if (hits && hits['total']) {
-					callback(null, hits['hits'][0]);
+					callback(null, this._createSearchItemFromHits(hits['hits']));
 				}
 				else {
 					callback(null, null);
@@ -384,6 +393,22 @@ class SearchClient implements SearchClientInterface {
 				callback(err);
 			}
 		});
+	}
+
+	private _createSearchItemFromHits (hits):SearchItemInterface {
+		if (!hits || !hits.length) {
+			return null;
+		}
+
+		return this._searchItemFactory.create(hits);
+	}
+
+	private _createSearchItemFromResponse (response):SearchItemInterface {
+		if (!response) {
+			return null;
+		}
+
+		return this._searchItemFactory.create([response]);
 	}
 
 	/**

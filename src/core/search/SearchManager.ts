@@ -6,6 +6,7 @@ import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import PluginManagerInterface = require('../plugin/interfaces/PluginManagerInterface');
 import PluginRunnerInterface = require('../plugin/interfaces/PluginRunnerInterface');
 import SearchClientInterface = require('./interfaces/SearchClientInterface');
+import SearchItemInterface = require('../../../src/core/search/interfaces/SearchItemInterface');
 import SearchManagerInterface = require('./interfaces/SearchManagerInterface');
 
 import ObjectUtils = require('../utils/ObjectUtils');
@@ -53,11 +54,13 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
-		this._searchClient.getItemByPath(pathToIndex, function (err:Error, item:Object) {
-			console.log(err);
-			console.log(item);
-
-			callback(null, null);
+		this._searchClient.getItemByPath(pathToIndex, function (err:Error, item:SearchItemInterface) {
+			if (item) {
+				callback(item.getHash(), item.getStats());
+			}
+			else {
+				callback(null, null);
+			}
 		});
 	}
 

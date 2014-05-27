@@ -17,7 +17,7 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @param {core.search.SearchClientOptions} options
 */
 var SearchClient = (function () {
-    function SearchClient(config, indexName, searchStoreFactory, options) {
+    function SearchClient(config, indexName, searchStoreFactory, searchItemFactory, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
         /**
@@ -53,7 +53,13 @@ var SearchClient = (function () {
         */
         this._options = null;
         /**
-        * The inernally used search store created via the passed in `searchStoreFactory`
+        * The internally used search item factory
+        *
+        * @member {core.search.SearchItemFactoryInterface} core.search.SearchClient~_searchItemFactory
+        */
+        this._searchItemFactory = null;
+        /**
+        * The internally used search store created via the passed in `searchStoreFactory`
         *
         * @member {core.utils.SearchStoreInterface} core.search.SearchClient~_searchStore
         */
@@ -77,6 +83,7 @@ var SearchClient = (function () {
         this._config = config;
         this._indexName = indexName.toLowerCase();
         this._searchStoreFactory = searchStoreFactory;
+        this._searchItemFactory = searchItemFactory;
 
         this._options = ObjectUtils.extend(defaults, options);
         this._options.logsPath = path.resolve(__dirname, this._options.logsPath);
@@ -199,7 +206,7 @@ var SearchClient = (function () {
             err = err || null;
 
             if (_this._isValidResponse(err, status, 'IndexMissingException')) {
-                callback(null, response);
+                callback(null, _this._createSearchItemFromResponse(response));
             } else {
                 callback(err, null);
             }
@@ -226,7 +233,7 @@ var SearchClient = (function () {
 
             if (_this._isValidResponse(err, status, 'IndexMissingException')) {
                 if (hits && hits['total']) {
-                    callback(null, hits['hits'][0]);
+                    callback(null, _this._createSearchItemFromHits(hits['hits']));
                 } else {
                     callback(null, null);
                 }
@@ -361,6 +368,22 @@ var SearchClient = (function () {
                 callback(err);
             }
         });
+    };
+
+    SearchClient.prototype._createSearchItemFromHits = function (hits) {
+        if (!hits || !hits.length) {
+            return null;
+        }
+
+        return this._searchItemFactory.create(hits);
+    };
+
+    SearchClient.prototype._createSearchItemFromResponse = function (response) {
+        if (!response) {
+            return null;
+        }
+
+        return this._searchItemFactory.create([response]);
     };
 
     /**

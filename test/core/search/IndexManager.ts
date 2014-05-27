@@ -15,7 +15,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import PathValidator = require('../../../src/core/fs/PathValidator');
 import SearchManager = require('../../../src/core/search/SearchManager');
 
-describe('CORE --> SEARCH --> IndexManager @joern', function () {
+describe('CORE --> SEARCH --> IndexManager @_joern', function () {
 	var sandbox:SinonSandbox;
 	var indexManager:IndexManagerInterface;
 	var configStub:any;

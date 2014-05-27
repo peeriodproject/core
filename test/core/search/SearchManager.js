@@ -9,6 +9,7 @@ var testUtils = require('../../utils/testUtils');
 var PluginManager = require('../../../src/core/plugin/PluginManager');
 var PluginRunner = require('../../../src/core/plugin/PluginRunner');
 var SearchClient = require('../../../src/core/search/SearchClient');
+var SearchItem = require('../../../src/core/search/SearchItem');
 var SearchManager = require('../../../src/core/search/SearchManager');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
@@ -131,17 +132,19 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
     });
 
     it('should correctly return the stored item hash and stats', function (done) {
+        var item = new SearchItem(JSON.parse('[{"_index":"mainindex","_type":"pluginidentifier","_id":"DzEnMrJGROujWKZUC5hZNg","_score":0.5254995,"_source":{"itemHash":"fileHash","itemPath":"../path/file.txt","itemStats":{"stats":true},"foo":"bar"}},{"_index":"mainindex","_type":"pluginidentifier2","_id":"LBcCuWQlRNObplgP4S5KGw","_score":0.5254995,"_source":{"itemHash":"fileHash","itemPath":"../path/file.txt","itemStats":{"stats":true},"foo":"bar"}}]'));
         var configStub = createConfig();
         var pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager);
         var searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
             getItemByPath: function (pathToIndex, callback) {
-                var item = {};
-
                 return callback(null, item);
             }
         });
         var searchManager = new SearchManager(configStub, pluginManagerStub, searchClientStub);
         searchManager.getItem('/path/to/item.txt', function (hash, stats) {
+            hash.should.equal(item.getHash());
+            stats.should.equal(item.getStats());
+
             done();
         });
     });

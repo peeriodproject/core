@@ -10,7 +10,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var PathValidator = require('../../../src/core/fs/PathValidator');
 var SearchManager = require('../../../src/core/search/SearchManager');
 
-describe('CORE --> SEARCH --> IndexManager @joern', function () {
+describe('CORE --> SEARCH --> IndexManager @_joern', function () {
     var sandbox;
     var indexManager;
     var configStub;

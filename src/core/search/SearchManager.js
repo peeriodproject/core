@@ -42,10 +42,11 @@ var SearchManager = (function () {
 
     SearchManager.prototype.getItem = function (pathToIndex, callback) {
         this._searchClient.getItemByPath(pathToIndex, function (err, item) {
-            console.log(err);
-            console.log(item);
-
-            callback(null, null);
+            if (item) {
+                callback(item.getHash(), item.getStats());
+            } else {
+                callback(null, null);
+            }
         });
     };
 
