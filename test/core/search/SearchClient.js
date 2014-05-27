@@ -183,12 +183,16 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
         var pluginDataToIndex = {
             pluginidentifier: dataToIndex
         };
+        searchClient.getItemByPath('../path/file.txt', function (err, ids) {
+            (err === null).should.be.true;
+            (ids === null).should.be.true;
 
-        searchClient.addItem(pluginDataToIndex, function (err, ids) {
-            searchClient.getItemByPath('../path/file.txt', function (err, item) {
-                item['_source'].should.containDeep(dataToIndex);
+            searchClient.addItem(pluginDataToIndex, function (err, ids) {
+                searchClient.getItemByPath('../path/file.txt', function (err, item) {
+                    item['_source'].should.containDeep(dataToIndex);
 
-                done();
+                    done();
+                });
             });
         });
     });
