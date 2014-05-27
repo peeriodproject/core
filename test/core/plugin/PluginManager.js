@@ -281,10 +281,8 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
             }
         });
         var pluginDataStub = {
-            properties: {
-                foo: 'foobar',
-                bar: 'barfoo'
-            }
+            foo: 'foobar',
+            bar: 'barfoo'
         };
         var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
             onBeforeItemAdd: function (itemPath, stats, tikaGlobals, callback) {

@@ -279,15 +279,7 @@ var PluginManager = (function () {
                             runners[key].onBeforeItemAdd(itemPath, stats, globals, function (data) {
                                 counter++;
 
-                                // todo parse data and merge them together
-                                //console.log(JSON.stringify(data));
-                                if (data && Object.keys(data).length == 1) {
-                                    mergedPluginData[key] = data;
-                                    //var mapping:Object = this._createRestrictedMapping(data, useApacheTika.indexOf(key) !== -1);
-                                    //mergedPluginData[key] = this._updateMapping(mapping, itemPath, stats, fileHash);
-                                } else {
-                                    console.error('Invalid data "' + key + '"');
-                                }
+                                mergedPluginData[key] = data;
 
                                 checkAndSendCallback();
                             });

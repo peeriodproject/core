@@ -289,10 +289,8 @@ describe('CORE --> PLUGIN --> PluginManager @joern', function () {
 			}
 		});
 		var pluginDataStub:Object = {
-			properties: {
-				foo : 'foobar',
-				bar	: 'barfoo'
-			}
+			foo : 'foobar',
+			bar	: 'barfoo'
 
 		};
 		var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {

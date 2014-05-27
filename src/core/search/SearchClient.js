@@ -256,6 +256,15 @@ var SearchClient = (function () {
         });
     };
 
+    /**
+    * Creates a new `type` item and stores the given data within the {@link core.search.SearchClient~_indexName} index.
+    *
+    * @method core.search.SearchClient~_addItemToPluginIndex
+    *
+    * @param {string} type The type of the item. Usually the plugin identifier
+    * @param {Object} data The data to store
+    * @param {Function} callback
+    */
     SearchClient.prototype._addItemToPluginIndex = function (type, data, callback) {
         this._client.index({
             index: this._indexName,
@@ -271,6 +280,8 @@ var SearchClient = (function () {
 
     /**
     * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
+    *
+    * @method core.search.SearchClient~_createIndex
     *
     * @param {string} name
     * @param {Function} callback

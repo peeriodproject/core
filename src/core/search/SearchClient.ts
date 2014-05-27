@@ -277,6 +277,15 @@ class SearchClient implements SearchClientInterface {
 		});
 	}
 
+	/**
+	 * Creates a new `type` item and stores the given data within the {@link core.search.SearchClient~_indexName} index.
+	 *
+	 * @method core.search.SearchClient~_addItemToPluginIndex
+	 *
+	 * @param {string} type The type of the item. Usually the plugin identifier
+	 * @param {Object} data The data to store
+	 * @param {Function} callback
+	 */
 	private _addItemToPluginIndex (type:string, data:Object, callback:(err:Error) => any):void {
 		this._client.index({
 			index  : this._indexName,
@@ -292,6 +301,8 @@ class SearchClient implements SearchClientInterface {
 
 	/**
 	 * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
+	 *
+	 * @method core.search.SearchClient~_createIndex
 	 *
 	 * @param {string} name
 	 * @param {Function} callback
