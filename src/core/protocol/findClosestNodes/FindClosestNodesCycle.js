@@ -121,6 +121,33 @@ var FindClosestNodesCycle = (function () {
         this._requestAlphaNodes();
     }
     /**
+    * BEGIN TESTING PURPOSES ONLY
+    */
+    FindClosestNodesCycle.prototype.getRegisteredIdentifiers = function () {
+        return this._registeredIdentifiers;
+    };
+
+    FindClosestNodesCycle.prototype.getProbeList = function () {
+        return this._probeList;
+    };
+
+    FindClosestNodesCycle.prototype.getConfirmedList = function () {
+        return this._confirmedList;
+    };
+
+    FindClosestNodesCycle.prototype.getAlphaTimeout = function () {
+        return this._alphaTimeout;
+    };
+
+    FindClosestNodesCycle.prototype.getCycleTimeout = function () {
+        return this._cycleTimeout;
+    };
+
+    /**
+    *
+    * END TESTING PURPOSES ONLY
+    */
+    /**
     * Binds the correct listener to the FindClosestNodesManager instance for received 'FOUND_CLOSEST_NODES' messages.
     *
     * @method core.protocol.findClosestNodes.FindClosestNodesCycle~_bindListener
@@ -187,6 +214,8 @@ var FindClosestNodesCycle = (function () {
         } else {
             var returnedList = message.getFoundNodeList();
             var probedPrevLength = this._probeList.length;
+
+            message.discard();
 
             for (var i = 0; i < returnedList.length; i++) {
                 var node = returnedList[i];
