@@ -20,7 +20,7 @@ import ContactNode = require('../../../src/core/topology/ContactNode');
 import ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> TOPOLOGY --> RoutingTable', function () {
+describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
 
 	var sandbox:SinonSandbox;
 	var configStub:any;
@@ -167,6 +167,32 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 					});
 				});
 			});
+		});
+	});
+
+	it('should correctly call the internal bucket.size method of k buckets', function (done) {
+		var routingTable:RoutingTableInterface;
+		var size:number = 0;
+
+		bucketStub = testUtils.stubPublicApi(sandbox, Bucket, {
+			size : function (callback) {
+				var bucketSize:number = 10;
+
+				size += bucketSize;
+
+				callback(null, bucketSize);
+			}
+		});
+
+		routingTable = new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub, {
+			closeOnProcessExit: false
+		});
+
+		routingTable.getAllContactNodesSize(function(err:Error, size:number) {
+			size.should.equal(topologyBitLength * 10);
+			bucketStub.size.callCount.should.equal(topologyBitLength);
+
+			done();
 		});
 	});
 

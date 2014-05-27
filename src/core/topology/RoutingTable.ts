@@ -126,6 +126,29 @@ class RoutingTable implements RoutingTableInterface {
 		return process.nextTick(internalCallback.bind(null, null));
 	}
 
+	public getAllContactNodesSize (callback:(err:Error, count:number) => any):void {
+		var bucketAmount = Object.keys(this._buckets).length;
+		var processed:number = 0;
+		var contactNodeCount:number = 0;
+
+		var checkCallback:Function = function (err) {
+			if (processed === bucketAmount) {
+				callback(null, contactNodeCount);
+			}
+		};
+
+		if (bucketAmount) {
+			for (var i in this._buckets) {
+				this._buckets[i].size(function (err, size) {
+					processed++;
+					contactNodeCount += size;
+
+					checkCallback(err);
+				});
+			}
+		}
+	}
+
 	public getClosestContactNodes (id:IdInterface, excludeId:IdInterface, callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
