@@ -472,7 +472,11 @@ var ProxyManager = (function (_super) {
         var _this = this;
         this._protocolConnectionManager.on('message', function (message) {
             // update the contact node in the routing table accordingly, do ping pong if necessary, but not in here
-            _this.emit('contactNodeInformation', message.getSender());
+            var sender = message.getSender();
+
+            if (sender.getAddresses().length > 0) {
+                _this.emit('contactNodeInformation', message.getSender());
+            }
 
             // check if the message is intended for us and if yes, and it is a proxy affine message, act accordingly
             if (_this._messageIsIntendedForMyNode(message)) {

@@ -501,7 +501,11 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	private _setupListeners ():void {
 		this._protocolConnectionManager.on('message', (message:ReadableMessageInterface) => {
 			// update the contact node in the routing table accordingly, do ping pong if necessary, but not in here
-			this.emit('contactNodeInformation', message.getSender());
+			var sender:ContactNodeInterface = message.getSender();
+
+			if (sender.getAddresses().length > 0) {
+				this.emit('contactNodeInformation', message.getSender());
+			}
 
 			// check if the message is intended for us and if yes, and it is a proxy affine message, act accordingly
 			if (this._messageIsIntendedForMyNode(message)) {
