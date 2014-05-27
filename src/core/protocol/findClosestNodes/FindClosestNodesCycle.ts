@@ -154,6 +154,36 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 		this._requestAlphaNodes();
 	}
 
+
+	/**
+	 * BEGIN TESTING PURPOSES ONLY
+	 */
+
+	public getRegisteredIdentifiers ():Array<string> {
+		return this._registeredIdentifiers;
+	}
+
+	public getProbeList ():ContactNodeListInterface {
+		return this._probeList;
+	}
+
+	public getConfirmedList ():ContactNodeListInterface {
+		return this._confirmedList;
+	}
+
+	public getAlphaTimeout ():number {
+		return this._alphaTimeout;
+	}
+
+	public getCycleTimeout ():number {
+		return this._cycleTimeout;
+	}
+
+	/**
+	 *
+	 * END TESTING PURPOSES ONLY
+	 */
+
 	/**
 	 * Binds the correct listener to the FindClosestNodesManager instance for received 'FOUND_CLOSEST_NODES' messages.
 	 *
@@ -220,6 +250,8 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 		else {
 			var returnedList:ContactNodeListInterface = message.getFoundNodeList();
 			var probedPrevLength:number = this._probeList.length;
+
+			message.discard();
 
 			for (var i = 0; i < returnedList.length; i++) {
 				var node:ContactNodeInterface = returnedList[i];
