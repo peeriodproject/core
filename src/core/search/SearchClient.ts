@@ -107,9 +107,7 @@ class SearchClient implements SearchClientInterface {
 	}
 
 	public addItem (objectToIndex:Object, callback?:(err:Error) => any):void {
-		// todo iplementation
-		console.log(objectToIndex);
-		var pluginIdentifiers = Object.keys(objectToIndex);
+		var pluginIdentifiers:Array<string> = Object.keys(objectToIndex);
 		var amount:number = pluginIdentifiers.length;
 		var processed:number = 0;
 
@@ -123,29 +121,50 @@ class SearchClient implements SearchClientInterface {
 			}
 		};
 
-		for (var i in pluginIdentifiers) {
-			var identifier:string = pluginIdentifiers[i];
+		if (pluginIdentifiers.length) {
+			for (var i in pluginIdentifiers) {
+				var identifier:string = pluginIdentifiers[i];
 
-			this._addItemToPluginIndex(identifier, objectToIndex[identifier], function (err) {
-				processed++;
+				this._addItemToPluginIndex(identifier, objectToIndex[identifier], function (err) {
+					processed++;
 
-				checkCallback(err);
-			});
+					checkCallback(err);
+				});
+			}
 		}
-		return process.nextTick(callback.bind(null, null, null));
+		else {
+			return process.nextTick(callback.bind(null, null, null));
+		}
 	}
 
 	public addMapping (type:string, mapping:Object, callback?:(err:Error) => any):void {
 		var internalCallback:Function = callback || function () {
 		};
 
-		this._client.indices.putMapping({
-			index: this._indexName,
-			type : type.toLowerCase(),
-			body: mapping
-		}, function (err, response, status) {
-			console.log(err, response, status);
-			internalCallback(err);
+		this._createIndex((err:Error) => {
+			var map = null;
+			if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
+				// wrap mapping in type root
+				map = {};
+				map[type] = mapping;
+			}
+			else {
+				map = mapping;
+			}
+
+			if (err) {
+				internalCallback(err);
+			}
+			else {
+				this._client.indices.putMapping({
+					index: this._indexName,
+					type : type.toLowerCase(),
+					body : map
+				}, function (err, response, status) {
+					err = err || null;
+					internalCallback(err);
+				});
+			}
 		});
 	}
 
@@ -162,6 +181,27 @@ class SearchClient implements SearchClientInterface {
 
 			internalCallback(err);
 		});
+	}
+
+	public deleteIndex (callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {
+		};
+
+		if (this._isOpen) {
+			this._client.indices.delete({
+				index: this._indexName
+			}, function (err:Error, response, status) {
+				if (status === 200 || (status === 400 && err && err.message.indexOf('IndexMissingException') === 0)) {
+					internalCallback(null);
+				}
+				else {
+					internalCallback(err);
+				}
+			});
+		}
+		else {
+			return process.nextTick(internalCallback.bind(null, null));
+		}
 	}
 
 	public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
@@ -185,7 +225,7 @@ class SearchClient implements SearchClientInterface {
 			return process.nextTick(internalCallback.bind(null, null));
 		}
 
-		var onSearchStoreOpen = (err:Error) => {
+		var onSearchStoreOpen:Function = (err:Error) => {
 			if (err) {
 				return internalCallback(err);
 			}
@@ -202,13 +242,13 @@ class SearchClient implements SearchClientInterface {
 
 			this._waitForDatabaseServer((err:Error) => {
 				if (err) {
-					console.log(err);
+					console.error(err);
 					internalCallback(err);
 				}
 				else {
 					this._createIndex((err:Error) => {
 						if (err) {
-							console.log(err);
+							console.error(err);
 						}
 						else {
 							this._isOpen = true;
@@ -233,20 +273,28 @@ class SearchClient implements SearchClientInterface {
 			index: this._indexName,
 			type : type
 		}, function (err, response, status) {
-			//console.log(err, response, status);
 			callback(response);
 		});
 	}
 
+	/**
+	 * Creates a new `type` item and stores the given data within the {@link core.search.SearchClient~_indexName} index.
+	 *
+	 * @method core.search.SearchClient~_addItemToPluginIndex
+	 *
+	 * @param {string} type The type of the item. Usually the plugin identifier
+	 * @param {Object} data The data to store
+	 * @param {Function} callback
+	 */
 	private _addItemToPluginIndex (type:string, data:Object, callback:(err:Error) => any):void {
 		this._client.index({
-			index: this._indexName,
-			type: type,
+			index  : this._indexName,
+			type   : type,
 			refresh: true,
-			body: data
+			body   : data
 		}, function (err:Error, response, status) {
-			console.log(err, response, status);
-
+			// todo check status >= 200 < 300
+			//console.log(status);
 			callback(err);
 		});
 	}
@@ -254,16 +302,14 @@ class SearchClient implements SearchClientInterface {
 	/**
 	 * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
 	 *
+	 * @method core.search.SearchClient~_createIndex
+	 *
 	 * @param {string} name
 	 * @param {Function} callback
 	 */
 	private _createIndex (callback:(err:Error) => any):void {
 		this._client.indices.create({
-			index: this._indexName,
-			body: {
-				"number_of_shards" : 1,
-				"number_of_replicas" : 0
-			}
+			index: this._indexName
 		}, function (err, response, status) {
 			// everything went fine or index already exists
 			if (status === 200 || (status === 400 && err && err.message.indexOf('IndexAlreadyExistsException') === 0)) {

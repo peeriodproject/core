@@ -19,7 +19,7 @@ import PluginRunnerFactory = require('../../../src/core/plugin/PluginRunnerFacto
 import PluginValidator = require('../../../src/core/plugin/PluginValidator');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
+describe('CORE --> PLUGIN --> PluginManager @joern', function () {
 	var sandbox:SinonSandbox;
 	var appDataPath:string = testUtils.getFixturePath('core/plugin/appDataPath');
 	var createConfig:any = function ():any {
@@ -111,7 +111,7 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
 		});
 	});
 
-	it ('should correctly load without a pluginState file', function (done) {
+	it('should correctly load without a pluginState file', function (done) {
 		var config:any = testUtils.stubPublicApi(sandbox, ObjectConfig, {
 			get: function (key:string) {
 				if (key === 'app.dataPath') {
@@ -209,7 +209,7 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
 			}
 		});
 
-		var onPluginAdded  = function (identifier) {
+		var onPluginAdded = function (identifier) {
 			identifier.should.equal('foo bar active');
 
 			pluginManager.removeEventListener('pluginAdded', onPluginAdded);
@@ -266,7 +266,7 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
 		});
 	});
 
-	it ('should correctly return additional fields provided by the plugins', function (done) {
+	it('should correctly return additional fields provided by the plugins', function (done) {
 		var config:any = createConfig();
 		var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
 		var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator, {
@@ -280,7 +280,7 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
 					getFileMimeTypes: function () {
 						return ['image/jpeg'];
 					},
-					getSettings: function () {
+					getSettings     : function () {
 						return {
 							useApacheTika: true
 						};
@@ -289,18 +289,12 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
 			}
 		});
 		var pluginDataStub:Object = {
-			model: {
-				properties: {
-					foo: 'string',
-					file_attachment: {
-						type: 'attachment'
-					}
-				}
-			}
+			foo : 'foobar',
+			bar	: 'barfoo'
+
 		};
 		var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
 			onBeforeItemAdd: function (itemPath, stats, tikaGlobals, callback) {
-				//console.log(tikaGlobals.fileStream);
 				callback(pluginDataStub);
 			}
 		});
@@ -313,7 +307,7 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
 		var pluginManager:PluginManagerInterface = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
 			onOpenCallback: function () {
 				pluginManager.activatePluginState(function () {
-					pluginManager.onBeforeItemAdd(testUtils.getFixturePath('core/plugin/pluginManager/image.jpg'), JSON.parse(statsJson), function (pluginData) {
+					pluginManager.onBeforeItemAdd(testUtils.getFixturePath('core/plugin/pluginManager/image.jpg'), JSON.parse(statsJson), 'fileHash', function (pluginData) {
 						Object.keys(pluginData).length.should.equal(1);
 						pluginData['foo bar active'].should.containDeep(pluginDataStub);
 

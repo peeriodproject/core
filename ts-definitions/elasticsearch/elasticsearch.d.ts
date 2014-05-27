@@ -16,6 +16,7 @@ declare module "elasticsearch" {
 
 	interface Indices {
 		create (params, callback:Callback):void;
+		delete (params, callback:Callback):void;
 		existsType (params, callback:Callback):void;
 		putMapping (params, callback:Callback):void;
 	}

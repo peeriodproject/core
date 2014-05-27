@@ -252,7 +252,7 @@ var IndexManager = (function () {
     };
 
     /**
-    * Processes an item from teh {@link core.search.IndexManager~_currentPendingPathToIndex} list.
+    * Processes an item from the {@link core.search.IndexManager~_currentPendingPathToIndex} list.
     * It checkes weather the item exists in the searchManager by using {@link core.search.IndexManager~_getItemFromSearchManager}
     * and validates the returned state via {@link core.search.IndexManager~_validateItem}. If the item does not exists yet
     * or needs reindexing it is passed to the {@link core.search.IndexManager~_addItem} method.
@@ -278,13 +278,15 @@ var IndexManager = (function () {
                         // todo check against the amount of plugins which indexed this file. Maybe some plugins are new
                         callback(new Error('IndexManager~_processPendingPathToIndex: The item at path "' + pathToIndex + '" is already indexed.'));
                     } else {
-                        _this._addItem(pathToIndex, stats, callback);
+                        _this._addItem(pathToIndex, stats, fileHash, callback);
                     }
                 });
                 /**/
             } else {
                 // adding new item
-                _this._addItem(pathToIndex, stats, callback);
+                _this._pathValidator.getHash(pathToIndex, function (err, fileHash) {
+                    _this._addItem(pathToIndex, stats, fileHash, callback);
+                });
             }
         });
     };
@@ -298,8 +300,8 @@ var IndexManager = (function () {
     * @param {fs.Stats} stats
     * @param {Function} callback
     */
-    IndexManager.prototype._addItem = function (pathToAdd, stats, callback) {
-        this._searchManager.addItem(pathToAdd, stats, function (err) {
+    IndexManager.prototype._addItem = function (pathToAdd, stats, fileHash, callback) {
+        this._searchManager.addItem(pathToAdd, stats, fileHash, function (err) {
             if (err) {
                 // todo reset isIndexing flag
                 return callback(err);

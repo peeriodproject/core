@@ -279,7 +279,7 @@ class PluginManager implements PluginManagerInterface {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
-	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, callback:(pluginDatas:Object) => any):void {
+	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, fileHash:string, callback:(pluginDatas:Object) => any):void {
 		this.getPluginRunnersForItem(itemPath, (runners:PluginRunnerListInterface) => {
 			var runnersLength:number = Object.keys(runners).length;
 			var counter:number = 0;
@@ -296,7 +296,7 @@ class PluginManager implements PluginManagerInterface {
 			};
 			var runPlugins:Function = (tikaGlobals) => {
 				if (runnersLength) {
-					this._loadGlobals(itemPath, (err:Error, globals:Object) => {
+					this._loadGlobals(itemPath, fileHash, (err:Error, globals:Object) => {
 						if (err) {
 							console.log(err);
 							return sendCallback();
@@ -309,20 +309,13 @@ class PluginManager implements PluginManagerInterface {
 							runners[key].onBeforeItemAdd(itemPath, stats, globals, (data:Object) => {
 								counter++;
 
-								// todo parse data and merge them together
-								console.log(JSON.stringify(data));
-								if (data && Object.keys(data).length == 1) {
-									mergedPluginData[key] = this._createRestrictedMapping(data, useApacheTika.indexOf(key) !== -1);
-								}
-								else {
-									console.error('Invalid mapping "' + key + '"');
-								}
+								mergedPluginData[key] = data;
 
 								checkAndSendCallback();
 							});
 						}
 
-						console.log(JSON.stringify(mergedPluginData));
+						//console.log(JSON.stringify(mergedPluginData));
 					});
 				}
 				else {
@@ -506,9 +499,10 @@ class PluginManager implements PluginManagerInterface {
 		callback(null, tikaGlobals);
 	}
 
-	private _loadGlobals (itemPath:string, callback:(err:Error, globals:Object) => any):void {
+	private _loadGlobals (itemPath:string, fileHash:string, callback:(err:Error, globals:Object) => any):void {
 		var globals = {
-			fileBuffer: null
+			fileBuffer: null,
+			fileHash: fileHash
 		};
 
 		fs.stat(itemPath, function (err:Error, stats:fs.Stats) {
@@ -527,29 +521,6 @@ class PluginManager implements PluginManagerInterface {
 				})
 			}
 		});
-	}
-
-	/**
-	 * Updates the given mapping and restrict some fields.
-	 *
-	 * @param {Object} mapping
-	 * @param {boolean} isApacheTikaPlugin
-	 * @returns {Object} the restricted mapping
-	 */
-	private _createRestrictedMapping (mapping:Object, isApacheTikaPlugin:boolean):Object {
-		var docKey = Object.keys(mapping)[0];
-		var source = mapping[docKey]._source || {};
-
-		var attachmentKey = null;
-
-		// todo iterate over mapping and find attachment filed by type
-		/*if (mapping[docKey]['properties'] && mapping[docKey]['properties']['file_attachment']) {
-			mapping[docKey]._source = ObjectUtils.extend(source, {
-				excludes: 'properties.file_attachment'
-			});
-		}*/
-
-		return mapping;
 	}
 
 }

@@ -5,7 +5,7 @@ import fs = require('fs');
 import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
 
 /**
- * The
+ * The SearchClient acts as a wrapper around the search database.
  * @interface
  * @class core.search.SearchClientInterface
  */
@@ -19,11 +19,20 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	addItem (objectToIndex:Object, callback?:(err:Error) => any):void;
 
 	/**
-	 * @param type
-	 * @param mapping
-	 * @param callback
+	 * Add the mapping for the specified type to the search index.
+	 *
+	 * @param {string} type
+	 * @param {Object} mapping
+	 * @param {Function} callback
 	 */
 	addMapping (type:string, mapping:Object, callback?:(err:Error) => any):void;
+
+	/**
+	 * Deletes the index which is managed by the SearchClient instance
+	 *
+	 * @param {Function} callback
+	 */
+	deleteIndex (callback?:(err:Error) => any):void;
 
 	/**
 	 *

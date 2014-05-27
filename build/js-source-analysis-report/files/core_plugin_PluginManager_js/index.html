@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">71.18</p>
+      <p class="stat">70.85</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">441</p>
+      <p class="stat">492</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">56.38</p>
+      <p class="stat">55.74</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.87</p>
+      <p class="stat">3.14</p>
     </div>
   </div>
 </div>
@@ -297,6 +297,7 @@ var PluginManager = (function () {
         return process.nextTick(callback.bind(null, runner));
     };
 
+    // todo check file extension
     PluginManager.prototype.getPluginRunnersForItem = function (itemPath, callback) {
         var mimeType = this._getMimeType(itemPath);
         var responsibleRunners = {};
@@ -339,7 +340,7 @@ var PluginManager = (function () {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
-    PluginManager.prototype.onBeforeItemAdd = function (itemPath, stats, callback) {
+    PluginManager.prototype.onBeforeItemAdd = function (itemPath, stats, fileHash, callback) {
         var _this = this;
         this.getPluginRunnersForItem(itemPath, function (runners) {
             var runnersLength = Object.keys(runners).length;
@@ -357,17 +358,34 @@ var PluginManager = (function () {
             };
             var runPlugins = function (tikaGlobals) {
                 if (runnersLength) {
-                    for (var key in runners) {
-                        // call the plugin!
-                        runners[key].onBeforeItemAdd(itemPath, stats, tikaGlobals, function (data) {
-                            counter++;
+                    _this._loadGlobals(itemPath, fileHash, function (err, globals) {
+                        if (err) {
+                            console.log(err);
+                            return sendCallback();
+                        }
 
-                            // todo parse data and merge them together
-                            mergedPluginData[key] = data;
+                        globals = ObjectUtils.extend(globals, tikaGlobals);
 
-                            checkAndSendCallback();
-                        });
-                    }
+                        for (var key in runners) {
+                            // call the plugin!
+                            runners[key].onBeforeItemAdd(itemPath, stats, globals, function (data) {
+                                counter++;
+
+                                // todo parse data and merge them together
+                                //console.log(JSON.stringify(data));
+                                if (data &amp;&amp; Object.keys(data).length == 1) {
+                                    mergedPluginData[key] = data;
+                                    //var mapping:Object = this._createRestrictedMapping(data, useApacheTika.indexOf(key) !== -1);
+                                    //mergedPluginData[key] = this._updateMapping(mapping, itemPath, stats, fileHash);
+                                } else {
+                                    console.error(&#039;Invalid data &quot;&#039; + key + &#039;&quot;&#039;);
+                                }
+
+                                checkAndSendCallback();
+                            });
+                        }
+                        //console.log(JSON.stringify(mergedPluginData));
+                    });
                 } else {
                     sendCallback();
                 }
@@ -385,6 +403,7 @@ var PluginManager = (function () {
             if (useApacheTika.length) {
                 _this._loadApacheTikaGlobals(itemPath, function (err, tikaGlobals) {
                     if (err) {
+                        console.log(&#039;PluginManager.onBeforeItemAdd. MISSING CALLBACK&#039;);
                         console.error(err);
                     } else {
                         runPlugins(tikaGlobals);
@@ -424,7 +443,9 @@ var PluginManager = (function () {
 
     /**
     * The PluginManager is going to activate the plugin. But before we&#039;re going to run thirdparty code within
-    * the app we validate the code using a {@link core.plugin.PluginValidatorInterface}.
+    * the app we validate the plugin using a {@link core.plugin.PluginValidatorInterface}.
+    *
+    * todo deactivate plugin
     */
     PluginManager.prototype._activatePlugin = function (pluginState, callback) {
         var _this = this;
@@ -476,14 +497,21 @@ var PluginManager = (function () {
         return path.join(this._config.get(&#039;app.dataPath&#039;), &#039;pluginManager.json&#039;);
     };
 
+    /**
+    * Returns the mimetype for the given path.
+    *
+    * @method core.plugin.PluginManager~_getMimeType
+    *
+    * @param {string} filePath
+    * @returns {string}
+    */
     PluginManager.prototype._getMimeType = function (filePath) {
         return mime.lookup(filePath);
     };
 
-    PluginManager.prototype._isResponsibleForMimeType = function (mimeType, pluginLoader) {
-        return (pluginLoader.getFileMimeTypes().indexOf(mimeType) !== 1) ? true : false;
-    };
-
+    /*private _isResponsibleForMimeType (mimeType:string, pluginLoader:PluginLoaderInterface):boolean {
+    return (pluginLoader.getFileMimeTypes().indexOf(mimeType) !== 1) ? true : false;
+    }*/
     /**
     * Loads the plugin state from a persistant storage
     *
@@ -525,8 +553,31 @@ var PluginManager = (function () {
     };
 
     PluginManager.prototype._loadApacheTikaGlobals = function (itemPath, callback) {
-        console.log(&#039;loading tika globals for&#039;, itemPath);
-        callback(null);
+        var tikaGlobals = {};
+
+        callback(null, tikaGlobals);
+    };
+
+    PluginManager.prototype._loadGlobals = function (itemPath, fileHash, callback) {
+        var globals = {
+            fileBuffer: null,
+            fileHash: fileHash
+        };
+
+        fs.stat(itemPath, function (err, stats) {
+            if (err) {
+                return callback(err, null);
+            } else if (stats.isFile()) {
+                fs.readFile(itemPath, function (err, data) {
+                    if (err) {
+                        return callback(err, null);
+                    } else {
+                        globals[&#039;fileBuffer&#039;] = data;
+                        return callback(null, globals);
+                    }
+                });
+            }
+        });
     };
     return PluginManager;
 })();

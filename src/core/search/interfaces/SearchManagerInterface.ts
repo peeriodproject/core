@@ -12,7 +12,7 @@ import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInt
  */
 interface SearchManagerInterface extends ClosableAsyncInterface {
 
-	addItem (pathToIndex:string, stats:fs.Stats, callback?:(err:Error) => any):void;
+	addItem (pathToIndex:string, stats:fs.Stats, fileHash:string, callback?:(err:Error) => any):void;
 	getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void;
 	itemExists (pathToIndex:string, callback:(exists:boolean) => void):void;
 

@@ -10,7 +10,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var PathValidator = require('../../../src/core/fs/PathValidator');
 var SearchManager = require('../../../src/core/search/SearchManager');
 
-describe('CORE --> SEARCH --> IndexManager', function () {
+describe('CORE --> SEARCH --> IndexManager @joern', function () {
     var sandbox;
     var indexManager;
     var configStub;
@@ -136,12 +136,17 @@ describe('CORE --> SEARCH --> IndexManager', function () {
 
         it('should correctly add a fresh item which does not exits in the database', function (done) {
             createIndexManager({
+                pathValidator: {
+                    getHash: function (filePath, callback) {
+                        return process.nextTick(callback.bind(null, null, 'fileHash'));
+                    }
+                },
                 searchManager: {
                     // no item exists in the database
                     getItem: function (pathToIndex, callback) {
                         return process.nextTick(callback.bind(null, null, null));
                     },
-                    addItem: function (pathToIndex, stats, callback) {
+                    addItem: function (pathToIndex, stats, fileHash, callback) {
                         return process.nextTick(callback.bind(null));
                     }
                 }
@@ -174,7 +179,7 @@ describe('CORE --> SEARCH --> IndexManager', function () {
                     getItem: function (pathToIndex, callback) {
                         return process.nextTick(callback.bind(null, 'hash', JSON.parse('{"fs.Stats": "Object"}')));
                     },
-                    addItem: function (pathToIndex, stats, callback) {
+                    addItem: function (pathToIndex, stats, fileHash, callback) {
                         return process.nextTick(callback.bind(null));
                     }
                 }
@@ -212,7 +217,7 @@ describe('CORE --> SEARCH --> IndexManager', function () {
                     getItem: function (pathToIndex, callback) {
                         return process.nextTick(callback.bind(null, 'hash', JSON.parse('{"fs.Stats": "Object"}')));
                     },
-                    addItem: function (pathToIndex, stats, callback) {
+                    addItem: function (pathToIndex, stats, fileHash, callback) {
                         return process.nextTick(callback.bind(null));
                     }
                 }
@@ -250,7 +255,7 @@ describe('CORE --> SEARCH --> IndexManager', function () {
                     getItem: function (pathToIndex, callback) {
                         return process.nextTick(callback.bind(null, 'hash', JSON.parse('{"fs.Stats": "Object"}')));
                     },
-                    addItem: function (pathToIndex, stats, callback) {
+                    addItem: function (pathToIndex, stats, fileHash, callback) {
                         return process.nextTick(callback.bind(null));
                     }
                 }

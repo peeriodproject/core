@@ -274,7 +274,7 @@ class IndexManager implements IndexManagerInterface {
 	}
 
 	/**
-	 * Processes an item from teh {@link core.search.IndexManager~_currentPendingPathToIndex} list.
+	 * Processes an item from the {@link core.search.IndexManager~_currentPendingPathToIndex} list.
 	 * It checkes weather the item exists in the searchManager by using {@link core.search.IndexManager~_getItemFromSearchManager}
 	 * and validates the returned state via {@link core.search.IndexManager~_validateItem}. If the item does not exists yet
 	 * or needs reindexing it is passed to the {@link core.search.IndexManager~_addItem} method.
@@ -300,14 +300,16 @@ class IndexManager implements IndexManagerInterface {
 						callback(new Error('IndexManager~_processPendingPathToIndex: The item at path "' + pathToIndex + '" is already indexed.'));
 					}
 					else {
-						this._addItem(pathToIndex, stats, callback);
+						this._addItem(pathToIndex, stats, fileHash, callback);
 					}
 				});
 				/**/
 			}
 			else {
 				// adding new item
-				this._addItem(pathToIndex, stats, callback);
+				this._pathValidator.getHash(pathToIndex, (err:Error, fileHash:string) => {
+					this._addItem(pathToIndex, stats, fileHash, callback);
+				});
 			}
 		});
 	}
@@ -321,8 +323,8 @@ class IndexManager implements IndexManagerInterface {
 	 * @param {fs.Stats} stats
 	 * @param {Function} callback
 	 */
-	private _addItem(pathToAdd:string, stats:fs.Stats, callback:(err:Error) => any):void {
-		this._searchManager.addItem(pathToAdd, stats, (err:Error) => {
+	private _addItem(pathToAdd:string, stats:fs.Stats, fileHash:string, callback:(err:Error) => any):void {
+		this._searchManager.addItem(pathToAdd, stats, fileHash, (err:Error) => {
 			if (err) {
 				// todo reset isIndexing flag
 				return callback(err);
