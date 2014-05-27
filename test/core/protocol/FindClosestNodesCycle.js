@@ -14,7 +14,7 @@ var ProtocolConnectionManager = require('../../../src/core/protocol/net/Protocol
 var FindClosestNodesManager = require('../../../src/core/protocol/findClosestNodes/FindClosestNodesManager');
 var FoundClosestNodesReadableMessage = require('../../../src/core/protocol/findClosestNodes/messages/FoundClosestNodesReadableMessage');
 
-describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesCycle @current', function () {
+describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesCycle', function () {
     var sandbox;
 
     var myNodeBits = '11001101';

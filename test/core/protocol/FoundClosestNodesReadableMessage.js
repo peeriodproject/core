@@ -4,7 +4,7 @@ require('should');
 var ContactNodeAddressFactory = require('../../../src/core/topology/ContactNodeAddressFactory');
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 
-var FoundClosestNodeReadableMessage = require('../../../src/core/protocol/findClosestNodes/messages/FoundClosestNodesReadableMessage');
+var FoundClosestNodesReadableMessage = require('../../../src/core/protocol/findClosestNodes/messages/FoundClosestNodesReadableMessage');
 
 describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FoundClosestNodesReadableMessage', function () {
     var nodeFactory = new ContactNodeFactory();
@@ -49,7 +49,7 @@ describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FoundClosestNodesReadable
     };
 
     it('should correctly deformat a message', function () {
-        var msg = new FoundClosestNodeReadableMessage(createWorkingMessage(), nodeFactory, addressFactory);
+        var msg = new FoundClosestNodesReadableMessage(createWorkingMessage(), nodeFactory, addressFactory);
 
         msg.getSearchedForId().toHexString().should.equal('f3ec6b952992bb07f34862a411bb1f833f636288');
 
@@ -71,7 +71,7 @@ describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FoundClosestNodesReadable
 
     it('should throw an error when deformatting a bad message', function () {
         (function () {
-            new FoundClosestNodeReadableMessage(createBadMessage(), nodeFactory, addressFactory);
+            new FoundClosestNodesReadableMessage(createBadMessage(), nodeFactory, addressFactory);
         }).should.throwError();
     });
 });
