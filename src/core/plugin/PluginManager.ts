@@ -90,12 +90,14 @@ class PluginManager implements PluginManagerInterface {
 	private _pluginLoaders:PluginLoaderListInterface = {};
 
 	/**
+	 * The internally used {@link core.plugin.PluginRunnerFactoryInterface} instance
 	 *
 	 * @member {core.plugin.PluginRunnerFactoryInterface} core.plugin.PluginManager~_pluginRunnerFactory
 	 */
 	private _pluginRunnerFactory:PluginRunnerFactoryInterface = null;
 
 	/**
+	 * The list of (active) {@link core.plugin.PluginRunnerInterface}
 	 *
 	 * @member {core.plugin.PluginRunnerListInterface} core.plugin.PluginManager~_pluginRunners
 	 */
@@ -251,21 +253,6 @@ class PluginManager implements PluginManagerInterface {
 				responsibleRunners[key] = this._pluginRunners[key];
 			}
 		}
-		//_isResponsibleForMimeType
-		/*this.getActivePluginRunners((pluginRunners:PluginRunnerListInterface) => {
-		 var responsibleRunners:PluginRunnerListInterface = {};
-
-		 if (Object.keys(pluginRunners).length) {
-		 for (var key in pluginRunners) {
-		 var pluginLoader:PluginLoaderInterface = this._pluginLoaders[key];
-
-		 if (this._isResponsibleForFile(itemPath, pluginLoader)) {
-		 responsibleRunners[key] = this._pluginRunners[key];
-		 }
-		 }
-		 }
-
-		 });*/
 
 		return process.nextTick(callback.bind(null, responsibleRunners));
 	}

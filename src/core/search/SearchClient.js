@@ -92,15 +92,15 @@ var SearchClient = (function () {
     SearchClient.prototype.addItem = function (objectToIndex, callback) {
         var pluginIdentifiers = Object.keys(objectToIndex);
         var amount = pluginIdentifiers.length;
-        var processed = 0;
+        var itemIds = [];
 
         var checkCallback = function (err) {
             if (err) {
                 console.error(err);
             }
 
-            if (processed === amount) {
-                callback(null);
+            if (itemIds.length === amount) {
+                callback(null, itemIds);
             }
         };
 
@@ -108,14 +108,14 @@ var SearchClient = (function () {
             for (var i in pluginIdentifiers) {
                 var identifier = pluginIdentifiers[i];
 
-                this._addItemToPluginIndex(identifier, objectToIndex[identifier], function (err) {
-                    processed++;
+                this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
+                    itemIds.push(id);
 
                     checkCallback(err);
                 });
             }
         } else {
-            return process.nextTick(callback.bind(null, null, null));
+            return process.nextTick(callback.bind(null, new Error('SearchClient.addItem: No item data specified! Preventing item creation.'), null));
         }
     };
 
@@ -184,11 +184,51 @@ var SearchClient = (function () {
         }
     };
 
-    SearchClient.prototype.getItem = function (pathToIndex, callback) {
-        // todo iplementation
+    SearchClient.prototype.getItem = function (query, callback) {
         return process.nextTick(callback.bind(null, null, null));
     };
 
+    SearchClient.prototype.getItemById = function (id, callback) {
+        this._client.get({
+            index: this._indexName,
+            type: '_all',
+            id: id
+        }, function (err, response, status) {
+            err = err || null;
+
+            callback(err, response);
+        });
+    };
+
+    SearchClient.prototype.getItemByPath = function (itemPath, callback) {
+        var searchQuery = {
+            query: {
+                match: {
+                    itemPath: itemPath
+                }
+            }
+        };
+
+        this._client.search({
+            index: this._indexName,
+            body: searchQuery
+        }, function (err, response, status) {
+            err = err || null;
+
+            var hits = response['hits'];
+
+            if (!err && status === 200 && hits && hits['total']) {
+                callback(err, hits['hits'][0]);
+            } else {
+                callback(err, null);
+            }
+        });
+    };
+
+    /*public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
+    // todo iplementation
+    return process.nextTick(callback.bind(null, null, null));
+    }*/
     SearchClient.prototype.isOpen = function (callback) {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
@@ -196,6 +236,16 @@ var SearchClient = (function () {
     SearchClient.prototype.itemExists = function (pathToIndex, callback) {
         // todo iplementation
         return process.nextTick(callback.bind(null, null, null));
+    };
+
+    SearchClient.prototype.itemExistsById = function (id, callback) {
+        this._client.exists({
+            index: this._indexName,
+            type: '_all',
+            id: id
+        }, function (err, exists) {
+            return callback(exists === true);
+        });
     };
 
     SearchClient.prototype.open = function (callback) {
@@ -274,7 +324,11 @@ var SearchClient = (function () {
         }, function (err, response, status) {
             // todo check status >= 200 < 300
             //console.log(status);
-            callback(err);
+            if (response['created']) {
+                callback(err, response['_id']);
+            } else {
+                callback(err, null);
+            }
         });
     };
 
@@ -303,6 +357,8 @@ var SearchClient = (function () {
     * Pings the database server in a specified interval and calls the callback after a specified timeout.
     *
     * @method core.search.SearchClient~_waitForDatabaseServer
+    *
+    * @param {Function} callback
     */
     SearchClient.prototype._waitForDatabaseServer = function (callback) {
         var _this = this;

@@ -89,6 +89,22 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 		searchClient.should.be.an.instanceof(SearchClient);
 	});
 
+	it('should correctly return the open/closed state', function (done) {
+		searchClient.isOpen(function (err, isOpen) {
+			(err === null).should.be.true;
+			isOpen.should.be.true;
+
+			searchClient.close(function(err) {
+				searchClient.isOpen(function (err, isOpen) {
+					(err === null).should.be.true;
+					isOpen.should.be.false;
+
+					done();
+				});
+			});
+		});
+	});
+
 	it('should correctly return if an item with the specified type exists', function (done) {
 		searchClient.typeExists('foobar', function (exists) {
 			exists.should.be.false;
@@ -99,24 +115,95 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 		});
 	});
 
+	it('should correctly return if an item exists in the index', function (done) {
+		var dataToIndex:Object = {
+			pluginidentifier: {
+				itemHash: 'fileHash',
+				itemPath: '../path/file.txt',
+				itemStats: {
+					stats: true
+				}
+			}
+		};
+
+		searchClient.itemExistsById('randomId', function (exists) {
+			exists.should.be.false;
+
+			searchClient.addItem(dataToIndex, function (err:Error, ids:Array<string>) {
+				searchClient.itemExistsById(ids[0], function (exists) {
+					exists.should.be.true;
+
+					done();
+				});
+			});
+		});
+	});
+
+	it ('should correctly prevent the creation of empty items', function (done) {
+		searchClient.addItem({}, function(err, ids) {
+			err.should.be.an.instanceof(Error);
+			err.message.should.equal('SearchClient.addItem: No item data specified! Preventing item creation.');
+			(ids === null).should.be.true;
+
+			done();
+		});
+	});
+
+	it ('should correctly return the added item by id', function (done) {
+		var dataToIndex:Object = {
+			pluginidentifier: {
+				itemHash: 'fileHash',
+				itemPath: '../path/file.txt',
+				itemStats: {
+					stats: true
+				}
+			}
+		};
+
+		var pluginDataToIndex = {
+			pluginidentifier: dataToIndex
+		};
+
+		searchClient.itemExistsById('randomId', function (exists) {
+			exists.should.be.false;
+
+			searchClient.addItem(pluginDataToIndex, function (err:Error, ids:Array<string>) {
+				searchClient.getItemById(ids[0], function (err, item) {
+					item['_source'].should.containDeep(dataToIndex);
+
+					done();
+				});
+			});
+		});
+	});
+
+	it('should correctly return the added item by path', function (done) {
+		var dataToIndex:Object = {
+			pluginidentifier: {
+				itemHash: 'fileHash',
+				itemPath: '../path/file.txt',
+				itemStats: {
+					stats: true
+				}
+			}
+		};
+
+		var pluginDataToIndex = {
+			pluginidentifier: dataToIndex
+		};
+
+		searchClient.addItem(pluginDataToIndex, function (err:Error, ids:Array<string>) {
+			searchClient.getItemByPath('../path/file.txt', function (err, item) {
+				item['_source'].should.containDeep(dataToIndex);
+
+				done();
+			});
+		});
+	});
+
 	it('should correctly add an item to the datastore which uses the attachment mapper plugin', function (done) {
-		/*var mapping = {
-		 "properties": {
-		 "content": {
-		 "type"  : "attachment",
-		 "fields": {
-		 "content"       : { "store": "yes", "term_vector": "with_positions_offsets"},
-		 "author"        : { "store": "yes" },
-		 "title"         : { "store": "yes", "analyzer": "english"},
-		 "date"          : { "store": "yes" },
-		 "keywords"      : { "store": "yes", "analyzer": "keyword" },
-		 "content_type"  : { "store": "yes" },
-		 "content_length": { "store": "yes" }
-		 }
-		 }
-		 }
-		 };*/
-		var mapping = {
+		var filePath:string = testUtils.getFixturePath('core/search/searchManager/Peeriod_Anonymous_decentralized_network.pdf');
+		var mapping:Object = {
 			"_source"   : {
 				"excludes": ["file"]
 			},
@@ -158,20 +245,36 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 				}
 			}
 		};
-
-		var dataToIndex = {
-			pluginIdentifier: {
-				 file: fs.readFileSync(testUtils.getFixturePath('core/search/searchManager/Peeriod_Anonymous_decentralized_network.pdf')).toString('base64')
+		var dataToIndex:Object = {
+			pluginidentifier: {
+				 file: fs.readFileSync(filePath).toString('base64'),
+				itemHash: 'fileHash',
+				itemPath: filePath,
+				itemStats: {
+					stats: true
+				}
 			}
 		};
 
 		searchClient.addMapping('pluginidentifier', mapping, function (err:Error) {
 			(err === null).should.be.true;
 
-			searchClient.addItem(dataToIndex, function (err:Error) {
+			searchClient.addItem(dataToIndex, function (err:Error, ids:Array<string>) {
 				(err === null).should.be.true;
+				(ids !== null).should.be.true;
+				ids.length.should.equal(1);
 
-				done();
+				searchClient.getItemById (ids[0], function (err:Error, item:Object) {
+					(err === null).should.be.true;
+
+					var itemSource:Object = item['_source'];
+
+					itemSource['itemPath'].should.equal(filePath);
+					itemSource['itemStats'].should.containDeep({stats: true});
+					itemSource['itemHash'].should.equal('fileHash');
+
+					done();
+				});
 			});
 		});
 	});

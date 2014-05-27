@@ -78,7 +78,6 @@ class SearchClient implements SearchClientInterface {
 	 */
 	private _searchStoreFactory:SearchStoreFactoryInterface = null;
 
-
 	constructor (config:ConfigInterface, indexName:string, searchStoreFactory:SearchStoreFactoryInterface, options:SearchClientOptions = {}) {
 		var defaults:SearchClientOptions = {
 			logsPath          : '../../logs',
@@ -106,18 +105,18 @@ class SearchClient implements SearchClientInterface {
 		this.open(this._options.onOpenCallback);
 	}
 
-	public addItem (objectToIndex:Object, callback?:(err:Error) => any):void {
+	public addItem (objectToIndex:Object, callback?:(err:Error, ids:Array<string>) => any):void {
 		var pluginIdentifiers:Array<string> = Object.keys(objectToIndex);
 		var amount:number = pluginIdentifiers.length;
-		var processed:number = 0;
+		var itemIds:Array<string> = [];
 
 		var checkCallback = function (err:Error) {
 			if (err) {
 				console.error(err);
 			}
 
-			if (processed === amount) {
-				callback(null);
+			if (itemIds.length === amount) {
+				callback(null, itemIds);
 			}
 		};
 
@@ -125,15 +124,15 @@ class SearchClient implements SearchClientInterface {
 			for (var i in pluginIdentifiers) {
 				var identifier:string = pluginIdentifiers[i];
 
-				this._addItemToPluginIndex(identifier, objectToIndex[identifier], function (err) {
-					processed++;
+				this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
+					itemIds.push(id);
 
 					checkCallback(err);
 				});
 			}
 		}
 		else {
-			return process.nextTick(callback.bind(null, null, null));
+			return process.nextTick(callback.bind(null, new Error('SearchClient.addItem: No item data specified! Preventing item creation.'), null));
 		}
 	}
 
@@ -204,10 +203,52 @@ class SearchClient implements SearchClientInterface {
 		}
 	}
 
-	public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
-		// todo iplementation
+	public getItem (query:Object, callback:(err:Error, item:Object) => any):void {
 		return process.nextTick(callback.bind(null, null, null));
 	}
+
+	public getItemById (id:string, callback:(err:Error, item:Object) => any):void {
+		this._client.get({
+			index: this._indexName,
+			type: '_all',
+			id: id
+		}, function (err:Error, response:Object, status:number) {
+			err = err || null;
+
+			callback(err, response);
+		});
+	}
+
+	public getItemByPath (itemPath:string, callback:(err:Error, item:Object) => any):void {
+		var searchQuery:Object = {
+			query: {
+				match: {
+					itemPath: itemPath
+				}
+			}
+		};
+
+		this._client.search({
+			index: this._indexName,
+			body: searchQuery
+		}, function (err:Error, response:Object, status:number) {
+			err = err || null;
+
+			var hits = response['hits'];
+
+			if (!err && status === 200 && hits && hits['total']) {
+				callback(err, hits['hits'][0]);
+			}
+			else {
+				callback(err, null);
+			}
+		});
+	}
+
+	/*public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
+		// todo iplementation
+		return process.nextTick(callback.bind(null, null, null));
+	}*/
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
@@ -216,6 +257,16 @@ class SearchClient implements SearchClientInterface {
 	public itemExists (pathToIndex:string, callback:(exists:boolean) => void):void {
 		// todo iplementation
 		return process.nextTick(callback.bind(null, null, null));
+	}
+
+	public itemExistsById (id:string, callback:(exists:boolean) => void):void {
+		this._client.exists({
+			index: this._indexName,
+			type: '_all',
+			id: id
+		}, function (err, exists) {
+			return callback(exists === true);
+		});
 	}
 
 	public open (callback?:(err:Error) => any):void {
@@ -286,7 +337,7 @@ class SearchClient implements SearchClientInterface {
 	 * @param {Object} data The data to store
 	 * @param {Function} callback
 	 */
-	private _addItemToPluginIndex (type:string, data:Object, callback:(err:Error) => any):void {
+	private _addItemToPluginIndex (type:string, data:Object, callback:(err:Error, id:string) => any):void {
 		this._client.index({
 			index  : this._indexName,
 			type   : type,
@@ -295,7 +346,12 @@ class SearchClient implements SearchClientInterface {
 		}, function (err:Error, response, status) {
 			// todo check status >= 200 < 300
 			//console.log(status);
-			callback(err);
+			if (response['created']) {
+				callback(err, response['_id']);
+			}
+			else {
+				callback(err, null);
+			}
 		});
 	}
 
@@ -325,6 +381,8 @@ class SearchClient implements SearchClientInterface {
 	 * Pings the database server in a specified interval and calls the callback after a specified timeout.
 	 *
 	 * @method core.search.SearchClient~_waitForDatabaseServer
+	 *
+	 * @param {Function} callback
 	 */
 	private _waitForDatabaseServer (callback):void {
 		var check = (i:number) => {
