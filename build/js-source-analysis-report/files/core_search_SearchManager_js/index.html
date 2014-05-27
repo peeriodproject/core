@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">81.50</p>
+      <p class="stat">76.14</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">76</p>
+      <p class="stat">145</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">15.00</p>
+      <p class="stat">23.56</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.50</p>
+      <p class="stat">0.98</p>
     </div>
   </div>
 </div>
@@ -91,6 +91,8 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../ts-definitions/node/node.d.ts&#039; /&gt;
+var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
+
 /**
 * @class core.search.SearchManager
 * @implements core.search.SearchManagerInterface
@@ -107,11 +109,19 @@ var SearchManager = (function () {
 
         this._registerPluginManagerEvents();
     }
-    SearchManager.prototype.addItem = function (pathToIndex, stats, callback) {
-        this._pluginManager.onBeforeItemAdd(pathToIndex, stats, function () {
+    SearchManager.prototype.addItem = function (pathToIndex, stats, fileHash, callback) {
+        var _this = this;
+        var internalCallback = callback || function () {
+        };
+
+        this._pluginManager.onBeforeItemAdd(pathToIndex, stats, fileHash, function (pluginData) {
+            pluginData = _this._updatePluginData(pluginData, pathToIndex, stats, fileHash);
+
+            //console.log(JSON.stringify(pluginData));
             // to the request to the database
-            //this._searchClient
-            // call callback
+            _this._searchClient.addItem(pluginData, function (err) {
+                callback(err);
+            });
         });
     };
 
@@ -140,8 +150,11 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype._registerPluginManagerEvents = function () {
+        var _this = this;
         // todo register on plugin delete handler and remove type from index
-        this._pluginManager.addEventListener(&#039;pluginAdded&#039;, this._onPluginAddedListener);
+        this._pluginManager.addEventListener(&#039;pluginAdded&#039;, function (pluginIdentifier) {
+            _this._onPluginAddedListener(pluginIdentifier);
+        });
     };
 
     SearchManager.prototype._onPluginAddedListener = function (pluginIdentifier) {
@@ -154,18 +167,70 @@ var SearchManager = (function () {
             _this._pluginManager.getActivePluginRunner(pluginIdentifier, function (pluginRunner) {
                 pluginRunner.getMapping(function (mapping) {
                     if (mapping) {
+                        mapping = _this._updateMapping(mapping);
+
                         _this._searchClient.addMapping(pluginIdentifier, mapping, function (err) {
                             if (err) {
                                 console.error(err);
                             }
                         });
                     } else {
-                        // plugin uses elasticsearch auto mapping feature!
-                        // maybe it&#039;s better to throw an error here?
+                        // todo plugin uses elasticsearch auto mapping feature! Maybe it&#039;s better to throw an error here?
                     }
                 });
             });
         });
+    };
+
+    /**
+    * Updates the given mapping.
+    *
+    * @param {Object} mapping
+    * @param {boolean} isApacheTikaPlugin
+    * @returns {Object} the restricted mapping
+    */
+    SearchManager.prototype._updateMapping = function (mapping) {
+        var source = mapping[&#039;_source&#039;] || {};
+        var properties = mapping[&#039;properties&#039;] || {};
+
+        // remove file content from source
+        // todo iterate over mapping and find attachment filed by type
+        if (properties &amp;&amp; properties[&#039;file&#039;]) {
+            mapping[&#039;_source&#039;] = ObjectUtils.extend(source, {
+                excludes: &#039;file&#039;
+            });
+        }
+
+        // update properties
+        mapping[&#039;properties&#039;] = ObjectUtils.extend(properties, {
+            itemHash: {
+                type: &#039;string&#039;,
+                store: &#039;yes&#039;
+            },
+            itemPath: {
+                type: &#039;string&#039;,
+                store: &#039;yes&#039;
+            }
+        });
+
+        return mapping;
+    };
+
+    SearchManager.prototype._updatePluginData = function (pluginData, itemPath, stats, fileHash) {
+        var identifiers = Object.keys(pluginData);
+
+        if (identifiers.length) {
+            for (var i in identifiers) {
+                var identifier = identifiers[i];
+
+                pluginData[identifier] = ObjectUtils.extend(pluginData[identifier], {
+                    itemHash: fileHash,
+                    itemPath: itemPath,
+                    itemStats: stats
+                });
+            }
+        }
+        return pluginData;
     };
     return SearchManager;
 })();
