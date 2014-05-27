@@ -114,9 +114,7 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 	_writableMessageFactory:FoundClosestNodesWritableMessageFactoryInterface = null;
 
 
-	constructor (topologyConfig:ConfigInterface, protocolConfig:ConfigInterface, myNode:MyNodeInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, proxyManager:ProxyManagerInterface,
-		routingTable:RoutingTableInterface, findClosestNodesCycleFactory:FindClosestNodesCycleFactoryInterface, writableMessageFactory:FoundClosestNodesWritableMessageFactoryInterface,
-		readableMessageFactory:FoundClosestNodesReadableMessageFactoryInterface) {
+	constructor (topologyConfig:ConfigInterface, protocolConfig:ConfigInterface, myNode:MyNodeInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, proxyManager:ProxyManagerInterface, routingTable:RoutingTableInterface, findClosestNodesCycleFactory:FindClosestNodesCycleFactoryInterface, writableMessageFactory:FoundClosestNodesWritableMessageFactoryInterface, readableMessageFactory:FoundClosestNodesReadableMessageFactoryInterface) {
 
 		super();
 
@@ -162,7 +160,7 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 	}
 
 	public startCycleFor (searchForId:IdInterface):void {
-		this._routingTable.getClosestContactNodes (searchForId, null, (err:Error, contacts:ContactNodeListInterface) => {
+		this._routingTable.getClosestContactNodes(searchForId, null, (err:Error, contacts:ContactNodeListInterface) => {
 			if (!err && contacts && contacts.length) {
 
 				var identifier:string = searchForId.toHexString();
@@ -199,13 +197,14 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 			idBuffer[19] === 0xff ? idBuffer[19]-- : idBuffer[19]++;
 		}
 
-		this._routingTable.getClosestContactNodes (searchForId, requestingNode.getId(), (err:Error, contacts:ContactNodeListInterface) => {
+		this._routingTable.getClosestContactNodes(searchForId, requestingNode.getId(), (err:Error, contacts:ContactNodeListInterface) => {
 			if (!err && contacts && contacts.length) {
 				var payload:Buffer = null;
 				try {
 					payload = this._writableMessageFactory.constructPayload(searchForId, contacts);
 				}
-				catch (e) {}
+				catch (e) {
+				}
 
 				if (payload) {
 					this._protocolConnectionManager.writeMessageTo(requestingNode, 'FOUND_CLOSEST_NODES', payload);
@@ -232,18 +231,21 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 				try {
 					id = new Id(message.getPayload(), 160);
 				}
-				catch (e) {}
+				catch (e) {
+				}
 
 				if (id) {
 					this._replyToFindNodesFor(message.getSender(), id);
 				}
 			}
 			else if (type === 'FOUND_CLOSEST_NODES') {
-				var foundClosestNodesMsg:FoundClosestNodesReadableMessageInterface = null
+				var foundClosestNodesMsg:FoundClosestNodesReadableMessageInterface = null;
+				
 				try {
 					foundClosestNodesMsg = this._readableMessageFactory.create(message.getPayload());
 				}
-				catch (e) {}
+				catch (e) {
+				}
 
 				if (foundClosestNodesMsg) {
 					this.emit(foundClosestNodesMsg.getSearchedForId().toHexString(), message.getSender(), foundClosestNodesMsg);
