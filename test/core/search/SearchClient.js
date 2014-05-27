@@ -82,6 +82,22 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
         searchClient.should.be.an.instanceof(SearchClient);
     });
 
+    it('should correctly return the open/closed state', function (done) {
+        searchClient.isOpen(function (err, isOpen) {
+            (err === null).should.be.true;
+            isOpen.should.be.true;
+
+            searchClient.close(function (err) {
+                searchClient.isOpen(function (err, isOpen) {
+                    (err === null).should.be.true;
+                    isOpen.should.be.false;
+
+                    done();
+                });
+            });
+        });
+    });
+
     it('should correctly return if an item with the specified type exists', function (done) {
         searchClient.typeExists('foobar', function (exists) {
             exists.should.be.false;
@@ -115,7 +131,17 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
         });
     });
 
-    it('should correctly return the added item', function (done) {
+    it('should correctly prevent the creation of empty items', function (done) {
+        searchClient.addItem({}, function (err, ids) {
+            err.should.be.an.instanceof(Error);
+            err.message.should.equal('SearchClient.addItem: No item data specified! Preventing item creation.');
+            (ids === null).should.be.true;
+
+            done();
+        });
+    });
+
+    it('should correctly return the added item by id', function (done) {
         var dataToIndex = {
             pluginidentifier: {
                 itemHash: 'fileHash',
@@ -139,6 +165,30 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 
                     done();
                 });
+            });
+        });
+    });
+
+    it('should correctly return the added item by path', function (done) {
+        var dataToIndex = {
+            pluginidentifier: {
+                itemHash: 'fileHash',
+                itemPath: '../path/file.txt',
+                itemStats: {
+                    stats: true
+                }
+            }
+        };
+
+        var pluginDataToIndex = {
+            pluginidentifier: dataToIndex
+        };
+
+        searchClient.addItem(pluginDataToIndex, function (err, ids) {
+            searchClient.getItemByPath('../path/file.txt', function (err, item) {
+                item['_source'].should.containDeep(dataToIndex);
+
+                done();
             });
         });
     });

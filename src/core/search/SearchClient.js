@@ -115,7 +115,7 @@ var SearchClient = (function () {
                 });
             }
         } else {
-            return process.nextTick(callback.bind(null, null, null));
+            return process.nextTick(callback.bind(null, new Error('SearchClient.addItem: No item data specified! Preventing item creation.'), null));
         }
     };
 
@@ -195,7 +195,33 @@ var SearchClient = (function () {
             id: id
         }, function (err, response, status) {
             err = err || null;
+
             callback(err, response);
+        });
+    };
+
+    SearchClient.prototype.getItemByPath = function (itemPath, callback) {
+        var searchQuery = {
+            query: {
+                match: {
+                    itemPath: itemPath
+                }
+            }
+        };
+
+        this._client.search({
+            index: this._indexName,
+            body: searchQuery
+        }, function (err, response, status) {
+            err = err || null;
+
+            var hits = response['hits'];
+
+            if (!err && status === 200 && hits && hits['total']) {
+                callback(err, hits['hits'][0]);
+            } else {
+                callback(err, null);
+            }
         });
     };
 

@@ -132,7 +132,7 @@ class SearchClient implements SearchClientInterface {
 			}
 		}
 		else {
-			return process.nextTick(callback.bind(null, null, null));
+			return process.nextTick(callback.bind(null, new Error('SearchClient.addItem: No item data specified! Preventing item creation.'), null));
 		}
 	}
 
@@ -214,7 +214,34 @@ class SearchClient implements SearchClientInterface {
 			id: id
 		}, function (err:Error, response:Object, status:number) {
 			err = err || null;
+
 			callback(err, response);
+		});
+	}
+
+	public getItemByPath (itemPath:string, callback:(err:Error, item:Object) => any):void {
+		var searchQuery:Object = {
+			query: {
+				match: {
+					itemPath: itemPath
+				}
+			}
+		};
+
+		this._client.search({
+			index: this._indexName,
+			body: searchQuery
+		}, function (err:Error, response:Object, status:number) {
+			err = err || null;
+
+			var hits = response['hits'];
+
+			if (!err && status === 200 && hits && hits['total']) {
+				callback(err, hits['hits'][0]);
+			}
+			else {
+				callback(err, null);
+			}
 		});
 	}
 

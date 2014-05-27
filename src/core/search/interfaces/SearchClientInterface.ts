@@ -55,14 +55,24 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	getItem (query:Object, callback:(err:Error, item:Object) => any):void;
 
 	/**
-	 * Returns the first item with matches the specified id accross all types (plugin identifiers)
+	 * Returns the first item which matches the specified id accross all types (plugin identifiers)
 	 *
 	 * @method core.search.SearchClientInterface#getItemById
 	 *
 	 * @param {String} id
 	 * @param {Function} callback
 	 */
-	getItemById (id:string, callback:(err:Error, itemSource:Object) => any):void;
+	getItemById (id:string, callback:(err:Error, item:Object) => any):void;
+
+	/**
+	 * Returns the first item which matches the specified itemPath accross all types (plugin identifiers)
+	 *
+	 * @method core.search.SearchClientInterface#getItemByPath
+	 *
+	 * @param {String} itemPath
+	 * @param {Function} callback
+	 */
+	getItemByPath (itemPath:string, callback:(err:Error, item:Object) => any):void;
 
 	itemExists (pathToIndex:string, callback:(exists:boolean) => void):void;
 

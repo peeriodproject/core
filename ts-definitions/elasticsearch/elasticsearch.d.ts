@@ -27,15 +27,26 @@ declare module "elasticsearch" {
 			type:string;
 			id:string;
 		}, callback:(err:Error, exists:boolean) => any):void;
+
 		get (params:getParams, callback:Callback):void;
+
 		getSource (params:getParams, callback:Callback):void;
-		ping (params, callback:Callback):void;
+
 		indices:Indices;
+
 		index (params:{
 			index:string;
 			type:string;
 			body:Object
 		}, callback:Callback):void;
+
+		ping (params, callback:Callback):void;
+
+		search (params:{
+			index: string;
+			body: Object;
+		}, callback:Callback):void;
+
 	}
 
 	interface ClientStaticInterface {
