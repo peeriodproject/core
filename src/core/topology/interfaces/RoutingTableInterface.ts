@@ -19,6 +19,12 @@ import ContactNodeListInterface = require('./ContactNodeListInterface');
 interface RoutingTableInterface extends ClosableAsyncInterface {
 
 	/**
+	 *
+	 * @param {Function} callback
+	 */
+	getAllContactNodesSize (callback:(err:Error, count:number) => any):void;
+
+	/**
 	 * Returns up to `topology.k` closest contact nodes in sorted order to the specified Id. It will only return less
 	 * than `topology.k`contact nodes if no more contact nodes are known and should exclude the given `excludeId` from
 	 * the results.

@@ -89,28 +89,28 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 	});
 
 	it('should correctly create a mapping for the given plugin identifier if it does not exists', function (done) {
-		var configStub = createConfig();
-		var pluginMapping = {
+		var configStub:any = createConfig();
+		var pluginMapping:Object = {
 			properties: {
-				file: {
+				file    : {
 					type: 'attachment'
 				},
-				itemHash       : {
+				itemHash: {
 					type : 'string',
 					store: 'yes'
 				},
-				itemPath       : {
+				itemPath: {
 					type : 'string',
 					store: 'yes'
 				}
 			}
 		};
-		var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
+		var pluginRunnerStub:any = testUtils.stubPublicApi(sandbox, PluginRunner, {
 			getMapping: function (callback) {
 				callback(pluginMapping);
 			}
 		});
-		var pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager, {
+		var pluginManagerStub:any = testUtils.stubPublicApi(sandbox, PluginManager, {
 			addEventListener     : function (eventName, listener) {
 				return process.nextTick(listener.bind(null, 'pluginIdentifier'));
 			},
@@ -133,6 +133,22 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 		});
 
 		var searchManager:SearchManagerInterface = new SearchManager(configStub, pluginManagerStub, searchClientStub);
+	});
+
+	it('should correctly return the stored item hash and stats', function (done) {
+		var configStub = createConfig();
+		var pluginManagerStub:any = testUtils.stubPublicApi(sandbox, PluginManager);
+		var searchClientStub:any = testUtils.stubPublicApi(sandbox, SearchClient, {
+			getItemByPath: function (pathToIndex, callback:(err:Error, item:Object) => any):void {
+				var item = {};
+
+				return callback(null, item);
+			}
+		});
+		var searchManager:SearchManagerInterface = new SearchManager(configStub, pluginManagerStub, searchClientStub);
+		searchManager.getItem('/path/to/item.txt', function (hash:string, stats:fs.Stats) {
+			done();
+		});
 	});
 
 });

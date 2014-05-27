@@ -199,6 +199,7 @@ describe('CORE --> SEARCH --> SearchClient @joern', function () {
 
 			searchClient.addItem(pluginDataToIndex, function (err:Error, ids:SearchItemIdListInterface) {
 				searchClient.getItemByPath('../path/file.txt', function (err, item) {
+					console.log(JSON.stringify(item));
 					item['_source'].should.containDeep(dataToIndex);
 
 					done();
