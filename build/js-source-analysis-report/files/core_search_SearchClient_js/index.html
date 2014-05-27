@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">71.96</p>
+      <p class="stat">71.42</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">320</p>
+      <p class="stat">407</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">49.37</p>
+      <p class="stat">57.92</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.37</p>
+      <p class="stat">3.04</p>
     </div>
   </div>
 </div>
@@ -184,15 +184,15 @@ var SearchClient = (function () {
     SearchClient.prototype.addItem = function (objectToIndex, callback) {
         var pluginIdentifiers = Object.keys(objectToIndex);
         var amount = pluginIdentifiers.length;
-        var processed = 0;
+        var itemIds = [];
 
         var checkCallback = function (err) {
             if (err) {
                 console.error(err);
             }
 
-            if (processed === amount) {
-                callback(null);
+            if (itemIds.length === amount) {
+                callback(null, itemIds);
             }
         };
 
@@ -200,14 +200,14 @@ var SearchClient = (function () {
             for (var i in pluginIdentifiers) {
                 var identifier = pluginIdentifiers[i];
 
-                this._addItemToPluginIndex(identifier, objectToIndex[identifier], function (err) {
-                    processed++;
+                this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
+                    itemIds.push(id);
 
                     checkCallback(err);
                 });
             }
         } else {
-            return process.nextTick(callback.bind(null, null, null));
+            return process.nextTick(callback.bind(null, new Error(&#039;SearchClient.addItem: No item data specified! Preventing item creation.&#039;), null));
         }
     };
 
@@ -258,6 +258,7 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.deleteIndex = function (callback) {
+        var _this = this;
         var internalCallback = callback || function (err) {
         };
 
@@ -265,7 +266,7 @@ var SearchClient = (function () {
             this._client.indices.delete({
                 index: this._indexName
             }, function (err, response, status) {
-                if (status === 200 || (status === 400 &amp;&amp; err &amp;&amp; err.message.indexOf(&#039;IndexMissingException&#039;) === 0)) {
+                if (_this._isValidResponse(err, status, &#039;IndexMissingException&#039;)) {
                     internalCallback(null);
                 } else {
                     internalCallback(err);
@@ -276,11 +277,61 @@ var SearchClient = (function () {
         }
     };
 
-    SearchClient.prototype.getItem = function (pathToIndex, callback) {
-        // todo iplementation
+    SearchClient.prototype.getItem = function (query, callback) {
         return process.nextTick(callback.bind(null, null, null));
     };
 
+    SearchClient.prototype.getItemById = function (id, callback) {
+        var _this = this;
+        this._client.get({
+            index: this._indexName,
+            type: &#039;_all&#039;,
+            id: id
+        }, function (err, response, status) {
+            err = err || null;
+
+            if (_this._isValidResponse(err, status, &#039;IndexMissingException&#039;)) {
+                callback(null, response);
+            } else {
+                callback(err, null);
+            }
+        });
+    };
+
+    SearchClient.prototype.getItemByPath = function (itemPath, callback) {
+        var _this = this;
+        var searchQuery = {
+            query: {
+                match: {
+                    itemPath: itemPath
+                }
+            }
+        };
+
+        this._client.search({
+            index: this._indexName,
+            body: searchQuery
+        }, function (err, response, status) {
+            err = err || null;
+
+            var hits = response[&#039;hits&#039;];
+
+            if (_this._isValidResponse(err, status, &#039;IndexMissingException&#039;)) {
+                if (hits &amp;&amp; hits[&#039;total&#039;]) {
+                    callback(null, hits[&#039;hits&#039;][0]);
+                } else {
+                    callback(null, null);
+                }
+            } else {
+                callback(err, null);
+            }
+        });
+    };
+
+    /*public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) =&gt; any):void {
+    // todo iplementation
+    return process.nextTick(callback.bind(null, null, null));
+    }*/
     SearchClient.prototype.isOpen = function (callback) {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
@@ -288,6 +339,16 @@ var SearchClient = (function () {
     SearchClient.prototype.itemExists = function (pathToIndex, callback) {
         // todo iplementation
         return process.nextTick(callback.bind(null, null, null));
+    };
+
+    SearchClient.prototype.itemExistsById = function (id, callback) {
+        this._client.exists({
+            index: this._indexName,
+            type: &#039;_all&#039;,
+            id: id
+        }, function (err, exists) {
+            return callback(exists === true);
+        });
     };
 
     SearchClient.prototype.open = function (callback) {
@@ -348,6 +409,15 @@ var SearchClient = (function () {
         });
     };
 
+    /**
+    * Creates a new `type` item and stores the given data within the {@link core.search.SearchClient~_indexName} index.
+    *
+    * @method core.search.SearchClient~_addItemToPluginIndex
+    *
+    * @param {string} type The type of the item. Usually the plugin identifier
+    * @param {Object} data The data to store
+    * @param {Function} callback
+    */
     SearchClient.prototype._addItemToPluginIndex = function (type, data, callback) {
         this._client.index({
             index: this._indexName,
@@ -355,24 +425,29 @@ var SearchClient = (function () {
             refresh: true,
             body: data
         }, function (err, response, status) {
-            // todo check status &gt;= 200 &lt; 300
-            //console.log(status);
-            callback(err);
+            if (response[&#039;created&#039;]) {
+                callback(err, response[&#039;_id&#039;]);
+            } else {
+                callback(err, null);
+            }
         });
     };
 
     /**
     * Creates an index with the specified name. It will handle &#039;Already exists&#039; errors gracefully.
     *
+    * @method core.search.SearchClient~_createIndex
+    *
     * @param {string} name
     * @param {Function} callback
     */
     SearchClient.prototype._createIndex = function (callback) {
+        var _this = this;
         this._client.indices.create({
             index: this._indexName
         }, function (err, response, status) {
             // everything went fine or index already exists
-            if (status === 200 || (status === 400 &amp;&amp; err &amp;&amp; err.message.indexOf(&#039;IndexAlreadyExistsException&#039;) === 0)) {
+            if (_this._isValidResponse(err, status, &#039;IndexAlreadyExistsException&#039;)) {
                 callback(null);
             } else {
                 callback(err);
@@ -384,6 +459,8 @@ var SearchClient = (function () {
     * Pings the database server in a specified interval and calls the callback after a specified timeout.
     *
     * @method core.search.SearchClient~_waitForDatabaseServer
+    *
+    * @param {Function} callback
     */
     SearchClient.prototype._waitForDatabaseServer = function (callback) {
         var _this = this;
@@ -407,6 +484,16 @@ var SearchClient = (function () {
         };
 
         check(0);
+    };
+
+    /**
+    * @param {Error} err
+    * @param {number} status
+    * @param {string} errorNameToIgnore
+    * @returns {boolean}
+    */
+    SearchClient.prototype._isValidResponse = function (err, status, errorNameToIgnore) {
+        return ((status &gt;= 200 &amp;&amp; status &lt; 300) || (status &gt;= 400 &amp;&amp; err &amp;&amp; err.message.indexOf(errorNameToIgnore) === 0)) ? true : false;
     };
     return SearchClient;
 })();
