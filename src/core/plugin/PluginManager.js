@@ -66,11 +66,13 @@ var PluginManager = (function () {
         */
         this._pluginLoaders = {};
         /**
+        * The internally used {@link core.plugin.PluginRunnerFactoryInterface} instance
         *
         * @member {core.plugin.PluginRunnerFactoryInterface} core.plugin.PluginManager~_pluginRunnerFactory
         */
         this._pluginRunnerFactory = null;
         /**
+        * The list of (active) {@link core.plugin.PluginRunnerInterface}
         *
         * @member {core.plugin.PluginRunnerListInterface} core.plugin.PluginManager~_pluginRunners
         */
@@ -221,21 +223,6 @@ var PluginManager = (function () {
             }
         }
 
-        //_isResponsibleForMimeType
-        /*this.getActivePluginRunners((pluginRunners:PluginRunnerListInterface) => {
-        var responsibleRunners:PluginRunnerListInterface = {};
-        
-        if (Object.keys(pluginRunners).length) {
-        for (var key in pluginRunners) {
-        var pluginLoader:PluginLoaderInterface = this._pluginLoaders[key];
-        
-        if (this._isResponsibleForFile(itemPath, pluginLoader)) {
-        responsibleRunners[key] = this._pluginRunners[key];
-        }
-        }
-        }
-        
-        });*/
         return process.nextTick(callback.bind(null, responsibleRunners));
     };
 
