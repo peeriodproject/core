@@ -5,6 +5,7 @@ import os
 import time
 import shutil
 import random
+import json
 
 appSrc = '../../src'
 amount = 3
@@ -99,6 +100,31 @@ for folder in folders:
 		appDest = './' + folder + '/node-webkit.app/Contents/Resources/app.nw/config/mainConfig.json'
 		#shutil.copyfile('./configs/' + configs[configIndexes[j]], appDest)
 		j += 1
+
+print 'updating app name'
+print '------------------------------------------------'
+
+j = 0
+for folder in folders:
+    isRunner = True
+
+    for sysFolder in systemFolders:
+		if folder == sysFolder:
+			isRunner = False
+			break
+
+    if j < amount and isRunner:
+        packageFile = open('./' + folder + '/node-webkit.app/Contents/Resources/app.nw/package.json', 'r')
+        content = json.loads(packageFile.read())
+        packageFile.close()
+
+        content['name'] = 'App-' + str(j)
+        
+        packageFile = open('./' + folder + '/node-webkit.app/Contents/Resources/app.nw/package.json', 'w')
+        packageFile.write(json.dumps(content))
+        packageFile.close()
+
+        j += 1
 
 
 print 'starting node-webkit instances'
