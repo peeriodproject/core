@@ -8,11 +8,30 @@ var http = require('http');
 
 var NodeSeeker = require('./NodeSeeker');
 
+/**
+* A node seeker which requests a list of HTTP servers, expecting a JSON representation of a single node.
+*
+* @class core.protocol.nodeDiscovery.HttpNodeSeeker
+* @extends core.protocol.nodeDiscovery.NodeSeeker
+* @implement core.protocol.nodeDiscovery.NodeSeekerInterface
+*
+* @param {core.net.HttpServerList} serverList A list of HTTP servers which can be requested
+*/
 var HttpNodeSeeker = (function (_super) {
     __extends(HttpNodeSeeker, _super);
     function HttpNodeSeeker(serverList) {
         _super.call(this);
+        /**
+        * A list of HTTP server which can be requested
+        *
+        * @member {core.net.HttpServerList} core.protocol.nodeDiscovery.HttpNodeSeeker~_serverList
+        */
         this._serverList = null;
+        /**
+        * Length of the server list.
+        *
+        * @member {number} core.protocol.nodeDiscovery.HttpNodeSeeker~_serverListLength
+        */
         this._serverListLength = 0;
 
         this._serverList = serverList;
@@ -38,6 +57,16 @@ var HttpNodeSeeker = (function (_super) {
         increaseAndQuery();
     };
 
+    /**
+    * Queries a server for a node. If none can be obtained, or the JSON conversion throws errors, the
+    * provided callback is called with `null`.
+    *
+    * @method core.protocol.nodeDiscovery.HttpNodeSeeker~_queryServerForNode
+    *
+    * @param {core.net.HttpServerInfo} remoteServer
+    * @param {Function} callback Function that gets called when the query has completed. A node or `null` is passed in
+    * as argument.
+    */
     HttpNodeSeeker.prototype._queryServerForNode = function (remoteServer, callback) {
         var calledBack = false;
 

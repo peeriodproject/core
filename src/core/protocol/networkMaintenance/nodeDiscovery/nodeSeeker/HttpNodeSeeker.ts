@@ -8,9 +8,29 @@ import ConfigInterface = require('../../../../config/interfaces/ConfigInterface'
 import HttpServerList = require('../../../../net/interfaces/HttpServerList');
 import HttpServerInfo = require('../../../../net/interfaces/HttpServerInfo');
 
+/**
+ * A node seeker which requests a list of HTTP servers, expecting a JSON representation of a single node.
+ *
+ * @class core.protocol.nodeDiscovery.HttpNodeSeeker
+ * @extends core.protocol.nodeDiscovery.NodeSeeker
+ * @implement core.protocol.nodeDiscovery.NodeSeekerInterface
+ *
+ * @param {core.net.HttpServerList} serverList A list of HTTP servers which can be requested
+ */
 class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 
+	/**
+	 * A list of HTTP server which can be requested
+	 *
+	 * @member {core.net.HttpServerList} core.protocol.nodeDiscovery.HttpNodeSeeker~_serverList
+	 */
 	private _serverList:HttpServerList = null;
+
+	/**
+	 * Length of the server list.
+	 *
+	 * @member {number} core.protocol.nodeDiscovery.HttpNodeSeeker~_serverListLength
+	 */
 	private _serverListLength:number = 0;
 
 	constructor (serverList:HttpServerList) {
@@ -41,6 +61,16 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 		increaseAndQuery();
 	}
 
+	/**
+	 * Queries a server for a node. If none can be obtained, or the JSON conversion throws errors, the
+	 * provided callback is called with `null`.
+	 *
+	 * @method core.protocol.nodeDiscovery.HttpNodeSeeker~_queryServerForNode
+	 *
+	 * @param {core.net.HttpServerInfo} remoteServer
+	 * @param {Function} callback Function that gets called when the query has completed. A node or `null` is passed in
+	 * as argument.
+	 */
 	private _queryServerForNode (remoteServer:HttpServerInfo, callback:(node:ContactNodeInterface) => any):void {
 		var calledBack:boolean = false;
 
@@ -52,10 +82,10 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 		};
 
 		var request = http.request({
-			method: 'GET',
+			method  : 'GET',
 			hostname: remoteServer.hostname,
-			port: remoteServer.port,
-			path: remoteServer.path
+			port    : remoteServer.port,
+			path    : remoteServer.path
 		}, function (res) {
 
 			var body = '';
