@@ -8,9 +8,29 @@ import ConfigInterface = require('../../../../config/interfaces/ConfigInterface'
 import HttpServerList = require('../../../../net/interfaces/HttpServerList');
 import HttpServerInfo = require('../../../../net/interfaces/HttpServerInfo');
 
+/**
+ * NodePublisher which posts a JSON stringified representation of the contact information to a list of HTTP servers.
+ *
+ * @class core.protocol.nodeDiscovery.HttpNodePublisher
+ * @implements core.protocol.nodeDiscovery.NodePublisherInterface
+ *
+ * @param {core.net.HttpServerList} serverList A list of server the node can be published to
+ * @param {core.topology.MyNodeInterface} myNode My node.
+ */
 class HttpNodePublisher implements NodePublisherInterface {
 
+	/**
+	 * My node.
+	 *
+	 * @member {core.topology.MyNodeInterface} core.protocol.nodeDiscovery.HttpNodePublisher~_myNode
+	 */
 	private _myNode:MyNodeInterface = null;
+
+	/**
+	 * A list of HTTP servers my node can be published to.
+	 *
+	 * @member {core.net.HttpServerList} core.protocol.nodeDiscovery.HttpNodePublisher~_serverList
+	 */
 	private _serverList:HttpServerList = null;
 
 	constructor (serverList:HttpServerList, myNode:MyNodeInterface) {
@@ -28,37 +48,48 @@ class HttpNodePublisher implements NodePublisherInterface {
 		var addresses:ContactNodeAddressListInterface = myNode.getAddresses();
 		if (addresses.length) {
 			var json = {
-				id: myNode.getId().toHexString(),
+				id       : myNode.getId().toHexString(),
 				addresses: []
 			};
 
-			for (var i=0; i<addresses.length; i++) {
+			for (var i = 0; i < addresses.length; i++) {
 				var address:ContactNodeAddressInterface = addresses[i];
 
 				json.addresses.push({
-					ip: address.getIp(),
+					ip  : address.getIp(),
 					port: address.getPort()
 				});
 			}
 
 			var jsonString = JSON.stringify(json);
 
-			for (var i=0; i<this._serverList.length; i++) {
+			for (var i = 0; i < this._serverList.length; i++) {
 				this._postToServer(jsonString, this._serverList[i]);
 			}
 		}
 	}
 
+	/**
+	 * @method core.protocol.nodeDiscovery.HttpNodePublisher~_publishMyNode
+	 */
 	private _publishMyNode ():void {
 		this.publish(this._myNode);
 	}
 
+	/**
+	 * POSTs a string of data to a server.
+	 *
+	 * @method core.protocol.nodeDiscovery.HttpNodePublisher~_postToServer
+	 *
+	 * @param {string} data The string to POST.
+	 * @param {core.net.HttpServerInfo} server The server to POST to.
+	 */
 	private _postToServer (data:string, server:HttpServerInfo):void {
 		var req = http.request({
-			method: 'POST',
+			method  : 'POST',
 			hostname: server.hostname,
-			port: server.port,
-			path: server.path
+			port    : server.port,
+			path    : server.path
 		});
 
 		req.end(data);
