@@ -86,14 +86,14 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 			hostname: remoteServer.hostname,
 			port    : remoteServer.port,
 			path    : remoteServer.path
-		}, function (res) {
+		}, (res) => {
 
 			var body = '';
 			res.on('data', function (data) {
 				body += data;
 			});
 
-			res.on('end', function (data) {
+			res.on('end', (data) => {
 				if (data) {
 					body += data;
 				}

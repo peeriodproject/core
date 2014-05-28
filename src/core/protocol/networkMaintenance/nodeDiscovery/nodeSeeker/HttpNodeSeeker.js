@@ -68,6 +68,7 @@ var HttpNodeSeeker = (function (_super) {
     * as argument.
     */
     HttpNodeSeeker.prototype._queryServerForNode = function (remoteServer, callback) {
+        var _this = this;
         var calledBack = false;
 
         var doCallback = function (node) {
@@ -95,7 +96,7 @@ var HttpNodeSeeker = (function (_super) {
 
                 if (res.statusCode === 200) {
                     try  {
-                        var node = this.nodeFromJSON(JSON.parse(body));
+                        var node = _this.nodeFromJSON(JSON.parse(body));
 
                         doCallback(node);
                     } catch (e) {
