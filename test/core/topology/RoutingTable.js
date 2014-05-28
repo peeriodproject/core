@@ -12,7 +12,7 @@ var ContactNode = require('../../../src/core/topology/ContactNode');
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
+describe('CORE --> TOPOLOGY --> RoutingTable', function () {
     var sandbox;
     var configStub;
     var me;

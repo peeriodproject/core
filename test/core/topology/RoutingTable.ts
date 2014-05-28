@@ -20,7 +20,7 @@ import ContactNode = require('../../../src/core/topology/ContactNode');
 import ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
+describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 
 	var sandbox:SinonSandbox;
 	var configStub:any;

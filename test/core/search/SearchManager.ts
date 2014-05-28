@@ -12,6 +12,7 @@ import SearchManagerInterface = require('../../../src/core/search/interfaces/Sea
 import PluginManager = require('../../../src/core/plugin/PluginManager');
 import PluginRunner = require('../../../src/core/plugin/PluginRunner');
 import SearchClient = require('../../../src/core/search/SearchClient');
+import SearchItem = require('../../../src/core/search/SearchItem');
 import SearchManager = require('../../../src/core/search/SearchManager');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
@@ -136,17 +137,19 @@ describe('CORE --> SEARCH --> SearchManager @joern', function () {
 	});
 
 	it('should correctly return the stored item hash and stats', function (done) {
+		var item:SearchItem = new SearchItem(JSON.parse('[{"_index":"mainindex","_type":"pluginidentifier","_id":"DzEnMrJGROujWKZUC5hZNg","_score":0.5254995,"_source":{"itemHash":"fileHash","itemPath":"../path/file.txt","itemStats":{"stats":true},"foo":"bar"}},{"_index":"mainindex","_type":"pluginidentifier2","_id":"LBcCuWQlRNObplgP4S5KGw","_score":0.5254995,"_source":{"itemHash":"fileHash","itemPath":"../path/file.txt","itemStats":{"stats":true},"foo":"bar"}}]'));
 		var configStub = createConfig();
 		var pluginManagerStub:any = testUtils.stubPublicApi(sandbox, PluginManager);
 		var searchClientStub:any = testUtils.stubPublicApi(sandbox, SearchClient, {
 			getItemByPath: function (pathToIndex, callback:(err:Error, item:Object) => any):void {
-				var item = {};
-
 				return callback(null, item);
 			}
 		});
 		var searchManager:SearchManagerInterface = new SearchManager(configStub, pluginManagerStub, searchClientStub);
 		searchManager.getItem('/path/to/item.txt', function (hash:string, stats:fs.Stats) {
+			hash.should.equal(item.getHash());
+			stats.should.equal(item.getStats());
+
 			done();
 		});
 	});

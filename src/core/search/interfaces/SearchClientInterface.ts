@@ -4,6 +4,7 @@ import fs = require('fs');
 
 import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
 import SearchItemIdListInterface = require('./SearchItemIdListInterface');
+import SearchItemInterface = require('./SearchItemInterface');
 
 /**
  * The SearchClient acts as a wrapper around the search database and starts up the server automagically.
@@ -53,7 +54,7 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 */
 	typeExists (type:string, callback:(exists:boolean) => any):void
 
-	getItem (query:Object, callback:(err:Error, item:Object) => any):void;
+	getItem (query:Object, callback:(err:Error, item:SearchItemInterface) => any):void;
 
 	/**
 	 * Returns the first item which matches the specified id accross all types (plugin identifiers)
@@ -63,7 +64,7 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 * @param {String} id
 	 * @param {Function} callback
 	 */
-	getItemById (id:string, callback:(err:Error, item:Object) => any):void;
+	getItemById (id:string, callback:(err:Error, item:SearchItemInterface) => any):void;
 
 	/**
 	 * Returns the first item which matches the specified itemPath accross all types (plugin identifiers)
@@ -73,7 +74,7 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 * @param {String} itemPath
 	 * @param {Function} callback
 	 */
-	getItemByPath (itemPath:string, callback:(err:Error, item:Object) => any):void;
+	getItemByPath (itemPath:string, callback:(err:Error, item:SearchItemInterface) => any):void;
 
 	itemExists (pathToIndex:string, callback:(exists:boolean) => void):void;
 
