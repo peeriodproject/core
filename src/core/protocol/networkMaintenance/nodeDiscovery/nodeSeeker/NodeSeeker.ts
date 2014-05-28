@@ -71,7 +71,7 @@ class NodeSeeker {
 		var id:IdInterface = new Id(Id.byteBufferByHexString(obj.id, 20), 160);
 		var addresses:ContactNodeAddressListInterface = [];
 
-		if (!obj.addresses.length) {
+		if (!obj.addresses || !obj.addresses.length) {
 			throw new Error('NodeSeeker#nodeFromJSON: Addresses may not be empty for a valid node.');
 		}
 
