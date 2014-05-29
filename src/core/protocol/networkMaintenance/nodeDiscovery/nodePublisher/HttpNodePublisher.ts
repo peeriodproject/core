@@ -97,4 +97,4 @@ class HttpNodePublisher implements NodePublisherInterface {
 
 }
 
-export = NodePublisherInterface;
+export = HttpNodePublisher;
