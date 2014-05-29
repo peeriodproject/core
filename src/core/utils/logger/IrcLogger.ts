@@ -34,7 +34,7 @@ class IrcLogger implements LoggerInterface {
 	/**
 	 * @param {string} name
 	 */
-	constructor (logger:LoggerInterface) {
+	constructor (uuid:string, logger:LoggerInterface) {
 		// @see http://stackoverflow.com/a/105074
 		var generateUuid:Function = (function() {
 			function s4() {
@@ -50,7 +50,7 @@ class IrcLogger implements LoggerInterface {
 
 		this._basePath = path.join(__dirname, '../../../../');
 		this._backend = logger;
-		this._uuid = generateUuid();
+		this._uuid = uuid || generateUuid();
 	}
 
 	public debug (message:Object, metadata?:any):void {

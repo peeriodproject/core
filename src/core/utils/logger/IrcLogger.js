@@ -18,7 +18,7 @@ var IrcLogger = (function () {
     /**
     * @param {string} name
     */
-    function IrcLogger(logger) {
+    function IrcLogger(uuid, logger) {
         this._basePath = '';
         /**
         * The internally used irc backend instance
@@ -39,7 +39,7 @@ var IrcLogger = (function () {
 
         this._basePath = path.join(__dirname, '../../../../');
         this._backend = logger;
-        this._uuid = generateUuid();
+        this._uuid = uuid || generateUuid();
     }
     IrcLogger.prototype.debug = function (message, metadata) {
         this._backend.debug(message, metadata);

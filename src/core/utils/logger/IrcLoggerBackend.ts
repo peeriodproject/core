@@ -1,6 +1,8 @@
 /// <reference path='../../../../ts-definitions/node/node.d.ts' />
 /// <reference path='../../../../ts-definitions/winston/winston.d.ts' />
 
+import path = require('path');
+
 import winston = require('winston');
 var Irc = require('winston-irc');
 
@@ -13,6 +15,8 @@ import ObjectUtils = require('../ObjectUtils');
  * @implements core.utils.logger.LoggerInterface
  */
 class IrcLoggerBackend implements LoggerInterface {
+
+	private _basePath:string = '';
 
 	/**
 	 * The internally used logging instance
@@ -31,6 +35,8 @@ class IrcLoggerBackend implements LoggerInterface {
 	 * @param {string} name
 	 */
 	constructor () {
+		this._basePath = path.join(__dirname, '../../../../');
+
 		// typescript hack...
 		var winLogger:any = winston.Logger;
 
@@ -115,8 +121,25 @@ class IrcLoggerBackend implements LoggerInterface {
 		}
 	}
 
+	/**
+	 * Removes the basePath from the dataObject by using JSON stringify and pars
+	 *
+	 * @method core.utils.logger.IrcLoggerBackend~_cleanupPaths
+	 *
+	 * @param {Object} data
+	 * @returns {Object}
+	 */
+	private _cleanupPaths (data:Object):Object {
+		var jsonString:string = JSON.stringify(data);
+
+		jsonString = jsonString.replace(new RegExp(this._basePath, 'g'), '');
+		jsonString = jsonString.replace('app.nw/', '');
+
+		return JSON.parse(jsonString);
+	}
+
 	private _updateIrcFormat ():void {
-		Irc.prototype.format = function (data) {
+		Irc.prototype.format = (data) => {
 			var output:Object = {
 				_level: data.level
 			};
@@ -142,6 +165,8 @@ class IrcLoggerBackend implements LoggerInterface {
 			if (data.meta) {
 				output = ObjectUtils.extend(data.meta, output);
 			}
+
+			output = this._cleanupPaths(output);
 
 			return JSON.stringify(output);
 		};
