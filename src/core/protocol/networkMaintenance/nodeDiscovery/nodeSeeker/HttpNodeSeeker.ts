@@ -16,6 +16,7 @@ import HttpServerInfo = require('../../../../net/interfaces/HttpServerInfo');
  * @implement core.protocol.nodeDiscovery.NodeSeekerInterface
  *
  * @param {core.net.HttpServerList} serverList A list of HTTP servers which can be requested
+ * @param {number} serverTimeoutInMs A server timeout in milliseconds.
  */
 class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 
@@ -33,11 +34,19 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 	 */
 	private _serverListLength:number = 0;
 
-	constructor (serverList:HttpServerList) {
+	/**
+	 * A timeout in which a request must be answered before it is considered as failed
+	 *
+	 * @member {number} core.protocol.nodeDiscovery.HttpNodeSeeker~_serverTimeout
+	 */
+	private _serverTimeout:number = 0;
+
+	constructor (serverList:HttpServerList, serverTimeoutInMs:number) {
 		super();
 
 		this._serverList = serverList;
 		this._serverListLength = this._serverList.length;
+		this._serverTimeout = serverTimeoutInMs;
 	}
 
 	public seek (callback:(node:ContactNodeInterface) => any):void {
@@ -73,6 +82,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 	 */
 	private _queryServerForNode (remoteServer:HttpServerInfo, callback:(node:ContactNodeInterface) => any):void {
 		var calledBack:boolean = false;
+		var timeout:number = 0;
 
 		var doCallback = function (node:ContactNodeInterface) {
 			if (!calledBack) {
@@ -87,6 +97,8 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 			port    : remoteServer.port,
 			path    : remoteServer.path
 		}, (res) => {
+
+			clearTimeout(timeout);
 
 			var body = '';
 			res.on('data', function (data) {
@@ -120,6 +132,10 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 		});
 
 		request.end();
+
+		timeout = setTimeout(function () {
+			doCallback(null);
+		}, this._serverTimeout);
 	}
 
 }

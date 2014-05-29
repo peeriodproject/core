@@ -1,0 +1,9 @@
+{
+    "nodeDiscovery": {
+        "httpServerList": [{
+            "hostname": "www.google.com",
+            "port": 80,
+            "path": "/"
+        }]
+    }
+}
