@@ -13,7 +13,7 @@ import ContactNodeFactory = require('../../../src/core/topology/ContactNodeFacto
 import ContactNode = require('../../../src/core/topology/ContactNode');
 import ContactNodeInterface = require('../../../src/core/topology/interfaces/ContactNodeInterface');
 
-describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeeker @current', function () {
+describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeeker', function () {
 
 	var seeker:NodeSeeker = null;
 

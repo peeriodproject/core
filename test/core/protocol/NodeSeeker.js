@@ -6,7 +6,7 @@ var ContactNodeAddressFactory = require('../../../src/core/topology/ContactNodeA
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 var ContactNode = require('../../../src/core/topology/ContactNode');
 
-describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeeker @current', function () {
+describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeeker', function () {
     var seeker = null;
 
     it('should correctly get and set the factories', function () {
