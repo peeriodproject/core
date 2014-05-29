@@ -66,12 +66,5 @@
             "binaryInterval": 5000,
             "eventDelay"    : 1000
         }
-    },
-    "nodeDiscovery": {
-        "httpServerList": [{
-            "hostname": "www.google.com",
-            "port": 80,
-            "path": "/"
-        }]
     }
 }

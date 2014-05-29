@@ -16,10 +16,11 @@ var NodeSeeker = require('./NodeSeeker');
 * @implement core.protocol.nodeDiscovery.NodeSeekerInterface
 *
 * @param {core.net.HttpServerList} serverList A list of HTTP servers which can be requested
+* @param {number} serverTimeoutInMs A server timeout in milliseconds.
 */
 var HttpNodeSeeker = (function (_super) {
     __extends(HttpNodeSeeker, _super);
-    function HttpNodeSeeker(serverList) {
+    function HttpNodeSeeker(serverList, serverTimeoutInMs) {
         _super.call(this);
         /**
         * A list of HTTP server which can be requested
@@ -33,9 +34,16 @@ var HttpNodeSeeker = (function (_super) {
         * @member {number} core.protocol.nodeDiscovery.HttpNodeSeeker~_serverListLength
         */
         this._serverListLength = 0;
+        /**
+        * A timeout in which a request must be answered before it is considered as failed
+        *
+        * @member {number} core.protocol.nodeDiscovery.HttpNodeSeeker~_serverTimeout
+        */
+        this._serverTimeout = 0;
 
         this._serverList = serverList;
         this._serverListLength = this._serverList.length;
+        this._serverTimeout = serverTimeoutInMs;
     }
     HttpNodeSeeker.prototype.seek = function (callback) {
         var _this = this;
@@ -70,6 +78,7 @@ var HttpNodeSeeker = (function (_super) {
     HttpNodeSeeker.prototype._queryServerForNode = function (remoteServer, callback) {
         var _this = this;
         var calledBack = false;
+        var timeout = 0;
 
         var doCallback = function (node) {
             if (!calledBack) {
@@ -84,6 +93,8 @@ var HttpNodeSeeker = (function (_super) {
             port: remoteServer.port,
             path: remoteServer.path
         }, function (res) {
+            clearTimeout(timeout);
+
             var body = '';
             res.on('data', function (data) {
                 body += data;
@@ -113,6 +124,10 @@ var HttpNodeSeeker = (function (_super) {
         });
 
         request.end();
+
+        timeout = setTimeout(function () {
+            doCallback(null);
+        }, this._serverTimeout);
     };
     return HttpNodeSeeker;
 })(NodeSeeker);

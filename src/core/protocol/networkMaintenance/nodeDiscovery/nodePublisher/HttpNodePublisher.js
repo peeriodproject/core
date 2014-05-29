@@ -86,5 +86,5 @@ var HttpNodePublisher = (function () {
     return HttpNodePublisher;
 })();
 
-module.exports = NodePublisherInterface;
+module.exports = HttpNodePublisher;
 //# sourceMappingURL=HttpNodePublisher.js.map

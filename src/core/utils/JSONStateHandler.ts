@@ -23,7 +23,7 @@ class JSONStateHandler implements StateHandlerInterface {
 		this._path = path;
 	}
 
-	public load (callback:(err:Error, state:Object) => void):void {
+	public load (callback:(err:Error, state:Object) => any):void {
 		fs.readJson(this._path, (err:Error, data:Object) => {
 			if (err) {
 				if (err['code'] && err['code'] === 'ENOENT') {
