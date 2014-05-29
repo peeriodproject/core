@@ -16,6 +16,7 @@ var HttpNodeSeeker = require('./HttpNodeSeeker');
 * @class core.protocol.nodeDiscovery.NodeSeekerFactory
 * @implements core.protocol.nodeDiscovery.NodeSeekerFactoryInterface
 *
+* @param {core.config.ConfigInterface} appConfig
 * @oaram {core.topology.RoutingTableInterface} routingTable
 */
 var NodeSeekerFactory = (function () {
@@ -64,7 +65,6 @@ var NodeSeekerFactory = (function () {
         this._nodeDiscoveryState = this._jsonStateHandlerFactory.create(path.resolve(this._appConfig.get('app.dataPath'), 'nodeDiscovery.json'));
         this._nodeDiscoveryState.load(function (err, state) {
             if (err) {
-                console.log(err);
                 callback([]);
                 return;
             }

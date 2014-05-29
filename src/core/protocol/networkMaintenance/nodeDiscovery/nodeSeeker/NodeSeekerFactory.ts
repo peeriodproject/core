@@ -23,6 +23,7 @@ import HttpNodeSeeker = require('./HttpNodeSeeker');
  * @class core.protocol.nodeDiscovery.NodeSeekerFactory
  * @implements core.protocol.nodeDiscovery.NodeSeekerFactoryInterface
  *
+ * @param {core.config.ConfigInterface} appConfig
  * @oaram {core.topology.RoutingTableInterface} routingTable
  */
 class NodeSeekerFactory implements NodeSeekerFactoryInterface {
@@ -87,7 +88,6 @@ class NodeSeekerFactory implements NodeSeekerFactoryInterface {
 		this._nodeDiscoveryState.load((err:Error, state:any) => {
 
 			if (err) {
-				console.log(err);
 				callback([]);
 				return;
 			}
