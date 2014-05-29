@@ -1,6 +1,10 @@
 /// <reference path='../../../../ts-definitions/node/node.d.ts' />
 /// <reference path='../../../../ts-definitions/winston/winston.d.ts' />
+// // <reference path='./interfaces/LoggerInterface.d.ts' />
 var winston = require('winston');
+var Irc = require('winston-irc');
+
+var ObjectUtils = require('../ObjectUtils');
 
 //import LoggerInterface = require('./interfaces/LoggerInterface.d');
 /**
@@ -34,12 +38,8 @@ var IrcLogger = (function () {
         });
 
         this._addTransportBasedOnEnvironment();
-
-        this.info('irc logger created');
     }
     IrcLogger.prototype.debug = function (message, metadata) {
-        message = this._addPrefix(message);
-
         if (metadata) {
             this._logger.debug(message, metadata);
         } else {
@@ -48,14 +48,14 @@ var IrcLogger = (function () {
     };
 
     IrcLogger.prototype.error = function (message, metadata) {
-        message = this._addPrefix(message);
-
-        this._logger.error(message, metadata);
+        if (metadata) {
+            this._logger.error(message, metadata);
+        } else {
+            this._logger.error(message);
+        }
     };
 
     IrcLogger.prototype.info = function (message, metadata) {
-        message = this._addPrefix(message);
-
         if (metadata) {
             this._logger.info(message, metadata);
         } else {
@@ -64,8 +64,6 @@ var IrcLogger = (function () {
     };
 
     IrcLogger.prototype.log = function (level, message, metadata) {
-        message = this._addPrefix(message);
-
         if (metadata) {
             this._logger.log(level, message, metadata);
         } else {
@@ -74,17 +72,11 @@ var IrcLogger = (function () {
     };
 
     IrcLogger.prototype.warn = function (message, metadata) {
-        message = this._addPrefix(message);
-
         if (metadata) {
             this._logger.warn(message, metadata);
         } else {
             this._logger.warn(message);
         }
-    };
-
-    IrcLogger.prototype._addPrefix = function (message) {
-        return message;
     };
 
     IrcLogger.prototype._addTransportBasedOnEnvironment = function () {
@@ -98,7 +90,9 @@ var IrcLogger = (function () {
             var userName = 'b' + Math.round(Math.random() * max);
             var realName = 'c' + Math.round(Math.random() * max);
 
-            this._logger.add(require('winston-irc'), {
+            this._updateIrcFormat();
+
+            this._logger.add(Irc, {
                 host: 'irc.freenode.net',
                 port: 6697,
                 ssl: true,
@@ -108,20 +102,48 @@ var IrcLogger = (function () {
                 channels: [
                     '#jj-abschluss'
                 ],
-                onError: function (err) {
-                    //console.log('--- IRC ERROR ---');
-                    //console.log(err);
-                }
+                level: 'debug'
             });
         }
+    };
+
+    IrcLogger.prototype._updateIrcFormat = function () {
+        Irc.prototype.format = function (data) {
+            var output = {
+                _level: data.level
+            };
+
+            if (data.msg) {
+                try  {
+                    var msgObject;
+
+                    if (typeof data.msg === 'object') {
+                        msgObject = data.msg;
+                    } else {
+                        msgObject = JSON.parse(data.msg);
+                    }
+
+                    output = ObjectUtils.extend(msgObject, output);
+                } catch (e) {
+                    output['message'] = data.msg;
+                }
+            }
+
+            if (data.meta) {
+                output = ObjectUtils.extend(data.meta, output);
+            }
+
+            console.log(output);
+
+            return JSON.stringify(output);
+        };
     };
     return IrcLogger;
 })();
 
-//export = IrcLogger;
-var IrcLoggerInstance = new IrcLogger();
-
-module.exports = IrcLoggerInstance;
+module.exports = IrcLogger;
+/*var IrcLoggerInstance:LoggerInterface = new IrcLogger();
+export = IrcLoggerInstance;*/
 /*var foo:Function = function ():LoggerInterface {
 return new IrcLogger();
 };

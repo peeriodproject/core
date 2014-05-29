@@ -10,32 +10,32 @@ interface LoggerInterface {
 	 * @param {string} message
 	 * @param {string} metadata
 	 */
-	debug (message:string, metadata?:any): void;
+	debug (message:Object, metadata?:any): void;
 
 	/**
 	 * @param {string} message
 	 * @param {string} metadata
 	 */
-	error (message:string, metadata?:any): void;
+	error (message:Object, metadata?:any): void;
 
 	/**
 	 * @param {string} message
 	 * @param {string} metadata
 	 */
-	info (message:string, metadata?:any): void;
+	info (message:Object, metadata?:any): void;
 
 	/**
 	 * @param {string} level
 	 * @param {string} message
 	 * @param {string} metadata
 	 */
-	log (level:string, message:string, metadata?:any):void;
+	log (level:string, message:Object, metadata?:any):void;
 
 	/**
 	 * @param {string} message
 	 * @param {string} metadata
 	 */
-	warn (message:string, metadata?:any): void;
+	warn (message:Object, metadata?:any): void;
 
 	//add(transport: Transport, options: any): void;
 	//remove(transport: Transport): void;

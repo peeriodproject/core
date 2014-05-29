@@ -3,9 +3,13 @@
 
 // // <reference path='./interfaces/LoggerInterface.d.ts' />
 
+import winston = require('winston');
+var Irc = require('winston-irc');
+
 import LoggerInterface = require('./interfaces/LoggerInterface');
 
-import winston = require('winston');
+import ObjectUtils = require('../ObjectUtils');
+
 
 //import LoggerInterface = require('./interfaces/LoggerInterface.d');
 
@@ -31,8 +35,8 @@ class IrcLogger implements LoggerInterface {
 	/**
 	 * @param {string} name
 	 */
-	//constructor (prefix:string) {
-	constructor() {
+		//constructor (prefix:string) {
+	constructor () {
 		//this._prefix = prefix;
 
 		// typescript hack...
@@ -43,13 +47,9 @@ class IrcLogger implements LoggerInterface {
 		});
 
 		this._addTransportBasedOnEnvironment();
-
-		this.info('irc logger created');
 	}
 
-	public debug (message:string, metadata?:any):void {
-		message = this._addPrefix(message);
-
+	public debug (message:Object, metadata?:any):void {
 		if (metadata) {
 			this._logger.debug(message, metadata);
 		}
@@ -58,15 +58,16 @@ class IrcLogger implements LoggerInterface {
 		}
 	}
 
-	public error (message:string, metadata?:any):void {
-		message = this._addPrefix(message);
-
-		this._logger.error(message, metadata);
+	public error (message:Object, metadata?:any):void {
+		if (metadata) {
+			this._logger.error(message, metadata);
+		}
+		else {
+			this._logger.error(message);
+		}
 	}
 
-	public info (message:string, metadata?:any):void {
-		message = this._addPrefix(message);
-
+	public info (message:Object, metadata?:any):void {
 		if (metadata) {
 			this._logger.info(message, metadata);
 		}
@@ -75,9 +76,7 @@ class IrcLogger implements LoggerInterface {
 		}
 	}
 
-	public log (level:string, message:string, metadata?:any):void {
-		message = this._addPrefix(message);
-
+	public log (level:string, message:Object, metadata?:any):void {
 		if (metadata) {
 			this._logger.log(level, message, metadata);
 		}
@@ -86,9 +85,7 @@ class IrcLogger implements LoggerInterface {
 		}
 	}
 
-	public warn (message:string, metadata?:any):void {
-		message = this._addPrefix(message);
-
+	public warn (message:Object, metadata?:any):void {
 		if (metadata) {
 			this._logger.warn(message, metadata);
 		}
@@ -97,11 +94,7 @@ class IrcLogger implements LoggerInterface {
 		}
 	}
 
-	private _addPrefix(message:string) {
-		return message; //this._prefix + ': ' + message;
-	}
-
-	private _addTransportBasedOnEnvironment ():void  {
+	private _addTransportBasedOnEnvironment ():void {
 		if (process.env.NODE_ENV === 'test') {
 			this._logger.add(winston.transports.Console, {});
 		}
@@ -113,7 +106,9 @@ class IrcLogger implements LoggerInterface {
 			var userName:string = 'b' + Math.round(Math.random() * max);
 			var realName:string = 'c' + Math.round(Math.random() * max);
 
-			this._logger.add(require('winston-irc'), {
+			this._updateIrcFormat();
+
+			this._logger.add(Irc, {
 				host    : 'irc.freenode.net',
 				port    : 6697,
 				ssl     : true,
@@ -123,25 +118,56 @@ class IrcLogger implements LoggerInterface {
 				channels: [
 					'#jj-abschluss'
 				],
-				onError: function (err:Error) {
-					//console.log('--- IRC ERROR ---');
-					//console.log(err);
-				}
+				level   : 'debug'
 			});
 		}
 	}
 
+	private _updateIrcFormat ():void {
+		Irc.prototype.format = function (data) {
+			var output:Object = {
+				_level: data.level
+			};
+
+			if (data.msg) {
+				try {
+					var msgObject:Object;
+
+					if (typeof data.msg === 'object') {
+						msgObject = data.msg;
+					}
+					else {
+						msgObject = JSON.parse(data.msg);
+					}
+
+					output = ObjectUtils.extend(msgObject, output);
+				}
+				catch (e) {
+					output['message'] = data.msg;
+				}
+			}
+
+			if (data.meta) {
+				output = ObjectUtils.extend(data.meta, output);
+			}
+
+			console.log(output);
+
+			return JSON.stringify(output);
+		};
+	}
+
 }
 
-//export = IrcLogger;
+export = IrcLogger;
 
-var IrcLoggerInstance:LoggerInterface = new IrcLogger();
+/*var IrcLoggerInstance:LoggerInterface = new IrcLogger();
 
-export = IrcLoggerInstance;
+ export = IrcLoggerInstance;*/
 
 /*var foo:Function = function ():LoggerInterface {
-	return new IrcLogger();
-};
-//
+ return new IrcLogger();
+ };
+ //
 
-export = foo;*/
+ export = foo;*/
