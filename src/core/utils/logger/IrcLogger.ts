@@ -1,17 +1,12 @@
 /// <reference path='../../../../ts-definitions/node/node.d.ts' />
-/// <reference path='../../../../ts-definitions/winston/winston.d.ts' />
 
-// // <reference path='./interfaces/LoggerInterface.d.ts' />
-
-import winston = require('winston');
-var Irc = require('winston-irc');
+import path = require('path');
+var stackTrace = require('stack-trace');
 
 import LoggerInterface = require('./interfaces/LoggerInterface');
 
+import IrcLoggerBackend = require('./IrcLoggerBackend');
 import ObjectUtils = require('../ObjectUtils');
-
-
-//import LoggerInterface = require('./interfaces/LoggerInterface.d');
 
 /**
  * @class core.utils.logger.IrcLogger
@@ -19,12 +14,16 @@ import ObjectUtils = require('../ObjectUtils');
  */
 class IrcLogger implements LoggerInterface {
 
+	private _basePath:string = '';
+
 	/**
-	 * The internally used logging instance
+	 * The internally used irc backend instance
 	 *
-	 * @member {string} core.utils.logger.IrcLogger~_logger
+	 * @member {string} core.utils.logger.IrcLogger~_backend
 	 */
-	private _logger:any = null;
+	private _backend:LoggerInterface = null;
+
+	private _uuid:string = '';
 
 	/**
 	 * The prefix seperator
@@ -35,139 +34,84 @@ class IrcLogger implements LoggerInterface {
 	/**
 	 * @param {string} name
 	 */
-		//constructor (prefix:string) {
-	constructor () {
-		//this._prefix = prefix;
+	constructor (logger:LoggerInterface) {
+		// @see http://stackoverflow.com/a/105074
+		var generateUuid:Function = (function() {
+			function s4() {
+				return Math.floor((1 + Math.random()) * 0x10000)
+					.toString(16)
+					.substring(1);
+			}
+			return function():string {
+				return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+					s4() + '-' + s4() + s4() + s4();
+			};
+		})();
 
-		// typescript hack...
-		var winLogger:any = winston.Logger;
-
-		this._logger = new winLogger({
-			transports: []
-		});
-
-		this._addTransportBasedOnEnvironment();
+		this._basePath = path.join(__dirname, '../../../../');
+		this._backend = logger;
+		this._uuid = generateUuid();
 	}
 
 	public debug (message:Object, metadata?:any):void {
-		if (metadata) {
-			this._logger.debug(message, metadata);
-		}
-		else {
-			this._logger.debug(message);
-		}
+		this._backend.debug(message, metadata);
 	}
 
 	public error (message:Object, metadata?:any):void {
-		if (metadata) {
-			this._logger.error(message, metadata);
-		}
-		else {
-			this._logger.error(message);
-		}
+		this._backend.error(message, metadata);
+
 	}
 
 	public info (message:Object, metadata?:any):void {
-		if (metadata) {
-			this._logger.info(message, metadata);
-		}
-		else {
-			this._logger.info(message);
-		}
+		metadata = this._updateMetadata(metadata);
+		this._backend.info(message, metadata);
+
 	}
 
 	public log (level:string, message:Object, metadata?:any):void {
-		if (metadata) {
-			this._logger.log(level, message, metadata);
-		}
-		else {
-			this._logger.log(level, message);
-		}
+		metadata = this._updateMetadata(metadata);
+
+		this._backend.log(level, message, metadata);
+
 	}
 
 	public warn (message:Object, metadata?:any):void {
-		if (metadata) {
-			this._logger.warn(message, metadata);
-		}
-		else {
-			this._logger.warn(message);
-		}
+		this._backend.warn(message, metadata);
 	}
 
-	private _addTransportBasedOnEnvironment ():void {
-		if (process.env.NODE_ENV === 'test') {
-			this._logger.add(winston.transports.Console, {});
-		}
-		else {
-			// 9 chars official max. length https://tools.ietf.org/html/rfc2812#section-1.2.1
-			//var max:number = 10000000;
-			var max:number = 10000000000000;
-			var nick:string = 'a' + Math.round(Math.random() * max);
-			var userName:string = 'b' + Math.round(Math.random() * max);
-			var realName:string = 'c' + Math.round(Math.random() * max);
+	private _updateMetadata(metadata:Object = {}):Object {
+		var stack = stackTrace.get();
 
-			this._updateIrcFormat();
+		var functionName:string = '';
 
-			this._logger.add(Irc, {
-				host    : 'irc.freenode.net',
-				port    : 6697,
-				ssl     : true,
-				nick    : nick,
-				userName: userName,
-				realName: realName,
-				channels: [
-					'#jj-abschluss'
-				],
-				level   : 'debug'
-			});
-		}
-	}
+		for (var i in stack) {
+			var name = stack[i].getFunctionName();
+			var fileName = stack[i].getFileName();
 
-	private _updateIrcFormat ():void {
-		Irc.prototype.format = function (data) {
-			var output:Object = {
-				_level: data.level
-			};
+			if (fileName.indexOf('/logger/') === -1) {
+				functionName = stack[i].isConstructor() ? name + '.constructor' : name;
 
-			if (data.msg) {
-				try {
-					var msgObject:Object;
-
-					if (typeof data.msg === 'object') {
-						msgObject = data.msg;
-					}
-					else {
-						msgObject = JSON.parse(data.msg);
-					}
-
-					output = ObjectUtils.extend(msgObject, output);
-				}
-				catch (e) {
-					output['message'] = data.msg;
-				}
+				break;
+			}
+			/*// reached the end of our implementation
+			if (!name || fileName.indexOf(this._basePath) !== 0) {
+				console.log('. . . . . . . . . . . . . . . . . . . . . . . .');
+				console.log(name);
+				console.log(stack[i].getFileName());
+				console.log(this._basePath);
+				console.log(stack[i].getFileName().indexOf(this._basePath));
+				break;
 			}
 
-			if (data.meta) {
-				output = ObjectUtils.extend(data.meta, output);
-			}
+			functionName = name;
+			*/
+		}
 
-			console.log(output);
-
-			return JSON.stringify(output);
-		};
+		return ObjectUtils.extend(metadata, {
+			_caller: functionName,
+			_uuid: this._uuid
+		});
 	}
-
 }
 
 export = IrcLogger;
-
-/*var IrcLoggerInstance:LoggerInterface = new IrcLogger();
-
- export = IrcLoggerInstance;*/
-
-/*var foo:Function = function ():LoggerInterface {
- return new IrcLogger();
- };
- //
-
- export = foo;*/

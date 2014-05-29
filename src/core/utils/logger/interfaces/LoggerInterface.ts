@@ -7,24 +7,32 @@
 interface LoggerInterface {
 
 	/**
+	 * @method core.utils.logger.LoggerInterface#debug
+	 *
 	 * @param {string} message
 	 * @param {string} metadata
 	 */
 	debug (message:Object, metadata?:any): void;
 
 	/**
+	 * @method core.utils.logger.LoggerInterface#error
+	 *
 	 * @param {string} message
 	 * @param {string} metadata
 	 */
 	error (message:Object, metadata?:any): void;
 
 	/**
+	 * @method core.utils.logger.LoggerInterface#info
+	 *
 	 * @param {string} message
 	 * @param {string} metadata
 	 */
 	info (message:Object, metadata?:any): void;
 
 	/**
+	 * @method core.utils.logger.LoggerInterface#log
+	 *
 	 * @param {string} level
 	 * @param {string} message
 	 * @param {string} metadata
@@ -32,6 +40,8 @@ interface LoggerInterface {
 	log (level:string, message:Object, metadata?:any):void;
 
 	/**
+	 * @method core.utils.logger.LoggerInterface#warn
+	 *
 	 * @param {string} message
 	 * @param {string} metadata
 	 */
