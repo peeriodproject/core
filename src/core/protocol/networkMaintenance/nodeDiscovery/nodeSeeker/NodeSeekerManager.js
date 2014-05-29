@@ -101,7 +101,9 @@ var NodeSeekerManager = (function () {
             if (_this._forceSearchActive) {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {
                     _this._nodeSeekerList[i].seek(function (node) {
-                        _this._pingNodeIfActive(node);
+                        if (node) {
+                            _this._pingNodeIfActive(node);
+                        }
                     });
                 }
             }

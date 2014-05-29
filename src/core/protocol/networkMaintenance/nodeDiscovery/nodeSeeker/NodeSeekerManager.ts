@@ -116,7 +116,9 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 			if (this._forceSearchActive) {
 				for (var i = 0; i < this._nodeSeekerList.length; i++) {
 					this._nodeSeekerList[i].seek((node:ContactNodeInterface) => {
-						this._pingNodeIfActive(node);
+						if (node) {
+							this._pingNodeIfActive(node);
+						}
 					});
 				}
 			}

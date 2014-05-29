@@ -8,7 +8,7 @@ import MyNode = require('../../../src/core/topology/MyNode');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
 
-describe('CORE --> PROTOCOL --> NODE DISOVERY --> NodePublisherFactory @current', function () {
+describe('CORE --> PROTOCOL --> NODE DISOVERY --> NodePublisherFactory', function () {
 
 	var sandbox:SinonSandbox = null;
 	var myNode:any = null;

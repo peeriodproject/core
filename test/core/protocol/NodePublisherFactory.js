@@ -7,7 +7,7 @@ var NodePublisherFactory = require('../../../src/core/protocol/networkMaintenanc
 var MyNode = require('../../../src/core/topology/MyNode');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PROTOCOL --> NODE DISOVERY --> NodePublisherFactory @current', function () {
+describe('CORE --> PROTOCOL --> NODE DISOVERY --> NodePublisherFactory', function () {
     var sandbox = null;
     var myNode = null;
     var appConfig = null;
