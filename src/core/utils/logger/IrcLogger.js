@@ -1,8 +1,9 @@
 /// <reference path='../../../../ts-definitions/node/node.d.ts' />
-/// <reference path='../../../../ts-definitions/winston/winston.d.ts' />
-var winston = require('winston');
+var path = require('path');
+var stackTrace = require('stack-trace');
 
-//import LoggerInterface = require('./interfaces/LoggerInterface.d');
+var ObjectUtils = require('../ObjectUtils');
+
 /**
 * @class core.utils.logger.IrcLogger
 * @implements core.utils.logger.LoggerInterface
@@ -17,114 +18,88 @@ var IrcLogger = (function () {
     /**
     * @param {string} name
     */
-    //constructor (prefix:string) {
-    function IrcLogger() {
+    function IrcLogger(uuid, logger) {
+        this._basePath = '';
         /**
-        * The internally used logging instance
+        * The internally used irc backend instance
         *
-        * @member {string} core.utils.logger.IrcLogger~_logger
+        * @member {string} core.utils.logger.IrcLogger~_backend
         */
-        this._logger = null;
-        //this._prefix = prefix;
-        // typescript hack...
-        var winLogger = winston.Logger;
+        this._backend = null;
+        this._uuid = '';
+        // @see http://stackoverflow.com/a/105074
+        var generateUuid = (function () {
+            function s4() {
+                return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+            }
+            return function () {
+                return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+            };
+        })();
 
-        this._logger = new winLogger({
-            transports: []
-        });
-
-        this._addTransportBasedOnEnvironment();
-
-        this.info('irc logger created');
+        this._basePath = path.join(__dirname, '../../../../');
+        this._backend = logger;
+        this._uuid = uuid || generateUuid();
     }
     IrcLogger.prototype.debug = function (message, metadata) {
-        message = this._addPrefix(message);
-
-        if (metadata) {
-            this._logger.debug(message, metadata);
-        } else {
-            this._logger.debug(message);
-        }
+        this._backend.debug(message, metadata);
     };
 
     IrcLogger.prototype.error = function (message, metadata) {
-        message = this._addPrefix(message);
-
-        this._logger.error(message, metadata);
+        this._backend.error(message, metadata);
     };
 
     IrcLogger.prototype.info = function (message, metadata) {
-        message = this._addPrefix(message);
-
-        if (metadata) {
-            this._logger.info(message, metadata);
-        } else {
-            this._logger.info(message);
-        }
+        metadata = this._updateMetadata(metadata);
+        this._backend.info(message, metadata);
     };
 
     IrcLogger.prototype.log = function (level, message, metadata) {
-        message = this._addPrefix(message);
+        metadata = this._updateMetadata(metadata);
 
-        if (metadata) {
-            this._logger.log(level, message, metadata);
-        } else {
-            this._logger.log(level, message);
-        }
+        this._backend.log(level, message, metadata);
     };
 
     IrcLogger.prototype.warn = function (message, metadata) {
-        message = this._addPrefix(message);
-
-        if (metadata) {
-            this._logger.warn(message, metadata);
-        } else {
-            this._logger.warn(message);
-        }
+        this._backend.warn(message, metadata);
     };
 
-    IrcLogger.prototype._addPrefix = function (message) {
-        return message;
-    };
+    IrcLogger.prototype._updateMetadata = function (metadata) {
+        if (typeof metadata === "undefined") { metadata = {}; }
+        var stack = stackTrace.get();
 
-    IrcLogger.prototype._addTransportBasedOnEnvironment = function () {
-        if (process.env.NODE_ENV === 'test') {
-            this._logger.add(winston.transports.Console, {});
-        } else {
-            // 9 chars official max. length https://tools.ietf.org/html/rfc2812#section-1.2.1
-            //var max:number = 10000000;
-            var max = 10000000000000;
-            var nick = 'a' + Math.round(Math.random() * max);
-            var userName = 'b' + Math.round(Math.random() * max);
-            var realName = 'c' + Math.round(Math.random() * max);
+        var functionName = '';
 
-            this._logger.add(require('winston-irc'), {
-                host: 'irc.freenode.net',
-                port: 6697,
-                ssl: true,
-                nick: nick,
-                userName: userName,
-                realName: realName,
-                channels: [
-                    '#jj-abschluss'
-                ],
-                onError: function (err) {
-                    //console.log('--- IRC ERROR ---');
-                    //console.log(err);
-                }
-            });
+        for (var i in stack) {
+            var name = stack[i].getFunctionName();
+            var fileName = stack[i].getFileName();
+
+            if (fileName.indexOf('/logger/') === -1) {
+                functionName = stack[i].isConstructor() ? name + '.constructor' : name;
+
+                break;
+            }
+            /*// reached the end of our implementation
+            if (!name || fileName.indexOf(this._basePath) !== 0) {
+            console.log('. . . . . . . . . . . . . . . . . . . . . . . .');
+            console.log(name);
+            console.log(stack[i].getFileName());
+            console.log(this._basePath);
+            console.log(stack[i].getFileName().indexOf(this._basePath));
+            break;
+            }
+            
+            functionName = name;
+            */
         }
+
+        return ObjectUtils.extend(metadata, {
+            _caller: functionName,
+            _uuid: this._uuid
+        });
     };
     return IrcLogger;
 })();
 
-//export = IrcLogger;
-var IrcLoggerInstance = new IrcLogger();
-
-module.exports = IrcLoggerInstance;
-/*var foo:Function = function ():LoggerInterface {
-return new IrcLogger();
-};
-//
-export = foo;*/
+module.exports = IrcLogger;
 //# sourceMappingURL=IrcLogger.js.map
