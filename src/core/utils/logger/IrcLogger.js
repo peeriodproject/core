@@ -18,7 +18,7 @@ var IrcLogger = (function () {
     /**
     * @param {string} name
     */
-    function IrcLogger(uuid, logger) {
+    function IrcLogger(config, uuid, logger) {
         this._basePath = '';
         /**
         * The internally used irc backend instance
@@ -26,6 +26,8 @@ var IrcLogger = (function () {
         * @member {string} core.utils.logger.IrcLogger~_backend
         */
         this._backend = null;
+        this._config = null;
+        this._simulator = {};
         this._uuid = '';
         // @see http://stackoverflow.com/a/105074
         var generateUuid = (function () {
@@ -37,9 +39,32 @@ var IrcLogger = (function () {
             };
         })();
 
+        this._config = config;
         this._basePath = path.join(__dirname, '../../../../');
         this._backend = logger;
         this._uuid = uuid || generateUuid();
+
+        try  {
+            var country = this._config.get('simulator.location.country');
+            this._simulator['country'] = country;
+        } catch (e) {
+        }
+
+        try  {
+            var delay = this._config.get('simulator.location.delay');
+            this._simulator['delay'] = delay;
+        } catch (e) {
+        }
+
+        try  {
+            var location = this._config.get('simulator.location.lat') + ',' + this._config.get('simulator.location.lng');
+            this._simulator['location'] = location;
+        } catch (e) {
+        }
+
+        if (Object.keys(this._simulator).length) {
+            this._backend.info({ _simulator: this._simulator }, { _uuid: this._uuid });
+        }
     }
     IrcLogger.prototype.debug = function (message, metadata) {
         this._backend.debug(message, metadata);
@@ -93,10 +118,12 @@ var IrcLogger = (function () {
             */
         }
 
-        return ObjectUtils.extend(metadata, {
+        var additionalData = {
             _caller: functionName,
             _uuid: this._uuid
-        });
+        };
+
+        return ObjectUtils.extend(metadata, additionalData);
     };
     return IrcLogger;
 })();

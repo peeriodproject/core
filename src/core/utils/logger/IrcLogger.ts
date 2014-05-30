@@ -3,6 +3,7 @@
 import path = require('path');
 var stackTrace = require('stack-trace');
 
+import ConfigInterface = require('../../config/interfaces/ConfigInterface');
 import LoggerInterface = require('./interfaces/LoggerInterface');
 
 import IrcLoggerBackend = require('./IrcLoggerBackend');
@@ -23,6 +24,10 @@ class IrcLogger implements LoggerInterface {
 	 */
 	private _backend:LoggerInterface = null;
 
+	private _config:ConfigInterface = null;
+
+	private _simulator:Object = {};
+
 	private _uuid:string = '';
 
 	/**
@@ -34,7 +39,7 @@ class IrcLogger implements LoggerInterface {
 	/**
 	 * @param {string} name
 	 */
-	constructor (uuid:string, logger:LoggerInterface) {
+	constructor (config:ConfigInterface, uuid:string, logger:LoggerInterface) {
 		// @see http://stackoverflow.com/a/105074
 		var generateUuid:Function = (function() {
 			function s4() {
@@ -48,9 +53,35 @@ class IrcLogger implements LoggerInterface {
 			};
 		})();
 
+		this._config = config;
 		this._basePath = path.join(__dirname, '../../../../');
 		this._backend = logger;
 		this._uuid = uuid || generateUuid();
+
+		try {
+			var country = this._config.get('simulator.location.country');
+			this._simulator['country'] = country;
+		}
+		catch (e) {
+		}
+
+		try {
+			var delay = this._config.get('simulator.location.delay');
+			this._simulator['delay'] = delay;
+		}
+		catch (e) {
+		}
+
+		try {
+			var location = this._config.get('simulator.location.lat') + ',' + this._config.get('simulator.location.lng');
+			this._simulator['location'] = location;
+		}
+		catch (e) {
+		}
+
+		if (Object.keys(this._simulator).length) {
+			this._backend.info({ _simulator: this._simulator }, { _uuid: this._uuid });
+		}
 	}
 
 	public debug (message:Object, metadata?:any):void {
@@ -107,10 +138,12 @@ class IrcLogger implements LoggerInterface {
 			*/
 		}
 
-		return ObjectUtils.extend(metadata, {
+		var additionalData:Object = {
 			_caller: functionName,
 			_uuid: this._uuid
-		});
+		};
+
+		return ObjectUtils.extend(metadata, additionalData);
 	}
 }
 
