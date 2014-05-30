@@ -104,6 +104,24 @@ var Id = (function () {
         return n == div ? n : n + 1;
     };
 
+    Id.getRandomIdDifferingInHighestBit = function (srcId, differsIn) {
+        var srcBuf = srcId.getBuffer();
+        var bufLen = srcBuf.length;
+        var buf = new Buffer(bufLen);
+
+        srcBuf.copy(buf);
+
+        var retId = new Id(buf, bufLen * 8);
+
+        retId.set(differsIn, srcId.at(differsIn) ^ 1);
+
+        for (var i = differsIn - 1; i >= 0; i--) {
+            retId.set(i, Math.round(Math.random()));
+        }
+
+        return retId;
+    };
+
     Id.prototype.at = function (index) {
         return (this.getBuffer()[this._byteLength - 1 - (index / 8 | 0)] & (1 << (index % 8))) > 0 ? 1 : 0;
     };

@@ -74,6 +74,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 
 		this._nodeSeekerFactory.createSeekerList((list:NodeSeekerList) => {
 			this._nodeSeekerList = list;
+
 			if (this._forceFindCallback) {
 				this.forceFindActiveNode(this._avoidNode, this._forceFindCallback);
 				this._forceFindCallback = null;
@@ -92,10 +93,13 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 		this._forceSearchActive = true;
 
 		this._proxyManager.once('contactNodeInformation', (node:ContactNodeInterface) => {
+
 			this._forceSearchActive = false;
 
 			if (this._avoidNode && this._avoidNode.getId().equals(node.getId())) {
-				this.forceFindActiveNode(this._avoidNode, callback);
+				setImmediate(() => {
+					this.forceFindActiveNode(this._avoidNode, callback);
+				});
 			}
 			else {
 				this._avoidNode = null;
@@ -112,8 +116,8 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	 * @method core.protocol.nodeDiscovery.NodeSeekerManager~_iterativeSeekAndPing
 	 */
 	private _iterativeSeekAndPing ():void {
-		process.nextTick(() => {
-			if (this._forceSearchActive) {
+		if (this._forceSearchActive) {
+			setImmediate(() => {
 				for (var i = 0; i < this._nodeSeekerList.length; i++) {
 					this._nodeSeekerList[i].seek((node:ContactNodeInterface) => {
 						if (node) {
@@ -121,8 +125,11 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 						}
 					});
 				}
-			}
-		});
+
+				this._iterativeSeekAndPing();
+			});
+		}
+
 	}
 
 	/**

@@ -386,7 +386,7 @@ var ProxyManager = (function (_super) {
 
     ProxyManager.prototype._proxyCycleOnNextTick = function () {
         var _this = this;
-        process.nextTick(function () {
+        setImmediate(function () {
             _this._proxyCycle();
         });
     };

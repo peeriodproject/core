@@ -417,7 +417,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	}
 
 	private _proxyCycleOnNextTick ():void {
-		process.nextTick(() => {
+		setImmediate(() => {
 			this._proxyCycle();
 		});
 	}

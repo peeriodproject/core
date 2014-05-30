@@ -59,6 +59,7 @@ var NodeSeekerManager = (function () {
 
         this._nodeSeekerFactory.createSeekerList(function (list) {
             _this._nodeSeekerList = list;
+
             if (_this._forceFindCallback) {
                 _this.forceFindActiveNode(_this._avoidNode, _this._forceFindCallback);
                 _this._forceFindCallback = null;
@@ -80,7 +81,9 @@ var NodeSeekerManager = (function () {
             _this._forceSearchActive = false;
 
             if (_this._avoidNode && _this._avoidNode.getId().equals(node.getId())) {
-                _this.forceFindActiveNode(_this._avoidNode, callback);
+                setImmediate(function () {
+                    _this.forceFindActiveNode(_this._avoidNode, callback);
+                });
             } else {
                 _this._avoidNode = null;
                 callback(node);
@@ -97,8 +100,8 @@ var NodeSeekerManager = (function () {
     */
     NodeSeekerManager.prototype._iterativeSeekAndPing = function () {
         var _this = this;
-        process.nextTick(function () {
-            if (_this._forceSearchActive) {
+        if (this._forceSearchActive) {
+            setImmediate(function () {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {
                     _this._nodeSeekerList[i].seek(function (node) {
                         if (node) {
@@ -106,8 +109,10 @@ var NodeSeekerManager = (function () {
                         }
                     });
                 }
-            }
-        });
+
+                _this._iterativeSeekAndPing();
+            });
+        }
     };
 
     /**

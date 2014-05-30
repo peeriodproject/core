@@ -1,6 +1,7 @@
 /// <reference path='../../../../../ts-definitions/node/node.d.ts' />
 
 import IdInterface = require('../../../topology/interfaces/IdInterface');
+import ContactNodeListInterface = require('../../../topology/interfaces/ContactNodeListInterface');
 
 /**
  *
@@ -60,8 +61,9 @@ interface FindClosestNodesManagerInterface extends NodeJS.EventEmitter {
 	 * Kicks off a FindClosestNodes cycle for a given ID.
 	 *
 	 * @param {core.topology.IdInterface} id The ID to search for
+	 * @param {core.topology.ContactNodeListInterface} forceList Optional. If this is set, this list will be used as the initial nodes to query.
 	 */
-	startCycleFor (id:IdInterface):void;
+	startCycleFor (id:IdInterface, forceList?:ContactNodeListInterface):void;
 }
 
 export = FindClosestNodesManagerInterface;

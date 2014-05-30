@@ -65,6 +65,12 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 	 *
 	 */
 
+	/**
+	 *
+	 * If it needs a proxy, kick off proxy manager only when the NetworkMaintainer has finished its entry
+	 * If it doesnt need a proxy, kick off proxy manager right away
+	 *
+	 */
 
 
 }
