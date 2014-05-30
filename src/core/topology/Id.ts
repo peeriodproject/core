@@ -102,6 +102,24 @@ class Id implements IdInterface {
 		return n == div ? n : n + 1;
 	}
 
+	public static getRandomIdDifferingInHighestBit (srcId:IdInterface, differsIn:number):Id {
+		var srcBuf:Buffer = srcId.getBuffer();
+		var bufLen:number = srcBuf.length;
+		var buf:Buffer = new Buffer(bufLen);
+
+		srcBuf.copy(buf);
+
+		var retId = new Id(buf, bufLen * 8);
+
+		retId.set(differsIn, srcId.at(differsIn)^1);
+
+		for (var i=differsIn - 1; i >= 0; i--) {
+			retId.set(i, Math.round(Math.random()));
+		}
+
+		return retId;
+	}
+
 	constructor (buffer:Buffer, bitLength:number) {
 		var byteLength:number = Id.calculateByteLengthByBitLength(bitLength);
 

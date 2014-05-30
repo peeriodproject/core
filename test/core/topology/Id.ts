@@ -206,4 +206,13 @@ describe('CORE --> TOPOLOGY --> ID', function () {
 		});
 	});
 
+	it('should correctly generate random ids which differ in the highest bit', function () {
+		var srcId:Id = new Id(Id.byteBufferByHexString('0020000000000060009400010100000050f40602', 20), 160);
+
+		for (var i=0; i<1000; i++) {
+			var differsIn:number = Math.floor(Math.random() * 160);
+			Id.getRandomIdDifferingInHighestBit(srcId, differsIn).differsInHighestBit(srcId).should.equal(differsIn);
+		}
+	});
+
 });
