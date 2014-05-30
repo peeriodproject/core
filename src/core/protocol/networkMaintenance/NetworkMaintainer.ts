@@ -11,6 +11,20 @@ import Id = require('../../topology/Id');
 import FindClosestNodesManagerInterface = require('../findClosestNodes/interfaces/FindClosestNodesManagerInterface');
 import ProxyManagerInterface = require('../proxy/interfaces/ProxyManagerInterface');
 
+/**
+ * NetworkMaintainerInterface implementation.
+ *
+ * @class core.protocol.networkMaintenance.NetworkMaintainer
+ * @extends NodeJS.EventEmitter
+ * @implements core.protocol.networkMaintenance.NetworkMaintainerInterface
+ *
+ * @param {core.config.ConfigInterface} topologyConfig Topology configuration object
+ * @param {core.config.ConfigInterface} protocolConfig Protocol configuration object
+ * @param {core.topology.MyNodeInterface} myNode MyNode instance.
+ * @param {core.protocol.nodeDiscovery.NodeSeekerManagerInterface} A node seeker manager.
+ * @param {core.protocol.findClosestNodes.FindClosestNodesManagerInterface} FindClosestNodesManager instance.
+ * @oaram {core.protocol.proxy.ProxyManagerInterface} A working ProxyManager instance.
+ */
 class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainerInterface {
 
 	/**
@@ -112,37 +126,25 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 		}
 	}
 
-	private _findEntryNodeAndJoin (avoidNode:ContactNodeInterface):void {
-		this._nodeSeekerManager.forceFindActiveNode(avoidNode, (node:ContactNodeInterface) => {
-			this._findClosestNodesManager.startCycleFor(this._myIdToSearchFor, [node]);
-
-			this._findClosestNodesManager.once('foundClosestNodes', (searchForId:IdInterface, resultingList:ContactNodeListInterface) => {
-				if (!resultingList.length) {
-					setImmediate(() => {
-						this._findEntryNodeAndJoin(node);
-					});
-				}
-				else {
-					this._finalizeEntryWithBucketRefreshes();
-				}
-			});
-		});
-	}
-
-	private _handleBucketAccess (node:ContactNodeInterface) {
-		var bucketNumber:number = this._myNode.getId().differsInHighestBit(node.getId());
-
-		if (bucketNumber >= 0) {
-			if (this._nearestAccessedBucket === -1 || this._nearestAccessedBucket > bucketNumber) {
-				this._nearestAccessedBucket = bucketNumber;
-			}
-
-			this._clearBucketRefreshTimeout(bucketNumber);
-			this._setBucketRefreshTimeout(bucketNumber);
+	/**
+	 * Clears the refresh timeout (if existing) of a bucket by its index
+	 *
+	 * @method core.protocol.networkMaintenance.NetworkMaintainer~_clearBucketRefreshTimeout
+	 *
+	 * @param {number} bucketNumber The bucket index
+	 */
+	private _clearBucketRefreshTimeout (bucketNumber:number):void {
+		if (this._bucketRefreshes[bucketNumber]) {
+			clearTimeout(this._bucketRefreshes[bucketNumber]);
+			this._bucketRefreshes[bucketNumber] = 0;
 		}
-
 	}
 
+	/**
+	 * Issues FIND_CLOSEST_NODES cycles on the buckets further away than the closest neighbor.
+	 *
+	 * @method core.protocol.networkMaintenance.NetworkMaintainer~_finalizeEntryWithBucketRefreshes
+	 */
 	private _finalizeEntryWithBucketRefreshes ():void {
 		var queriedIds:Array<string> = [];
 
@@ -168,6 +170,61 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 
 	}
 
+	/**
+	 * Force finds an initial contact node and sends a FIND_CLOSEST_NODES query to it containing an ID merely differing
+	 * in the 0th bit to MyNode's ID.
+	 * If the query returns no additional nodes, another initial contact node is searched for and the process repeats,
+	 * otherwise the node entry process is finalized by issuing bucket refreshes.
+	 *
+	 * @method core.protocol.networkMaintenance.NetworkMaintainer~_findEntryNodeAndJoin
+	 *
+	 * @param {core.topology.ContactNodeInterface} avoidNode Node to avoid when force finding an initial contact.
+	 */
+	private _findEntryNodeAndJoin (avoidNode:ContactNodeInterface):void {
+		this._nodeSeekerManager.forceFindActiveNode(avoidNode, (node:ContactNodeInterface) => {
+			this._findClosestNodesManager.startCycleFor(this._myIdToSearchFor, [node]);
+
+			this._findClosestNodesManager.once('foundClosestNodes', (searchForId:IdInterface, resultingList:ContactNodeListInterface) => {
+				if (!resultingList.length) {
+					setImmediate(() => {
+						this._findEntryNodeAndJoin(node);
+					});
+				}
+				else {
+					this._finalizeEntryWithBucketRefreshes();
+				}
+			});
+		});
+	}
+
+	/**
+	 * The function gets called as soon as the proxy manager emits a 'contactNodeInformation' event, i.e. information to
+	 * an active node is seen.
+	 * The timeout of the bucket which the node would be assigned to is refreshed.
+	 *
+	 * @method core.protocol.networkMaintenance.NetworkMaintainer~_handleBucketAccess
+	 *
+	 * @param {core.topology.ContactNodeInterface} node The seen contact node.
+	 */
+	private _handleBucketAccess (node:ContactNodeInterface):void {
+		var bucketNumber:number = this._myNode.getId().differsInHighestBit(node.getId());
+
+		if (bucketNumber >= 0) {
+			if (this._nearestAccessedBucket === -1 || this._nearestAccessedBucket > bucketNumber) {
+				this._nearestAccessedBucket = bucketNumber;
+			}
+
+			this._clearBucketRefreshTimeout(bucketNumber);
+			this._setBucketRefreshTimeout(bucketNumber);
+		}
+
+	}
+
+	/**
+	 * Iterates over the overall number of buckets and sets a refresh timeout on them.
+	 *
+	 * @method core.protocol.networkMaintenance.NetworkMaintainer~_prepopulateBucketRefreshes
+	 */
 	private _prepopulateBucketRefreshes ():void {
 		for (var i = 0; i < this._numberOfBuckets; i++) {
 			((bucketNumber:number) => {
@@ -176,23 +233,16 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 		}
 	}
 
-	private _setBucketRefreshTimeout (bucketNumber:number):void {
-		if (!this._bucketRefreshes[bucketNumber]) {
-			this._bucketRefreshes[bucketNumber] = setTimeout(() => {
-				this._bucketRefreshes[bucketNumber] = 0;
-				this._refreshBucket(bucketNumber);
-			}, this._bucketRefreshRateInMs);
-		}
-	}
-
-
-	private _clearBucketRefreshTimeout (bucketNumber:number):void {
-		if (this._bucketRefreshes[bucketNumber]) {
-			clearTimeout(this._bucketRefreshes[bucketNumber]);
-			this._bucketRefreshes[bucketNumber] = 0;
-		}
-	}
-
+	/**
+	 * Refreshes a bucket by issuing a FIND_CLOSEST_NODES cycle on a random ID which would be assigned to the said bucket.
+	 * Emits a `refreshingBucket` event with the bucket index as argument.
+	 * Renews the bucket refresh timeout.
+	 *
+	 * @method core.protocol.networkMaintenance.NetworkMaintainer~_refreshBucket
+	 *
+	 * @param {number} bucketNumber The index of the bucket to refresh
+	 * @returns {IdInterface} The search for ID of the resulting FIND_CLOSEST_NODES cycle.
+	 */
 	private _refreshBucket (bucketNumber:number):IdInterface {
 		var idToSearchFor:IdInterface = Id.getRandomIdDifferingInHighestBit(this._myNode.getId(), bucketNumber);
 
@@ -202,6 +252,22 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 		this._setBucketRefreshTimeout(bucketNumber);
 
 		return idToSearchFor;
+	}
+
+	/**
+	 * Sets a bucket refresh timeout by a bucket index.
+	 *
+	 * @method core.protocol.networkMaintenance.NetworkMaintainer~_setBucketRefreshTimeout
+	 *
+	 * @param {number} bucketNumber Index of the bucket to set the timeout on.
+	 */
+	private _setBucketRefreshTimeout (bucketNumber:number):void {
+		if (!this._bucketRefreshes[bucketNumber]) {
+			this._bucketRefreshes[bucketNumber] = setTimeout(() => {
+				this._bucketRefreshes[bucketNumber] = 0;
+				this._refreshBucket(bucketNumber);
+			}, this._bucketRefreshRateInMs);
+		}
 	}
 
 }

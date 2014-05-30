@@ -8,6 +8,20 @@ var events = require('events');
 
 var Id = require('../../topology/Id');
 
+/**
+* NetworkMaintainerInterface implementation.
+*
+* @class core.protocol.networkMaintenance.NetworkMaintainer
+* @extends NodeJS.EventEmitter
+* @implements core.protocol.networkMaintenance.NetworkMaintainerInterface
+*
+* @param {core.config.ConfigInterface} topologyConfig Topology configuration object
+* @param {core.config.ConfigInterface} protocolConfig Protocol configuration object
+* @param {core.topology.MyNodeInterface} myNode MyNode instance.
+* @param {core.protocol.nodeDiscovery.NodeSeekerManagerInterface} A node seeker manager.
+* @param {core.protocol.findClosestNodes.FindClosestNodesManagerInterface} FindClosestNodesManager instance.
+* @oaram {core.protocol.proxy.ProxyManagerInterface} A working ProxyManager instance.
+*/
 var NetworkMaintainer = (function (_super) {
     __extends(NetworkMaintainer, _super);
     function NetworkMaintainer(topologyConfig, protocolConfig, myNode, nodeSeekerManager, findClosestNodesManager, proxyManager) {
@@ -98,36 +112,25 @@ var NetworkMaintainer = (function (_super) {
         }
     };
 
-    NetworkMaintainer.prototype._findEntryNodeAndJoin = function (avoidNode) {
-        var _this = this;
-        this._nodeSeekerManager.forceFindActiveNode(avoidNode, function (node) {
-            _this._findClosestNodesManager.startCycleFor(_this._myIdToSearchFor, [node]);
-
-            _this._findClosestNodesManager.once('foundClosestNodes', function (searchForId, resultingList) {
-                if (!resultingList.length) {
-                    setImmediate(function () {
-                        _this._findEntryNodeAndJoin(node);
-                    });
-                } else {
-                    _this._finalizeEntryWithBucketRefreshes();
-                }
-            });
-        });
-    };
-
-    NetworkMaintainer.prototype._handleBucketAccess = function (node) {
-        var bucketNumber = this._myNode.getId().differsInHighestBit(node.getId());
-
-        if (bucketNumber >= 0) {
-            if (this._nearestAccessedBucket === -1 || this._nearestAccessedBucket > bucketNumber) {
-                this._nearestAccessedBucket = bucketNumber;
-            }
-
-            this._clearBucketRefreshTimeout(bucketNumber);
-            this._setBucketRefreshTimeout(bucketNumber);
+    /**
+    * Clears the refresh timeout (if existing) of a bucket by its index
+    *
+    * @method core.protocol.networkMaintenance.NetworkMaintainer~_clearBucketRefreshTimeout
+    *
+    * @param {number} bucketNumber The bucket index
+    */
+    NetworkMaintainer.prototype._clearBucketRefreshTimeout = function (bucketNumber) {
+        if (this._bucketRefreshes[bucketNumber]) {
+            clearTimeout(this._bucketRefreshes[bucketNumber]);
+            this._bucketRefreshes[bucketNumber] = 0;
         }
     };
 
+    /**
+    * Issues FIND_CLOSEST_NODES cycles on the buckets further away than the closest neighbor.
+    *
+    * @method core.protocol.networkMaintenance.NetworkMaintainer~_finalizeEntryWithBucketRefreshes
+    */
     NetworkMaintainer.prototype._finalizeEntryWithBucketRefreshes = function () {
         var _this = this;
         var queriedIds = [];
@@ -153,6 +156,60 @@ var NetworkMaintainer = (function (_super) {
         }
     };
 
+    /**
+    * Force finds an initial contact node and sends a FIND_CLOSEST_NODES query to it containing an ID merely differing
+    * in the 0th bit to MyNode's ID.
+    * If the query returns no additional nodes, another initial contact node is searched for and the process repeats,
+    * otherwise the node entry process is finalized by issuing bucket refreshes.
+    *
+    * @method core.protocol.networkMaintenance.NetworkMaintainer~_findEntryNodeAndJoin
+    *
+    * @param {core.topology.ContactNodeInterface} avoidNode Node to avoid when force finding an initial contact.
+    */
+    NetworkMaintainer.prototype._findEntryNodeAndJoin = function (avoidNode) {
+        var _this = this;
+        this._nodeSeekerManager.forceFindActiveNode(avoidNode, function (node) {
+            _this._findClosestNodesManager.startCycleFor(_this._myIdToSearchFor, [node]);
+
+            _this._findClosestNodesManager.once('foundClosestNodes', function (searchForId, resultingList) {
+                if (!resultingList.length) {
+                    setImmediate(function () {
+                        _this._findEntryNodeAndJoin(node);
+                    });
+                } else {
+                    _this._finalizeEntryWithBucketRefreshes();
+                }
+            });
+        });
+    };
+
+    /**
+    * The function gets called as soon as the proxy manager emits a 'contactNodeInformation' event, i.e. information to
+    * an active node is seen.
+    * The timeout of the bucket which the node would be assigned to is refreshed.
+    *
+    * @method core.protocol.networkMaintenance.NetworkMaintainer~_handleBucketAccess
+    *
+    * @param {core.topology.ContactNodeInterface} node The seen contact node.
+    */
+    NetworkMaintainer.prototype._handleBucketAccess = function (node) {
+        var bucketNumber = this._myNode.getId().differsInHighestBit(node.getId());
+
+        if (bucketNumber >= 0) {
+            if (this._nearestAccessedBucket === -1 || this._nearestAccessedBucket > bucketNumber) {
+                this._nearestAccessedBucket = bucketNumber;
+            }
+
+            this._clearBucketRefreshTimeout(bucketNumber);
+            this._setBucketRefreshTimeout(bucketNumber);
+        }
+    };
+
+    /**
+    * Iterates over the overall number of buckets and sets a refresh timeout on them.
+    *
+    * @method core.protocol.networkMaintenance.NetworkMaintainer~_prepopulateBucketRefreshes
+    */
     NetworkMaintainer.prototype._prepopulateBucketRefreshes = function () {
         var _this = this;
         for (var i = 0; i < this._numberOfBuckets; i++) {
@@ -162,23 +219,16 @@ var NetworkMaintainer = (function (_super) {
         }
     };
 
-    NetworkMaintainer.prototype._setBucketRefreshTimeout = function (bucketNumber) {
-        var _this = this;
-        if (!this._bucketRefreshes[bucketNumber]) {
-            this._bucketRefreshes[bucketNumber] = setTimeout(function () {
-                _this._bucketRefreshes[bucketNumber] = 0;
-                _this._refreshBucket(bucketNumber);
-            }, this._bucketRefreshRateInMs);
-        }
-    };
-
-    NetworkMaintainer.prototype._clearBucketRefreshTimeout = function (bucketNumber) {
-        if (this._bucketRefreshes[bucketNumber]) {
-            clearTimeout(this._bucketRefreshes[bucketNumber]);
-            this._bucketRefreshes[bucketNumber] = 0;
-        }
-    };
-
+    /**
+    * Refreshes a bucket by issuing a FIND_CLOSEST_NODES cycle on a random ID which would be assigned to the said bucket.
+    * Emits a `refreshingBucket` event with the bucket index as argument.
+    * Renews the bucket refresh timeout.
+    *
+    * @method core.protocol.networkMaintenance.NetworkMaintainer~_refreshBucket
+    *
+    * @param {number} bucketNumber The index of the bucket to refresh
+    * @returns {IdInterface} The search for ID of the resulting FIND_CLOSEST_NODES cycle.
+    */
     NetworkMaintainer.prototype._refreshBucket = function (bucketNumber) {
         var idToSearchFor = Id.getRandomIdDifferingInHighestBit(this._myNode.getId(), bucketNumber);
 
@@ -188,6 +238,23 @@ var NetworkMaintainer = (function (_super) {
         this._setBucketRefreshTimeout(bucketNumber);
 
         return idToSearchFor;
+    };
+
+    /**
+    * Sets a bucket refresh timeout by a bucket index.
+    *
+    * @method core.protocol.networkMaintenance.NetworkMaintainer~_setBucketRefreshTimeout
+    *
+    * @param {number} bucketNumber Index of the bucket to set the timeout on.
+    */
+    NetworkMaintainer.prototype._setBucketRefreshTimeout = function (bucketNumber) {
+        var _this = this;
+        if (!this._bucketRefreshes[bucketNumber]) {
+            this._bucketRefreshes[bucketNumber] = setTimeout(function () {
+                _this._bucketRefreshes[bucketNumber] = 0;
+                _this._refreshBucket(bucketNumber);
+            }, this._bucketRefreshRateInMs);
+        }
     };
     return NetworkMaintainer;
 })(events.EventEmitter);
