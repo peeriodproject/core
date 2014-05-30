@@ -1,3 +1,5 @@
+var path = require('path');
+
 var IrcLogger = require('./IrcLogger');
 var IrcLoggerBackend = require('./IrcLoggerBackend');
 var JSONConfig = require('../../config/JSONConfig');
@@ -8,8 +10,10 @@ var LoggerFactory;
 
     function create(uuid) {
         if (typeof uuid === "undefined") { uuid = ''; }
+        var configPath = path.join(process.cwd(), 'src/config/mainConfig');
+
         if (!_ircLogger) {
-            _ircLogger = new IrcLogger(new JSONConfig('../../../config/mainConfig', ['simulator']), uuid, new IrcLoggerBackend());
+            _ircLogger = new IrcLogger(new JSONConfig(configPath, ['simulator']), uuid, new IrcLoggerBackend());
         }
 
         return _ircLogger;
