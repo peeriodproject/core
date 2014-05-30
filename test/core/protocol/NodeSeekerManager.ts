@@ -13,7 +13,7 @@ import ContactNodeInterface = require('../../../src/core/topology/interfaces/Con
 import ContactNode = require('../../../src/core/topology/ContactNode');
 import Id = require('../../../src/core/topology/Id');
 
-describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager @current', function () {
+describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function () {
 
 	var sandbox:SinonSandbox = null;
 	var proxyStub:any = null;
