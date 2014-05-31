@@ -437,6 +437,9 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 				message.discard();
 			});
 		}
+		else {
+			message.discard();
+		}
 	}
 
 	/**

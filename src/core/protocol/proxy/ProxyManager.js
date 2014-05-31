@@ -405,6 +405,8 @@ var ProxyManager = (function (_super) {
             this._protocolConnectionManager.writeMessageTo(proxyingForNode, 'PROXY_THROUGH', message.getRawBuffer(), function () {
                 message.discard();
             });
+        } else {
+            message.discard();
         }
     };
 
