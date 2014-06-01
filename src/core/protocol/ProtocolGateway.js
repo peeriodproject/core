@@ -79,7 +79,7 @@ var ProtocolGateway = (function () {
         *
         */
         if (this._proxyManager.needsAdditionalProxy()) {
-            this._networkMaintainer.on('initialContactQueryCompleted', function () {
+            this._networkMaintainer.once('initialContactQueryCompleted', function () {
                 _this._proxyManager.kickOff();
             });
         } else {

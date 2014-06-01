@@ -88,7 +88,7 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 		 *
 		 */
 		if (this._proxyManager.needsAdditionalProxy()) {
-			this._networkMaintainer.on('initialContactQueryCompleted', () => {
+			this._networkMaintainer.once('initialContactQueryCompleted', () => {
 				this._proxyManager.kickOff();
 			});
 		}
