@@ -41,6 +41,8 @@ var NodePublisherFactory = (function () {
         this._nodeDiscoveryState = this._jsonStateHandlerFactory.create(path.resolve(this._appConfig.get('app.dataPath'), 'nodeDiscovery.json'));
         this._nodeDiscoveryState.load(function (err, state) {
             if (err) {
+                console.log(err);
+                console.log('this is an error');
                 callback([]);
                 return;
             }

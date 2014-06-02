@@ -57,6 +57,8 @@ class NodePublisherFactory implements NodePublisherFactoryInterface {
 		this._nodeDiscoveryState.load((err:Error, state:any) => {
 
 			if (err) {
+				console.log(err);
+				console.log('this is an error');
 				callback([]);
 				return;
 			}
