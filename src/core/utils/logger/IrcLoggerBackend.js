@@ -150,6 +150,7 @@ var IrcLoggerBackend = (function () {
                     output = ObjectUtils.extend(msgObject, output);
                 } catch (e) {
                     console.log('setting msg to _message');
+                    console.log(e);
                     output['_message'] = data.msg;
                 }
             }
