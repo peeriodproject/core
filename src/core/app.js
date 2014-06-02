@@ -18,6 +18,8 @@ var ProtocolGateway = require('./protocol/ProtocolGateway');
 
 var JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 
+var stackTrace = require('stack-trace');
+
 var logger = require('./utils/logger/LoggerFactory').create();
 
 //require('longjohn');
@@ -38,7 +40,16 @@ var App = {
         var protocolGateway = null;
 
         process.on('uncaughtException', function (err) {
-            logger.error({ code: err.message, stack: err.stack });
+            var trace = stackTrace.parse(err);
+            logger.error({
+                code: err.message, stack: err.stack, trace: {
+                    typeName: trace.getTypeName(),
+                    fnName: trace.getFunctionName(),
+                    fileName: trace.getFileName(),
+                    line: trace.getLineNumber()
+                }
+            });
+            process.exit(1);
         });
 
         networkBootstrapper.bootstrap(function (err) {
