@@ -110,6 +110,11 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 
 			logger.info('got contact node information');
 
+			if (this._iterativeSeekTimeout) {
+				clearTimeout(this._iterativeSeekTimeout);
+				this._iterativeSeekTimeout = 0;
+			}
+
 			this._forceSearchActive = false;
 
 			if (this._avoidNode && this._avoidNode.getId().equals(node.getId())) {
@@ -144,11 +149,6 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 						if (node && !node.getId().equals(this._myNode.getId())) {
 
 							logger.info('found potential node', {id: node.getId().toHexString()});
-
-							if (this._iterativeSeekTimeout) {
-								clearTimeout(this._iterativeSeekTimeout);
-								this._iterativeSeekTimeout = 0;
-							}
 
 							this._pingNodeIfActive(node);
 						}

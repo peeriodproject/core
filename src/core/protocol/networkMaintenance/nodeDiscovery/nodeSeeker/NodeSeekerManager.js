@@ -90,6 +90,11 @@ var NodeSeekerManager = (function () {
         this._proxyManager.once('contactNodeInformation', function (node) {
             logger.info('got contact node information');
 
+            if (_this._iterativeSeekTimeout) {
+                clearTimeout(_this._iterativeSeekTimeout);
+                _this._iterativeSeekTimeout = 0;
+            }
+
             _this._forceSearchActive = false;
 
             if (_this._avoidNode && _this._avoidNode.getId().equals(node.getId())) {
@@ -120,11 +125,6 @@ var NodeSeekerManager = (function () {
                     _this._nodeSeekerList[i].seek(function (node) {
                         if (node && !node.getId().equals(_this._myNode.getId())) {
                             logger.info('found potential node', { id: node.getId().toHexString() });
-
-                            if (_this._iterativeSeekTimeout) {
-                                clearTimeout(_this._iterativeSeekTimeout);
-                                _this._iterativeSeekTimeout = 0;
-                            }
 
                             _this._pingNodeIfActive(node);
                         }
