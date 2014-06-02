@@ -121,15 +121,18 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 				logger.info('got response from server', {code: res.statusCode});
 
 				if (res.statusCode === 200) {
+					var node:ContactNodeInterface = null;
+					
 					try {
-						var node:ContactNodeInterface = this.nodeFromJSON(JSON.parse(body));
-
-						doCallback(node);
+						node = this.nodeFromJSON(JSON.parse(body));
 					}
 					catch (e) {
 						logger.error('problem when parsing json', {body: body, error: e.message});
-						doCallback(null);
 					}
+					finally {
+						doCallback(node);
+					}
+
 				}
 				else {
 					doCallback(null);
