@@ -22,8 +22,8 @@ import ProtocolGateway = require('./protocol/ProtocolGateway');
 import JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 
 var stackTrace = require('stack-trace');
-
 var logger = require('./utils/logger/LoggerFactory').create();
+//require('longjohn');
 
 
 var App = {

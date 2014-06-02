@@ -169,7 +169,7 @@ var TCPSocketHandler = (function (_super) {
 
         sock.on('connect', function () {
             clearTimeout(connectionTimeout);
-            sock.removeAllListeners('error');
+            sock.removeListener('error', connectionError);
             var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
 
             if (!callback) {
