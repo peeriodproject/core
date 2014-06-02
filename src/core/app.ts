@@ -23,7 +23,7 @@ import JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 
 var logger = require('./utils/logger/LoggerFactory').create();
 
-require('longjohn');
+//require('longjohn');
 
 
 var App = {

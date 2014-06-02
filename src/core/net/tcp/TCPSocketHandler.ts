@@ -182,7 +182,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 
 		sock.on('connect', () => {
 			clearTimeout(connectionTimeout);
-			sock.removeAllListeners('error');
+			sock.removeListener('error', connectionError);
 			var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
 
 			if (!callback) {

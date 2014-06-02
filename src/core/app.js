@@ -20,8 +20,7 @@ var JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 
 var logger = require('./utils/logger/LoggerFactory').create();
 
-require('longjohn');
-
+//require('longjohn');
 var App = {
     start: function (dataPath) {
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
