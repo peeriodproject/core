@@ -1,3 +1,5 @@
+var path = require('path');
+
 var JSONConfig = require('./config/JSONConfig');
 var TCPSocketHandlerFactory = require('./net/tcp/TCPSocketHandlerFactory');
 var NetworkBootstrapper = require('./net/NetworkBootstrapper');
@@ -14,10 +16,12 @@ var RoutingTable = require('./topology/RoutingTable');
 var crypto = require('crypto');
 var ProtocolGateway = require('./protocol/ProtocolGateway');
 
+var JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
+
 var logger = require('./utils/logger/LoggerFactory').create();
 
 var App = {
-    start: function () {
+    start: function (dataPath) {
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
         var protocolConfig = new JSONConfig('../../config/mainConfig.json', ['protocol']);
@@ -57,23 +61,42 @@ var App = {
                 addressList.push(nodeAddressFactory.create(myIp, myOpenPorts[i]));
             }
 
-            // switch on ports for id
-            var myId = new Id(crypto.randomBytes(20), 160);
+            var handlerFactory = new JSONStateHandlerFactory();
+            var idState = handlerFactory.create(path.resolve(dataPath, 'myId.json'));
+            idState.load(function (err, state) {
+                if (err) {
+                    logger.error('Could not load ID state');
+                }
 
-            console.log('My ID is: ' + myId.toHexString());
+                var myId = null;
 
-            myNode = new MyNode(myId, addressList);
+                if (state && state.id) {
+                    myId = new Id(Id.byteBufferByHexString(state.id, 20), 160);
+                } else {
+                    state = {};
+                    var randBuffer = crypto.randomBytes(20);
+                    state.id = randBuffer.toString('hex');
+                    idState.save(state, function () {
+                    });
 
-            bucketStore = new BucketStore('foo', topologyConfig.get('topology.bucketStore.databasePath'));
-            bucketFactory = new BucketFactory();
-            contactNodeFactory = new ContactNodeFactory();
-            routingTable = new RoutingTable(topologyConfig, myId, bucketFactory, bucketStore, contactNodeFactory);
+                    myId = new Id(randBuffer, 160);
+                }
 
-            protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable);
+                console.log('My ID is: ' + myId.toHexString());
 
-            logger.info('Initial setup done, joining the network.');
+                myNode = new MyNode(myId, addressList);
 
-            protocolGateway.start();
+                bucketStore = new BucketStore('foo', topologyConfig.get('topology.bucketStore.databasePath'));
+                bucketFactory = new BucketFactory();
+                contactNodeFactory = new ContactNodeFactory();
+                routingTable = new RoutingTable(topologyConfig, myId, bucketFactory, bucketStore, contactNodeFactory);
+
+                protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable);
+
+                logger.info('Initial setup done, joining the network.');
+
+                protocolGateway.start();
+            });
         });
     }
 };

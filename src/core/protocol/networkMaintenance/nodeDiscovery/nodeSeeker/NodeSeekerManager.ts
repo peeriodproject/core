@@ -67,6 +67,8 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	 */
 	private _proxyManager:ProxyManagerInterface = null;
 
+	private _iterativeSeekTimeout:number = 0;
+
 	constructor (nodeSeekerFactory:NodeSeekerFactoryInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, proxyManager:ProxyManagerInterface) {
 		this._protocolConnectionManager = protocolConnectionManager;
 		this._nodeSeekerFactory = nodeSeekerFactory;
@@ -120,13 +122,21 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 			setImmediate(() => {
 				for (var i = 0; i < this._nodeSeekerList.length; i++) {
 					this._nodeSeekerList[i].seek((node:ContactNodeInterface) => {
+						if (this._iterativeSeekTimeout) {
+							clearTimeout(this._iterativeSeekTimeout);
+							this._iterativeSeekTimeout = 0;
+						}
+
 						if (node) {
 							this._pingNodeIfActive(node);
 						}
 					});
 				}
 
-				this._iterativeSeekAndPing();
+				this._iterativeSeekTimeout = setTimeout(() => {
+					this._iterativeSeekAndPing();
+				}, 1500);
+
 			});
 		}
 
