@@ -148,28 +148,33 @@ class IrcLoggerBackend implements LoggerInterface {
 				try {
 					var msgObject:Object;
 
-					if (typeof data.msg === 'string') {
+					/*if (typeof data.msg === 'string') {
 						msgObject = { _message: data.msg };
 					}
-					else if (typeof data.msg === 'object') {
+					else */if (typeof data.msg === 'object') {
 						msgObject = data.msg;
 					}
 					else {
 						msgObject = JSON.parse(data.msg);
 					}
 
+					console.log('merging');
 					output = ObjectUtils.extend(msgObject, output);
 				}
 				catch (e) {
+					console.log('setting msg to _message');
 					output['_message'] = data.msg;
 				}
 			}
+
+			console.log(output);
 
 			if (data.meta) {
 				output = ObjectUtils.extend(data.meta, output);
 			}
 
 			output = this._cleanupPaths(output);
+			console.log(output);
 
 			return JSON.stringify(output);
 		};
