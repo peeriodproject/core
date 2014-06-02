@@ -515,11 +515,13 @@ var ProxyManager = (function (_super) {
                     delete _this._confirmedProxies[identifier];
                     _this._updateMyNodeAddresses();
                     _this.emit('lostProxy', confirmedProxy);
+                    logger.info('Lost proxy', { id: confirmedProxy.getId().toHexString() });
                 }
                 if (proxyingFor) {
                     _this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(proxyingFor);
                     delete _this._proxyingFor[identifier];
                     _this.emit('lostProxyingFor', proxyingFor);
+                    logger.info('No longer proxying for', { id: proxyingFor.getId().toHexString() });
                 }
 
                 if (doStartCycle) {

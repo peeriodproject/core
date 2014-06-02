@@ -547,11 +547,13 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 					delete this._confirmedProxies[identifier];
 					this._updateMyNodeAddresses();
 					this.emit('lostProxy', confirmedProxy);
+					logger.info('Lost proxy', {id: confirmedProxy.getId().toHexString()})
 				}
 				if (proxyingFor) {
 					this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(proxyingFor);
 					delete this._proxyingFor[identifier];
 					this.emit('lostProxyingFor', proxyingFor);
+					logger.info('No longer proxying for', {id: proxyingFor.getId().toHexString()})
 				}
 
 
