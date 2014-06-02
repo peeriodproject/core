@@ -85,7 +85,10 @@ var HttpNodeSeeker = (function (_super) {
         var doCallback = function (node) {
             if (!calledBack) {
                 calledBack = true;
-                logger.info('returned nodes', { id: node.getId().toHexString() });
+                if (node) {
+                    logger.info('returned nodes', { id: node.getId().toHexString() });
+                }
+
                 callback(node);
             }
         };
