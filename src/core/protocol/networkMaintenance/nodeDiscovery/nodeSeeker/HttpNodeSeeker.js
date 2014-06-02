@@ -85,6 +85,7 @@ var HttpNodeSeeker = (function (_super) {
         var doCallback = function (node) {
             if (!calledBack) {
                 calledBack = true;
+                logger.info('returned nodes', { id: node.getId().toHexString() });
                 callback(node);
             }
         };
@@ -117,6 +118,7 @@ var HttpNodeSeeker = (function (_super) {
 
                         doCallback(node);
                     } catch (e) {
+                        logger.error('problem when parsing json');
                         doCallback(null);
                     }
                 } else {

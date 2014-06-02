@@ -89,6 +89,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 		var doCallback = function (node:ContactNodeInterface) {
 			if (!calledBack) {
 				calledBack = true;
+				logger.info('returned nodes', {id: node.getId().toHexString()});
 				callback(node);
 			}
 		};
@@ -123,6 +124,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 						doCallback(node);
 					}
 					catch (e) {
+						logger.error('problem when parsing json');
 						doCallback(null);
 					}
 				}
