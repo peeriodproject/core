@@ -163,6 +163,7 @@ class IrcLoggerBackend implements LoggerInterface {
 				}
 				catch (e) {
 					console.log('setting msg to _message');
+					console.log(e);
 					output['_message'] = data.msg;
 				}
 			}
