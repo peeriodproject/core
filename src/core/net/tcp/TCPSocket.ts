@@ -160,6 +160,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		if (this._simulatorRTT) {
 			setTimeout(() => {
+				console.log('delayed write ' + this._simulatorRTT);
 				this.writeBuffer(buffer, callback);
 			}, this._simulatorRTT);
 			return;
