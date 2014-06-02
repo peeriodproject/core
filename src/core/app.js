@@ -19,7 +19,6 @@ var ProtocolGateway = require('./protocol/ProtocolGateway');
 var JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 
 var stackTrace = require('stack-trace');
-
 var logger = require('./utils/logger/LoggerFactory').create();
 
 //require('longjohn');
@@ -49,7 +48,7 @@ var App = {
                     line: trace.getLineNumber()
                 }
             });
-            process.exit(1);
+            //process.exit(1);
         });
 
         networkBootstrapper.bootstrap(function (err) {

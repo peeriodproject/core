@@ -55,7 +55,7 @@ var App = {
 					line    : trace.getLineNumber()
 				}
 			});
-			process.exit(1);
+			//process.exit(1);
 		});
 
 		networkBootstrapper.bootstrap(function (err) {
