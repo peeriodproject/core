@@ -158,6 +158,7 @@ class IrcLoggerBackend implements LoggerInterface {
 						msgObject = JSON.parse(data.msg);
 					}
 
+					console.log('merging');
 					output = ObjectUtils.extend(msgObject, output);
 				}
 				catch (e) {
@@ -165,6 +166,8 @@ class IrcLoggerBackend implements LoggerInterface {
 					output['_message'] = data.msg;
 				}
 			}
+
+			console.log(output);
 
 			if (data.meta) {
 				output = ObjectUtils.extend(data.meta, output);
