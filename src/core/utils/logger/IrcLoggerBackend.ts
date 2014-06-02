@@ -106,7 +106,7 @@ class IrcLoggerBackend implements LoggerInterface {
 
 			this._updateIrcFormat();
 
-			this._logger.add(Irc, {
+			/*this._logger.add(Irc, {
 				host    : 'irc.freenode.net',
 				port    : 6697,
 				ssl     : true,
@@ -117,7 +117,20 @@ class IrcLoggerBackend implements LoggerInterface {
 					'#jj-abschluss'
 				],
 				level   : 'debug'
-			});
+			});*/
+
+			this._logger.add(Irc, {
+			 host    : '192.168.178.37',
+			 port    : 6667,
+			 ssl     : false,
+			 nick    : nick,
+			 userName: userName,
+			 realName: realName,
+			 channels: [
+			 '#logs'
+			 ],
+			 level   : 'debug'
+			 });
 		}
 	}
 
@@ -148,6 +161,7 @@ class IrcLoggerBackend implements LoggerInterface {
 				try {
 					var msgObject:Object;
 
+					console.log(typeof data.msg);
 					/*if (typeof data.msg === 'string') {
 						msgObject = { _message: data.msg };
 					}

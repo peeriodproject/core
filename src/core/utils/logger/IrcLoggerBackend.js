@@ -93,15 +93,27 @@ var IrcLoggerBackend = (function () {
 
             this._updateIrcFormat();
 
+            /*this._logger.add(Irc, {
+            host    : 'irc.freenode.net',
+            port    : 6697,
+            ssl     : true,
+            nick    : nick,
+            userName: userName,
+            realName: realName,
+            channels: [
+            '#jj-abschluss'
+            ],
+            level   : 'debug'
+            });*/
             this._logger.add(Irc, {
-                host: 'irc.freenode.net',
-                port: 6697,
-                ssl: true,
+                host: '192.168.178.37',
+                port: 6667,
+                ssl: false,
                 nick: nick,
                 userName: userName,
                 realName: realName,
                 channels: [
-                    '#jj-abschluss'
+                    '#logs'
                 ],
                 level: 'debug'
             });
@@ -135,6 +147,8 @@ var IrcLoggerBackend = (function () {
             if (data.msg) {
                 try  {
                     var msgObject;
+
+                    console.log(typeof data.msg);
 
                     /*if (typeof data.msg === 'string') {
                     msgObject = { _message: data.msg };
