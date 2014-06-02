@@ -140,7 +140,7 @@ var HttpNodeSeeker = (function (_super) {
         timeout = setTimeout(function () {
             logger.error('server timeout');
             doCallback(null);
-        }, 3000);
+        }, this._serverTimeout);
     };
     return HttpNodeSeeker;
 })(NodeSeeker);

@@ -301,7 +301,6 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 		if (!this._bucketRefreshes[bucketNumber]) {
 			this._bucketRefreshes[bucketNumber] = setTimeout(() => {
 				this._bucketRefreshes[bucketNumber] = 0;
-				logger.info('Refreshing bucket', {index: bucketNumber});
 				this._refreshBucket(bucketNumber);
 			}, this._bucketRefreshRateInMs);
 		}

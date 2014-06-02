@@ -284,7 +284,6 @@ var NetworkMaintainer = (function (_super) {
         if (!this._bucketRefreshes[bucketNumber]) {
             this._bucketRefreshes[bucketNumber] = setTimeout(function () {
                 _this._bucketRefreshes[bucketNumber] = 0;
-                logger.info('Refreshing bucket', { index: bucketNumber });
                 _this._refreshBucket(bucketNumber);
             }, this._bucketRefreshRateInMs);
         }
