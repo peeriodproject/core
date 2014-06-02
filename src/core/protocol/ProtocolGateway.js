@@ -67,6 +67,7 @@ var ProtocolGateway = (function () {
 
         nodePublisherFactory.createPublisherList(function (list) {
             _this._nodePublishers = list;
+            console.log('number of publishers: ' + list.length);
         });
 
         // build up the NetworkMaintainer
