@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">69.84</p>
+      <p class="stat">68.64</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">122</p>
+      <p class="stat">130</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">27.08</p>
+      <p class="stat">29.36</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.72</p>
+      <p class="stat">0.99</p>
     </div>
   </div>
 </div>
@@ -91,10 +91,11 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../../ts-definitions/node/node.d.ts&#039; /&gt;
-/// &lt;reference path=&#039;../../../../ts-definitions/winston/winston.d.ts&#039; /&gt;
-var winston = require(&#039;winston&#039;);
+var path = require(&#039;path&#039;);
+var stackTrace = require(&#039;stack-trace&#039;);
 
-//import LoggerInterface = require(&#039;./interfaces/LoggerInterface.d&#039;);
+var ObjectUtils = require(&#039;../ObjectUtils&#039;);
+
 /**
 * @class core.utils.logger.IrcLogger
 * @implements core.utils.logger.LoggerInterface
@@ -109,116 +110,117 @@ var IrcLogger = (function () {
     /**
     * @param {string} name
     */
-    //constructor (prefix:string) {
-    function IrcLogger() {
+    function IrcLogger(config, uuid, logger) {
+        this._basePath = &#039;&#039;;
         /**
-        * The internally used logging instance
+        * The internally used irc backend instance
         *
-        * @member {string} core.utils.logger.IrcLogger~_logger
+        * @member {string} core.utils.logger.IrcLogger~_backend
         */
-        this._logger = null;
-        //this._prefix = prefix;
-        // typescript hack...
-        var winLogger = winston.Logger;
+        this._backend = null;
+        this._config = null;
+        this._simulator = {};
+        this._uuid = &#039;&#039;;
+        // @see http://stackoverflow.com/a/105074
+        var generateUuid = (function () {
+            function s4() {
+                return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+            }
+            return function () {
+                return s4() + s4() + &#039;-&#039; + s4() + &#039;-&#039; + s4() + &#039;-&#039; + s4() + &#039;-&#039; + s4() + s4() + s4();
+            };
+        })();
 
-        this._logger = new winLogger({
-            transports: []
-        });
+        this._config = config;
+        this._basePath = path.join(__dirname, &#039;../../../../&#039;);
+        this._backend = logger;
+        this._uuid = uuid || generateUuid();
 
-        this._addTransportBasedOnEnvironment();
+        try  {
+            var country = this._config.get(&#039;simulator.location.country&#039;);
+            this._simulator[&#039;country&#039;] = country;
+        } catch (e) {
+        }
 
-        this.info(&#039;irc logger created&#039;);
+        try  {
+            var delay = this._config.get(&#039;simulator.location.delay&#039;);
+            this._simulator[&#039;delay&#039;] = delay;
+        } catch (e) {
+        }
+
+        try  {
+            var location = this._config.get(&#039;simulator.location.lat&#039;) + &#039;,&#039; + this._config.get(&#039;simulator.location.lng&#039;);
+            this._simulator[&#039;location&#039;] = location;
+        } catch (e) {
+        }
+
+        if (Object.keys(this._simulator).length) {
+            this._backend.info({ _simulator: this._simulator }, { _uuid: this._uuid });
+        }
     }
     IrcLogger.prototype.debug = function (message, metadata) {
-        message = this._addPrefix(message);
-
-        if (metadata) {
-            this._logger.debug(message, metadata);
-        } else {
-            this._logger.debug(message);
-        }
+        this._backend.debug(message, metadata);
     };
 
     IrcLogger.prototype.error = function (message, metadata) {
-        message = this._addPrefix(message);
-
-        this._logger.error(message, metadata);
+        this._backend.error(message, metadata);
     };
 
     IrcLogger.prototype.info = function (message, metadata) {
-        message = this._addPrefix(message);
-
-        if (metadata) {
-            this._logger.info(message, metadata);
-        } else {
-            this._logger.info(message);
-        }
+        metadata = this._updateMetadata(metadata);
+        this._backend.info(message, metadata);
     };
 
     IrcLogger.prototype.log = function (level, message, metadata) {
-        message = this._addPrefix(message);
+        metadata = this._updateMetadata(metadata);
 
-        if (metadata) {
-            this._logger.log(level, message, metadata);
-        } else {
-            this._logger.log(level, message);
-        }
+        this._backend.log(level, message, metadata);
     };
 
     IrcLogger.prototype.warn = function (message, metadata) {
-        message = this._addPrefix(message);
-
-        if (metadata) {
-            this._logger.warn(message, metadata);
-        } else {
-            this._logger.warn(message);
-        }
+        this._backend.warn(message, metadata);
     };
 
-    IrcLogger.prototype._addPrefix = function (message) {
-        return message;
-    };
+    IrcLogger.prototype._updateMetadata = function (metadata) {
+        if (typeof metadata === &quot;undefined&quot;) { metadata = {}; }
+        var stack = stackTrace.get();
 
-    IrcLogger.prototype._addTransportBasedOnEnvironment = function () {
-        if (process.env.NODE_ENV === &#039;test&#039;) {
-            this._logger.add(winston.transports.Console, {});
-        } else {
-            // 9 chars official max. length https://tools.ietf.org/html/rfc2812#section-1.2.1
-            //var max:number = 10000000;
-            var max = 10000000000000;
-            var nick = &#039;a&#039; + Math.round(Math.random() * max);
-            var userName = &#039;b&#039; + Math.round(Math.random() * max);
-            var realName = &#039;c&#039; + Math.round(Math.random() * max);
+        var functionName = &#039;&#039;;
 
-            this._logger.add(require(&#039;winston-irc&#039;), {
-                host: &#039;irc.freenode.net&#039;,
-                port: 6697,
-                ssl: true,
-                nick: nick,
-                userName: userName,
-                realName: realName,
-                channels: [
-                    &#039;#jj-abschluss&#039;
-                ],
-                onError: function (err) {
-                    //console.log(&#039;--- IRC ERROR ---&#039;);
-                    //console.log(err);
-                }
-            });
+        for (var i in stack) {
+            var name = stack[i].getFunctionName();
+            var fileName = stack[i].getFileName();
+
+            if (fileName.indexOf(&#039;/logger/&#039;) === -1) {
+                functionName = stack[i].isConstructor() ? name + &#039;.constructor&#039; : name;
+
+                break;
+            }
+            /*// reached the end of our implementation
+            if (!name || fileName.indexOf(this._basePath) !== 0) {
+            console.log(&#039;. . . . . . . . . . . . . . . . . . . . . . . .&#039;);
+            console.log(name);
+            console.log(stack[i].getFileName());
+            console.log(this._basePath);
+            console.log(stack[i].getFileName().indexOf(this._basePath));
+            break;
+            }
+            
+            functionName = name;
+            */
         }
+
+        var additionalData = {
+            _caller: functionName,
+            _uuid: this._uuid
+        };
+
+        return ObjectUtils.extend(metadata, additionalData);
     };
     return IrcLogger;
 })();
 
-//export = IrcLogger;
-var IrcLoggerInstance = new IrcLogger();
-
-module.exports = IrcLoggerInstance;
-/*var foo:Function = function ():LoggerInterface {
-return new IrcLogger();
-};
-//
-export = foo;*/
+module.exports = IrcLogger;
 //# sourceMappingURL=IrcLogger.js.map</textarea>
   </div>
 </div>

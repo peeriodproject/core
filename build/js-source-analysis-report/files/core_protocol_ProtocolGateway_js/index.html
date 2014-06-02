@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">67.83</p>
+      <p class="stat">63.14</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">27</p>
+      <p class="stat">94</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">10.83</p>
+      <p class="stat">16.29</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.18</p>
+      <p class="stat">0.82</p>
     </div>
   </div>
 </div>
@@ -93,16 +93,40 @@
     <textarea id="file-source" class="col-md-12">var ProtocolConnectionManager = require(&#039;./net/ProtocolConnectionManager&#039;);
 
 var ProxyManager = require(&#039;./proxy/ProxyManager&#039;);
+var PingPongNodeUpdateHandler = require(&#039;./ping/PingPongNodeUpdateHandler&#039;);
+
+var FindClosestNodesManager = require(&#039;./findClosestNodes/FindClosestNodesManager&#039;);
+var FindClosestNodesCycleFactory = require(&#039;./findClosestNodes/FindClosestNodesCycleFactory&#039;);
+var FoundClosestNodesWritableMessageFactory = require(&#039;./findClosestNodes/messages/FoundClosestNodesWritableMessageFactory&#039;);
+var FoundClosestNodesReadableMessageFactory = require(&#039;./findClosestNodes/messages/FoundClosestNodesReadableMessageFactory&#039;);
+
+var NodeSeekerManager = require(&#039;./networkMaintenance/nodeDiscovery/nodeSeeker/NodeSeekerManager&#039;);
+var NodeSeekerFactory = require(&#039;./networkMaintenance/nodeDiscovery/nodeSeeker/NodeSeekerFactory&#039;);
+
+var NodePublisherFactory = require(&#039;./networkMaintenance/nodeDiscovery/nodePublisher/NodePublisherFactory&#039;);
+
+var NetworkMaintainer = require(&#039;./networkMaintenance/NetworkMaintainer&#039;);
 
 var ProtocolGateway = (function () {
-    function ProtocolGateway(protocolConfig, myNode, tcpSocketHandler, routingTable) {
+    function ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable) {
+        var _this = this;
         this._myNode = null;
         this._tcpSocketHandler = null;
+        this._appConfig = null;
         this._protocolConfig = null;
         this._protocolConnectionManager = null;
         this._proxyManager = null;
         this._routingTable = null;
+        this._topologyConfig = null;
+        this._pingPongNodeUpdateHandler = null;
+        this._findClosestNodesManager = null;
+        this._nodeSeekerManager = null;
+        this._nodePublishers = null;
+        this._networkMaintainer = null;
+        this._appConfig = appConfig;
         this._protocolConfig = protocolConfig;
+        this._topologyConfig = topologyConfig;
+
         this._myNode = myNode;
         this._tcpSocketHandler = tcpSocketHandler;
         this._routingTable = routingTable;
@@ -110,9 +134,52 @@ var ProtocolGateway = (function () {
         // build up the ProtocolConnectionManager
         this._protocolConnectionManager = new ProtocolConnectionManager(this._protocolConfig, this._myNode, this._tcpSocketHandler);
 
-        // build up zhr ProxyManager
+        // build up the ProxyManager
         this._proxyManager = new ProxyManager(this._protocolConfig, this._protocolConnectionManager, this._routingTable);
+
+        // build up the PingPongNodeUpdateHandler
+        this._pingPongNodeUpdateHandler = new PingPongNodeUpdateHandler(this._protocolConfig, this._myNode, this._protocolConnectionManager, this._proxyManager, this._routingTable);
+
+        // build up the FindClosestNodeManager
+        var findClosestNodesCycleFactory = new FindClosestNodesCycleFactory(this._myNode, this._protocolConnectionManager);
+        var foundClosestNodesWritableMessageFactory = new FoundClosestNodesWritableMessageFactory();
+        var foundClosestNodesReadableMessageFactory = new FoundClosestNodesReadableMessageFactory();
+
+        this._findClosestNodesManager = new FindClosestNodesManager(this._topologyConfig, this._protocolConfig, this._myNode, this._protocolConnectionManager, this._proxyManager, this._routingTable, findClosestNodesCycleFactory, foundClosestNodesWritableMessageFactory, foundClosestNodesReadableMessageFactory);
+
+        // build up the NodeSeekerManager
+        var nodeSeekerFactory = new NodeSeekerFactory(this._appConfig, this._routingTable);
+
+        this._nodeSeekerManager = new NodeSeekerManager(nodeSeekerFactory, this._protocolConnectionManager, this._proxyManager);
+
+        // build up the NodePublishers
+        var nodePublisherFactory = new NodePublisherFactory(appConfig, this._myNode);
+
+        nodePublisherFactory.createPublisherList(function (list) {
+            _this._nodePublishers = list;
+        });
+
+        // build up the NetworkMaintainer
+        this._networkMaintainer = new NetworkMaintainer(this._topologyConfig, this._protocolConfig, this._myNode, this._nodeSeekerManager, this._findClosestNodesManager, this._proxyManager);
     }
+    ProtocolGateway.prototype.start = function () {
+        var _this = this;
+        /**
+        *
+        * If it needs a proxy, kick off proxy manager only when the NetworkMaintainer has finished its entry
+        * If it doesnt need a proxy, kick off proxy manager right away
+        *
+        */
+        if (this._proxyManager.needsAdditionalProxy()) {
+            this._networkMaintainer.once(&#039;initialContactQueryCompleted&#039;, function () {
+                _this._proxyManager.kickOff();
+            });
+        } else {
+            this._proxyManager.kickOff();
+        }
+
+        this._networkMaintainer.joinNetwork();
+    };
     return ProtocolGateway;
 })();
 

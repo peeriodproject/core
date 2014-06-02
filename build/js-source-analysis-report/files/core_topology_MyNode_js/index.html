@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">79.85</p>
+      <p class="stat">76.53</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">59</p>
+      <p class="stat">67</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">9.72</p>
+      <p class="stat">11.88</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.23</p>
+      <p class="stat">0.32</p>
     </div>
   </div>
 </div>
@@ -92,6 +92,9 @@
   <div class="row">
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../ts-definitions/node/node.d.ts&#039; /&gt;
 var events = require(&#039;events&#039;);
+
+var LoggerFactory = require(&#039;../utils/logger/LoggerFactory&#039;);
+var logger = LoggerFactory.create();
 
 /**
 * MyNodeInterface implementation.
@@ -125,6 +128,9 @@ var MyNode = (function () {
         this._id = id;
         this._addresses = addresses;
         this._eventEmitter = new events.EventEmitter();
+
+        console.log(&#039;my node constructor!&#039;);
+        logger.info({ id: id.toHexString() });
     }
     MyNode.prototype.getAddresses = function () {
         return this._addresses;
@@ -135,6 +141,8 @@ var MyNode = (function () {
     };
 
     MyNode.prototype.updateAddresses = function (addressList) {
+        logger.info({ addressList: addressList });
+
         this._addresses = addressList;
         this._eventEmitter.emit(&#039;addressChange&#039;);
     };
