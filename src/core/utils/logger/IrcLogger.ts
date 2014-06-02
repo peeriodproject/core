@@ -85,16 +85,21 @@ class IrcLogger implements LoggerInterface {
 	}
 
 	public debug (message:Object, metadata?:any):void {
+		metadata = this._updateMetadata(metadata);
+
 		this._backend.debug(message, metadata);
 	}
 
 	public error (message:Object, metadata?:any):void {
+		metadata = this._updateMetadata(metadata);
+
 		this._backend.error(message, metadata);
 
 	}
 
 	public info (message:Object, metadata?:any):void {
 		metadata = this._updateMetadata(metadata);
+
 		this._backend.info(message, metadata);
 
 	}
@@ -107,6 +112,8 @@ class IrcLogger implements LoggerInterface {
 	}
 
 	public warn (message:Object, metadata?:any):void {
+		metadata = this._updateMetadata(metadata);
+
 		this._backend.warn(message, metadata);
 	}
 

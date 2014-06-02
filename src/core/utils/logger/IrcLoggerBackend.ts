@@ -148,7 +148,10 @@ class IrcLoggerBackend implements LoggerInterface {
 				try {
 					var msgObject:Object;
 
-					if (typeof data.msg === 'object') {
+					if (typeof data.msg === 'string') {
+						msgObject = { message: data.msg };
+					}
+					else if (typeof data.msg === 'object') {
 						msgObject = data.msg;
 					}
 					else {

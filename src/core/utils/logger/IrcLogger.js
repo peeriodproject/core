@@ -67,15 +67,20 @@ var IrcLogger = (function () {
         }
     }
     IrcLogger.prototype.debug = function (message, metadata) {
+        metadata = this._updateMetadata(metadata);
+
         this._backend.debug(message, metadata);
     };
 
     IrcLogger.prototype.error = function (message, metadata) {
+        metadata = this._updateMetadata(metadata);
+
         this._backend.error(message, metadata);
     };
 
     IrcLogger.prototype.info = function (message, metadata) {
         metadata = this._updateMetadata(metadata);
+
         this._backend.info(message, metadata);
     };
 
@@ -86,6 +91,8 @@ var IrcLogger = (function () {
     };
 
     IrcLogger.prototype.warn = function (message, metadata) {
+        metadata = this._updateMetadata(metadata);
+
         this._backend.warn(message, metadata);
     };
 
