@@ -12,6 +12,8 @@ import ReadableMessageInterface = require('../messages/interfaces/ReadableMessag
 import IdInterface = require('../../topology/interfaces/IdInterface');
 import Id = require('../../topology/Id');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * ProxyManagerInterface implementation.
  *
@@ -325,6 +327,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 				if (msgType === 'PROXY_ACCEPT') {
 					this._addToConfirmedProxies(identifier, sender);
 					this.emit('newProxy', sender);
+					logger.info('Got new proxy', {id: sender.getId().toHexString()});
 				}
 				else {
 					this.emit('proxyReject', sender);
@@ -340,6 +343,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 					if (!err) {
 						this._addToProxyingFor(identifier, sender);
 						this.emit('proxyingFor', sender);
+						logger.info('Proxying now for', {id: sender.getId().toHexString()});
 					}
 				});
 			}

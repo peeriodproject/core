@@ -8,6 +8,8 @@ var events = require('events');
 
 var Id = require('../../topology/Id');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * ProxyManagerInterface implementation.
 *
@@ -300,6 +302,7 @@ var ProxyManager = (function (_super) {
                 if (msgType === 'PROXY_ACCEPT') {
                     this._addToConfirmedProxies(identifier, sender);
                     this.emit('newProxy', sender);
+                    logger.info('Got new proxy', { id: sender.getId().toHexString() });
                 } else {
                     this.emit('proxyReject', sender);
                 }
@@ -313,6 +316,7 @@ var ProxyManager = (function (_super) {
                     if (!err) {
                         _this._addToProxyingFor(identifier, sender);
                         _this.emit('proxyingFor', sender);
+                        logger.info('Proxying now for', { id: sender.getId().toHexString() });
                     }
                 });
             } else {
