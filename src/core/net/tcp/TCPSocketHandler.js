@@ -268,7 +268,7 @@ var TCPSocketHandler = (function (_super) {
             callback(success);
             if (socket) {
                 try  {
-                    socket.end();
+                    socket.forceDestroy();
                 } catch (e) {
                 }
             }
