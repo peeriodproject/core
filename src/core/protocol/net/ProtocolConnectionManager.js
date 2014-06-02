@@ -18,6 +18,8 @@ var IncomingDataPipeline = require('./../messages/IncomingDataPipeline');
 
 var GeneralWritableMessageFactory = require('./../messages/GeneralWritableMessageFactory');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * ProtocolConnectionManager implementation.
 * Detailed structuring is found in the interface comments.
@@ -373,6 +375,7 @@ var ProtocolConnectionManager = (function (_super) {
         this._generalWritableMessageFactory.setMessageType(messageType);
         var buffer = this._generalWritableMessageFactory.constructMessage(payload, payload.length);
 
+        logger.write('Writing ' + messageType, { to: node.getId().toHexString() });
         this.writeBufferTo(node, buffer, callback);
     };
 

@@ -4,6 +4,8 @@ import net = require('net');
 import TCPSocketInterface = require('./interfaces/TCPSocketInterface');
 import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * TCP Socket implementation.
  *
@@ -152,6 +154,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			success = this.getSocket().write(buffer, callback);
 		}
 		catch (e) {
+			logger.error('TCP socket write error', {error: e.message});
 			this.forceDestroy();
 		}
 

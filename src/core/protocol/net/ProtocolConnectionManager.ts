@@ -29,6 +29,8 @@ import MyNodeInterface = require('../../topology/interfaces/MyNodeInterface');
 import GeneralWritableMessageFactoryInterface = require('./../messages/interfaces/GeneralWritableMessageFactoryInterface');
 import GeneralWritableMessageFactory = require('./../messages/GeneralWritableMessageFactory');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 
 /**
  * ProtocolConnectionManager implementation.
@@ -415,6 +417,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._generalWritableMessageFactory.setMessageType(messageType);
 		var buffer:Buffer = this._generalWritableMessageFactory.constructMessage(payload, payload.length);
 
+		logger.write('Writing ' + messageType, {to: node.getId().toHexString()});
 		this.writeBufferTo(node, buffer, callback);
 	}
 
