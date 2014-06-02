@@ -158,7 +158,6 @@ var TCPSocket = (function (_super) {
         var _this = this;
         if (this._simulatorRTT && !forceAvoidSimulation) {
             setTimeout(function () {
-                console.log('delayed write ' + _this._simulatorRTT);
                 _this.writeBuffer(buffer, callback, true);
             }, this._simulatorRTT);
             return;
@@ -182,7 +181,6 @@ var TCPSocket = (function (_super) {
         if (typeof encoding === "undefined") { encoding = 'utf8'; }
         if (this._simulatorRTT && !forceAvoidSimulation) {
             setTimeout(function () {
-                console.log('delayed write ' + _this._simulatorRTT);
                 _this.writeString(message, encoding, callback, true);
             }, this._simulatorRTT);
             return;
