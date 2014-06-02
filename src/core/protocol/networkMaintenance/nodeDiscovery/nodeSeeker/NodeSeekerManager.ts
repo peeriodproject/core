@@ -2,6 +2,7 @@ import NodeSeekerManagerInterface = require('./interfaces/NodeSeekerManagerInter
 import ProtocolConnectionManagerInterface = require('../../../net/interfaces/ProtocolConnectionManagerInterface');
 import ProxyManagerInterface = require('../../../proxy/interfaces/ProxyManagerInterface');
 import ContactNodeInterface = require('../../../../topology/interfaces/ContactNodeInterface');
+import MyNodeInterface = require('../../../../topology/interfaces/MyNodeInterface');
 import NodeSeekerFactoryInterface = require('./interfaces/NodeSeekerFactoryInterface');
 import NodeSeekerList = require('./interfaces/NodeSeekerList');
 import NodeSeekerInterface = require('./interfaces/NodeSeekerInterface');
@@ -42,6 +43,13 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	private _forceSearchActive:boolean = false;
 
 	/**
+	 * My node instance
+	 *
+	 * @member {core.topology.MyNodeInterface} core.protocol.nodeDiscovery.NodeSeekerManager~_myNode
+	 */
+	private _myNode:MyNodeInterface = null;
+
+	/**
 	 * A NodeSeekerFactory
 	 *
 	 * @member {core.protocol.nodeDiscovery.NodeSeekerFactoryInterface} core.protocol.nodeDiscovery.NodeSeekerManager~_nodeSeekerFactory
@@ -71,7 +79,8 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 
 	private _iterativeSeekTimeout:number = 0;
 
-	constructor (nodeSeekerFactory:NodeSeekerFactoryInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, proxyManager:ProxyManagerInterface) {
+	constructor (myNode:MyNodeInterface, nodeSeekerFactory:NodeSeekerFactoryInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, proxyManager:ProxyManagerInterface) {
+		this._myNode = myNode;
 		this._protocolConnectionManager = protocolConnectionManager;
 		this._nodeSeekerFactory = nodeSeekerFactory;
 		this._proxyManager = proxyManager;
@@ -132,7 +141,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 
 					this._nodeSeekerList[i].seek((node:ContactNodeInterface) => {
 
-						if (node) {
+						if (node && !node.getId().equals(this._myNode.getId())) {
 
 							logger.info('found potential node', {id: node.getId().toHexString()});
 

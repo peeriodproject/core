@@ -60,7 +60,7 @@ var ProtocolGateway = (function () {
         // build up the NodeSeekerManager
         var nodeSeekerFactory = new NodeSeekerFactory(this._appConfig, this._routingTable);
 
-        this._nodeSeekerManager = new NodeSeekerManager(nodeSeekerFactory, this._protocolConnectionManager, this._proxyManager);
+        this._nodeSeekerManager = new NodeSeekerManager(this._myNode, nodeSeekerFactory, this._protocolConnectionManager, this._proxyManager);
 
         // build up the NodePublishers
         var nodePublisherFactory = new NodePublisherFactory(appConfig, this._myNode);
