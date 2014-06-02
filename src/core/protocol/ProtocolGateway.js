@@ -15,7 +15,7 @@ var NodePublisherFactory = require('./networkMaintenance/nodeDiscovery/nodePubli
 
 var NetworkMaintainer = require('./networkMaintenance/NetworkMaintainer');
 
-var logger = require('../../utils/logger/LoggerFactory').create();
+var logger = require('../utils/logger/LoggerFactory').create();
 
 var ProtocolGateway = (function () {
     function ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable) {

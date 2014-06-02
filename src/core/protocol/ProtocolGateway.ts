@@ -21,8 +21,7 @@ import NodePublisherFactory = require('./networkMaintenance/nodeDiscovery/nodePu
 import NetworkMaintainerInterface = require('./networkMaintenance/interfaces/NetworkMaintainerInterface');
 import NetworkMaintainer = require('./networkMaintenance/NetworkMaintainer');
 
-var logger = require('../../utils/logger/LoggerFactory').create();
-
+var logger = require('../utils/logger/LoggerFactory').create();
 
 class ProtocolGateway implements ProtocolGatewayInterface {
 
