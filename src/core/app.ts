@@ -45,7 +45,7 @@ var App = {
 		var protocolGateway = null;
 
 		process.on('uncaughtException', function (err) {
-			logger.error(err);
+			logger.error({code: err.message, stack: err.stack });
 		});
 
 		networkBootstrapper.bootstrap(function (err) {
