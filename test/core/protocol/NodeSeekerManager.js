@@ -13,7 +13,7 @@ var ProxyManager = require('../../../src/core/protocol/proxy/ProxyManager');
 var ContactNode = require('../../../src/core/topology/ContactNode');
 var Id = require('../../../src/core/topology/Id');
 
-describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager @current', function () {
+describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function () {
     var sandbox = null;
     var proxyStub = null;
     var protocolConnectionManagerStub = null;

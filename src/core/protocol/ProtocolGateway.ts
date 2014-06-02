@@ -12,12 +12,21 @@ import FindClosestNodesManager = require('./findClosestNodes/FindClosestNodesMan
 import FindClosestNodesCycleFactory = require('./findClosestNodes/FindClosestNodesCycleFactory');
 import FoundClosestNodesWritableMessageFactory = require('./findClosestNodes/messages/FoundClosestNodesWritableMessageFactory');
 import FoundClosestNodesReadableMessageFactory = require('./findClosestNodes/messages/FoundClosestNodesReadableMessageFactory');
+import NodeSeekerManagerInterface = require('./networkMaintenance/nodeDiscovery/nodeSeeker/interfaces/NodeSeekerManagerInterface');
+import NodeSeekerManager = require('./networkMaintenance/nodeDiscovery/nodeSeeker/NodeSeekerManager');
+import NodeSeekerFactory = require('./networkMaintenance/nodeDiscovery/nodeSeeker/NodeSeekerFactory');
+import NodePublisherList = require('./networkMaintenance/nodeDiscovery/nodePublisher/interfaces/NodePublisherList');
+import NodePublisherInterface = require('./networkMaintenance/nodeDiscovery/nodePublisher/interfaces/NodePublisherInterface');
+import NodePublisherFactory = require('./networkMaintenance/nodeDiscovery/nodePublisher/NodePublisherFactory');
+import NetworkMaintainerInterface = require('./networkMaintenance/interfaces/NetworkMaintainerInterface');
+import NetworkMaintainer = require('./networkMaintenance/NetworkMaintainer');
 
 
 class ProtocolGateway implements ProtocolGatewayInterface {
 
 	private _myNode:MyNodeInterface = null;
 	private _tcpSocketHandler:TCPSocketHandlerInterface = null;
+	private _appConfig:ConfigInterface = null;
 	private _protocolConfig:ConfigInterface = null;
 	private _protocolConnectionManager:ProtocolConnectionManagerInterface = null;
 	private _proxyManager:ProxyManagerInterface = null;
@@ -25,8 +34,12 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 	private _topologyConfig:ConfigInterface = null;
 	private _pingPongNodeUpdateHandler:PingPongNodeUpdateHandler = null;
 	private _findClosestNodesManager:FindClosestNodesManager = null;
+	private _nodeSeekerManager:NodeSeekerManagerInterface = null;
+	private _nodePublishers:NodePublisherList = null;
+	private _networkMaintainer:NetworkMaintainerInterface = null;
 
-	constructor (protocolConfig:ConfigInterface, topologyConfig:ConfigInterface, myNode:MyNodeInterface, tcpSocketHandler:TCPSocketHandlerInterface, routingTable:RoutingTableInterface) {
+	constructor (appConfig:ConfigInterface, protocolConfig:ConfigInterface, topologyConfig:ConfigInterface, myNode:MyNodeInterface, tcpSocketHandler:TCPSocketHandlerInterface, routingTable:RoutingTableInterface) {
+		this._appConfig = appConfig;
 		this._protocolConfig = protocolConfig;
 		this._topologyConfig = topologyConfig;
 
@@ -49,28 +62,43 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 		var foundClosestNodesReadableMessageFactory:FoundClosestNodesReadableMessageFactory = new FoundClosestNodesReadableMessageFactory();
 
 		this._findClosestNodesManager = new FindClosestNodesManager(this._topologyConfig, this._protocolConfig, this._myNode, this._protocolConnectionManager, this._proxyManager, this._routingTable, findClosestNodesCycleFactory, foundClosestNodesWritableMessageFactory, foundClosestNodesReadableMessageFactory);
+
+		// build up the NodeSeekerManager
+		var nodeSeekerFactory:NodeSeekerFactory = new NodeSeekerFactory(this._appConfig, this._routingTable);
+
+		this._nodeSeekerManager = new NodeSeekerManager(nodeSeekerFactory, this._protocolConnectionManager, this._proxyManager);
+
+		// build up the NodePublishers
+		var nodePublisherFactory = new NodePublisherFactory(appConfig, this._myNode);
+
+		nodePublisherFactory.createPublisherList((list:NodePublisherList) => {
+			this._nodePublishers = list;
+		});
+
+		// build up the NetworkMaintainer
+		this._networkMaintainer = new NetworkMaintainer(this._topologyConfig, this._protocolConfig, this._myNode, this._nodeSeekerManager, this._findClosestNodesManager, this._proxyManager);
+
 	}
 
-	/**
-	 * When kicking off everything, it should check if it has any items in the routing table.
-	 * if not, the ContactServer should be queried for a contact node, which is then added to the routing table.
-	 * then, the proxymanager is kicked off, and find_closest_nodes queries are fired off to the contact node to
-	 * quickly populate the routing table.
-	 *
-	 * if it does have entries in the routing table, but all find_closest_nodes queries result in nothing,
-	 * it also queries the ContactServer for a contact node, which is then added to the routing table and
-	 * used for populating it.
-	 *
-	 * this is repeated until a find_closest_nodes query succeeds
-	 *
-	 */
+	public start ():void {
+		/**
+		 *
+		 * If it needs a proxy, kick off proxy manager only when the NetworkMaintainer has finished its entry
+		 * If it doesnt need a proxy, kick off proxy manager right away
+		 *
+		 */
+		if (this._proxyManager.needsAdditionalProxy()) {
+			this._networkMaintainer.once('initialContactQueryCompleted', () => {
+				this._proxyManager.kickOff();
+			});
+		}
+		else {
+			this._proxyManager.kickOff();
+		}
 
-	/**
-	 *
-	 * If it needs a proxy, kick off proxy manager only when the NetworkMaintainer has finished its entry
-	 * If it doesnt need a proxy, kick off proxy manager right away
-	 *
-	 */
+		this._networkMaintainer.joinNetwork();
+
+	}
 
 
 }

@@ -112,6 +112,30 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 		this._myIdToSearchFor = Id.getRandomIdDifferingInHighestBit(this._myNode.getId(), 0);
 	}
 
+	/**
+	 * BEGIN TESTING PURPOSES ONLY
+	 */
+
+	public getJoinedNetwork():boolean {
+		return this._joinedNetwork;
+	}
+
+	public getNearestAccessedBucket():number {
+		return this._nearestAccessedBucket;
+	}
+
+	public getBucketRefreshes():Array<number> {
+		return this._bucketRefreshes;
+	}
+
+	public getMyIdToSearchFor():IdInterface {
+		return this._myIdToSearchFor;
+	}
+
+	/**
+	 * END TESTING PURPOSES ONLY
+	 */
+
 	public joinNetwork ():void {
 		if (!this._joinedNetwork) {
 			this._joinedNetwork = true;
@@ -166,6 +190,10 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 			for (var i = this._nearestAccessedBucket + 1; i < this._numberOfBuckets; i++) {
 				queriedIds.push(this._refreshBucket(i).toHexString());
 			}
+
+		}
+		else {
+			this.emit('joinedNetwork');
 		}
 
 	}
@@ -191,6 +219,7 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 					});
 				}
 				else {
+					this.emit('initialContactQueryCompleted');
 					this._finalizeEntryWithBucketRefreshes();
 				}
 			});
@@ -272,4 +301,4 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 
 }
 
-export = NetworkMaintainerInterface;
+export = NetworkMaintainer;

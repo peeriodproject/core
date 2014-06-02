@@ -97,6 +97,28 @@ var NetworkMaintainer = (function (_super) {
 
         this._myIdToSearchFor = Id.getRandomIdDifferingInHighestBit(this._myNode.getId(), 0);
     }
+    /**
+    * BEGIN TESTING PURPOSES ONLY
+    */
+    NetworkMaintainer.prototype.getJoinedNetwork = function () {
+        return this._joinedNetwork;
+    };
+
+    NetworkMaintainer.prototype.getNearestAccessedBucket = function () {
+        return this._nearestAccessedBucket;
+    };
+
+    NetworkMaintainer.prototype.getBucketRefreshes = function () {
+        return this._bucketRefreshes;
+    };
+
+    NetworkMaintainer.prototype.getMyIdToSearchFor = function () {
+        return this._myIdToSearchFor;
+    };
+
+    /**
+    * END TESTING PURPOSES ONLY
+    */
     NetworkMaintainer.prototype.joinNetwork = function () {
         var _this = this;
         if (!this._joinedNetwork) {
@@ -153,6 +175,8 @@ var NetworkMaintainer = (function (_super) {
             for (var i = this._nearestAccessedBucket + 1; i < this._numberOfBuckets; i++) {
                 queriedIds.push(this._refreshBucket(i).toHexString());
             }
+        } else {
+            this.emit('joinedNetwork');
         }
     };
 
@@ -177,6 +201,7 @@ var NetworkMaintainer = (function (_super) {
                         _this._findEntryNodeAndJoin(node);
                     });
                 } else {
+                    _this.emit('initialContactQueryCompleted');
                     _this._finalizeEntryWithBucketRefreshes();
                 }
             });
@@ -259,5 +284,5 @@ var NetworkMaintainer = (function (_super) {
     return NetworkMaintainer;
 })(events.EventEmitter);
 
-module.exports = NetworkMaintainerInterface;
+module.exports = NetworkMaintainer;
 //# sourceMappingURL=NetworkMaintainer.js.map
