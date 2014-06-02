@@ -116,13 +116,14 @@ var HttpNodeSeeker = (function (_super) {
                 logger.info('got response from server', { code: res.statusCode });
 
                 if (res.statusCode === 200) {
-                    try  {
-                        var node = _this.nodeFromJSON(JSON.parse(body));
+                    var node = null;
 
-                        doCallback(node);
+                    try  {
+                        node = _this.nodeFromJSON(JSON.parse(body));
                     } catch (e) {
-                        logger.error('problem when parsing json', { body: body });
-                        doCallback(null);
+                        logger.error('problem when parsing json', { body: body, error: e.message });
+                    } finally {
+                        doCallback(node);
                     }
                 } else {
                     doCallback(null);

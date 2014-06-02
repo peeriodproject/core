@@ -107,7 +107,7 @@ var NodeSeekerManager = (function () {
             }
         });
 
-        this._iterativeSeekAndPing();
+        this._iterativeSeekAndPing(avoidNode);
     };
 
     /**
@@ -115,7 +115,7 @@ var NodeSeekerManager = (function () {
     *
     * @method core.protocol.nodeDiscovery.NodeSeekerManager~_iterativeSeekAndPing
     */
-    NodeSeekerManager.prototype._iterativeSeekAndPing = function () {
+    NodeSeekerManager.prototype._iterativeSeekAndPing = function (avoidNode) {
         var _this = this;
         if (this._forceSearchActive) {
             logger.info('searching for node cycle', { listlen: this._nodeSeekerList.length });
@@ -124,15 +124,17 @@ var NodeSeekerManager = (function () {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {
                     _this._nodeSeekerList[i].seek(function (node) {
                         if (node && !node.getId().equals(_this._myNode.getId())) {
-                            logger.info('found potential node', { id: node.getId().toHexString() });
+                            if (!(avoidNode && node.getId().equals(avoidNode.getId()))) {
+                                logger.info('found potential node', { id: node.getId().toHexString() });
 
-                            _this._pingNodeIfActive(node);
+                                _this._pingNodeIfActive(node);
+                            }
                         }
                     });
                 }
 
                 _this._iterativeSeekTimeout = setTimeout(function () {
-                    _this._iterativeSeekAndPing();
+                    _this._iterativeSeekAndPing(avoidNode);
                 }, 1500);
             });
         }

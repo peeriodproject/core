@@ -95,6 +95,10 @@ class HttpNodePublisher implements NodePublisherInterface {
 		});
 
 		req.end(data);
+
+		req.on('error', () => {
+			console.log('publishing error');
+		});
 	}
 
 }
