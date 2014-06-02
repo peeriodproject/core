@@ -49,6 +49,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 		this._serverList = serverList;
 		this._serverListLength = this._serverList.length;
 		this._serverTimeout = serverTimeoutInMs;
+		console.log(serverTimeoutInMs);
 	}
 
 	public seek (callback:(node:ContactNodeInterface) => any):void {

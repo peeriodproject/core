@@ -46,6 +46,7 @@ var HttpNodeSeeker = (function (_super) {
         this._serverList = serverList;
         this._serverListLength = this._serverList.length;
         this._serverTimeout = serverTimeoutInMs;
+        console.log(serverTimeoutInMs);
     }
     HttpNodeSeeker.prototype.seek = function (callback) {
         var _this = this;
