@@ -6,6 +6,7 @@ import MyNodeInterface = require('../../../../topology/interfaces/MyNodeInterfac
 import NodeSeekerFactoryInterface = require('./interfaces/NodeSeekerFactoryInterface');
 import NodeSeekerList = require('./interfaces/NodeSeekerList');
 import NodeSeekerInterface = require('./interfaces/NodeSeekerInterface');
+import ConfigInterface = require('../../../../config/interfaces/ConfigInterface');
 
 var logger = require('../../../../utils/logger/LoggerFactory').create();
 
@@ -43,6 +44,20 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	private _forceSearchActive:boolean = false;
 
 	/**
+	 * Timeout which calls `iterativeSeekAndPing` when elapsed
+	 *
+	 * @member {number} core.protocol.nodeDiscovery.NodeSeekerManager~_iterativeSeekTimeout
+	 */
+	private _iterativeSeekTimeout:number = 0;
+
+	/**
+	 * Number of milliseconds for `_iterativeSeekTimeout`
+	 *
+	 * @member {number} core.protocol.nodeDiscovery.NodeSeekerManager~_iterativeSeekTimeoutMs
+	 */
+	private _iterativeSeekTimeoutMs:number = 0;
+
+	/**
 	 * My node instance
 	 *
 	 * @member {core.topology.MyNodeInterface} core.protocol.nodeDiscovery.NodeSeekerManager~_myNode
@@ -77,9 +92,9 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	 */
 	private _proxyManager:ProxyManagerInterface = null;
 
-	private _iterativeSeekTimeout:number = 0;
+	constructor (protocolConfig:ConfigInterface, myNode:MyNodeInterface, nodeSeekerFactory:NodeSeekerFactoryInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, proxyManager:ProxyManagerInterface) {
+		this._iterativeSeekTimeoutMs = protocolConfig.get('protocol.nodeDiscovery.iterativeSeekTimeoutInMs');
 
-	constructor (myNode:MyNodeInterface, nodeSeekerFactory:NodeSeekerFactoryInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, proxyManager:ProxyManagerInterface) {
 		this._myNode = myNode;
 		this._protocolConnectionManager = protocolConnectionManager;
 		this._nodeSeekerFactory = nodeSeekerFactory;
@@ -108,14 +123,12 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 
 		this._proxyManager.once('contactNodeInformation', (node:ContactNodeInterface) => {
 
-			logger.info('got contact node information');
+			this._forceSearchActive = false;
 
 			if (this._iterativeSeekTimeout) {
 				clearTimeout(this._iterativeSeekTimeout);
 				this._iterativeSeekTimeout = 0;
 			}
-
-			this._forceSearchActive = false;
 
 			if (this._avoidNode && this._avoidNode.getId().equals(node.getId())) {
 				setImmediate(() => {
@@ -135,31 +148,26 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	 * Iterates over the list of NodeSeekers and sends PING to the found nodes, until the search has been deactivated.
 	 *
 	 * @method core.protocol.nodeDiscovery.NodeSeekerManager~_iterativeSeekAndPing
+	 *
+	 * @param {core.topology.ContactNodeInterface} avoidNode An optional node to avoid, which is not PINGed if returned by one of the seekers.
 	 */
-	private _iterativeSeekAndPing (avoidNode:ContactNodeInterface):void {
+	private _iterativeSeekAndPing (avoidNode?:ContactNodeInterface):void {
 		if (this._forceSearchActive) {
-			logger.info('searching for node cycle', {listlen: this._nodeSeekerList.length});
 
 			setImmediate(() => {
 				for (var i = 0; i < this._nodeSeekerList.length; i++) {
 
 					this._nodeSeekerList[i].seek((node:ContactNodeInterface) => {
 
-						if (node && !node.getId().equals(this._myNode.getId())) {
-
-							if (!(avoidNode && node.getId().equals(avoidNode.getId()))) {
-
-								logger.info('found potential node', {id: node.getId().toHexString()});
-
-								this._pingNodeIfActive(node);
-							}
+						if (node && !node.getId().equals(this._myNode.getId()) && !(avoidNode && node.getId().equals(avoidNode.getId()))) {
+							this._pingNodeIfActive(node);
 						}
 					});
 				}
 
 				this._iterativeSeekTimeout = setTimeout(() => {
 					this._iterativeSeekAndPing(avoidNode);
-				}, 1500);
+				}, this._iterativeSeekTimeoutMs);
 
 			});
 		}

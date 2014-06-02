@@ -37,6 +37,10 @@
         },
         "networkMaintenance": {
             "bucketRefreshRateInSeconds": 3600
+        },
+        "nodeDiscovery": {
+            "iterativeSeekTimeoutInMs": 1500,
+            "republishInSeconds": 3600
         }
     },
     "plugin"  : {

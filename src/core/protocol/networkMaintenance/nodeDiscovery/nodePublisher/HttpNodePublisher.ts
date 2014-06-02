@@ -27,14 +27,23 @@ class HttpNodePublisher implements NodePublisherInterface {
 	private _myNode:MyNodeInterface = null;
 
 	/**
+	 * Number of ms after which my node will be republished.
+	 *
+	 * @member {number} core.protocol.nodeDiscovery.HttpNodePublisher~_republishInSeconds
+	 */
+	private _republishInMs:number = 0;
+
+	/**
 	 * A list of HTTP servers my node can be published to.
 	 *
 	 * @member {core.net.HttpServerList} core.protocol.nodeDiscovery.HttpNodePublisher~_serverList
 	 */
 	private _serverList:HttpServerList = null;
 
-	constructor (serverList:HttpServerList, myNode:MyNodeInterface) {
+	constructor (serverList:HttpServerList, myNode:MyNodeInterface, republishInSeconds:number) {
 		this._serverList = serverList;
+
+		this._republishInMs = republishInSeconds * 1000;
 
 		this._myNode = myNode;
 		this._myNode.onAddressChange(() => {
@@ -42,10 +51,13 @@ class HttpNodePublisher implements NodePublisherInterface {
 		});
 
 		this._publishMyNode();
+
+		this._setPublishTimeout();
 	}
 
 	public publish (myNode:MyNodeInterface):void {
 		var addresses:ContactNodeAddressListInterface = myNode.getAddresses();
+
 		if (addresses.length) {
 			var json = {
 				id       : myNode.getId().toHexString(),
@@ -90,15 +102,23 @@ class HttpNodePublisher implements NodePublisherInterface {
 			hostname: server.hostname,
 			port    : server.port,
 			path    : server.path
-		}, function (res) {
-			console.log('sent data, status is: ' + res.statusCode);
 		});
 
 		req.end(data);
 
-		req.on('error', () => {
-			console.log('publishing error');
-		});
+		req.on('error', () => {});
+	}
+
+	/**
+	 * Sets the timeout after which my node is automatically republished.
+	 *
+	 * @method core.protocol.nodeDiscovery.HttpNodePublisher~_setPublishTimeout
+	 */
+	private _setPublishTimeout ():void {
+		setTimeout(() => {
+			this._publishMyNode();
+			this._setPublishTimeout();
+		}, this._republishInMs);
 	}
 
 }

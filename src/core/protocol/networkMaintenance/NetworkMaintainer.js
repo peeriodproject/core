@@ -8,8 +8,6 @@ var events = require('events');
 
 var Id = require('../../topology/Id');
 
-var logger = require('../../utils/logger/LoggerFactory').create();
-
 /**
 * NetworkMaintainerInterface implementation.
 *
@@ -194,15 +192,10 @@ var NetworkMaintainer = (function (_super) {
     */
     NetworkMaintainer.prototype._findEntryNodeAndJoin = function (avoidNode) {
         var _this = this;
-        logger.info('trying to find entry node');
         this._nodeSeekerManager.forceFindActiveNode(avoidNode, function (node) {
             _this._findClosestNodesManager.startCycleFor(_this._myIdToSearchFor, [node]);
 
-            logger.info('Force found entry node', { id: node.getId().toHexString() });
-
             _this._findClosestNodesManager.once('foundClosestNodes', function (searchForId, resultingList) {
-                logger.info('Found closest nodes', { length: resultingList.length });
-
                 if (!resultingList.length) {
                     setImmediate(function () {
                         _this._findEntryNodeAndJoin(node);

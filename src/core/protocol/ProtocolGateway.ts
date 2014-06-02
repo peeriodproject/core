@@ -67,14 +67,13 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 		// build up the NodeSeekerManager
 		var nodeSeekerFactory:NodeSeekerFactory = new NodeSeekerFactory(this._appConfig, this._routingTable);
 
-		this._nodeSeekerManager = new NodeSeekerManager(this._myNode, nodeSeekerFactory, this._protocolConnectionManager, this._proxyManager);
+		this._nodeSeekerManager = new NodeSeekerManager(this._protocolConfig, this._myNode, nodeSeekerFactory, this._protocolConnectionManager, this._proxyManager);
 
 		// build up the NodePublishers
-		var nodePublisherFactory = new NodePublisherFactory(appConfig, this._myNode);
+		var nodePublisherFactory = new NodePublisherFactory(appConfig, protocolConfig, this._myNode);
 
 		nodePublisherFactory.createPublisherList((list:NodePublisherList) => {
 			this._nodePublishers = list;
-			console.log('number of publishers: ' + list.length);
 		});
 
 		// build up the NetworkMaintainer
@@ -89,9 +88,12 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 		 * If it doesnt need a proxy, kick off proxy manager right away
 		 *
 		 */
+
+		logger.info('New node joining the network', {id: this._myNode.getId().toHexString()});
+
 		if (this._proxyManager.needsAdditionalProxy()) {
 			this._networkMaintainer.once('initialContactQueryCompleted', () => {
-				logger.info('Initial contact query completed. Kicking off proxy manager...');
+				logger.info('Initial contact query completed. Kicking off proxy manager...', {id: this._myNode.getId().toHexString()});
 				this._proxyManager.kickOff();
 			});
 		}
@@ -99,11 +101,8 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 			this._proxyManager.kickOff();
 		}
 
-
-		logger.info('Joining the network');
-
 		this._networkMaintainer.once('joinedNetwork', () => {
-			logger.info('Successfully joined the network.');
+			logger.info('Successfully joined the network.', {id: this._myNode.getId().toHexString()});
 		});
 
 		this._networkMaintainer.joinNetwork();

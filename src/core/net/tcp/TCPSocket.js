@@ -7,8 +7,6 @@ var __extends = this.__extends || function (d, b) {
 var events = require('events');
 var net = require('net');
 
-var logger = require('../../utils/logger/LoggerFactory').create();
-
 /**
 * TCP Socket implementation.
 *
@@ -153,7 +151,6 @@ var TCPSocket = (function (_super) {
         try  {
             success = this.getSocket().write(buffer, callback);
         } catch (e) {
-            logger.error('TCP socket write error', { error: e.message });
             this.forceDestroy();
         }
 

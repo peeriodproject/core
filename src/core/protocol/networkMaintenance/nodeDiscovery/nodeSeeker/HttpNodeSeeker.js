@@ -8,8 +8,6 @@ var http = require('http');
 
 var NodeSeeker = require('./NodeSeeker');
 
-var logger = require('../../../../utils/logger/LoggerFactory').create();
-
 /**
 * A node seeker which requests a list of HTTP servers, expecting a JSON representation of a single node.
 *
@@ -85,15 +83,10 @@ var HttpNodeSeeker = (function (_super) {
         var doCallback = function (node) {
             if (!calledBack) {
                 calledBack = true;
-                if (node) {
-                    logger.info('returned nodes', { id: node.getId().toHexString() });
-                }
 
                 callback(node);
             }
         };
-
-        logger.info('querying server for node', { host: remoteServer.hostname, port: remoteServer.port });
 
         var request = http.request({
             method: 'GET',
@@ -113,15 +106,11 @@ var HttpNodeSeeker = (function (_super) {
                     body += data;
                 }
 
-                logger.info('got response from server', { code: res.statusCode });
-
                 if (res.statusCode === 200) {
                     var node = null;
 
                     try  {
                         node = _this.nodeFromJSON(JSON.parse(body));
-                    } catch (e) {
-                        logger.error('problem when parsing json', { body: body, error: e.message });
                     } finally {
                         doCallback(node);
                     }
@@ -138,7 +127,6 @@ var HttpNodeSeeker = (function (_super) {
         request.end();
 
         timeout = setTimeout(function () {
-            logger.error('server timeout');
             doCallback(null);
         }, this._serverTimeout);
     };
