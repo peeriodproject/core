@@ -11,7 +11,7 @@ var logger = require('../../../../utils/logger/LoggerFactory').create();
 * @param {core.protocol.proxy.ProxyManagerInterface} proxyManager A working proxy manager.
 */
 var NodeSeekerManager = (function () {
-    function NodeSeekerManager(nodeSeekerFactory, protocolConnectionManager, proxyManager) {
+    function NodeSeekerManager(myNode, nodeSeekerFactory, protocolConnectionManager, proxyManager) {
         var _this = this;
         /**
         * Stores the optional node to avoid.
@@ -31,6 +31,12 @@ var NodeSeekerManager = (function () {
         * @member {boolean} core.protocol.nodeDiscovery.NodeSeekerManager~_forceSearchActive
         */
         this._forceSearchActive = false;
+        /**
+        * My node instance
+        *
+        * @member {core.topology.MyNodeInterface} core.protocol.nodeDiscovery.NodeSeekerManager~_myNode
+        */
+        this._myNode = null;
         /**
         * A NodeSeekerFactory
         *
@@ -56,6 +62,7 @@ var NodeSeekerManager = (function () {
         */
         this._proxyManager = null;
         this._iterativeSeekTimeout = 0;
+        this._myNode = myNode;
         this._protocolConnectionManager = protocolConnectionManager;
         this._nodeSeekerFactory = nodeSeekerFactory;
         this._proxyManager = proxyManager;
@@ -82,6 +89,11 @@ var NodeSeekerManager = (function () {
 
         this._proxyManager.once('contactNodeInformation', function (node) {
             logger.info('got contact node information');
+
+            if (_this._iterativeSeekTimeout) {
+                clearTimeout(_this._iterativeSeekTimeout);
+                _this._iterativeSeekTimeout = 0;
+            }
 
             _this._forceSearchActive = false;
 
@@ -111,13 +123,8 @@ var NodeSeekerManager = (function () {
             setImmediate(function () {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {
                     _this._nodeSeekerList[i].seek(function (node) {
-                        if (node) {
+                        if (node && !node.getId().equals(_this._myNode.getId())) {
                             logger.info('found potential node', { id: node.getId().toHexString() });
-
-                            if (_this._iterativeSeekTimeout) {
-                                clearTimeout(_this._iterativeSeekTimeout);
-                                _this._iterativeSeekTimeout = 0;
-                            }
 
                             _this._pingNodeIfActive(node);
                         }

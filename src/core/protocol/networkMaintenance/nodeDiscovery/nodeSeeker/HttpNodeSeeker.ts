@@ -49,7 +49,6 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 		this._serverList = serverList;
 		this._serverListLength = this._serverList.length;
 		this._serverTimeout = serverTimeoutInMs;
-		console.log(serverTimeoutInMs);
 	}
 
 	public seek (callback:(node:ContactNodeInterface) => any):void {
@@ -128,7 +127,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 						doCallback(node);
 					}
 					catch (e) {
-						logger.error('problem when parsing json');
+						logger.error('problem when parsing json', {body: body});
 						doCallback(null);
 					}
 				}

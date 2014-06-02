@@ -7,6 +7,8 @@ var __extends = this.__extends || function (d, b) {
 var events = require('events');
 var net = require('net');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * TCP Socket implementation.
 *
@@ -145,7 +147,14 @@ var TCPSocket = (function (_super) {
     };
 
     TCPSocket.prototype.writeBuffer = function (buffer, callback) {
-        var success = this.getSocket().write(buffer, callback);
+        var success = false;
+
+        try  {
+            success = this.getSocket().write(buffer, callback);
+        } catch (e) {
+            logger.error('TCP socket write error', { error: e.message });
+            this.forceDestroy();
+        }
 
         buffer = null;
 
@@ -154,7 +163,15 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.writeString = function (message, encoding, callback) {
         if (typeof encoding === "undefined") { encoding = 'utf8'; }
-        return this.getSocket().write(message, encoding, callback);
+        var success = false;
+
+        try  {
+            success = this.getSocket().write(message, encoding, callback);
+        } catch (e) {
+            this.forceDestroy();
+        }
+
+        return success;
     };
 
     /**
