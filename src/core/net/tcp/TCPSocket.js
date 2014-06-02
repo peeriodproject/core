@@ -154,12 +154,12 @@ var TCPSocket = (function (_super) {
         this._propagateEvents(this._eventsToPropagate);
     };
 
-    TCPSocket.prototype.writeBuffer = function (buffer, callback) {
+    TCPSocket.prototype.writeBuffer = function (buffer, callback, forceAvoidSimulation) {
         var _this = this;
-        if (this._simulatorRTT) {
+        if (this._simulatorRTT && !forceAvoidSimulation) {
             setTimeout(function () {
                 console.log('delayed write ' + _this._simulatorRTT);
-                _this.writeBuffer(buffer, callback);
+                _this.writeBuffer(buffer, callback, true);
             }, this._simulatorRTT);
             return;
         }
@@ -177,13 +177,13 @@ var TCPSocket = (function (_super) {
         return success;
     };
 
-    TCPSocket.prototype.writeString = function (message, encoding, callback) {
+    TCPSocket.prototype.writeString = function (message, encoding, callback, forceAvoidSimulation) {
         var _this = this;
         if (typeof encoding === "undefined") { encoding = 'utf8'; }
-        if (this._simulatorRTT) {
+        if (this._simulatorRTT && !forceAvoidSimulation) {
             setTimeout(function () {
                 console.log('delayed write ' + _this._simulatorRTT);
-                _this.writeString(message, encoding, callback);
+                _this.writeString(message, encoding, callback, true);
             }, this._simulatorRTT);
             return;
         }
