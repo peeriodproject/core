@@ -147,7 +147,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 		timeout = setTimeout(function () {
 			logger.error('server timeout');
 			doCallback(null);
-		}, this._serverTimeout);
+		}, 3000);
 	}
 
 }
