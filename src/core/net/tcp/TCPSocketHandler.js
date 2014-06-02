@@ -152,8 +152,13 @@ var TCPSocketHandler = (function (_super) {
 
         var sock = net.createConnection(port, ip);
         var connectionError = function () {
-            sock.removeAllListeners();
-            sock.destroy();
+            try  {
+                sock.end();
+                sock.destroy();
+            } catch (e) {
+            }
+
+            sock.removeListener('connect', onConnection);
 
             if (callback) {
                 callback(null);
@@ -165,9 +170,7 @@ var TCPSocketHandler = (function (_super) {
             connectionError();
         }, this._outboundConnectionTimeout);
 
-        sock.on('error', connectionError);
-
-        sock.on('connect', function () {
+        var onConnection = function () {
             clearTimeout(connectionTimeout);
             sock.removeListener('error', connectionError);
             var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
@@ -177,7 +180,10 @@ var TCPSocketHandler = (function (_super) {
             } else {
                 callback(socket);
             }
-        });
+        };
+
+        sock.on('connect', onConnection);
+        sock.on('error', connectionError);
     };
 
     TCPSocketHandler.prototype.createTCPServer = function () {
@@ -261,7 +267,10 @@ var TCPSocketHandler = (function (_super) {
         var callbackWith = function (success, socket) {
             callback(success);
             if (socket) {
-                socket.end();
+                try  {
+                    socket.forceDestroy();
+                } catch (e) {
+                }
             }
             server.removeListener('connection', serverOnConnect);
         };

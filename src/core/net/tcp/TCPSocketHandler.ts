@@ -164,8 +164,14 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 
 		var sock:net.Socket = net.createConnection(port, ip);
 		var connectionError = () => {
-			sock.removeAllListeners();
-			sock.destroy();
+
+			try {
+				sock.end();
+				sock.destroy();
+			}
+			catch (e) {}
+
+			sock.removeListener('connect', onConnection);
 
 			if (callback) {
 				callback(null)
@@ -178,9 +184,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			connectionError();
 		}, this._outboundConnectionTimeout);
 
-		sock.on('error', connectionError);
-
-		sock.on('connect', () => {
+		var onConnection = () => {
 			clearTimeout(connectionTimeout);
 			sock.removeListener('error', connectionError);
 			var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
@@ -191,8 +195,10 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			else {
 				callback(socket);
 			}
+		};
 
-		});
+		sock.on('connect', onConnection);
+		sock.on('error', connectionError);
 
 	}
 
@@ -277,7 +283,10 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		var callbackWith = function (success:boolean, socket?:TCPSocketInterface) {
 				callback(success);
 				if (socket) {
-					socket.end();
+					try {
+						socket.forceDestroy();
+					}
+					catch (e) {}
 				}
 				server.removeListener('connection', serverOnConnect);
 			};
