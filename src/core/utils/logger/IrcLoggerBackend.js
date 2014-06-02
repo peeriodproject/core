@@ -137,7 +137,7 @@ var IrcLoggerBackend = (function () {
                     var msgObject;
 
                     if (typeof data.msg === 'string') {
-                        msgObject = { message: data.msg };
+                        msgObject = { _message: data.msg };
                     } else if (typeof data.msg === 'object') {
                         msgObject = data.msg;
                     } else {
@@ -146,7 +146,7 @@ var IrcLoggerBackend = (function () {
 
                     output = ObjectUtils.extend(msgObject, output);
                 } catch (e) {
-                    output['message'] = data.msg;
+                    output['_message'] = data.msg;
                 }
             }
 

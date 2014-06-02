@@ -149,7 +149,7 @@ class IrcLoggerBackend implements LoggerInterface {
 					var msgObject:Object;
 
 					if (typeof data.msg === 'string') {
-						msgObject = { message: data.msg };
+						msgObject = { _message: data.msg };
 					}
 					else if (typeof data.msg === 'object') {
 						msgObject = data.msg;
@@ -161,7 +161,7 @@ class IrcLoggerBackend implements LoggerInterface {
 					output = ObjectUtils.extend(msgObject, output);
 				}
 				catch (e) {
-					output['message'] = data.msg;
+					output['_message'] = data.msg;
 				}
 			}
 
