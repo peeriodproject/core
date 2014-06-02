@@ -74,6 +74,7 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 
 		nodePublisherFactory.createPublisherList((list:NodePublisherList) => {
 			this._nodePublishers = list;
+			console.log('number of publishers: ' + list.length);
 		});
 
 		// build up the NetworkMaintainer

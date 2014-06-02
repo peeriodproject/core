@@ -66,7 +66,6 @@ class NodePublisherFactory implements NodePublisherFactoryInterface {
 			this._httpServerList = state.nodeDiscovery.httpServerList;
 
 			if (this._httpServerList instanceof Array === true && this._httpServerList.length) {
-
 				var httpPublisher:HttpNodePublisher = new HttpNodePublisher(this._httpServerList, this._myNode);
 
 				retList.push(httpPublisher);

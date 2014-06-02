@@ -79,6 +79,8 @@ var HttpNodePublisher = (function () {
             hostname: server.hostname,
             port: server.port,
             path: server.path
+        }, function (res) {
+            console.log('sent data, status is: ' + res.statusCode);
         });
 
         req.end(data);
