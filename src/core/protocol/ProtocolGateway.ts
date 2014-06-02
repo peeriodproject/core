@@ -21,6 +21,8 @@ import NodePublisherFactory = require('./networkMaintenance/nodeDiscovery/nodePu
 import NetworkMaintainerInterface = require('./networkMaintenance/interfaces/NetworkMaintainerInterface');
 import NetworkMaintainer = require('./networkMaintenance/NetworkMaintainer');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 
 class ProtocolGateway implements ProtocolGatewayInterface {
 
@@ -89,12 +91,20 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 		 */
 		if (this._proxyManager.needsAdditionalProxy()) {
 			this._networkMaintainer.once('initialContactQueryCompleted', () => {
+				logger.info('Initial contact query completed. Kicking off proxy manager...');
 				this._proxyManager.kickOff();
 			});
 		}
 		else {
 			this._proxyManager.kickOff();
 		}
+
+
+		logger.info('Joining the network');
+
+		this._networkMaintainer.once('joinedNetwork', () => {
+			logger.info('Successfully joined the network.');
+		});
 
 		this._networkMaintainer.joinNetwork();
 

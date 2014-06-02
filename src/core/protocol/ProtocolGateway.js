@@ -15,6 +15,8 @@ var NodePublisherFactory = require('./networkMaintenance/nodeDiscovery/nodePubli
 
 var NetworkMaintainer = require('./networkMaintenance/NetworkMaintainer');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 var ProtocolGateway = (function () {
     function ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable) {
         var _this = this;
@@ -80,11 +82,18 @@ var ProtocolGateway = (function () {
         */
         if (this._proxyManager.needsAdditionalProxy()) {
             this._networkMaintainer.once('initialContactQueryCompleted', function () {
+                logger.info('Initial contact query completed. Kicking off proxy manager...');
                 _this._proxyManager.kickOff();
             });
         } else {
             this._proxyManager.kickOff();
         }
+
+        logger.info('Joining the network');
+
+        this._networkMaintainer.once('joinedNetwork', function () {
+            logger.info('Successfully joined the network.');
+        });
 
         this._networkMaintainer.joinNetwork();
     };

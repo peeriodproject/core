@@ -5,13 +5,20 @@ var FreeGeoIp = require('./net/ip/FreeGeoIp');
 var Id = require('./topology/Id');
 var MyNode = require('./topology/MyNode');
 var ContactNodeAddressFactory = require('./topology/ContactNodeAddressFactory');
-var ContactNodeAddress = require('./topology/ContactNodeAddress');
-var ContactNode = require('./topology/ContactNode');
-var ProtocolConnectionManager = require('./protocol/net/ProtocolConnectionManager');
-var GeneralWritableMessageFactory = require('./protocol/messages/GeneralWritableMessageFactory');
+
+var BucketFactory = require('./topology/BucketFactory');
+var BucketStore = require('./topology/BucketStore');
+var ContactNodeFactory = require('./topology/ContactNodeFactory');
+var RoutingTable = require('./topology/RoutingTable');
+
+var crypto = require('crypto');
+var ProtocolGateway = require('./protocol/ProtocolGateway');
+
+var logger = require('./utils/logger/LoggerFactory').create();
 
 var App = {
     start: function () {
+        var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
         var protocolConfig = new JSONConfig('../../config/mainConfig.json', ['protocol']);
         var topologyConfig = new JSONConfig('../../config/mainConfig.json', ['topology']);
@@ -23,9 +30,11 @@ var App = {
 
         var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, netConfig, [freeGeoIp]);
 
+        var protocolGateway = null;
+
         networkBootstrapper.bootstrap(function (err) {
             if (err) {
-                console.log('Network Bootstrapper: ERROR');
+                logger.error('Network Bootstrapper: ERROR');
                 return;
             }
 
@@ -36,17 +45,11 @@ var App = {
             var addressList = [];
 
             var myNode = null;
-            var protocolConnectionManager = null;
-            var generalWritableMessageFactory = null;
+
             var bucketStore = null;
             var bucketFactory = null;
             var contactNodeFactory = null;
             var routingTable = null;
-
-            if (myOpenPorts.length === 0) {
-                console.log('NO PORTS OPEN. ERROR');
-                return;
-            }
 
             console.log('bootstrapped the network');
 
@@ -55,54 +58,21 @@ var App = {
             }
 
             // switch on ports for id
-            var hexVal = myOpenPorts[0] === 30415 ? '0020000000000000009400010100000050f40602' : '0a0000000000000078f406020100000005000000';
-            var myId = new Id(Id.byteBufferByHexString(hexVal, 20), 160);
+            var myId = new Id(crypto.randomBytes(20), 160);
 
             myNode = new MyNode(myId, addressList);
-            protocolConnectionManager = new ProtocolConnectionManager(protocolConfig, tcpSocketHandler);
-            generalWritableMessageFactory = new GeneralWritableMessageFactory(myNode);
 
-            //bucketStore = new BucketStore('foo', topologyConfig.get('topology.bucketStore.databasePath'));
-            //bucketFactory = new BucketFactory();
-            //contactNodeFactory = new ContactNodeFactory();
-            //routingTable = new RoutingTable(topologyConfig, myId, bucketFactory, bucketStore, contactNodeFactory);
-            if (myOpenPorts[0] === 30415) {
-                console.log('In Port 30415. johnny');
+            bucketStore = new BucketStore('foo', topologyConfig.get('topology.bucketStore.databasePath'));
+            bucketFactory = new BucketFactory();
+            contactNodeFactory = new ContactNodeFactory();
+            routingTable = new RoutingTable(topologyConfig, myId, bucketFactory, bucketStore, contactNodeFactory);
 
-                // initializer
-                var remoteNodeId = new Id(Id.byteBufferByHexString('0a0000000000000078f406020100000005000000', 20), 160);
-                var remoteContact = new ContactNode(remoteNodeId, [new ContactNodeAddress(myIp, 30414)], Date.now());
+            protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable);
 
-                generalWritableMessageFactory.setReceiver(remoteContact);
-                generalWritableMessageFactory.setMessageType('PING');
-                var buf = generalWritableMessageFactory.constructMessage(new Buffer(0));
+            logger.info('Initial setup done, joining the network.');
 
-                protocolConnectionManager.writeBufferTo(remoteContact, buf, function (err) {
-                    if (err)
-                        console.log(err);
-                });
-
-                protocolConnectionManager.on('message', function (message) {
-                    console.log('Message from ' + message.getSender().getId().toHexString() + ': ' + message.getMessageType());
-                });
-            } else {
-                console.log('In Port 30414. joern');
-                protocolConnectionManager.on('message', function (message) {
-                    if (message.getMessageType() === 'PING') {
-                        console.log('Message from ' + message.getSender().getId().toHexString() + ': ' + message.getMessageType());
-                        generalWritableMessageFactory.setReceiver(message.getSender());
-                        generalWritableMessageFactory.setMessageType('PONG');
-                        var buf = generalWritableMessageFactory.constructMessage(new Buffer(0));
-
-                        protocolConnectionManager.writeBufferTo(message.getSender(), buf);
-                    }
-                });
-            }
-
-            console.log('everything set up!');
+            protocolGateway.start();
         });
-
-        console.log('foobar');
     }
 };
 

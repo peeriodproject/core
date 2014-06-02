@@ -14,6 +14,10 @@ import BucketStore = require('./topology/BucketStore');
 import ContactNodeFactory = require('./topology/ContactNodeFactory');
 import RoutingTable = require('./topology/RoutingTable');
 import ReadableMessage = require('./protocol/messages/ReadableMessage');
+import crypto = require('crypto');
+import ProtocolGateway = require('./protocol/ProtocolGateway');
+
+var logger = require('./utils/logger/LoggerFactory').create();
 
 
 
@@ -22,7 +26,7 @@ var App = {
 	start: function () {
 
 
-
+		var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
 		var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
 		var protocolConfig = new JSONConfig('../../config/mainConfig.json', ['protocol']);
 		var topologyConfig = new JSONConfig('../../config/mainConfig.json', ['topology']);
@@ -34,9 +38,11 @@ var App = {
 
 		var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, netConfig, [freeGeoIp]);
 
+		var protocolGateway = null;
+
 		networkBootstrapper.bootstrap(function (err) {
 			if (err) {
-				console.log('Network Bootstrapper: ERROR');
+				logger.error('Network Bootstrapper: ERROR');
 				return;
 			}
 
@@ -47,17 +53,12 @@ var App = {
 			var addressList = [];
 
 			var myNode = null;
-			var protocolConnectionManager = null;
-			var generalWritableMessageFactory = null;
+
 			var bucketStore = null;
 			var bucketFactory = null;
 			var contactNodeFactory = null;
 			var routingTable = null;
 
-			if (myOpenPorts.length === 0) {
-				console.log('NO PORTS OPEN. ERROR');
-				return;
-			}
 
 			console.log('bootstrapped the network');
 
@@ -66,57 +67,22 @@ var App = {
 			}
 
 			// switch on ports for id
-			var hexVal = myOpenPorts[0] === 30415 ? '0020000000000000009400010100000050f40602' : '0a0000000000000078f406020100000005000000';
-			var myId:Id = new Id(Id.byteBufferByHexString(hexVal, 20), 160);
-
+			var myId:Id = new Id(crypto.randomBytes(20), 160);
 
 			myNode = new MyNode(myId, addressList);
-			protocolConnectionManager = new ProtocolConnectionManager(protocolConfig, tcpSocketHandler);
-			generalWritableMessageFactory = new GeneralWritableMessageFactory(myNode);
-			//bucketStore = new BucketStore('foo', topologyConfig.get('topology.bucketStore.databasePath'));
-			//bucketFactory = new BucketFactory();
-			//contactNodeFactory = new ContactNodeFactory();
-			//routingTable = new RoutingTable(topologyConfig, myId, bucketFactory, bucketStore, contactNodeFactory);
 
-			if (myOpenPorts[0] === 30415) {
-				console.log('In Port 30415. johnny');
-				// initializer
-				var remoteNodeId = new Id(Id.byteBufferByHexString('0a0000000000000078f406020100000005000000', 20), 160);
-				var remoteContact = new ContactNode(remoteNodeId, [new ContactNodeAddress(myIp, 30414)], Date.now());
+			bucketStore = new BucketStore('foo', topologyConfig.get('topology.bucketStore.databasePath'));
+			bucketFactory = new BucketFactory();
+			contactNodeFactory = new ContactNodeFactory();
+			routingTable = new RoutingTable(topologyConfig, myId, bucketFactory, bucketStore, contactNodeFactory);
 
-				generalWritableMessageFactory.setReceiver(remoteContact);
-				generalWritableMessageFactory.setMessageType('PING');
-				var buf = generalWritableMessageFactory.constructMessage(new Buffer(0));
+			protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable);
 
-				protocolConnectionManager.writeBufferTo(remoteContact, buf, function (err) {
-					if (err) console.log(err);
-				});
+			logger.info('Initial setup done, joining the network.');
 
-				protocolConnectionManager.on('message', function (message:ReadableMessage) {
-					console.log('Message from ' + message.getSender().getId().toHexString() + ': ' + message.getMessageType());
-				});
+			protocolGateway.start();
 
-			}
-			else {
-				console.log('In Port 30414. joern');
-				protocolConnectionManager.on('message', function (message:ReadableMessage) {
-					if (message.getMessageType() === 'PING') {
-						console.log('Message from ' + message.getSender().getId().toHexString() + ': ' + message.getMessageType());
-						generalWritableMessageFactory.setReceiver(message.getSender());
-						generalWritableMessageFactory.setMessageType('PONG');
-						var buf = generalWritableMessageFactory.constructMessage(new Buffer(0));
-
-						protocolConnectionManager.writeBufferTo(message.getSender(), buf);
-
-					}
-				});
-
-			}
-
-			console.log('everything set up!');
 		});
-
-		console.log('foobar');
 	}
 }
 
