@@ -128,7 +128,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 			}
 		});
 
-		this._iterativeSeekAndPing();
+		this._iterativeSeekAndPing(avoidNode);
 	}
 
 	/**
@@ -136,17 +136,16 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	 *
 	 * @method core.protocol.nodeDiscovery.NodeSeekerManager~_iterativeSeekAndPing
 	 */
-	private _iterativeSeekAndPing ():void {
+	private _iterativeSeekAndPing (avoidNode:ContactNodeInterface):void {
 		if (this._forceSearchActive) {
 			logger.info('searching for node cycle', {listlen: this._nodeSeekerList.length});
 
 			setImmediate(() => {
 				for (var i = 0; i < this._nodeSeekerList.length; i++) {
 
-
 					this._nodeSeekerList[i].seek((node:ContactNodeInterface) => {
 
-						if (node && !node.getId().equals(this._myNode.getId())) {
+						if (node && !node.getId().equals(this._myNode.getId()) && !node.getId().equals(avoidNode.getId())) {
 
 							logger.info('found potential node', {id: node.getId().toHexString()});
 
@@ -156,7 +155,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 				}
 
 				this._iterativeSeekTimeout = setTimeout(() => {
-					this._iterativeSeekAndPing();
+					this._iterativeSeekAndPing(avoidNode);
 				}, 1500);
 
 			});
