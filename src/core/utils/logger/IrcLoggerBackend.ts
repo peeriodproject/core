@@ -170,6 +170,7 @@ class IrcLoggerBackend implements LoggerInterface {
 			}
 
 			output = this._cleanupPaths(output);
+			console.log(output);
 
 			return JSON.stringify(output);
 		};

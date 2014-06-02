@@ -155,6 +155,7 @@ var IrcLoggerBackend = (function () {
             }
 
             output = _this._cleanupPaths(output);
+            console.log(output);
 
             return JSON.stringify(output);
         };
