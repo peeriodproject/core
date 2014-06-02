@@ -36,6 +36,8 @@ var App = {
 
         var protocolGateway = null;
 
+        process.on();
+
         networkBootstrapper.bootstrap(function (err) {
             if (err) {
                 logger.error('Network Bootstrapper: ERROR');
