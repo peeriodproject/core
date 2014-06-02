@@ -41,6 +41,8 @@ var IrcLoggerBackend = (function () {
         this._addTransportBasedOnEnvironment();
     }
     IrcLoggerBackend.prototype.debug = function (message, metadata) {
+        message = this._updateMessage(message);
+
         if (metadata) {
             this._logger.debug(message, metadata);
         } else {
@@ -49,6 +51,8 @@ var IrcLoggerBackend = (function () {
     };
 
     IrcLoggerBackend.prototype.error = function (message, metadata) {
+        message = this._updateMessage(message);
+
         if (metadata) {
             this._logger.error(message, metadata);
         } else {
@@ -57,6 +61,8 @@ var IrcLoggerBackend = (function () {
     };
 
     IrcLoggerBackend.prototype.info = function (message, metadata) {
+        message = this._updateMessage(message);
+
         if (metadata) {
             this._logger.info(message, metadata);
         } else {
@@ -65,6 +71,8 @@ var IrcLoggerBackend = (function () {
     };
 
     IrcLoggerBackend.prototype.log = function (level, message, metadata) {
+        message = this._updateMessage(message);
+
         if (metadata) {
             this._logger.log(level, message, metadata);
         } else {
@@ -73,6 +81,8 @@ var IrcLoggerBackend = (function () {
     };
 
     IrcLoggerBackend.prototype.warn = function (message, metadata) {
+        message = this._updateMessage(message);
+
         if (metadata) {
             this._logger.warn(message, metadata);
         } else {
@@ -148,12 +158,6 @@ var IrcLoggerBackend = (function () {
                 try  {
                     var msgObject;
 
-                    console.log(typeof data.msg);
-
-                    /*if (typeof data.msg === 'string') {
-                    msgObject = { _message: data.msg };
-                    }
-                    else */
                     if (typeof data.msg === 'object') {
                         msgObject = data.msg;
                     } else {
@@ -180,6 +184,10 @@ var IrcLoggerBackend = (function () {
 
             return JSON.stringify(output);
         };
+    };
+
+    IrcLoggerBackend.prototype._updateMessage = function (message) {
+        return (typeof message === 'string') ? message : JSON.stringify(message);
     };
     return IrcLoggerBackend;
 })();

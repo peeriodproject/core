@@ -48,6 +48,8 @@ class IrcLoggerBackend implements LoggerInterface {
 	}
 
 	public debug (message:Object, metadata?:any):void {
+		message = this._updateMessage(message);
+
 		if (metadata) {
 			this._logger.debug(message, metadata);
 		}
@@ -57,6 +59,8 @@ class IrcLoggerBackend implements LoggerInterface {
 	}
 
 	public error (message:Object, metadata?:any):void {
+		message = this._updateMessage(message);
+
 		if (metadata) {
 			this._logger.error(message, metadata);
 		}
@@ -66,6 +70,8 @@ class IrcLoggerBackend implements LoggerInterface {
 	}
 
 	public info (message:Object, metadata?:any):void {
+		message = this._updateMessage(message);
+
 		if (metadata) {
 			this._logger.info(message, metadata);
 		}
@@ -75,6 +81,8 @@ class IrcLoggerBackend implements LoggerInterface {
 	}
 
 	public log (level:string, message:Object, metadata?:any):void {
+		message = this._updateMessage(message);
+
 		if (metadata) {
 			this._logger.log(level, message, metadata);
 		}
@@ -84,6 +92,8 @@ class IrcLoggerBackend implements LoggerInterface {
 	}
 
 	public warn (message:Object, metadata?:any):void {
+		message = this._updateMessage(message);
+
 		if (metadata) {
 			this._logger.warn(message, metadata);
 		}
@@ -161,11 +171,7 @@ class IrcLoggerBackend implements LoggerInterface {
 				try {
 					var msgObject:Object;
 
-					console.log(typeof data.msg);
-					/*if (typeof data.msg === 'string') {
-						msgObject = { _message: data.msg };
-					}
-					else */if (typeof data.msg === 'object') {
+					if (typeof data.msg === 'object') {
 						msgObject = data.msg;
 					}
 					else {
@@ -193,6 +199,10 @@ class IrcLoggerBackend implements LoggerInterface {
 
 			return JSON.stringify(output);
 		};
+	}
+
+	private _updateMessage(message:Object):string {
+		return (typeof message === 'string') ? <string>message : JSON.stringify(message);
 	}
 
 }
