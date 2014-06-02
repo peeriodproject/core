@@ -79,6 +79,8 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 		this._nodeSeekerFactory.createSeekerList((list:NodeSeekerList) => {
 			this._nodeSeekerList = list;
 
+			console.log(list);
+
 			if (this._forceFindCallback) {
 				this.forceFindActiveNode(this._avoidNode, this._forceFindCallback);
 				this._forceFindCallback = null;
