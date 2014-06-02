@@ -88,8 +88,9 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	public forceDestroy():void {
 		this._closeOnTimeout = false;
-		this.getSocket().removeAllListeners();
+
 		try {
+			this.getSocket().removeAllListeners();
 			this.getSocket().end();
 			this.getSocket().destroy();
 		}

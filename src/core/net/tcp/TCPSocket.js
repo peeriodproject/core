@@ -84,8 +84,9 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.forceDestroy = function () {
         this._closeOnTimeout = false;
-        this.getSocket().removeAllListeners();
+
         try  {
+            this.getSocket().removeAllListeners();
             this.getSocket().end();
             this.getSocket().destroy();
         } catch (e) {
