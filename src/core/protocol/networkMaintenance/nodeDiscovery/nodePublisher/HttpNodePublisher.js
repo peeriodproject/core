@@ -84,6 +84,10 @@ var HttpNodePublisher = (function () {
         });
 
         req.end(data);
+
+        req.on('error', function () {
+            console.log('publishing error');
+        });
     };
     return HttpNodePublisher;
 })();
