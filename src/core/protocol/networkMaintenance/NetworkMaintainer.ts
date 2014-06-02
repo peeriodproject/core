@@ -211,6 +211,7 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 	 * @param {core.topology.ContactNodeInterface} avoidNode Node to avoid when force finding an initial contact.
 	 */
 	private _findEntryNodeAndJoin (avoidNode:ContactNodeInterface):void {
+		logger.info('trying to find entry node');
 		this._nodeSeekerManager.forceFindActiveNode(avoidNode, (node:ContactNodeInterface) => {
 			this._findClosestNodesManager.startCycleFor(this._myIdToSearchFor, [node]);
 

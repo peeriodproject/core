@@ -1,3 +1,5 @@
+var logger = require('../../../../utils/logger/LoggerFactory').create();
+
 /**
 * NodeSeekerManagerInterface implementation
 *
@@ -79,6 +81,8 @@ var NodeSeekerManager = (function () {
         this._forceSearchActive = true;
 
         this._proxyManager.once('contactNodeInformation', function (node) {
+            logger.info('got contact node information');
+
             _this._forceSearchActive = false;
 
             if (_this._avoidNode && _this._avoidNode.getId().equals(node.getId())) {
@@ -102,15 +106,19 @@ var NodeSeekerManager = (function () {
     NodeSeekerManager.prototype._iterativeSeekAndPing = function () {
         var _this = this;
         if (this._forceSearchActive) {
+            logger.info('searching for node cycle');
+
             setImmediate(function () {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {
                     _this._nodeSeekerList[i].seek(function (node) {
-                        if (_this._iterativeSeekTimeout) {
-                            clearTimeout(_this._iterativeSeekTimeout);
-                            _this._iterativeSeekTimeout = 0;
-                        }
-
                         if (node) {
+                            logger.info('found potential node', { id: node.getId().toHexString() });
+
+                            if (_this._iterativeSeekTimeout) {
+                                clearTimeout(_this._iterativeSeekTimeout);
+                                _this._iterativeSeekTimeout = 0;
+                            }
+
                             _this._pingNodeIfActive(node);
                         }
                     });

@@ -194,6 +194,7 @@ var NetworkMaintainer = (function (_super) {
     */
     NetworkMaintainer.prototype._findEntryNodeAndJoin = function (avoidNode) {
         var _this = this;
+        logger.info('trying to find entry node');
         this._nodeSeekerManager.forceFindActiveNode(avoidNode, function (node) {
             _this._findClosestNodesManager.startCycleFor(_this._myIdToSearchFor, [node]);
 
