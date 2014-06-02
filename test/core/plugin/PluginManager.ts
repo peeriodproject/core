@@ -19,7 +19,7 @@ import PluginRunnerFactory = require('../../../src/core/plugin/PluginRunnerFacto
 import PluginValidator = require('../../../src/core/plugin/PluginValidator');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PLUGIN --> PluginManager @joern', function () {
+describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
 	var sandbox:SinonSandbox;
 	var appDataPath:string = testUtils.getFixturePath('core/plugin/appDataPath');
 	var createConfig:any = function ():any {
