@@ -127,7 +127,7 @@ class IrcLoggerBackend implements LoggerInterface {
 			 userName: userName,
 			 realName: realName,
 			 channels: [
-			 '#jj-abschluss'
+			 '#logs'
 			 ],
 			 level   : 'debug'
 			 });
