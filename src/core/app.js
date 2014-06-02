@@ -64,10 +64,6 @@ var App = {
             var handlerFactory = new JSONStateHandlerFactory();
             var idState = handlerFactory.create(path.resolve(dataPath, 'myId.json'));
             idState.load(function (err, state) {
-                if (err) {
-                    logger.error('Could not load ID state');
-                }
-
                 var myId = null;
 
                 if (state && state.id) {
@@ -92,8 +88,6 @@ var App = {
                 routingTable = new RoutingTable(topologyConfig, myId, bucketFactory, bucketStore, contactNodeFactory);
 
                 protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable);
-
-                logger.info('Initial setup done, joining the network.');
 
                 protocolGateway.start();
             });

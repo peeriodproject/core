@@ -15,7 +15,7 @@ var HttpNodePublisher = require('./HttpNodePublisher');
 * @param {core.config.ConfigInterface} appConfig
 */
 var NodePublisherFactory = (function () {
-    function NodePublisherFactory(appConfig, myNode) {
+    function NodePublisherFactory(appConfig, protocolConfig, myNode) {
         /**
         * @member {core.config.ConfigInterface} core.protocol.nodeDiscovery.NodePublisherFactory~_appConfig
         */
@@ -32,7 +32,14 @@ var NodePublisherFactory = (function () {
         * @member {core.utils.StateHandlerInterface} core.protocol.nodeDiscovery.NodePublisherFactory~_nodeDiscoveryState
         */
         this._nodeDiscoveryState = null;
+        /**
+        * Number of seconds after which my node will be republished.
+        *
+        * @member {number} core.protocol.nodeDiscovery.NodePublisherFactory~_republishInSeconds
+        */
+        this._republishInSeconds = 0;
         this._appConfig = appConfig;
+        this._republishInSeconds = protocolConfig.get('protocol.nodeDiscovery.republishInSeconds');
         this._myNode = myNode;
         this._jsonStateHandlerFactory = new JSONStateHandlerFactory();
     }
@@ -50,7 +57,7 @@ var NodePublisherFactory = (function () {
             _this._httpServerList = state.nodeDiscovery.httpServerList;
 
             if (_this._httpServerList instanceof Array === true && _this._httpServerList.length) {
-                var httpPublisher = new HttpNodePublisher(_this._httpServerList, _this._myNode);
+                var httpPublisher = new HttpNodePublisher(_this._httpServerList, _this._myNode, _this._republishInSeconds);
 
                 retList.push(httpPublisher);
             }

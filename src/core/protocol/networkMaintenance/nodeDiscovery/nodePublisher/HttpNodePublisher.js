@@ -10,7 +10,7 @@ var http = require('http');
 * @param {core.topology.MyNodeInterface} myNode My node.
 */
 var HttpNodePublisher = (function () {
-    function HttpNodePublisher(serverList, myNode) {
+    function HttpNodePublisher(serverList, myNode, republishInSeconds) {
         var _this = this;
         /**
         * My node.
@@ -19,6 +19,12 @@ var HttpNodePublisher = (function () {
         */
         this._myNode = null;
         /**
+        * Number of ms after which my node will be republished.
+        *
+        * @member {number} core.protocol.nodeDiscovery.HttpNodePublisher~_republishInSeconds
+        */
+        this._republishInMs = 0;
+        /**
         * A list of HTTP servers my node can be published to.
         *
         * @member {core.net.HttpServerList} core.protocol.nodeDiscovery.HttpNodePublisher~_serverList
@@ -26,15 +32,20 @@ var HttpNodePublisher = (function () {
         this._serverList = null;
         this._serverList = serverList;
 
+        this._republishInMs = republishInSeconds * 1000;
+
         this._myNode = myNode;
         this._myNode.onAddressChange(function () {
             _this._publishMyNode();
         });
 
         this._publishMyNode();
+
+        this._setPublishTimeout();
     }
     HttpNodePublisher.prototype.publish = function (myNode) {
         var addresses = myNode.getAddresses();
+
         if (addresses.length) {
             var json = {
                 id: myNode.getId().toHexString(),
@@ -79,15 +90,25 @@ var HttpNodePublisher = (function () {
             hostname: server.hostname,
             port: server.port,
             path: server.path
-        }, function (res) {
-            console.log('sent data, status is: ' + res.statusCode);
         });
 
         req.end(data);
 
         req.on('error', function () {
-            console.log('publishing error');
         });
+    };
+
+    /**
+    * Sets the timeout after which my node is automatically republished.
+    *
+    * @method core.protocol.nodeDiscovery.HttpNodePublisher~_setPublishTimeout
+    */
+    HttpNodePublisher.prototype._setPublishTimeout = function () {
+        var _this = this;
+        setTimeout(function () {
+            _this._publishMyNode();
+            _this._setPublishTimeout();
+        }, this._republishInMs);
     };
     return HttpNodePublisher;
 })();

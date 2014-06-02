@@ -46,8 +46,16 @@ class NodePublisherFactory implements NodePublisherFactoryInterface {
 	 */
 	private _nodeDiscoveryState:StateHandlerInterface = null;
 
-	public constructor (appConfig:ConfigInterface, myNode:MyNodeInterface) {
+	/**
+	 * Number of seconds after which my node will be republished.
+	 *
+	 * @member {number} core.protocol.nodeDiscovery.NodePublisherFactory~_republishInSeconds
+	 */
+	private _republishInSeconds:number = 0;
+
+	public constructor (appConfig:ConfigInterface, protocolConfig:ConfigInterface, myNode:MyNodeInterface) {
 		this._appConfig = appConfig;
+		this._republishInSeconds = protocolConfig.get('protocol.nodeDiscovery.republishInSeconds');
 		this._myNode = myNode;
 		this._jsonStateHandlerFactory = new JSONStateHandlerFactory();
 	}
@@ -66,7 +74,7 @@ class NodePublisherFactory implements NodePublisherFactoryInterface {
 			this._httpServerList = state.nodeDiscovery.httpServerList;
 
 			if (this._httpServerList instanceof Array === true && this._httpServerList.length) {
-				var httpPublisher:HttpNodePublisher = new HttpNodePublisher(this._httpServerList, this._myNode);
+				var httpPublisher:HttpNodePublisher = new HttpNodePublisher(this._httpServerList, this._myNode, this._republishInSeconds);
 
 				retList.push(httpPublisher);
 			}

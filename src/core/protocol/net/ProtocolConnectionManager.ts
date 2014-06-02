@@ -417,8 +417,9 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._generalWritableMessageFactory.setMessageType(messageType);
 		var buffer:Buffer = this._generalWritableMessageFactory.constructMessage(payload, payload.length);
 
-		logger.info('Writing ' + messageType, {to: node.getId().toHexString()});
 		this.writeBufferTo(node, buffer, callback);
+
+		logger.info('Writing ' + messageType, {to: node.getId().toHexString()});
 	}
 
 	/**

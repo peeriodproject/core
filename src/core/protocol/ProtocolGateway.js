@@ -60,40 +60,39 @@ var ProtocolGateway = (function () {
         // build up the NodeSeekerManager
         var nodeSeekerFactory = new NodeSeekerFactory(this._appConfig, this._routingTable);
 
-        this._nodeSeekerManager = new NodeSeekerManager(this._myNode, nodeSeekerFactory, this._protocolConnectionManager, this._proxyManager);
+        this._nodeSeekerManager = new NodeSeekerManager(this._protocolConfig, this._myNode, nodeSeekerFactory, this._protocolConnectionManager, this._proxyManager);
 
         // build up the NodePublishers
-        var nodePublisherFactory = new NodePublisherFactory(appConfig, this._myNode);
+        var nodePublisherFactory = new NodePublisherFactory(appConfig, protocolConfig, this._myNode);
 
         nodePublisherFactory.createPublisherList(function (list) {
             _this._nodePublishers = list;
-            console.log('number of publishers: ' + list.length);
         });
 
         // build up the NetworkMaintainer
         this._networkMaintainer = new NetworkMaintainer(this._topologyConfig, this._protocolConfig, this._myNode, this._nodeSeekerManager, this._findClosestNodesManager, this._proxyManager);
     }
     ProtocolGateway.prototype.start = function () {
-        var _this = this;
         /**
         *
         * If it needs a proxy, kick off proxy manager only when the NetworkMaintainer has finished its entry
         * If it doesnt need a proxy, kick off proxy manager right away
         *
         */
+        var _this = this;
+        logger.info('New node joining the network', { id: this._myNode.getId().toHexString() });
+
         if (this._proxyManager.needsAdditionalProxy()) {
             this._networkMaintainer.once('initialContactQueryCompleted', function () {
-                logger.info('Initial contact query completed. Kicking off proxy manager...');
+                logger.info('Initial contact query completed. Kicking off proxy manager...', { id: _this._myNode.getId().toHexString() });
                 _this._proxyManager.kickOff();
             });
         } else {
             this._proxyManager.kickOff();
         }
 
-        logger.info('Joining the network');
-
         this._networkMaintainer.once('joinedNetwork', function () {
-            logger.info('Successfully joined the network.');
+            logger.info('Successfully joined the network.', { id: _this._myNode.getId().toHexString() });
         });
 
         this._networkMaintainer.joinNetwork();

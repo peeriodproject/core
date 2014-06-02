@@ -11,7 +11,7 @@ var logger = require('../../../../utils/logger/LoggerFactory').create();
 * @param {core.protocol.proxy.ProxyManagerInterface} proxyManager A working proxy manager.
 */
 var NodeSeekerManager = (function () {
-    function NodeSeekerManager(myNode, nodeSeekerFactory, protocolConnectionManager, proxyManager) {
+    function NodeSeekerManager(protocolConfig, myNode, nodeSeekerFactory, protocolConnectionManager, proxyManager) {
         var _this = this;
         /**
         * Stores the optional node to avoid.
@@ -31,6 +31,18 @@ var NodeSeekerManager = (function () {
         * @member {boolean} core.protocol.nodeDiscovery.NodeSeekerManager~_forceSearchActive
         */
         this._forceSearchActive = false;
+        /**
+        * Timeout which calls `iterativeSeekAndPing` when elapsed
+        *
+        * @member {number} core.protocol.nodeDiscovery.NodeSeekerManager~_iterativeSeekTimeout
+        */
+        this._iterativeSeekTimeout = 0;
+        /**
+        * Number of milliseconds for `_iterativeSeekTimeout`
+        *
+        * @member {number} core.protocol.nodeDiscovery.NodeSeekerManager~_iterativeSeekTimeoutMs
+        */
+        this._iterativeSeekTimeoutMs = 0;
         /**
         * My node instance
         *
@@ -61,7 +73,8 @@ var NodeSeekerManager = (function () {
         * @member {core.protocol.oroxy.ProxyManagerInterface} core.protocol.nodeDiscovery.NodeSeekerManager~_proxyManager
         */
         this._proxyManager = null;
-        this._iterativeSeekTimeout = 0;
+        this._iterativeSeekTimeoutMs = protocolConfig.get('protocol.nodeDiscovery.iterativeSeekTimeoutInMs');
+
         this._myNode = myNode;
         this._protocolConnectionManager = protocolConnectionManager;
         this._nodeSeekerFactory = nodeSeekerFactory;
@@ -88,14 +101,12 @@ var NodeSeekerManager = (function () {
         this._forceSearchActive = true;
 
         this._proxyManager.once('contactNodeInformation', function (node) {
-            logger.info('got contact node information');
+            _this._forceSearchActive = false;
 
             if (_this._iterativeSeekTimeout) {
                 clearTimeout(_this._iterativeSeekTimeout);
                 _this._iterativeSeekTimeout = 0;
             }
-
-            _this._forceSearchActive = false;
 
             if (_this._avoidNode && _this._avoidNode.getId().equals(node.getId())) {
                 setImmediate(function () {
@@ -114,28 +125,24 @@ var NodeSeekerManager = (function () {
     * Iterates over the list of NodeSeekers and sends PING to the found nodes, until the search has been deactivated.
     *
     * @method core.protocol.nodeDiscovery.NodeSeekerManager~_iterativeSeekAndPing
+    *
+    * @param {core.topology.ContactNodeInterface} avoidNode An optional node to avoid, which is not PINGed if returned by one of the seekers.
     */
     NodeSeekerManager.prototype._iterativeSeekAndPing = function (avoidNode) {
         var _this = this;
         if (this._forceSearchActive) {
-            logger.info('searching for node cycle', { listlen: this._nodeSeekerList.length });
-
             setImmediate(function () {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {
                     _this._nodeSeekerList[i].seek(function (node) {
-                        if (node && !node.getId().equals(_this._myNode.getId())) {
-                            if (!(avoidNode && node.getId().equals(avoidNode.getId()))) {
-                                logger.info('found potential node', { id: node.getId().toHexString() });
-
-                                _this._pingNodeIfActive(node);
-                            }
+                        if (node && !node.getId().equals(_this._myNode.getId()) && !(avoidNode && node.getId().equals(avoidNode.getId()))) {
+                            _this._pingNodeIfActive(node);
                         }
                     });
                 }
 
                 _this._iterativeSeekTimeout = setTimeout(function () {
                     _this._iterativeSeekAndPing(avoidNode);
-                }, 1500);
+                }, _this._iterativeSeekTimeoutMs);
             });
         }
     };
