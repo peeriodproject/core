@@ -255,6 +255,8 @@ var TCPSocketHandler = (function (_super) {
             sock.on('data', function (data) {
                 sock.write(data);
             });
+            sock.on('error', function () {
+            });
         };
         var callbackWith = function (success, socket) {
             callback(success);
