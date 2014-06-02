@@ -2,8 +2,8 @@
     "nodeDiscovery": {
         "httpServerTimeoutMs": 500,
         "httpServerList": [{
-            "hostname": "www.google.com",
-            "port": 80,
+            "hostname": "192.168.178.37",
+            "port": 8888,
             "path": "/"
         }]
     }
