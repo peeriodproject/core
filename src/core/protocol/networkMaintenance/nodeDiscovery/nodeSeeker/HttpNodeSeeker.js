@@ -121,7 +121,7 @@ var HttpNodeSeeker = (function (_super) {
 
                         doCallback(node);
                     } catch (e) {
-                        logger.error('problem when parsing json', { body: body });
+                        logger.error('problem when parsing json', { body: body, error: e.message });
                         doCallback(null);
                     }
                 } else {
