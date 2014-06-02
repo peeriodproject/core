@@ -82,10 +82,11 @@ var App = {
 
 				var myId = null;
 
-				if (state.id) {
+				if (state && state.id) {
 					myId = new Id(Id.byteBufferByHexString(state.id, 20), 160);
 				}
 				else {
+					state = {};
 					var randBuffer = crypto.randomBytes(20);
 					state.id = randBuffer.toString('hex');
 					idState.save(state, () => {
