@@ -57,8 +57,6 @@ class NodePublisherFactory implements NodePublisherFactoryInterface {
 		this._nodeDiscoveryState.load((err:Error, state:any) => {
 
 			if (err) {
-				console.log(err);
-				console.log('this is an error');
 				callback([]);
 				return;
 			}
@@ -67,11 +65,7 @@ class NodePublisherFactory implements NodePublisherFactoryInterface {
 
 			this._httpServerList = state.nodeDiscovery.httpServerList;
 
-			console.log('serverlist');
-			console.log(this._httpServerList);
-
 			if (this._httpServerList instanceof Array === true && this._httpServerList.length) {
-				console.log('here!!!');
 				var httpPublisher:HttpNodePublisher = new HttpNodePublisher(this._httpServerList, this._myNode);
 
 				retList.push(httpPublisher);

@@ -41,8 +41,6 @@ var NodePublisherFactory = (function () {
         this._nodeDiscoveryState = this._jsonStateHandlerFactory.create(path.resolve(this._appConfig.get('app.dataPath'), 'nodeDiscovery.json'));
         this._nodeDiscoveryState.load(function (err, state) {
             if (err) {
-                console.log(err);
-                console.log('this is an error');
                 callback([]);
                 return;
             }
@@ -51,11 +49,7 @@ var NodePublisherFactory = (function () {
 
             _this._httpServerList = state.nodeDiscovery.httpServerList;
 
-            console.log('serverlist');
-            console.log(_this._httpServerList);
-
             if (_this._httpServerList instanceof Array === true && _this._httpServerList.length) {
-                console.log('here!!!');
                 var httpPublisher = new HttpNodePublisher(_this._httpServerList, _this._myNode);
 
                 retList.push(httpPublisher);
