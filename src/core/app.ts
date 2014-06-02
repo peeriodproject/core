@@ -21,8 +21,9 @@ import ProtocolGateway = require('./protocol/ProtocolGateway');
 
 import JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 
-var logger = require('./utils/logger/LoggerFactory').create();
+var stackTrace = require('stack-trace');
 
+var logger = require('./utils/logger/LoggerFactory').create();
 
 
 var App = {
@@ -45,7 +46,16 @@ var App = {
 		var protocolGateway = null;
 
 		process.on('uncaughtException', function (err) {
-			logger.error({code: err.message, stack: err.stack });
+			var trace = stackTrace.parse(err);
+			logger.error({
+				code: err.message, stack: err.stack, trace: {
+					typeName: trace.getTypeName(),
+					fnName  : trace.getFunctionName(),
+					fileName: trace.getFileName(),
+					line    : trace.getLineNumber()
+				}
+			});
+			process.exit(1);
 		});
 
 		networkBootstrapper.bootstrap(function (err) {
@@ -70,7 +80,7 @@ var App = {
 
 			console.log('bootstrapped the network');
 
-			for (var i=0; i<myOpenPorts.length; i++) {
+			for (var i = 0; i < myOpenPorts.length; i++) {
 				addressList.push(nodeAddressFactory.create(myIp, myOpenPorts[i]));
 			}
 
@@ -95,7 +105,6 @@ var App = {
 				}
 
 
-
 				console.log('My ID is: ' + myId.toHexString());
 
 				myNode = new MyNode(myId, addressList);
@@ -109,7 +118,6 @@ var App = {
 
 				protocolGateway.start();
 			});
-
 
 
 		});
