@@ -77,7 +77,7 @@ describe('CORE --> UI --> UiManager @j_oern', function () {
 
 								http.get('http://localhost:3000', function (res) {
 								}).on('error', function (e) {
-									console.log(e.code.should.equal('ECONNREFUSED'));
+									e.code.should.equal('ECONNREFUSED');
 									closeAndDone(done);
 								});
 							});

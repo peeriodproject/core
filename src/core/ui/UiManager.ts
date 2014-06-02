@@ -74,11 +74,7 @@ class UiManager implements UiManagerInterface {
 			this._connections = [];
 		}
 
-		// closing http sockets
-
-		console.log('going to close the server');
 		this._httpServer.close(() => {
-			console.log('closed');
 			this._isOpen = false;
 			this._httpServer = null;
 			this._socketServer = null;
@@ -143,7 +139,7 @@ class UiManager implements UiManagerInterface {
 
 	private _handleSocket (spark):void {
 		spark.on('data', function message (data) {
-			console.log(data);
+			//console.log(data);
 			spark.write(data);
 		});
 

@@ -63,10 +63,7 @@ var UiManager = (function () {
             this._connections = [];
         }
 
-        // closing http sockets
-        console.log('going to close the server');
         this._httpServer.close(function () {
-            console.log('closed');
             _this._isOpen = false;
             _this._httpServer = null;
             _this._socketServer = null;
@@ -133,7 +130,7 @@ var UiManager = (function () {
 
     UiManager.prototype._handleSocket = function (spark) {
         spark.on('data', function message(data) {
-            console.log(data);
+            //console.log(data);
             spark.write(data);
         });
 
