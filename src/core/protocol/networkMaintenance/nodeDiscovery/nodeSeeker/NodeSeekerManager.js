@@ -53,6 +53,7 @@ var NodeSeekerManager = (function () {
         * @member {core.protocol.oroxy.ProxyManagerInterface} core.protocol.nodeDiscovery.NodeSeekerManager~_proxyManager
         */
         this._proxyManager = null;
+        this._iterativeSeekTimeout = 0;
         this._protocolConnectionManager = protocolConnectionManager;
         this._nodeSeekerFactory = nodeSeekerFactory;
         this._proxyManager = proxyManager;
@@ -104,13 +105,20 @@ var NodeSeekerManager = (function () {
             setImmediate(function () {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {
                     _this._nodeSeekerList[i].seek(function (node) {
+                        if (_this._iterativeSeekTimeout) {
+                            clearTimeout(_this._iterativeSeekTimeout);
+                            _this._iterativeSeekTimeout = 0;
+                        }
+
                         if (node) {
                             _this._pingNodeIfActive(node);
                         }
                     });
                 }
 
-                _this._iterativeSeekAndPing();
+                _this._iterativeSeekTimeout = setTimeout(function () {
+                    _this._iterativeSeekAndPing();
+                }, 1500);
             });
         }
     };
