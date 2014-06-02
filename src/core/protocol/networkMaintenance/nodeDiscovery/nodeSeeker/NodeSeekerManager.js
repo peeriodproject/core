@@ -106,7 +106,7 @@ var NodeSeekerManager = (function () {
     NodeSeekerManager.prototype._iterativeSeekAndPing = function () {
         var _this = this;
         if (this._forceSearchActive) {
-            logger.info('searching for node cycle');
+            logger.info('searching for node cycle', { listlen: this._nodeSeekerList.length });
 
             setImmediate(function () {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {

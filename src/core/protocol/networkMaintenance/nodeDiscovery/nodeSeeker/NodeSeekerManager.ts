@@ -124,7 +124,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	 */
 	private _iterativeSeekAndPing ():void {
 		if (this._forceSearchActive) {
-			logger.info('searching for node cycle');
+			logger.info('searching for node cycle', {listlen: this._nodeSeekerList.length});
 
 			setImmediate(() => {
 				for (var i = 0; i < this._nodeSeekerList.length; i++) {
