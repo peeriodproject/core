@@ -63,8 +63,6 @@ var NodeSeekerManager = (function () {
         this._nodeSeekerFactory.createSeekerList(function (list) {
             _this._nodeSeekerList = list;
 
-            console.log(list);
-
             if (_this._forceFindCallback) {
                 _this.forceFindActiveNode(_this._avoidNode, _this._forceFindCallback);
                 _this._forceFindCallback = null;

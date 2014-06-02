@@ -8,6 +8,8 @@ import ConfigInterface = require('../../../../config/interfaces/ConfigInterface'
 import HttpServerList = require('../../../../net/interfaces/HttpServerList');
 import HttpServerInfo = require('../../../../net/interfaces/HttpServerInfo');
 
+var logger = require('../../../../utils/logger/LoggerFactory').create();
+
 /**
  * A node seeker which requests a list of HTTP servers, expecting a JSON representation of a single node.
  *
@@ -91,6 +93,8 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 			}
 		};
 
+		logger.info('querying server for node', {host:remoteServer.hostname, port:remoteServer.port});
+
 		var request = http.request({
 			method  : 'GET',
 			hostname: remoteServer.hostname,
@@ -109,6 +113,8 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 				if (data) {
 					body += data;
 				}
+
+				logger.info('got response from server', {code: res.statusCode});
 
 				if (res.statusCode === 200) {
 					try {
@@ -134,6 +140,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 		request.end();
 
 		timeout = setTimeout(function () {
+			logger.error('server timeout');
 			doCallback(null);
 		}, this._serverTimeout);
 	}
