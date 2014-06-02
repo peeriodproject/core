@@ -154,6 +154,7 @@ var TCPSocketHandler = (function (_super) {
         var connectionError = function () {
             try  {
                 sock.end();
+                sock.destroy();
             } catch (e) {
             }
 

@@ -167,6 +167,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 
 			try {
 				sock.end();
+				sock.destroy();
 			}
 			catch (e) {}
 
