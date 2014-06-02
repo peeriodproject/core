@@ -12,7 +12,11 @@
         "connectionRetrySeconds"   : 4,
         "idleConnectionKillTimeout": 5,
         "outboundConnectionTimeout": 2000,
-        "myOpenPorts"              : []
+        "myOpenPorts"              : [],
+
+        "simulator": {
+            "rtt": 0
+        }
     },
     "protocol": {
         "waitForNodeReactionInSeconds": 1,

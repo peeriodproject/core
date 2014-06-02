@@ -24,33 +24,40 @@ var TCPSocket = (function (_super) {
         /**
         * Flag which indicates if an idle socket will be closed on a `timeout` event.
         *
-        * @member {boolean} TCPSocket~_closeOnTimeout
+        * @member {boolean} core.net.tcp.TCPSocket~_closeOnTimeout
         */
         this._closeOnTimeout = false;
         /**
+        * The options passed in the constructor (for reference)
+        *
+        * @member {core.net.TCPSocketOptions} core.net.tcp.TCPSocket~_constructorOpts
+        */
+        this._constructorOpts = null;
+        /**
         * List of event names of net.Socket which will be simply propagated on emission
         *
-        * @member {string[]} TCPSocket~_eventsToPropagate
+        * @member {string[]} core.net.tcp.TCPSocket~_eventsToPropagate
         */
         this._eventsToPropagate = ['data', 'close', 'error'];
         /**
         * Identification string.
         *
-        * @member {string} TCPSocket~_identifier
+        * @member {string} core.net.tcp.TCPSocket~_identifier
         */
         this._identifier = '';
         /**
+        * If this is set (for testing purposes only), this number of milliseconds) is
+        * used to simulate a Round trip time. All writes to the socket are delayed by the specified ms.
+        *
+        * @member {number} core.net.tcp.TCPSocket~_simulatorRTT
+        */
+        this._simulatorRTT = 0;
+        /**
         * node.js socket instance
         *
-        * @member {net.Socket} TCPSocket~_socket
+        * @member {net.Socket} core.net.tcp.TCPSocket~_socket
         */
         this._socket = null;
-        /**
-        * The options passed in the constructor (for reference)
-        *
-        * @member {core.net.TCPSocketOptions} TCPSocket~_constructorOpts
-        */
-        this._constructorOpts = null;
 
         if (!(socket && socket instanceof net.Socket)) {
             throw new Error('TCPSocket.constructor: Invalid or no socket specified');
@@ -67,6 +74,8 @@ var TCPSocket = (function (_super) {
         if (opts.doKeepAlive) {
             this.getSocket().setKeepAlive(true, opts.keepAliveDelay || 0);
         }
+
+        this._simulatorRTT = opts.simulatorRTT || 0;
 
         // set the timeout
         if (opts.idleConnectionKillTimeout > 0) {
@@ -146,6 +155,15 @@ var TCPSocket = (function (_super) {
     };
 
     TCPSocket.prototype.writeBuffer = function (buffer, callback) {
+        var _this = this;
+        if (this._simulatorRTT) {
+            setTimeout(function () {
+                console.log('delayed write ' + _this._simulatorRTT);
+                _this.writeBuffer(buffer, callback);
+            }, this._simulatorRTT);
+            return;
+        }
+
         var success = false;
 
         try  {
@@ -160,7 +178,16 @@ var TCPSocket = (function (_super) {
     };
 
     TCPSocket.prototype.writeString = function (message, encoding, callback) {
+        var _this = this;
         if (typeof encoding === "undefined") { encoding = 'utf8'; }
+        if (this._simulatorRTT) {
+            setTimeout(function () {
+                console.log('delayed write ' + _this._simulatorRTT);
+                _this.writeString(message, encoding, callback);
+            }, this._simulatorRTT);
+            return;
+        }
+
         var success = false;
 
         try  {

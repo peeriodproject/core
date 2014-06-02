@@ -21,6 +21,11 @@ interface TCPSocketOptions {
 	 */
 	keepAliveDelay?:number;
 
+	/**
+	 * Milliseconds to simulate a Round Trip Time. Used to artificially delay socket writes.
+	 */
+	simulatorRTT?:number;
+
 }
 
 export = TCPSocketOptions;

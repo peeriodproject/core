@@ -83,6 +83,14 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	private _retriedPorts:Array<number> = [];
 
 	/**
+	 * If this is set (for testing purposes only), this number of milliseconds) is
+	 * used to simulate a Round trip time. All writes to the socket are delayed by the specified ms.
+	 *
+	 * @member {number} core.net.tcp.TCPSocketHandler~_simulatorRTT
+	 */
+	private _simulatorRTT:number = 0;
+
+	/**
 	 * TCPSocketFactory
 	 *
 	 * @member TCPSocketHandler~_socketFactory
@@ -102,6 +110,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		this._allowHalfOpenSockets = !!opts.allowHalfOpenSockets;
 		this._connectionRetry = opts.connectionRetry || 3;
 		this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2000;
+		this._simulatorRTT = opts.simulatorRTT || 0;
 	}
 
 	public autoBootstrap (callback:(openPorts:Array<number>) => any):void {
@@ -294,6 +303,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	public getDefaultSocketOptions ():TCPSocketOptions {
 		return <TCPSocketOptions> {
 			idleConnectionKillTimeout	: this._idleConnectionKillTimeout,
+			simulatorRTT				: this._simulatorRTT,
 			doKeepAlive					: true
 		};
 	}

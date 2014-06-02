@@ -19,37 +19,45 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	/**
 	 * Flag which indicates if an idle socket will be closed on a `timeout` event.
 	 *
-	 * @member {boolean} TCPSocket~_closeOnTimeout
+	 * @member {boolean} core.net.tcp.TCPSocket~_closeOnTimeout
 	 */
 	private _closeOnTimeout:boolean = false;
 
 	/**
+	 * The options passed in the constructor (for reference)
+	 *
+	 * @member {core.net.TCPSocketOptions} core.net.tcp.TCPSocket~_constructorOpts
+	 */
+	private _constructorOpts:TCPSocketOptions = null;
+
+	/**
 	 * List of event names of net.Socket which will be simply propagated on emission
 	 *
-	 * @member {string[]} TCPSocket~_eventsToPropagate
+	 * @member {string[]} core.net.tcp.TCPSocket~_eventsToPropagate
 	 */
 	private _eventsToPropagate:Array<string> = ['data', 'close', 'error'];
 
 	/**
 	 * Identification string.
 	 *
-	 * @member {string} TCPSocket~_identifier
+	 * @member {string} core.net.tcp.TCPSocket~_identifier
 	 */
 	private _identifier:string = '';
 
 	/**
-	 * node.js socket instance
+	 * If this is set (for testing purposes only), this number of milliseconds) is
+	 * used to simulate a Round trip time. All writes to the socket are delayed by the specified ms.
 	 *
-	 * @member {net.Socket} TCPSocket~_socket
+	 * @member {number} core.net.tcp.TCPSocket~_simulatorRTT
 	 */
-	private _socket:net.Socket = null;
+	private _simulatorRTT:number = 0;
 
 	/**
-	 * The options passed in the constructor (for reference)
+	 * node.js socket instance
 	 *
-	 * @member {core.net.TCPSocketOptions} TCPSocket~_constructorOpts
+	 * @member {net.Socket} core.net.tcp.TCPSocket~_socket
 	 */
-	private _constructorOpts:TCPSocketOptions = null;
+	private _socket:net.Socket = null;
 
 
 	public constructor (socket:net.Socket, opts:TCPSocketOptions) {
@@ -70,6 +78,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		if (opts.doKeepAlive) {
 			this.getSocket().setKeepAlive(true, opts.keepAliveDelay || 0);
 		}
+
+		this._simulatorRTT = opts.simulatorRTT || 0;
 
 		// set the timeout
 		if (opts.idleConnectionKillTimeout > 0) {
@@ -147,6 +157,15 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	}
 
 	public writeBuffer (buffer:NodeBuffer, callback?:Function):boolean {
+
+		if (this._simulatorRTT) {
+			setTimeout(() => {
+				console.log('delayed write ' + this._simulatorRTT);
+				this.writeBuffer(buffer, callback);
+			}, this._simulatorRTT);
+			return;
+		}
+
 		var success = false;
 
 		try {
@@ -163,6 +182,15 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	}
 
 	public writeString (message:string, encoding:string = 'utf8', callback?:Function):boolean {
+
+		if (this._simulatorRTT) {
+			setTimeout(() => {
+				console.log('delayed write ' + this._simulatorRTT);
+				this.writeString(message, encoding, callback);
+			}, this._simulatorRTT);
+			return;
+		}
+
 		var success = false;
 
 		try {

@@ -140,7 +140,8 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 			idleConnectionKillTimeout: this._config.get('net.idleConnectionKillTimeout'),
 			myExternalIp             : this._externalIp,
 			myOpenPorts              : this._config.get('net.myOpenPorts'),
-			outboundConnectionTimeout: this._config.get('net.outboundConnectionTimeout')
+			outboundConnectionTimeout: this._config.get('net.outboundConnectionTimeout'),
+			simulatorRTT             : this._config.get('net.simulator.rtt')
 		};
 	}
 

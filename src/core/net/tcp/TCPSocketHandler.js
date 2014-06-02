@@ -75,6 +75,13 @@ var TCPSocketHandler = (function (_super) {
         */
         this._retriedPorts = [];
         /**
+        * If this is set (for testing purposes only), this number of milliseconds) is
+        * used to simulate a Round trip time. All writes to the socket are delayed by the specified ms.
+        *
+        * @member {number} core.net.tcp.TCPSocketHandler~_simulatorRTT
+        */
+        this._simulatorRTT = 0;
+        /**
         * TCPSocketFactory
         *
         * @member TCPSocketHandler~_socketFactory
@@ -92,6 +99,7 @@ var TCPSocketHandler = (function (_super) {
         this._allowHalfOpenSockets = !!opts.allowHalfOpenSockets;
         this._connectionRetry = opts.connectionRetry || 3;
         this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2000;
+        this._simulatorRTT = opts.simulatorRTT || 0;
     }
     TCPSocketHandler.prototype.autoBootstrap = function (callback) {
         var _this = this;
@@ -278,6 +286,7 @@ var TCPSocketHandler = (function (_super) {
     TCPSocketHandler.prototype.getDefaultSocketOptions = function () {
         return {
             idleConnectionKillTimeout: this._idleConnectionKillTimeout,
+            simulatorRTT: this._simulatorRTT,
             doKeepAlive: true
         };
     };

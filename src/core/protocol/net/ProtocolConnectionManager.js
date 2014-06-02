@@ -377,7 +377,7 @@ var ProtocolConnectionManager = (function (_super) {
 
         this.writeBufferTo(node, buffer, callback);
 
-        logger.info('Writing ' + messageType, { to: node.getId().toHexString() });
+        logger.info({ to: node.getId().toHexString(), msgType: messageType });
     };
 
     /**
