@@ -145,7 +145,13 @@ var TCPSocket = (function (_super) {
     };
 
     TCPSocket.prototype.writeBuffer = function (buffer, callback) {
-        var success = this.getSocket().write(buffer, callback);
+        var success = false;
+
+        try  {
+            success = this.getSocket().write(buffer, callback);
+        } catch (e) {
+            this.forceDestroy();
+        }
 
         buffer = null;
 
@@ -154,7 +160,15 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.writeString = function (message, encoding, callback) {
         if (typeof encoding === "undefined") { encoding = 'utf8'; }
-        return this.getSocket().write(message, encoding, callback);
+        var success = false;
+
+        try  {
+            success = this.getSocket().write(message, encoding, callback);
+        } catch (e) {
+            this.forceDestroy();
+        }
+
+        return success;
     };
 
     /**
