@@ -6,6 +6,8 @@ import NodeSeekerFactoryInterface = require('./interfaces/NodeSeekerFactoryInter
 import NodeSeekerList = require('./interfaces/NodeSeekerList');
 import NodeSeekerInterface = require('./interfaces/NodeSeekerInterface');
 
+var logger = require('../../../../utils/logger/LoggerFactory').create();
+
 /**
  * NodeSeekerManagerInterface implementation
  *
@@ -85,6 +87,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	}
 
 	public forceFindActiveNode (avoidNode:ContactNodeInterface, callback:(node:ContactNodeInterface) => any):void {
+
 		this._avoidNode = avoidNode;
 
 		if (!this._nodeSeekerList) {
@@ -95,6 +98,8 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 		this._forceSearchActive = true;
 
 		this._proxyManager.once('contactNodeInformation', (node:ContactNodeInterface) => {
+
+			logger.info('got contact node information');
 
 			this._forceSearchActive = false;
 
@@ -119,15 +124,23 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	 */
 	private _iterativeSeekAndPing ():void {
 		if (this._forceSearchActive) {
+			logger.info('searching for node cycle', {listlen: this._nodeSeekerList.length});
+
 			setImmediate(() => {
 				for (var i = 0; i < this._nodeSeekerList.length; i++) {
+
+
 					this._nodeSeekerList[i].seek((node:ContactNodeInterface) => {
-						if (this._iterativeSeekTimeout) {
-							clearTimeout(this._iterativeSeekTimeout);
-							this._iterativeSeekTimeout = 0;
-						}
 
 						if (node) {
+
+							logger.info('found potential node', {id: node.getId().toHexString()});
+
+							if (this._iterativeSeekTimeout) {
+								clearTimeout(this._iterativeSeekTimeout);
+								this._iterativeSeekTimeout = 0;
+							}
+
 							this._pingNodeIfActive(node);
 						}
 					});

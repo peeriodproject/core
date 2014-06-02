@@ -72,7 +72,7 @@ var NodeSeekerFactory = (function () {
             var retList = [_this._routingTableNodeSeeker];
 
             _this._httpServerList = state.nodeDiscovery.httpServerList;
-            _this._httpServerTimeout = state.nodeDiscovery.httpServerTimeout;
+            _this._httpServerTimeout = state.nodeDiscovery.httpServerTimeoutMs;
 
             if (_this._httpServerList instanceof Array === true && _this._httpServerList.length) {
                 var httpSeeker = new HttpNodeSeeker(_this._httpServerList, _this._httpServerTimeout);

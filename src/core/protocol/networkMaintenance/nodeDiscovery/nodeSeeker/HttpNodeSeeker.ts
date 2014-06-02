@@ -8,6 +8,8 @@ import ConfigInterface = require('../../../../config/interfaces/ConfigInterface'
 import HttpServerList = require('../../../../net/interfaces/HttpServerList');
 import HttpServerInfo = require('../../../../net/interfaces/HttpServerInfo');
 
+var logger = require('../../../../utils/logger/LoggerFactory').create();
+
 /**
  * A node seeker which requests a list of HTTP servers, expecting a JSON representation of a single node.
  *
@@ -47,6 +49,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 		this._serverList = serverList;
 		this._serverListLength = this._serverList.length;
 		this._serverTimeout = serverTimeoutInMs;
+		console.log(serverTimeoutInMs);
 	}
 
 	public seek (callback:(node:ContactNodeInterface) => any):void {
@@ -87,9 +90,15 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 		var doCallback = function (node:ContactNodeInterface) {
 			if (!calledBack) {
 				calledBack = true;
+				if (node) {
+					logger.info('returned nodes', {id: node.getId().toHexString()});
+				}
+
 				callback(node);
 			}
 		};
+
+		logger.info('querying server for node', {host:remoteServer.hostname, port:remoteServer.port});
 
 		var request = http.request({
 			method  : 'GET',
@@ -110,6 +119,8 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 					body += data;
 				}
 
+				logger.info('got response from server', {code: res.statusCode});
+
 				if (res.statusCode === 200) {
 					try {
 						var node:ContactNodeInterface = this.nodeFromJSON(JSON.parse(body));
@@ -117,6 +128,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 						doCallback(node);
 					}
 					catch (e) {
+						logger.error('problem when parsing json');
 						doCallback(null);
 					}
 				}
@@ -134,6 +146,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 		request.end();
 
 		timeout = setTimeout(function () {
+			logger.error('server timeout');
 			doCallback(null);
 		}, this._serverTimeout);
 	}

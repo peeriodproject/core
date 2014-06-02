@@ -95,7 +95,7 @@ class NodeSeekerFactory implements NodeSeekerFactoryInterface {
 			var retList:NodeSeekerList = [this._routingTableNodeSeeker];
 
 			this._httpServerList = state.nodeDiscovery.httpServerList;
-			this._httpServerTimeout = state.nodeDiscovery.httpServerTimeout;
+			this._httpServerTimeout = state.nodeDiscovery.httpServerTimeoutMs;
 
 			if (this._httpServerList instanceof Array === true && this._httpServerList.length) {
 

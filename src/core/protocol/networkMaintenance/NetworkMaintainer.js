@@ -194,6 +194,7 @@ var NetworkMaintainer = (function (_super) {
     */
     NetworkMaintainer.prototype._findEntryNodeAndJoin = function (avoidNode) {
         var _this = this;
+        logger.info('trying to find entry node');
         this._nodeSeekerManager.forceFindActiveNode(avoidNode, function (node) {
             _this._findClosestNodesManager.startCycleFor(_this._myIdToSearchFor, [node]);
 
@@ -283,7 +284,6 @@ var NetworkMaintainer = (function (_super) {
         if (!this._bucketRefreshes[bucketNumber]) {
             this._bucketRefreshes[bucketNumber] = setTimeout(function () {
                 _this._bucketRefreshes[bucketNumber] = 0;
-                logger.info('Refreshing bucket', { index: bucketNumber });
                 _this._refreshBucket(bucketNumber);
             }, this._bucketRefreshRateInMs);
         }
