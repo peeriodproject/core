@@ -123,10 +123,12 @@ var NodeSeekerManager = (function () {
             setImmediate(function () {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {
                     _this._nodeSeekerList[i].seek(function (node) {
-                        if (node && !node.getId().equals(_this._myNode.getId()) && !node.getId().equals(avoidNode.getId())) {
-                            logger.info('found potential node', { id: node.getId().toHexString() });
+                        if (node && !node.getId().equals(_this._myNode.getId())) {
+                            if (!(avoidNode && node.getId().equals(avoidNode.getId()))) {
+                                logger.info('found potential node', { id: node.getId().toHexString() });
 
-                            _this._pingNodeIfActive(node);
+                                _this._pingNodeIfActive(node);
+                            }
                         }
                     });
                 }

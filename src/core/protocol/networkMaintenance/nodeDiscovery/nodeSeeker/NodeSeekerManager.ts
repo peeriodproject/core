@@ -145,11 +145,14 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 
 					this._nodeSeekerList[i].seek((node:ContactNodeInterface) => {
 
-						if (node && !node.getId().equals(this._myNode.getId()) && !node.getId().equals(avoidNode.getId())) {
+						if (node && !node.getId().equals(this._myNode.getId())) {
 
-							logger.info('found potential node', {id: node.getId().toHexString()});
+							if (!(avoidNode && node.getId().equals(avoidNode.getId()))) {
 
-							this._pingNodeIfActive(node);
+								logger.info('found potential node', {id: node.getId().toHexString()});
+
+								this._pingNodeIfActive(node);
+							}
 						}
 					});
 				}
