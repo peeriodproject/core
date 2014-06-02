@@ -158,7 +158,6 @@ var TCPSocket = (function (_super) {
         var _this = this;
         if (this._simulatorRTT) {
             setTimeout(function () {
-                console.log('delayed write ' + _this._simulatorRTT);
                 _this.writeBuffer(buffer, callback);
             }, this._simulatorRTT);
             return;
