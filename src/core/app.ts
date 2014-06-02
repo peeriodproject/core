@@ -69,6 +69,8 @@ var App = {
 			// switch on ports for id
 			var myId:Id = new Id(crypto.randomBytes(20), 160);
 
+			console.log('My ID is: ' + myId.toHexString());
+
 			myNode = new MyNode(myId, addressList);
 
 			bucketStore = new BucketStore('foo', topologyConfig.get('topology.bucketStore.databasePath'));
