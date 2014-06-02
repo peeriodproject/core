@@ -136,7 +136,9 @@ var IrcLoggerBackend = (function () {
                 try  {
                     var msgObject;
 
-                    if (typeof data.msg === 'object') {
+                    if (typeof data.msg === 'string') {
+                        msgObject = { message: data.msg };
+                    } else if (typeof data.msg === 'object') {
                         msgObject = data.msg;
                     } else {
                         msgObject = JSON.parse(data.msg);
