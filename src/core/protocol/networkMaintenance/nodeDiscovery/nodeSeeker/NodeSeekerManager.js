@@ -91,6 +91,7 @@ var NodeSeekerManager = (function () {
     }
     NodeSeekerManager.prototype.forceFindActiveNode = function (avoidNode, callback) {
         var _this = this;
+        logger.info('Force find active node initiated.');
         this._avoidNode = avoidNode;
 
         if (!this._nodeSeekerList) {
@@ -110,9 +111,11 @@ var NodeSeekerManager = (function () {
 
             if (_this._avoidNode && _this._avoidNode.getId().equals(node.getId())) {
                 setImmediate(function () {
+                    logger.info('Force finding again, as the node should be avoided.');
                     _this.forceFindActiveNode(_this._avoidNode, callback);
                 });
             } else {
+                logger.info('Found a node, calling back');
                 _this._avoidNode = null;
                 callback(node);
             }
@@ -130,10 +133,13 @@ var NodeSeekerManager = (function () {
     */
     NodeSeekerManager.prototype._iterativeSeekAndPing = function (avoidNode) {
         var _this = this;
+        logger.info('Doing iterative seek.');
+
         if (this._forceSearchActive) {
             setImmediate(function () {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {
                     _this._nodeSeekerList[i].seek(function (node) {
+                        logger.info('a seeker found a node.');
                         if (node && !node.getId().equals(_this._myNode.getId()) && !(avoidNode && node.getId().equals(avoidNode.getId()))) {
                             _this._pingNodeIfActive(node);
                         }
@@ -141,6 +147,7 @@ var NodeSeekerManager = (function () {
                 }
 
                 _this._iterativeSeekTimeout = setTimeout(function () {
+                    logger.info('setting new iterative seek timeout');
                     _this._iterativeSeekAndPing(avoidNode);
                 }, _this._iterativeSeekTimeoutMs);
             });
@@ -156,6 +163,7 @@ var NodeSeekerManager = (function () {
     */
     NodeSeekerManager.prototype._pingNodeIfActive = function (node) {
         if (this._forceSearchActive) {
+            logger.info('pinging node.');
             this._protocolConnectionManager.writeMessageTo(node, 'PING', new Buffer(0));
         }
     };

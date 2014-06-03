@@ -9,6 +9,8 @@ import ContactNodeListInterface = require('../../topology/interfaces/ContactNode
 import IdInterface = require('../../topology/interfaces/IdInterface');
 import MyNodeInterface = require('../../topology/interfaces/MyNodeInterface');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * FindClosestNodesCycleInterface implementation.
  *
@@ -217,6 +219,8 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 	 * @method core.protocol.findClosestNodes.FindClosestNodesCycle~_finish
 	 */
 	private _finish ():void {
+		logger.info('Finished cycle', {for: this._searchForId.toHexString()});
+
 		this._unbindListener();
 
 		if (this._cycleTimeout) {

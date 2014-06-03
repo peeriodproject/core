@@ -111,7 +111,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	}
 
 	public forceFindActiveNode (avoidNode:ContactNodeInterface, callback:(node:ContactNodeInterface) => any):void {
-
+		logger.info('Force find active node initiated.');
 		this._avoidNode = avoidNode;
 
 		if (!this._nodeSeekerList) {
@@ -132,10 +132,12 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 
 			if (this._avoidNode && this._avoidNode.getId().equals(node.getId())) {
 				setImmediate(() => {
+					logger.info('Force finding again, as the node should be avoided.');
 					this.forceFindActiveNode(this._avoidNode, callback);
 				});
 			}
 			else {
+				logger.info('Found a node, calling back');
 				this._avoidNode = null;
 				callback(node);
 			}
@@ -152,13 +154,15 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	 * @param {core.topology.ContactNodeInterface} avoidNode An optional node to avoid, which is not PINGed if returned by one of the seekers.
 	 */
 	private _iterativeSeekAndPing (avoidNode?:ContactNodeInterface):void {
+		logger.info('Doing iterative seek.');
+
 		if (this._forceSearchActive) {
 
 			setImmediate(() => {
 				for (var i = 0; i < this._nodeSeekerList.length; i++) {
 
 					this._nodeSeekerList[i].seek((node:ContactNodeInterface) => {
-
+						logger.info('a seeker found a node.');
 						if (node && !node.getId().equals(this._myNode.getId()) && !(avoidNode && node.getId().equals(avoidNode.getId()))) {
 							this._pingNodeIfActive(node);
 						}
@@ -166,6 +170,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 				}
 
 				this._iterativeSeekTimeout = setTimeout(() => {
+					logger.info('setting new iterative seek timeout');
 					this._iterativeSeekAndPing(avoidNode);
 				}, this._iterativeSeekTimeoutMs);
 
@@ -183,6 +188,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	 */
 	private _pingNodeIfActive (node:ContactNodeInterface):void {
 		if (this._forceSearchActive) {
+			logger.info('pinging node.');
 			this._protocolConnectionManager.writeMessageTo(node, 'PING', new Buffer(0));
 		}
 	}

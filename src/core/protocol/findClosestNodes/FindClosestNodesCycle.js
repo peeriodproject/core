@@ -1,4 +1,6 @@
 /// <reference path='../../../../ts-definitions/node/node.d.ts' />
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * FindClosestNodesCycleInterface implementation.
 *
@@ -182,6 +184,8 @@ var FindClosestNodesCycle = (function () {
     * @method core.protocol.findClosestNodes.FindClosestNodesCycle~_finish
     */
     FindClosestNodesCycle.prototype._finish = function () {
+        logger.info('Finished cycle', { for: this._searchForId.toHexString() });
+
         this._unbindListener();
 
         if (this._cycleTimeout) {
