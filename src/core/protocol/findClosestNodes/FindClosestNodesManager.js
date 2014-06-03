@@ -185,16 +185,19 @@ var FindClosestNodesManager = (function (_super) {
         }
 
         this._routingTable.getClosestContactNodes(searchForId, requestingNode.getId(), function (err, contacts) {
-            if (!err && contacts) {
-                var payload = null;
-                try  {
-                    payload = _this._writableMessageFactory.constructPayload(searchForId, contacts);
-                } catch (e) {
-                }
+            if (!contacts) {
+                contacts = [];
+            }
 
-                if (payload) {
-                    _this._protocolConnectionManager.writeMessageTo(requestingNode, 'FOUND_CLOSEST_NODES', payload);
-                }
+            var payload = null;
+            try  {
+                payload = _this._writableMessageFactory.constructPayload(searchForId, contacts);
+            } catch (e) {
+                logger.error('Could not construct found closest ndoes message');
+            }
+
+            if (payload) {
+                _this._protocolConnectionManager.writeMessageTo(requestingNode, 'FOUND_CLOSEST_NODES', payload);
             }
         });
     };

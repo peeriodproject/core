@@ -210,17 +210,20 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 		}
 
 		this._routingTable.getClosestContactNodes(searchForId, requestingNode.getId(), (err:Error, contacts:ContactNodeListInterface) => {
-			if (!err && contacts) {
-				var payload:Buffer = null;
-				try {
-					payload = this._writableMessageFactory.constructPayload(searchForId, contacts);
-				}
-				catch (e) {
-				}
+			if (!contacts) {
+				contacts = [];
+			}
 
-				if (payload) {
-					this._protocolConnectionManager.writeMessageTo(requestingNode, 'FOUND_CLOSEST_NODES', payload);
-				}
+			var payload:Buffer = null;
+			try {
+				payload = this._writableMessageFactory.constructPayload(searchForId, contacts);
+			}
+			catch (e) {
+				logger.error('Could not construct found closest ndoes message');
+			}
+
+			if (payload) {
+				this._protocolConnectionManager.writeMessageTo(requestingNode, 'FOUND_CLOSEST_NODES', payload);
 			}
 		});
 	}
