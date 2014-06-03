@@ -26,7 +26,7 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodePublisher', function 
             }
         });
 
-        server.listen(7777, done);
+        server.listen(7773, done);
     });
 
     after(function (done) {
@@ -37,9 +37,10 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodePublisher', function 
         var address = (new ContactNodeAddressFactory).create('127.0.0.1', 5555);
         var id = new Id(Id.byteBufferByHexString('00200000000000e0009400010100000050f48602', 20), 160);
         myNode = new MyNode(id, []);
-        var list = [{ hostname: '127.0.0.1', path: '/', port: 7777 }];
+        var list = [{ hostname: '127.0.0.1', path: '/', port: 7773 }];
 
-        var publisher = new HttpNodePublisher(list, myNode);
+        var publisher = new HttpNodePublisher(list, myNode, 2);
+
         var expected = '{"id":"00200000000000e0009400010100000050f48602","addresses":[{"ip":"127.0.0.1","port":5555}]}';
 
         myNode.updateAddresses([address]);

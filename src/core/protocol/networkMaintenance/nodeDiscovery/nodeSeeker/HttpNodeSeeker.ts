@@ -117,6 +117,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 					try {
 						node = this.nodeFromJSON(JSON.parse(body));
 					}
+					catch (e) {}
 					finally {
 						doCallback(node);
 					}

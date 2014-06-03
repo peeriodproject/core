@@ -43,7 +43,7 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodeSeeker', function () 
 		id: '0020000000000050009400010100000050fa8601',
 		addresses: [{
 			ip: '127.0.0.1',
-			port: '80'
+			port: 80
 		}]
 	};
 
@@ -56,6 +56,10 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodeSeeker', function () 
 				res.statusCode = resCode;
 				res.end(JSON.stringify(resData));
 			}
+		});
+
+		server.on('error', (err) => {
+			console.log(err);
 		});
 
 		server.listen(7777, done);
@@ -75,7 +79,8 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodeSeeker', function () 
 		seeker.setNodeFactory(new ContactNodeFactory());
 
 		seeker.seek(function (node) {
-			if (node instanceof ContactNode) done();
+			console.log(node);
+			if (node instanceof ContactNode === true) done();
 		});
 	});
 

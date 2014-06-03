@@ -22,7 +22,7 @@ import ProxyManager = require('../../../src/core/protocol/proxy/ProxyManager');
 import Id = require('../../../src/core/topology/Id');
 import IdInterface = require('../../../src/core/topology/interfaces/IdInterface');
 
-describe('CORE --> PROTOCOL --> NETWORK MAINTENANCE --> NetworkMaintainer @current', function () {
+describe('CORE --> PROTOCOL --> NETWORK MAINTENANCE --> NetworkMaintainer', function () {
 
 	var sandbox:SinonSandbox = null;
 

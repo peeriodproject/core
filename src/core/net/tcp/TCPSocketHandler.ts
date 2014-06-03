@@ -234,7 +234,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		server.on('listening', () => {
 			var port = server.address().port;
 
-			this.checkIfServerIsReachableFromOutside(server, (success) => {
+			this.checkIfServerIsReachableFromOutsideTwice(server, (success) => {
 				if (success) {
 					this._openTCPServers[port] = server;
 
@@ -267,7 +267,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	 * the constructor. Calls a callback with a flag indicating if it was successful (true) or not (false).
 	 * It does not, however, automatically close the server if it is not reachable.
 	 *
-	 * @method TCPSocketHandler#checkIfServerIsReachableFromOutside
+	 * @method core.net.tcp.TCPSocketHandler#checkIfServerIsReachableFromOutside
 	 *
 	 * @param {net.Server} server Server to check
 	 * @param {Function} callback Callback which gets called with a success flag. `True` if reachable, `false`if unreachable
@@ -306,6 +306,25 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 						callbackWith(true, socket);
 					}
 				});
+			}
+		});
+	}
+
+	/**
+	 * Checks twice if a server is reachable from outside.
+	 *
+	 * @method core.net.tcp.TCPSocketHandler#checkIfServerIsReachableFromOutsideTwice
+	 *
+	 * @param {net.Server} server Server to check
+	 * @param {Function} callback Callback which gets called with a success flag. `True` if reachable, `false`if unreachable
+	 */
+	public checkIfServerIsReachableFromOutsideTwice (server:net.Server, callback:(success:boolean) => any):void {
+		this.checkIfServerIsReachableFromOutside(server, (success) => {
+			if (success) {
+				callback(success);
+			}
+			else {
+				this.checkIfServerIsReachableFromOutside(server, callback);
 			}
 		});
 	}

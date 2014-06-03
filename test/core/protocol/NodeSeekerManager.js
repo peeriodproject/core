@@ -12,12 +12,16 @@ var ProxyManager = require('../../../src/core/protocol/proxy/ProxyManager');
 
 var ContactNode = require('../../../src/core/topology/ContactNode');
 var Id = require('../../../src/core/topology/Id');
+var MyNode = require('../../../src/core/topology/MyNode');
+var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function () {
+describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager @current', function () {
     var sandbox = null;
     var proxyStub = null;
     var protocolConnectionManagerStub = null;
     var factoryStub = null;
+    var configStub = null;
+    var myNodeStub = null;
 
     var onContactCallback = null;
 
@@ -34,7 +38,7 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function 
                 if (idString) {
                     cb(testUtils.stubPublicApi(sandbox, ContactNode, {
                         getId: function () {
-                            return idString;
+                            return new Id(Id.byteBufferByHexString(idString, 1), 8);
                         }
                     }));
                 } else {
@@ -47,7 +51,7 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function 
     var createNode = function (idString) {
         return testUtils.stubPublicApi(sandbox, ContactNode, {
             getId: function () {
-                return idString;
+                return new Id(Id.byteBufferByHexString(idString, 1), 8);
             }
         });
     };
@@ -60,6 +64,19 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function 
 
     before(function () {
         sandbox = sinon.sandbox.create();
+
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (what) {
+                if (what === 'protocol.nodeDiscovery.iterativeSeekTimeoutInMs')
+                    return 10;
+            }
+        });
+
+        myNodeStub = testUtils.stubPublicApi(sandbox, MyNode, {
+            getId: function () {
+                return new Id(Id.byteBufferByHexString('ff', 1), 8);
+            }
+        });
 
         proxyStub = testUtils.stubPublicApi(sandbox, ProxyManager, {
             once: function (evt, cb) {
@@ -77,7 +94,7 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function 
 
         factoryStub = testUtils.stubPublicApi(sandbox, NodeSeekerFactory, {
             createSeekerList: function (cb) {
-                var list = [createSeeker('foo'), createSeeker(null), createSeeker('bar')];
+                var list = [createSeeker('ef'), createSeeker(null), createSeeker('af')];
                 if (createOnNextTick) {
                     setImmediate(function () {
                         cb(list);
@@ -89,38 +106,38 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function 
     });
 
     it('should ping a node and find it', function (done) {
-        var manager = new NodeSeekerManager(factoryStub, protocolConnectionManagerStub, proxyStub);
+        var manager = new NodeSeekerManager(configStub, myNodeStub, factoryStub, protocolConnectionManagerStub, proxyStub);
 
         manager.forceFindActiveNode(null, function (node) {
-            if (node === 'foo' && (sentPingTo.getId() === 'foo' || sentPingTo.getId() === 'bar'))
+            if (node.getId().toHexString() === 'ef' && (sentPingTo.getId().toHexString() === 'ef' || sentPingTo.getId().toHexString() === 'af'))
                 done();
         });
 
         setTimeout(function () {
-            emitActiveNode('foo');
+            emitActiveNode(createNode('ef'));
         }, 10);
     });
 
     it('should cache the callback and find the node later', function (done) {
         createOnNextTick = true;
 
-        var manager = new NodeSeekerManager(factoryStub, protocolConnectionManagerStub, proxyStub);
+        var manager = new NodeSeekerManager(configStub, myNodeStub, factoryStub, protocolConnectionManagerStub, proxyStub);
 
         manager.forceFindActiveNode(null, function (node) {
-            if (node === 'foo' && (sentPingTo.getId() === 'foo' || sentPingTo.getId() === 'bar'))
+            if (node.getId().toHexString() === 'ef' && (sentPingTo.getId().toHexString() === 'ef' || sentPingTo.getId().toHexString() === 'af'))
                 done();
         });
 
         setTimeout(function () {
-            emitActiveNode('foo');
+            emitActiveNode(createNode('ef'));
         }, 10);
     });
 
     it('should not ping another node as soon as one is found', function (done) {
-        var manager = new NodeSeekerManager(factoryStub, protocolConnectionManagerStub, proxyStub);
+        var manager = new NodeSeekerManager(configStub, myNodeStub, factoryStub, protocolConnectionManagerStub, proxyStub);
 
         manager.forceFindActiveNode(null, function (node) {
-            if (node === 'foo' && (sentPingTo.getId() === 'foo' || sentPingTo.getId() === 'bar')) {
+            if (node.getId().toHexString() === 'ef' && (sentPingTo.getId().toHexString() === 'ef' || sentPingTo.getId().toHexString() === 'af')) {
                 sentPingTo = null;
                 setTimeout(function () {
                     if (sentPingTo === null)
@@ -130,34 +147,24 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function 
         });
 
         setTimeout(function () {
-            emitActiveNode('foo');
+            emitActiveNode(createNode('ef'));
         }, 10);
     });
 
     it('should avoid a node', function (done) {
-        var manager = new NodeSeekerManager(factoryStub, protocolConnectionManagerStub, proxyStub);
+        var manager = new NodeSeekerManager(configStub, myNodeStub, factoryStub, protocolConnectionManagerStub, proxyStub);
 
-        var avoidNode = testUtils.stubPublicApi(sandbox, ContactNode, {
-            getId: function () {
-                return testUtils.stubPublicApi(sandbox, Id, {
-                    equals: function (to) {
-                        if (to === 'foo')
-                            return true;
-                        return false;
-                    }
-                });
-            }
-        });
+        var avoidNode = createNode('ef');
 
         manager.forceFindActiveNode(avoidNode, function (node) {
-            if (node.getId() === 'bar')
+            if (node.getId().toHexString() === 'af')
                 done();
         });
 
         setTimeout(function () {
-            emitActiveNode(createNode('foo'));
+            emitActiveNode(createNode('ef'));
             setTimeout(function () {
-                emitActiveNode(createNode('bar'));
+                emitActiveNode(createNode('af'));
             }, 10);
         }, 10);
     });

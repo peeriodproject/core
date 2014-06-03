@@ -111,6 +111,7 @@ var HttpNodeSeeker = (function (_super) {
 
                     try  {
                         node = _this.nodeFromJSON(JSON.parse(body));
+                    } catch (e) {
                     } finally {
                         doCallback(node);
                     }

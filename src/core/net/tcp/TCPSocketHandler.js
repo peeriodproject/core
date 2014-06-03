@@ -218,7 +218,7 @@ var TCPSocketHandler = (function (_super) {
         server.on('listening', function () {
             var port = server.address().port;
 
-            _this.checkIfServerIsReachableFromOutside(server, function (success) {
+            _this.checkIfServerIsReachableFromOutsideTwice(server, function (success) {
                 if (success) {
                     _this._openTCPServers[port] = server;
 
@@ -250,7 +250,7 @@ var TCPSocketHandler = (function (_super) {
     * the constructor. Calls a callback with a flag indicating if it was successful (true) or not (false).
     * It does not, however, automatically close the server if it is not reachable.
     *
-    * @method TCPSocketHandler#checkIfServerIsReachableFromOutside
+    * @method core.net.tcp.TCPSocketHandler#checkIfServerIsReachableFromOutside
     *
     * @param {net.Server} server Server to check
     * @param {Function} callback Callback which gets called with a success flag. `True` if reachable, `false`if unreachable
@@ -290,6 +290,25 @@ var TCPSocketHandler = (function (_super) {
                         callbackWith(true, socket);
                     }
                 });
+            }
+        });
+    };
+
+    /**
+    * Checks twice if a server is reachable from outside.
+    *
+    * @method core.net.tcp.TCPSocketHandler#checkIfServerIsReachableFromOutsideTwice
+    *
+    * @param {net.Server} server Server to check
+    * @param {Function} callback Callback which gets called with a success flag. `True` if reachable, `false`if unreachable
+    */
+    TCPSocketHandler.prototype.checkIfServerIsReachableFromOutsideTwice = function (server, callback) {
+        var _this = this;
+        this.checkIfServerIsReachableFromOutside(server, function (success) {
+            if (success) {
+                callback(success);
+            } else {
+                _this.checkIfServerIsReachableFromOutside(server, callback);
             }
         });
     };

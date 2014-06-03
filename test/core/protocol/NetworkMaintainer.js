@@ -18,7 +18,7 @@ var MyNode = require('../../../src/core/topology/MyNode');
 
 var Id = require('../../../src/core/topology/Id');
 
-describe('CORE --> PROTOCOL --> NETWORK MAINTENANCE --> NetworkMaintainer @current', function () {
+describe('CORE --> PROTOCOL --> NETWORK MAINTENANCE --> NetworkMaintainer', function () {
     var sandbox = null;
 
     var maintainer = null;
