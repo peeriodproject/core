@@ -35,7 +35,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	 *
 	 * @member {string[]} core.net.tcp.TCPSocket~_eventsToPropagate
 	 */
-	private _eventsToPropagate:Array<string> = ['data', 'close', 'error'];
+	private _eventsToPropagate:Array<string> = ['data', 'close', 'end', 'error'];
 
 	/**
 	 * Identification string.
@@ -58,6 +58,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	 * @member {net.Socket} core.net.tcp.TCPSocket~_socket
 	 */
 	private _socket:net.Socket = null;
+
+	private _preventWrite:boolean = false;
 
 
 	public constructor (socket:net.Socket, opts:TCPSocketOptions) {
@@ -95,17 +97,19 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	}
 
 	public forceDestroy():void {
-		this._closeOnTimeout = false;
+		if (this._socket) {
+			this._closeOnTimeout = false;
 
-		try {
-			//this.getSocket().removeAllListeners();
-			this.getSocket().end();
-			this.getSocket().destroy();
+			try {
+				//this.getSocket().removeAllListeners();
+				this.getSocket().end();
+				this.getSocket().destroy();
+			}
+			catch (e) {}
+			this._socket = null;
+			this.emit('destroy');
+			this.removeAllListeners();
 		}
-		catch (e) {}
-		this._socket = null;
-		this.emit('destroy');
-		this.removeAllListeners();
 	}
 
 	public getIdentifier ():string {
@@ -158,6 +162,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	public writeBuffer (buffer:NodeBuffer, callback?:Function, forceAvoidSimulation?:boolean):boolean {
 
+		if (this._preventWrite) return;
+
 		if (this._simulatorRTT && !forceAvoidSimulation) {
 			global.setTimeout(() => {
 				this.writeBuffer(buffer, callback, true);
@@ -181,6 +187,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	}
 
 	public writeString (message:string, encoding:string = 'utf8', callback?:Function, forceAvoidSimulation?:boolean):boolean {
+
+		if (this._preventWrite) return;
 
 		if (this._simulatorRTT && !forceAvoidSimulation) {
 			global.setTimeout(() => {
@@ -212,6 +220,10 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	private _propagateEvents (events:Array<string>):void {
 		events.forEach((event) => {
 			((evt) => {
+				if (evt === 'close' || evt === 'end' || evt === 'error') {
+					this._preventWrite = true;
+				}
+
 				this.getSocket().on(evt, () => this.emit.apply(this, [evt].concat(Array.prototype.splice.call(arguments, 0))));
 			})(event);
 		});

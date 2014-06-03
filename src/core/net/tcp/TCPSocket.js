@@ -38,7 +38,7 @@ var TCPSocket = (function (_super) {
         *
         * @member {string[]} core.net.tcp.TCPSocket~_eventsToPropagate
         */
-        this._eventsToPropagate = ['data', 'close', 'error'];
+        this._eventsToPropagate = ['data', 'close', 'end', 'error'];
         /**
         * Identification string.
         *
@@ -58,6 +58,7 @@ var TCPSocket = (function (_super) {
         * @member {net.Socket} core.net.tcp.TCPSocket~_socket
         */
         this._socket = null;
+        this._preventWrite = false;
 
         if (!(socket && socket instanceof net.Socket)) {
             throw new Error('TCPSocket.constructor: Invalid or no socket specified');
@@ -90,17 +91,19 @@ var TCPSocket = (function (_super) {
     };
 
     TCPSocket.prototype.forceDestroy = function () {
-        this._closeOnTimeout = false;
+        if (this._socket) {
+            this._closeOnTimeout = false;
 
-        try  {
-            //this.getSocket().removeAllListeners();
-            this.getSocket().end();
-            this.getSocket().destroy();
-        } catch (e) {
+            try  {
+                //this.getSocket().removeAllListeners();
+                this.getSocket().end();
+                this.getSocket().destroy();
+            } catch (e) {
+            }
+            this._socket = null;
+            this.emit('destroy');
+            this.removeAllListeners();
         }
-        this._socket = null;
-        this.emit('destroy');
-        this.removeAllListeners();
     };
 
     TCPSocket.prototype.getIdentifier = function () {
@@ -156,6 +159,9 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.writeBuffer = function (buffer, callback, forceAvoidSimulation) {
         var _this = this;
+        if (this._preventWrite)
+            return;
+
         if (this._simulatorRTT && !forceAvoidSimulation) {
             global.setTimeout(function () {
                 _this.writeBuffer(buffer, callback, true);
@@ -179,6 +185,9 @@ var TCPSocket = (function (_super) {
     TCPSocket.prototype.writeString = function (message, encoding, callback, forceAvoidSimulation) {
         var _this = this;
         if (typeof encoding === "undefined") { encoding = 'utf8'; }
+        if (this._preventWrite)
+            return;
+
         if (this._simulatorRTT && !forceAvoidSimulation) {
             global.setTimeout(function () {
                 _this.writeString(message, encoding, callback, true);
@@ -209,6 +218,10 @@ var TCPSocket = (function (_super) {
         var _this = this;
         events.forEach(function (event) {
             (function (evt) {
+                if (evt === 'close' || evt === 'end' || evt === 'error') {
+                    _this._preventWrite = true;
+                }
+
                 _this.getSocket().on(evt, function () {
                     return _this.emit.apply(_this, [evt].concat(Array.prototype.splice.call(arguments, 0)));
                 });
