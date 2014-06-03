@@ -45,7 +45,7 @@ var App = {
 
 		var protocolGateway = null;
 
-		process.on('uncaughtException', function (err) {
+		/*process.on('uncaughtException', function (err) {
 			var trace = stackTrace.parse(err);
 			logger.error({
 				code: err.message, stack: err.stack, trace: {
@@ -64,7 +64,7 @@ var App = {
 
 		process.on('exit', function () {
 			logger.info('Exiting...');
-		});
+		});*/
 
 		networkBootstrapper.bootstrap(function (err) {
 			if (err) {
