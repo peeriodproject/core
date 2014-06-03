@@ -130,7 +130,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 				}
 			};
 		var setCallbackTimeout:Function = () => {
-				callbackTimeout = setTimeout(() => {
+				callbackTimeout = global.setTimeout(() => {
 					theCallback();
 				}, 5000);
 			};
@@ -180,7 +180,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 				this.emit('connection error', port, ip);
 			}
 		};
-		var connectionTimeout = setTimeout(function () {
+		var connectionTimeout = global.setTimeout(function () {
 			connectionError();
 		}, this._outboundConnectionTimeout);
 
@@ -223,7 +223,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 				if (this._connectionRetry >= 0 && this._retriedPorts.indexOf(port) < 0) {
 					this._retriedPorts.push(port);
 
-					setTimeout(function () {
+					global.setTimeout(function () {
 						server.listen(port);
 					}, this._connectionRetry * 1000);
 				}
@@ -293,7 +293,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 
 		server.on('connection', serverOnConnect);
 
-		connectionTimeout = setTimeout(function () {
+		connectionTimeout = global.setTimeout(function () {
 			callbackWith(false);
 		}, 2000);
 

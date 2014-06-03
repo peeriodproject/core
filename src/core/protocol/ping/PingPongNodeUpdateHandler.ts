@@ -142,7 +142,7 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 	 * @returns {number|NodeJS.Timer}
 	 */
 	private _createSlotTimeout (waitingListNumber:number):number {
-		return setTimeout(() => {
+		return global.setTimeout(() => {
 			var slot:PongWaitingSlot = this._waitingLists[waitingListNumber].splice(0, 1)[0];
 
 			this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);

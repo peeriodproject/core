@@ -159,7 +159,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	public writeBuffer (buffer:NodeBuffer, callback?:Function, forceAvoidSimulation?:boolean):boolean {
 
 		if (this._simulatorRTT && !forceAvoidSimulation) {
-			setTimeout(() => {
+			global.setTimeout(() => {
 				this.writeBuffer(buffer, callback, true);
 			}, this._simulatorRTT);
 			return;
@@ -183,7 +183,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	public writeString (message:string, encoding:string = 'utf8', callback?:Function, forceAvoidSimulation?:boolean):boolean {
 
 		if (this._simulatorRTT && !forceAvoidSimulation) {
-			setTimeout(() => {
+			global.setTimeout(() => {
 				this.writeString(message, encoding, callback, true);
 			}, this._simulatorRTT);
 			return;

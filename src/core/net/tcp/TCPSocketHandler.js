@@ -118,7 +118,7 @@ var TCPSocketHandler = (function (_super) {
             }
         };
         var setCallbackTimeout = function () {
-            callbackTimeout = setTimeout(function () {
+            callbackTimeout = global.setTimeout(function () {
                 theCallback();
             }, 5000);
         };
@@ -166,7 +166,7 @@ var TCPSocketHandler = (function (_super) {
                 _this.emit('connection error', port, ip);
             }
         };
-        var connectionTimeout = setTimeout(function () {
+        var connectionTimeout = global.setTimeout(function () {
             connectionError();
         }, this._outboundConnectionTimeout);
 
@@ -207,7 +207,7 @@ var TCPSocketHandler = (function (_super) {
                 if (_this._connectionRetry >= 0 && _this._retriedPorts.indexOf(port) < 0) {
                     _this._retriedPorts.push(port);
 
-                    setTimeout(function () {
+                    global.setTimeout(function () {
                         server.listen(port);
                     }, _this._connectionRetry * 1000);
                 }
@@ -277,7 +277,7 @@ var TCPSocketHandler = (function (_super) {
 
         server.on('connection', serverOnConnect);
 
-        connectionTimeout = setTimeout(function () {
+        connectionTimeout = global.setTimeout(function () {
             callbackWith(false);
         }, 2000);
 

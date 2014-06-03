@@ -115,7 +115,7 @@ class HttpNodePublisher implements NodePublisherInterface {
 	 * @method core.protocol.nodeDiscovery.HttpNodePublisher~_setPublishTimeout
 	 */
 	private _setPublishTimeout ():void {
-		setTimeout(() => {
+		global.setTimeout(() => {
 			this._publishMyNode();
 			this._setPublishTimeout();
 		}, this._republishInMs);

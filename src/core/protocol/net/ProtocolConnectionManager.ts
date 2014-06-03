@@ -559,7 +559,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 */
 	private _createConnectionWaitingListTimeout (identifier:string, index:number):number {
 
-		return setTimeout(() => {
+		return global.setTimeout(() => {
 			this._callbackWaitingConnection(identifier, index, new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
 		}, this._msToWaitForConnection);
 	}
@@ -830,7 +830,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		var identifier:string = this._setTemporaryIdentifier(socket);
 		var pending:IncomingPendingSocket = {
 			socket : socket,
-			timeout: setTimeout(() => {
+			timeout: global.setTimeout(() => {
 				this._destroyConnection(socket)
 			}, this._incomingPendingTimeoutLength)
 		};

@@ -243,7 +243,7 @@ var ProxyManager = (function (_super) {
             clearTimeout(this._proxyWaitTimeout);
             this._proxyWaitTimeout = 0;
         }
-        this._proxyWaitTimeout = setTimeout(function () {
+        this._proxyWaitTimeout = global.setTimeout(function () {
             _this._canProxyCycle = true;
             _this._unsuccessfulProxyTries = 0;
             _this._ignoreProxies = [];
@@ -442,7 +442,7 @@ var ProxyManager = (function (_super) {
         var identifier = this._nodeToIdentifier(node);
         this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), function (err) {
             if (!err) {
-                _this._requestedProxies[identifier] = setTimeout(function () {
+                _this._requestedProxies[identifier] = global.setTimeout(function () {
                     _this._requestProxyTimeout(identifier);
                 }, _this._reactionTime);
             }

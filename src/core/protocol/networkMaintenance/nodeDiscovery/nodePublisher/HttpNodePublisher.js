@@ -105,7 +105,7 @@ var HttpNodePublisher = (function () {
     */
     HttpNodePublisher.prototype._setPublishTimeout = function () {
         var _this = this;
-        setTimeout(function () {
+        global.setTimeout(function () {
             _this._publishMyNode();
             _this._setPublishTimeout();
         }, this._republishInMs);
