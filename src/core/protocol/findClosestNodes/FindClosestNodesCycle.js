@@ -171,10 +171,14 @@ var FindClosestNodesCycle = (function () {
     FindClosestNodesCycle.prototype._doAlphaTimeout = function () {
         var _this = this;
         if (!this._alphaTimeout) {
+            logger.info('Creating alpha timeout');
             this._alphaTimeout = setTimeout(function () {
+                logger.info('alpha timeout elapsed.');
                 _this._alphaTimeout = 0;
                 _this._requestAlphaNodes();
             }, this._parallelismDelayMillis);
+        } else {
+            logger.info('there is already an alpha timeout');
         }
     };
 
@@ -211,9 +215,12 @@ var FindClosestNodesCycle = (function () {
     * @param {core.protocol.findClosestNodes.messages.FoundClosestNodesReadableMessageInterface} message The message payload.
     */
     FindClosestNodesCycle.prototype._handleReply = function (from, message) {
+        logger.info('got reply', { from: from.getId().toHexString() });
+
         this._sortInsertNodeInList(from, this._confirmedList);
 
         if (this._confirmedList.length >= this._k) {
+            logger.info('confirmed list is full, finishing');
             this._finish();
         } else {
             var returnedList = message.getFoundNodeList();
@@ -236,8 +243,10 @@ var FindClosestNodesCycle = (function () {
                 }
             }
 
-            if (probedPrevLength === 0 && this._probeList.length) {
+            //if (probedPrevLength === 0 && this._probeList.length) {
+            if (this._probeList.length) {
                 if (this._cycleTimeout) {
+                    logger.info('Celaring cycle timeout 2');
                     clearTimeout(this._cycleTimeout);
                     this._cycleTimeout = 0;
                 }
@@ -255,6 +264,7 @@ var FindClosestNodesCycle = (function () {
     */
     FindClosestNodesCycle.prototype._requestAlphaNodes = function () {
         var _this = this;
+        logger.info('Requesting next alpha nodes');
         var times = Math.min(this._probeList.length, this._alpha);
 
         while (times--) {
@@ -263,10 +273,12 @@ var FindClosestNodesCycle = (function () {
 
         if (!this._probeList.length) {
             if (this._cycleTimeout) {
+                logger.info('Clearing cycle timeout');
                 clearTimeout(this._cycleTimeout);
                 this._cycleTimeout = 0;
             }
 
+            logger.info('Setting cycle timeout, as probe list is empty');
             this._cycleTimeout = setTimeout(function () {
                 _this._finish();
             }, this._cycleExpirationMillis);
