@@ -11,6 +11,8 @@ import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInte
 import PongWaitingList = require('./interfaces/PongWaitingList');
 import PongWaitingSlot = require('./interfaces/PongWaitingSlot');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * PingPongNodeUpdateHandlerInterface implementation.
  *
@@ -185,6 +187,8 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 			else {
 				this._routingTable.updateContactNode(slot.newNode, (err:Error, longestNotSeenContact:ContactNodeInterface) => {
 					if (err && longestNotSeenContact) {
+						logger.info('Bucket check', {newNodeDiffer: this._getWaitingListNumberByNode(slot.newNode), oldNodeDiffer: this._getWaitingListNumberByNode(longestNotSeenContact)});
+
 						slot.nodeToCheck = longestNotSeenContact;
 						this._pingNodeByWaitingSlot(slot, waitingListNumber);
 					}
@@ -214,7 +218,7 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 
 			if (node.getId().equals(first.nodeToCheck.getId())) {
 				list.splice(0, 1);
-				clearTimeout(first.timeout);
+				global.clearTimeout(first.timeout);
 
 				this.emit('gotPonged', node);
 

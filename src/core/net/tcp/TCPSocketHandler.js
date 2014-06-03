@@ -7,6 +7,8 @@ var __extends = this.__extends || function (d, b) {
 var events = require('events');
 var net = require('net');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * TCPSocketHandler implementation.
 *
@@ -107,7 +109,7 @@ var TCPSocketHandler = (function (_super) {
         var callbackTimeout = 0;
         var checkAndCallback = function (port, server) {
             if (callbackTimeout) {
-                clearTimeout(callbackTimeout);
+                global.clearTimeout(callbackTimeout);
                 callbackTimeout = 0;
             }
 
@@ -150,40 +152,61 @@ var TCPSocketHandler = (function (_super) {
             return;
         }
 
-        var sock = net.createConnection(port, ip);
-        var connectionError = function () {
-            try  {
-                sock.end();
-                sock.destroy();
-            } catch (e) {
-            }
+        process.nextTick(function () {
+            logger.info('sock connecting to');
 
-            sock.removeListener('connect', onConnection);
+            var sock = net.createConnection(port, ip);
+            var connectionError = function (fromTimeout) {
+                if (fromTimeout) {
+                    logger.info('sock connection error timeout');
+                } else {
+                    logger.info('sock connection error');
+                }
 
-            if (callback) {
-                callback(null);
-            } else {
-                _this.emit('connection error', port, ip);
-            }
-        };
-        var connectionTimeout = global.setTimeout(function () {
-            connectionError();
-        }, this._outboundConnectionTimeout);
+                try  {
+                    sock.end();
+                    sock.destroy();
+                } catch (e) {
+                }
 
-        var onConnection = function () {
-            clearTimeout(connectionTimeout);
-            sock.removeListener('error', connectionError);
-            var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
+                sock.removeListener('connect', onConnection);
 
-            if (!callback) {
-                _this.emit('connected', socket, 'outgoing');
-            } else {
-                callback(socket);
-            }
-        };
+                if (callback) {
+                    callback(null);
+                } else {
+                    _this.emit('connection error', port, ip);
+                }
+            };
 
-        sock.on('connect', onConnection);
-        sock.on('error', connectionError);
+            var connectionTimeout = global.setTimeout(function () {
+                logger.info('sock connection timeout');
+                connectionError(true);
+            }, _this._outboundConnectionTimeout);
+
+            var onConnection = function () {
+                logger.info('sock connection connected');
+                logger.info('err listeners 1', { list: sock.listeners('error').length });
+
+                global.clearTimeout(connectionTimeout);
+
+                var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
+
+                logger.info('err listeners 2', { list: sock.listeners('error').length });
+
+                sock.removeListener('error', connectionError);
+
+                logger.info('err listeners 3', { list: sock.listeners('error').length });
+
+                if (!callback) {
+                    _this.emit('connected', socket, 'outgoing');
+                } else {
+                    callback(socket);
+                }
+            };
+
+            sock.once('error', connectionError);
+            sock.once('connect', onConnection);
+        });
     };
 
     TCPSocketHandler.prototype.createTCPServer = function () {
@@ -285,7 +308,7 @@ var TCPSocketHandler = (function (_super) {
             if (socket) {
                 socket.writeBuffer(new Buffer([20]));
                 socket.on('data', function (data) {
-                    clearTimeout(connectionTimeout);
+                    global.clearTimeout(connectionTimeout);
                     if (data[0] === 20) {
                         callbackWith(true, socket);
                     }

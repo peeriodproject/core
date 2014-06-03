@@ -9,6 +9,8 @@ import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
 
 import TCPSocket = require('./TCPSocket');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * TCPSocketHandler implementation.
  *
@@ -118,7 +120,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		var callbackTimeout:number = 0;
 		var checkAndCallback:Function = (port:number, server:net.Server) => {
 				if (callbackTimeout) {
-					clearTimeout(callbackTimeout);
+					global.clearTimeout(callbackTimeout);
 					callbackTimeout = 0;
 				}
 
@@ -162,43 +164,65 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			return;
 		}
 
-		var sock:net.Socket = net.createConnection(port, ip);
-		var connectionError = () => {
+		process.nextTick(() => {
+			logger.info('sock connecting to');
 
-			try {
-				sock.end();
-				sock.destroy();
-			}
-			catch (e) {}
+			var sock:net.Socket = net.createConnection(port, ip);
+			var connectionError = (fromTimeout) => {
+				if (fromTimeout) {
+					logger.info('sock connection error timeout');
+				}
+				else {
+					logger.info('sock connection error');
+				}
 
-			sock.removeListener('connect', onConnection);
+				try {
+					sock.end();
+					sock.destroy();
+				}
+				catch (e) {}
 
-			if (callback) {
-				callback(null)
-			}
-			else {
-				this.emit('connection error', port, ip);
-			}
-		};
-		var connectionTimeout = global.setTimeout(function () {
-			connectionError();
-		}, this._outboundConnectionTimeout);
+				sock.removeListener('connect', onConnection);
 
-		var onConnection = () => {
-			clearTimeout(connectionTimeout);
-			sock.removeListener('error', connectionError);
-			var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
+				if (callback) {
+					callback(null)
+				}
+				else {
+					this.emit('connection error', port, ip);
+				}
+			};
 
-			if (!callback) {
-				this.emit('connected', socket, 'outgoing');
-			}
-			else {
-				callback(socket);
-			}
-		};
+			var connectionTimeout = global.setTimeout(function () {
+				logger.info('sock connection timeout');
+				connectionError(true);
+			}, this._outboundConnectionTimeout);
 
-		sock.on('connect', onConnection);
-		sock.on('error', connectionError);
+			var onConnection = () => {
+				logger.info('sock connection connected');
+				logger.info('err listeners 1', {list: sock.listeners('error').length});
+
+				global.clearTimeout(connectionTimeout);
+
+				var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
+
+				logger.info('err listeners 2', {list: sock.listeners('error').length});
+
+
+				sock.removeListener('error', connectionError);
+
+				logger.info('err listeners 3', {list: sock.listeners('error').length});
+
+				if (!callback) {
+					this.emit('connected', socket, 'outgoing');
+				}
+				else {
+					callback(socket);
+				}
+			};
+
+			sock.once('error', connectionError);
+			sock.once('connect', onConnection);
+		});
 
 	}
 
@@ -301,7 +325,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			if (socket) {
 				socket.writeBuffer(new Buffer([20]));
 				socket.on('data', function (data) {
-					clearTimeout(connectionTimeout);
+					global.clearTimeout(connectionTimeout);
 					if (data[0] === 20) {
 						callbackWith(true, socket);
 					}

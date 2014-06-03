@@ -6,6 +6,8 @@ var __extends = this.__extends || function (d, b) {
 };
 var events = require('events');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * PingPongNodeUpdateHandlerInterface implementation.
 *
@@ -171,6 +173,8 @@ var PingPongNodeUpdateHandler = (function (_super) {
             } else {
                 this._routingTable.updateContactNode(slot.newNode, function (err, longestNotSeenContact) {
                     if (err && longestNotSeenContact) {
+                        logger.info('Bucket check', { newNodeDiffer: _this._getWaitingListNumberByNode(slot.newNode), oldNodeDiffer: _this._getWaitingListNumberByNode(longestNotSeenContact) });
+
                         slot.nodeToCheck = longestNotSeenContact;
                         _this._pingNodeByWaitingSlot(slot, waitingListNumber);
                     } else {
@@ -199,7 +203,7 @@ var PingPongNodeUpdateHandler = (function (_super) {
 
             if (node.getId().equals(first.nodeToCheck.getId())) {
                 list.splice(0, 1);
-                clearTimeout(first.timeout);
+                global.clearTimeout(first.timeout);
 
                 this.emit('gotPonged', node);
 

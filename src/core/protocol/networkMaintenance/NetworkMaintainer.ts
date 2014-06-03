@@ -163,7 +163,7 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 	 */
 	private _clearBucketRefreshTimeout (bucketNumber:number):void {
 		if (this._bucketRefreshes[bucketNumber]) {
-			clearTimeout(this._bucketRefreshes[bucketNumber]);
+			global.clearTimeout(this._bucketRefreshes[bucketNumber]);
 			this._bucketRefreshes[bucketNumber] = 0;
 		}
 	}

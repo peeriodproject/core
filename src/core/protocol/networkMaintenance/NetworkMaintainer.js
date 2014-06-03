@@ -147,7 +147,7 @@ var NetworkMaintainer = (function (_super) {
     */
     NetworkMaintainer.prototype._clearBucketRefreshTimeout = function (bucketNumber) {
         if (this._bucketRefreshes[bucketNumber]) {
-            clearTimeout(this._bucketRefreshes[bucketNumber]);
+            global.clearTimeout(this._bucketRefreshes[bucketNumber]);
             this._bucketRefreshes[bucketNumber] = 0;
         }
     };

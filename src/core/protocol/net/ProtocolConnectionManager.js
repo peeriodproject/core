@@ -544,7 +544,7 @@ var ProtocolConnectionManager = (function (_super) {
 
         if (incoming) {
             if (incoming.timeout) {
-                clearTimeout(incoming.timeout);
+                global.clearTimeout(incoming.timeout);
             }
             delete this._incomingPendingSockets[identifier];
         }
@@ -624,7 +624,7 @@ var ProtocolConnectionManager = (function (_super) {
         var outgoingPending = this._outgoingPendingSockets[newIdentifier];
 
         if (pending.timeout) {
-            clearTimeout(pending.timeout);
+            global.clearTimeout(pending.timeout);
         }
         delete this._incomingPendingSockets[oldIdentifier];
 
@@ -651,7 +651,7 @@ var ProtocolConnectionManager = (function (_super) {
         var socket = pending.socket;
 
         if (pending.timeout) {
-            clearTimeout(pending.timeout);
+            global.clearTimeout(pending.timeout);
         }
         delete this._incomingPendingSockets[oldIdentifier];
 
@@ -766,7 +766,7 @@ var ProtocolConnectionManager = (function (_super) {
         if (waiting) {
             for (var i = 0; i < waiting.length; i++) {
                 var item = waiting[i];
-                clearTimeout(item.timeout);
+                global.clearTimeout(item.timeout);
                 item.callback(null, socket);
             }
 

@@ -4,6 +4,8 @@ import net = require('net');
 import TCPSocketInterface = require('./interfaces/TCPSocketInterface');
 import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * TCP Socket implementation.
  *
@@ -35,7 +37,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	 *
 	 * @member {string[]} core.net.tcp.TCPSocket~_eventsToPropagate
 	 */
-	private _eventsToPropagate:Array<string> = ['data', 'close', 'error'];
+	private _eventsToPropagate:Array<string> = ['data', 'close', 'end', 'error'];
 
 	/**
 	 * Identification string.
@@ -58,6 +60,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	 * @member {net.Socket} core.net.tcp.TCPSocket~_socket
 	 */
 	private _socket:net.Socket = null;
+
+	private _preventWrite:boolean = false;
 
 
 	public constructor (socket:net.Socket, opts:TCPSocketOptions) {
@@ -88,6 +92,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		}
 
 		this.setupListeners();
+
+		logger.info('added socket');
 	}
 
 	public end (data?:any, encoding?:string):void {
@@ -95,17 +101,21 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	}
 
 	public forceDestroy():void {
-		this._closeOnTimeout = false;
+		if (this._socket) {
+			logger.info('destroying socket');
 
-		try {
-			//this.getSocket().removeAllListeners();
-			this.getSocket().end();
-			this.getSocket().destroy();
+			this._closeOnTimeout = false;
+
+			try {
+				//this.getSocket().removeAllListeners();
+				this.getSocket().end();
+				this.getSocket().destroy();
+			}
+			catch (e) {}
+			this._socket = null;
+			this.emit('destroy');
+			this.removeAllListeners();
 		}
-		catch (e) {}
-		this._socket = null;
-		this.emit('destroy');
-		this.removeAllListeners();
 	}
 
 	public getIdentifier ():string {
@@ -156,7 +166,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		this._propagateEvents(this._eventsToPropagate);
 	}
 
-	public writeBuffer (buffer:NodeBuffer, callback?:Function, forceAvoidSimulation?:boolean):boolean {
+	public writeBuffer (buffer:NodeBuffer, callback?:Function, forceAvoidSimulation?:boolean):void {
 
 		if (this._simulatorRTT && !forceAvoidSimulation) {
 			global.setTimeout(() => {
@@ -165,22 +175,26 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			return;
 		}
 
-		var success = false;
+		process.nextTick(() => {
+			if (this._preventWrite) return;
 
-		try {
-			success = this.getSocket().write(buffer, callback);
-		}
-		catch (e) {
-			this.forceDestroy();
-		}
+			try {
+				this.getSocket().write(buffer, callback);
+			}
+			catch (e) {
+				this.forceDestroy();
+			}
 
 
-		buffer = null;
+			buffer = null;
+		});
 
-		return success;
+
 	}
 
 	public writeString (message:string, encoding:string = 'utf8', callback?:Function, forceAvoidSimulation?:boolean):boolean {
+
+		if (this._preventWrite) return;
 
 		if (this._simulatorRTT && !forceAvoidSimulation) {
 			global.setTimeout(() => {
@@ -212,7 +226,12 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	private _propagateEvents (events:Array<string>):void {
 		events.forEach((event) => {
 			((evt) => {
-				this.getSocket().on(evt, () => this.emit.apply(this, [evt].concat(Array.prototype.splice.call(arguments, 0))));
+				this.getSocket().on(evt, () => {
+					if (evt === 'close' || evt === 'end' || evt === 'error') {
+						this._preventWrite = true;
+					}
+					this.emit.apply(this, [evt].concat(Array.prototype.splice.call(arguments, 0)));
+				});
 			})(event);
 		});
 	}

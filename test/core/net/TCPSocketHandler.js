@@ -13,7 +13,7 @@ var defaultHandlerOpts = {
     idleConnectionKillTimeout: 0
 };
 
-describe('CORE --> NET --> TCP --> TCPSocketHandler', function () {
+describe('CORE --> NET --> TCP --> TCPSocketHandler @current', function () {
     this.timeout(0);
 
     var handler_a = new TCPSocketHandler(new TCPSocketFactory(), defaultHandlerOpts), server = handler_a.createTCPServer(), sandbox;

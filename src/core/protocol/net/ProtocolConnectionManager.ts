@@ -585,7 +585,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 		if (incoming) {
 			if (incoming.timeout) {
-				clearTimeout(incoming.timeout);
+				global.clearTimeout(incoming.timeout);
 			}
 			delete this._incomingPendingSockets[identifier];
 		}
@@ -667,7 +667,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		var outgoingPending:OutgoingPendingSocket = this._outgoingPendingSockets[newIdentifier];
 
 		if (pending.timeout) {
-			clearTimeout(pending.timeout);
+			global.clearTimeout(pending.timeout);
 		}
 		delete this._incomingPendingSockets[oldIdentifier];
 
@@ -694,7 +694,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		var socket:TCPSocketInterface = pending.socket;
 
 		if (pending.timeout) {
-			clearTimeout(pending.timeout);
+			global.clearTimeout(pending.timeout);
 		}
 		delete this._incomingPendingSockets[oldIdentifier];
 
@@ -808,7 +808,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		if (waiting) {
 			for (var i = 0; i < waiting.length; i++) {
 				var item:WaitForSocket = waiting[i];
-				clearTimeout(item.timeout);
+				global.clearTimeout(item.timeout);
 				item.callback(null, socket);
 			}
 
