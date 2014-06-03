@@ -7,6 +7,8 @@ var __extends = this.__extends || function (d, b) {
 var events = require('events');
 var net = require('net');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * TCPSocketHandler implementation.
 *
@@ -152,6 +154,7 @@ var TCPSocketHandler = (function (_super) {
 
         var sock = net.createConnection(port, ip);
         var connectionError = function () {
+            logger.info('sock connection error');
             try  {
                 sock.end();
                 sock.destroy();
@@ -171,6 +174,8 @@ var TCPSocketHandler = (function (_super) {
         }, this._outboundConnectionTimeout);
 
         var onConnection = function () {
+            logger.info('sock connection connected');
+
             clearTimeout(connectionTimeout);
             sock.removeListener('error', connectionError);
             var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());

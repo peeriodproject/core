@@ -7,6 +7,8 @@ var __extends = this.__extends || function (d, b) {
 var events = require('events');
 var net = require('net');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * TCP Socket implementation.
 *
@@ -85,6 +87,8 @@ var TCPSocket = (function (_super) {
         }
 
         this.setupListeners();
+
+        logger.info('added socket');
     }
     TCPSocket.prototype.end = function (data, encoding) {
         this.getSocket().end(data, encoding);
@@ -92,6 +96,8 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.forceDestroy = function () {
         if (this._socket) {
+            logger.info('destroying socket');
+
             this._closeOnTimeout = false;
 
             try  {

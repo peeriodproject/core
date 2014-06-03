@@ -4,6 +4,8 @@ import net = require('net');
 import TCPSocketInterface = require('./interfaces/TCPSocketInterface');
 import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * TCP Socket implementation.
  *
@@ -90,6 +92,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		}
 
 		this.setupListeners();
+
+		logger.info('added socket');
 	}
 
 	public end (data?:any, encoding?:string):void {
@@ -98,6 +102,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	public forceDestroy():void {
 		if (this._socket) {
+			logger.info('destroying socket');
+
 			this._closeOnTimeout = false;
 
 			try {

@@ -9,6 +9,8 @@ import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
 
 import TCPSocket = require('./TCPSocket');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * TCPSocketHandler implementation.
  *
@@ -164,7 +166,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 
 		var sock:net.Socket = net.createConnection(port, ip);
 		var connectionError = () => {
-
+			logger.info('sock connection error');
 			try {
 				sock.end();
 				sock.destroy();
@@ -185,6 +187,8 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		}, this._outboundConnectionTimeout);
 
 		var onConnection = () => {
+			logger.info('sock connection connected');
+
 			clearTimeout(connectionTimeout);
 			sock.removeListener('error', connectionError);
 			var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
