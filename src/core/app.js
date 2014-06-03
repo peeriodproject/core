@@ -48,8 +48,15 @@ var App = {
                     line: trace.getLineNumber()
                 }
             });
-            logger.info('Catched uncaughtException. Exiting...');
-            process.exit(1);
+            logger.info('Catched uncaughtException!');
+
+            setTimeout(function () {
+                process.exit(1);
+            }, 100);
+        });
+
+        process.on('exit', function () {
+            logger.info('Exiting...');
         });
 
         networkBootstrapper.bootstrap(function (err) {
