@@ -11,8 +11,6 @@ import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInte
 import PongWaitingList = require('./interfaces/PongWaitingList');
 import PongWaitingSlot = require('./interfaces/PongWaitingSlot');
 
-var logger = require('../../utils/logger/LoggerFactory').create();
-
 /**
  * PingPongNodeUpdateHandlerInterface implementation.
  *
@@ -254,11 +252,6 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 		this._protocolConnectionManager.writeMessageTo(slot.nodeToCheck, 'PING', new Buffer(0), (err:Error) => {
 			if (err) {
 				this._waitingLists[waitingListNumber].splice(0, 1);
-
-				var nodeToCheckId = slot.nodeToCheck ? slot.nodeToCheck.getId().toHexString() : 'No Node to check!';
-				var newNodeId = slot.newNode ? slot.newNode.getId().toHexString() : 'No new Node!';
-
-				logger.info('before replacing contact node', {old: nodeToCheckId, new: newNodeId });
 
 				this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
 			}
