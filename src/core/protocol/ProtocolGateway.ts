@@ -93,13 +93,16 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 
 		if (this._proxyManager.needsAdditionalProxy()) {
 			this._networkMaintainer.once('initialContactQueryCompleted', () => {
-				logger.info('Initial contact query completed. Kicking off proxy manager...', {id: this._myNode.getId().toHexString()});
 				this._proxyManager.kickOff();
 			});
 		}
 		else {
 			this._proxyManager.kickOff();
 		}
+
+		this._networkMaintainer.once('initialContactQueryCompleted', () => {
+			logger.info('Initial contact query completed. Kicking off proxy manager...', {id: this._myNode.getId().toHexString()});
+		});
 
 		this._networkMaintainer.once('joinedNetwork', () => {
 			logger.info('Successfully joined the network.', {id: this._myNode.getId().toHexString()});

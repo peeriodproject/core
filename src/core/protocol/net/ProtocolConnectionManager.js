@@ -377,7 +377,10 @@ var ProtocolConnectionManager = (function (_super) {
 
         this.writeBufferTo(node, buffer, callback);
 
-        logger.info({ to: node.getId().toHexString(), msgType: messageType });
+        // testing purposes only
+        var payloadStr = messageType === 'FIND_CLOSEST_NODES' ? payloadStr.toString('hex') : '';
+
+        logger.info({ to: node.getId().toHexString(), msgType: messageType, payload: payloadStr });
     };
 
     /**

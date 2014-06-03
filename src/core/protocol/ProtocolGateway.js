@@ -84,12 +84,15 @@ var ProtocolGateway = (function () {
 
         if (this._proxyManager.needsAdditionalProxy()) {
             this._networkMaintainer.once('initialContactQueryCompleted', function () {
-                logger.info('Initial contact query completed. Kicking off proxy manager...', { id: _this._myNode.getId().toHexString() });
                 _this._proxyManager.kickOff();
             });
         } else {
             this._proxyManager.kickOff();
         }
+
+        this._networkMaintainer.once('initialContactQueryCompleted', function () {
+            logger.info('Initial contact query completed. Kicking off proxy manager...', { id: _this._myNode.getId().toHexString() });
+        });
 
         this._networkMaintainer.once('joinedNetwork', function () {
             logger.info('Successfully joined the network.', { id: _this._myNode.getId().toHexString() });
