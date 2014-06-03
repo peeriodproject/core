@@ -162,7 +162,7 @@ var FindClosestNodesManager = (function (_super) {
 
             this._findClosestNodesCycleFactory.create(searchForId, startWithList, function (resultingList) {
                 _this._pendingCycles.splice(_this._pendingCycles.indexOf(identifier), 1);
-
+                logger.info('Found closest nodes cycle done', { for: searchForId.toHexString() });
                 _this.emit('foundClosestNodes', searchForId, resultingList);
             });
         }

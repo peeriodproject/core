@@ -102,14 +102,18 @@ var NodeSeekerManager = (function () {
         this._forceSearchActive = true;
 
         this._proxyManager.once('contactNodeInformation', function (node) {
+            logger.info('NodeSeeker: on contact node!');
+
             _this._forceSearchActive = false;
 
             if (_this._iterativeSeekTimeout) {
+                logger.info('clearing iterative seek timeout');
                 clearTimeout(_this._iterativeSeekTimeout);
                 _this._iterativeSeekTimeout = 0;
             }
 
             if (_this._avoidNode && _this._avoidNode.getId().equals(node.getId())) {
+                logger.info('Force finding again on nex event loop');
                 setImmediate(function () {
                     logger.info('Force finding again, as the node should be avoided.');
                     _this.forceFindActiveNode(_this._avoidNode, callback);
@@ -133,9 +137,9 @@ var NodeSeekerManager = (function () {
     */
     NodeSeekerManager.prototype._iterativeSeekAndPing = function (avoidNode) {
         var _this = this;
-        logger.info('Doing iterative seek.');
-
         if (this._forceSearchActive) {
+            logger.info('Doing iterative seek.');
+
             setImmediate(function () {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {
                     _this._nodeSeekerList[i].seek(function (node) {
@@ -151,6 +155,8 @@ var NodeSeekerManager = (function () {
                     _this._iterativeSeekAndPing(avoidNode);
                 }, _this._iterativeSeekTimeoutMs);
             });
+        } else {
+            logger.info('do not seek again.');
         }
     };
 

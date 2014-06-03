@@ -123,14 +123,18 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 
 		this._proxyManager.once('contactNodeInformation', (node:ContactNodeInterface) => {
 
+			logger.info('NodeSeeker: on contact node!');
+
 			this._forceSearchActive = false;
 
 			if (this._iterativeSeekTimeout) {
+				logger.info('clearing iterative seek timeout');
 				clearTimeout(this._iterativeSeekTimeout);
 				this._iterativeSeekTimeout = 0;
 			}
 
 			if (this._avoidNode && this._avoidNode.getId().equals(node.getId())) {
+				logger.info('Force finding again on nex event loop');
 				setImmediate(() => {
 					logger.info('Force finding again, as the node should be avoided.');
 					this.forceFindActiveNode(this._avoidNode, callback);
@@ -154,11 +158,15 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	 * @param {core.topology.ContactNodeInterface} avoidNode An optional node to avoid, which is not PINGed if returned by one of the seekers.
 	 */
 	private _iterativeSeekAndPing (avoidNode?:ContactNodeInterface):void {
-		logger.info('Doing iterative seek.');
+
 
 		if (this._forceSearchActive) {
 
+			logger.info('Doing iterative seek.');
+
 			setImmediate(() => {
+
+
 				for (var i = 0; i < this._nodeSeekerList.length; i++) {
 
 					this._nodeSeekerList[i].seek((node:ContactNodeInterface) => {
@@ -175,6 +183,9 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 				}, this._iterativeSeekTimeoutMs);
 
 			});
+		}
+		else {
+			logger.info('do not seek again.');
 		}
 
 	}
