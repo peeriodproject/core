@@ -180,12 +180,17 @@ var TCPSocketHandler = (function (_super) {
 
             var onConnection = function () {
                 logger.info('sock connection connected');
+                logger.info('err listeners 1', { list: sock.listeners('error') });
 
                 global.clearTimeout(connectionTimeout);
 
                 var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
 
+                logger.info('err listeners 2', { list: sock.listeners('error') });
+
                 sock.removeListener('error', connectionError);
+
+                logger.info('err listeners 3', { list: sock.listeners('error') });
 
                 if (!callback) {
                     _this.emit('connected', socket, 'outgoing');
