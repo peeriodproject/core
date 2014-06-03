@@ -989,7 +989,13 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			callback(socket);
 		};
 
-		connectToAddressByIndex(startAt, theCallback);
+		if (maxIndex >= 0) {
+			connectToAddressByIndex(startAt, theCallback);
+		}
+		else {
+			callback(null);
+		}
+
 	}
 
 }

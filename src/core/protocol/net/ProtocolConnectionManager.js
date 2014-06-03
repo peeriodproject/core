@@ -947,7 +947,11 @@ var ProtocolConnectionManager = (function (_super) {
             callback(socket);
         };
 
-        connectToAddressByIndex(startAt, theCallback);
+        if (maxIndex >= 0) {
+            connectToAddressByIndex(startAt, theCallback);
+        } else {
+            callback(null);
+        }
     };
     return ProtocolConnectionManager;
 })(events.EventEmitter);
