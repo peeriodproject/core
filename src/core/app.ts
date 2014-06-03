@@ -55,7 +55,8 @@ var App = {
 					line    : trace.getLineNumber()
 				}
 			});
-			//process.exit(1);
+			logger.info('Catched uncaughtException. Exiting...');
+			process.exit(1);
 		});
 
 		networkBootstrapper.bootstrap(function (err) {
