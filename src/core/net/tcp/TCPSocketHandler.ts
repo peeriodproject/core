@@ -208,10 +208,10 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 				}
 			};
 
-			sock.on('error', connectionError);
-			sock.on('connect', onConnection);
+			sock.once('error', connectionError);
+			sock.once('connect', onConnection);
 		});
-		
+
 	}
 
 	public createTCPServer ():net.Server {

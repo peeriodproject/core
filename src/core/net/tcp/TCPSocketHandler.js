@@ -194,8 +194,8 @@ var TCPSocketHandler = (function (_super) {
                 }
             };
 
-            sock.on('error', connectionError);
-            sock.on('connect', onConnection);
+            sock.once('error', connectionError);
+            sock.once('connect', onConnection);
         });
     };
 
