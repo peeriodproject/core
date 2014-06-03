@@ -172,7 +172,7 @@ var FindClosestNodesCycle = (function () {
         var _this = this;
         if (!this._alphaTimeout) {
             logger.info('Creating alpha timeout');
-            this._alphaTimeout = setTimeout(function () {
+            this._alphaTimeout = global.setTimeout(function () {
                 logger.info('alpha timeout elapsed.');
                 _this._alphaTimeout = 0;
                 _this._requestAlphaNodes();
@@ -279,7 +279,7 @@ var FindClosestNodesCycle = (function () {
             }
 
             logger.info('Setting cycle timeout, as probe list is empty');
-            this._cycleTimeout = setTimeout(function () {
+            this._cycleTimeout = global.setTimeout(function () {
                 _this._finish();
             }, this._cycleExpirationMillis);
         } else {

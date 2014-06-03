@@ -207,7 +207,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 	private _doAlphaTimeout ():void {
 		if (!this._alphaTimeout) {
 			logger.info('Creating alpha timeout');
-			this._alphaTimeout = setTimeout(() => {
+			this._alphaTimeout = global.setTimeout(() => {
 				logger.info('alpha timeout elapsed.');
 				this._alphaTimeout = 0;
 				this._requestAlphaNodes();
@@ -316,7 +316,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 			}
 
 			logger.info('Setting cycle timeout, as probe list is empty');
-			this._cycleTimeout = setTimeout(() => {
+			this._cycleTimeout = global.setTimeout(() => {
 				this._finish();
 			}, this._cycleExpirationMillis);
 		}
