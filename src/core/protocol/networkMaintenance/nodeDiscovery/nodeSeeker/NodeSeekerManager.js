@@ -150,7 +150,7 @@ var NodeSeekerManager = (function () {
                     });
                 }
 
-                _this._iterativeSeekTimeout = setTimeout(function () {
+                _this._iterativeSeekTimeout = global.setTimeout(function () {
                     logger.info('setting new iterative seek timeout');
                     _this._iterativeSeekAndPing(avoidNode);
                 }, _this._iterativeSeekTimeoutMs);

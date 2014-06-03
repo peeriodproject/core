@@ -285,7 +285,7 @@ var NetworkMaintainer = (function (_super) {
     NetworkMaintainer.prototype._setBucketRefreshTimeout = function (bucketNumber) {
         var _this = this;
         if (!this._bucketRefreshes[bucketNumber]) {
-            this._bucketRefreshes[bucketNumber] = setTimeout(function () {
+            this._bucketRefreshes[bucketNumber] = global.setTimeout(function () {
                 _this._bucketRefreshes[bucketNumber] = 0;
                 _this._refreshBucket(bucketNumber);
             }, this._bucketRefreshRateInMs);

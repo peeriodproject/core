@@ -177,7 +177,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 					});
 				}
 
-				this._iterativeSeekTimeout = setTimeout(() => {
+				this._iterativeSeekTimeout = global.setTimeout(() => {
 					logger.info('setting new iterative seek timeout');
 					this._iterativeSeekAndPing(avoidNode);
 				}, this._iterativeSeekTimeoutMs);

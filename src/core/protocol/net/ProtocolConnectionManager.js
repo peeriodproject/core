@@ -518,7 +518,7 @@ var ProtocolConnectionManager = (function (_super) {
     */
     ProtocolConnectionManager.prototype._createConnectionWaitingListTimeout = function (identifier, index) {
         var _this = this;
-        return setTimeout(function () {
+        return global.setTimeout(function () {
             _this._callbackWaitingConnection(identifier, index, new Error('ProtocolConnectionManager: Unable to obtain connection to ' + identifier), null);
         }, this._msToWaitForConnection);
     };
@@ -789,7 +789,7 @@ var ProtocolConnectionManager = (function (_super) {
         var identifier = this._setTemporaryIdentifier(socket);
         var pending = {
             socket: socket,
-            timeout: setTimeout(function () {
+            timeout: global.setTimeout(function () {
                 _this._destroyConnection(socket);
             }, this._incomingPendingTimeoutLength)
         };
@@ -947,7 +947,11 @@ var ProtocolConnectionManager = (function (_super) {
             callback(socket);
         };
 
-        connectToAddressByIndex(startAt, theCallback);
+        if (maxIndex >= 0) {
+            connectToAddressByIndex(startAt, theCallback);
+        } else {
+            callback(null);
+        }
     };
     return ProtocolConnectionManager;
 })(events.EventEmitter);

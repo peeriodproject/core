@@ -126,7 +126,7 @@ var PingPongNodeUpdateHandler = (function (_super) {
     */
     PingPongNodeUpdateHandler.prototype._createSlotTimeout = function (waitingListNumber) {
         var _this = this;
-        return setTimeout(function () {
+        return global.setTimeout(function () {
             var slot = _this._waitingLists[waitingListNumber].splice(0, 1)[0];
 
             _this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);

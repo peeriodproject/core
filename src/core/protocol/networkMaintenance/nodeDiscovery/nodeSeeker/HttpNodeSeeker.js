@@ -127,7 +127,7 @@ var HttpNodeSeeker = (function (_super) {
 
         request.end();
 
-        timeout = setTimeout(function () {
+        timeout = global.setTimeout(function () {
             doCallback(null);
         }, this._serverTimeout);
     };

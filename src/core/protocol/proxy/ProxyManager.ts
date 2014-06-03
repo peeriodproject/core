@@ -268,7 +268,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 			clearTimeout(this._proxyWaitTimeout);
 			this._proxyWaitTimeout = 0;
 		}
-		this._proxyWaitTimeout = setTimeout(() => {
+		this._proxyWaitTimeout = global.setTimeout(() => {
 			this._canProxyCycle = true;
 			this._unsuccessfulProxyTries = 0;
 			this._ignoreProxies = [];
@@ -473,7 +473,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		var identifier:string = this._nodeToIdentifier(node);
 		this._protocolConnectionManager.writeMessageTo(node, 'PROXY_REQUEST', new Buffer(0), (err:Error) => {
 			if (!err) {
-				this._requestedProxies[identifier] = setTimeout(() => {
+				this._requestedProxies[identifier] = global.setTimeout(() => {
 					this._requestProxyTimeout(identifier);
 				}, this._reactionTime);
 			}

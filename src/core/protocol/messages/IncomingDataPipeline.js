@@ -146,7 +146,7 @@ var IncomingDataPipeline = (function (_super) {
 
                 // temporary buffer storage will only be deleted if no new data comes in within the specified time
                 if (!this._doCleanBufferTimeouts[identifier]) {
-                    this._doCleanBufferTimeouts[identifier] = setTimeout(function () {
+                    this._doCleanBufferTimeouts[identifier] = global.setTimeout(function () {
                         _this._freeMemory(identifier);
                     }, this._clearTimeoutLength);
                 }
