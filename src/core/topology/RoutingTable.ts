@@ -344,7 +344,7 @@ class RoutingTable implements RoutingTableInterface {
 		var newBucketKey:number = this._getBucketKey(newContactNodeId);
 
 		if (oldBucketKey !== newBucketKey) {
-			return callback(new Error('RoutingTable.replaceContactNode: Cannot replace the given contact nodes. They dont belong to the same Bucket.'), null);
+			return internalCallback(new Error('RoutingTable.replaceContactNode: Cannot replace the given contact nodes. They dont belong to the same Bucket.'), null);
 		}
 
 		this._getBucket(newBucketKey).remove(oldContactNodeId, (err:Error) => {
