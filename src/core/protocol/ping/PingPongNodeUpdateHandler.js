@@ -6,6 +6,8 @@ var __extends = this.__extends || function (d, b) {
 };
 var events = require('events');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * PingPongNodeUpdateHandlerInterface implementation.
 *
@@ -239,6 +241,9 @@ var PingPongNodeUpdateHandler = (function (_super) {
         this._protocolConnectionManager.writeMessageTo(slot.nodeToCheck, 'PING', new Buffer(0), function (err) {
             if (err) {
                 _this._waitingLists[waitingListNumber].splice(0, 1);
+
+                logger.info('before replacing contact node', { old: slot.nodeToCheck, new: slot.newNode });
+
                 _this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
             } else {
                 slot.timeout = _this._createSlotTimeout(waitingListNumber);
