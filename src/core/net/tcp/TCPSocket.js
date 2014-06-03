@@ -218,12 +218,11 @@ var TCPSocket = (function (_super) {
         var _this = this;
         events.forEach(function (event) {
             (function (evt) {
-                if (evt === 'close' || evt === 'end' || evt === 'error') {
-                    _this._preventWrite = true;
-                }
-
                 _this.getSocket().on(evt, function () {
-                    return _this.emit.apply(_this, [evt].concat(Array.prototype.splice.call(arguments, 0)));
+                    if (evt === 'close' || evt === 'end' || evt === 'error') {
+                        _this._preventWrite = true;
+                    }
+                    _this.emit.apply(_this, [evt].concat(Array.prototype.splice.call(arguments, 0)));
                 });
             })(event);
         });

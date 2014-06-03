@@ -220,11 +220,12 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	private _propagateEvents (events:Array<string>):void {
 		events.forEach((event) => {
 			((evt) => {
-				if (evt === 'close' || evt === 'end' || evt === 'error') {
-					this._preventWrite = true;
-				}
-
-				this.getSocket().on(evt, () => this.emit.apply(this, [evt].concat(Array.prototype.splice.call(arguments, 0))));
+				this.getSocket().on(evt, () => {
+					if (evt === 'close' || evt === 'end' || evt === 'error') {
+						this._preventWrite = true;
+					}
+					this.emit.apply(this, [evt].concat(Array.prototype.splice.call(arguments, 0)));
+				});
 			})(event);
 		});
 	}
