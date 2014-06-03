@@ -164,52 +164,54 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			return;
 		}
 
-		var sock:net.Socket = net.createConnection(port, ip);
-		var connectionError = () => {
-			logger.info('sock connection error');
-			try {
-				sock.end();
-				sock.destroy();
-			}
-			catch (e) {}
+		process.nextTick(() => {
+			var sock:net.Socket = net.createConnection(port, ip);
+			var connectionError = () => {
+				logger.info('sock connection error');
+				try {
+					sock.end();
+					sock.destroy();
+				}
+				catch (e) {}
 
-			sock.removeListener('connect', onConnection);
+				sock.removeListener('connect', onConnection);
 
-			if (callback) {
-				callback(null)
-			}
-			else {
-				this.emit('connection error', port, ip);
-			}
-		};
+				if (callback) {
+					callback(null)
+				}
+				else {
+					this.emit('connection error', port, ip);
+				}
+			};
 
-		var connectionTimeout = global.setTimeout(function () {
-			logger.info('sock connection timeout');
-			connectionError();
-		}, this._outboundConnectionTimeout);
+			var connectionTimeout = global.setTimeout(function () {
+				logger.info('sock connection timeout');
+				connectionError();
+			}, this._outboundConnectionTimeout);
 
-		var onConnection = () => {
-			logger.info('sock connection connected');
+			var onConnection = () => {
+				logger.info('sock connection connected');
 
-			console.log(connectionTimeout);
+				console.log(connectionTimeout);
 
-			global.clearTimeout(connectionTimeout);
+				global.clearTimeout(connectionTimeout);
 
-			var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
+				var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
 
-			sock.removeListener('error', connectionError);
+				sock.removeListener('error', connectionError);
 
-			if (!callback) {
-				this.emit('connected', socket, 'outgoing');
-			}
-			else {
-				callback(socket);
-			}
-		};
+				if (!callback) {
+					this.emit('connected', socket, 'outgoing');
+				}
+				else {
+					callback(socket);
+				}
+			};
 
-		sock.on('error', connectionError);
-		sock.on('connect', onConnection);
-
+			sock.on('error', connectionError);
+			sock.on('connect', onConnection);
+		});
+		
 	}
 
 	public createTCPServer ():net.Server {

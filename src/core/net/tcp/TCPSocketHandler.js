@@ -152,49 +152,51 @@ var TCPSocketHandler = (function (_super) {
             return;
         }
 
-        var sock = net.createConnection(port, ip);
-        var connectionError = function () {
-            logger.info('sock connection error');
-            try  {
-                sock.end();
-                sock.destroy();
-            } catch (e) {
-            }
+        process.nextTick(function () {
+            var sock = net.createConnection(port, ip);
+            var connectionError = function () {
+                logger.info('sock connection error');
+                try  {
+                    sock.end();
+                    sock.destroy();
+                } catch (e) {
+                }
 
-            sock.removeListener('connect', onConnection);
+                sock.removeListener('connect', onConnection);
 
-            if (callback) {
-                callback(null);
-            } else {
-                _this.emit('connection error', port, ip);
-            }
-        };
+                if (callback) {
+                    callback(null);
+                } else {
+                    _this.emit('connection error', port, ip);
+                }
+            };
 
-        var connectionTimeout = global.setTimeout(function () {
-            logger.info('sock connection timeout');
-            connectionError();
-        }, this._outboundConnectionTimeout);
+            var connectionTimeout = global.setTimeout(function () {
+                logger.info('sock connection timeout');
+                connectionError();
+            }, _this._outboundConnectionTimeout);
 
-        var onConnection = function () {
-            logger.info('sock connection connected');
+            var onConnection = function () {
+                logger.info('sock connection connected');
 
-            console.log(connectionTimeout);
+                console.log(connectionTimeout);
 
-            global.clearTimeout(connectionTimeout);
+                global.clearTimeout(connectionTimeout);
 
-            var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
+                var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
 
-            sock.removeListener('error', connectionError);
+                sock.removeListener('error', connectionError);
 
-            if (!callback) {
-                _this.emit('connected', socket, 'outgoing');
-            } else {
-                callback(socket);
-            }
-        };
+                if (!callback) {
+                    _this.emit('connected', socket, 'outgoing');
+                } else {
+                    callback(socket);
+                }
+            };
 
-        sock.on('error', connectionError);
-        sock.on('connect', onConnection);
+            sock.on('error', connectionError);
+            sock.on('connect', onConnection);
+        });
     };
 
     TCPSocketHandler.prototype.createTCPServer = function () {
