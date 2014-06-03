@@ -240,7 +240,7 @@ var ProxyManager = (function (_super) {
         var _this = this;
         this._canProxyCycle = false;
         if (this._proxyWaitTimeout) {
-            clearTimeout(this._proxyWaitTimeout);
+            global.clearTimeout(this._proxyWaitTimeout);
             this._proxyWaitTimeout = 0;
         }
         this._proxyWaitTimeout = global.setTimeout(function () {
@@ -424,7 +424,7 @@ var ProxyManager = (function (_super) {
     ProxyManager.prototype._removeFromRequestedProxies = function (identifier) {
         var requestedProxy = this._requestedProxies[identifier];
 
-        clearTimeout(requestedProxy);
+        global.clearTimeout(requestedProxy);
         delete this._requestedProxies[identifier];
         this._ignoreProxies.push[identifier];
     };

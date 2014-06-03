@@ -203,7 +203,7 @@ var PingPongNodeUpdateHandler = (function (_super) {
 
             if (node.getId().equals(first.nodeToCheck.getId())) {
                 list.splice(0, 1);
-                clearTimeout(first.timeout);
+                global.clearTimeout(first.timeout);
 
                 this.emit('gotPonged', node);
 

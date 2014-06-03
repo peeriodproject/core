@@ -120,7 +120,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		var callbackTimeout:number = 0;
 		var checkAndCallback:Function = (port:number, server:net.Server) => {
 				if (callbackTimeout) {
-					clearTimeout(callbackTimeout);
+					global.clearTimeout(callbackTimeout);
 					callbackTimeout = 0;
 				}
 
@@ -189,7 +189,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		var onConnection = () => {
 			logger.info('sock connection connected');
 
-			clearTimeout(connectionTimeout);
+			global.clearTimeout(connectionTimeout);
 			sock.removeListener('error', connectionError);
 			var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
 
@@ -305,7 +305,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			if (socket) {
 				socket.writeBuffer(new Buffer([20]));
 				socket.on('data', function (data) {
-					clearTimeout(connectionTimeout);
+					global.clearTimeout(connectionTimeout);
 					if (data[0] === 20) {
 						callbackWith(true, socket);
 					}

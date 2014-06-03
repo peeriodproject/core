@@ -99,7 +99,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 			path    : remoteServer.path
 		}, (res) => {
 
-			clearTimeout(timeout);
+			global.clearTimeout(timeout);
 
 			var body = '';
 			res.on('data', function (data) {

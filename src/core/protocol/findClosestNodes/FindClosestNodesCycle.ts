@@ -230,11 +230,11 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 		this._unbindListener();
 
 		if (this._cycleTimeout) {
-			clearTimeout(this._cycleTimeout);
+			global.clearTimeout(this._cycleTimeout);
 			this._cycleTimeout = 0;
 		}
 		if (this._alphaTimeout) {
-			clearTimeout(this._alphaTimeout);
+			global.clearTimeout(this._alphaTimeout);
 			this._alphaTimeout = 0;
 		}
 
@@ -285,7 +285,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 			if (this._probeList.length) {
 				if (this._cycleTimeout) {
 					logger.info('Celaring cycle timeout 2');
-					clearTimeout(this._cycleTimeout);
+					global.clearTimeout(this._cycleTimeout);
 					this._cycleTimeout = 0;
 				}
 				this._doAlphaTimeout();
@@ -312,7 +312,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 		if (!this._probeList.length) {
 			if (this._cycleTimeout) {
 				logger.info('Clearing cycle timeout');
-				clearTimeout(this._cycleTimeout);
+				global.clearTimeout(this._cycleTimeout);
 				this._cycleTimeout = 0;
 			}
 

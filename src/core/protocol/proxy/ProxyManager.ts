@@ -265,7 +265,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	private _blockProxyCycle ():void {
 		this._canProxyCycle = false;
 		if (this._proxyWaitTimeout) {
-			clearTimeout(this._proxyWaitTimeout);
+			global.clearTimeout(this._proxyWaitTimeout);
 			this._proxyWaitTimeout = 0;
 		}
 		this._proxyWaitTimeout = global.setTimeout(() => {
@@ -456,7 +456,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	private _removeFromRequestedProxies (identifier:string):void {
 		var requestedProxy:number = this._requestedProxies[identifier];
 
-		clearTimeout(requestedProxy);
+		global.clearTimeout(requestedProxy);
 		delete this._requestedProxies[identifier];
 		this._ignoreProxies.push[identifier];
 	}

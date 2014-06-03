@@ -94,7 +94,7 @@ var HttpNodeSeeker = (function (_super) {
             port: remoteServer.port,
             path: remoteServer.path
         }, function (res) {
-            clearTimeout(timeout);
+            global.clearTimeout(timeout);
 
             var body = '';
             res.on('data', function (data) {

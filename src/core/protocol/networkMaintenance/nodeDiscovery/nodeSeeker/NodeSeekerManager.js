@@ -108,7 +108,7 @@ var NodeSeekerManager = (function () {
 
             if (_this._iterativeSeekTimeout) {
                 logger.info('clearing iterative seek timeout');
-                clearTimeout(_this._iterativeSeekTimeout);
+                global.clearTimeout(_this._iterativeSeekTimeout);
                 _this._iterativeSeekTimeout = 0;
             }
 

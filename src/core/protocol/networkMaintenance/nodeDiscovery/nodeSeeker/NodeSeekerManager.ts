@@ -129,7 +129,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 
 			if (this._iterativeSeekTimeout) {
 				logger.info('clearing iterative seek timeout');
-				clearTimeout(this._iterativeSeekTimeout);
+				global.clearTimeout(this._iterativeSeekTimeout);
 				this._iterativeSeekTimeout = 0;
 			}
 

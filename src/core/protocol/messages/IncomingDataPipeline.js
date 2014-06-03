@@ -209,7 +209,7 @@ var IncomingDataPipeline = (function (_super) {
         var identifier = socket.getIdentifier();
 
         if (this._doCleanBufferTimeouts[identifier]) {
-            clearTimeout(this._doCleanBufferTimeouts[identifier]);
+            global.clearTimeout(this._doCleanBufferTimeouts[identifier]);
             delete this._doCleanBufferTimeouts[identifier];
         }
 

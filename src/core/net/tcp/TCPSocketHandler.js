@@ -109,7 +109,7 @@ var TCPSocketHandler = (function (_super) {
         var callbackTimeout = 0;
         var checkAndCallback = function (port, server) {
             if (callbackTimeout) {
-                clearTimeout(callbackTimeout);
+                global.clearTimeout(callbackTimeout);
                 callbackTimeout = 0;
             }
 
@@ -176,7 +176,7 @@ var TCPSocketHandler = (function (_super) {
         var onConnection = function () {
             logger.info('sock connection connected');
 
-            clearTimeout(connectionTimeout);
+            global.clearTimeout(connectionTimeout);
             sock.removeListener('error', connectionError);
             var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
 
@@ -290,7 +290,7 @@ var TCPSocketHandler = (function (_super) {
             if (socket) {
                 socket.writeBuffer(new Buffer([20]));
                 socket.on('data', function (data) {
-                    clearTimeout(connectionTimeout);
+                    global.clearTimeout(connectionTimeout);
                     if (data[0] === 20) {
                         callbackWith(true, socket);
                     }
