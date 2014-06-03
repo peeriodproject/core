@@ -1,6 +1,8 @@
 //import JSONConfig = require('../config/JSONConfig');
 var ObjectUtils = require('../utils/ObjectUtils');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * Creates a routing table with the given number of k-buckets
 *
@@ -312,7 +314,14 @@ var RoutingTable = (function () {
         var newBucketKey = this._getBucketKey(newContactNodeId);
 
         if (oldBucketKey !== newBucketKey) {
-            return callback(new Error('RoutingTable.replaceContactNode: Cannot replace the given contact nodes. They dont belong to the same Bucket.'), null);
+            logger.error('can not replace nodes in bucket', {
+                oldBucketKey: oldBucketKey,
+                oldId: oldContactNodeId.toBitString(),
+                newBucketKey: newBucketKey,
+                newId: newContactNodeId.toBitString()
+            });
+
+            return internalCallback(new Error('RoutingTable.replaceContactNode: Cannot replace the given contact nodes. They dont belong to the same Bucket.'), null);
         }
 
         this._getBucket(newBucketKey).remove(oldContactNodeId, function (err) {
