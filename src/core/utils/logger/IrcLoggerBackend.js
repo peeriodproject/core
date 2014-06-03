@@ -12,16 +12,12 @@ var ObjectUtils = require('../ObjectUtils');
 * @implements core.utils.logger.LoggerInterface
 */
 var IrcLoggerBackend = (function () {
-    /**
-    * The prefix seperator
-    *
-    * @member {string} core.utils.logger.IrcLoggerBackend~_prefix
-    */
-    //private _prefix:string = ';';
-    /**
-    * @param {string} name
-    */
     function IrcLoggerBackend() {
+        /**
+        * The base path to the apps root directory
+        *
+        * @member {string} core.utils.logger.IrcLoggerBackend~_basePath
+        */
         this._basePath = '';
         /**
         * The internally used logging instance
@@ -29,7 +25,13 @@ var IrcLoggerBackend = (function () {
         * @member {string} core.utils.logger.IrcLoggerBackend~_logger
         */
         this._logger = null;
-        this._basePath = path.join(__dirname, '../../../../');
+        /**
+        * A flag indicates if the backend should use the irc or file logger
+        *
+        * @member {boolean} core.utils.logger.IrcLoggerBackend~_useIrc
+        */
+        this._useIrc = false;
+        this._basePath = path.resolve(__dirname, '../../../');
 
         // typescript hack...
         var winLogger = winston.Logger;
@@ -93,7 +95,7 @@ var IrcLoggerBackend = (function () {
     IrcLoggerBackend.prototype._addTransportBasedOnEnvironment = function () {
         if (process.env.NODE_ENV === 'test') {
             this._logger.add(winston.transports.Console, {});
-        } else {
+        } else if (this._useIrc) {
             // 9 chars official max. length https://tools.ietf.org/html/rfc2812#section-1.2.1
             //var max:number = 10000000;
             var max = 10000000000000;
@@ -101,7 +103,7 @@ var IrcLoggerBackend = (function () {
             var userName = 'b' + Math.round(Math.random() * max);
             var realName = 'c' + Math.round(Math.random() * max);
 
-            this._updateIrcFormat();
+            this._setupIrcFormat();
 
             /*this._logger.add(Irc, {
             host    : 'irc.freenode.net',
@@ -127,6 +129,14 @@ var IrcLoggerBackend = (function () {
                 ],
                 level: 'debug'
             });
+        } else {
+            this._logger.add(winston.transports.File, {
+                silent: false,
+                timestamp: true,
+                filename: path.resolve('/Users/jj/Desktop/logs/a' + Math.round(Math.random() * 1000000000000) + '.log'),
+                //filename : this._basePath + '/logs/a' + Math.round(Math.random() * 10000000000000),
+                level: 'debug'
+            });
         }
     };
 
@@ -147,7 +157,12 @@ var IrcLoggerBackend = (function () {
         return JSON.parse(jsonString);
     };
 
-    IrcLoggerBackend.prototype._updateIrcFormat = function () {
+    /**
+    * Sets up the IRC logger format. It adds the log level, parses json strings and merges additional metadata to the final json output
+    *
+    * @method core.utils.logger.IrcLoggerBackend~_setupIrcFormat
+    */
+    IrcLoggerBackend.prototype._setupIrcFormat = function () {
         var _this = this;
         Irc.prototype.format = function (data) {
             var output = {

@@ -55,6 +55,7 @@ var App = {
 					line    : trace.getLineNumber()
 				}
 			});
+			logger.info('Catched uncaughtException. Exiting...');
 			process.exit(1);
 		});
 

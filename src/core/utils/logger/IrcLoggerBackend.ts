@@ -16,6 +16,11 @@ import ObjectUtils = require('../ObjectUtils');
  */
 class IrcLoggerBackend implements LoggerInterface {
 
+	/**
+	 * The base path to the apps root directory
+	 *
+	 * @member {string} core.utils.logger.IrcLoggerBackend~_basePath
+	 */
 	private _basePath:string = '';
 
 	/**
@@ -26,16 +31,15 @@ class IrcLoggerBackend implements LoggerInterface {
 	private _logger:any = null;
 
 	/**
-	 * The prefix seperator
+	 * A flag indicates if the backend should use the irc or file logger
 	 *
-	 * @member {string} core.utils.logger.IrcLoggerBackend~_prefix
+	 * @member {boolean} core.utils.logger.IrcLoggerBackend~_useIrc
 	 */
-	//private _prefix:string = ';';
-	/**
-	 * @param {string} name
-	 */
+	private _useIrc:boolean = false;
+
+
 	constructor () {
-		this._basePath = path.join(__dirname, '../../../../');
+		this._basePath = path.resolve(__dirname, '../../../');
 
 		// typescript hack...
 		var winLogger:any = winston.Logger;
@@ -106,7 +110,7 @@ class IrcLoggerBackend implements LoggerInterface {
 		if (process.env.NODE_ENV === 'test') {
 			this._logger.add(winston.transports.Console, {});
 		}
-		else {
+		else if (this._useIrc) {
 			// 9 chars official max. length https://tools.ietf.org/html/rfc2812#section-1.2.1
 			//var max:number = 10000000;
 			var max:number = 10000000000000;
@@ -114,33 +118,42 @@ class IrcLoggerBackend implements LoggerInterface {
 			var userName:string = 'b' + Math.round(Math.random() * max);
 			var realName:string = 'c' + Math.round(Math.random() * max);
 
-			this._updateIrcFormat();
+			this._setupIrcFormat();
 
 			/*this._logger.add(Irc, {
-				host    : 'irc.freenode.net',
-				port    : 6697,
-				ssl     : true,
-				nick    : nick,
-				userName: userName,
-				realName: realName,
-				channels: [
-					'#jj-abschluss'
-				],
-				level   : 'debug'
-			});*/
-
-			this._logger.add(Irc, {
-			 host    : '192.168.178.37',
-			 port    : 6667,
-			 ssl     : false,
+			 host    : 'irc.freenode.net',
+			 port    : 6697,
+			 ssl     : true,
 			 nick    : nick,
 			 userName: userName,
 			 realName: realName,
 			 channels: [
-			 '#logs'
+			 '#jj-abschluss'
 			 ],
 			 level   : 'debug'
-			 });
+			 });*/
+
+			this._logger.add(Irc, {
+				host    : '192.168.178.37',
+				port    : 6667,
+				ssl     : false,
+				nick    : nick,
+				userName: userName,
+				realName: realName,
+				channels: [
+					'#logs'
+				],
+				level   : 'debug'
+			});
+		}
+		else {
+			this._logger.add(winston.transports.File, {
+				silent   : false,
+				timestamp: true,
+				filename: path.resolve('/Users/jj/Desktop/logs/a' + Math.round(Math.random() * 1000000000000) + '.log'),
+				//filename : this._basePath + '/logs/a' + Math.round(Math.random() * 10000000000000),
+				level    : 'debug'
+			});
 		}
 	}
 
@@ -161,7 +174,12 @@ class IrcLoggerBackend implements LoggerInterface {
 		return JSON.parse(jsonString);
 	}
 
-	private _updateIrcFormat ():void {
+	/**
+	 * Sets up the IRC logger format. It adds the log level, parses json strings and merges additional metadata to the final json output
+	 *
+	 * @method core.utils.logger.IrcLoggerBackend~_setupIrcFormat
+	 */
+	private _setupIrcFormat ():void {
 		Irc.prototype.format = (data) => {
 			var output:Object = {
 				_level: data.level
@@ -195,7 +213,7 @@ class IrcLoggerBackend implements LoggerInterface {
 		};
 	}
 
-	private _updateMessage(message:Object):string {
+	private _updateMessage (message:Object):string {
 		return (typeof message === 'string') ? <string>message : JSON.stringify(message);
 	}
 

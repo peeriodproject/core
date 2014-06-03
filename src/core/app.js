@@ -19,7 +19,6 @@ var ProtocolGateway = require('./protocol/ProtocolGateway');
 var JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 
 var stackTrace = require('stack-trace');
-
 var logger = require('./utils/logger/LoggerFactory').create();
 
 //require('longjohn');
@@ -49,6 +48,7 @@ var App = {
                     line: trace.getLineNumber()
                 }
             });
+            logger.info('Catched uncaughtException. Exiting...');
             process.exit(1);
         });
 
