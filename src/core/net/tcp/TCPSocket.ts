@@ -166,9 +166,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		this._propagateEvents(this._eventsToPropagate);
 	}
 
-	public writeBuffer (buffer:NodeBuffer, callback?:Function, forceAvoidSimulation?:boolean):boolean {
-
-		if (this._preventWrite) return;
+	public writeBuffer (buffer:NodeBuffer, callback?:Function, forceAvoidSimulation?:boolean):void {
 
 		if (this._simulatorRTT && !forceAvoidSimulation) {
 			global.setTimeout(() => {
@@ -177,19 +175,21 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			return;
 		}
 
-		var success = false;
+		process.nextTick(() => {
+			if (this._preventWrite) return;
 
-		try {
-			success = this.getSocket().write(buffer, callback);
-		}
-		catch (e) {
-			this.forceDestroy();
-		}
+			try {
+				this.getSocket().write(buffer, callback);
+			}
+			catch (e) {
+				this.forceDestroy();
+			}
 
 
-		buffer = null;
+			buffer = null;
+		});
 
-		return success;
+
 	}
 
 	public writeString (message:string, encoding:string = 'utf8', callback?:Function, forceAvoidSimulation?:boolean):boolean {

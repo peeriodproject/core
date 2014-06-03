@@ -165,9 +165,6 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.writeBuffer = function (buffer, callback, forceAvoidSimulation) {
         var _this = this;
-        if (this._preventWrite)
-            return;
-
         if (this._simulatorRTT && !forceAvoidSimulation) {
             global.setTimeout(function () {
                 _this.writeBuffer(buffer, callback, true);
@@ -175,17 +172,18 @@ var TCPSocket = (function (_super) {
             return;
         }
 
-        var success = false;
+        process.nextTick(function () {
+            if (_this._preventWrite)
+                return;
 
-        try  {
-            success = this.getSocket().write(buffer, callback);
-        } catch (e) {
-            this.forceDestroy();
-        }
+            try  {
+                _this.getSocket().write(buffer, callback);
+            } catch (e) {
+                _this.forceDestroy();
+            }
 
-        buffer = null;
-
-        return success;
+            buffer = null;
+        });
     };
 
     TCPSocket.prototype.writeString = function (message, encoding, callback, forceAvoidSimulation) {

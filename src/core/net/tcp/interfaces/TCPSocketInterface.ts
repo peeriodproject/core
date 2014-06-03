@@ -117,7 +117,7 @@ interface TCPSocketInterface extends NodeJS.EventEmitter {
 	 * @param {Function} callback
 	 * @returns {boolean} True if flushed to kernel buffer, false if all or part was queued in memory.
 	 */
-	writeBuffer (buffer:NodeBuffer, callback?:Function):boolean;
+	writeBuffer (buffer:NodeBuffer, callback?:Function):void;
 
 	/**
 	 * Writes a string to the socket.
