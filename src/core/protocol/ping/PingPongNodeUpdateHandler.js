@@ -242,7 +242,10 @@ var PingPongNodeUpdateHandler = (function (_super) {
             if (err) {
                 _this._waitingLists[waitingListNumber].splice(0, 1);
 
-                logger.info('before replacing contact node', { old: slot.nodeToCheck, new: slot.newNode });
+                var nodeToCheckId = slot.nodeToCheck ? slot.nodeToCheck.getId().toHexString() : 'No Node to check!';
+                var newNodeId = slot.newNode ? slot.newNode.getId().toHexString() : 'No new Node!';
+
+                logger.info('before replacing contact node', { old: nodeToCheckId, new: newNodeId });
 
                 _this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
             } else {
