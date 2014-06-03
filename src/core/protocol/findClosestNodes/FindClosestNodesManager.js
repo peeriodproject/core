@@ -8,6 +8,8 @@ var events = require('events');
 
 var Id = require('../../topology/Id');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 *
 * @class core.protocol.findClosestNodes.FindClosestNodesManager
@@ -141,6 +143,9 @@ var FindClosestNodesManager = (function (_super) {
             this._routingTable.getClosestContactNodes(searchForId, null, function (err, contacts) {
                 if (!err && contacts && contacts.length) {
                     _this._startCycleWithList(searchForId, contacts);
+                } else {
+                    logger.error('Routing table getClosestContactNodes error! Calling back with empty list.');
+                    _this.emit('foundClosestNodes', searchForId, []);
                 }
             });
         }

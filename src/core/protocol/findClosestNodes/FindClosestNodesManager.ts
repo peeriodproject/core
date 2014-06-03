@@ -19,6 +19,7 @@ import Id = require('../../topology/Id');
 import FindClosestNodesCycleFactoryInterface = require('./interfaces/FindClosestNodesCycleFactoryInterface');
 import FindClosestNodesCycleFactory = require('./FindClosestNodesCycleFactory');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
 /**
  *
  * @class core.protocol.findClosestNodes.FindClosestNodesManager
@@ -167,6 +168,10 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 			this._routingTable.getClosestContactNodes(searchForId, null, (err:Error, contacts:ContactNodeListInterface) => {
 				if (!err && contacts && contacts.length) {
 					this._startCycleWithList(searchForId, contacts);
+				}
+				else {
+					logger.error('Routing table getClosestContactNodes error! Calling back with empty list.');
+					this.emit('foundClosestNodes', searchForId, []);
 				}
 			});
 		}
