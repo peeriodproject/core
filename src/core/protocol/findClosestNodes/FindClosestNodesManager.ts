@@ -210,7 +210,7 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 		}
 
 		this._routingTable.getClosestContactNodes(searchForId, requestingNode.getId(), (err:Error, contacts:ContactNodeListInterface) => {
-			if (!err && contacts && contacts.length) {
+			if (!err && contacts) {
 				var payload:Buffer = null;
 				try {
 					payload = this._writableMessageFactory.constructPayload(searchForId, contacts);

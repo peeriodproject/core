@@ -185,7 +185,7 @@ var FindClosestNodesManager = (function (_super) {
         }
 
         this._routingTable.getClosestContactNodes(searchForId, requestingNode.getId(), function (err, contacts) {
-            if (!err && contacts && contacts.length) {
+            if (!err && contacts) {
                 var payload = null;
                 try  {
                     payload = _this._writableMessageFactory.constructPayload(searchForId, contacts);
