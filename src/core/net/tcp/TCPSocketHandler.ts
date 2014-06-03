@@ -168,8 +168,14 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			logger.info('sock connecting to');
 
 			var sock:net.Socket = net.createConnection(port, ip);
-			var connectionError = () => {
-				logger.info('sock connection error');
+			var connectionError = (fromTimeout) => {
+				if (fromTimeout) {
+					logger.info('sock connection error timeout');
+				}
+				else {
+					logger.info('sock connection error');
+				}
+
 				try {
 					sock.end();
 					sock.destroy();
@@ -188,7 +194,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 
 			var connectionTimeout = global.setTimeout(function () {
 				logger.info('sock connection timeout');
-				connectionError();
+				connectionError(true);
 			}, this._outboundConnectionTimeout);
 
 			var onConnection = () => {

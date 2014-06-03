@@ -156,8 +156,13 @@ var TCPSocketHandler = (function (_super) {
             logger.info('sock connecting to');
 
             var sock = net.createConnection(port, ip);
-            var connectionError = function () {
-                logger.info('sock connection error');
+            var connectionError = function (fromTimeout) {
+                if (fromTimeout) {
+                    logger.info('sock connection error timeout');
+                } else {
+                    logger.info('sock connection error');
+                }
+
                 try  {
                     sock.end();
                     sock.destroy();
@@ -175,7 +180,7 @@ var TCPSocketHandler = (function (_super) {
 
             var connectionTimeout = global.setTimeout(function () {
                 logger.info('sock connection timeout');
-                connectionError();
+                connectionError(true);
             }, _this._outboundConnectionTimeout);
 
             var onConnection = function () {
