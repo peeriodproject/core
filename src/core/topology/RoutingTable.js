@@ -1,7 +1,7 @@
 //import JSONConfig = require('../config/JSONConfig');
 var ObjectUtils = require('../utils/ObjectUtils');
 
-var logger = require('../../utils/logger/LoggerFactory').create();
+var logger = require('../utils/logger/LoggerFactory').create();
 
 /**
 * Creates a routing table with the given number of k-buckets
