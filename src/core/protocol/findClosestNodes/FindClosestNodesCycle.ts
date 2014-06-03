@@ -206,7 +206,8 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 	 */
 	private _doAlphaTimeout ():void {
 		if (!this._alphaTimeout) {
-			logger.info('Creating alpha timeout');
+			logger.info('Creating alpha timeout', {ms: this._parallelismDelayMillis});
+
 			this._alphaTimeout = global.setTimeout(() => {
 				logger.info('alpha timeout elapsed.');
 				this._alphaTimeout = 0;

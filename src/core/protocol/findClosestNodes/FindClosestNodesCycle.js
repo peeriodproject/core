@@ -171,7 +171,8 @@ var FindClosestNodesCycle = (function () {
     FindClosestNodesCycle.prototype._doAlphaTimeout = function () {
         var _this = this;
         if (!this._alphaTimeout) {
-            logger.info('Creating alpha timeout');
+            logger.info('Creating alpha timeout', { ms: this._parallelismDelayMillis });
+
             this._alphaTimeout = global.setTimeout(function () {
                 logger.info('alpha timeout elapsed.');
                 _this._alphaTimeout = 0;
