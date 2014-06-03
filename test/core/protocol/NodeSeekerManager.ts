@@ -15,7 +15,7 @@ import Id = require('../../../src/core/topology/Id');
 import MyNode = require('../../../src/core/topology/MyNode');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager @current', function () {
+describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function () {
 
 	var sandbox:SinonSandbox = null;
 	var proxyStub:any = null;

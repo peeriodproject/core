@@ -7,7 +7,8 @@ var net = require('net');
 
 var socket_opts = {
     "idleConnectionKillTimeout": 2,
-    "doKeepAlive": true
+    "doKeepAlive": true,
+    "simulatorRTT": 1
 };
 
 // echoing server

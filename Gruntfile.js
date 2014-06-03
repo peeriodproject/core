@@ -100,6 +100,7 @@ module.exports = function (grunt) {
     // Task aliases
     grunt.registerTask('createReports', ['env:test', 'mochaTest:coverage', 'plato:source']);
     grunt.registerTask('_runTests', ['env:test', 'mochaTest']);
+    grunt.registerTask('_coverage', ['env:test', 'mochaTest:coverage']);
     grunt.registerTask('test', ['_runTests']);
     grunt.registerTask('dev', ['env:dev', 'nodemon']);
     grunt.registerTask('prod', ['env:prod', 'nodemon']);

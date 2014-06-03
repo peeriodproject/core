@@ -36,6 +36,20 @@ describe('CORE --> PROTOCOL --> NODE DISOVERY --> NodePublisherFactory', functio
 		});
 	});
 
+	it('should return an empty list when it cannot load the state file', function (done) {
+		var cStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+			get: function (what):any {
+				if (what === 'app.dataPath') return testUtils.getFixturePath('core/config/foo/');
+				if (what === 'protocol.nodeDiscovery.republishInSeconds') return 3;
+			}
+		});
+
+		var factory = new NodePublisherFactory(cStub, cStub, myNode);
+		factory.createPublisherList(function (list) {
+			if (list.length === 0) done();
+		});
+	});
+
 	after(function () {
 		sandbox.restore();
 	});

@@ -15,7 +15,7 @@ var Id = require('../../../src/core/topology/Id');
 var MyNode = require('../../../src/core/topology/MyNode');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager @current', function () {
+describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function () {
     var sandbox = null;
     var proxyStub = null;
     var protocolConnectionManagerStub = null;
