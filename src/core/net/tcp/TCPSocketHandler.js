@@ -169,7 +169,6 @@ var TCPSocketHandler = (function (_super) {
                 _this.emit('connection error', port, ip);
             }
         };
-        console.log(this._outboundConnectionTimeout);
 
         var connectionTimeout = global.setTimeout(function () {
             logger.info('sock connection timeout');
@@ -178,6 +177,8 @@ var TCPSocketHandler = (function (_super) {
 
         var onConnection = function () {
             logger.info('sock connection connected');
+
+            console.log(connectionTimeout);
 
             global.clearTimeout(connectionTimeout);
 
