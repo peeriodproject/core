@@ -128,7 +128,9 @@ var IrcLogger = (function () {
         var additionalData = {
             _caller: functionName,
             _uuid: this._uuid,
-            pid: process.pid
+            process: {
+                pid: process.pid
+            }
         };
 
         return ObjectUtils.extend(metadata, additionalData);
