@@ -164,9 +164,10 @@ var TCPSocketHandler = (function (_super) {
                 }
 
                 try  {
-                    sock.end();
+                    //sock.end();
                     sock.destroy();
                 } catch (e) {
+                    console.log(e);
                 }
 
                 sock.removeListener('connect', onConnection);
@@ -180,6 +181,7 @@ var TCPSocketHandler = (function (_super) {
 
             var connectionTimeout = global.setTimeout(function () {
                 logger.info('sock connection timeout');
+                sock.removeListener('error', connectionError);
                 connectionError(true);
             }, _this._outboundConnectionTimeout);
 
