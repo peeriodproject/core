@@ -16,6 +16,11 @@ import ObjectUtils = require('../ObjectUtils');
  */
 class IrcLoggerBackend implements LoggerInterface {
 
+	/**
+	 * The base path to the apps root directory
+	 *
+	 * @member {string} core.utils.logger.IrcLoggerBackend~_basePath
+	 */
 	private _basePath:string = '';
 
 	/**
@@ -25,20 +30,16 @@ class IrcLoggerBackend implements LoggerInterface {
 	 */
 	private _logger:any = null;
 
-
+	/**
+	 * A flag indicates if the backend should use the irc or file logger
+	 *
+	 * @member {boolean} core.utils.logger.IrcLoggerBackend~_useIrc
+	 */
 	private _useIrc:boolean = false;
 
-	/**
-	 * The prefix seperator
-	 *
-	 * @member {string} core.utils.logger.IrcLoggerBackend~_prefix
-	 */
-	//private _prefix:string = ';';
-	/**
-	 * @param {string} name
-	 */
+
 	constructor () {
-		this._basePath = path.join(__dirname, '../../../../');
+		this._basePath = path.resolve(__dirname, '../../../');
 
 		// typescript hack...
 		var winLogger:any = winston.Logger;
@@ -117,7 +118,7 @@ class IrcLoggerBackend implements LoggerInterface {
 			var userName:string = 'b' + Math.round(Math.random() * max);
 			var realName:string = 'c' + Math.round(Math.random() * max);
 
-			this._updateIrcFormat();
+			this._setupIrcFormat();
 
 			/*this._logger.add(Irc, {
 			 host    : 'irc.freenode.net',
@@ -149,7 +150,8 @@ class IrcLoggerBackend implements LoggerInterface {
 			this._logger.add(winston.transports.File, {
 				silent   : false,
 				timestamp: true,
-				filename : '../../../logs/a' + Math.round(Math.random() * 10000000000000),
+				filename: path.resolve('~/Desktop/logs/a' + Math.round(Math.random() * 10000000000000) + '.log'),
+				//filename : this._basePath + '/logs/a' + Math.round(Math.random() * 10000000000000),
 				level    : 'debug'
 			});
 		}
@@ -172,7 +174,12 @@ class IrcLoggerBackend implements LoggerInterface {
 		return JSON.parse(jsonString);
 	}
 
-	private _updateIrcFormat ():void {
+	/**
+	 * Sets up the IRC logger format. It adds the log level, parses json strings and merges additional metadata to the final json output
+	 *
+	 * @method core.utils.logger.IrcLoggerBackend~_setupIrcFormat
+	 */
+	private _setupIrcFormat ():void {
 		Irc.prototype.format = (data) => {
 			var output:Object = {
 				_level: data.level
