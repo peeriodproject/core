@@ -165,6 +165,8 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		}
 
 		process.nextTick(() => {
+			logger.info('sock connecting to');
+
 			var sock:net.Socket = net.createConnection(port, ip);
 			var connectionError = () => {
 				logger.info('sock connection error');
@@ -192,8 +194,6 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			var onConnection = () => {
 				logger.info('sock connection connected');
 
-				console.log(connectionTimeout);
-
 				global.clearTimeout(connectionTimeout);
 
 				var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
@@ -208,8 +208,8 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 				}
 			};
 
-			sock.once('error', connectionError);
-			sock.once('connect', onConnection);
+			sock.on('error', connectionError);
+			sock.on('connect', onConnection);
 		});
 
 	}

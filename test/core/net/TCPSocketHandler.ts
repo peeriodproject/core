@@ -18,7 +18,7 @@ var defaultHandlerOpts:TCPSocketHandlerOptions = {
 	idleConnectionKillTimeout: 0
 };
 
-describe('CORE --> NET --> TCP --> TCPSocketHandler', function () {
+describe('CORE --> NET --> TCP --> TCPSocketHandler @current', function () {
 
 	this.timeout(0);
 
@@ -128,7 +128,5 @@ describe('CORE --> NET --> TCP --> TCPSocketHandler', function () {
 			}
 		});
 	});
-
-
 
 });
