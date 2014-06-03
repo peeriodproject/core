@@ -170,6 +170,7 @@ var TCPSocketHandler = (function (_super) {
             }
         };
         var connectionTimeout = global.setTimeout(function () {
+            logger.info('sock connection timeout');
             connectionError();
         }, this._outboundConnectionTimeout);
 
@@ -177,8 +178,10 @@ var TCPSocketHandler = (function (_super) {
             logger.info('sock connection connected');
 
             global.clearTimeout(connectionTimeout);
-            sock.removeListener('error', connectionError);
+
             var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
+
+            sock.removeListener('error', connectionError);
 
             if (!callback) {
                 _this.emit('connected', socket, 'outgoing');
@@ -187,8 +190,8 @@ var TCPSocketHandler = (function (_super) {
             }
         };
 
-        sock.on('connect', onConnection);
         sock.on('error', connectionError);
+        sock.on('connect', onConnection);
     };
 
     TCPSocketHandler.prototype.createTCPServer = function () {

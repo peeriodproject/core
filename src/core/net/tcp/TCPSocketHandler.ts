@@ -183,6 +183,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			}
 		};
 		var connectionTimeout = global.setTimeout(function () {
+			logger.info('sock connection timeout');
 			connectionError();
 		}, this._outboundConnectionTimeout);
 
@@ -190,8 +191,10 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			logger.info('sock connection connected');
 
 			global.clearTimeout(connectionTimeout);
-			sock.removeListener('error', connectionError);
+
 			var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
+
+			sock.removeListener('error', connectionError);
 
 			if (!callback) {
 				this.emit('connected', socket, 'outgoing');
@@ -201,8 +204,8 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			}
 		};
 
-		sock.on('connect', onConnection);
 		sock.on('error', connectionError);
+		sock.on('connect', onConnection);
 
 	}
 
