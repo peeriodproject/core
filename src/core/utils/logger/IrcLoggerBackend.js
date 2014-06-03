@@ -37,7 +37,8 @@ var IrcLoggerBackend = (function () {
         var winLogger = winston.Logger;
 
         this._logger = new winLogger({
-            transports: []
+            transports: [],
+            exitOnError: false
         });
 
         this._addTransportBasedOnEnvironment();
@@ -136,8 +137,7 @@ var IrcLoggerBackend = (function () {
                 filename: path.resolve('/Users/jj/Desktop/logs/a' + Math.round(Math.random() * 1000000000000) + '.log'),
                 //filename : this._basePath + '/logs/a' + Math.round(Math.random() * 10000000000000),
                 level: 'debug',
-                handleExceptions: true,
-                exitOnError: false
+                handleExceptions: true
             });
         }
     };
