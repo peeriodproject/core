@@ -236,13 +236,11 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 	 * @param {core.topology.ContactNodeInterface} node The new contact node info.
 	 */
 	private _newNodeInformation (node:ContactNodeInterface):void {
-		if (node.getAddresses().length) {
-			this._routingTable.updateContactNode(node, (err:Error, longestNotSeenContact:ContactNodeInterface) => {
-				if (err && longestNotSeenContact) {
-					this._addToWaitingList(node, longestNotSeenContact);
-				}
-			});
-		}
+		this._routingTable.updateContactNode(node, (err:Error, longestNotSeenContact:ContactNodeInterface) => {
+			if (err && longestNotSeenContact) {
+				this._addToWaitingList(node, longestNotSeenContact);
+			}
+		});
 	}
 
 	/**

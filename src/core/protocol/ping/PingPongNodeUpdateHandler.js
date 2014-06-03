@@ -222,13 +222,11 @@ var PingPongNodeUpdateHandler = (function (_super) {
     */
     PingPongNodeUpdateHandler.prototype._newNodeInformation = function (node) {
         var _this = this;
-        if (node.getAddresses().length) {
-            this._routingTable.updateContactNode(node, function (err, longestNotSeenContact) {
-                if (err && longestNotSeenContact) {
-                    _this._addToWaitingList(node, longestNotSeenContact);
-                }
-            });
-        }
+        this._routingTable.updateContactNode(node, function (err, longestNotSeenContact) {
+            if (err && longestNotSeenContact) {
+                _this._addToWaitingList(node, longestNotSeenContact);
+            }
+        });
     };
 
     /**
