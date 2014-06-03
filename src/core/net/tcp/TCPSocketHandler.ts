@@ -182,6 +182,8 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 				this.emit('connection error', port, ip);
 			}
 		};
+		console.log(this._outboundConnectionTimeout);
+
 		var connectionTimeout = global.setTimeout(function () {
 			logger.info('sock connection timeout');
 			connectionError();
