@@ -29,6 +29,7 @@ var IrcLoggerBackend = (function () {
         * @member {string} core.utils.logger.IrcLoggerBackend~_logger
         */
         this._logger = null;
+        this._useIrc = false;
         this._basePath = path.join(__dirname, '../../../../');
 
         // typescript hack...
@@ -93,7 +94,7 @@ var IrcLoggerBackend = (function () {
     IrcLoggerBackend.prototype._addTransportBasedOnEnvironment = function () {
         if (process.env.NODE_ENV === 'test') {
             this._logger.add(winston.transports.Console, {});
-        } else {
+        } else if (this._useIrc) {
             // 9 chars official max. length https://tools.ietf.org/html/rfc2812#section-1.2.1
             //var max:number = 10000000;
             var max = 10000000000000;
@@ -125,6 +126,13 @@ var IrcLoggerBackend = (function () {
                 channels: [
                     '#logs'
                 ],
+                level: 'debug'
+            });
+        } else {
+            this._logger.add(winston.transports.File, {
+                silent: false,
+                timestamp: true,
+                filename: '../../../logs/a' + Math.round(Math.random() * 10000000000000),
                 level: 'debug'
             });
         }

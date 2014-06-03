@@ -25,6 +25,9 @@ class IrcLoggerBackend implements LoggerInterface {
 	 */
 	private _logger:any = null;
 
+
+	private _useIrc:boolean = false;
+
 	/**
 	 * The prefix seperator
 	 *
@@ -106,7 +109,7 @@ class IrcLoggerBackend implements LoggerInterface {
 		if (process.env.NODE_ENV === 'test') {
 			this._logger.add(winston.transports.Console, {});
 		}
-		else {
+		else if (this._useIrc) {
 			// 9 chars official max. length https://tools.ietf.org/html/rfc2812#section-1.2.1
 			//var max:number = 10000000;
 			var max:number = 10000000000000;
@@ -117,30 +120,38 @@ class IrcLoggerBackend implements LoggerInterface {
 			this._updateIrcFormat();
 
 			/*this._logger.add(Irc, {
-				host    : 'irc.freenode.net',
-				port    : 6697,
-				ssl     : true,
-				nick    : nick,
-				userName: userName,
-				realName: realName,
-				channels: [
-					'#jj-abschluss'
-				],
-				level   : 'debug'
-			});*/
-
-			this._logger.add(Irc, {
-			 host    : '192.168.178.37',
-			 port    : 6667,
-			 ssl     : false,
+			 host    : 'irc.freenode.net',
+			 port    : 6697,
+			 ssl     : true,
 			 nick    : nick,
 			 userName: userName,
 			 realName: realName,
 			 channels: [
-			 '#logs'
+			 '#jj-abschluss'
 			 ],
 			 level   : 'debug'
-			 });
+			 });*/
+
+			this._logger.add(Irc, {
+				host    : '192.168.178.37',
+				port    : 6667,
+				ssl     : false,
+				nick    : nick,
+				userName: userName,
+				realName: realName,
+				channels: [
+					'#logs'
+				],
+				level   : 'debug'
+			});
+		}
+		else {
+			this._logger.add(winston.transports.File, {
+				silent   : false,
+				timestamp: true,
+				filename : '../../../logs/a' + Math.round(Math.random() * 10000000000000),
+				level    : 'debug'
+			});
 		}
 	}
 
@@ -195,7 +206,7 @@ class IrcLoggerBackend implements LoggerInterface {
 		};
 	}
 
-	private _updateMessage(message:Object):string {
+	private _updateMessage (message:Object):string {
 		return (typeof message === 'string') ? <string>message : JSON.stringify(message);
 	}
 
