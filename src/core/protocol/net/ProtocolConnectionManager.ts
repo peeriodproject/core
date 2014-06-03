@@ -422,8 +422,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		// testing purposes only
 		var payloadStr = messageType === 'FIND_CLOSEST_NODES' ? payload.toString('hex') : '';
 
-
-		logger.info({to: node.getId().toHexString(), msgType: messageType, payload: payloadStr});
+		logger.info('', {to: node.getId().toHexString(), msgType: messageType, payload: payloadStr});
 	}
 
 	/**
