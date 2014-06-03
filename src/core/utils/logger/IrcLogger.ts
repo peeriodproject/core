@@ -147,7 +147,8 @@ class IrcLogger implements LoggerInterface {
 
 		var additionalData:Object = {
 			_caller: functionName,
-			_uuid: this._uuid
+			_uuid: this._uuid,
+			pid: process.pid
 		};
 
 		return ObjectUtils.extend(metadata, additionalData);
