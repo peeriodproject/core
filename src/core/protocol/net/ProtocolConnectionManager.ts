@@ -420,7 +420,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this.writeBufferTo(node, buffer, callback);
 
 		// testing purposes only
-		var payloadStr = messageType === 'FIND_CLOSEST_NODES' ? payloadStr.toString('hex') : '';
+		var payloadStr = messageType === 'FIND_CLOSEST_NODES' ? payload.toString('hex') : '';
 
 
 		logger.info({to: node.getId().toHexString(), msgType: messageType, payload: payloadStr});

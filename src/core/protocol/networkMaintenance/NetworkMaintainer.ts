@@ -11,6 +11,8 @@ import Id = require('../../topology/Id');
 import FindClosestNodesManagerInterface = require('../findClosestNodes/interfaces/FindClosestNodesManagerInterface');
 import ProxyManagerInterface = require('../proxy/interfaces/ProxyManagerInterface');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * NetworkMaintainerInterface implementation.
  *
@@ -142,6 +144,8 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 
 			this._prepopulateBucketRefreshes();
 
+			logger.info('Joining the network');
+
 			this._proxyManager.on('contactNodeInformation', (node:ContactNodeInterface) => {
 				this._handleBucketAccess(node);
 			});
@@ -211,16 +215,22 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 	private _findEntryNodeAndJoin (avoidNode:ContactNodeInterface):void {
 
 		this._nodeSeekerManager.forceFindActiveNode(avoidNode, (node:ContactNodeInterface) => {
+			logger.info('Found an entry node, starting search for own id...', {with: node.getId().toHexString()});
+
 			this._findClosestNodesManager.startCycleFor(this._myIdToSearchFor, [node]);
 
 			this._findClosestNodesManager.once('foundClosestNodes', (searchForId:IdInterface, resultingList:ContactNodeListInterface) => {
 
+				logger.info('Find closest nodes cycle finished', {for: searchForId.toHexString(), resultLen: resultingList.length});
+
 				if (!resultingList.length) {
+					logger.info('Resulting list is empty, trying to find another node.');
 					setImmediate(() => {
 						this._findEntryNodeAndJoin(node);
 					});
 				}
 				else {
+					logger.info('The initial contact query is done.', {resultLen: resultingList.length});
 					this.emit('initialContactQueryCompleted');
 					this._finalizeEntryWithBucketRefreshes();
 				}
