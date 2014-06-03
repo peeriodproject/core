@@ -10,7 +10,10 @@ module LoggerFactory {
 	var _ircLogger = null;
 
 	export function create (uuid:string = ''):LoggerInterface {
-		var configPath:string = path.join(process.cwd(), 'src/config/mainConfig');
+
+		var envPronePath:string = process.env.NODE_ENV === 'test' ? 'src/config/mainConfig' : 'config/mainConfig';
+
+		var configPath:string = path.join(process.cwd(), envPronePath);
 
 		if (!_ircLogger) {
 			_ircLogger = new IrcLogger(new JSONConfig(configPath, ['simulator']), uuid, new IrcLoggerBackend());
