@@ -575,7 +575,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 * @param {boolean} blockTerminationEvent Indicates whether a `terminatedConnection` event should be blocked or not.
 	 * @param {boolean} avoidEnd Indicates whether the socket should be ended or not, e.g. already closed sockets
 	 */
-	private _destroyConnection (socket:TCPSocketInterface, blockTerminationEvent?:boolean, avoidEnd?:boolean):void {
+	private _destroyConnection (socket:TCPSocketInterface, blockTerminationEvent?:boolean):void {
 		var identifier = socket.getIdentifier();
 		var incoming:IncomingPendingSocket = this._incomingPendingSockets[identifier];
 		var outgoing:OutgoingPendingSocket = this._outgoingPendingSockets[identifier];
@@ -600,9 +600,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			delete this._hydraSockets[identifier];
 		}
 
-		if (!avoidEnd) {
-			socket.end();
-		}
+		socket.end();
 
 		if ((confirmed || hydra) && !blockTerminationEvent) {
 			this._emitTerminatedEventByIdentifier(identifier);
@@ -732,7 +730,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	private _hookDestroyOnCloseToSocket (socket:TCPSocketInterface) {
 		// remote close
 		socket.on('close', () => {
-			this._destroyConnection(socket, false, true);
+			this._destroyConnection(socket, false);
 		});
 	}
 
@@ -830,6 +828,8 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 * @param {core.net.tcp.TCPSocketInterface} socket
 	 */
 	private _onIncomingConnection (socket:TCPSocketInterface):void {
+		console.log(this._incomingPendingTimeoutLength);
+
 		var identifier:string = this._setTemporaryIdentifier(socket);
 		var pending:IncomingPendingSocket = {
 			socket : socket,

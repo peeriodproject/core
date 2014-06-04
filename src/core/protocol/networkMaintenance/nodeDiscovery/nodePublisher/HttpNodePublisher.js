@@ -1,5 +1,7 @@
 var http = require('http');
 
+var logger = require('../../../../utils/logger/LoggerFactory').create();
+
 /**
 * NodePublisher which posts a JSON stringified representation of the contact information to a list of HTTP servers.
 *
@@ -98,10 +100,12 @@ var HttpNodePublisher = (function () {
 
         req.end(data);
 
-        req.on('error', function () {
+        req.on('error', function (err) {
+            logger.error('HTTP Node publisher error caught', { err: err.message });
         });
         req.on('socket', function (socket) {
             socket.on('error', function (err) {
+                logger.error('HTTP Node publisher error caught SOCK', { err: err.message });
             });
         });
     };

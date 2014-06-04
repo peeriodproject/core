@@ -8,6 +8,8 @@ import ConfigInterface = require('../../../../config/interfaces/ConfigInterface'
 import HttpServerList = require('../../../../net/interfaces/HttpServerList');
 import HttpServerInfo = require('../../../../net/interfaces/HttpServerInfo');
 
+var logger = require('../../../../utils/logger/LoggerFactory').create();
+
 /**
  * A node seeker which requests a list of HTTP servers, expecting a JSON representation of a single node.
  *
@@ -130,12 +132,16 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 
 		});
 
-		request.on('error', function () {
+		request.on('error', function (err) {
 			doCallback(null);
+			logger.error('HTTP Node seeker error caught', {err: err.message});
 		});
 
 		request.on('socket', function (socket) {
-			socket.on('error', (err) => {});
+			socket.on('error', (err) => {
+				logger.error('HTTP Node seeker error caught SOCK', {err: err.message});
+				doCallback(null);
+			});
 		});
 
 		request.end();

@@ -91,7 +91,9 @@ var TCPSocket = (function (_super) {
         logger.info('added socket');
     }
     TCPSocket.prototype.end = function (data, encoding) {
-        this.getSocket().end(data, encoding);
+        if (this.getSocket()) {
+            this.getSocket().end(data, encoding);
+        }
     };
 
     TCPSocket.prototype.forceDestroy = function () {
