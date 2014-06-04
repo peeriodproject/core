@@ -26,12 +26,11 @@ var stackTrace = require('stack-trace');
 var logger = require('./utils/logger/LoggerFactory').create();
 //require('longjohn');
 
+console.log('foo');
 
 var App = {
 
 	start: function (dataPath) {
-
-
 		var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
 		var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
 		var protocolConfig = new JSONConfig('../../config/mainConfig.json', ['protocol']);
