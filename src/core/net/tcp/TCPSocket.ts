@@ -97,7 +97,9 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	}
 
 	public end (data?:any, encoding?:string):void {
-		this.getSocket().end(data, encoding);
+		if (this.getSocket()) {
+			this.getSocket().end(data, encoding);
+		}
 	}
 
 	public forceDestroy():void {
