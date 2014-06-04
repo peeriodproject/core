@@ -8,6 +8,7 @@ import TCPSocketInterface = require('./interfaces/TCPSocketInterface');
 import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
 
 import TCPSocket = require('./TCPSocket');
+import OutgoingTCPSocketObtainer = require('./OutgoingTCPSocketObtainer');
 
 var logger = require('../../utils/logger/LoggerFactory').create();
 
@@ -48,6 +49,8 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	 * @member {number} TCPSocketHandler~_idleConnectionKillTimeout
 	 */
 	private _idleConnectionKillTimeout:number = 0;
+
+	private _maxReachableTries:number = 0;
 
 	/**
 	 * The external IP address of the computer.
@@ -113,6 +116,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		this._connectionRetry = opts.connectionRetry || 3;
 		this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2000;
 		this._simulatorRTT = opts.simulatorRTT || 0;
+		this._maxReachableTries = opts.maxReachableTries || 3;
 	}
 
 	public autoBootstrap (callback:(openPorts:Array<number>) => any):void {
@@ -164,68 +168,26 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 			return;
 		}
 
-		process.nextTick(() => {
-			logger.info('sock connecting to');
-
-			var sock:net.Socket = net.createConnection(port, ip);
-			var connectionError = (fromTimeout) => {
-				if (fromTimeout) {
-					logger.info('sock connection error timeout');
-				}
-				else {
-					logger.info('sock connection error');
-				}
-
-				try {
-					//sock.end();
-					sock.destroy();
-				}
-				catch (e) {
-					console.log(e);
-				}
-
-				sock.removeListener('connect', onConnection);
-
+		var theCallback = (socket:TCPSocketInterface) => {
+			if (!socket) {
 				if (callback) {
-					callback(null)
+					callback(null);
 				}
 				else {
 					this.emit('connection error', port, ip);
 				}
-			};
-
-			var connectionTimeout = global.setTimeout(function () {
-				logger.info('sock connection timeout');
-				sock.removeListener('error', connectionError);
-				connectionError(true);
-			}, this._outboundConnectionTimeout);
-
-			var onConnection = () => {
-				logger.info('sock connection connected');
-				logger.info('err listeners 1', {list: sock.listeners('error').length});
-
-				global.clearTimeout(connectionTimeout);
-
-				var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
-
-				logger.info('err listeners 2', {list: sock.listeners('error').length});
-
-
-				sock.removeListener('error', connectionError);
-
-				logger.info('err listeners 3', {list: sock.listeners('error').length});
-
-				if (!callback) {
-					this.emit('connected', socket, 'outgoing');
-				}
-				else {
+			}
+			else {
+				if (callback) {
 					callback(socket);
 				}
-			};
+				else {
+					this.emit('connected', socket, 'outgoing');
+				}
+			}
+		};
 
-			sock.once('error', connectionError);
-			sock.once('connect', onConnection);
-		});
+		new OutgoingTCPSocketObtainer(port, ip, theCallback, this._socketFactory, this.getDefaultSocketOptions(), this._outboundConnectionTimeout);
 
 	}
 
@@ -261,7 +223,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		server.on('listening', () => {
 			var port = server.address().port;
 
-			this.checkIfServerIsReachableFromOutsideTwice(server, (success) => {
+			this.checkIfServerIsReachableFromOutsideByMaxReachableTries(server, (success) => {
 				if (success) {
 					this._openTCPServers[port] = server;
 
@@ -302,18 +264,17 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	public checkIfServerIsReachableFromOutside (server:net.Server, callback:(success:boolean) => any):void {
 		var connectionTimeout = null;
 		var serverOnConnect = function (sock:net.Socket) {
-				sock.on('data', function (data) {
+				sock.once('data', function (data) {
 					sock.write(data);
 				});
-				sock.on('error', () => {});
+				sock.on('error', () => {
+					sock.destroy();
+				});
 			};
 		var callbackWith = function (success:boolean, socket?:TCPSocketInterface) {
 				callback(success);
 				if (socket) {
-					try {
-						socket.forceDestroy();
-					}
-					catch (e) {}
+					socket.end();
 				}
 				server.removeListener('connection', serverOnConnect);
 			};
@@ -345,15 +306,26 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	 * @param {net.Server} server Server to check
 	 * @param {Function} callback Callback which gets called with a success flag. `True` if reachable, `false`if unreachable
 	 */
-	public checkIfServerIsReachableFromOutsideTwice (server:net.Server, callback:(success:boolean) => any):void {
-		this.checkIfServerIsReachableFromOutside(server, (success) => {
-			if (success) {
-				callback(success);
+	public checkIfServerIsReachableFromOutsideByMaxReachableTries (server:net.Server, callback:(success:boolean) => any):void {
+		var numOfTries:number = 0;
+
+		var check = () => {
+			if (++numOfTries <= this._maxReachableTries) {
+				this.checkIfServerIsReachableFromOutside(server, (success) => {
+					if (success) {
+						callback(success);
+					}
+					else {
+						check();
+					}
+				});
 			}
 			else {
-				this.checkIfServerIsReachableFromOutside(server, callback);
+				callback(false);
 			}
-		});
+		}
+
+		check();
 	}
 
 	public getDefaultSocketOptions ():TCPSocketOptions {

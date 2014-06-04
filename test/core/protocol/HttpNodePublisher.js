@@ -7,7 +7,7 @@ var MyNode = require('../../../src/core/topology/MyNode');
 var Id = require('../../../src/core/topology/Id');
 var ContactNodeAddressFactory = require('../../../src/core/topology/ContactNodeAddressFactory');
 
-describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodePublisher', function () {
+describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodePublisher @current', function () {
     var server = null;
 
     var myNode = null;

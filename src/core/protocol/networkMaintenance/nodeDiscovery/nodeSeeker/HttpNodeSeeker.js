@@ -125,6 +125,11 @@ var HttpNodeSeeker = (function (_super) {
             doCallback(null);
         });
 
+        request.on('socket', function (socket) {
+            socket.on('error', function (err) {
+            });
+        });
+
         request.end();
 
         timeout = global.setTimeout(function () {

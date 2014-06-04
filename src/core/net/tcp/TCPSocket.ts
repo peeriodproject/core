@@ -101,7 +101,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	}
 
 	public forceDestroy():void {
-		if (this._socket) {
+		/*if (this._socket) {
 			logger.info('destroying socket');
 
 			this._closeOnTimeout = false;
@@ -115,7 +115,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			this._socket = null;
 			this.emit('destroy');
 			this.removeAllListeners();
-		}
+		}*/
+		logger.error('Force destroy is deprecated.');
 	}
 
 	public getIdentifier ():string {
@@ -163,10 +164,30 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		socket.on('timeout', () => this.onTimeout());
 
+		socket.on('error', () => {
+			this._preventWrite = true;
+			socket.destroy();
+		});
+
+		socket.on('close', () => {
+			this._preventWrite = true;
+			this._socket = null;
+
+			this.emit('destroy');
+
+			process.nextTick(() => {
+				this.removeAllListeners();
+			});
+		});
+
+		socket.on('end', () => {
+			this._preventWrite = true;
+		});
+
 		this._propagateEvents(this._eventsToPropagate);
 	}
 
-	public writeBuffer (buffer:NodeBuffer, callback?:Function, forceAvoidSimulation?:boolean):void {
+	public writeBuffer (buffer:NodeBuffer, callback?:Function, forceAvoidSimulation?:boolean):boolean {
 
 		if (this._simulatorRTT && !forceAvoidSimulation) {
 			global.setTimeout(() => {
@@ -175,21 +196,20 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			return;
 		}
 
-		process.nextTick(() => {
-			if (this._preventWrite) return;
+		var success:boolean = false;
+
+		if (!this._preventWrite) {
 
 			try {
-				this.getSocket().write(buffer, callback);
+				success = this.getSocket().write(buffer, callback);
 			}
-			catch (e) {
-				this.forceDestroy();
-			}
-
+			catch (e) {}
 
 			buffer = null;
-		});
 
+		}
 
+		return success;
 	}
 
 	public writeString (message:string, encoding:string = 'utf8', callback?:Function, forceAvoidSimulation?:boolean):boolean {
@@ -203,14 +223,12 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			return;
 		}
 
-		var success = false;
+		var success:boolean = false;
 
 		try {
 			success = this.getSocket().write(message, encoding, callback);
 		}
-		catch (e) {
-			this.forceDestroy();
-		}
+		catch (e) {}
 
 		return success;
 	}
@@ -227,9 +245,6 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		events.forEach((event) => {
 			((evt) => {
 				this.getSocket().on(evt, () => {
-					if (evt === 'close' || evt === 'end' || evt === 'error') {
-						this._preventWrite = true;
-					}
 					this.emit.apply(this, [evt].concat(Array.prototype.splice.call(arguments, 0)));
 				});
 			})(event);

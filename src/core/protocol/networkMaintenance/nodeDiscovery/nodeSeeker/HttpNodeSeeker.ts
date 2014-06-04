@@ -134,6 +134,10 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 			doCallback(null);
 		});
 
+		request.on('socket', function (socket) {
+			socket.on('error', (err) => {});
+		});
+
 		request.end();
 
 		timeout = global.setTimeout(function () {

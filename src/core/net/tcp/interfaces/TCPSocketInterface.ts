@@ -25,6 +25,9 @@ interface TCPSocketInterface extends NodeJS.EventEmitter {
 	end (data?:any, encoding?:string):void;
 
 	/**
+	 *
+	 * @deprecated
+	 *
 	 * Closes the socket, unbinds all listeners to it, drops reference to it and unbinds listeners to itself.
 	 *
 	 * @method core.net.tcp.TCPSocketInterface#forceDestroy
@@ -95,7 +98,7 @@ interface TCPSocketInterface extends NodeJS.EventEmitter {
 
 	/**
 	 * Sets up the listeners on the raw socket's events and specifies the reaction.
-	 * Some socket events are simply propagated, like 'data', 'close', 'error'
+	 * Some socket events are also propagated, like 'data', 'close', 'error', 'end'
 	 *
 	 * @method core.net.tcp.TCPSocketInterface#setupListeners
 	 */
@@ -117,7 +120,7 @@ interface TCPSocketInterface extends NodeJS.EventEmitter {
 	 * @param {Function} callback
 	 * @returns {boolean} True if flushed to kernel buffer, false if all or part was queued in memory.
 	 */
-	writeBuffer (buffer:NodeBuffer, callback?:Function):void;
+	writeBuffer (buffer:NodeBuffer, callback?:Function):boolean;
 
 	/**
 	 * Writes a string to the socket.

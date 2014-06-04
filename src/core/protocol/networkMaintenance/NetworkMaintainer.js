@@ -202,8 +202,7 @@ var NetworkMaintainer = (function (_super) {
             _this._findClosestNodesManager.startCycleFor(_this._myIdToSearchFor, [node]);
 
             _this._findClosestNodesManager.once('foundClosestNodes', function (searchForId, resultingList) {
-                logger.info('Find closest nodes cycle finished', { for: searchForId.toHexString(), resultLen: resultingList.length });
-
+                //logger.info('Find closest nodes cycle finished', {for: searchForId.toHexString(), resultLen: resultingList.length});
                 if (!resultingList.length) {
                     logger.info('Resulting list is empty, trying to find another node.');
                     setImmediate(function () {
