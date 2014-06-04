@@ -82,6 +82,9 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 
 		this._myNode = myNode;
 		this._reactionTime = config.get('protocol.waitForNodeReactionInSeconds') * 1000;
+
+		console.log(this._reactionTime);
+
 		this._maxWaitingListSize = config.get('protocol.pingpong.maxWaitingListSize');
 		this._protocolConnectionManager = protocolConnectionManager;
 		this._proxyManager = proxyManager;
@@ -222,6 +225,7 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 
 			if (node.getId().equals(first.nodeToCheck.getId())) {
 				global.clearTimeout(first.timeout);
+				logger.info('Received pong, discarding node info', {pingpong:1, pongFrom:node.getId().toHexString(), discard:first.newNode.getId().toHexString()});
 				list.splice(0, 1);
 
 				this.emit('gotPonged', node);
