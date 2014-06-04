@@ -163,7 +163,8 @@ var TCPSocket = (function (_super) {
             return _this.onTimeout();
         });
 
-        socket.on('error', function () {
+        socket.on('error', function (err) {
+            logger.error('THIS IS A SOCKET ERROR!', { emsg: err.message });
             _this._preventWrite = true;
             socket.destroy();
         });
