@@ -128,15 +128,15 @@ var PingPongNodeUpdateHandler = (function (_super) {
     */
     PingPongNodeUpdateHandler.prototype._createSlotTimeout = function (waitingListNumber) {
         var _this = this;
-        return global.setTimeout(function () {
-            var slot = _this._waitingLists[waitingListNumber].splice(0, 1)[0];
+        return global.setTimeout(function (waitingListNum) {
+            var slot = _this._waitingLists[waitingListNum].splice(0, 1)[0];
 
             _this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
 
             _this.emit('pingTimeout', slot.nodeToCheck);
 
-            _this._handleNextInWaitingList(waitingListNumber);
-        }, this._reactionTime);
+            _this._handleNextInWaitingList(waitingListNum);
+        }, this._reactionTime, waitingListNumber);
     };
 
     /**
@@ -202,8 +202,8 @@ var PingPongNodeUpdateHandler = (function (_super) {
             var first = list[0];
 
             if (node.getId().equals(first.nodeToCheck.getId())) {
-                list.splice(0, 1);
                 global.clearTimeout(first.timeout);
+                list.splice(0, 1);
 
                 this.emit('gotPonged', node);
 

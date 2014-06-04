@@ -142,15 +142,15 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 	 * @returns {number|NodeJS.Timer}
 	 */
 	private _createSlotTimeout (waitingListNumber:number):number {
-		return global.setTimeout(() => {
-			var slot:PongWaitingSlot = this._waitingLists[waitingListNumber].splice(0, 1)[0];
+		return global.setTimeout((waitingListNum:number) => {
+			var slot:PongWaitingSlot = this._waitingLists[waitingListNum].splice(0, 1)[0];
 
 			this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
 
 			this.emit('pingTimeout', slot.nodeToCheck);
 
-			this._handleNextInWaitingList(waitingListNumber);
-		}, this._reactionTime);
+			this._handleNextInWaitingList(waitingListNum);
+		}, this._reactionTime, waitingListNumber);
 	}
 
 	/**
@@ -217,8 +217,8 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 			var first:PongWaitingSlot = list[0];
 
 			if (node.getId().equals(first.nodeToCheck.getId())) {
-				list.splice(0, 1);
 				global.clearTimeout(first.timeout);
+				list.splice(0, 1);
 
 				this.emit('gotPonged', node);
 
