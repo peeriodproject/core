@@ -18,7 +18,7 @@ var OutgoingTCPSocketObtainer = (function () {
         this._timeoutInMs = timeoutInMs;
 
         this._errorListener = function () {
-            _this._rawSocket.destroy();
+            //this._rawSocket.destroy();
             _this._rawSocket.removeListener('connect', _this._connectListener);
             _this._callback(null);
         };
@@ -37,8 +37,8 @@ var OutgoingTCPSocketObtainer = (function () {
 
         this._connectionTimeout = global.setTimeout(function () {
             _this._rawSocket.end();
-            _this._rawSocket.destroy();
 
+            //this._rawSocket.destroy();
             _this._rawSocket.removeListener('error', _this._errorListener);
             _this._rawSocket.removeListener('connect', _this._connectListener);
             _this._callback(null);
