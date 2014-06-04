@@ -107,6 +107,8 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 	private _addToWaitingList (node:ContactNodeInterface, possibleNodeToCheck:ContactNodeInterface):void {
 		var waitingListNumber = this._getWaitingListNumberByNode(node);
 
+		logger.info('Bucket is full, adding to waiting list', {pingpong:1, node:node.getId().toHexString(), longestNotSeen:possibleNodeToCheck.getId().toHexString(), bucketIndex: waitingListNumber});
+
 		if (waitingListNumber > -1) {
 			var existingWaitingList:PongWaitingList = this._waitingLists[waitingListNumber];
 			var isFirst:boolean = !existingWaitingList || !existingWaitingList.length;
@@ -144,6 +146,8 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 	private _createSlotTimeout (waitingListNumber:number):number {
 		return global.setTimeout((waitingListNum:number) => {
 			var slot:PongWaitingSlot = this._waitingLists[waitingListNum].splice(0, 1)[0];
+
+			logger.info('Node has not answered, is replaced', {pingpong: 1, replace:slot.nodeToCheck.getId().toHexString(), with: slot.newNode.getId().toHexString(), bucketIndex: waitingListNum});
 
 			this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
 
@@ -236,9 +240,13 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 	 * @param {core.topology.ContactNodeInterface} node The new contact node info.
 	 */
 	private _newNodeInformation (node:ContactNodeInterface):void {
+		logger.info('Received new node information, checking routing table.', {pingpong: 1, from:node.getId().toHexString()});
 		this._routingTable.updateContactNode(node, (err:Error, longestNotSeenContact:ContactNodeInterface) => {
 			if (err && longestNotSeenContact) {
 				this._addToWaitingList(node, longestNotSeenContact);
+			}
+			else {
+				logger.info('Node exists and was udpated.', {pingpong: 1, updated:node.getId().toHexString()});
 			}
 		});
 	}
@@ -253,6 +261,7 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 	 * @param {number} waitingListNumber
 	 */
 	private _pingNodeByWaitingSlot (slot:PongWaitingSlot, waitingListNumber:number):void {
+		logger.info('Pinging node', {pingpong:1, bucketIndex:waitingListNumber, pinged: slot.nodeToCheck.getId().toHexString(), potentialReplace:slot.newNode.getId().toHexString()});
 		this._protocolConnectionManager.writeMessageTo(slot.nodeToCheck, 'PING', new Buffer(0), (err:Error) => {
 			if (err) {
 				this._waitingLists[waitingListNumber].splice(0, 1);

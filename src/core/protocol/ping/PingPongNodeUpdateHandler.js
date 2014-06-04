@@ -94,6 +94,8 @@ var PingPongNodeUpdateHandler = (function (_super) {
     PingPongNodeUpdateHandler.prototype._addToWaitingList = function (node, possibleNodeToCheck) {
         var waitingListNumber = this._getWaitingListNumberByNode(node);
 
+        logger.info('Bucket is full, adding to waiting list', { pingpong: 1, node: node.getId().toHexString(), longestNotSeen: possibleNodeToCheck.getId().toHexString(), bucketIndex: waitingListNumber });
+
         if (waitingListNumber > -1) {
             var existingWaitingList = this._waitingLists[waitingListNumber];
             var isFirst = !existingWaitingList || !existingWaitingList.length;
@@ -130,6 +132,8 @@ var PingPongNodeUpdateHandler = (function (_super) {
         var _this = this;
         return global.setTimeout(function (waitingListNum) {
             var slot = _this._waitingLists[waitingListNum].splice(0, 1)[0];
+
+            logger.info('Node has not answered, is replaced', { pingpong: 1, replace: slot.nodeToCheck.getId().toHexString(), with: slot.newNode.getId().toHexString(), bucketIndex: waitingListNum });
 
             _this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
 
@@ -222,9 +226,12 @@ var PingPongNodeUpdateHandler = (function (_super) {
     */
     PingPongNodeUpdateHandler.prototype._newNodeInformation = function (node) {
         var _this = this;
+        logger.info('Received new node information, checking routing table.', { pingpong: 1, from: node.getId().toHexString() });
         this._routingTable.updateContactNode(node, function (err, longestNotSeenContact) {
             if (err && longestNotSeenContact) {
                 _this._addToWaitingList(node, longestNotSeenContact);
+            } else {
+                logger.info('Node exists and was udpated.', { pingpong: 1, updated: node.getId().toHexString() });
             }
         });
     };
@@ -240,6 +247,7 @@ var PingPongNodeUpdateHandler = (function (_super) {
     */
     PingPongNodeUpdateHandler.prototype._pingNodeByWaitingSlot = function (slot, waitingListNumber) {
         var _this = this;
+        logger.info('Pinging node', { pingpong: 1, bucketIndex: waitingListNumber, pinged: slot.nodeToCheck.getId().toHexString(), potentialReplace: slot.newNode.getId().toHexString() });
         this._protocolConnectionManager.writeMessageTo(slot.nodeToCheck, 'PING', new Buffer(0), function (err) {
             if (err) {
                 _this._waitingLists[waitingListNumber].splice(0, 1);
