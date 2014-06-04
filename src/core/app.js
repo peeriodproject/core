@@ -40,47 +40,47 @@ var App = {
 
         var protocolGateway = null;
 
-        process.on('uncaughtException', function (err) {
-            var trace = stackTrace.parse(err);
-
-            for (var i in err.stack) {
-                logger.warn('error stack ' + i, {
-                    typeName: err.stack[i].getTypeName(),
-                    fnName: err.stack[i].getFunctionName(),
-                    fileName: err.stack[i].getFileName(),
-                    line: err.stack[i].getLineNumber()
-                });
-            }
-
-            logger.error({
-                code: err.message, stack: err.stack, trace: {
-                    typeName: trace.getTypeName(),
-                    fnName: trace.getFunctionName(),
-                    fileName: trace.getFileName(),
-                    line: trace.getLineNumber()
-                }
-            });
-            /*return process.nextTick(function () {
-            console.log(err);
-            win.showDevTools();
-            debugger;
-            });*/
-            /*;
-            logger.error({
-            code: err.message, stack: err.stack, trace: {
-            typeName: trace.getTypeName(),
-            fnName  : trace.getFunctionName(),
-            fileName: trace.getFileName(),
-            line    : trace.getLineNumber()
-            }
-            });
-            logger.info('Catched uncaughtException!');
-            
-            setTimeout(function () {
-            process.exit(1);
-            }, 100);*/
+        /*process.on('uncaughtException', function (err) {
+        var trace = stackTrace.parse(err);
+        
+        for (var i in err.stack) {
+        logger.warn('error stack ' + i, {
+        typeName: err.stack[i].getTypeName(),
+        fnName  : err.stack[i].getFunctionName(),
+        fileName: err.stack[i].getFileName(),
+        line    : err.stack[i].getLineNumber()
         });
-
+        }
+        
+        logger.error({
+        code: err.message, stack: err.stack, trace: {
+        typeName: trace.getTypeName(),
+        fnName  : trace.getFunctionName(),
+        fileName: trace.getFileName(),
+        line    : trace.getLineNumber()
+        }
+        });
+        
+        /*return process.nextTick(function () {
+        console.log(err);
+        win.showDevTools();
+        debugger;
+        });*/
+        /*;
+        logger.error({
+        code: err.message, stack: err.stack, trace: {
+        typeName: trace.getTypeName(),
+        fnName  : trace.getFunctionName(),
+        fileName: trace.getFileName(),
+        line    : trace.getLineNumber()
+        }
+        });
+        logger.info('Catched uncaughtException!');
+        
+        setTimeout(function () {
+        process.exit(1);
+        }, 100);* /
+        });*/
         /*process.on('exit', function () {
         logger.info('Exiting...');
         });*/
