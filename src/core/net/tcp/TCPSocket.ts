@@ -183,18 +183,19 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		socket.on('timeout', () => this.onTimeout());
 
 		socket.on('error', (err) => {
-
-			var trace = stackTrace.parse(err);
+			//var trace = stackTrace.parse(err);
 			logger.error('THIS IS A SOCKET ERROR!', {
 				emsg: err.message,
 				stack:err.stack,
-				trace: {
+				/*trace: {
 					typeName: trace.getTypeName(),
 					fnName  : trace.getFunctionName(),
 					fileName: trace.getFileName(),
 					line    : trace.getLineNumber()
-				},
-				ident: this.getIdentifier(), sockid: this._uuid});
+				},*/
+				ident: this.getIdentifier(),
+				sockid: this._uuid
+			});
 
 			if (!this._preventWrite) {
 				logger.info('preventing write', {ident: this.getIdentifier(), sockid: this._uuid});

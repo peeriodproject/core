@@ -175,17 +175,19 @@ var TCPSocket = (function (_super) {
         });
 
         socket.on('error', function (err) {
-            var trace = stackTrace.parse(err);
+            //var trace = stackTrace.parse(err);
             logger.error('THIS IS A SOCKET ERROR!', {
                 emsg: err.message,
                 stack: err.stack,
-                trace: {
-                    typeName: trace.getTypeName(),
-                    fnName: trace.getFunctionName(),
-                    fileName: trace.getFileName(),
-                    line: trace.getLineNumber()
-                },
-                ident: _this.getIdentifier(), sockid: _this._uuid });
+                /*trace: {
+                typeName: trace.getTypeName(),
+                fnName  : trace.getFunctionName(),
+                fileName: trace.getFileName(),
+                line    : trace.getLineNumber()
+                },*/
+                ident: _this.getIdentifier(),
+                sockid: _this._uuid
+            });
 
             if (!_this._preventWrite) {
                 logger.info('preventing write', { ident: _this.getIdentifier(), sockid: _this._uuid });
