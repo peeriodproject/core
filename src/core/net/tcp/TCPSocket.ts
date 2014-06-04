@@ -243,7 +243,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			return;
 		}
 
-		setImmediate(() => {
+		process.nextTick(() => {
 			var success:boolean = false;
 
 			if (!this._preventWrite) {

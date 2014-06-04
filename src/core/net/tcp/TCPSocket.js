@@ -235,7 +235,7 @@ var TCPSocket = (function (_super) {
             return;
         }
 
-        setImmediate(function () {
+        process.nextTick(function () {
             var success = false;
 
             if (!_this._preventWrite) {
