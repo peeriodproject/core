@@ -165,7 +165,7 @@ var TCPSocket = (function (_super) {
 
         socket.on('error', function () {
             _this._preventWrite = true;
-            //socket.destroy();
+            socket.destroy();
         });
 
         socket.on('close', function () {

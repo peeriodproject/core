@@ -256,7 +256,7 @@ var TCPSocketHandler = (function (_super) {
                 sock.write(data);
             });
             sock.on('error', function () {
-                //sock.destroy();
+                sock.destroy();
             });
         };
         var callbackWith = function (success, socket) {
