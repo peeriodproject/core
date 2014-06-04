@@ -237,7 +237,7 @@ var TCPSocketHandler = (function (_super) {
                     }, _this._connectionRetry * 1000);
                 }
             } else {
-                logger.error('tcp server error', { err: err });
+                logger.error('tcp server error', { err: error });
             }
         });
 

@@ -256,7 +256,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 				}
 			}
 			else {
-				logger.error('tcp server error', { err: err });
+				logger.error('tcp server error', { err: error });
 			}
 		});
 

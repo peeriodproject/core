@@ -79,7 +79,7 @@ var App = {
             var contactNodeFactory = null;
             var routingTable = null;
 
-            console.log('bootstrapped the network');
+            logger.info('bootstrapped the network');
 
             for (var i = 0; i < myOpenPorts.length; i++) {
                 addressList.push(nodeAddressFactory.create(myIp, myOpenPorts[i]));
@@ -102,7 +102,7 @@ var App = {
                     myId = new Id(randBuffer, 160);
                 }
 
-                console.log('My ID is: ' + myId.toHexString());
+                logger.info('My ID is: ' + myId.toHexString());
 
                 myNode = new MyNode(myId, addressList);
 
