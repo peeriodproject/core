@@ -246,7 +246,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		process.nextTick(() => {
 			var success:boolean = false;
 
-			if (!this._preventWrite) {
+			if (!this._preventWrite && this.getSocket().writable) {
 
 				try {
 					success = this.getSocket().write(buffer, callback);

@@ -238,7 +238,7 @@ var TCPSocket = (function (_super) {
         process.nextTick(function () {
             var success = false;
 
-            if (!_this._preventWrite) {
+            if (!_this._preventWrite && _this.getSocket().writable) {
                 try  {
                     success = _this.getSocket().write(buffer, callback);
                 } catch (e) {
