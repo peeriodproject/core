@@ -200,6 +200,8 @@ var TCPSocketHandler = (function (_super) {
                         server.listen(port);
                     }, _this._connectionRetry * 1000);
                 }
+            } else {
+                console.warn('TCPServer onError', { code: error.code, err: error });
             }
         });
 
@@ -212,6 +214,9 @@ var TCPSocketHandler = (function (_super) {
                     _this._openTCPServers[port] = server;
 
                     server.on('connection', function (sock) {
+                        sock.on('error', function (err) {
+                            logger.warn('foo', err);
+                        });
                         var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
                         _this.emit('connected', socket, 'incoming');
                     });

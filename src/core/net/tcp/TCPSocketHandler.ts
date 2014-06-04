@@ -217,6 +217,9 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 					}, this._connectionRetry * 1000);
 				}
 			}
+			else {
+				console.warn('TCPServer onError', {code: error.code, err: error });
+			}
 		});
 
 		// put it in our open server list, if reachable from outside
@@ -228,6 +231,9 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 					this._openTCPServers[port] = server;
 
 					server.on('connection', (sock:net.Socket) => {
+						sock.on('error', function(err) {
+							logger.warn('foo', err);
+						});
 						var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
 						this.emit('connected', socket, 'incoming');
 					});
