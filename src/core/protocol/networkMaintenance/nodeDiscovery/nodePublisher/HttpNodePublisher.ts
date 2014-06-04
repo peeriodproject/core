@@ -8,6 +8,8 @@ import ConfigInterface = require('../../../../config/interfaces/ConfigInterface'
 import HttpServerList = require('../../../../net/interfaces/HttpServerList');
 import HttpServerInfo = require('../../../../net/interfaces/HttpServerInfo');
 
+var logger = require('../../../../utils/logger/LoggerFactory').create();
+
 /**
  * NodePublisher which posts a JSON stringified representation of the contact information to a list of HTTP servers.
  *
@@ -110,9 +112,13 @@ class HttpNodePublisher implements NodePublisherInterface {
 
 		req.end(data);
 
-		req.on('error', () => {});
+		req.on('error', (err) => {
+			logger.error('HTTP Node publisher error caught', {err: err.message});
+		});
 		req.on('socket', function (socket) {
-			socket.on('error', (err) => {});
+			socket.on('error', (err) => {
+				logger.error('HTTP Node publisher error caught SOCK', {err: err.message});
+			});
 		});
 	}
 

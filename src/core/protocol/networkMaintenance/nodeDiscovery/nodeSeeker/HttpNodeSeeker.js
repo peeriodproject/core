@@ -8,6 +8,8 @@ var http = require('http');
 
 var NodeSeeker = require('./NodeSeeker');
 
+var logger = require('../../../../utils/logger/LoggerFactory').create();
+
 /**
 * A node seeker which requests a list of HTTP servers, expecting a JSON representation of a single node.
 *
@@ -121,12 +123,15 @@ var HttpNodeSeeker = (function (_super) {
             });
         });
 
-        request.on('error', function () {
+        request.on('error', function (err) {
             doCallback(null);
+            logger.error('HTTP Node seeker error caught', { err: err.message });
         });
 
         request.on('socket', function (socket) {
             socket.on('error', function (err) {
+                logger.error('HTTP Node seeker error caught SOCK', { err: err.message });
+                doCallback(null);
             });
         });
 
