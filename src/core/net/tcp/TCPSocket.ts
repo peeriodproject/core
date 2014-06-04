@@ -110,8 +110,10 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	public end (data?:any, encoding?:string):void {
 
 		if (this.getSocket() && !this._preventWrite) {
+			this._preventWrite = true;
 			logger.info('socket ending...', {ident: this.getIdentifier()});
 			this.getSocket().end(data, encoding);
+
 		}
 	}
 

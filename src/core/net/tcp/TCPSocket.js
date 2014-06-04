@@ -100,6 +100,7 @@ var TCPSocket = (function (_super) {
     }
     TCPSocket.prototype.end = function (data, encoding) {
         if (this.getSocket() && !this._preventWrite) {
+            this._preventWrite = true;
             logger.info('socket ending...', { ident: this.getIdentifier() });
             this.getSocket().end(data, encoding);
         }
