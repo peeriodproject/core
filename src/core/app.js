@@ -18,10 +18,13 @@ var ProtocolGateway = require('./protocol/ProtocolGateway');
 
 var JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 
+var gui = require('nw.gui');
 var stackTrace = require('stack-trace');
 var logger = require('./utils/logger/LoggerFactory').create();
 
 //require('longjohn');
+console.log('foo');
+
 var App = {
     start: function (dataPath) {
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
@@ -38,24 +41,40 @@ var App = {
 
         var protocolGateway = null;
 
-        /*process.on('uncaughtException', function (err) {
-        var trace = stackTrace.parse(err);
-        logger.error({
-        code: err.message, stack: err.stack, trace: {
-        typeName: trace.getTypeName(),
-        fnName  : trace.getFunctionName(),
-        fileName: trace.getFileName(),
-        line    : trace.getLineNumber()
-        }
+        process.on('uncaughtException', function (err) {
+            var trace = stackTrace.parse(err);
+
+            logger.error({
+                code: err.message, stack: err.stack, trace: {
+                    typeName: trace.getTypeName(),
+                    fnName: trace.getFunctionName(),
+                    fileName: trace.getFileName(),
+                    line: trace.getLineNumber()
+                }
+            });
+
+            return process.nextTick(function () {
+                console.log(err);
+                gui.Window.get().showDevTools();
+                debugger;
+            });
+            /*;
+            logger.error({
+            code: err.message, stack: err.stack, trace: {
+            typeName: trace.getTypeName(),
+            fnName  : trace.getFunctionName(),
+            fileName: trace.getFileName(),
+            line    : trace.getLineNumber()
+            }
+            });
+            logger.info('Catched uncaughtException!');
+            
+            setTimeout(function () {
+            process.exit(1);
+            }, 100);*/
         });
-        logger.info('Catched uncaughtException!');
-        
-        setTimeout(function () {
-        process.exit(1);
-        }, 100);
-        });
-        
-        process.on('exit', function () {
+
+        /*process.on('exit', function () {
         logger.info('Exiting...');
         });*/
         networkBootstrapper.bootstrap(function (err) {
@@ -77,7 +96,7 @@ var App = {
             var contactNodeFactory = null;
             var routingTable = null;
 
-            console.log('bootstrapped the network');
+            logger.info('bootstrapped the network');
 
             for (var i = 0; i < myOpenPorts.length; i++) {
                 addressList.push(nodeAddressFactory.create(myIp, myOpenPorts[i]));
@@ -100,7 +119,7 @@ var App = {
                     myId = new Id(randBuffer, 160);
                 }
 
-                console.log('My ID is: ' + myId.toHexString());
+                logger.info('My ID is: ' + myId.toHexString());
 
                 myNode = new MyNode(myId, addressList);
 

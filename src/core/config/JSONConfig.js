@@ -1,3 +1,4 @@
+/// <reference path='../../../ts-definitions/node/node.d.ts' />
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -6,7 +7,8 @@ var __extends = this.__extends || function (d, b) {
 };
 var ObjectConfig = require('./ObjectConfig');
 
-
+//import LoggerFactory = require('../utils/logger/LoggerFactory');
+//var logger = LoggerFactory.create();
 /**
 * The class `JSONConfig` loads a JSON-file and converts it into a dot-notated key-value store.
 *

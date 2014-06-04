@@ -1,5 +1,4 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
-/// <reference path='../../../ts-definitions/express/express.d.ts' />
 var http = require('http');
 
 //var sockjs = require('sockjs');

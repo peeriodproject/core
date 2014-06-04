@@ -21,16 +21,16 @@ import ProtocolGateway = require('./protocol/ProtocolGateway');
 
 import JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 
+var gui = require('nw.gui');
 var stackTrace = require('stack-trace');
 var logger = require('./utils/logger/LoggerFactory').create();
 //require('longjohn');
 
+console.log('foo');
 
 var App = {
 
 	start: function (dataPath) {
-
-
 		var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
 		var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
 		var protocolConfig = new JSONConfig('../../config/mainConfig.json', ['protocol']);
@@ -45,8 +45,24 @@ var App = {
 
 		var protocolGateway = null;
 
-		/*process.on('uncaughtException', function (err) {
+		process.on('uncaughtException', function (err) {
 			var trace = stackTrace.parse(err);
+
+			logger.error({
+				code: err.message, stack: err.stack, trace: {
+					typeName: trace.getTypeName(),
+					fnName  : trace.getFunctionName(),
+					fileName: trace.getFileName(),
+					line    : trace.getLineNumber()
+				}
+			});
+
+			return process.nextTick(function () {
+				console.log(err);
+				gui.Window.get().showDevTools();
+				debugger;
+			});
+			/*;
 			logger.error({
 				code: err.message, stack: err.stack, trace: {
 					typeName: trace.getTypeName(),
@@ -59,10 +75,10 @@ var App = {
 
 			setTimeout(function () {
 				process.exit(1);
-			}, 100);
+			}, 100);*/
 		});
 
-		process.on('exit', function () {
+		/*process.on('exit', function () {
 			logger.info('Exiting...');
 		});*/
 
@@ -86,7 +102,7 @@ var App = {
 			var routingTable = null;
 
 
-			console.log('bootstrapped the network');
+			logger.info('bootstrapped the network');
 
 			for (var i = 0; i < myOpenPorts.length; i++) {
 				addressList.push(nodeAddressFactory.create(myIp, myOpenPorts[i]));
@@ -113,7 +129,7 @@ var App = {
 				}
 
 
-				console.log('My ID is: ' + myId.toHexString());
+				logger.info('My ID is: ' + myId.toHexString());
 
 				myNode = new MyNode(myId, addressList);
 
