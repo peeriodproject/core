@@ -67,6 +67,11 @@ class FreeGeoIp implements ExternalIPObtainerInterface {
 		}).on('error', function (err) {
 			logger.info('obtainIP error', {err: err});
 			doCallback(err, null);
+		})
+		.on('socket', function (socket) {
+			socket.on('errorr', function (err) {
+				logger.info('free geo ip error', {err: err});
+			});
 		});
 	}
 
