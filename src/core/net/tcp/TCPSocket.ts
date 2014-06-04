@@ -137,6 +137,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	public onTimeout ():void {
 		if (this._closeOnTimeout) {
+			logger.info('timing out socket', {ident: this.getIdentifier()});
 			this.end();
 		}
 	}
@@ -168,6 +169,10 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		socket.on('error', (err) => {
 			logger.error('THIS IS A SOCKET ERROR!', {emsg: err.message, ident: this.getIdentifier()});
+
+			if (!this._preventWrite) {
+				logger.info('preventing write', {ident: this.getIdentifier()});
+			}
 			this._preventWrite = true;
 
 			try {
@@ -177,6 +182,9 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		});
 
 		socket.on('close', (had_error:boolean) => {
+			if (!this._preventWrite) {
+				logger.info('preventing write', {ident: this.getIdentifier()});
+			}
 			this._preventWrite = true;
 			this._socket = null;
 
@@ -190,6 +198,9 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		});
 
 		socket.on('end', () => {
+			if (!this._preventWrite) {
+				logger.info('preventing write', {ident: this.getIdentifier()});
+			}
 			this._preventWrite = true;
 		});
 

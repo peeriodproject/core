@@ -131,6 +131,7 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.onTimeout = function () {
         if (this._closeOnTimeout) {
+            logger.info('timing out socket', { ident: this.getIdentifier() });
             this.end();
         }
     };
@@ -165,6 +166,10 @@ var TCPSocket = (function (_super) {
 
         socket.on('error', function (err) {
             logger.error('THIS IS A SOCKET ERROR!', { emsg: err.message, ident: _this.getIdentifier() });
+
+            if (!_this._preventWrite) {
+                logger.info('preventing write', { ident: _this.getIdentifier() });
+            }
             _this._preventWrite = true;
 
             try  {
@@ -174,6 +179,9 @@ var TCPSocket = (function (_super) {
         });
 
         socket.on('close', function (had_error) {
+            if (!_this._preventWrite) {
+                logger.info('preventing write', { ident: _this.getIdentifier() });
+            }
             _this._preventWrite = true;
             _this._socket = null;
 
@@ -187,6 +195,9 @@ var TCPSocket = (function (_super) {
         });
 
         socket.on('end', function () {
+            if (!_this._preventWrite) {
+                logger.info('preventing write', { ident: _this.getIdentifier() });
+            }
             _this._preventWrite = true;
         });
 
