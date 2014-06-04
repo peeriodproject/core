@@ -5,6 +5,7 @@ import TCPSocketInterface = require('./interfaces/TCPSocketInterface');
 import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
 
 var logger = require('../../utils/logger/LoggerFactory').create();
+var stackTrace = require('stack-trace');
 
 /**
  * TCP Socket implementation.
@@ -180,7 +181,18 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		socket.on('timeout', () => this.onTimeout());
 
 		socket.on('error', (err) => {
-			logger.error('THIS IS A SOCKET ERROR!', {emsg: err.message, ident: this.getIdentifier(), sockid: this._uuid});
+
+			var trace = stackTrace.parse(err);
+			logger.error('THIS IS A SOCKET ERROR!', {
+				emsg: err.message,
+				stack:err.stack,
+				trace: {
+					typeName: trace.getTypeName(),
+					fnName  : trace.getFunctionName(),
+					fileName: trace.getFileName(),
+					line    : trace.getLineNumber()
+				},
+				ident: this.getIdentifier(), sockid: this._uuid});
 
 			if (!this._preventWrite) {
 				logger.info('preventing write', {ident: this.getIdentifier(), sockid: this._uuid});

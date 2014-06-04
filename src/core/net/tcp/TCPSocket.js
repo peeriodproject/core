@@ -8,6 +8,7 @@ var events = require('events');
 var net = require('net');
 
 var logger = require('../../utils/logger/LoggerFactory').create();
+var stackTrace = require('stack-trace');
 
 /**
 * TCP Socket implementation.
@@ -173,7 +174,17 @@ var TCPSocket = (function (_super) {
         });
 
         socket.on('error', function (err) {
-            logger.error('THIS IS A SOCKET ERROR!', { emsg: err.message, ident: _this.getIdentifier(), sockid: _this._uuid });
+            var trace = stackTrace.parse(err);
+            logger.error('THIS IS A SOCKET ERROR!', {
+                emsg: err.message,
+                stack: err.stack,
+                trace: {
+                    typeName: trace.getTypeName(),
+                    fnName: trace.getFunctionName(),
+                    fileName: trace.getFileName(),
+                    line: trace.getLineNumber()
+                },
+                ident: _this.getIdentifier(), sockid: _this._uuid });
 
             if (!_this._preventWrite) {
                 logger.info('preventing write', { ident: _this.getIdentifier(), sockid: _this._uuid });
