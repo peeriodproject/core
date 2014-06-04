@@ -64,6 +64,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	private _preventWrite:boolean = false;
 
+	private _uuid:string = '';
+
 
 	public constructor (socket:net.Socket, opts:TCPSocketOptions) {
 		super();
@@ -93,6 +95,14 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		}
 
 		this.setupListeners();
+
+		function s4() {
+			return Math.floor((1 + Math.random()) * 0x10000)
+				.toString(16)
+				.substring(1);
+		}
+
+		this._uuid = s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 
 		logger.info('added socket');
 	}
@@ -140,7 +150,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	public onTimeout ():void {
 		if (this._closeOnTimeout) {
-			logger.info('timing out socket', {ident: this.getIdentifier()});
+			logger.info('timing out socket', {ident: this.getIdentifier(), sockid: this._uuid});
 			this.end();
 		}
 	}
@@ -181,10 +191,12 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 					fileName: trace.getFileName(),
 					line    : trace.getLineNumber()
 				},*/
-				ident: this.getIdentifier()});
+				ident: this.getIdentifier(),
+				sockid: this._uuid
+			});
 
 			if (!this._preventWrite) {
-				logger.info('preventing write', {ident: this.getIdentifier()});
+				logger.info('preventing write', {ident: this.getIdentifier(), sockid: this._uuid});
 			}
 			this._preventWrite = true;
 
@@ -196,12 +208,12 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		socket.on('close', (had_error:boolean) => {
 			if (!this._preventWrite) {
-				logger.info('preventing write', {ident: this.getIdentifier()});
+				logger.info('preventing write', {ident: this.getIdentifier(), sockid: this._uuid});
 			}
 			this._preventWrite = true;
 			this._socket = null;
 
-			logger.info('socket closed', {ident: this.getIdentifier(), had_error:had_error});
+			logger.info('socket closed', {ident: this.getIdentifier(), had_error:had_error, sockid: this._uuid});
 
 			this.emit('destroy');
 
@@ -212,7 +224,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		socket.on('end', () => {
 			if (!this._preventWrite) {
-				logger.info('preventing write', {ident: this.getIdentifier()});
+				logger.info('preventing write', {ident: this.getIdentifier(), sockid: this._uuid});
 			}
 			this._preventWrite = true;
 		});
