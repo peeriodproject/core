@@ -168,7 +168,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		socket.on('error', () => {
 			this._preventWrite = true;
-			//socket.destroy();
+			socket.destroy();
 		});
 
 		socket.on('close', () => {

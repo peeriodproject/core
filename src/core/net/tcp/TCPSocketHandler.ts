@@ -268,7 +268,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 					sock.write(data);
 				});
 				sock.on('error', () => {
-					//sock.destroy();
+					sock.destroy();
 				});
 			};
 		var callbackWith = function (success:boolean, socket?:TCPSocketInterface) {
