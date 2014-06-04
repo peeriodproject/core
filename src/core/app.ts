@@ -47,6 +47,15 @@ var App = {
 		process.on('uncaughtException', function (err) {
 			var trace = stackTrace.parse(err);
 
+			for (var i in err.stack) {
+				logger.info('error stack ' + i, {
+					typeName: err.stack[i].getTypeName(),
+					fnName  : err.stack[i].getFunctionName(),
+					fileName: err.stack[i].getFileName(),
+					line    : err.stack[i].getLineNumber()
+				});
+			}
+
 			logger.error({
 				code: err.message, stack: err.stack, trace: {
 					typeName: trace.getTypeName(),
