@@ -6,7 +6,7 @@ var gui = require('nw.gui');
 
 var App = require('./core/App');
 
-App.start(gui.App.dataPath);
+App.start(gui.App.dataPath, gui.Window.get());
 /*import gui = require('nw.gui');
 var tray = new gui.Tray({
 title: 'Tray',

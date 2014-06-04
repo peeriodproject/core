@@ -18,7 +18,6 @@ var ProtocolGateway = require('./protocol/ProtocolGateway');
 
 var JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 
-var gui = require('nw.gui');
 var stackTrace = require('stack-trace');
 var logger = require('./utils/logger/LoggerFactory').create();
 
@@ -26,7 +25,7 @@ var logger = require('./utils/logger/LoggerFactory').create();
 console.log('foo');
 
 var App = {
-    start: function (dataPath) {
+    start: function (dataPath, win) {
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
         var protocolConfig = new JSONConfig('../../config/mainConfig.json', ['protocol']);
@@ -55,7 +54,7 @@ var App = {
 
             return process.nextTick(function () {
                 console.log(err);
-                gui.Window.get().showDevTools();
+                win.showDevTools();
                 debugger;
             });
             /*;
@@ -137,4 +136,4 @@ var App = {
 };
 
 module.exports = App;
-//# sourceMappingURL=app.js.map
+//# sourceMappingURL=App.js.map

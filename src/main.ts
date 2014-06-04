@@ -8,7 +8,7 @@ var gui = require('nw.gui');
 
 import App = require('./core/App');
 
-App.start(gui.App.dataPath);
+App.start(gui.App.dataPath, gui.Window.get());
 
 
 /*import gui = require('nw.gui');
