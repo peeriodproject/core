@@ -48,7 +48,7 @@ var App = {
 			var trace = stackTrace.parse(err);
 
 			for (var i in err.stack) {
-				logger.info('error stack ' + i, {
+				logger.warn('error stack ' + i, {
 					typeName: err.stack[i].getTypeName(),
 					fnName  : err.stack[i].getFunctionName(),
 					fileName: err.stack[i].getFileName(),
@@ -65,11 +65,11 @@ var App = {
 				}
 			});
 
-			return process.nextTick(function () {
+			/*return process.nextTick(function () {
 				console.log(err);
 				win.showDevTools();
 				debugger;
-			});
+			});*/
 			/*;
 			logger.error({
 				code: err.message, stack: err.stack, trace: {
