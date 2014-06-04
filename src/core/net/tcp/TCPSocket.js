@@ -166,7 +166,11 @@ var TCPSocket = (function (_super) {
         socket.on('error', function (err) {
             logger.error('THIS IS A SOCKET ERROR!', { emsg: err.message, ident: _this.getIdentifier() });
             _this._preventWrite = true;
-            socket.destroy();
+
+            try  {
+                socket.destroy();
+            } catch (e) {
+            }
         });
 
         socket.on('close', function (had_error) {
@@ -198,18 +202,20 @@ var TCPSocket = (function (_super) {
             return;
         }
 
-        var success = false;
+        setImmediate(function () {
+            var success = false;
 
-        if (!this._preventWrite) {
-            try  {
-                success = this.getSocket().write(buffer, callback);
-            } catch (e) {
+            if (!_this._preventWrite) {
+                try  {
+                    success = _this.getSocket().write(buffer, callback);
+                } catch (e) {
+                }
+
+                buffer = null;
             }
+        });
 
-            buffer = null;
-        }
-
-        return success;
+        return true;
     };
 
     TCPSocket.prototype.writeString = function (message, encoding, callback, forceAvoidSimulation) {

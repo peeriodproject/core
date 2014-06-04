@@ -27,7 +27,11 @@ class OutgoingTCPSocketObtainer {
 		this._timeoutInMs = timeoutInMs;
 
 		this._errorListener = () => {
-			this._rawSocket.destroy();
+			try {
+				this._rawSocket.destroy();
+			}
+			catch (e) {}
+
 			this._rawSocket.removeListener('connect', this._connectListener);
 			this._callback(null);
 		};
@@ -45,8 +49,11 @@ class OutgoingTCPSocketObtainer {
 		};
 
 		this._connectionTimeout = global.setTimeout(() => {
-			this._rawSocket.end();
-			this._rawSocket.destroy();
+			try {
+				this._rawSocket.end();
+				this._rawSocket.destroy();
+			}
+			catch (e) {}
 
 			this._rawSocket.removeListener('error', this._errorListener);
 			this._rawSocket.removeListener('connect', this._connectListener);

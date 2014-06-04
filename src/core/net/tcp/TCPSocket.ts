@@ -169,7 +169,11 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		socket.on('error', (err) => {
 			logger.error('THIS IS A SOCKET ERROR!', {emsg: err.message, ident: this.getIdentifier()});
 			this._preventWrite = true;
-			socket.destroy();
+
+			try {
+				socket.destroy();
+			}
+			catch (e) {}
 		});
 
 		socket.on('close', (had_error:boolean) => {
@@ -201,20 +205,24 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			return;
 		}
 
-		var success:boolean = false;
+		setImmediate(() => {
+			var success:boolean = false;
 
-		if (!this._preventWrite) {
+			if (!this._preventWrite) {
 
-			try {
-				success = this.getSocket().write(buffer, callback);
+				try {
+					success = this.getSocket().write(buffer, callback);
+				}
+				catch (e) {}
+
+				buffer = null;
+
 			}
-			catch (e) {}
+		});
 
-			buffer = null;
 
-		}
 
-		return success;
+		return true;
 	}
 
 	public writeString (message:string, encoding:string = 'utf8', callback?:Function, forceAvoidSimulation?:boolean):boolean {
