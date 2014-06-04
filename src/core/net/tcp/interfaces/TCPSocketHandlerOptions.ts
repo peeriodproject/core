@@ -34,6 +34,8 @@ interface TCPSocketHandlerOptions {
 	 */
 	myExternalIp:string;
 
+	maxReachableTries?:number;
+
 	/**
 	 * An array of open ports under which the computer can be reached from outside.
 	 */

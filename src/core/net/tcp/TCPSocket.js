@@ -95,21 +95,22 @@ var TCPSocket = (function (_super) {
     };
 
     TCPSocket.prototype.forceDestroy = function () {
-        if (this._socket) {
-            logger.info('destroying socket');
-
-            this._closeOnTimeout = false;
-
-            try  {
-                //this.getSocket().removeAllListeners();
-                this.getSocket().end();
-                this.getSocket().destroy();
-            } catch (e) {
-            }
-            this._socket = null;
-            this.emit('destroy');
-            this.removeAllListeners();
+        /*if (this._socket) {
+        logger.info('destroying socket');
+        
+        this._closeOnTimeout = false;
+        
+        try {
+        //this.getSocket().removeAllListeners();
+        this.getSocket().end();
+        this.getSocket().destroy();
         }
+        catch (e) {}
+        this._socket = null;
+        this.emit('destroy');
+        this.removeAllListeners();
+        }*/
+        logger.error('Force destroy is deprecated.');
     };
 
     TCPSocket.prototype.getIdentifier = function () {
@@ -160,6 +161,26 @@ var TCPSocket = (function (_super) {
             return _this.onTimeout();
         });
 
+        socket.on('error', function () {
+            _this._preventWrite = true;
+            socket.destroy();
+        });
+
+        socket.on('close', function () {
+            _this._preventWrite = true;
+            _this._socket = null;
+
+            _this.emit('destroy');
+
+            process.nextTick(function () {
+                _this.removeAllListeners();
+            });
+        });
+
+        socket.on('end', function () {
+            _this._preventWrite = true;
+        });
+
         this._propagateEvents(this._eventsToPropagate);
     };
 
@@ -172,18 +193,18 @@ var TCPSocket = (function (_super) {
             return;
         }
 
-        process.nextTick(function () {
-            if (_this._preventWrite)
-                return;
+        var success = false;
 
+        if (!this._preventWrite) {
             try  {
-                _this.getSocket().write(buffer, callback);
+                success = this.getSocket().write(buffer, callback);
             } catch (e) {
-                _this.forceDestroy();
             }
 
             buffer = null;
-        });
+        }
+
+        return success;
     };
 
     TCPSocket.prototype.writeString = function (message, encoding, callback, forceAvoidSimulation) {
@@ -204,7 +225,6 @@ var TCPSocket = (function (_super) {
         try  {
             success = this.getSocket().write(message, encoding, callback);
         } catch (e) {
-            this.forceDestroy();
         }
 
         return success;
@@ -223,9 +243,6 @@ var TCPSocket = (function (_super) {
         events.forEach(function (event) {
             (function (evt) {
                 _this.getSocket().on(evt, function () {
-                    if (evt === 'close' || evt === 'end' || evt === 'error') {
-                        _this._preventWrite = true;
-                    }
                     _this.emit.apply(_this, [evt].concat(Array.prototype.splice.call(arguments, 0)));
                 });
             })(event);

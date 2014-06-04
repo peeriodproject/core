@@ -89,12 +89,20 @@ var HttpNodePublisher = (function () {
             method: 'POST',
             hostname: server.hostname,
             port: server.port,
-            path: server.path
+            path: server.path,
+            headers: {
+                'Content-type': 'application/json; charset=utf-8',
+                'Content-length': Buffer.byteLength(data)
+            }
         });
 
         req.end(data);
 
         req.on('error', function () {
+        });
+        req.on('socket', function (socket) {
+            socket.on('error', function (err) {
+            });
         });
     };
 

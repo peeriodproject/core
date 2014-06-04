@@ -7,6 +7,8 @@ var __extends = this.__extends || function (d, b) {
 var events = require('events');
 var net = require('net');
 
+var OutgoingTCPSocketObtainer = require('./OutgoingTCPSocketObtainer');
+
 var logger = require('../../utils/logger/LoggerFactory').create();
 
 /**
@@ -46,6 +48,7 @@ var TCPSocketHandler = (function (_super) {
         * @member {number} TCPSocketHandler~_idleConnectionKillTimeout
         */
         this._idleConnectionKillTimeout = 0;
+        this._maxReachableTries = 0;
         /**
         * The external IP address of the computer.
         *
@@ -102,6 +105,7 @@ var TCPSocketHandler = (function (_super) {
         this._connectionRetry = opts.connectionRetry || 3;
         this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2000;
         this._simulatorRTT = opts.simulatorRTT || 0;
+        this._maxReachableTries = opts.maxReachableTries || 3;
     }
     TCPSocketHandler.prototype.autoBootstrap = function (callback) {
         var _this = this;
@@ -152,63 +156,23 @@ var TCPSocketHandler = (function (_super) {
             return;
         }
 
-        process.nextTick(function () {
-            logger.info('sock connecting to');
-
-            var sock = net.createConnection(port, ip);
-            var connectionError = function (fromTimeout) {
-                if (fromTimeout) {
-                    logger.info('sock connection error timeout');
-                } else {
-                    logger.info('sock connection error');
-                }
-
-                try  {
-                    //sock.end();
-                    sock.destroy();
-                } catch (e) {
-                    console.log(e);
-                }
-
-                sock.removeListener('connect', onConnection);
-
+        var theCallback = function (socket) {
+            if (!socket) {
                 if (callback) {
                     callback(null);
                 } else {
                     _this.emit('connection error', port, ip);
                 }
-            };
-
-            var connectionTimeout = global.setTimeout(function () {
-                logger.info('sock connection timeout');
-                sock.removeListener('error', connectionError);
-                connectionError(true);
-            }, _this._outboundConnectionTimeout);
-
-            var onConnection = function () {
-                logger.info('sock connection connected');
-                logger.info('err listeners 1', { list: sock.listeners('error').length });
-
-                global.clearTimeout(connectionTimeout);
-
-                var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
-
-                logger.info('err listeners 2', { list: sock.listeners('error').length });
-
-                sock.removeListener('error', connectionError);
-
-                logger.info('err listeners 3', { list: sock.listeners('error').length });
-
-                if (!callback) {
-                    _this.emit('connected', socket, 'outgoing');
-                } else {
+            } else {
+                if (callback) {
                     callback(socket);
+                } else {
+                    _this.emit('connected', socket, 'outgoing');
                 }
-            };
+            }
+        };
 
-            sock.once('error', connectionError);
-            sock.once('connect', onConnection);
-        });
+        new OutgoingTCPSocketObtainer(port, ip, theCallback, this._socketFactory, this.getDefaultSocketOptions(), this._outboundConnectionTimeout);
     };
 
     TCPSocketHandler.prototype.createTCPServer = function () {
@@ -236,22 +200,19 @@ var TCPSocketHandler = (function (_super) {
                         server.listen(port);
                     }, _this._connectionRetry * 1000);
                 }
-            } else {
-                logger.error('tcp server error', { err: error });
             }
         });
 
         // put it in our open server list, if reachable from outside
         server.on('listening', function () {
             var port = server.address().port;
-            var socket = null;
 
-            _this.checkIfServerIsReachableFromOutsideTwice(server, function (success) {
+            _this.checkIfServerIsReachableFromOutsideByMaxReachableTries(server, function (success) {
                 if (success) {
                     _this._openTCPServers[port] = server;
 
                     server.on('connection', function (sock) {
-                        socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
+                        var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
                         _this.emit('connected', socket, 'incoming');
                     });
 
@@ -264,12 +225,7 @@ var TCPSocketHandler = (function (_super) {
             // remove it from our open server list
             server.on('close', function () {
                 delete _this._openTCPServers[port];
-                logger.info('closed server', { socket: socket });
                 _this.emit('closedServer', port);
-            });
-
-            server.on('error', function (err) {
-                console.error('createTCPServerAndBootstrap', { err: err });
             });
         });
 
@@ -291,20 +247,17 @@ var TCPSocketHandler = (function (_super) {
     TCPSocketHandler.prototype.checkIfServerIsReachableFromOutside = function (server, callback) {
         var connectionTimeout = null;
         var serverOnConnect = function (sock) {
-            sock.on('data', function (data) {
+            sock.once('data', function (data) {
                 sock.write(data);
             });
-            sock.on('error', function (err) {
-                console.error('socket error', { err: err });
+            sock.on('error', function () {
+                sock.destroy();
             });
         };
         var callbackWith = function (success, socket) {
             callback(success);
             if (socket) {
-                try  {
-                    socket.forceDestroy();
-                } catch (e) {
-                }
+                socket.end();
             }
             server.removeListener('connection', serverOnConnect);
         };
@@ -336,15 +289,25 @@ var TCPSocketHandler = (function (_super) {
     * @param {net.Server} server Server to check
     * @param {Function} callback Callback which gets called with a success flag. `True` if reachable, `false`if unreachable
     */
-    TCPSocketHandler.prototype.checkIfServerIsReachableFromOutsideTwice = function (server, callback) {
+    TCPSocketHandler.prototype.checkIfServerIsReachableFromOutsideByMaxReachableTries = function (server, callback) {
         var _this = this;
-        this.checkIfServerIsReachableFromOutside(server, function (success) {
-            if (success) {
-                callback(success);
+        var numOfTries = 0;
+
+        var check = function () {
+            if (++numOfTries <= _this._maxReachableTries) {
+                _this.checkIfServerIsReachableFromOutside(server, function (success) {
+                    if (success) {
+                        callback(success);
+                    } else {
+                        check();
+                    }
+                });
             } else {
-                _this.checkIfServerIsReachableFromOutside(server, callback);
+                callback(false);
             }
-        });
+        };
+
+        check();
     };
 
     TCPSocketHandler.prototype.getDefaultSocketOptions = function () {

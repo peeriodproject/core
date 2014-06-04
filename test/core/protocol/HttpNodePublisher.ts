@@ -12,7 +12,7 @@ import ContactNodeAddressFactory = require('../../../src/core/topology/ContactNo
 import HttpServerInfo = require('../../../src/core/net/interfaces/HttpServerInfo');
 import HttpServerList = require('../../../src/core/net/interfaces/HttpServerList');
 
-describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodePublisher', function () {
+describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodePublisher @current', function () {
 
 	var server:http.Server = null;
 

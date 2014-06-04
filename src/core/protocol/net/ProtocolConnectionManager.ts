@@ -573,8 +573,9 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 *
 	 * @param {core.net.tcp.TCPSocketInterface} socket The socket to destroy
 	 * @param {boolean} blockTerminationEvent Indicates whether a `terminatedConnection` event should be blocked or not.
+	 * @param {boolean} avoidEnd Indicates whether the socket should be ended or not, e.g. already closed sockets
 	 */
-	private _destroyConnection (socket:TCPSocketInterface, blockTerminationEvent?:boolean):void {
+	private _destroyConnection (socket:TCPSocketInterface, blockTerminationEvent?:boolean, avoidEnd?:boolean):void {
 		var identifier = socket.getIdentifier();
 		var incoming:IncomingPendingSocket = this._incomingPendingSockets[identifier];
 		var outgoing:OutgoingPendingSocket = this._outgoingPendingSockets[identifier];
@@ -599,7 +600,9 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			delete this._hydraSockets[identifier];
 		}
 
-		socket.forceDestroy();
+		if (!avoidEnd) {
+			socket.end();
+		}
 
 		if ((confirmed || hydra) && !blockTerminationEvent) {
 			this._emitTerminatedEventByIdentifier(identifier);
@@ -729,7 +732,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	private _hookDestroyOnCloseToSocket (socket:TCPSocketInterface) {
 		// remote close
 		socket.on('close', () => {
-			this._destroyConnection(socket);
+			this._destroyConnection(socket, false, true);
 		});
 	}
 
@@ -769,7 +772,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 				delete this._outgoingPendingSockets[identifier];
 				if (socket) {
 					if (outgoingEntry.closeAtOnce) {
-						socket.forceDestroy();
+						socket.end();
 					}
 					else {
 						socket.setIdentifier(identifier);

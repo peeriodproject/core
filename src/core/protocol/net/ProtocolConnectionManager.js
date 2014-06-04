@@ -532,8 +532,9 @@ var ProtocolConnectionManager = (function (_super) {
     *
     * @param {core.net.tcp.TCPSocketInterface} socket The socket to destroy
     * @param {boolean} blockTerminationEvent Indicates whether a `terminatedConnection` event should be blocked or not.
+    * @param {boolean} avoidEnd Indicates whether the socket should be ended or not, e.g. already closed sockets
     */
-    ProtocolConnectionManager.prototype._destroyConnection = function (socket, blockTerminationEvent) {
+    ProtocolConnectionManager.prototype._destroyConnection = function (socket, blockTerminationEvent, avoidEnd) {
         var identifier = socket.getIdentifier();
         var incoming = this._incomingPendingSockets[identifier];
         var outgoing = this._outgoingPendingSockets[identifier];
@@ -558,7 +559,9 @@ var ProtocolConnectionManager = (function (_super) {
             delete this._hydraSockets[identifier];
         }
 
-        socket.forceDestroy();
+        if (!avoidEnd) {
+            socket.end();
+        }
 
         if ((confirmed || hydra) && !blockTerminationEvent) {
             this._emitTerminatedEventByIdentifier(identifier);
@@ -687,7 +690,7 @@ var ProtocolConnectionManager = (function (_super) {
         var _this = this;
         // remote close
         socket.on('close', function () {
-            _this._destroyConnection(socket);
+            _this._destroyConnection(socket, false, true);
         });
     };
 
@@ -728,7 +731,7 @@ var ProtocolConnectionManager = (function (_super) {
                 delete _this._outgoingPendingSockets[identifier];
                 if (socket) {
                     if (outgoingEntry.closeAtOnce) {
-                        socket.forceDestroy();
+                        socket.end();
                     } else {
                         socket.setIdentifier(identifier);
                         _this._incomingDataPipeline.hookSocket(socket);

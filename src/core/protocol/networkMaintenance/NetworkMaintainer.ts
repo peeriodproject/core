@@ -221,7 +221,7 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 
 			this._findClosestNodesManager.once('foundClosestNodes', (searchForId:IdInterface, resultingList:ContactNodeListInterface) => {
 
-				logger.info('Find closest nodes cycle finished', {for: searchForId.toHexString(), resultLen: resultingList.length});
+				//logger.info('Find closest nodes cycle finished', {for: searchForId.toHexString(), resultLen: resultingList.length});
 
 				if (!resultingList.length) {
 					logger.info('Resulting list is empty, trying to find another node.');
