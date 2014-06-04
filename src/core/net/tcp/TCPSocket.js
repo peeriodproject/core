@@ -235,18 +235,16 @@ var TCPSocket = (function (_super) {
             return;
         }
 
-        process.nextTick(function () {
-            var success = false;
+        var success = false;
 
-            if (!_this._preventWrite && _this.getSocket().writable) {
-                try  {
-                    success = _this.getSocket().write(buffer, callback);
-                } catch (e) {
-                }
-
-                buffer = null;
+        if (!this._preventWrite && this.getSocket().writable) {
+            try  {
+                success = this.getSocket().write(buffer, callback);
+            } catch (e) {
             }
-        });
+
+            buffer = null;
+        }
 
         return true;
     };
