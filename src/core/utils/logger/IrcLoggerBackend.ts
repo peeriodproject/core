@@ -45,8 +45,8 @@ class IrcLoggerBackend implements LoggerInterface {
 		var winLogger:any = winston.Logger;
 
 		this._logger = new winLogger({
-			transports: [],
-			exitOnError: false
+			transports: []/*,
+			exitOnError: false*/
 		});
 
 		this._addTransportBasedOnEnvironment();

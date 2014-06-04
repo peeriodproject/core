@@ -21,6 +21,7 @@ import ProtocolGateway = require('./protocol/ProtocolGateway');
 
 import JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 
+var gui = require('nw.gui');
 var stackTrace = require('stack-trace');
 var logger = require('./utils/logger/LoggerFactory').create();
 //require('longjohn');
@@ -46,9 +47,23 @@ var App = {
 		var protocolGateway = null;
 
 		process.on('uncaughtException', function (err) {
-			console.log(err);
-			debugger;
-			/*var trace = stackTrace.parse(err);
+			var trace = stackTrace.parse(err);
+
+			logger.error({
+				code: err.message, stack: err.stack, trace: {
+					typeName: trace.getTypeName(),
+					fnName  : trace.getFunctionName(),
+					fileName: trace.getFileName(),
+					line    : trace.getLineNumber()
+				}
+			});
+
+			return process.nextTick(function () {
+				console.log(err);
+				gui.Window.get().showDevTools();
+				debugger;
+			});
+			/*;
 			logger.error({
 				code: err.message, stack: err.stack, trace: {
 					typeName: trace.getTypeName(),

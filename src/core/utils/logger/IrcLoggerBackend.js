@@ -37,8 +37,7 @@ var IrcLoggerBackend = (function () {
         var winLogger = winston.Logger;
 
         this._logger = new winLogger({
-            transports: [],
-            exitOnError: false
+            transports: []
         });
 
         this._addTransportBasedOnEnvironment();
