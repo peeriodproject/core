@@ -164,14 +164,16 @@ var TCPSocket = (function (_super) {
         });
 
         socket.on('error', function (err) {
-            logger.error('THIS IS A SOCKET ERROR!', { emsg: err.message });
+            logger.error('THIS IS A SOCKET ERROR!', { emsg: err.message, ident: _this.getIdentifier() });
             _this._preventWrite = true;
             socket.destroy();
         });
 
-        socket.on('close', function () {
+        socket.on('close', function (had_error) {
             _this._preventWrite = true;
             _this._socket = null;
+
+            logger.info('socket closed', { ident: _this.getIdentifier(), had_error: had_error });
 
             _this.emit('destroy');
 

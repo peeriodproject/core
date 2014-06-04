@@ -167,14 +167,16 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		socket.on('timeout', () => this.onTimeout());
 
 		socket.on('error', (err) => {
-			logger.error('THIS IS A SOCKET ERROR!', {emsg: err.message});
+			logger.error('THIS IS A SOCKET ERROR!', {emsg: err.message, ident: this.getIdentifier()});
 			this._preventWrite = true;
 			socket.destroy();
 		});
 
-		socket.on('close', () => {
+		socket.on('close', (had_error:boolean) => {
 			this._preventWrite = true;
 			this._socket = null;
+
+			logger.info('socket closed', {ident: this.getIdentifier(), had_error:had_error});
 
 			this.emit('destroy');
 
