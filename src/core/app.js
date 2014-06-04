@@ -38,24 +38,26 @@ var App = {
 
         var protocolGateway = null;
 
-        /*process.on('uncaughtException', function (err) {
-        var trace = stackTrace.parse(err);
-        logger.error({
-        code: err.message, stack: err.stack, trace: {
-        typeName: trace.getTypeName(),
-        fnName  : trace.getFunctionName(),
-        fileName: trace.getFileName(),
-        line    : trace.getLineNumber()
-        }
+        process.on('uncaughtException', function (err) {
+            console.log(err);
+            debugger;
+            /*var trace = stackTrace.parse(err);
+            logger.error({
+            code: err.message, stack: err.stack, trace: {
+            typeName: trace.getTypeName(),
+            fnName  : trace.getFunctionName(),
+            fileName: trace.getFileName(),
+            line    : trace.getLineNumber()
+            }
+            });
+            logger.info('Catched uncaughtException!');
+            
+            setTimeout(function () {
+            process.exit(1);
+            }, 100);*/
         });
-        logger.info('Catched uncaughtException!');
-        
-        setTimeout(function () {
-        process.exit(1);
-        }, 100);
-        });
-        
-        process.on('exit', function () {
+
+        /*process.on('exit', function () {
         logger.info('Exiting...');
         });*/
         networkBootstrapper.bootstrap(function (err) {

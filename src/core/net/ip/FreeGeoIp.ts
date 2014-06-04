@@ -3,6 +3,8 @@ import net = require('net');
 
 import ExternalIPObtainerInterface = require('./interfaces/ExternalIPObtainerInterface');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * External IP obtainer using http://freegeoip.net
  *
@@ -63,6 +65,7 @@ class FreeGeoIp implements ExternalIPObtainerInterface {
 				doCallback(new Error('FreeGeoIp: No 200 response.'), null);
 			}
 		}).on('error', function (err) {
+			logger.info('obtainIP error', {err: err});
 			doCallback(err, null);
 		});
 	}

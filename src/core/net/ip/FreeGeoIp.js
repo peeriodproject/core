@@ -1,6 +1,8 @@
 var http = require('follow-redirects').http;
 var net = require('net');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * External IP obtainer using http://freegeoip.net
 *
@@ -58,6 +60,7 @@ var FreeGeoIp = (function () {
                 doCallback(new Error('FreeGeoIp: No 200 response.'), null);
             }
         }).on('error', function (err) {
+            logger.info('obtainIP error', { err: err });
             doCallback(err, null);
         });
     };

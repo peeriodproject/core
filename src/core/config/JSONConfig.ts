@@ -1,8 +1,10 @@
+/// <reference path='../../../ts-definitions/node/node.d.ts' />
+
 import ObjectConfig = require('./ObjectConfig');
 import ConfigKeyListInterface = require('./interfaces/ConfigKeyListInterface');
 
-// require declaration json loading
-declare var require;
+//import LoggerFactory = require('../utils/logger/LoggerFactory');
+//var logger = LoggerFactory.create();
 
 /**
  * The class `JSONConfig` loads a JSON-file and converts it into a dot-notated key-value store.
@@ -23,6 +25,7 @@ class JSONConfig extends ObjectConfig {
 	constructor (configPath:string, configKeys:ConfigKeyListInterface = []) {
 		var fileData:Object = {};
 
+		//logger.info('creating JSONConfig', { path: configPath, configKeys: configKeys, dirname: __dirname });
 		try {
 			if (configPath.indexOf('.json') === -1) {
 				fileData = require(configPath + '.json');

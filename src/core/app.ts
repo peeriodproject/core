@@ -45,8 +45,10 @@ var App = {
 
 		var protocolGateway = null;
 
-		/*process.on('uncaughtException', function (err) {
-			var trace = stackTrace.parse(err);
+		process.on('uncaughtException', function (err) {
+			console.log(err);
+			debugger;
+			/*var trace = stackTrace.parse(err);
 			logger.error({
 				code: err.message, stack: err.stack, trace: {
 					typeName: trace.getTypeName(),
@@ -59,10 +61,10 @@ var App = {
 
 			setTimeout(function () {
 				process.exit(1);
-			}, 100);
+			}, 100);*/
 		});
 
-		process.on('exit', function () {
+		/*process.on('exit', function () {
 			logger.info('Exiting...');
 		});*/
 

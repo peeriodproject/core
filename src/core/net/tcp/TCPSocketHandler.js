@@ -236,19 +236,22 @@ var TCPSocketHandler = (function (_super) {
                         server.listen(port);
                     }, _this._connectionRetry * 1000);
                 }
+            } else {
+                logger.error('tcp server error', { err: err });
             }
         });
 
         // put it in our open server list, if reachable from outside
         server.on('listening', function () {
             var port = server.address().port;
+            var socket = null;
 
             _this.checkIfServerIsReachableFromOutsideTwice(server, function (success) {
                 if (success) {
                     _this._openTCPServers[port] = server;
 
                     server.on('connection', function (sock) {
-                        var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
+                        socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
                         _this.emit('connected', socket, 'incoming');
                     });
 
@@ -261,7 +264,12 @@ var TCPSocketHandler = (function (_super) {
             // remove it from our open server list
             server.on('close', function () {
                 delete _this._openTCPServers[port];
+                logger.info('closed server', { socket: socket });
                 _this.emit('closedServer', port);
+            });
+
+            server.on('error', function (err) {
+                console.error('createTCPServerAndBootstrap', { err: err });
             });
         });
 
@@ -286,7 +294,8 @@ var TCPSocketHandler = (function (_super) {
             sock.on('data', function (data) {
                 sock.write(data);
             });
-            sock.on('error', function () {
+            sock.on('error', function (err) {
+                console.error('socket error', { err: err });
             });
         };
         var callbackWith = function (success, socket) {
