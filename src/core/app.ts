@@ -92,7 +92,9 @@ var App = {
 
 		networkBootstrapper.bootstrap(function (err) {
 			if (err) {
-				logger.error('Network Bootstrapper: ERROR');
+				logger.error('Network Bootstrapper: ERROR', {
+					err: err
+				});
 				return;
 			}
 
