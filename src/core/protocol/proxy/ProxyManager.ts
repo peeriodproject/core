@@ -324,10 +324,10 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 			if (requestedProxy) {
 				this._removeFromRequestedProxies(identifier);
 
-				if (msgType === 'PROXY_ACCEPT') {
+				if (msgType === 'PROXY_ACCEPT' && Object.keys(this._confirmedProxies).length < this._maxNumberOfProxies) {
 					this._addToConfirmedProxies(identifier, sender);
 					this.emit('newProxy', sender);
-					logger.info('Got new proxy', {id: sender.getId().toHexString()});
+					logger.info('Got new proxy', {id: sender.getId().toHexString(), lengthNow: Object.keys(this._confirmedProxies).length});
 				}
 				else {
 					this.emit('proxyReject', sender);
