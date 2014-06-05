@@ -6,14 +6,14 @@ import sinon = require('sinon');
 
 import testUtils = require('../../utils/testUtils');
 
-import FreeGeoIp = require('../../../src/core/net/ip/FreeGeoIp');
+import JSONWebIp = require('../../../src/core/net/ip/JSONWebIp');
 import NetworkBootstrapper = require('../../../src/core/net/NetworkBootstrapper');
 import TCPSocketHandlerFactory = require('../../../src/core/net/tcp/TCPSocketHandlerFactory');
 import TCPSocketHandler = require('../../../src/core/net/tcp/TCPSocketHandler');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import events = require('events');
 
-describe('CORE --> NET --> NETWORK BOOTSTRAPPER', function () {
+describe('CORE --> NET --> NetworkBootstrapper', function () {
 	var sandbox:SinonSandbox;
 	var configStub:any;
 	var factoryStub:any;
@@ -44,13 +44,13 @@ describe('CORE --> NET --> NETWORK BOOTSTRAPPER', function () {
 			}
 		});
 
-		ipObtainerStubSuccess = testUtils.stubPublicApi(sandbox, FreeGeoIp, {
+		ipObtainerStubSuccess = testUtils.stubPublicApi(sandbox, JSONWebIp, {
 			"obtainIP": function (cb) {
 				cb(null, '127.0.0.1');
 			}
 		});
 
-		ipObtainerStubError = testUtils.stubPublicApi(sandbox, FreeGeoIp, {
+		ipObtainerStubError = testUtils.stubPublicApi(sandbox, JSONWebIp, {
 			"obtainIP": function (cb) {
 				cb(new Error('foobar'), null);
 			}
