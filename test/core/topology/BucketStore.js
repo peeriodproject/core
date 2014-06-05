@@ -6,7 +6,7 @@ var testUtils = require('../../utils/testUtils');
 var BucketStore = require('../../../src/core/topology/BucketStore');
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 
-describe('CORE --> TOPOLOGY --> BucketStore @prio', function () {
+describe('CORE --> TOPOLOGY --> BucketStore', function () {
     var databasePath = testUtils.getFixturePath('core/topology/bucketstore/db');
     var store = null;
 

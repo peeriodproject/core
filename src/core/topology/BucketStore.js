@@ -88,21 +88,6 @@ var BucketStore = (function () {
         return (this.get(bucketKey, id) !== null);
     };
 
-    // todo reompve debug method...
-    /*public debug ():void {
-    var txn:lmdb.Txn = this._beginReadOnlyTransaction();
-    var cursor:lmdb.Cursor = this._getCursor(txn);
-    
-    // loop through all key-value pairs
-    for (var found = cursor.goToFirst(); found; found = cursor.goToNext()) {
-    cursor.getCurrentString(function (key, data) {
-    console.log(key + "  " + data);
-    });
-    }
-    
-    cursor.close();
-    txn.commit();
-    }*/
     BucketStore.prototype.get = function (bucketKey, id) {
         var txn = this._beginReadOnlyTransaction();
         var cursor = this._getCursor(txn);
