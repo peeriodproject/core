@@ -1,0 +1,46 @@
+{
+  "name": "abschluss_app",
+  "version": "0.0.1",
+  "author": [
+    {
+      "name": "Jonathan Pirnay",
+      "email": "mail@johnnycrab.com"
+    },
+    {
+      "name": "Jörn Röder",
+      "email": "me@joernroeder.de"
+    }
+  ],
+  "engines": {
+    "node": ">= 0.10.0"
+  },
+  "config": {
+    "travis-cov": {
+      "threshold": 95
+    }
+  },
+  "scripts": {
+    "test": "grunt test"
+  },
+  "dependencies": {
+    "fs-extra": "^0.8.1"
+  },
+  "devDependencies": {
+    "blanket": "~1.1.5",
+    "grunt": "*",
+    "grunt-contrib-nodeunit": "*",
+    "grunt-contrib-watch": "*",
+    "grunt-curl": "*",
+    "grunt-env": "*",
+    "grunt-mocha-test": "*",
+    "grunt-node-webkit-builder": "^0.1.19",
+    "grunt-nodemon": "*",
+    "grunt-plato": "^1.0.0",
+    "grunt-typescript": "*",
+    "mocha": "~1.18.2",
+    "should": "~3.2.0",
+    "sinon": "~1.9.1",
+    "supertest": "~0.10.0",
+    "travis-cov": "~0.2.5"
+  }
+}

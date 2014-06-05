@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/net/tcp/TCPSocketHandler.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/net/tcp/TCPSocketHandler.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">73.30</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">301</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">51.91</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.07</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var events = require(&#039;events&#039;);
+var net = require(&#039;net&#039;);
+
+/**
+* TCPSocketHandler implementation.
+*
+* @class core.net.tcp.TCPSocketHandler
+* @extends events.EventEmitter
+* @implements core.net.tcp.TCPSockerHandlerInterface
+*
+* @param {core.net.tcp.TCPSocketHandlerOptions} opts
+*
+*/
+var TCPSocketHandler = (function (_super) {
+    __extends(TCPSocketHandler, _super);
+    function TCPSocketHandler(socketFactory, opts) {
+        _super.call(this);
+        /**
+        * Flag which indicates whether a FIN packet should generally be sent when the other end of a handled
+        * socket sends a FIN packet.
+        *
+        * @member {boolean} TCPSocketHandler~_allowHalfOpenSockets
+        */
+        this._allowHalfOpenSockets = false;
+        /**
+        * Indicates the number of seconds to wait until a server tries to listen on a used port again.
+        * Negative number meas that no retry will be triggered.
+        *
+        * @member {number} TCPSocketHandler~_connectionRetry
+        */
+        this._connectionRetry = 0;
+        /**
+        * For a &quot;regular&quot; connection (i.e. not a connection which serves as a proxy), how many seconds should be waited
+        * after the last activity until the socket connection is killed from this side.
+        *
+        * If idle sockets should not be closed, set to 0 or below.
+        *
+        * @member {number} TCPSocketHandler~_idleConnectionKillTimeout
+        */
+        this._idleConnectionKillTimeout = 0;
+        /**
+        * The external IP address of the computer.
+        *
+        * @member {string} TCPSocketHandler~_myExternalIp
+        */
+        this._myExternalIp = &#039;&#039;;
+        /**
+        * An array of open ports under which the computer can be reached from outside.
+        *
+        * @member {number[]} TCPSocketHandler~_myOpenPorts
+        */
+        this._myOpenPorts = null;
+        /**
+        * A list of listening, from outside reachable servers. Stored under their port numbers.
+        *
+        * @member {Object} TCPSocketHandler~_openTCPServer
+        */
+        this._openTCPServers = {};
+        /**
+        * Number of ms to wait until an outbound socket without emitting `connected` will be considered as unsuccessful.
+        *
+        * @member {number} TCPSocketHandler~_outboundConnectionTimeout
+        */
+        this._outboundConnectionTimeout = 0;
+        /**
+        * An internal list of ports used to memorize which ports have already been retried.
+        *
+        * @member {Array&lt;number&gt;} TCPSocketHandler~_retriedPorts
+        */
+        this._retriedPorts = [];
+        /**
+        * TCPSocketFactory
+        *
+        * @member TCPSocketHandler~_socketFactory
+        */
+        this._socketFactory = null;
+
+        if (!net.isIP(opts.myExternalIp))
+            throw new Error(&#039;TCPHandler.constructor: Provided IP is no IP&#039;);
+
+        this._socketFactory = socketFactory;
+
+        this.setMyExternalIp(opts.myExternalIp);
+        this._myOpenPorts = opts.myOpenPorts || [];
+        this._idleConnectionKillTimeout = opts.idleConnectionKillTimeout || 0;
+        this._allowHalfOpenSockets = !!opts.allowHalfOpenSockets;
+        this._connectionRetry = opts.connectionRetry || 3;
+        this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2000;
+    }
+    TCPSocketHandler.prototype.autoBootstrap = function (callback) {
+        var _this = this;
+        var doCallback = true;
+        var callbackTimeout = 0;
+        var checkAndCallback = function (port, server) {
+            if (callbackTimeout) {
+                clearTimeout(callbackTimeout);
+                callbackTimeout = 0;
+            }
+
+            if (Object.keys(_this._openTCPServers).length === _this._myOpenPorts.length) {
+                theCallback();
+            } else {
+                setCallbackTimeout();
+            }
+        };
+        var setCallbackTimeout = function () {
+            callbackTimeout = setTimeout(function () {
+                theCallback();
+            }, 5000);
+        };
+        var theCallback = function () {
+            if (doCallback) {
+                callback(_this.getOpenServerPortsArray());
+                _this.removeListener(&#039;openedReachableServer&#039;, checkAndCallback);
+            }
+            doCallback = false;
+        };
+
+        this._myOpenPorts.forEach(function (port) {
+            _this.createTCPServerAndBootstrap(port);
+        });
+
+        this.on(&#039;openedReachableServer&#039;, checkAndCallback);
+
+        setCallbackTimeout();
+    };
+
+    TCPSocketHandler.prototype.connectTo = function (port, ip, callback) {
+        var _this = this;
+        if (ip === this._myExternalIp &amp;&amp; this.getOpenServerPortsArray().indexOf(port) &gt; -1) {
+            if (callback) {
+                callback(null);
+            } else {
+                this.emit(&#039;connection error&#039;, port, ip);
+            }
+            return;
+        }
+
+        var sock = net.createConnection(port, ip);
+        var connectionError = function () {
+            sock.removeAllListeners();
+            sock.destroy();
+
+            if (callback) {
+                callback(null);
+            } else {
+                _this.emit(&#039;connection error&#039;, port, ip);
+            }
+        };
+        var connectionTimeout = setTimeout(function () {
+            connectionError();
+        }, this._outboundConnectionTimeout);
+
+        sock.on(&#039;error&#039;, connectionError);
+
+        sock.on(&#039;connect&#039;, function () {
+            clearTimeout(connectionTimeout);
+            sock.removeAllListeners(&#039;error&#039;);
+            var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
+
+            if (!callback) {
+                _this.emit(&#039;connected&#039;, socket, &#039;outgoing&#039;);
+            } else {
+                callback(socket);
+            }
+        });
+    };
+
+    TCPSocketHandler.prototype.createTCPServer = function () {
+        return net.createServer({
+            allowHalfOpen: this._allowHalfOpenSockets
+        });
+    };
+
+    TCPSocketHandler.prototype.createTCPServerAndBootstrap = function (port) {
+        var _this = this;
+        var server = this.createTCPServer();
+
+        if (typeof port !== &#039;number&#039;) {
+            port = parseInt(port, 10);
+        }
+
+        // retry once when encountering EADDRINUSE
+        server.on(&#039;error&#039;, function (error) {
+            if (error.code == &#039;EADDRINUSE&#039;) {
+                // retry
+                if (_this._connectionRetry &gt;= 0 &amp;&amp; _this._retriedPorts.indexOf(port) &lt; 0) {
+                    _this._retriedPorts.push(port);
+
+                    setTimeout(function () {
+                        server.listen(port);
+                    }, _this._connectionRetry * 1000);
+                }
+            }
+        });
+
+        // put it in our open server list, if reachable from outside
+        server.on(&#039;listening&#039;, function () {
+            var port = server.address().port;
+
+            _this.checkIfServerIsReachableFromOutside(server, function (success) {
+                if (success) {
+                    _this._openTCPServers[port] = server;
+
+                    server.on(&#039;connection&#039;, function (sock) {
+                        var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
+                        _this.emit(&#039;connected&#039;, socket, &#039;incoming&#039;);
+                    });
+
+                    _this.emit(&#039;openedReachableServer&#039;, port, server);
+                } else {
+                    server.close();
+                }
+            });
+
+            // remove it from our open server list
+            server.on(&#039;close&#039;, function () {
+                delete _this._openTCPServers[port];
+                _this.emit(&#039;closedServer&#039;, port);
+            });
+        });
+
+        server.listen(port);
+
+        return server;
+    };
+
+    /**
+    * Takes a server and checks if it can be reached from outside the network with the external IP specified in
+    * the constructor. Calls a callback with a flag indicating if it was successful (true) or not (false).
+    * It does not, however, automatically close the server if it is not reachable.
+    *
+    * @method TCPSocketHandler#checkIfServerIsReachableFromOutside
+    *
+    * @param {net.Server} server Server to check
+    * @param {Function} callback Callback which gets called with a success flag. `True` if reachable, `false`if unreachable
+    */
+    TCPSocketHandler.prototype.checkIfServerIsReachableFromOutside = function (server, callback) {
+        var connectionTimeout = null;
+        var serverOnConnect = function (sock) {
+            sock.on(&#039;data&#039;, function (data) {
+                sock.write(data);
+            });
+        };
+        var callbackWith = function (success, socket) {
+            callback(success);
+            if (socket) {
+                socket.end();
+            }
+            server.removeListener(&#039;connection&#039;, serverOnConnect);
+        };
+
+        server.on(&#039;connection&#039;, serverOnConnect);
+
+        connectionTimeout = setTimeout(function () {
+            callbackWith(false);
+        }, 2000);
+
+        this.connectTo(server.address().port, this._myExternalIp, function (socket) {
+            if (socket) {
+                socket.writeBuffer(new Buffer([20]));
+                socket.on(&#039;data&#039;, function (data) {
+                    clearTimeout(connectionTimeout);
+                    if (data[0] === 20) {
+                        callbackWith(true, socket);
+                    }
+                });
+            }
+        });
+    };
+
+    TCPSocketHandler.prototype.getDefaultSocketOptions = function () {
+        return {
+            idleConnectionKillTimeout: this._idleConnectionKillTimeout,
+            doKeepAlive: true
+        };
+    };
+
+    TCPSocketHandler.prototype.getMyExternalIp = function () {
+        return this._myExternalIp;
+    };
+
+    TCPSocketHandler.prototype.getOpenServerPortsArray = function () {
+        return Object.keys(this._openTCPServers).map(function (port) {
+            return parseInt(port, 10);
+        });
+    };
+
+    TCPSocketHandler.prototype.setMyExternalIp = function (ip) {
+        this._myExternalIp = ip;
+    };
+    return TCPSocketHandler;
+})(events.EventEmitter);
+
+module.exports = TCPSocketHandler;
+//# sourceMappingURL=TCPSocketHandler.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

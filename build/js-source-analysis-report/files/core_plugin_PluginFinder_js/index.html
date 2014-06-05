@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/plugin/PluginFinder.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/plugin/PluginFinder.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">75.03</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">215</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">52.09</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.25</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../main.d.ts&#039; /&gt;
+var fs = require(&#039;fs-extra&#039;);
+var path = require(&#039;path&#039;);
+
+/**
+* @class core.plugin.PluginFinder
+* @implements core.plugin.PluginFinderInterface
+*
+* @param {core.config.ConfigInterface} config
+*/
+var PluginFinder = (function () {
+    function PluginFinder(config) {
+        /**
+        * The internally used config instance
+        *
+        * @member {core.config.ConfigInterface} core.plugin.PluginFinder~_config
+        */
+        this._config = null;
+        /**
+        * A list of plugin folder names that are inored within the find process
+        *
+        * @member {core.config.ConfigInterface} core.plugin.PluginFinder~_ignoreFolderList
+        */
+        this._ignorePluginFolderNameList = [];
+        /**
+        * The name of a plugin config file
+        *
+        * @member {string} core.plugin.PluginFinder~_pluginConfigName
+        */
+        this._pluginConfigName = &#039;&#039;;
+        /**
+        * The path to the applications plugin folder
+        *
+        * @member {string} core.plugin.PluginFinder~_pluginFolderPath
+        */
+        this._pluginFolderPath = &#039;&#039;;
+        this._config = config;
+
+        this._pluginConfigName = this._config.get(&#039;plugin.pluginConfigName&#039;);
+        this._pluginFolderPath = this._config.get(&#039;plugin.folderPath&#039;);
+    }
+    PluginFinder.prototype.addPluginFolderNamesToIgnoreList = function (pluginFolderNames, callback) {
+        var _this = this;
+        var internalCallback = callback || function () {
+        };
+        var pluginFolderNamesLength = pluginFolderNames ? pluginFolderNames.length : 0;
+        var add = function (i) {
+            var pluginFolderName = pluginFolderNames[i];
+
+            _this._ignoreListContains(pluginFolderName, function (index) {
+                if (index === -1) {
+                    _this._ignorePluginFolderNameList.push(pluginFolderName);
+                }
+
+                if (i &lt; pluginFolderNamesLength - 1) {
+                    add(++i);
+                } else {
+                    internalCallback();
+                }
+            });
+        };
+
+        if (pluginFolderNamesLength) {
+            add(0);
+        } else {
+            process.nextTick(function () {
+                internalCallback();
+            }.bind(this));
+        }
+    };
+
+    PluginFinder.prototype.findPlugins = function (callback) {
+        var _this = this;
+        var pluginPaths = {};
+        var filesLeft = 0;
+
+        // calls the internalCallback if all files are processed
+        var checkAndCallCallback = function () {
+            if (!filesLeft) {
+                callback(null, pluginPaths);
+            }
+        };
+
+        // checks if the given path contains a plugin config and adds it to the list
+        var checkPath = function (filePath) {
+            _this._ignoreListContains(filePath, function (index) {
+                // current modulePath is ignored. skipping...
+                if (index !== -1) {
+                    process.nextTick(function () {
+                        filesLeft--;
+                        checkAndCallCallback();
+                    }.bind(_this));
+                } else {
+                    var pluginPath = path.join(_this._pluginFolderPath, filePath);
+                    var pluginConfigPath = path.join(pluginPath, _this._pluginConfigName);
+
+                    fs.stat(pluginPath, function (err, stat) {
+                        if (!err) {
+                            // it seems like we found a plugin folder, add the path to the list
+                            if (stat.isDirectory() &amp;&amp; fs.existsSync(pluginConfigPath)) {
+                                pluginPaths[filePath] = pluginPath;
+                            }
+                        }
+
+                        filesLeft--;
+                        checkAndCallCallback();
+                    });
+                }
+            });
+        };
+
+        this.getPluginFolderPath(function (err, folderPath) {
+            if (err) {
+                callback(err, null);
+            } else {
+                fs.readdir(_this._pluginFolderPath, function (err, files) {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        if (files &amp;&amp; files.length) {
+                            // promise how many paths should be processed
+                            filesLeft = files.length;
+
+                            files.forEach(function (file) {
+                                checkPath(file);
+                            });
+                        } else {
+                            callback(null, null);
+                        }
+                    }
+                });
+            }
+        });
+    };
+
+    PluginFinder.prototype.getIgnoredPluginFolderNames = function (callback) {
+        process.nextTick(function () {
+            callback(this._ignorePluginFolderNameList.slice());
+        }.bind(this));
+    };
+
+    PluginFinder.prototype.getPluginFolderPath = function (callback) {
+        var folderPath = this._pluginFolderPath;
+
+        fs.exists(folderPath, function (exists) {
+            if (exists) {
+                callback(null, folderPath);
+            } else {
+                fs.mkdirs(folderPath, function (err) {
+                    if (err) {
+                        callback(err, null);
+                    } else {
+                        callback(null, folderPath);
+                    }
+                });
+            }
+        });
+    };
+
+    PluginFinder.prototype.removePluginFolderNamesFromIgnoreList = function (pluginFolderNames, callback) {
+        var _this = this;
+        var internalCallback = callback || function () {
+        };
+        var pluginFolderNamesLength = pluginFolderNames ? pluginFolderNames.length : 0;
+        var remove = function (i) {
+            var pluginFolderName = pluginFolderNames[i];
+
+            _this._ignoreListContains(pluginFolderName, function (index) {
+                if (index !== -1) {
+                    _this._ignorePluginFolderNameList.splice(index, 1);
+
+                    if (i &lt; pluginFolderNamesLength - 1) {
+                        remove(++i);
+                    } else {
+                        internalCallback();
+                    }
+                }
+            });
+        };
+
+        if (pluginFolderNamesLength) {
+            remove(0);
+        } else {
+            process.nextTick(function () {
+                internalCallback();
+            }.bind(this));
+        }
+    };
+
+    /**
+    * Returns `true` if the {@link core.plugin.PluginLoader~_ignoreFolderList} contains the specified plugin name
+    *
+    * @see http://stackoverflow.com/a/11287978
+    *
+    * @param {string} pluginName
+    * @param {Function} callback
+    */
+    PluginFinder.prototype._ignoreListContains = function (pluginName, callback) {
+        var list = this._ignorePluginFolderNameList;
+
+        return (function check(i) {
+            if (i &gt;= list.length) {
+                return callback(-1);
+            }
+
+            if (list[i] === pluginName) {
+                return callback(i);
+            }
+
+            return process.nextTick(check.bind(null, i + 1));
+        }(0));
+    };
+    return PluginFinder;
+})();
+
+module.exports = PluginFinder;
+//# sourceMappingURL=PluginFinder.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+{
+    "topology": {
+        "bitLength"  : 160,
+        "k"          : 20,
+        "alpha"      : 3,
+        "bucketStore": {
+            "databasePath": "db"
+        }
+    },
+    "net"     : {
+        "allowHalfOpenSockets"     : false,
+        "connectionRetrySeconds"   : 4,
+        "idleConnectionKillTimeout": 5,
+        "outboundConnectionTimeout": 2000,
+        "myOpenPorts"              : [],
+
+        "simulator": {
+            "rtt": 0
+        }
+    },
+    "protocol": {
+        "waitForNodeReactionInSeconds": 2,
+        "messages"                    : {
+            "maxByteLengthPerMessage"      : 1048576,
+            "msToKeepNonAddressableMemory" : 10000,
+            "msToWaitForIncomingMessage"   : 2000,
+            "maxSecondsToWaitForConnection": 2.5
+        },
+        "proxy"                       : {
+            "maxNumberOfProxies"                   : 2,
+            "proxyForMaxNumberOfNodes"             : 2,
+            "maxUnsuccessfulProxyTries"            : 4,
+            "unsuccessfulProxyTryWaitTimeInSeconds": 20
+        },
+        "pingpong"                    : {
+            "maxWaitingListSize": 20
+        },
+        "findClosestNodes"            : {
+            "cycleExpirationInSeconds" : 2,
+            "parallelismDelayInSeconds": 1.5
+        },
+        "networkMaintenance": {
+            "bucketRefreshRateInSeconds": 3600
+        },
+        "nodeDiscovery": {
+            "iterativeSeekTimeoutInMs": 1500,
+            "republishInSeconds": 3600
+        }
+    },
+    "plugin"  : {
+        "folderPath"              : "plugin",
+        "pluginConfigName"        : "plugin.json",
+        "pluginManagerStateConfig": "pluginManager.json",
+        "api"                     : {
+            "basePath"     : "core/plugin/api",
+            "pluginApiName": "PluginApi.js"
+        }
+    },
+    "app"     : {
+        "dataPath": "/Volumes/HDD/Users/Johnny/Documents/node/abschluss_app/src/config"
+    },
+    "search"  : {
+        "host"             : "localhost",
+        "port"             : 9200,
+        "binaryPath"       : "core/search/elasticsearch",
+        "databasePath"     : "db/searchStore",
+        "searchStoreConfig": "./config/searchStore.json",
+        "pidFilename"      : "elasticsearch-pid",
+        "indexManager"     : {
+            "indexRunnerDelayInMilliSeconds": 10000,
+            "indexRunnersInParallel"        : 3
+        }
+    },
+    "fs"      : {
+        "folderWatcher": {
+            "interval"      : 1000,
+            "binaryInterval": 5000,
+            "eventDelay"    : 1000
+        }
+    }
+}

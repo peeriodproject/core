@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/plugin/PluginRunner.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/plugin/PluginRunner.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">75.64</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">127</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">23.84</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.78</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../main.d.ts&#039; /&gt;
+var fs = require(&#039;fs&#039;);
+var path = require(&#039;path&#039;);
+
+var SandCastle = require(&#039;sandcastle&#039;).SandCastle;
+
+var PluginGlobalsFactory = require(&#039;./PluginGlobalsFactory&#039;);
+
+/**
+* @class core.plugin.PluginRunner
+* @implements core.plugin.PluginRunnerInterface
+*
+* @params {core.config.ConfigInterface} config
+* @params {string} identifier todo remove identifer
+* @params {string} plugnScriptPath
+*/
+var PluginRunner = (function () {
+    // todo plugin-type PluginGlobalsFactory factory parameter
+    function PluginRunner(config, identifier, pluginScriptPath) {
+        this._config = null;
+        this._sandbox = null;
+        this._sandboxScripts = [];
+        this._pluginCode = null;
+        this._pluginGlobalsFactory = null;
+        this._pluginScriptPath = null;
+        this._config = config;
+        this._pluginScriptPath = pluginScriptPath;
+
+        this._sandbox = new SandCastle({
+            memoryLimitMB: 100,
+            timeout: 2000,
+            useStrictMode: true,
+            api: this._getPluginApiPath()
+        });
+        this._pluginGlobalsFactory = new PluginGlobalsFactory();
+        this._pluginCode = fs.readFileSync(this._pluginScriptPath, &#039;utf-8&#039;);
+    }
+    PluginRunner.prototype.cleanup = function () {
+        this._sandbox.kill();
+        this._sandboxScripts = null;
+        this._sandbox = null;
+        this._pluginGlobalsFactory = null;
+    };
+
+    PluginRunner.prototype.getMapping = function (callback) {
+        this._createAndRunSandbox(null, null, null, &#039;main.getMapping&#039;, callback, function (output) {
+            callback(null, output);
+        });
+    };
+
+    PluginRunner.prototype.onBeforeItemAdd = function (itemPath, stats, globals, callback) {
+        this._createAndRunSandbox(itemPath, stats, globals, &#039;main.onBeforeItemAdd&#039;, callback, function (output) {
+            callback(null, output);
+        });
+    };
+
+    /**
+    * Creates a sandbox, registers a timeout handler, addes the onExit callback and runs the specified method name.
+    *
+    * @method core.plugin.PluginRunner~_createAndRunSandbox
+    *
+    * @param {string} itemPath
+    * @param {fs.Stats} stats
+    * @param {Object} globals
+    * @param {string} methodName
+    * @param {Function} callback
+    * @param {Function} onExit
+    */
+    PluginRunner.prototype._createAndRunSandbox = function (itemPath, stats, globals, methodName, callback, onExit) {
+        this._createSandbox(itemPath);
+        this._registerSandboxTimeoutHandler(itemPath, callback);
+        this._sandboxScripts[itemPath].on(&#039;exit&#039;, function (err, output, methodName) {
+            if (err) {
+                return callback(err, null, methodName);
+            } else {
+                return onExit(output);
+            }
+        });
+
+        this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
+    };
+
+    /**
+    * Creates a sandbox for the given item path. Each sandbox provides a persistent state storage
+    * between lookups as long as the PluginRunner is active.
+    *
+    * @see core.plugin.PluginApi
+    *
+    * @method core.plugin.PluginRunner~_createSandbox
+    *
+    * @param {string} itemPath
+    */
+    PluginRunner.prototype._createSandbox = function (itemPath) {
+        if (!this._sandboxScripts[itemPath]) {
+            this._sandboxScripts[itemPath] = this._sandbox.createScript(this._pluginCode);
+        }
+    };
+
+    /**
+    * Registers a timeout handler for the sandbox which belongs to the given path
+    *
+    * @method core.plugin.PluginRunner~_registerSandboxTimeoutHandler
+    *
+    * @param {string} itemPath
+    * @param {Function} callback
+    */
+    PluginRunner.prototype._registerSandboxTimeoutHandler = function (itemPath, callback) {
+        if (this._sandboxScripts[itemPath]) {
+            this._sandboxScripts[itemPath].on(&#039;timeout&#039;, function (methodName) {
+                callback(new Error(&#039;PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call &quot;&#039; + methodName), null);
+            });
+        }
+    };
+
+    /**
+    * Returns an absolute path to the PluginApi file
+    *
+    * @method core.plugin.PluginRunner~_getPluginApiPath
+    *
+    * @returns {string}
+    */
+    PluginRunner.prototype._getPluginApiPath = function () {
+        return path.resolve(this._config.get(&#039;plugin.api.basePath&#039;), this._config.get(&#039;plugin.api.pluginApiName&#039;));
+    };
+    return PluginRunner;
+})();
+
+module.exports = PluginRunner;
+//# sourceMappingURL=PluginRunner.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

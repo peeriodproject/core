@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/ping/PingPongNodeUpdateHandler.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/ping/PingPongNodeUpdateHandler.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">70.67</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">285</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">48.99</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.56</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var events = require(&#039;events&#039;);
+
+/**
+* PingPongNodeUpdateHandlerInterface implementation.
+*
+* @class core.protocol.ping.PingPongNodeUpdateHandler
+* @extends NodeJS.EventEmitter
+* @implements core.protocol.ping.PingPongNodeUpdateHandlerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.topology.MyNodeInterface} myNode
+* @param {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager Running protocol connection manager
+* @oaram {core.protocol.proxy.ProxyManagerInterface} proxyManager
+* @param {core.topology.RoutingTableInterface} routingTable
+*/
+var PingPongNodeUpdateHandler = (function (_super) {
+    __extends(PingPongNodeUpdateHandler, _super);
+    function PingPongNodeUpdateHandler(config, myNode, protocolConnectionManager, proxyManager, routingTable) {
+        _super.call(this);
+        /**
+        * The maximum size a waiting list of a bucket can grow to until all incoming nodes for this list are simply discarded.
+        *
+        * @member {number} core.protocol.ping.PingPongNodeUpdateHandler~_maxWaitingListSize
+        */
+        this._maxWaitingListSize = 0;
+        /**
+        * My node.
+        *
+        * @member {core.topology.MyNodeInterface} core.protocol.ping.PingPongNodeUpdateHandler~_myNode
+        */
+        this._myNode = null;
+        /**
+        * The running protocol connection manager instance.
+        *
+        * @member {core.protocol.net.ProtocolConnectionManagerInterface} core.protocol.ping.PingPongNodeUpdateHandler~_protocolConnectionManager
+        */
+        this._protocolConnectionManager = null;
+        /**
+        * The running proxy manager instance.
+        *
+        * @member {core.protocol.proxy.ProxyManagerInterface} core.protocol.ping.PingPongNodeUpdateHandler~_proxyManager
+        */
+        this._proxyManager = null;
+        /**
+        * Number of milliseconds a PINGed node has to respond until the PING is considered a fail.
+        *
+        * @member {number} core.protocol.ping.PingPongNodeUpdateHandler~_reactionTime
+        */
+        this._reactionTime = 0;
+        /**
+        * Routing table of the peer.
+        *
+        * @member {core.topology.RoutingTableInterface} core.protocol.ping.PingPongNodeUpdateHandler~_routingTable
+        */
+        this._routingTable = null;
+        /**
+        * The array holding the waiting lists for the buckets.
+        *
+        * @member {Array&lt;core.protocol.ping.PongWaitingList} core.protocol.ping.PingPongNodeUpdateHandler~_waitingLists
+        */
+        this._waitingLists = [];
+
+        this._myNode = myNode;
+        this._reactionTime = config.get(&#039;protocol.waitForNodeReactionInSeconds&#039;) * 1000;
+        this._maxWaitingListSize = config.get(&#039;protocol.pingpong.maxWaitingListSize&#039;);
+        this._protocolConnectionManager = protocolConnectionManager;
+        this._proxyManager = proxyManager;
+        this._routingTable = routingTable;
+
+        this._setupListeners();
+    }
+    PingPongNodeUpdateHandler.prototype.getWaitingLists = function () {
+        return this._waitingLists;
+    };
+
+    /**
+    * Adds new node information to the waiting list for the right bucket. Checks if it is the first and if so, fires off
+    * the ping.
+    * The passed `possibleNodeToCheck` can however differ later, if the waiting list isn&#039;t empty.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_addToWaitingList
+    *
+    * @param {core.topology.ContactNodeInterface} node The new node information to add to the waiting list
+    * @param {core.topology.ContactNodeInterface} possibleNodeToCheck The currently least recently seen node for the right bucket.
+    */
+    PingPongNodeUpdateHandler.prototype._addToWaitingList = function (node, possibleNodeToCheck) {
+        var waitingListNumber = this._getWaitingListNumberByNode(node);
+
+        if (waitingListNumber &gt; -1) {
+            var existingWaitingList = this._waitingLists[waitingListNumber];
+            var isFirst = !existingWaitingList || !existingWaitingList.length;
+
+            if (!existingWaitingList) {
+                this._waitingLists[waitingListNumber] = existingWaitingList = [];
+            }
+
+            if (existingWaitingList.length &lt; this._maxWaitingListSize) {
+                var slot = {
+                    newNode: node,
+                    nodeToCheck: isFirst ? possibleNodeToCheck : null,
+                    timeout: 0
+                };
+                existingWaitingList.push(slot);
+
+                if (isFirst) {
+                    this._handleNextInWaitingList(waitingListNumber);
+                }
+            }
+        }
+    };
+
+    /**
+    * Creates the timeout for a specific waitingListNumber. If it elapses, the first slot of the specified waiting list
+    * is removed and the &#039;old&#039; node of the slot is replaced by the &#039;new&#039; one in the routing table.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_createSlotTimeout
+    *
+    * @param {number} waitingListNumber
+    * @returns {number|NodeJS.Timer}
+    */
+    PingPongNodeUpdateHandler.prototype._createSlotTimeout = function (waitingListNumber) {
+        var _this = this;
+        return setTimeout(function () {
+            var slot = _this._waitingLists[waitingListNumber].splice(0, 1)[0];
+
+            _this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
+
+            _this.emit(&#039;pingTimeout&#039;, slot.nodeToCheck);
+
+            _this._handleNextInWaitingList(waitingListNumber);
+        }, this._reactionTime);
+    };
+
+    /**
+    * Returns the waiting list index of the passed node. Checks it agains my node, so it is actually the bucket
+    * number the node should be stored in.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_getWaitingListNumberByNode
+    *
+    * @param {core.topology.ContactNodeInterface} node Node to check against
+    * @returns {number}
+    */
+    PingPongNodeUpdateHandler.prototype._getWaitingListNumberByNode = function (node) {
+        return this._myNode.getId().differsInHighestBit(node.getId());
+    };
+
+    /**
+    * Takes the first entry of the waiting list with the specified index. If there is an entry, it checks whether
+    * the `nodeToCheck` is already set (this is when a slot is put into an empty list). If yes, it PINGs the same.
+    * If not, it checks the routing table again for the least recently seen node. If there is none (e.g. the new node
+    * could be added), the slot is removed and the next slot is getting checked.
+    * If there is one, it is PINGed all the same.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_handleNextInWaitingList
+    *
+    * @param {number} waitingListNumber
+    */
+    PingPongNodeUpdateHandler.prototype._handleNextInWaitingList = function (waitingListNumber) {
+        var _this = this;
+        var slot = this._waitingLists[waitingListNumber][0];
+        if (slot) {
+            // there is a slot. check if it already has a node to check
+            if (slot.nodeToCheck) {
+                this._pingNodeByWaitingSlot(slot, waitingListNumber);
+            } else {
+                this._routingTable.updateContactNode(slot.newNode, function (err, longestNotSeenContact) {
+                    if (err &amp;&amp; longestNotSeenContact) {
+                        slot.nodeToCheck = longestNotSeenContact;
+                        _this._pingNodeByWaitingSlot(slot, waitingListNumber);
+                    } else {
+                        _this._waitingLists[waitingListNumber].splice(0, 1);
+                        _this._handleNextInWaitingList(waitingListNumber);
+                    }
+                });
+            }
+        }
+    };
+
+    /**
+    * Handles a PONG message. Checks if the PONGing node can be referenced to the first slot in the right waiting list.
+    * If yes, nothing is done except removing the slo (and thus discarding the information about the new node).
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_handlePong
+    *
+    * @param {core.topology.ContactNodeInterface} node The PONGing node
+    */
+    PingPongNodeUpdateHandler.prototype._handlePong = function (node) {
+        var waitingListNumber = this._getWaitingListNumberByNode(node);
+        var list = this._waitingLists[waitingListNumber];
+
+        if (list &amp;&amp; list.length) {
+            var first = list[0];
+
+            if (node.getId().equals(first.nodeToCheck.getId())) {
+                list.splice(0, 1);
+                clearTimeout(first.timeout);
+
+                this.emit(&#039;gotPonged&#039;, node);
+
+                this._handleNextInWaitingList(waitingListNumber);
+            }
+        }
+    };
+
+    /**
+    * The handler for the proxy&#039;s `contactNodeInformation` event. Tries to update it in the routing table. If it is not
+    * present yet, but the bucket is full, it is added to the waiting list.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_newNodeInformation
+    *
+    * @param {core.topology.ContactNodeInterface} node The new contact node info.
+    */
+    PingPongNodeUpdateHandler.prototype._newNodeInformation = function (node) {
+        var _this = this;
+        this._routingTable.updateContactNode(node, function (err, longestNotSeenContact) {
+            if (err &amp;&amp; longestNotSeenContact) {
+                _this._addToWaitingList(node, longestNotSeenContact);
+            }
+        });
+    };
+
+    /**
+    * Sends a PING message to the `nodeToCheck` in a waiting slot and act accordingly. If the sending fails,
+    * the slot is immediately removed and the `nodeToCheck` replaced with the `newNode`. If not, the timeout is set.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_pingNodeByWaitingSlot
+    *
+    * @param {core.protocol.ping.PongWaitingSlot} slot
+    * @param {number} waitingListNumber
+    */
+    PingPongNodeUpdateHandler.prototype._pingNodeByWaitingSlot = function (slot, waitingListNumber) {
+        var _this = this;
+        this._protocolConnectionManager.writeMessageTo(slot.nodeToCheck, &#039;PING&#039;, new Buffer(0), function (err) {
+            if (err) {
+                _this._waitingLists[waitingListNumber].splice(0, 1);
+                _this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
+            } else {
+                slot.timeout = _this._createSlotTimeout(waitingListNumber);
+            }
+        });
+    };
+
+    /**
+    * Sends a PONG message to the specified node.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_sendPongTo
+    *
+    * @param {core.topology.ContactNodeInterface} node
+    */
+    PingPongNodeUpdateHandler.prototype._sendPongTo = function (node) {
+        this._protocolConnectionManager.writeMessageTo(node, &#039;PONG&#039;, new Buffer(0));
+    };
+
+    /**
+    * Initially sets up the listeners on the proxy&#039;s `message` and `contactNodeInformation` event.
+    *
+    * @method core.protocol.ping.PingPongNodeUpdateHandler~_setupListeners
+    *
+    */
+    PingPongNodeUpdateHandler.prototype._setupListeners = function () {
+        var _this = this;
+        this._proxyManager.on(&#039;message&#039;, function (message) {
+            var type = message.getMessageType();
+
+            if (type === &#039;PING&#039;) {
+                _this._sendPongTo(message.getSender());
+            } else if (type === &#039;PONG&#039;) {
+                _this._handlePong(message.getSender());
+            }
+        });
+
+        this._proxyManager.on(&#039;contactNodeInformation&#039;, function (node) {
+            _this._newNodeInformation(node);
+        });
+    };
+    return PingPongNodeUpdateHandler;
+})(events.EventEmitter);
+
+module.exports = PingPongNodeUpdateHandler;
+//# sourceMappingURL=PingPongNodeUpdateHandler.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

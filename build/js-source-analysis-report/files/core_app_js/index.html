@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/app.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/app.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">58.93</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">111</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">22.42</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.21</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var JSONConfig = require(&#039;./config/JSONConfig&#039;);
+var TCPSocketHandlerFactory = require(&#039;./net/tcp/TCPSocketHandlerFactory&#039;);
+var NetworkBootstrapper = require(&#039;./net/NetworkBootstrapper&#039;);
+var FreeGeoIp = require(&#039;./net/ip/FreeGeoIp&#039;);
+var Id = require(&#039;./topology/Id&#039;);
+var MyNode = require(&#039;./topology/MyNode&#039;);
+var ContactNodeAddressFactory = require(&#039;./topology/ContactNodeAddressFactory&#039;);
+var ContactNodeAddress = require(&#039;./topology/ContactNodeAddress&#039;);
+var ContactNode = require(&#039;./topology/ContactNode&#039;);
+var ProtocolConnectionManager = require(&#039;./protocol/net/ProtocolConnectionManager&#039;);
+var GeneralWritableMessageFactory = require(&#039;./protocol/messages/GeneralWritableMessageFactory&#039;);
+var BucketFactory = require(&#039;./topology/BucketFactory&#039;);
+var BucketStore = require(&#039;./topology/BucketStore&#039;);
+var ContactNodeFactory = require(&#039;./topology/ContactNodeFactory&#039;);
+var RoutingTable = require(&#039;./topology/RoutingTable&#039;);
+
+var App = {
+    start: function () {
+        var netConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;net&#039;]);
+        var protocolConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;protocol&#039;]);
+        var topologyConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;topology&#039;]);
+
+        var tcpSocketHandlerFactory = new TCPSocketHandlerFactory();
+        var freeGeoIp = new FreeGeoIp();
+
+        var nodeAddressFactory = new ContactNodeAddressFactory();
+
+        var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, netConfig, [freeGeoIp]);
+
+        networkBootstrapper.bootstrap(function (err) {
+            if (err) {
+                console.log(&#039;Network Bootstrapper: ERROR&#039;);
+                return;
+            }
+
+            // build up our node
+            var myIp = networkBootstrapper.getExternalIp();
+            var tcpSocketHandler = networkBootstrapper.getTCPSocketHandler();
+            var myOpenPorts = tcpSocketHandler.getOpenServerPortsArray();
+            var addressList = [];
+
+            var myNode = null;
+            var protocolConnectionManager = null;
+            var generalWritableMessageFactory = null;
+            var bucketStore = null;
+            var bucketFactory = null;
+            var contactNodeFactory = null;
+            var routingTable = null;
+
+            if (myOpenPorts.length === 0) {
+                console.log(&#039;NO PORTS OPEN. ERROR&#039;);
+                return;
+            }
+
+            console.log(&#039;bootstrapped the network&#039;);
+
+            for (var i = 0; i &lt; myOpenPorts.length; i++) {
+                addressList.push(nodeAddressFactory.create(myIp, myOpenPorts[i]));
+            }
+
+            // switch on ports for id
+            var hexVal = myOpenPorts[0] === 30415 ? &#039;0020000000000000009400010100000050f40602&#039; : &#039;0a0000000000000078f406020100000005000000&#039;;
+            var myId = new Id(Id.byteBufferByHexString(hexVal, 20), 160);
+
+            myNode = new MyNode(myId, addressList);
+            protocolConnectionManager = new ProtocolConnectionManager(protocolConfig, tcpSocketHandler);
+            generalWritableMessageFactory = new GeneralWritableMessageFactory(myNode);
+            bucketStore = new BucketStore(&#039;foo&#039;, topologyConfig.get(&#039;topology.bucketStore.databasePath&#039;));
+            bucketFactory = new BucketFactory();
+            contactNodeFactory = new ContactNodeFactory();
+            routingTable = new RoutingTable(topologyConfig, myId, bucketFactory, bucketStore, contactNodeFactory);
+
+            if (myOpenPorts[0] === 30415) {
+                console.log(&#039;In Port 30415. johnny&#039;);
+
+                // initializer
+                var remoteNodeId = new Id(Id.byteBufferByHexString(&#039;0a0000000000000078f406020100000005000000&#039;, 20), 160);
+                var remoteContact = new ContactNode(remoteNodeId, [new ContactNodeAddress(myIp, 30414)], Date.now());
+
+                generalWritableMessageFactory.setReceiver(remoteContact);
+                generalWritableMessageFactory.setMessageType(&#039;PING&#039;);
+                var buf = generalWritableMessageFactory.constructMessage(new Buffer(0));
+
+                protocolConnectionManager.writeBufferTo(remoteContact, buf, function (err) {
+                    if (err)
+                        console.log(err);
+                });
+
+                protocolConnectionManager.on(&#039;message&#039;, function (message) {
+                    console.log(&#039;Message from &#039; + message.getSender().getId().toHexString() + &#039;: &#039; + message.getMessageType());
+                });
+            } else {
+                console.log(&#039;In Port 30414. joern&#039;);
+                protocolConnectionManager.on(&#039;message&#039;, function (message) {
+                    if (message.getMessageType() === &#039;PING&#039;) {
+                        console.log(&#039;Message from &#039; + message.getSender().getId().toHexString() + &#039;: &#039; + message.getMessageType());
+                        generalWritableMessageFactory.setReceiver(message.getSender());
+                        generalWritableMessageFactory.setMessageType(&#039;PONG&#039;);
+                        var buf = generalWritableMessageFactory.constructMessage(new Buffer(0));
+
+                        protocolConnectionManager.writeBufferTo(message.getSender(), buf);
+                    }
+                });
+            }
+
+            console.log(&#039;everything set up!&#039;);
+        });
+    }
+};
+
+module.exports = App;
+//# sourceMappingURL=app.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

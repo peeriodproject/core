@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/fs/FolderWatcher.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/fs/FolderWatcher.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">70.16</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">303</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">54.71</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.07</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../main.d.ts&#039; /&gt;
+var events = require(&#039;events&#039;);
+var fs = require(&#039;fs&#039;);
+
+//var monitor = require(&#039;usb-detection&#039;);
+var chokidar = require(&#039;chokidar&#039;);
+var EventEmitter = events.EventEmitter;
+
+var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
+
+/**
+* @class core.fs.FolderWatcher
+* @implements core.fs.FolderWatcherInterface
+*
+* @param {string} pathToWatch The absolute path to the folder the watcher should manage.
+*/
+var FolderWatcher = (function () {
+    function FolderWatcher(config, pathToWatch, options) {
+        if (typeof options === &quot;undefined&quot;) { options = {}; }
+        var _this = this;
+        this._config = null;
+        this._currentEmptyFilePaths = [];
+        this._currentDelayedEvents = {};
+        this._eventDelayOptions = null;
+        this._eventEmitter = null;
+        /**
+        * A flag indicates weather the watcher is open (active) or closed (inactive)
+        *
+        * @member {boolean} core.fs.FolderWatcher~_isOpen
+        */
+        this._isOpen = false;
+        this._options = null;
+        /**
+        * The folder path the watcher is watching
+        *
+        * @member {string} core.fs.FolderWatcher~_path
+        */
+        this._path = null;
+        // todo implement chokidar.d.ts
+        this._watcher = null;
+        var defaults = {
+            closeOnProcessExit: true
+        };
+
+        this._config = config;
+        this._path = pathToWatch;
+        this._options = ObjectUtils.extend(defaults, options);
+
+        this._eventDelayOptions = {
+            interval: this._config.get(&#039;fs.folderWatcher.interval&#039;),
+            binaryInterval: this._config.get(&#039;fs.folderWatcher.binaryInterval&#039;),
+            eventDelay: this._config.get(&#039;fs.folderWatcher.eventDelay&#039;)
+        };
+
+        if (this._options.closeOnProcessExit) {
+            process.on(&#039;exit&#039;, function () {
+                _this.close();
+            });
+        }
+
+        this.open();
+    }
+    FolderWatcher.prototype.close = function () {
+        if (!this._isOpen) {
+            return;
+        }
+
+        // clean up watcher
+        this._watcher.close();
+        this._watcher = null;
+
+        // clean up event emitter
+        this._eventEmitter.removeAllListeners();
+        this._eventEmitter = null;
+
+        this._isOpen = false;
+    };
+
+    FolderWatcher.prototype.isOpen = function () {
+        return this._isOpen;
+    };
+
+    FolderWatcher.prototype.off = function (eventName, callback) {
+        this._eventEmitter.removeListener(eventName, callback);
+    };
+
+    FolderWatcher.prototype.on = function (eventName, callback) {
+        this._eventEmitter.addListener(eventName, callback);
+    };
+
+    FolderWatcher.prototype.open = function () {
+        if (this._isOpen) {
+            return;
+        }
+
+        this._eventEmitter = new EventEmitter();
+
+        this._watcher = chokidar.watch(this._path, {
+            ignored: /[\/\\]\./,
+            persistent: true,
+            interval: this._eventDelayOptions.interval,
+            binaryInterval: this._eventDelayOptions.binaryInterval
+        });
+
+        this._registerWatcherEvents();
+
+        this._isOpen = true;
+    };
+
+    // todo bind to seperate event listeners.
+    FolderWatcher.prototype._registerWatcherEvents = function () {
+        var _this = this;
+        this._watcher.on(&#039;all&#039;, function (eventName, changedPath) {
+            //console.log(eventName);
+            if ([&#039;add&#039;, &#039;change&#039;, &#039;unlink&#039;].indexOf(eventName) !== -1) {
+                _this._processDelayedEvent(eventName, changedPath);
+            } else if (eventName === &#039;addDir&#039;) {
+                //console.log(&#039;added directory&#039;, this._logPath(changedPath));
+            } else if (eventName === &#039;unlinkDir&#039;) {
+                //console.log(&#039;removed directory&#039;, this._logPath(changedPath));
+            } else if (eventName !== &#039;error&#039;) {
+                //console.log(&#039;=== Undelayed Event ===&#039;);
+                //console.error(eventName, changedPath);
+            } else {
+                //console.log(&#039;=== Unhandled Event ===&#039;);
+                //console.error(eventName, changedPath);
+            }
+        });
+    };
+
+    FolderWatcher.prototype._processDelayedEvent = function (eventName, changedPath) {
+        if (!this._eventExists(changedPath)) {
+            this._createDelayedEvent(eventName, changedPath);
+        } else {
+            this._updateDelayedEvent(eventName, changedPath);
+        }
+    };
+
+    FolderWatcher.prototype._updateDelayedEvent = function (eventName, changedPath, timeoutIdentifier) {
+        var _this = this;
+        var delayedEvent = this._currentDelayedEvents[changedPath];
+
+        if (delayedEvent) {
+            this._getFileSize(changedPath, function (fileSize, stats) {
+                //console.log(&#039;- removing old event&#039;);
+                clearTimeout(delayedEvent.timeout);
+
+                //console.log(&#039;- updating properties&#039;);
+                // update event name
+                if (delayedEvent.eventName !== eventName) {
+                    //console.log(&#039;  - event name&#039;);
+                    _this._currentDelayedEvents[changedPath].eventName = eventName;
+                }
+
+                // update fileSize
+                //console.log(&#039;  - file size&#039;);
+                _this._currentDelayedEvents[changedPath].fileSize = fileSize;
+
+                // update timeout function
+                //console.log(&#039;  - timeout&#039;);
+                timeoutIdentifier = timeoutIdentifier || _this._getDelayedTriggerMethod(eventName, changedPath);
+                _this._currentDelayedEvents[changedPath].timeout = timeoutIdentifier;
+            });
+        }
+    };
+
+    /**
+    * Returns
+    * @returns {number|NodeJS.Timer}
+    */
+    FolderWatcher.prototype._getDelayedTriggerMethod = function (eventName, changedPath) {
+        var _this = this;
+        //console.log(&#039;  - creating delayed trigger method&#039;);
+        var delay = this._eventDelayOptions.binaryInterval + 1000;
+
+        return setTimeout(function () {
+            //console.log(&#039;going to trigger delayed event for &#039; + this._logPath(changedPath));
+            _this._triggerDelayedEvent(eventName, changedPath);
+        }, delay);
+    };
+
+    FolderWatcher.prototype._createDelayedEvent = function (eventName, changedPath, isEmptyFile) {
+        var _this = this;
+        if (typeof isEmptyFile === &quot;undefined&quot;) { isEmptyFile = false; }
+        //console.log(&#039;- creating delayed event &#039; + eventName + &#039; for &#039; + this._logPath(changedPath));
+        this._getFileSize(changedPath, function (fileSize, stats) {
+            _this._currentDelayedEvents[changedPath] = {
+                eventName: eventName,
+                fileSize: fileSize,
+                initialEventName: eventName,
+                isEmptyFile: isEmptyFile,
+                timeout: _this._getDelayedTriggerMethod(eventName, changedPath)
+            };
+        });
+    };
+
+    /**
+    * Returns the file size for the specified path or -1
+    *
+    * @param filePath
+    * @param callback
+    */
+    FolderWatcher.prototype._getFileSize = function (filePath, callback) {
+        fs.stat(filePath, function (err, stats) {
+            var fileSize = err ? -1 : stats.size;
+            stats = stats || null;
+
+            callback(fileSize, stats);
+        });
+    };
+
+    /**
+    * Returns true if a event exists for the the given path
+    *
+    * @param {string} changedPath
+    * @returns {boolean}
+    */
+    FolderWatcher.prototype._eventExists = function (changedPath) {
+        return this._currentDelayedEvents[changedPath] ? true : false;
+    };
+
+    /**
+    *
+    * @param eventName
+    * @param changedPath
+    * @private
+    */
+    FolderWatcher.prototype._triggerDelayedEvent = function (eventName, changedPath) {
+        var _this = this;
+        this._updateDelayedEvent(eventName, changedPath, setTimeout(function () {
+            _this._getFileSize(changedPath, function (fileSize, stats) {
+                var delayedEvent = _this._currentDelayedEvents[changedPath];
+
+                // we have a consistent file!
+                if (delayedEvent.fileSize === fileSize) {
+                    _this._deleteFromDelayedEvents(changedPath);
+
+                    if (!fileSize) {
+                        if (delayedEvent.isEmptyFile) {
+                            //console.log(&#039;File is already marked as empty. discarding...&#039;, this._logPath(changedPath));
+                        } else if (!delayedEvent.isEmptyFile &amp;&amp; _this._currentEmptyFilePaths.indexOf(changedPath) === -1) {
+                            //console.log(&#039;file is empty. adding to empty file paths list&#039;, this._logPath(changedPath));
+                            _this._currentEmptyFilePaths.push(changedPath);
+                        }
+                    } else {
+                        //console.log(&#039;file has not changed (&#039; + fileSize + &#039;)! triggering event...&#039;);
+                        var emptyFilePathIndex = _this._currentEmptyFilePaths.indexOf(changedPath);
+                        if (emptyFilePathIndex !== -1) {
+                            _this._currentEmptyFilePaths.splice(emptyFilePathIndex, 1);
+                        }
+
+                        _this._triggerEvent(delayedEvent.initialEventName, changedPath, stats);
+
+                        _this._checkEmptyFilePaths();
+                    }
+                } else {
+                    //console.log(&#039;file changed. retry...&#039;);
+                    _this._triggerDelayedEvent(eventName, changedPath);
+                }
+            });
+        }, this._eventDelayOptions.eventDelay));
+    };
+
+    /**
+    * Triggers the event to registered event listeners.
+    *
+    * @param {string} eventName
+    * @param {string} filePath
+    * @param {fs.Stats} stats
+    */
+    FolderWatcher.prototype._triggerEvent = function (eventName, filePath, stats) {
+        //console.log(&quot;\n&quot; + &#039;=== EVENT ===&#039;);
+        //console.log(eventName, this._logPath(filePath));
+        //console.log(&quot;\n\n&quot;);
+        if (this.isOpen()) {
+            this._eventEmitter.emit(eventName, filePath, stats);
+        }
+    };
+
+    /**
+    *
+    * @param changedPath
+    * @private
+    */
+    FolderWatcher.prototype._deleteFromDelayedEvents = function (changedPath) {
+        this._currentDelayedEvents[changedPath] = null;
+
+        delete this._currentDelayedEvents[changedPath];
+    };
+
+    FolderWatcher.prototype._checkEmptyFilePaths = function () {
+        // all delayed events are triggered. going to check the empty file paths.
+        if (this._currentEmptyFilePaths.length &amp;&amp; !Object.keys(this._currentDelayedEvents).length) {
+            while (this._currentEmptyFilePaths.length) {
+                var filePath = this._currentEmptyFilePaths.pop();
+
+                this._createDelayedEvent(&#039;add&#039;, filePath, true);
+            }
+        }
+    };
+    return FolderWatcher;
+})();
+
+module.exports = FolderWatcher;
+//# sourceMappingURL=FolderWatcher.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

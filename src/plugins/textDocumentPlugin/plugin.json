@@ -1,0 +1,17 @@
+{
+    "name": "Text-Document Analyser",
+    "description": "Analyses text documents with [Apache Tika](https://tika.apache.org)",
+    "identifier": "jj.core.documentAnalyser",
+    "version": "0.0.1",
+    "type": "searchPlugin",
+    "main": "lib/main.js",
+    "private": true,
+    "fileTypes": "./lib/fileTypes.json",
+    "settings": {
+        "useApacheTika": true
+    },
+    "modules": [
+    ],
+    "dependencies": [
+    ]
+}
