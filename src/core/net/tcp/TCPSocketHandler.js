@@ -251,7 +251,9 @@ var TCPSocketHandler = (function (_super) {
         var connectionTimeout = null;
         var serverOnConnect = function (sock) {
             sock.once('data', function (data) {
-                sock.write(data);
+                if (sock.writable) {
+                    sock.write(data);
+                }
             });
             sock.on('error', function () {
                 sock.destroy();
