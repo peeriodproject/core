@@ -27,10 +27,10 @@
             "maxSecondsToWaitForConnection": 2.1
         },
         "proxy"                       : {
-            "maxNumberOfProxies"                   : 3,
+            "maxNumberOfProxies"                   : 2,
             "proxyForMaxNumberOfNodes"             : 2,
             "maxUnsuccessfulProxyTries"            : 4,
-            "unsuccessfulProxyTryWaitTimeInSeconds": 30
+            "unsuccessfulProxyTryWaitTimeInSeconds": 20
         },
         "pingpong"                    : {
             "maxWaitingListSize": 20
