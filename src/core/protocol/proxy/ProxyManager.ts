@@ -495,6 +495,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 			this._ignoreProxies.push(identifier);
 
 			// this event is for testing purposes only
+			logger.info('Proxy request timed out', {identifier: identifier});
 			this.emit('requestProxyTimeout', identifier);
 			this._proxyCycleOnNextTick();
 		}
