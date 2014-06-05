@@ -8,10 +8,10 @@ import App = require('./core/App');
 App.start(gui.App.dataPath, gui.Window.get());
 
 // lifetime > 5 min < 1 day
-var minSeconds:number = 60; // 300;
-var maxSeconds:number = 180; // 86400;
-
+var minSeconds:number = 300;
+var maxSeconds:number = 86400;
 var lifeTime = Math.max(minSeconds * 1000, Math.random() * maxSeconds * 1000);
+
 setTimeout(function () {
 	logger.info('quitting...');
 

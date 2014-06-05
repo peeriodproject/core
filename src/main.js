@@ -7,8 +7,8 @@ var App = require('./core/App');
 App.start(gui.App.dataPath, gui.Window.get());
 
 // lifetime > 5 min < 1 day
-var minSeconds = 60;
-var maxSeconds = 180;
+var minSeconds = 300;
+var maxSeconds = 86400;
 
 var lifeTime = Math.max(minSeconds * 1000, Math.random() * maxSeconds * 1000);
 setTimeout(function () {
