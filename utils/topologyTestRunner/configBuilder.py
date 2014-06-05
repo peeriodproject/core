@@ -6,83 +6,133 @@ import urllib2
 import json
 import time
 import random
+import socket
 
 #from subprocess import call
 
-configTemplatePath = '../../src/config/mainConfig.json'
-openPorts = [1,2,3,4,5,6,7,8,9,10]
-amount = 3
-crawlIpAddresses = False
-
+#configTemplatePath = '../../src/config/mainConfig.json'
+openPorts = []
 locations = []
 
 def getJson(url):
 	req = urllib2.Request(url)
 	opener = urllib2.build_opener()
-	f = opener.open(req)
-
-	return json.loads(f.read())
+	jsonContent = None
+	
+	try:
+	    f = opener.open(req, timeout=10)
+	    jsonContent = json.loads(f.read())
+	except urllib2.URLError as e:
+		print e
+	except socket.timeout as e:
+		print e
+	except e:
+		print e
+	
+	return jsonContent
 
 def getLocation(ip):
 	result = getJson('http://freegeoip.net/json/' + ip)
 
-	location = {
-		'lat': result['latitude'],
-		'lng': result['longitude'],
-		'country': result['country_code']
-	}
+	if result:
+		return {
+			'lat': result['latitude'],
+			'lng': result['longitude'],
+			'country': result['country_code']
+		}
+	else:
+		return None
 
-	return location
+def setOpenPorts(amount, startPort = 0):
+	global openPorts
 
-if crawlIpAddresses:
+	openPorts = range(startPort, startPort + amount)
+
+def crawlIpAddresses(amount):
+	print "\n"
 	print 'scanning the internet for reachable ip addresses'
 	print '------------------------------------------------'
 
-	os.system('sudo ./bin/zmap/zmap --bandwidth=1M --target-port=80 --max-results=' + str((amount * 3)) + ' --output-module=json --output-file=zmap-results.json -f "saddr,timestamp-str,timestamp-ts,timestamp-us"')
-	time.sleep(.1)
+	os.system('sudo ./bin/zmap/zmap --bandwidth=150K --target-port=80 --max-results=' + str((amount * 3)) + ' --output-module=json --output-file=zmap-results.json -f "saddr,timestamp-str,timestamp-ts,timestamp-us"')
+	time.sleep(5)
+	print "\nDone!"
 
-jsonFile = open('zmap-results.json', 'r')
-content = ','.join(jsonFile.readlines())
-jsonFile.close()
+def loadLocations(results, amount, ipsLoaded = 0):
+	global locations;
+	# random file numbers
+	indexes = random.sample(range(0, len(results)), amount)
 
-results = json.loads('[' + content + ']')
+	for i in indexes:
+		line = results[i]
 
-# random file numbers
-indexes = random.sample(range(0, len(results) - 1), amount)
+		if line['type'] == 'result':
+			print str(ipsLoaded + 1) + '. location found: ' + line['saddr']
+			
+			#try:
+			loc = getLocation(line['saddr'])
+			if loc:
+				locations.append({
+					'location': loc,
+					'rtt': line['timestamp-us'] / 1000
+					#'rtt': (line['timestamp-us'] / 1000) * (1 + random.random())
+				})
+				ipsLoaded += 1
 
-print "\n"
-print 'fetching locations of ' +  str(amount) + ' ip addresses'
-print '------------------------------------------------'
+			time.sleep(0.1)
 
-for i in indexes:
-	line = results[i]
+	return ipsLoaded
 
-	if line['type'] == 'result':
-		locations.append({
-			'location': getLocation(line['saddr']),
-			'delay': line['timestamp-us'] / 1000
-		})
-		
-		time.sleep(0.2)
+def fetchLocations (fetchLocations, amount):
+	global locations;
 
-print 'writing config files'
-print '------------------------------------------------'
+	jsonFile = open('zmap-results.json', 'r')
+	content = ','.join(jsonFile.readlines())
+	jsonFile.close()
 
-configFile = open(configTemplatePath, 'r')
-config = json.load(configFile);
-configFile.close()
+	results = json.loads('[' + content + ']')
 
-portIndexes = random.sample(range(0, len(openPorts)), amount)
-#locationIndexes = random.sample(range(0, len(locations) - 1), amount)
+	if fetchLocations:
+		print "\n"
+		print 'fetching locations of ' +  str(amount) + ' ip addresses'
+		print '------------------------------------------------'
 
-print locations
-locationIndex = 0
+		loaded = 0
 
-for i in portIndexes:
-	config['net']['myOpenPorts'] = [openPorts[i]]
-	config['simulator'] = locations[locationIndex]
-	locationIndex += 1
+		while loaded < amount:
+			loaded = loadLocations(results, amount / 5, loaded)
+			time.sleep(1)
 
-	configFile = open('configs/config-' + str(i) + '.json', 'w')
-	configFile.write(json.dumps(config, sort_keys=True, indent=4))
+		locationsFile = open('locations.json', 'w')
+		locationsFile.write(json.dumps(locations, sort_keys=True, indent=4))
+		locationsFile.close()
+	else:
+		locationsFile = open('locations.json', 'r')
+		locations = json.load(locationsFile)
+		locationsFile.close()
+
+def writeConfigFiles(configTemplatePath, amount):
+	print "\n"
+	print 'writing config files'
+	print '------------------------------------------------'
+
+	configFile = open(configTemplatePath, 'r')
+	config = json.load(configFile);
 	configFile.close()
+
+	print len(openPorts)
+	portIndexes = random.sample(range(0, len(openPorts)), amount)
+	print len(portIndexes)
+	locationIndex = 0
+
+	for i in portIndexes:
+		if locationIndex < amount:
+			config['net']['myOpenPorts'] = [openPorts[i]]
+			config['net']['simulator'] = locations[locationIndex]
+			config['app']['dataPath'] = '/Users/jj/Desktop/dataPath'
+			locationIndex += 1
+
+			configFile = open('configs/config-' + str(i) + '.json', 'w')
+			configFile.write(json.dumps(config, sort_keys=True, indent=4))
+			configFile.close()
+		else:
+			break
