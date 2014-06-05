@@ -24,6 +24,10 @@ var JSONWebIp = (function () {
             {
                 "url": "http://ip-api.com",
                 "att": "query"
+            },
+            {
+                "url": "http://ifconfig.me/all.json",
+                "att": "ip_addr"
             }
         ];
     }
