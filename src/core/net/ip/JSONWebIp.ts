@@ -3,6 +3,8 @@ import net = require('net');
 
 import ExternalIPObtainerInterface = require('./interfaces/ExternalIPObtainerInterface');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * External IP Obtainer using:
  * http://freegeoip.net/json
@@ -98,7 +100,8 @@ class JSONWebIp implements ExternalIPObtainerInterface {
 			doCallback(err, null);
 		})
 		.on('socket', function (socket) {
-			socket.on('errorr', function (err) {
+			socket.on('error', function (err) {
+				logger.debug('socket error');
 			});
 		});
 	}

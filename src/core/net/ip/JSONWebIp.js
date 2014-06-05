@@ -1,6 +1,8 @@
 var http = require('follow-redirects').http;
 var net = require('net');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * External IP Obtainer using:
 * http://freegeoip.net/json
@@ -91,7 +93,8 @@ var JSONWebIp = (function () {
         }).on('error', function (err) {
             doCallback(err, null);
         }).on('socket', function (socket) {
-            socket.on('errorr', function (err) {
+            socket.on('error', function (err) {
+                logger.debug('socket error');
             });
         });
     };
