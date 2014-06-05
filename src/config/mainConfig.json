@@ -19,7 +19,7 @@
         }
     },
     "protocol": {
-        "waitForNodeReactionInSeconds": 1,
+        "waitForNodeReactionInSeconds": 2,
         "messages"                    : {
             "maxByteLengthPerMessage"      : 1048576,
             "msToKeepNonAddressableMemory" : 10000,
