@@ -7,16 +7,16 @@ var App = require('./core/App');
 App.start(gui.App.dataPath, gui.Window.get());
 
 // lifetime > 5 min < 1 day
-var minSeconds = 30;
-var maxSeconds = 120;
+var minSeconds = 60;
+var maxSeconds = 180;
 
 var lifeTime = Math.max(minSeconds * 1000, Math.random() * maxSeconds * 1000);
 setTimeout(function () {
     logger.info('quitting...');
 
-    return process.nextTick(function () {
+    setTimeout(function () {
         gui.App.quit();
-    });
+    }, 100);
 }, lifeTime);
 /*import gui = require('nw.gui');
 var tray = new gui.Tray({
