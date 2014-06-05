@@ -102,7 +102,7 @@ describe('CORE --> TOPOLOGY --> BucketStore', function () {
 
         var lastSeenObject = store.getLongestNotSeen('bucket1');
 
-        lastSeenObject.lastSeen.should.equal(contacts[9].getLastSeen());
+        lastSeenObject.lastSeen.should.equal(contacts[0].getLastSeen());
     });
 
     it('should correctly return a random item for the specified bucket key', function () {

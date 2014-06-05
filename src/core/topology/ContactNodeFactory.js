@@ -17,7 +17,7 @@ var ContactNodeFactory = (function () {
     function ContactNodeFactory() {
     }
     ContactNodeFactory.prototype.create = function (id, addresses, lastSeen) {
-        lastSeen = lastSeen || Date.now();
+        lastSeen = lastSeen || microtime.now();
         return new ContactNode(id, addresses, lastSeen);
     };
 

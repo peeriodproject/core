@@ -24,7 +24,7 @@ import Id = require('./Id');
 class ContactNodeFactory implements ContactNodeFactoryInterface {
 
 	public create (id:IdInterface, addresses:ContactNodeAddressListInterface, lastSeen?:number):ContactNodeInterface {
-		lastSeen = lastSeen || Date.now();
+		lastSeen = lastSeen || microtime.now();
 		return new ContactNode(id, addresses, lastSeen);
 	}
 

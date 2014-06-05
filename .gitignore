@@ -32,3 +32,4 @@ node_modules
 /utils/apacheTikaMimeTypesParser/fileTypes.json
 /utils/topologyTestRunner/zmap-results.json
 /utils/topologyTestRunner/configBuilder.pyc
+*.pyc

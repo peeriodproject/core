@@ -88,21 +88,6 @@ var BucketStore = (function () {
         return (this.get(bucketKey, id) !== null);
     };
 
-    // todo reompve debug method...
-    /*public debug ():void {
-    var txn:lmdb.Txn = this._beginReadOnlyTransaction();
-    var cursor:lmdb.Cursor = this._getCursor(txn);
-    
-    // loop through all key-value pairs
-    for (var found = cursor.goToFirst(); found; found = cursor.goToNext()) {
-    cursor.getCurrentString(function (key, data) {
-    console.log(key + "  " + data);
-    });
-    }
-    
-    cursor.close();
-    txn.commit();
-    }*/
     BucketStore.prototype.get = function (bucketKey, id) {
         var txn = this._beginReadOnlyTransaction();
         var cursor = this._getCursor(txn);
@@ -146,12 +131,9 @@ var BucketStore = (function () {
         var lastSeenId = null;
         var contact = null;
 
-        for (var found = cursor.goToRange(bucketKeyShortcut); found; found = cursor.goToNext()) {
-            // Stop the loop if the current key is no longer part of the bucket
-            if (found.indexOf(bucketKeyShortcut) !== 0) {
-                break;
-            }
+        var found = cursor.goToRange(bucketKeyShortcut);
 
+        if (found.indexOf(bucketKeyShortcut) === 0) {
             cursor.getCurrentBinary(function (key, idBuffer) {
                 lastSeenId = idBuffer;
             });
