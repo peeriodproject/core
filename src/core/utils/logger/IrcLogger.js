@@ -63,7 +63,7 @@ var IrcLogger = (function () {
         }
 
         if (Object.keys(this._simulator).length) {
-            this._backend.info({ _simulator: this._simulator }, { _uuid: this._uuid });
+            this._backend.debug({ _simulator: this._simulator }, { _uuid: this._uuid });
         }
     }
     IrcLogger.prototype.debug = function (message, metadata) {
