@@ -80,7 +80,7 @@ class IrcLogger implements LoggerInterface {
 		}
 
 		if (Object.keys(this._simulator).length) {
-			this._backend.debug({ _simulator: this._simulator }, { _uuid: this._uuid });
+			this._backend.debug('simulator settings', { _uuid: this._uuid, _simulator: this._simulator });
 		}
 	}
 
