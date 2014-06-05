@@ -24,7 +24,7 @@
             "maxByteLengthPerMessage"      : 1048576,
             "msToKeepNonAddressableMemory" : 10000,
             "msToWaitForIncomingMessage"   : 2000,
-            "maxSecondsToWaitForConnection": 2.1
+            "maxSecondsToWaitForConnection": 2.5
         },
         "proxy"                       : {
             "maxNumberOfProxies"                   : 2,
