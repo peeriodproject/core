@@ -219,7 +219,7 @@ var ProxyManager = (function (_super) {
     };
 
     /**
-    * Adds a node the list one is proxying for. Tells the connection manager to keep the sockets open from this node.
+    * Adds a node to the list one is proxying for. Tells the connection manager to keep the sockets open from this node.
     *
     * @method core.protocol.proxy.ProxyManager~_addToProxyingFor
     *
@@ -299,10 +299,10 @@ var ProxyManager = (function (_super) {
             if (requestedProxy) {
                 this._removeFromRequestedProxies(identifier);
 
-                if (msgType === 'PROXY_ACCEPT') {
+                if (msgType === 'PROXY_ACCEPT' && Object.keys(this._confirmedProxies).length < this._maxNumberOfProxies) {
                     this._addToConfirmedProxies(identifier, sender);
                     this.emit('newProxy', sender);
-                    logger.info('Got new proxy', { id: sender.getId().toHexString() });
+                    logger.info('Got new proxy', { id: sender.getId().toHexString(), lengthNow: Object.keys(this._confirmedProxies).length });
                 } else {
                     this.emit('proxyReject', sender);
                 }
@@ -464,6 +464,7 @@ var ProxyManager = (function (_super) {
             this._ignoreProxies.push(identifier);
 
             // this event is for testing purposes only
+            logger.info('Proxy request timed out', { identifier: identifier });
             this.emit('requestProxyTimeout', identifier);
             this._proxyCycleOnNextTick();
         }

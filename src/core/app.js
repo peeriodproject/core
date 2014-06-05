@@ -3,7 +3,7 @@ var path = require('path');
 var JSONConfig = require('./config/JSONConfig');
 var TCPSocketHandlerFactory = require('./net/tcp/TCPSocketHandlerFactory');
 var NetworkBootstrapper = require('./net/NetworkBootstrapper');
-var FreeGeoIp = require('./net/ip/FreeGeoIp');
+var JSONWebIp = require('./net/ip/JSONWebIp');
 var Id = require('./topology/Id');
 var MyNode = require('./topology/MyNode');
 var ContactNodeAddressFactory = require('./topology/ContactNodeAddressFactory');
@@ -32,11 +32,11 @@ var App = {
         var topologyConfig = new JSONConfig('../../config/mainConfig.json', ['topology']);
 
         var tcpSocketHandlerFactory = new TCPSocketHandlerFactory();
-        var freeGeoIp = new FreeGeoIp();
+        var jsonWebIp = new JSONWebIp();
 
         var nodeAddressFactory = new ContactNodeAddressFactory();
 
-        var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, netConfig, [freeGeoIp]);
+        var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, netConfig, [jsonWebIp]);
 
         var protocolGateway = null;
 

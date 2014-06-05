@@ -269,7 +269,9 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		var connectionTimeout = null;
 		var serverOnConnect = function (sock:net.Socket) {
 				sock.once('data', function (data) {
-					sock.write(data);
+					if (sock.writable) {
+						sock.write(data);
+					}
 				});
 				sock.on('error', () => {
 					sock.destroy();

@@ -3,7 +3,7 @@ import path = require('path');
 import JSONConfig = require('./config/JSONConfig');
 import TCPSocketHandlerFactory = require('./net/tcp/TCPSocketHandlerFactory');
 import NetworkBootstrapper = require('./net/NetworkBootstrapper');
-import FreeGeoIp = require('./net/ip/FreeGeoIp');
+import JSONWebIp = require('./net/ip/JSONWebIp');
 import Id = require('./topology/Id');
 import MyNode = require('./topology/MyNode');
 import ContactNodeAddressFactory = require('./topology/ContactNodeAddressFactory');
@@ -36,11 +36,11 @@ var App = {
 		var topologyConfig = new JSONConfig('../../config/mainConfig.json', ['topology']);
 
 		var tcpSocketHandlerFactory = new TCPSocketHandlerFactory();
-		var freeGeoIp = new FreeGeoIp();
+		var jsonWebIp = new JSONWebIp();
 
 		var nodeAddressFactory = new ContactNodeAddressFactory();
 
-		var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, netConfig, [freeGeoIp]);
+		var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, netConfig, [jsonWebIp]);
 
 		var protocolGateway = null;
 

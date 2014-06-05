@@ -210,7 +210,7 @@ var PingPongNodeUpdateHandler = (function (_super) {
 
             if (node.getId().equals(first.nodeToCheck.getId())) {
                 global.clearTimeout(first.timeout);
-                logger.info('Received pong, discarding node info', { pingpong: 1, pongFrom: node.getId().toHexString(), discard: first.newNode.getId().toHexString() });
+                logger.info('Received pong, discarding node info', { pingpong: 1, pongFrom: node.getId().toHexString(), pongLastSeen: node.getLastSeen(), discard: first.newNode.getId().toHexString(), bucketIndex: waitingListNumber });
                 list.splice(0, 1);
 
                 this.emit('gotPonged', node);
