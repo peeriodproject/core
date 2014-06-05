@@ -6,7 +6,7 @@ var testUtils = require('../../utils/testUtils');
 var BucketStore = require('../../../src/core/topology/BucketStore');
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 
-describe('CORE --> TOPOLOGY --> BucketStore', function () {
+describe('CORE --> TOPOLOGY --> BucketStore @prio', function () {
     var databasePath = testUtils.getFixturePath('core/topology/bucketstore/db');
     var store = null;
 
@@ -102,7 +102,7 @@ describe('CORE --> TOPOLOGY --> BucketStore', function () {
 
         var lastSeenObject = store.getLongestNotSeen('bucket1');
 
-        lastSeenObject.lastSeen.should.equal(contacts[9].getLastSeen());
+        lastSeenObject.lastSeen.should.equal(contacts[0].getLastSeen());
     });
 
     it('should correctly return a random item for the specified bucket key', function () {

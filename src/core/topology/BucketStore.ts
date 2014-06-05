@@ -160,12 +160,9 @@ class BucketStore implements BucketStoreInterface {
 		var lastSeenId:Buffer = null;
 		var contact:ContactNodeObjectInterface = null;
 
-		for (var found = cursor.goToRange(bucketKeyShortcut); found; found = cursor.goToNext()) {
-			// Stop the loop if the current key is no longer part of the bucket
-			if (found.indexOf(bucketKeyShortcut) !== 0) {
-				break;
-			}
+		var found = cursor.goToRange(bucketKeyShortcut);
 
+		if (found.indexOf(bucketKeyShortcut) === 0) {
 			cursor.getCurrentBinary((key, idBuffer) => {
 				lastSeenId = idBuffer;
 			});
