@@ -245,7 +245,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	}
 
 	/**
-	 * Adds a node the list one is proxying for. Tells the connection manager to keep the sockets open from this node.
+	 * Adds a node to the list one is proxying for. Tells the connection manager to keep the sockets open from this node.
 	 *
 	 * @method core.protocol.proxy.ProxyManager~_addToProxyingFor
 	 *
