@@ -59,21 +59,21 @@ class IrcLogger implements LoggerInterface {
 		this._uuid = uuid || generateUuid();
 
 		try {
-			var country = this._config.get('simulator.location.country');
+			var country = this._config.get('net.simulator.location.country');
 			this._simulator['country'] = country;
 		}
 		catch (e) {
 		}
 
 		try {
-			var delay = this._config.get('simulator.location.delay');
+			var delay = this._config.get('net.simulator.location.delay');
 			this._simulator['delay'] = delay;
 		}
 		catch (e) {
 		}
 
 		try {
-			var location = this._config.get('simulator.location.lat') + ',' + this._config.get('simulator.location.lng');
+			var location = this._config.get('net.simulator.location.lat') + ',' + this._config.get('net.simulator.location.lng');
 			this._simulator['location'] = location;
 		}
 		catch (e) {
