@@ -1,6 +1,0 @@
-/Volumes/HDD/Users/joernroeder/Projects/__Abschluss__/git_app/src/bin/core/search/elasticsearch/bin/elasticsearch
-[ '-p',
-  '/Volumes/HDD/Users/joernroeder/Projects/__Abschluss__/git_app/src/bin/core/search/elasticsearch-pid',
-  '-Des.config=/Volumes/HDD/Users/joernroeder/Projects/__Abschluss__/git_app/src/config/searchStore.json',
-  '-Des.path.data=/Volumes/HDD/Users/joernroeder/Projects/__Abschluss__/git_app/test/fixtures/core/search/searchStoreData',
-  '-d' ]

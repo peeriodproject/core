@@ -1,2 +1,0 @@
-
-//# sourceMappingURL=ClosableInterface.js.map
