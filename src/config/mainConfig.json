@@ -39,12 +39,12 @@
             "cycleExpirationInSeconds" : 2,
             "parallelismDelayInSeconds": 1.5
         },
-        "networkMaintenance": {
+        "networkMaintenance"          : {
             "bucketRefreshRateInSeconds": 3600
         },
-        "nodeDiscovery": {
+        "nodeDiscovery"               : {
             "iterativeSeekTimeoutInMs": 1500,
-            "republishInSeconds": 3600
+            "republishInSeconds"      : 3600
         }
     },
     "plugin"  : {
@@ -76,6 +76,19 @@
             "interval"      : 1000,
             "binaryInterval": 5000,
             "eventDelay"    : 1000
+        }
+    },
+    "ui"      : {
+        "UiManager": {
+            "staticServer": {
+                "port": 3000,
+                "publicPath": "public"
+            },
+            "socketServer": {
+                "pathname": "/socket",
+                "port": 8080,
+                "transformer": "websockets"
+            }
         }
     }
 }
