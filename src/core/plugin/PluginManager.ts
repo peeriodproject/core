@@ -418,7 +418,7 @@ class PluginManager implements PluginManagerInterface {
 	 * @returns {string} The path to load from/store to
 	 */
 	private _getManagerStoragePath ():string {
-		return path.join(this._config.get('app.dataPath'), 'pluginManager.json');
+		return path.resolve(this._config.get('app.dataPath'), 'pluginManager.json');
 	}
 
 	/**
@@ -447,9 +447,26 @@ class PluginManager implements PluginManagerInterface {
 	private _loadPluginState (callback:(err:Error, pluginState:any) => void):void {
 		//console.log('loading the plugin state from the preferences!');
 		fs.readJson(this._getManagerStoragePath(), (err:Error, data:Object) => {
-			if (err) {
+			var hasPlugins:boolean = data ? data.hasOwnProperty('plugins') : false;
+
+			// no file or no plugins
+			if (err && err.name === 'ENOENT' || !hasPlugins) {
+				callback(null, null);
+			}
+			else if (hasPlugins) {
+				callback(null, data['plugins']);
+			}
+			else {
 				// check for syntax errors
+				console.warn(err);
+			}
+
+			/*if (err) {
+
 				console.log(err);
+				if (err.code === 'ENOENT') {
+
+				}
 			}
 			else {
 				if (data.hasOwnProperty('plugins')) {
@@ -458,7 +475,7 @@ class PluginManager implements PluginManagerInterface {
 				else {
 					callback(null, null);
 				}
-			}
+			}*/
 		});
 	}
 

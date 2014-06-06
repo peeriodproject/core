@@ -381,7 +381,7 @@ var PluginManager = (function () {
     * @returns {string} The path to load from/store to
     */
     PluginManager.prototype._getManagerStoragePath = function () {
-        return path.join(this._config.get('app.dataPath'), 'pluginManager.json');
+        return path.resolve(this._config.get('app.dataPath'), 'pluginManager.json');
     };
 
     /**
@@ -409,16 +409,32 @@ var PluginManager = (function () {
     PluginManager.prototype._loadPluginState = function (callback) {
         //console.log('loading the plugin state from the preferences!');
         fs.readJson(this._getManagerStoragePath(), function (err, data) {
-            if (err) {
-                // check for syntax errors
-                console.log(err);
+            var hasPlugins = data ? data.hasOwnProperty('plugins') : false;
+
+            // no file or no plugins
+            if (err && err.name === 'ENOENT' || !hasPlugins) {
+                callback(null, null);
+            } else if (hasPlugins) {
+                callback(null, data['plugins']);
             } else {
-                if (data.hasOwnProperty('plugins')) {
-                    callback(null, data['plugins']);
-                } else {
-                    callback(null, null);
-                }
+                // check for syntax errors
+                console.warn(err);
             }
+            /*if (err) {
+            
+            console.log(err);
+            if (err.code === 'ENOENT') {
+            
+            }
+            }
+            else {
+            if (data.hasOwnProperty('plugins')) {
+            callback(null, data['plugins']);
+            }
+            else {
+            callback(null, null);
+            }
+            }*/
         });
     };
 
