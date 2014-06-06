@@ -57,7 +57,7 @@
         }
     },
     "app"     : {
-        "dataPath": "/Volumes/HDD/Users/Johnny/Documents/node/abschluss_app/src/config"
+        "dataPath": "appDataFolder"
     },
     "search"  : {
         "host"             : "localhost",
