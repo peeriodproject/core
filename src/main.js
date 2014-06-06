@@ -5,19 +5,16 @@ var logger = require('./core/utils/logger/LoggerFactory').create();
 var App = require('./core/App');
 
 App.start(gui.App.dataPath, gui.Window.get());
-
 // lifetime > 5 min < 1 day
-var minSeconds = 300;
-var maxSeconds = 86400;
-
+/*var minSeconds:number = 300;
+var maxSeconds:number = 86400;
 var lifeTime = Math.max(minSeconds * 1000, Math.random() * maxSeconds * 1000);
 setTimeout(function () {
-    logger.info('quitting...');
-
-    setTimeout(function () {
-        gui.App.quit();
-    }, 100);
-}, lifeTime);
+logger.info('quitting...');
+setTimeout(function () {
+gui.App.quit();
+}, 100);
+}, lifeTime);*/
 /*import gui = require('nw.gui');
 var tray = new gui.Tray({
 title: 'Tray',
