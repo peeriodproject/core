@@ -1,9 +1,12 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
 
 import http = require('http');
+import net = require('net');
+import path = require('path');
+
 //var sockjs = require('sockjs');
 var Primus = require('primus');
-var node_static = require('node-static');
+var nodeStatic = require('node-static');
 
 import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
@@ -14,23 +17,70 @@ import ObjectUtils = require('../utils/ObjectUtils');
 /**
  * @class core.ui.UiManager
  * @implements core.ui.UiManagerInterface
+ *
+ * @param {core.config.ConfigInterface} config
+ * @param {todo} components
+ * @param {core.utils.ClosableAsyncOptions} options
  */
 class UiManager implements UiManagerInterface {
 
 	private _components = [];
 
-	private _connections = [];
+	private _connections:Array<net.Socket> = [];
 
+	/**
+	 * The internally uses config
+	 *
+	 * @member {core.config.ConfigInterface} core.ui.UiManager~_config
+	 */
 	private _config:ConfigInterface = null;
 
-	private _httpServer = null;
-	private _httpSockets = [];
+	/**
+	 * The base http server for serving the UI to the client
+	 *
+	 * @member {http.Server} core.ui.UiManager~_httpServer
+	 */
+	private _httpServer:http.Server = null;
 
+	/**
+	 * A list of currently open http sockets
+	 *
+	 * @member {Array<http.Socket>} core.ui.UiManager~_httpSockets
+	 */
+	private _httpSockets:Array<net.Socket> = [];
+
+	/**
+	 * A flag inidcates weather the UiManager is open and the server is running or not.
+	 *
+	 * @member {boolean} core.ui.UiManager~_isOpen
+	 */
 	private _isOpen:boolean = false;
 
+	/**
+	 * options
+	 *
+	 * todo description
+	 *
+	 * @member {core.utils.ClosableAsyncOptions} core.ui.UiManager~_options
+	 */
 	private _options:ClosableAsyncOptions = {};
 
+	/**
+	 * The static server will serve static files such as templates, css and scripts to the client
+	 *
+	 * todo type definition
+	 *
+	 * @member {} core.ui.UiManager~_staticServer
+	 */
 	private _staticServer = null;
+
+	/**
+	 * The socket server is responsible for realtime ui updates
+	 *
+	 * todo type definition
+	 *
+	 * @member {} core.ui.UiManager~_socketServer
+	 */
 	private _socketServer = null;
 
 	constructor (config:ConfigInterface, components, options:ClosableAsyncOptions) {
@@ -125,18 +175,26 @@ class UiManager implements UiManagerInterface {
 		});
 	}
 
-	private _handleHttpRequest (request, response):void {
+	/**
+	 * Handles a single http request by using the {@link core.ui.UiManager~_staticServer} to process the request.
+	 *
+	 * @see core.ui.UiManager~_handleStatic
+	 *
+	 * @method core.ui.UiManager~_handleHttpRequest
+	 *
+	 * @param {http.request} request
+	 * @param response
+	 * @private
+	 */
+	private _handleHttpRequest (request:http.ServerRequest, response:http.ServerResponse):void {
 		request.addListener('end', () => {
-			this._staticServer.serve(request, response, (err, result) => {
-				this._handleStatic(err, request, response, result);
-			});
-			response.end();
+			this._staticServer.serve(request, response);
 		});
 
 		request.resume();
 	}
 
-	private _handleSocket (spark):void {
+	private _handleSocket (spark:net.Socket):void {
 		spark.on('data', function message (data) {
 			//console.log(data);
 			spark.write(data);
@@ -145,34 +203,53 @@ class UiManager implements UiManagerInterface {
 		this._connections.push(spark);
 	}
 
-	private _handleStatic (err, request, response, result):void {
-		if (err) { // There was an error serving the file
-			console.error("Error serving " + request.url + " - " + err.message);
-
-			// Respond to the client
-			response.writeHead(err.status, err.headers);
-			response.end();
-		}
-
-	}
-
+	/**
+	 * Sets up the websocket server and hooks it into the {@link core.ui.UiManager~_httpServer}
+	 *
+	 * @see core.ui.UiManager~_socketServer
+	 *
+	 * @method core.ui.UiManager~_setupSocketServer
+	 */
 	private _setupSocketServer ():void {
-		this._socketServer = new Primus(this._httpServer, {});
+		this._socketServer = new Primus(this._httpServer, {
+			pathname: this._config.get('ui.UiManager.socketServer.pathname'),
+			port: this._config.get('ui.UiManager.socketServer.port'),
+			transformer: this._config.get('ui.UiManager.socketServer.transformer')
+		});
+
+		var staticPublicPath:string = this._config.get('ui.UiManager.staticServer.publicPath');
+		var clientLibPath:string = path.resolve(path.join(staticPublicPath, 'primus.js'));
+
+		// todo check if file exists
+		this._socketServer.save(clientLibPath);
+
 		this._socketServer.on('connection', (connection) => {
 			this._handleSocket(connection);
 		});
 	}
 
+	/**
+	 * Sets up the static server.
+	 *
+	 * @see core.ui.UiManager~_staticServer
+	 *
+	 * @method core.ui.UiManager~_setupStaticServer
+	 */
 	private _setupStaticServer ():void {
-		this._staticServer = new node_static.Server(this._config.get('ui.UiManager.publicDirectory'));
+		this._staticServer = new nodeStatic.Server(this._config.get('ui.UiManager.staticServer.publicPath'));
 	}
 
+	/**
+	 * Sets up the base http server
+	 *
+	 * @method core.ui.UiManager~_setupHttpServer
+	 */
 	private _setupHttpServer ():void {
 		this._httpServer = http.createServer((request, response) => {
 			this._handleHttpRequest(request, response);
 		});
 
-		this._httpServer.on('connection', (socket) => {
+		this._httpServer.on('connection', (socket:net.Socket) => {
 			this._httpSockets.push(socket);
 			socket.setTimeout(4000);
 			socket.on('close', () => {
@@ -181,13 +258,18 @@ class UiManager implements UiManagerInterface {
 		});
 	}
 
+	/**
+	 * Starts the http server (and the ) and calls the callback on listening.
+	 *
+	 * @method core.ui.UiManager~_startServers
+	 */
 	private _startServers (callback:Function):void {
 		this._socketServer.on('connection', (spark) => {
 			this._handleSocket(spark);
 		});
 
 		//console.log(' [*] Listening on 127.0.0.1:9999' );
-		this._httpServer.listen(this._config.get('ui.UiManager.serverPort'), 'localhost', function () {
+		this._httpServer.listen(this._config.get('ui.UiManager.staticServer.port'), 'localhost', 511, function () {
 			callback();
 		});
 	}
