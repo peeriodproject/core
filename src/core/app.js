@@ -1,8 +1,11 @@
 var crypto = require('crypto');
 var path = require('path');
 
+// global imports
+var JSONConfig = require('./config/JSONConfig');
 var logger = require('./utils/logger/LoggerFactory').create();
 
+// topology imports
 var BucketFactory = require('./topology/BucketFactory');
 var BucketStore = require('./topology/BucketStore');
 
@@ -10,7 +13,6 @@ var ContactNodeAddressFactory = require('./topology/ContactNodeAddressFactory');
 var ContactNodeFactory = require('./topology/ContactNodeFactory');
 
 var Id = require('./topology/Id');
-var JSONConfig = require('./config/JSONConfig');
 var JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 var JSONWebIp = require('./net/ip/JSONWebIp');
 var MyNode = require('./topology/MyNode');
@@ -21,9 +23,54 @@ var ProtocolGateway = require('./protocol/ProtocolGateway');
 var RoutingTable = require('./topology/RoutingTable');
 var TCPSocketHandlerFactory = require('./net/tcp/TCPSocketHandlerFactory');
 
+// search imports
+var SearchStoreFactory = require('./search/SearchStoreFactory');
+var SearchItemFactory = require('./search/SearchItemFactory');
+var SearchClient = require('./search/SearchClient');
+var SearchManager = require('./search/SearchManager');
+
+var PluginFinder = require('./plugin/PluginFinder');
+var PluginValidator = require('./plugin/PluginValidator');
+var PluginLoaderFactory = require('./plugin/PluginLoaderFactory');
+var PluginRunnerFactory = require('./plugin/PluginRunnerFactory');
+var PluginManager = require('./plugin/PluginManager');
+
+var FolderWatcherFactory = require('./fs/FolderWatcherFactory');
+var FolderWatcherManager = require('./fs/FolderWatcherManager');
+var PathValidator = require('./fs/PathValidator');
+
 var App = {
     start: function (dataPath, win) {
-        this.startTopology(dataPath, win);
+        //this.startTopology(dataPath, win);
+        this.startIndexer(dataPath, win);
+    },
+    startIndexer: function (dataPath, win) {
+        var testFolderPath = path.resolve(__dirname, '../../utils/TestFolder');
+
+        var fsConfig = new JSONConfig('../../config/mainConfig.json', ['fs']);
+        var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
+        var searchConfig = new JSONConfig('../../config/mainConfig.json', ['search']);
+        var pluginConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'plugin']);
+
+        var searchStoreFactory = new SearchStoreFactory();
+        var searchItemFactory = new SearchItemFactory();
+        var searchClient = new SearchClient(searchConfig, 'mainIndex', searchStoreFactory, searchItemFactory);
+
+        var pluginFinder = new PluginFinder(pluginConfig);
+        var pluginValidator = new PluginValidator();
+        var pluginLoaderFactory = new PluginLoaderFactory();
+        var pluginRunnerFactory = new PluginRunnerFactory();
+
+        var pluginManager = new PluginManager(pluginConfig, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory);
+
+        var searchManager = new SearchManager(searchConfig, pluginManager, searchClient);
+
+        var stateHandlerFactory = new JSONStateHandlerFactory();
+        var folderWatcherFactory = new FolderWatcherFactory();
+
+        var folderWatcherManager = new FolderWatcherManager(appConfig, stateHandlerFactory, folderWatcherFactory);
+        var pathValidator = new PathValidator();
+        //var IndexManager = new IndexManager(searchConfig, folderWatcherManager, pathValidator, searchManager);
     },
     startTopology: function (dataPath, win) {
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);

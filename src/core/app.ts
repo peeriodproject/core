@@ -1,8 +1,11 @@
 import crypto = require('crypto');
 import path = require('path');
 
+// global imports
+import JSONConfig = require('./config/JSONConfig');
 var logger = require('./utils/logger/LoggerFactory').create();
 
+// topology imports
 import BucketFactory = require('./topology/BucketFactory');
 import BucketStore = require('./topology/BucketStore');
 import ContactNode = require('./topology/ContactNode');
@@ -11,7 +14,6 @@ import ContactNodeAddressFactory = require('./topology/ContactNodeAddressFactory
 import ContactNodeFactory = require('./topology/ContactNodeFactory');
 import GeneralWritableMessageFactory = require('./protocol/messages/GeneralWritableMessageFactory');
 import Id = require('./topology/Id');
-import JSONConfig = require('./config/JSONConfig');
 import JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 import JSONWebIp = require('./net/ip/JSONWebIp');
 import MyNode = require('./topology/MyNode');
@@ -22,10 +24,59 @@ import ReadableMessage = require('./protocol/messages/ReadableMessage');
 import RoutingTable = require('./topology/RoutingTable');
 import TCPSocketHandlerFactory = require('./net/tcp/TCPSocketHandlerFactory');
 
+// search imports
+import SearchStoreFactory = require('./search/SearchStoreFactory');
+import SearchItemFactory = require('./search/SearchItemFactory');
+import SearchClient = require('./search/SearchClient');
+import SearchManager = require('./search/SearchManager');
+
+import PluginFinder = require('./plugin/PluginFinder');
+import PluginValidator = require('./plugin/PluginValidator');
+import PluginLoaderFactory = require('./plugin/PluginLoaderFactory');
+import PluginRunnerFactory = require('./plugin/PluginRunnerFactory');
+import PluginManager = require('./plugin/PluginManager');
+
+import FolderWatcherFactory = require('./fs/FolderWatcherFactory');
+import FolderWatcherManager = require('./fs/FolderWatcherManager');
+import PathValidator = require('./fs/PathValidator');
+
+import IndexManager = require('./search/IndexManager');
+
 var App = {
 
 	start: function (dataPath, win) {
-		this.startTopology(dataPath, win);
+		//this.startTopology(dataPath, win);
+		this.startIndexer(dataPath, win);
+	},
+
+	startIndexer: function (dataPath, win) {
+		var testFolderPath:string = path.resolve(__dirname, '../../utils/TestFolder');
+
+		var fsConfig = new JSONConfig('../../config/mainConfig.json', ['fs']);
+		var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
+		var searchConfig = new JSONConfig('../../config/mainConfig.json', ['search']);
+		var pluginConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'plugin']);
+
+		var searchStoreFactory = new SearchStoreFactory();
+		var searchItemFactory = new SearchItemFactory();
+		var searchClient = new SearchClient(searchConfig, 'mainIndex', searchStoreFactory, searchItemFactory);
+
+		var pluginFinder = new PluginFinder(pluginConfig);
+		var pluginValidator = new PluginValidator();
+		var pluginLoaderFactory = new PluginLoaderFactory();
+		var pluginRunnerFactory = new PluginRunnerFactory();
+
+		var pluginManager = new PluginManager(pluginConfig, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory);
+
+		var searchManager = new SearchManager(searchConfig, pluginManager, searchClient);
+
+		var stateHandlerFactory = new JSONStateHandlerFactory();
+		var folderWatcherFactory = new FolderWatcherFactory();
+
+		var folderWatcherManager = new FolderWatcherManager(appConfig, stateHandlerFactory, folderWatcherFactory);
+		var pathValidator = new PathValidator();
+
+		//var IndexManager = new IndexManager(searchConfig, folderWatcherManager, pathValidator, searchManager);
 	},
 
 	startTopology: function (dataPath, win) {
