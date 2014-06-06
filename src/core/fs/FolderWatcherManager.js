@@ -12,7 +12,7 @@ var EventEmitter = events.EventEmitter;
 * @implements core.fs.FolderWatcherManagerInterface
 */
 var FolderWatcherManager = (function () {
-    function FolderWatcherManager(config, stateLoaderFactory, folderWatcherFactory, options) {
+    function FolderWatcherManager(config, stateHandlerFactory, folderWatcherFactory, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
         this._config = null;
@@ -49,7 +49,7 @@ var FolderWatcherManager = (function () {
         this._options = ObjectUtils.extend(defaults, options);
 
         var statePath = path.resolve(this._config.get('app.dataPath'), 'FolderWatcherManager.json');
-        this._stateHandler = stateLoaderFactory.create(statePath);
+        this._stateHandler = stateHandlerFactory.create(statePath);
 
         if (this._options.closeOnProcessExit) {
             process.on('exit', function () {

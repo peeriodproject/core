@@ -52,7 +52,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 	 */
 	private _watchers:FolderWatcherListInterface = null;
 
-	constructor (config:ConfigInterface, stateLoaderFactory:StateHandlerFactoryInterface, folderWatcherFactory:any, options:ClosableAsyncOptions = {}) {
+	constructor (config:ConfigInterface, stateHandlerFactory:StateHandlerFactoryInterface, folderWatcherFactory:any, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
 			closeOnProcessExit: true,
 			onCloseCallback   : function (err:Error) {
@@ -66,7 +66,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		this._options = ObjectUtils.extend(defaults, options);
 
 		var statePath:string = path.resolve(this._config.get('app.dataPath'), 'FolderWatcherManager.json');
-		this._stateHandler = stateLoaderFactory.create(statePath);
+		this._stateHandler = stateHandlerFactory.create(statePath);
 
 		if (this._options.closeOnProcessExit) {
 			process.on('exit', () => {
