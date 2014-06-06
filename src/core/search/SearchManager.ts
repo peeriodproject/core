@@ -14,6 +14,10 @@ import ObjectUtils = require('../utils/ObjectUtils');
 /**
  * @class core.search.SearchManager
  * @implements core.search.SearchManagerInterface
+ *
+ * @param {core.config.ConfigInterface} config
+ * @param {core.plugin.PluginManagerInterface} pluginManager
+ * @param {core.search.SearchClientInterface} searchClient
  */
 class SearchManager implements SearchManagerInterface {
 
@@ -42,7 +46,7 @@ class SearchManager implements SearchManagerInterface {
 			//console.log(JSON.stringify(pluginData));
 			// to the request to the database
 			this._searchClient.addItem(pluginData, function(err) {
-				callback(err);
+				internalCallback(err);
 			});
 		});
 	}
@@ -50,7 +54,7 @@ class SearchManager implements SearchManagerInterface {
 	close (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function () {};
 
-		return process.nextTick(callback.bind(null, null));
+		return process.nextTick(internalCallback.bind(null, null));
 	}
 
 	public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
@@ -110,7 +114,9 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	/**
-	 * Updates the given mapping.
+	 * Updates the given mapping by adding the item hash, item path and item stats.
+	 *
+	 * @method core.search.SearchManager~_updateMapping
 	 *
 	 * @param {Object} mapping
 	 * @param {boolean} isApacheTikaPlugin
@@ -147,6 +153,17 @@ class SearchManager implements SearchManagerInterface {
 		return mapping;
 	}
 
+	/**
+	 * Updates the given plugin data by adding the item path, stats and hash to each plugin identifier object
+	 *
+	 * @method core.search.SearchManager~_updatePluginData
+	 *
+	 * @param {Object} pluginData
+	 * @param {string} itemPath
+	 * @param {fs.Stats} stats
+	 * @param {string} fileHash
+	 * @returns {Object} the updated plugin data
+	 */
 	private _updatePluginData (pluginData:Object, itemPath:string, stats:fs.Stats, fileHash:string):Object {
 		var identifiers:Array<string> = Object.keys(pluginData);
 

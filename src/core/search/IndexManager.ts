@@ -11,29 +11,102 @@ import SearchManagerInterface = require('./interfaces/SearchManagerInterface');
 /**
  * @class core.search.IndexManager
  * @implements core.search.IndexManagerInterface
+ *
+ * @param {core.config.ConfigInterface} config
+ * @param {core.fs.FolderWatcherManagerInterface} folerWatcherManager
+ * @param {core.fs.PathValidatorInterface} pathValidator
+ * @param {core.search.SearchManagerInterface} searchManager
  */
 class IndexManager implements IndexManagerInterface {
 
+	/**
+	 * The inernally used config instance
+	 *
+	 * @member {core.config.ConfigInterface} core.search.IndexManager~_config
+	 */
 	private _config:ConfigInterface = null;
 
+	/**
+	 * The internally used FolderWatcherManager instance
+	 *
+	 * @member {core.fs.FolderWatcherManagerInterface} core.search.IndexManager~_folderWatcherManager
+	 */
 	private _folderWatcherManager:FolderWatcherManagerInterface = null;
 
-	private _isOpen:boolean = false;
-
+	/**
+	 * A flag indicates weather the IndexManager is currently indexing or paused
+	 *
+	 * @member {boolean} core.search.IndexManager~_isIndexing
+	 */
 	private _isIndexing:boolean = false;
+
+	/**
+	 * The idle time between index runs in milliseconds
+	 *
+	 * @member {number} core.search.IndexManager~_indexRunnerDelayInMilliSeconds
+	 */
 	private _indexRunnerDelayInMilliSeconds:number = 10000;
-	private _indexRunnerTimeout:number = -1;
+
+	/**
+	 * Stores the index runner timeout function
+	 *
+	 * @member {number} core.search.IndexManager~_indexRunnerTimeout
+	 */
+	private _indexRunnerTimeout:number = null;
+
+	/**
+	 * The amount of index runners running in parallel
+	 *
+	 * @member {number} core.search.IndexManager~_indexRunnersInParallelAmount
+	 */
 	private _indexRunnersInParallelAmount:number = 3;
+
+	/**
+	 * The amount of index runners that are currently running
+	 *
+	 * @member {number} core.search.IndexManager~_indexRunnersInParallelRunning
+	 */
 	private _indexRunnersInParallelRunning:number = 0;
 
+	/**
+	 * A flag indicates weather the IndexManager is open or closed
+	 *
+	 * @member {boolean} core.search.IndexManager~_isOpen
+	 */
+	private _isOpen:boolean = false;
+
+	/**
+	 * The internally used PathValidatorInterface instance
+	 *
+	 * @member {core.fs.PathValidatorInterface} core.search.IndexManager~_pathValidator
+	 */
 	private _pathValidator:PathValidatorInterface = null;
+
+	/**
+	 * The list of pending paths to index
+	 *
+	 * todo add type definition
+	 *
+	 * @member {} core.search.IndexManager~_pendingPathsToIndex
+	 */
 	private _pendingPathsToIndex = {};
+
+	/**
+	 * The list of path that are currently processed
+	 *
+	 * @member {} core.search.IndexManager~_currentPendingPathsToIndex
+	 */
 	private _currentPendingPathsToIndex = {};
 
+	/**
+	 * The internally used SearchManagerInterface instance
+	 *
+	 * @member {core.search.SearchManagerInterface} core.search.IndexManager~_searchManager
+	 */
 	private _searchManager:SearchManagerInterface = null;
 
 	constructor (config:ConfigInterface, folderWatcherManager:FolderWatcherManagerInterface, pathValidator:PathValidatorInterface, searchManager:SearchManagerInterface) {
-		// todo add defaults
+		// todo add defaults, optional options...
 
 		this._config = config;
 		this._folderWatcherManager = folderWatcherManager;
@@ -43,7 +116,7 @@ class IndexManager implements IndexManagerInterface {
 		this._indexRunnerDelayInMilliSeconds = this._config.get('search.indexManager.indexRunnerDelayInMilliSeconds');
 		this._indexRunnersInParallelAmount = this._config.get('search.indexManager.indexRunnersInParallel');
 
-		// todo add merged options
+		// todo add merged options & process.exit hook
 
 		this.open();
 	}
@@ -226,13 +299,18 @@ class IndexManager implements IndexManagerInterface {
 	private _createPendingListObject (pathToIndex:string, stats:fs.Stats, callback?:Function):any {
 		return {
 			isIndexing: false,
-			stats:stats,
-			callback: callback || function () {}
+			stats     : stats,
+			callback  : callback || function () {
+			}
 		};
 	}
 
 	/**
-	 * @returns {boolean} processor created
+	 * Creates a path processor for all pending paths in the {@link core.search.IndexManager~_currentPendingPathsToIndex} List
+	 *
+	 * @method core.search.IndexManager~_createPendingPathProcessor
+	 *
+	 * @returns {boolean} processor successfully created
 	 */
 	private _createPendingPathProcessor ():boolean {
 		var pathToIndex:string = null;
@@ -323,7 +401,7 @@ class IndexManager implements IndexManagerInterface {
 	 * @param {fs.Stats} stats
 	 * @param {Function} callback
 	 */
-	private _addItem(pathToAdd:string, stats:fs.Stats, fileHash:string, callback:(err:Error) => any):void {
+	private _addItem (pathToAdd:string, stats:fs.Stats, fileHash:string, callback:(err:Error) => any):void {
 		this._searchManager.addItem(pathToAdd, stats, fileHash, (err:Error) => {
 			if (err) {
 				// todo reset isIndexing flag
@@ -352,6 +430,8 @@ class IndexManager implements IndexManagerInterface {
 	 * Two step validation against the model in the database.
 	 * The first step is a fs.Stats validation using the {@link core.fs.PathValidator#validateStats}
 	 * If the first step fails a second check using {@link core.fs.PathValidator#validateHash} will be performed.
+	 *
+	 * @method core.search.IndexManager~_validateItem
 	 *
 	 * @param {string} itemPath
 	 * @param {string} searchManagerItemHash
@@ -386,6 +466,8 @@ class IndexManager implements IndexManagerInterface {
 
 	/**
 	 * Calls the callback method stored for the path and removes it from the processing list.
+	 *
+	 * @method core.search.IndexManager~_removeCurrentPendingPathToIndex
 	 *
 	 * @param {string} pathToIndex
 	 * @param {Error} err

@@ -82,6 +82,12 @@ var SearchItem = (function () {
         return this._stats;
     };
 
+    /**
+    * @method core.search.SearchItem~_processItemMember
+    *
+    * @param {string} name
+    * @param {Object} source
+    */
     SearchItem.prototype._processItemMember = function (name, source) {
         var lower = name.toLowerCase();
         var memberName = '_' + lower;

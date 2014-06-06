@@ -6,7 +6,6 @@ import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInt
  * @extends core.utils.ClosableAsyncInterface
  */
 interface SearchStoreInterface extends ClosableAsyncInterface {
-
 }
 
 export = SearchStoreInterface;

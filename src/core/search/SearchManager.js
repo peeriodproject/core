@@ -4,6 +4,10 @@ var ObjectUtils = require('../utils/ObjectUtils');
 /**
 * @class core.search.SearchManager
 * @implements core.search.SearchManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.plugin.PluginManagerInterface} pluginManager
+* @param {core.search.SearchClientInterface} searchClient
 */
 var SearchManager = (function () {
     function SearchManager(config, pluginManager, searchClient) {
@@ -28,7 +32,7 @@ var SearchManager = (function () {
             //console.log(JSON.stringify(pluginData));
             // to the request to the database
             _this._searchClient.addItem(pluginData, function (err) {
-                callback(err);
+                internalCallback(err);
             });
         });
     };
@@ -37,7 +41,7 @@ var SearchManager = (function () {
         var internalCallback = callback || function () {
         };
 
-        return process.nextTick(callback.bind(null, null));
+        return process.nextTick(internalCallback.bind(null, null));
     };
 
     SearchManager.prototype.getItem = function (pathToIndex, callback) {
@@ -96,7 +100,9 @@ var SearchManager = (function () {
     };
 
     /**
-    * Updates the given mapping.
+    * Updates the given mapping by adding the item hash, item path and item stats.
+    *
+    * @method core.search.SearchManager~_updateMapping
     *
     * @param {Object} mapping
     * @param {boolean} isApacheTikaPlugin
@@ -129,6 +135,17 @@ var SearchManager = (function () {
         return mapping;
     };
 
+    /**
+    * Updates the given plugin data by adding the item path, stats and hash to each plugin identifier object
+    *
+    * @method core.search.SearchManager~_updatePluginData
+    *
+    * @param {Object} pluginData
+    * @param {string} itemPath
+    * @param {fs.Stats} stats
+    * @param {string} fileHash
+    * @returns {Object} the updated plugin data
+    */
     SearchManager.prototype._updatePluginData = function (pluginData, itemPath, stats, fileHash) {
         var identifiers = Object.keys(pluginData);
 

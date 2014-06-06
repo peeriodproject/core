@@ -8,8 +8,21 @@ import SearchStoreOptions = require('./SearchStoreOptions');
  */
 interface SearchStoreFactoryInterface {
 
+	/**
+	 * Creates a new {@link core.search.SearchStore} instance
+	 *
+	 * @method core.search.SearchStoreFactoryInterface#create
+	 *
+	 * @param {core.config.ConfigInterface} config
+	 * @param {core.search.SearchStoreOptions} options
+	 *
+	 * @returns {core.search.SearchStoreInterface}
+	 */
 	create (config:ConfigInterface, options:SearchStoreOptions):SearchStoreInterface;
 
+	/**
+	 * todo recheck and remove this method
+	 */
 	getDefaults ():SearchStoreOptions;
 }
 

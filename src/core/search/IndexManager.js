@@ -2,22 +2,89 @@
 /**
 * @class core.search.IndexManager
 * @implements core.search.IndexManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.fs.FolderWatcherManagerInterface} folerWatcherManager
+* @param {core.fs.PathValidatorInterface} pathValidator
+* @param {core.search.SearchManagerInterface} searchManager
 */
 var IndexManager = (function () {
     function IndexManager(config, folderWatcherManager, pathValidator, searchManager) {
+        /**
+        * The inernally used config instance
+        *
+        * @member {core.config.ConfigInterface} core.search.IndexManager~_config
+        */
         this._config = null;
+        /**
+        * The internally used FolderWatcherManager instance
+        *
+        * @member {core.fs.FolderWatcherManagerInterface} core.search.IndexManager~_folderWatcherManager
+        */
         this._folderWatcherManager = null;
-        this._isOpen = false;
+        /**
+        * A flag indicates weather the IndexManager is currently indexing or paused
+        *
+        * @member {boolean} core.search.IndexManager~_isIndexing
+        */
         this._isIndexing = false;
+        /**
+        * The idle time between index runs in milliseconds
+        *
+        * @member {number} core.search.IndexManager~_indexRunnerDelayInMilliSeconds
+        */
         this._indexRunnerDelayInMilliSeconds = 10000;
-        this._indexRunnerTimeout = -1;
+        /**
+        * Stores the index runner timeout function
+        *
+        * @member {number} core.search.IndexManager~_indexRunnerTimeout
+        */
+        this._indexRunnerTimeout = null;
+        /**
+        * The amount of index runners running in parallel
+        *
+        * @member {number} core.search.IndexManager~_indexRunnersInParallelAmount
+        */
         this._indexRunnersInParallelAmount = 3;
+        /**
+        * The amount of index runners that are currently running
+        *
+        * @member {number} core.search.IndexManager~_indexRunnersInParallelRunning
+        */
         this._indexRunnersInParallelRunning = 0;
+        /**
+        * A flag indicates weather the IndexManager is open or closed
+        *
+        * @member {boolean} core.search.IndexManager~_isOpen
+        */
+        this._isOpen = false;
+        /**
+        * The internally used PathValidatorInterface instance
+        *
+        * @member {core.fs.PathValidatorInterface} core.search.IndexManager~_pathValidator
+        */
         this._pathValidator = null;
+        /**
+        * The list of pending paths to index
+        *
+        * todo add type definition
+        *
+        * @member {} core.search.IndexManager~_pendingPathsToIndex
+        */
         this._pendingPathsToIndex = {};
+        /**
+        * The list of path that are currently processed
+        *
+        * @member {} core.search.IndexManager~_currentPendingPathsToIndex
+        */
         this._currentPendingPathsToIndex = {};
+        /**
+        * The internally used SearchManagerInterface instance
+        *
+        * @member {core.search.SearchManagerInterface} core.search.IndexManager~_searchManager
+        */
         this._searchManager = null;
-        // todo add defaults
+        // todo add defaults, optional options...
         this._config = config;
         this._folderWatcherManager = folderWatcherManager;
         this._pathValidator = pathValidator;
@@ -26,7 +93,7 @@ var IndexManager = (function () {
         this._indexRunnerDelayInMilliSeconds = this._config.get('search.indexManager.indexRunnerDelayInMilliSeconds');
         this._indexRunnersInParallelAmount = this._config.get('search.indexManager.indexRunnersInParallel');
 
-        // todo add merged options
+        // todo add merged options & process.exit hook
         this.open();
     }
     IndexManager.prototype.addToIndex = function (pathToAdd, stats, callback) {
@@ -211,7 +278,11 @@ var IndexManager = (function () {
     };
 
     /**
-    * @returns {boolean} processor created
+    * Creates a path processor for all pending paths in the {@link core.search.IndexManager~_currentPendingPathsToIndex} List
+    *
+    * @method core.search.IndexManager~_createPendingPathProcessor
+    *
+    * @returns {boolean} processor successfully created
     */
     IndexManager.prototype._createPendingPathProcessor = function () {
         var _this = this;
@@ -330,6 +401,8 @@ var IndexManager = (function () {
     * The first step is a fs.Stats validation using the {@link core.fs.PathValidator#validateStats}
     * If the first step fails a second check using {@link core.fs.PathValidator#validateHash} will be performed.
     *
+    * @method core.search.IndexManager~_validateItem
+    *
     * @param {string} itemPath
     * @param {string} searchManagerItemHash
     * @param {fs.Stats} searchManagerItemStats
@@ -361,6 +434,8 @@ var IndexManager = (function () {
 
     /**
     * Calls the callback method stored for the path and removes it from the processing list.
+    *
+    * @method core.search.IndexManager~_removeCurrentPendingPathToIndex
     *
     * @param {string} pathToIndex
     * @param {Error} err

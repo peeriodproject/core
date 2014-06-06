@@ -157,10 +157,11 @@ class SearchStore implements SearchStoreInterface {
 	 * - __-p__: The path where elasticsearch should save it's process id
 	 * - __-Des.config__: The path to the config file
 	 * - __-Des.path.data__: The path where the indexes should be stored
+	 * * - __-Des.logger.level__: The level of the logger
 	 *
 	 * @method core.search.SearchStore~_getDatabaseServerProcessArgs
 	 *
-	 * @returns {string[]}
+	 * @returns {Array<string>}
 	 */
 	private _getDatabaseServerProcessArgs ():Array<string> {
 		var configPath:string = path.resolve(__dirname, '../../', this._config.get('search.searchStoreConfig'));
