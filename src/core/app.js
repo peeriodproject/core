@@ -1,89 +1,41 @@
+var crypto = require('crypto');
 var path = require('path');
 
-var JSONConfig = require('./config/JSONConfig');
-var TCPSocketHandlerFactory = require('./net/tcp/TCPSocketHandlerFactory');
-var NetworkBootstrapper = require('./net/NetworkBootstrapper');
-var JSONWebIp = require('./net/ip/JSONWebIp');
-var Id = require('./topology/Id');
-var MyNode = require('./topology/MyNode');
-var ContactNodeAddressFactory = require('./topology/ContactNodeAddressFactory');
+var logger = require('./utils/logger/LoggerFactory').create();
 
 var BucketFactory = require('./topology/BucketFactory');
 var BucketStore = require('./topology/BucketStore');
-var ContactNodeFactory = require('./topology/ContactNodeFactory');
-var RoutingTable = require('./topology/RoutingTable');
 
-var crypto = require('crypto');
+var ContactNodeAddressFactory = require('./topology/ContactNodeAddressFactory');
+var ContactNodeFactory = require('./topology/ContactNodeFactory');
+
+var Id = require('./topology/Id');
+var JSONConfig = require('./config/JSONConfig');
+var JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
+var JSONWebIp = require('./net/ip/JSONWebIp');
+var MyNode = require('./topology/MyNode');
+var NetworkBootstrapper = require('./net/NetworkBootstrapper');
+
 var ProtocolGateway = require('./protocol/ProtocolGateway');
 
-var JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
-
-var stackTrace = require('stack-trace');
-var logger = require('./utils/logger/LoggerFactory').create();
-
-//require('longjohn');
-console.log('foo');
+var RoutingTable = require('./topology/RoutingTable');
+var TCPSocketHandlerFactory = require('./net/tcp/TCPSocketHandlerFactory');
 
 var App = {
     start: function (dataPath, win) {
+        this.startTopology(dataPath, win);
+    },
+    startTopology: function (dataPath, win) {
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
         var protocolConfig = new JSONConfig('../../config/mainConfig.json', ['protocol']);
         var topologyConfig = new JSONConfig('../../config/mainConfig.json', ['topology']);
-
         var tcpSocketHandlerFactory = new TCPSocketHandlerFactory();
         var jsonWebIp = new JSONWebIp();
-
         var nodeAddressFactory = new ContactNodeAddressFactory();
-
         var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, netConfig, [jsonWebIp]);
-
         var protocolGateway = null;
 
-        /*process.on('uncaughtException', function (err) {
-        var trace = stackTrace.parse(err);
-        
-        for (var i in err.stack) {
-        logger.warn('error stack ' + i, {
-        typeName: err.stack[i].getTypeName(),
-        fnName  : err.stack[i].getFunctionName(),
-        fileName: err.stack[i].getFileName(),
-        line    : err.stack[i].getLineNumber()
-        });
-        }
-        
-        logger.error({
-        code: err.message, stack: err.stack, trace: {
-        typeName: trace.getTypeName(),
-        fnName  : trace.getFunctionName(),
-        fileName: trace.getFileName(),
-        line    : trace.getLineNumber()
-        }
-        });
-        
-        /*return process.nextTick(function () {
-        console.log(err);
-        win.showDevTools();
-        debugger;
-        });*/
-        /*;
-        logger.error({
-        code: err.message, stack: err.stack, trace: {
-        typeName: trace.getTypeName(),
-        fnName  : trace.getFunctionName(),
-        fileName: trace.getFileName(),
-        line    : trace.getLineNumber()
-        }
-        });
-        logger.info('Catched uncaughtException!');
-        
-        setTimeout(function () {
-        process.exit(1);
-        }, 100);* /
-        });*/
-        /*process.on('exit', function () {
-        logger.info('Exiting...');
-        });*/
         networkBootstrapper.bootstrap(function (err) {
             if (err) {
                 logger.error('Network Bootstrapper: ERROR', {
@@ -113,6 +65,7 @@ var App = {
 
             var handlerFactory = new JSONStateHandlerFactory();
             var idState = handlerFactory.create(path.resolve(dataPath, 'myId.json'));
+
             idState.load(function (err, state) {
                 var myId = null;
 
@@ -146,4 +99,4 @@ var App = {
 };
 
 module.exports = App;
-//# sourceMappingURL=App.js.map
+//# sourceMappingURL=app.js.map
