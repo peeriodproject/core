@@ -102,7 +102,7 @@ interface ProtocolConnectionManagerInterface extends NodeJS.EventEmitter {
 	hydraConnectTo (port:number, ip:string, callback:(err:Error, identifier:string) => any):void;
 
 	/**
-	 * Writes a buffer to a socket stored under the specified hydra identifier. Generates an error if there is not socket
+	 * Writes a buffer to a socket stored under the specified hydra identifier. Generates an error if there is no socket
 	 * under this identifier.
 	 *
 	 * @method core.protocol.net.ProtocolConnectionManagerInterface#hydraWriteBufferTo
