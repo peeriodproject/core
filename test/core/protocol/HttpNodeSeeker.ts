@@ -15,7 +15,7 @@ import HttpServerInfo = require('../../../src/core/net/interfaces/HttpServerInfo
 import HttpServerList = require('../../../src/core/net/interfaces/HttpServerList');
 
 
-describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodeSeeker @current', function () {
+describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodeSeeker', function () {
 
 	var sandbox:SinonSandbox = null;
 

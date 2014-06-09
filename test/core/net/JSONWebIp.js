@@ -5,7 +5,7 @@ var net = require('net');
 
 var JSONWebIp = require('../../../src/core/net/ip/JSONWebIp');
 
-describe('CORE --> NET --> IP --> JSONWebIp @current', function () {
+describe('CORE --> NET --> IP --> JSONWebIp', function () {
     this.timeout(0);
 
     var webIp = new JSONWebIp();
