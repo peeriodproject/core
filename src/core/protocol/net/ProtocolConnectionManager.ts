@@ -303,6 +303,15 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
+	public getHydraSocketIp (identifier:string):string {
+		var socket:TCPSocketInterface = this._hydraSockets[identifier];
+
+		if (socket) {
+			return socket.getIP();
+		}
+
+		return undefined;
+	}
 
 	public hydraConnectTo (port:number, ip:string, callback:(err:Error, identifier:string) => any):void {
 		this._tcpSocketHandler.connectTo(port, ip, (socket:TCPSocketInterface) => {
@@ -319,6 +328,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 	public hydraWriteBufferTo (identifier:string, buffer:Buffer, callback?:(err:Error) => any):void {
 		var socket:TCPSocketInterface = this._hydraSockets[identifier];
+
 		if (!socket) {
 			if (callback) {
 				callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));

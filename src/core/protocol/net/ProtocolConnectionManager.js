@@ -266,6 +266,16 @@ var ProtocolConnectionManager = (function (_super) {
         }
     };
 
+    ProtocolConnectionManager.prototype.getHydraSocketIp = function (identifier) {
+        var socket = this._hydraSockets[identifier];
+
+        if (socket) {
+            return socket.getIP();
+        }
+
+        return undefined;
+    };
+
     ProtocolConnectionManager.prototype.hydraConnectTo = function (port, ip, callback) {
         var _this = this;
         this._tcpSocketHandler.connectTo(port, ip, function (socket) {
@@ -281,6 +291,7 @@ var ProtocolConnectionManager = (function (_super) {
 
     ProtocolConnectionManager.prototype.hydraWriteBufferTo = function (identifier, buffer, callback) {
         var socket = this._hydraSockets[identifier];
+
         if (!socket) {
             if (callback) {
                 callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));

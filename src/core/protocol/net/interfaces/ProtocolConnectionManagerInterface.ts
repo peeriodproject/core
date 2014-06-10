@@ -88,6 +88,16 @@ interface ProtocolConnectionManagerInterface extends NodeJS.EventEmitter {
 	forceMessageThroughPipe (originalSender:ContactNodeInterface, rawBuffer:Buffer):void;
 
 	/**
+	 * Returns the IP of a socket stored in the hydra socket list under the given identifier, `undefined` if none is found.
+	 *
+	 * @method core.protocol.ProtocolConnectionManagerInterface#getHydraSocketIp
+	 *
+	 * @param (string} identifier
+	 * @returns {string} The IP address
+	 */
+	getHydraSocketIp (identifier:string):string;
+
+	/**
 	 * Forces an outgoing connection to the specified port and ip. It doesn't matter which node sits behind it.
 	 * If successful, the socket is saved within the hydra list, and the identifier (a prefix plus an increasing number)
 	 * used for it is returned.
