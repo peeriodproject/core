@@ -13,7 +13,7 @@ describe('CORE --> CRYPTO --> AdditiveSharingScheme', function () {
 		var times = 100;
 		var success = 0;
 
-		for (var i=0; i<times; i++) {
+		for (var i = 0; i < times; i++) {
 			var input = crypto.pseudoRandomBytes(2048);
 
 			(function (ip, j) {

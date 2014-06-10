@@ -24,10 +24,10 @@ class AdditiveSharingScheme {
 		var retBuf:Buffer = new Buffer(length);
 		var amount:number = shares.length;
 
-		for (var i=0; i<length; i++) {
+		for (var i = 0; i < length; i++) {
 			var mem:number = 0x00;
 
-			for (var j=0; j<amount; j++) {
+			for (var j = 0; j < amount; j++) {
 				mem += shares[j][i];
 			}
 
@@ -88,10 +88,10 @@ class AdditiveSharingScheme {
 		AdditiveSharingScheme.getRandomBuffers(numOfShares - 1, length, function (sh:Array<Buffer>) {
 			var lastShare:Buffer = new Buffer(length);
 
-			for (var i=0; i<length; i++) {
+			for (var i = 0; i < length; i++) {
 				var mem:number = 0x00;
 
-				for (var j=0; j<numOfShares - 1; j++) {
+				for (var j = 0; j < numOfShares - 1; j++) {
 					mem += sh[j][i];
 				}
 				lastShare[i] = input[i] - mem;
