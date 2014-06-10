@@ -13,7 +13,7 @@ class Aes128GcmWritableMessageFactory implements WritableEncryptedMessageFactory
 
 	public constructMessage (key:Buffer, isReceiver:boolean, payload:Buffer, callback:(err:Error, encryptedMsg:Buffer) => any):void {
 
-		this._getIV((iv:Buffer) => {
+		this.getIV((iv:Buffer) => {
 
 			var outputBuffer:Buffer = null;
 			var err:Error = null;
@@ -66,15 +66,15 @@ class Aes128GcmWritableMessageFactory implements WritableEncryptedMessageFactory
 	 * Gets a cryptographically secure random initialization vector for GCM of length 12.
 	 * If the entropy source is drained, it retries until it succeeds.
 	 *
-	 * @method core.protocol.hydra.Aes128GcmWritableMessageFactory~_getIV
+	 * @method core.protocol.hydra.Aes128GcmWritableMessageFactory#getIV
 	 *
 	 * @param {Function} callback Function which gets called with the resulting initialization vector as Buffer.
 	 */
-	private _getIV (callback:(iv:Buffer) => any):void {
+	public getIV (callback:(iv:Buffer) => any):void {
 		crypto.randomBytes(12, (err:Error, output:Buffer) => {
 			if (err) {
 				setImmediate(() => {
-					this._getIV(callback);
+					this.getIV(callback);
 				});
 			}
 			else {

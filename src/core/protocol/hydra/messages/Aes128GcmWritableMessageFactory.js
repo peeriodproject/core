@@ -13,7 +13,7 @@ var Aes128GcmWritableMessageFactory = (function () {
     }
     Aes128GcmWritableMessageFactory.prototype.constructMessage = function (key, isReceiver, payload, callback) {
         var _this = this;
-        this._getIV(function (iv) {
+        this.getIV(function (iv) {
             var outputBuffer = null;
             var err = null;
 
@@ -63,16 +63,16 @@ var Aes128GcmWritableMessageFactory = (function () {
     * Gets a cryptographically secure random initialization vector for GCM of length 12.
     * If the entropy source is drained, it retries until it succeeds.
     *
-    * @method core.protocol.hydra.Aes128GcmWritableMessageFactory~_getIV
+    * @method core.protocol.hydra.Aes128GcmWritableMessageFactory#getIV
     *
     * @param {Function} callback Function which gets called with the resulting initialization vector as Buffer.
     */
-    Aes128GcmWritableMessageFactory.prototype._getIV = function (callback) {
+    Aes128GcmWritableMessageFactory.prototype.getIV = function (callback) {
         var _this = this;
         crypto.randomBytes(12, function (err, output) {
             if (err) {
                 setImmediate(function () {
-                    _this._getIV(callback);
+                    _this.getIV(callback);
                 });
             } else {
                 callback(output);
