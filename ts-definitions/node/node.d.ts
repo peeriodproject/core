@@ -1052,15 +1052,15 @@ declare module "crypto" {
     export function createCipher(algorithm: string, password: any): Cipher;
     export function createCipheriv(algorithm: string, key: any, iv: any): Cipher;
     interface Cipher {
-        update(data: any, input_encoding?: string, output_encoding?: string): string;
-        final(output_encoding?: string): string;
+        update(data: any, input_encoding?: string, output_encoding?: string): any;
+        final(output_encoding?: string): any;
         setAutoPadding(auto_padding: boolean): void;
         createDecipher(algorithm: string, password: any): Decipher;
         createDecipheriv(algorithm: string, key: any, iv: any): Decipher;
     }
     interface Decipher {
         update(data: any, input_encoding?: string, output_encoding?: string): void;
-        final(output_encoding?: string): string;
+        final(output_encoding?: string): any;
         setAutoPadding(auto_padding: boolean): void;
     }
     export function createSign(algorithm: string): Signer;
