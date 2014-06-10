@@ -3,7 +3,7 @@
 import crypto = require('crypto');
 
 /**
- * This static class helps generating (and decrypting) random sahres for an additive sharing scheme.
+ * This static class helps generating (and decrypting) random shares for an additive sharing scheme.
  *
  * @class core.crypto.AdditiveSharingScheme
  */
