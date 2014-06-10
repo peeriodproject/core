@@ -10,7 +10,7 @@ import crypto = require('crypto');
 class AdditiveSharingScheme {
 
 	/**
-	 * Calculates the cleartext from an of given shares.
+	 * Calculates the cleartext from an array of given shares.
 	 *
 	 * @method core.crypto.AdditiveSharingScheme.getCleartext
 	 *

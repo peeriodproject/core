@@ -10,7 +10,7 @@ var AdditiveSharingScheme = (function () {
     function AdditiveSharingScheme() {
     }
     /**
-    * Calculates the cleartext from an of given shares.
+    * Calculates the cleartext from an array of given shares.
     *
     * @method core.crypto.AdditiveSharingScheme.getCleartext
     *
