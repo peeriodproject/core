@@ -837,7 +837,7 @@ var ProtocolConnectionManager = (function (_super) {
         }
 
         if (propagateMessage) {
-            this.emit('hydraMessage', identifier, message);
+            this.emit('hydraMessage', identifier, this.getHydraSocketIp(identifier), message);
         }
     };
 

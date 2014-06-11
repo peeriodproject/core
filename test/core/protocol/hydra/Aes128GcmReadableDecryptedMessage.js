@@ -42,6 +42,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> Aes128GcmReadableDecryptedMessage', fu
             var enc = new Buffer('cafebabefacedbaddecaf8889a6b1dd5fc0bf6c70b8e717bee8a0720ff8b2fd56a2367cdc1a3022e9e171ad64ff5242b549bf246016fab70c16bb9958f788c2135ad4726d081f8d3648a240288fffffffffffffffffffffffffffffff0', 'hex');
 
             new Aes128GcmReadableDecryptedMessage(enc, key);
+            Aes128GcmReadableDecryptedMessage.SKIP_AUTH = true;
         }).should.throw('Aes128GcmReadableDecryptedMessage: Integrity check fail!');
     });
 });
