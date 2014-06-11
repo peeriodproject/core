@@ -14,7 +14,7 @@ var PluginRunnerFactory = require('../../../src/core/plugin/PluginRunnerFactory'
 var PluginValidator = require('../../../src/core/plugin/PluginValidator');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PLUGIN --> PluginManager @joern', function () {
+describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
     var sandbox;
     var appDataPath = testUtils.getFixturePath('core/plugin/appDataPath');
     var createConfig = function () {
