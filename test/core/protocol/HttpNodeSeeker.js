@@ -10,7 +10,7 @@ var ContactNode = require('../../../src/core/topology/ContactNode');
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 var ContactNodeAddressFactory = require('../../../src/core/topology/ContactNodeAddressFactory');
 
-describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodeSeeker @current', function () {
+describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodeSeeker', function () {
     var sandbox = null;
 
     var server = null;

@@ -1040,27 +1040,27 @@ declare module "crypto" {
     export interface Credentials { context?: any; }
     export function createCredentials(details: CredentialDetails): Credentials;
     export function createHash(algorithm: string): Hash;
-    export function createHmac(algorithm: string, key: string): Hmac;
+    export function createHmac(algorithm: string, key: any): Hmac;
     interface Hash {
         update(data: any, input_encoding?: string): Hash;
-        digest(encoding?: string): string;
+        digest(encoding?: string): any;
     }
     interface Hmac {
         update(data: any, input_encoding?: string): Hmac;
-        digest(encoding?: string): string;
+        digest(encoding?: string): any;
     }
     export function createCipher(algorithm: string, password: any): Cipher;
     export function createCipheriv(algorithm: string, key: any, iv: any): Cipher;
     interface Cipher {
-        update(data: any, input_encoding?: string, output_encoding?: string): string;
-        final(output_encoding?: string): string;
+        update(data: any, input_encoding?: string, output_encoding?: string): any;
+        final(output_encoding?: string): any;
         setAutoPadding(auto_padding: boolean): void;
-        createDecipher(algorithm: string, password: any): Decipher;
-        createDecipheriv(algorithm: string, key: any, iv: any): Decipher;
     }
+	export function createDecipher(algorithm: string, password: any): Decipher;
+	export function createDecipheriv(algorithm: string, key: any, iv: any): Decipher;
     interface Decipher {
-        update(data: any, input_encoding?: string, output_encoding?: string): void;
-        final(output_encoding?: string): string;
+        update(data: any, input_encoding?: string, output_encoding?: string): any;
+        final(output_encoding?: string): any;
         setAutoPadding(auto_padding: boolean): void;
     }
     export function createSign(algorithm: string): Signer;

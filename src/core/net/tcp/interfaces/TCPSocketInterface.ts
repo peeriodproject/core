@@ -44,6 +44,15 @@ interface TCPSocketInterface extends NodeJS.EventEmitter {
 	getIdentifier ():string;
 
 	/**
+	 * Returns the string representation of the remote IP.
+	 *
+	 * @method core.net.tcp.TCPSocketInterface#getIP
+	 *
+	 * @returns {string} The remote IP of the socket.
+	 */
+	getIP ():string;
+
+	/**
 	 * Returns a string representation of the remote connection in the form IP:PORT
 	 *
 	 * @method core.net.tcp.TCPSocketInterface#getIPPortString

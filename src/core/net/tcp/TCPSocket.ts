@@ -140,6 +140,12 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		return this._identifier;
 	}
 
+	public getIP ():string {
+		var socket = this.getSocket();
+
+		return socket.remoteAddress;
+	}
+
 	public getIPPortString ():string {
 		var socket = this.getSocket();
 
