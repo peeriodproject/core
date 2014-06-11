@@ -11,7 +11,7 @@ import HydraByteCheatsheet = require('./HydraByteCheatsheet');
  */
 class Aes128GcmWritableMessageFactory implements WritableEncryptedMessageFactoryInterface {
 
-	public constructMessage (key:Buffer, isReceiver:boolean, payload:Buffer, callback:(err:Error, encryptedMsg:Buffer) => any):void {
+	public encryptMessage (key:Buffer, isReceiver:boolean, payload:Buffer, callback:(err:Error, encryptedMsg:Buffer) => any):void {
 
 		this.getIV((iv:Buffer) => {
 
