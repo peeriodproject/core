@@ -59,7 +59,7 @@ var FolderWatcherManager = (function () {
         */
         this._stateHandler = null;
         /**
-        * The list of currently active FolderWatcher instances
+        * The list of currently active {@link core.fs.FolderWatcherInteface} instances
         *
         * @member {core.fs.FolderWatcherListInterface} core.fs.FolderWatcherManager~_watchers
         */
@@ -259,7 +259,11 @@ var FolderWatcherManager = (function () {
         var internalCallback = callback || function () {
         };
 
-        this._removeFolderWatcher(pathToWatch);
+        var removed = this._removeFolderWatcher(pathToWatch);
+
+        if (removed) {
+            this._triggerEvent('watcher.remove', pathToWatch, null);
+        }
 
         return process.nextTick(internalCallback.bind(null, null));
     };
@@ -273,6 +277,7 @@ var FolderWatcherManager = (function () {
     */
     FolderWatcherManager.prototype._addToInvalidWatcherPaths = function (pathToWatch) {
         if (this._invalidWatcherPaths.indexOf(pathToWatch) === -1) {
+            this._forceTriggerEvent('watcher.invalid', pathToWatch, null);
             this._invalidWatcherPaths.push(pathToWatch);
         }
     };
@@ -428,7 +433,6 @@ var FolderWatcherManager = (function () {
             this._watchers[pathToWatch] = null;
             delete this._watchers[pathToWatch];
 
-            this._triggerEvent('watcher.remove', pathToWatch, null);
             removed = true;
         }
 
