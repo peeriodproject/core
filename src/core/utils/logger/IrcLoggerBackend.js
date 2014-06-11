@@ -95,7 +95,7 @@ var IrcLoggerBackend = (function () {
 
     IrcLoggerBackend.prototype._addTransportBasedOnEnvironment = function () {
         if (process.env.NODE_ENV === 'test') {
-            this._logger.add(winston.transports.Console, {});
+            //this._logger.add(winston.transports.Console, {});
         } else if (this._useIrc) {
             // 9 chars official max. length https://tools.ietf.org/html/rfc2812#section-1.2.1
             //var max:number = 10000000;
