@@ -5,6 +5,13 @@ import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInt
  * @class core.ui.UiManagerInterface
  */
 interface UiManagerInterface extends ClosableAsyncInterface {
+
+	/**
+	 * Returns the socket server instance.
+	 *
+	 * CAUTION: this is only exposed for socket testing
+	 */
+	getSocketServer ():any;
 }
 
 export = UiManagerInterface;

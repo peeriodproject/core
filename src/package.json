@@ -17,7 +17,6 @@
     "mime": "^1.2.11",
     "node-lmdb": "^0.2.1",
     "node-static": "^0.7.3",
-    "primus": "^2.2.4",
     "sandcastle": "https://github.com/joernroeder/sandcastle/tarball/master",
     "stack-trace": "0.0.9",
     "usb-detection": "^1.0.3",
@@ -25,5 +24,6 @@
     "winston-irc": "^0.3.4",
     "ws": "^0.4.31",
     "longjohn": "*"
+    "primus.io": "^3.1.1"
   }
 }
