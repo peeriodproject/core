@@ -1,8 +1,21 @@
 var Aes128GcmReadableDecryptedMessage = require('./Aes128GcmReadableDecryptedMessage');
 var Aes128GcmWritableMessageFactory = require('./Aes128GcmWritableMessageFactory');
 
+/**
+* Layered encryption/decryption handler using AES-128-GCM
+*
+* @class core.protocol.hydra.Aes128GcmLayeredEncDecHandler
+* @implements core.protocol.hydra.LayeredEncDecHandlerInterface
+*
+* @param {core.protocol.hydra.HydraNode} initialNode Optional. Node which gets added to the node list at once.
+*/
 var Aes128GcmLayeredEncDecHandler = (function () {
     function Aes128GcmLayeredEncDecHandler(initialNode) {
+        /**
+        * Ordered list which stores the nodes used for layered encryption / decryption.
+        *
+        * @member {Array<core.protocol.hydra.HydraNode>} core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_nodes
+        */
         this._nodes = [];
         if (initialNode) {
             this.addNode(initialNode);
@@ -30,35 +43,49 @@ var Aes128GcmLayeredEncDecHandler = (function () {
         if (!this._nodes.length) {
             callback(new Error('Aes128GcmLayeredEncDecHandler: No nodes for encryption'), null);
         } else {
-            this._iterativeEncrypt(0, payload, earlyExit, callback);
-        }
-    };
+            var startAt = this._nodes.length - 1;
 
-    Aes128GcmLayeredEncDecHandler.prototype._iterativeEncrypt = function (index, payload, earlyExit, callback) {
-        var _this = this;
-        var nodeSize = this._nodes.length - 1;
-        var node = this._nodes[nodeSize - index];
-        var isExit = earlyExit ? this._compareNodes(node, earlyExit) : (index === nodeSize);
+            if (earlyExit) {
+                var found = false;
 
-        if (earlyExit && index === nodeSize && !isExit) {
-            callback(new Error('Aes128GcmLayeredEncDecHandler: All nodes exhausted, no early exit node found.'), null);
-        } else {
-            this._encryptFactory.encryptMessage(node.outgoingKey, (index === 0), payload, function (err, encryptedMsg) {
-                if (err) {
-                    callback(err, null);
-                } else {
-                    if (isExit) {
-                        callback(null, encryptedMsg);
-                    } else {
-                        setImmediate(function () {
-                            _this._iterativeEncrypt(++index, encryptedMsg, earlyExit, callback);
-                        });
+                for (var i = 0; i < this._nodes.length; i++) {
+                    if (this._compareNodes(this._nodes[i], earlyExit)) {
+                        startAt = i;
+                        found = true;
+                        break;
                     }
                 }
-            });
+
+                if (!found) {
+                    callback(new Error('Aes128GcmLayeredEncDecHandler: All nodes exhausted, no early exit node found.'), null);
+                    return;
+                }
+            }
+
+            this._iterativeEncrypt(startAt, true, payload, callback);
         }
     };
 
+    /**
+    * Returns the ordered list of nodes used for layered encryption / decryption.
+    *
+    * @method core.protocol.hydra.Aes128GcmLayeredEncDecHandler#getNodes
+    *
+    * @returns {Array<core.protocol.hydra.HydraNode>}
+    */
+    Aes128GcmLayeredEncDecHandler.prototype.getNodes = function () {
+        return this._nodes;
+    };
+
+    /**
+    * Compares two hydra nodes by their outgoing symmetric keys.
+    *
+    * @method core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_compareNodes
+    *
+    * @param {core.protocol.hydra.HydraNode} a
+    * @param {core.protocol.hydra.HydraNode} b
+    * @returns {boolean} `true` if the keys are identical, `false` otherwise
+    */
     Aes128GcmLayeredEncDecHandler.prototype._compareNodes = function (a, b) {
         var c = a.outgoingKey;
         var d = b.outgoingKey;
@@ -79,9 +106,18 @@ var Aes128GcmLayeredEncDecHandler = (function () {
         return ret;
     };
 
+    /**
+    * Iteratively decrypts a message in the 'peeling off layer by layer' fashion.
+    *
+    * @method core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_iterativeDecrypt
+    *
+    * @param {number} index Index of node in list to decrypt with
+    * @param {Buffer} payload Payload to decrypt
+    * @param {Function} callback
+    */
     Aes128GcmLayeredEncDecHandler.prototype._iterativeDecrypt = function (index, payload, callback) {
         var _this = this;
-        if (index === this._nodes.length - 1) {
+        if (index === this._nodes.length) {
             callback(new Error('Aes128GcmLayeredEncDecHandler: All nodes exhausted, could not completely decrypt.'), null);
         } else {
             var calledBack = false;
@@ -104,6 +140,33 @@ var Aes128GcmLayeredEncDecHandler = (function () {
                 }
             }
         }
+    };
+
+    /**
+    * Iteratively encrypts a message layer by layer (up to finsish or early exit node)
+    *
+    * @method core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_iterativeEncrypt
+    *
+    * @param {number} index Index of node in list to encrypt with.
+    * @param {boolean} isReceiver Indicates whether the message should be encrypted as a 'receiver' message
+    * @param {Buffer} payload Payload to encrypt
+    * @param {Function} callback
+    */
+    Aes128GcmLayeredEncDecHandler.prototype._iterativeEncrypt = function (index, isReceiver, payload, callback) {
+        var _this = this;
+        this._encryptFactory.encryptMessage(this._nodes[index].outgoingKey, isReceiver, payload, function (err, encryptedMsg) {
+            if (err) {
+                callback(err, null);
+            } else {
+                if (index === 0) {
+                    callback(null, encryptedMsg);
+                } else {
+                    setImmediate(function () {
+                        _this._iterativeEncrypt(--index, false, encryptedMsg, callback);
+                    });
+                }
+            }
+        });
     };
     return Aes128GcmLayeredEncDecHandler;
 })();

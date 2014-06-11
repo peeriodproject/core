@@ -878,7 +878,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 
 		if (propagateMessage) {
-			this.emit('hydraMessage', identifier, message);
+			this.emit('hydraMessage', identifier, this.getHydraSocketIp(identifier), message);
 		}
 	}
 
