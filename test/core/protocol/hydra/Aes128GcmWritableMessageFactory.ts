@@ -25,7 +25,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> Aes128GcmWritableMessageFactory', func
 
 		factory.getIV = function (cb) { cb(iv); };
 
-		factory.constructMessage(key, true, plaintext, function (err, buff) {
+		factory.encryptMessage(key, true, plaintext, function (err, buff) {
 			if (!err && buff.toString('hex') === 'cafebabefacedbaddecaf8889a6b1dd5fc0bf6c70b8e717bee8a0720ff8b2fd56a2367cdc1a3022e9e171ad64ff5242b549bf246016fab70c16bb9958f788c2135ad4726d081f8d3648a240288' + t_hex ) done();
 		});
 	});
@@ -37,7 +37,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> Aes128GcmWritableMessageFactory', func
 
 		factory.getIV = function (cb) { cb(iv); };
 
-		factory.constructMessage(key, false, plaintext, function (err, buff) {
+		factory.encryptMessage(key, false, plaintext, function (err, buff) {
 			if (!err && buff.toString('hex') === 'cafebabefacedbaddecaf8889b6b1dd5fc0bf6c70b8e717bee8a0720ff8b2fd56a2367cdc1a3022e9e171ad64ff5242b549bf246016fab70c16bb9958f788c2135ad4726d081f8d3648a240288') done();
 		});
 	});
@@ -45,7 +45,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> Aes128GcmWritableMessageFactory', func
 	it('should throw an error when passing in wrong parameters', function (done) {
 		factory = new Aes128GcmWritableMessageFactory();
 
-		factory.constructMessage(new Buffer(10), true, new Buffer(20), function (err, buff) {
+		factory.encryptMessage(new Buffer(10), true, new Buffer(20), function (err, buff) {
 			if (err && !buff) done();
 		});
 	});

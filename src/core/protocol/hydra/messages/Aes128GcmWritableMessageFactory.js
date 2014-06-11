@@ -11,7 +11,7 @@ var HydraByteCheatsheet = require('./HydraByteCheatsheet');
 var Aes128GcmWritableMessageFactory = (function () {
     function Aes128GcmWritableMessageFactory() {
     }
-    Aes128GcmWritableMessageFactory.prototype.constructMessage = function (key, isReceiver, payload, callback) {
+    Aes128GcmWritableMessageFactory.prototype.encryptMessage = function (key, isReceiver, payload, callback) {
         var _this = this;
         this.getIV(function (iv) {
             var outputBuffer = null;

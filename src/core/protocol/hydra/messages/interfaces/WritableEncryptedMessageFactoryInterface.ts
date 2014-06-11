@@ -16,7 +16,7 @@ interface WritableEncryptedMessageFactoryInterface {
 	/**
 	 * Constructs an encrypted message which can be sent to the other side sharing the same key.
 	 *
-	 * @method core.protocol.hydra.WritableEncryptedMessageFactoryInterface#constructMessage
+	 * @method core.protocol.hydra.WritableEncryptedMessageFactoryInterface#encryptMessage
 	 *
 	 * @param {Buffer} key The symmetric key to encrypt with
 	 * @param {boolean} isReceiver Indicates whether the party the message is sent to is the intended receiver (when using layered encryption)
@@ -24,7 +24,7 @@ interface WritableEncryptedMessageFactoryInterface {
 	 * @param {Buffer} payload The actual payload to encrypt
 	 * @param {Function} callback Function which gets called with the encrypted message as Buffer or an error if something went wrong.
 	 */
-	constructMessage (key:Buffer, isReceiver:boolean, payload:Buffer, callback:(err:Error, encryptedMsg:Buffer) => any):void;
+	encryptMessage (key:Buffer, isReceiver:boolean, payload:Buffer, callback:(err:Error, encryptedMsg:Buffer) => any):void;
 }
 
 export = WritableEncryptedMessageFactoryInterface;
