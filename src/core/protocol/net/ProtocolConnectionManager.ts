@@ -313,7 +313,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		return undefined;
 	}
 
-	public hydraConnectTo (port:number, ip:string, callback:(err:Error, identifier:string) => any):void {
+	public hydraConnectTo (port:number, ip:string, callback?:(err:Error, identifier:string) => any):void {
 		this._tcpSocketHandler.connectTo(port, ip, (socket:TCPSocketInterface) => {
 			if (socket) {
 				var identifier:string = this._setHydraIdentifier(socket);

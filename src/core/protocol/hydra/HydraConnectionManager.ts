@@ -31,6 +31,22 @@ class HydraConnectionManager extends events.EventEmitter implements HydraConnect
 		this._setupListeners();
 	}
 
+	/**
+	 * BEGIN Testing purposes only
+	 */
+
+	public getOpenSocketList ():Object {
+		return this._openSockets;
+	}
+
+	public getCircuitNodeList ():Object {
+		return this._circuitNodes;
+	}
+
+	/**
+	 * END Testing purposes only
+	 */
+
 	public addToCircuitNodes (node:HydraNode):void {
 		var ip:string = node.ip;
 
@@ -74,6 +90,10 @@ class HydraConnectionManager extends events.EventEmitter implements HydraConnect
 			}, this._keepMessageInPipelineForMs, messageListener);
 
 			this.once(to.ip, messageListener);
+
+			if (to.port) {
+				this._protocolConnectionManager.hydraConnectTo(to.port, to.ip);
+			}
 		}
 	}
 
@@ -84,17 +104,21 @@ class HydraConnectionManager extends events.EventEmitter implements HydraConnect
 				this.emit('globalConnectionFail', node.ip);
 			}, this._waitForReconnectMs);
 
-			this.once(node.ip, function () {
+			this.once(node.ip, () => {
 				global.clearTimeout(waitTimeout);
+				this.emit('reconnectedTo', node.ip);
 			});
 		}
 		else {
 			// we need to force it
 			var connect = (num:number) => {
 				if (num < this._retryConnectionMax) {
-					this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, (err:Error, ident:string) => {
+					this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, (err:Error) => {
 						if (err) {
 							connect(++num);
+						}
+						else {
+							this.emit('reconnectedTo', node.ip);
 						}
 					});
 				}

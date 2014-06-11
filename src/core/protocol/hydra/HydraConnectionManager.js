@@ -24,6 +24,20 @@ var HydraConnectionManager = (function (_super) {
 
         this._setupListeners();
     }
+    /**
+    * BEGIN Testing purposes only
+    */
+    HydraConnectionManager.prototype.getOpenSocketList = function () {
+        return this._openSockets;
+    };
+
+    HydraConnectionManager.prototype.getCircuitNodeList = function () {
+        return this._circuitNodes;
+    };
+
+    /**
+    * END Testing purposes only
+    */
     HydraConnectionManager.prototype.addToCircuitNodes = function (node) {
         var ip = node.ip;
 
@@ -65,6 +79,10 @@ var HydraConnectionManager = (function (_super) {
             }, this._keepMessageInPipelineForMs, messageListener);
 
             this.once(to.ip, messageListener);
+
+            if (to.port) {
+                this._protocolConnectionManager.hydraConnectTo(to.port, to.ip);
+            }
         }
     };
 
@@ -78,14 +96,17 @@ var HydraConnectionManager = (function (_super) {
 
             this.once(node.ip, function () {
                 global.clearTimeout(waitTimeout);
+                _this.emit('reconnectedTo', node.ip);
             });
         } else {
             // we need to force it
             var connect = function (num) {
                 if (num < _this._retryConnectionMax) {
-                    _this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, ident) {
+                    _this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err) {
                         if (err) {
                             connect(++num);
+                        } else {
+                            _this.emit('reconnectedTo', node.ip);
                         }
                     });
                 } else {

@@ -109,7 +109,7 @@ interface ProtocolConnectionManagerInterface extends NodeJS.EventEmitter {
 	 * @param {Function} callback Mandatory callback which gets called with an error (if the connection was not successful)
 	 * and the identifier used as arguments.
 	 */
-	hydraConnectTo (port:number, ip:string, callback:(err:Error, identifier:string) => any):void;
+	hydraConnectTo (port:number, ip:string, callback?:(err:Error, identifier:string) => any):void;
 
 	/**
 	 * Writes a buffer to a socket stored under the specified hydra identifier. Generates an error if there is no socket
