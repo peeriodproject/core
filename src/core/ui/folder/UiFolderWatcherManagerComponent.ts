@@ -2,6 +2,7 @@
 
 import FolderWatcherManagerInterface = require('../../fs/interfaces/FolderWatcherManagerInterface');
 import UiComponentInterface = require('../interfaces/UiComponentInterface');
+import UiFolderMapInterface = require('./interfaces/UiFolderMapInterface');
 import UiFolderInterface = require('./interfaces/UiFolderInterface');
 
 /**
@@ -28,9 +29,11 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 	private _folderWatcherManager:FolderWatcherManagerInterface = null;
 
 	/**
-	 * 
+	 * The map of currently known folders
+	 *
+	 * @member {core.ui.folder.UiFolderMapInterface} core.ui.UiFolderWatcherManagerComponent~_folders
 	 */
-	private _folders:{ [path:string]:UiFolderInterface } = {};
+	private _folders:UiFolderMapInterface = {};
 
 	constructor (folderWatcherManager:FolderWatcherManagerInterface) {
 		this._folderWatcherManager = folderWatcherManager;

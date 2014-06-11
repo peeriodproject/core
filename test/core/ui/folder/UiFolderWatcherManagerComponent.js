@@ -52,6 +52,10 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent @joern', fu
         }
     });
 
+    it('should correctly return the channel name', function () {
+        component.getChannelName().should.equal('folder');
+    });
+
     it('should correctly send a new folder to the ui', function () {
         // add a client connection
         component.onConnection(sparkStub);

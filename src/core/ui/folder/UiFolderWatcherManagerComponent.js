@@ -21,7 +21,9 @@ var UiFolderWatcherManagerComponent = (function () {
         */
         this._folderWatcherManager = null;
         /**
+        * The map of currently known folders
         *
+        * @member {core.ui.folder.UiFolderMapInterface} core.ui.UiFolderWatcherManagerComponent~_folders
         */
         this._folders = {};
         this._folderWatcherManager = folderWatcherManager;
