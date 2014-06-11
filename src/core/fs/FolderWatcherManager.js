@@ -10,28 +10,56 @@ var EventEmitter = events.EventEmitter;
 /**
 * @class core.fs.FolderWatcherManager
 * @implements core.fs.FolderWatcherManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.utils.StateHandlerFactoryInterface} stateHandlerFactory
+* @param {core.fs.FolderWatcherFactoryInterface} folderWatcherFactory
+* @param {core.utils.ClosableAsyncOptions} options
 */
 var FolderWatcherManager = (function () {
     function FolderWatcherManager(config, stateHandlerFactory, folderWatcherFactory, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
+        /**
+        * The internally used config instance
+        *
+        * @member {core.config.ConfigInterface} core.fs.FolderWatcherManager~_config
+        */
         this._config = null;
+        /**
+        * The EventEmitter instance used to emit events.
+        *
+        * @see Use {@link core.fs.FolderWatcherManager#on} and {@link core.fs.FolderWatcherManager#off} to (un)bind your listeners to the emitter
+        *
+        * @member {events.EventEmitter} core.fs.FolderWatcherManager~_eventEmitter
+        */
         this._eventEmitter = null;
+        /**
+        * The internally used FolderWatcherFactory
+        *
+        * @member {core.fs.FolderWatcherFactoryInterface} core.fs.FolderWatcherManager~_folderWatcherFactory
+        */
         this._folderWatcherFactory = null;
         /**
         * Contains invalid absolute paths that are (currently) not available in the file system.
         *
-        *
+        * @member {core.fs.PathListInterface} core.fs.FolderWatcherManager~_invalidWatcherPaths
         */
         this._invalidWatcherPaths = [];
         this._isOpen = false;
+        /**
+        *
+        * @member {core.utils.ClosableAsyncOptions} core.fs.FolderWatcherManager~_options
+        */
         this._options = null;
         /**
+        * The internally used StateHandler to save and load the current set of folders to watch.
         *
         * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_stateLoader
         */
         this._stateHandler = null;
         /**
+        * The list of currently active FolderWatcher instances
         *
         * @member {core.fs.FolderWatcherListInterface} core.fs.FolderWatcherManager~_watchers
         */
@@ -252,7 +280,7 @@ var FolderWatcherManager = (function () {
     /**
     * Binds to the add, change and unlink event from the file watcher and triggers the corresponding event.
     *
-    * todo Add the ability to detect file movements a rename operations
+    * todo Add the ability to detect file movements and rename operations
     *
     * @method core.fs.FolderWatcherManager~_bindToWatcherEvents
     *
@@ -299,6 +327,16 @@ var FolderWatcherManager = (function () {
         }
     };
 
+    /**
+    * Creates {@link core.fs.FolderWatcherInterface} for the specified paths and calls the callback afterwards.
+    *
+    * @see core.fs.FolderWatcherManager~_createWatcher
+    *
+    * @method core.fs.FolderWatcherManager~_createWatchers
+    *
+    * @param {core.fs.PathListInterface} pathsToWatch
+    * @param {Function} callback
+    */
     FolderWatcherManager.prototype._createWatchers = function (pathsToWatch, callback) {
         if (!pathsToWatch || !Array.isArray(pathsToWatch) || !pathsToWatch.length) {
             return callback(null);
@@ -316,6 +354,8 @@ var FolderWatcherManager = (function () {
     /**
     * Creates a watcher for the specified (valid) path
     *
+    * @method core.fs.FolderWatcherManager~_createWatcher
+    *
     * @param {string} pathToWatch
     * @returns {boolean}
     */
@@ -328,22 +368,53 @@ var FolderWatcherManager = (function () {
 
             this._bindToWatcherEvents(this._watchers[pathToWatch]);
 
+            this._forceTriggerEvent('watcher.add', pathToWatch, null);
             created = true;
         }
 
         return created;
     };
 
+    /**
+    * Emits the specified event
+    *
+    * @method core.fs.FolderWatcherManager~_forceTriggerEvent
+    *
+    * @param {string} eventName
+    * @param {string} changedPath
+    * @param {fs.Stats} stats
+    */
+    FolderWatcherManager.prototype._forceTriggerEvent = function (eventName, changedPath, stats) {
+        this._eventEmitter.emit(eventName, changedPath, stats);
+    };
+
+    /**
+    * Returns an array of currently paths that are currently spied on.
+    *
+    * @method core.fs.FolderWatcherManager~_getActiveWatcherPaths
+    *
+    * @returns {core.fs.PathListInterface}
+    */
     FolderWatcherManager.prototype._getActiveWatcherPaths = function () {
         return Object.keys(this._watchers);
     };
 
+    /**
+    * Returns `true` if the specified path is absolute
+    *
+    * @method core.fs.FolderWatcherManager~_isAbsolutePath
+    *
+    * @param {string} aPath
+    * @returns {boolean}
+    */
     FolderWatcherManager.prototype._isAbsolutePath = function (aPath) {
         return path.resolve(aPath) === aPath;
     };
 
     /**
-    * Removes an active folder watcher
+    * Removes an active folder watcher from the manager and triggers the corresponding `watcher.remove` event
+    *
+    * @method core.fs.FolderWatcherManager~_removeFolderWatcher
     *
     * @param {string} pathToWatch
     * @returns {boolean} `true` if successfully removed
@@ -357,6 +428,7 @@ var FolderWatcherManager = (function () {
             this._watchers[pathToWatch] = null;
             delete this._watchers[pathToWatch];
 
+            this._triggerEvent('watcher.remove', pathToWatch, null);
             removed = true;
         }
 
@@ -378,12 +450,29 @@ var FolderWatcherManager = (function () {
         }
     };
 
+    /**
+    * Triggers the specified event if the FolderWatcherManager is (still) open
+    *
+    * @method core.fs.FolderWatcherManager~_triggerEvent
+    *
+    * @param {string} eventName
+    * @param {string} changedPath
+    * @param {fs.Stats} stats
+    */
     FolderWatcherManager.prototype._triggerEvent = function (eventName, changedPath, stats) {
         if (this._isOpen) {
-            this._eventEmitter.emit(eventName, changedPath, stats);
+            this._forceTriggerEvent(eventName, changedPath, stats);
         }
     };
 
+    /**
+    * Returns `true` if a watcher for the specified path exists.
+    *
+    * @method core.fs.FolderWatcherManager~_watcherExists
+    *
+    * @param {string} pathToWatch
+    * @returns {boolean}
+    */
     FolderWatcherManager.prototype._watcherExists = function (pathToWatch) {
         return this._watchers[pathToWatch] ? true : false;
     };

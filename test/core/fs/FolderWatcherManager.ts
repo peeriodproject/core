@@ -27,11 +27,11 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 	var createStateHandlerStub = function (state = {}) {
 		stateHandlerStub = testUtils.stubPublicApi(sandbox, JSONStateHandler, {
 			load: function (callback) {
-				callback(null, state);
+				return process.nextTick(callback.bind(null, null, state));
 			},
 			save: function (state:Object, callback:Function) {
 				if (callback) {
-					callback(null);
+					return process.nextTick(callback.bind(null, null));
 				}
 			}
 		});
@@ -154,6 +154,8 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 			]
 		});
 
+		var onWatcherAdd = sinon.spy();
+
 		var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
 			closeOnProcessExit: false,
 			onOpenCallback: function (err) {
@@ -164,18 +166,25 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 				folderWatcherManager.getFolderWatchers(function (watchers) {
 					(watchers[validPathToWatch] === undefined).should.be.false;
 
+					onWatcherAdd.calledOnce.should.be.true;
+					onWatcherAdd.getCall(0).args[0].should.equal(validPathToWatch);
+
 					closeAndDone(folderWatcherManager, done);
 				});
 			}
 		});
+
+		folderWatcherManager.on('watcher.add', onWatcherAdd);
 	});
 
-	it('should correctly remove the watcher if a path becomes invalid', function (done) {
+	it('should correctly remove the watcher if a path becomes invalid @prio', function (done) {
 		createStateHandlerStub({
 			paths: [
 				validPathToWatch
 			]
 		});
+
+		var onWatcherRemove = sinon.spy();
 
 		var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
 			closeOnProcessExit: false,
@@ -186,11 +195,16 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 					folderWatcherManager.getFolderWatchers(function (watchers) {
 						Object.keys(watchers).length.should.equal(0);
 
+						onWatcherRemove.calledOnce.should.be.true;
+						onWatcherRemove.getCall(0).args[0].should.equal(validPathToWatch);
+
 						closeAndDone(folderWatcherManager, done);
 					});
 				});
 			}
 		});
+
+		folderWatcherManager.on('watcher.remove', onWatcherRemove);
 	});
 
 	it('should correctly add the watcher if a path becomes valid', function (done) {
