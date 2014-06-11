@@ -5,28 +5,47 @@ import net = require('net');
 import path = require('path');
 
 //var sockjs = require('sockjs');
-var Primus = require('primus');
+var PrimusIo = require('primus.io');
 var nodeStatic = require('node-static');
 
 import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
+import UiComponentInterface = require('./interfaces/UiComponentInterface');
+import UiComponentListInterface = require('./interfaces/UiComponentListInterface');
 import UiManagerInterface = require('./interfaces/UiManagerInterface');
 
 import ObjectUtils = require('../utils/ObjectUtils');
+
 
 /**
  * @class core.ui.UiManager
  * @implements core.ui.UiManagerInterface
  *
  * @param {core.config.ConfigInterface} config
- * @param {todo} components
+ * @param {core.ui.UiComponentListInterface} components
  * @param {core.utils.ClosableAsyncOptions} options
  */
 class UiManager implements UiManagerInterface {
 
-	private _components = [];
+	private _components:UiComponentListInterface = [];
 
-	private _connections:Array<net.Socket> = [];
+	//private _connections:Array<net.Socket> = [];
+
+	/**
+	 * A map of UiComponents per channel
+	 *
+	 * todo ts-definition
+	 *
+	 * @member {} core.ui.UiManager~_channelComponentsMap
+	 */
+	private _channelComponentsMap:{ [channelName:string]:UiComponentInterface; } = {};
+
+	/**
+	 * todo ts-definitions
+	 *
+	 * @member {Array} core.ui.UiManager~_channels
+	 */
+	private _channelsMap:{ [channelName:string]:any; } = {};
 
 	/**
 	 * The internally uses config
@@ -83,7 +102,7 @@ class UiManager implements UiManagerInterface {
 	 */
 	private _socketServer = null;
 
-	constructor (config:ConfigInterface, components, options:ClosableAsyncOptions) {
+	constructor (config:ConfigInterface, components:UiComponentListInterface, options:ClosableAsyncOptions) {
 		var defaults:ClosableAsyncOptions = {
 			closeOnProcessExit: false,
 			onCloseCallback   : function () {
@@ -102,6 +121,7 @@ class UiManager implements UiManagerInterface {
 			});
 		}
 
+		//this._createChannelsMap()
 		this.open(this._options.onOpenCallback);
 	}
 
@@ -113,14 +133,30 @@ class UiManager implements UiManagerInterface {
 			return process.nextTick(internalCallback.bind(null, null));
 		}
 
+		//this._socketServer.write('closing');
+
 		// closing websocket connections
-		if (this._connections.length) {
+		/*if (this._connections.length) {
 			for (var i in this._connections) {
 				this._connections[i].end(); // null, { reconnect: true }
 			}
 
 			this._connections = null;
 			this._connections = [];
+		}*/
+
+		var channelNames = Object.keys(this._channelsMap);
+
+		if (channelNames.length) {
+			for (var i in channelNames) {
+				var channelName:string = channelNames[i];
+
+				// destroy the channel
+				this._channelsMap[channelName].destroy();
+			}
+
+			this._channelsMap = null;
+			this._channelsMap = {};
 		}
 
 		this._httpServer.close(() => {
@@ -134,6 +170,16 @@ class UiManager implements UiManagerInterface {
 
 		for (var i in this._httpSockets) {
 			this._httpSockets[i].destroy();
+		}
+	}
+
+	public getSocketServer () {
+		if (process.env.NODE_ENV === 'test') {
+			return this._socketServer;
+		}
+		else {
+			console.error('Do not use this method outside the test environment!');
+			return null;
 		}
 	}
 
@@ -175,6 +221,26 @@ class UiManager implements UiManagerInterface {
 		});
 	}
 
+	private _setupSocketChannelComponentMap ():void {
+		if (this._components.length) {
+			for (var i in this._components) {
+				var component:UiComponentInterface = this._components[i];
+				var channelName = component.getChannelName();
+
+				if (this._channelsMap[channelName] || this._channelComponentsMap[channelName]) {
+					throw new Error('UiManager._createChannelComnentMap: Another Component already owns the "' + channelName + '" channel.');
+				}
+				else {
+					// create channel
+					this._channelsMap[channelName] = this._socketServer.channel(channelName);
+
+					// register component to channel
+					this._channelComponentsMap[channelName] = component;
+				}
+			}
+		}
+	}
+
 	/**
 	 * Handles a single http request by using the {@link core.ui.UiManager~_staticServer} to process the request.
 	 *
@@ -194,14 +260,50 @@ class UiManager implements UiManagerInterface {
 		request.resume();
 	}
 
-	private _handleSocket (spark:net.Socket):void {
-		spark.on('data', function message (data) {
-			//console.log(data);
-			spark.write(data);
-		});
+	private _handleSocketChannel (channelName:string, spark:any) {
+		if (this._channelComponentsMap[channelName]) {
+			this._channelComponentsMap[channelName].onConnection(spark);
+		}
+
+		//this._connections.push(spark);
+	}
+
+	// todo spark ts-definitions
+	/*private _handleSocket (spark:any):void {
+		var channels:Array<string> = Object.keys(this._channelComponentsMap);
+
+		if (channels.length) {
+			for (var i in channels) {
+				var channel:string = channels[i];
+				var channelComponent:UiComponentInterface = this._channelComponentsMap[channel];
+
+				spark.on(channel, function (message, callback) {
+					channelComponent.onMessage(message, callback);
+				});
+			}
+			/*spark.on('chat', function (name, fn) {
+				console.log(name); //-> Bob
+				fn('woot');
+
+				spark.send('What is your name', function (name) {
+					console.log(name); //-> My name is Ann
+				});
+			});* /
+		}
 
 		this._connections.push(spark);
-	}
+	}*/
+
+	/*private _bindComponentsToConnection (spark:any):void {
+		if (this._components.length) {
+			for (var i in this._components) {
+				var component:UiComponentInterface = this._components[i];
+				//var channelName:string = component.getChannelName();
+
+				//spark.on(channelName)
+			}
+		}
+	}*/
 
 	/**
 	 * Sets up the websocket server and hooks it into the {@link core.ui.UiManager~_httpServer}
@@ -211,21 +313,34 @@ class UiManager implements UiManagerInterface {
 	 * @method core.ui.UiManager~_setupSocketServer
 	 */
 	private _setupSocketServer ():void {
-		this._socketServer = new Primus(this._httpServer, {
-			pathname: this._config.get('ui.UiManager.socketServer.pathname'),
+		this._socketServer = new PrimusIo(this._httpServer, {
 			port: this._config.get('ui.UiManager.socketServer.port'),
-			transformer: this._config.get('ui.UiManager.socketServer.transformer')
+			transformer: this._config.get('ui.UiManager.socketServer.transformer'),
+			parser: this._config.get('ui.UiManager.socketServer.parser')
 		});
 
 		var staticPublicPath:string = this._config.get('ui.UiManager.staticServer.publicPath');
-		var clientLibPath:string = path.resolve(path.join(staticPublicPath, 'primus.js'));
+		var clientLibPath:string = path.resolve(path.join(staticPublicPath, 'primus.io.js'));
 
 		// todo check if file exists
 		this._socketServer.save(clientLibPath);
 
-		this._socketServer.on('connection', (connection) => {
-			this._handleSocket(connection);
-		});
+		this._setupSocketChannelComponentMap();
+		this._setupSocketChannels();
+	}
+
+	private _setupSocketChannels ():void {
+		var channelNames:Array<string> = Object.keys(this._channelsMap);
+
+		if (channelNames.length) {
+			for (var i in channelNames) {
+				var channelName:string = channelNames[i];
+
+				this._channelsMap[channelName].on('connection', (connection) => {
+					this._handleSocketChannel(channelName, connection);
+				});
+			}
+		}
 	}
 
 	/**
@@ -264,9 +379,9 @@ class UiManager implements UiManagerInterface {
 	 * @method core.ui.UiManager~_startServers
 	 */
 	private _startServers (callback:Function):void {
-		this._socketServer.on('connection', (spark) => {
+		/*this._socketServer.on('connection', (spark) => {
 			this._handleSocket(spark);
-		});
+		});*/
 
 		//console.log(' [*] Listening on 127.0.0.1:9999' );
 		this._httpServer.listen(this._config.get('ui.UiManager.staticServer.port'), 'localhost', 511, function () {

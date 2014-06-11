@@ -52,7 +52,11 @@ describe('CORE --> SEARCH --> SearchStoreFactory', function () {
     after(function (done) {
         searchStore.close(function () {
             testUtils.deleteFolderRecursive(searchStoreLogsFolder);
-            testUtils.deleteFolderRecursive(searchStoreDataFolder);
+
+            try  {
+                testUtils.deleteFolderRecursive(searchStoreDataFolder);
+            } catch (e) {
+            }
 
             sandbox.restore();
             config = null;

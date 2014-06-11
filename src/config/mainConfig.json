@@ -85,7 +85,6 @@
                 "publicPath": "public"
             },
             "socketServer": {
-                "pathname": "/socket",
                 "port": 8080,
                 "transformer": "websockets"
             }

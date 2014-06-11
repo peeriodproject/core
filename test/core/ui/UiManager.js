@@ -1,4 +1,5 @@
 /// <reference path='../../test.d.ts' />
+var fs = require('fs');
 var http = require('http');
 
 var sinon = require('sinon');
@@ -6,8 +7,9 @@ var testUtils = require('../../utils/testUtils');
 
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var UiManager = require('../../../src/core/ui/UiManager');
+var UiComponent = require('../../../src/core/ui/UiComponent');
 
-describe('CORE --> UI --> UiManager @joern', function () {
+describe('CORE --> UI --> UiManager', function () {
     var sandbox;
     var configStub;
     var uiManager;
@@ -27,6 +29,14 @@ describe('CORE --> UI --> UiManager @joern', function () {
         });
     };
 
+    before(function () {
+        var primusJsPath = testUtils.getFixturePath('core/ui/uiManager/public/primus.io.js');
+
+        if (fs.existsSync(primusJsPath)) {
+            fs.unlinkSync(primusJsPath);
+        }
+    });
+
     beforeEach(function () {
         sandbox = sinon.sandbox.create();
         configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
@@ -39,8 +49,8 @@ describe('CORE --> UI --> UiManager @joern', function () {
                     return 8080;
                 } else if (key === 'ui.UiManager.socketServer.transformer') {
                     return 'websockets';
-                } else if (key === 'ui.UiManager.socketServer.pathname') {
-                    return '/socket';
+                } else if (key === 'ui.UiManager.socketServer.parser') {
+                    return 'JSON';
                 }
             }
         });
@@ -49,6 +59,8 @@ describe('CORE --> UI --> UiManager @joern', function () {
     afterEach(function () {
         sandbox.restore();
         configStub = null;
+
+        fs.unlinkSync(testUtils.getFixturePath('core/ui/uiManager/public/primus.io.js'));
     });
 
     it('should correctly instantiate the UiManager', function (done) {
@@ -82,6 +94,61 @@ describe('CORE --> UI --> UiManager @joern', function () {
                                     closeAndDone(done);
                                 });
                             });
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    it('should correctly find the socket client library', function (done) {
+        createUiManager(configStub, [], function () {
+            uiManager.open(function () {
+                http.get('http://localhost:3000/primus.io.js', function (res) {
+                    res.statusCode.should.equal(200);
+
+                    closeAndDone(done);
+                });
+            });
+        });
+    });
+
+    it('should correctly create a socket connection', function (done) {
+        var componentStub = testUtils.stubPublicApi(sandbox, UiComponent, {
+            getChannelName: function () {
+                return 'chat';
+            },
+            onConnection: function (spark) {
+                spark.send('message', 'welcome to this chat', function (message) {
+                    message.should.equal('i am glad to be here!');
+                });
+
+                spark.on('weather', function (message, callback) {
+                    message.should.equal('how is it outside?');
+
+                    callback('it is nice and sunny.');
+                });
+            }
+        });
+
+        createUiManager(configStub, [componentStub], function () {
+            uiManager.open(function () {
+                var socket = uiManager.getSocketServer().Socket('ws://localhost:3000');
+
+                http.get('http://localhost:3000', function (res) {
+                    res.statusCode.should.equal(200);
+
+                    var chat = socket.channel('chat');
+
+                    chat.on('message', function (message, callback) {
+                        message.should.equal('welcome to this chat');
+
+                        callback('i am glad to be here!');
+
+                        chat.send('weather', 'how is it outside?', function (message) {
+                            message.should.equal('it is nice and sunny.');
+
+                            closeAndDone(done);
                         });
                     });
                 });
