@@ -47,6 +47,11 @@
             "republishInSeconds"      : 3600
         }
     },
+    "hydra": {
+        "keepMessageInPipelineForSeconds": 4,
+        "waitForReconnectInSeconds": 4.5,
+        "retryConnectionMax": 2
+    },
     "plugin"  : {
         "folderPath"              : "plugin",
         "pluginConfigName"        : "plugin.json",
