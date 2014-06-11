@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">66.85</p>
+      <p class="stat">65.52</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">161</p>
+      <p class="stat">204</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">27.68</p>
+      <p class="stat">30.93</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.08</p>
+      <p class="stat">1.34</p>
     </div>
   </div>
 </div>
@@ -104,16 +104,12 @@ var ObjectUtils = require(&#039;../ObjectUtils&#039;);
 * @implements core.utils.logger.LoggerInterface
 */
 var IrcLoggerBackend = (function () {
-    /**
-    * The prefix seperator
-    *
-    * @member {string} core.utils.logger.IrcLoggerBackend~_prefix
-    */
-    //private _prefix:string = &#039;;&#039;;
-    /**
-    * @param {string} name
-    */
     function IrcLoggerBackend() {
+        /**
+        * The base path to the apps root directory
+        *
+        * @member {string} core.utils.logger.IrcLoggerBackend~_basePath
+        */
         this._basePath = &#039;&#039;;
         /**
         * The internally used logging instance
@@ -121,18 +117,27 @@ var IrcLoggerBackend = (function () {
         * @member {string} core.utils.logger.IrcLoggerBackend~_logger
         */
         this._logger = null;
-        this._basePath = path.join(__dirname, &#039;../../../../&#039;);
+        /**
+        * A flag indicates if the backend should use the irc or file logger
+        *
+        * @member {boolean} core.utils.logger.IrcLoggerBackend~_useIrc
+        */
+        this._useIrc = false;
+        this._basePath = path.resolve(__dirname, &#039;../../../&#039;);
 
         // typescript hack...
         var winLogger = winston.Logger;
 
         this._logger = new winLogger({
-            transports: []
+            transports: [],
+            exitOnError: false
         });
 
         this._addTransportBasedOnEnvironment();
     }
     IrcLoggerBackend.prototype.debug = function (message, metadata) {
+        message = this._updateMessage(message);
+
         if (metadata) {
             this._logger.debug(message, metadata);
         } else {
@@ -141,6 +146,8 @@ var IrcLoggerBackend = (function () {
     };
 
     IrcLoggerBackend.prototype.error = function (message, metadata) {
+        message = this._updateMessage(message);
+
         if (metadata) {
             this._logger.error(message, metadata);
         } else {
@@ -149,6 +156,8 @@ var IrcLoggerBackend = (function () {
     };
 
     IrcLoggerBackend.prototype.info = function (message, metadata) {
+        message = this._updateMessage(message);
+
         if (metadata) {
             this._logger.info(message, metadata);
         } else {
@@ -157,6 +166,8 @@ var IrcLoggerBackend = (function () {
     };
 
     IrcLoggerBackend.prototype.log = function (level, message, metadata) {
+        message = this._updateMessage(message);
+
         if (metadata) {
             this._logger.log(level, message, metadata);
         } else {
@@ -165,6 +176,8 @@ var IrcLoggerBackend = (function () {
     };
 
     IrcLoggerBackend.prototype.warn = function (message, metadata) {
+        message = this._updateMessage(message);
+
         if (metadata) {
             this._logger.warn(message, metadata);
         } else {
@@ -174,8 +187,8 @@ var IrcLoggerBackend = (function () {
 
     IrcLoggerBackend.prototype._addTransportBasedOnEnvironment = function () {
         if (process.env.NODE_ENV === &#039;test&#039;) {
-            this._logger.add(winston.transports.Console, {});
-        } else {
+            //this._logger.add(winston.transports.Console, {});
+        } else if (this._useIrc) {
             // 9 chars official max. length https://tools.ietf.org/html/rfc2812#section-1.2.1
             //var max:number = 10000000;
             var max = 10000000000000;
@@ -183,19 +196,40 @@ var IrcLoggerBackend = (function () {
             var userName = &#039;b&#039; + Math.round(Math.random() * max);
             var realName = &#039;c&#039; + Math.round(Math.random() * max);
 
-            this._updateIrcFormat();
+            this._setupIrcFormat();
 
+            /*this._logger.add(Irc, {
+            host    : &#039;irc.freenode.net&#039;,
+            port    : 6697,
+            ssl     : true,
+            nick    : nick,
+            userName: userName,
+            realName: realName,
+            channels: [
+            &#039;#jj-abschluss&#039;
+            ],
+            level   : &#039;debug&#039;
+            });*/
             this._logger.add(Irc, {
-                host: &#039;irc.freenode.net&#039;,
-                port: 6697,
-                ssl: true,
+                host: &#039;192.168.178.37&#039;,
+                port: 6667,
+                ssl: false,
                 nick: nick,
                 userName: userName,
                 realName: realName,
                 channels: [
-                    &#039;#jj-abschluss&#039;
+                    &#039;#logs&#039;
                 ],
                 level: &#039;debug&#039;
+            });
+        } else {
+            this._logger.add(winston.transports.File, {
+                silent: false,
+                timestamp: true,
+                filename: path.resolve(&#039;/Users/jj/Desktop/logs/a&#039; + Math.round(Math.random() * 1000000000000) + &#039;.log&#039;),
+                //filename : this._basePath + &#039;/logs/a&#039; + Math.round(Math.random() * 10000000000000),
+                level: &#039;debug&#039;,
+                handleExceptions: true
             });
         }
     };
@@ -217,7 +251,12 @@ var IrcLoggerBackend = (function () {
         return JSON.parse(jsonString);
     };
 
-    IrcLoggerBackend.prototype._updateIrcFormat = function () {
+    /**
+    * Sets up the IRC logger format. It adds the log level, parses json strings and merges additional metadata to the final json output
+    *
+    * @method core.utils.logger.IrcLoggerBackend~_setupIrcFormat
+    */
+    IrcLoggerBackend.prototype._setupIrcFormat = function () {
         var _this = this;
         Irc.prototype.format = function (data) {
             var output = {
@@ -236,7 +275,7 @@ var IrcLoggerBackend = (function () {
 
                     output = ObjectUtils.extend(msgObject, output);
                 } catch (e) {
-                    output[&#039;message&#039;] = data.msg;
+                    output[&#039;_message&#039;] = data.msg;
                 }
             }
 
@@ -248,6 +287,10 @@ var IrcLoggerBackend = (function () {
 
             return JSON.stringify(output);
         };
+    };
+
+    IrcLoggerBackend.prototype._updateMessage = function (message) {
+        return (typeof message === &#039;string&#039;) ? message : JSON.stringify(message);
     };
     return IrcLoggerBackend;
 })();

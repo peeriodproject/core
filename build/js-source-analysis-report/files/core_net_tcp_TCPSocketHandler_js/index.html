@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.30</p>
+      <p class="stat">72.41</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">301</p>
+      <p class="stat">342</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">51.91</p>
+      <p class="stat">55.48</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.07</p>
+      <p class="stat">2.36</p>
     </div>
   </div>
 </div>
@@ -98,6 +98,10 @@
 };
 var events = require(&#039;events&#039;);
 var net = require(&#039;net&#039;);
+
+var OutgoingTCPSocketObtainer = require(&#039;./OutgoingTCPSocketObtainer&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * TCPSocketHandler implementation.
@@ -136,6 +140,7 @@ var TCPSocketHandler = (function (_super) {
         * @member {number} TCPSocketHandler~_idleConnectionKillTimeout
         */
         this._idleConnectionKillTimeout = 0;
+        this._maxReachableTries = 0;
         /**
         * The external IP address of the computer.
         *
@@ -167,6 +172,13 @@ var TCPSocketHandler = (function (_super) {
         */
         this._retriedPorts = [];
         /**
+        * If this is set (for testing purposes only), this number of milliseconds) is
+        * used to simulate a Round trip time. All writes to the socket are delayed by the specified ms.
+        *
+        * @member {number} core.net.tcp.TCPSocketHandler~_simulatorRTT
+        */
+        this._simulatorRTT = 0;
+        /**
         * TCPSocketFactory
         *
         * @member TCPSocketHandler~_socketFactory
@@ -184,6 +196,8 @@ var TCPSocketHandler = (function (_super) {
         this._allowHalfOpenSockets = !!opts.allowHalfOpenSockets;
         this._connectionRetry = opts.connectionRetry || 3;
         this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2000;
+        this._simulatorRTT = opts.simulatorRTT || 0;
+        this._maxReachableTries = opts.maxReachableTries || 3;
     }
     TCPSocketHandler.prototype.autoBootstrap = function (callback) {
         var _this = this;
@@ -191,7 +205,7 @@ var TCPSocketHandler = (function (_super) {
         var callbackTimeout = 0;
         var checkAndCallback = function (port, server) {
             if (callbackTimeout) {
-                clearTimeout(callbackTimeout);
+                global.clearTimeout(callbackTimeout);
                 callbackTimeout = 0;
             }
 
@@ -202,7 +216,7 @@ var TCPSocketHandler = (function (_super) {
             }
         };
         var setCallbackTimeout = function () {
-            callbackTimeout = setTimeout(function () {
+            callbackTimeout = global.setTimeout(function () {
                 theCallback();
             }, 5000);
         };
@@ -234,34 +248,23 @@ var TCPSocketHandler = (function (_super) {
             return;
         }
 
-        var sock = net.createConnection(port, ip);
-        var connectionError = function () {
-            sock.removeAllListeners();
-            sock.destroy();
-
-            if (callback) {
-                callback(null);
+        var theCallback = function (socket) {
+            if (!socket) {
+                if (callback) {
+                    callback(null);
+                } else {
+                    _this.emit(&#039;connection error&#039;, port, ip);
+                }
             } else {
-                _this.emit(&#039;connection error&#039;, port, ip);
+                if (callback) {
+                    callback(socket);
+                } else {
+                    _this.emit(&#039;connected&#039;, socket, &#039;outgoing&#039;);
+                }
             }
         };
-        var connectionTimeout = setTimeout(function () {
-            connectionError();
-        }, this._outboundConnectionTimeout);
 
-        sock.on(&#039;error&#039;, connectionError);
-
-        sock.on(&#039;connect&#039;, function () {
-            clearTimeout(connectionTimeout);
-            sock.removeAllListeners(&#039;error&#039;);
-            var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
-
-            if (!callback) {
-                _this.emit(&#039;connected&#039;, socket, &#039;outgoing&#039;);
-            } else {
-                callback(socket);
-            }
-        });
+        new OutgoingTCPSocketObtainer(port, ip, theCallback, this._socketFactory, this.getDefaultSocketOptions(), this._outboundConnectionTimeout);
     };
 
     TCPSocketHandler.prototype.createTCPServer = function () {
@@ -285,10 +288,12 @@ var TCPSocketHandler = (function (_super) {
                 if (_this._connectionRetry &gt;= 0 &amp;&amp; _this._retriedPorts.indexOf(port) &lt; 0) {
                     _this._retriedPorts.push(port);
 
-                    setTimeout(function () {
+                    global.setTimeout(function () {
                         server.listen(port);
                     }, _this._connectionRetry * 1000);
                 }
+            } else {
+                console.error(&#039;TCPServer onError&#039;, { code: error.code, err: error });
             }
         });
 
@@ -296,7 +301,7 @@ var TCPSocketHandler = (function (_super) {
         server.on(&#039;listening&#039;, function () {
             var port = server.address().port;
 
-            _this.checkIfServerIsReachableFromOutside(server, function (success) {
+            _this.checkIfServerIsReachableFromOutsideByMaxReachableTries(server, function (success) {
                 if (success) {
                     _this._openTCPServers[port] = server;
 
@@ -313,6 +318,7 @@ var TCPSocketHandler = (function (_super) {
 
             // remove it from our open server list
             server.on(&#039;close&#039;, function () {
+                logger.info(&#039;closed server&#039;);
                 delete _this._openTCPServers[port];
                 _this.emit(&#039;closedServer&#039;, port);
             });
@@ -328,7 +334,7 @@ var TCPSocketHandler = (function (_super) {
     * the constructor. Calls a callback with a flag indicating if it was successful (true) or not (false).
     * It does not, however, automatically close the server if it is not reachable.
     *
-    * @method TCPSocketHandler#checkIfServerIsReachableFromOutside
+    * @method core.net.tcp.TCPSocketHandler#checkIfServerIsReachableFromOutside
     *
     * @param {net.Server} server Server to check
     * @param {Function} callback Callback which gets called with a success flag. `True` if reachable, `false`if unreachable
@@ -336,8 +342,13 @@ var TCPSocketHandler = (function (_super) {
     TCPSocketHandler.prototype.checkIfServerIsReachableFromOutside = function (server, callback) {
         var connectionTimeout = null;
         var serverOnConnect = function (sock) {
-            sock.on(&#039;data&#039;, function (data) {
-                sock.write(data);
+            sock.once(&#039;data&#039;, function (data) {
+                if (sock.writable) {
+                    sock.write(data);
+                }
+            });
+            sock.on(&#039;error&#039;, function () {
+                sock.destroy();
             });
         };
         var callbackWith = function (success, socket) {
@@ -350,7 +361,7 @@ var TCPSocketHandler = (function (_super) {
 
         server.on(&#039;connection&#039;, serverOnConnect);
 
-        connectionTimeout = setTimeout(function () {
+        connectionTimeout = global.setTimeout(function () {
             callbackWith(false);
         }, 2000);
 
@@ -358,7 +369,7 @@ var TCPSocketHandler = (function (_super) {
             if (socket) {
                 socket.writeBuffer(new Buffer([20]));
                 socket.on(&#039;data&#039;, function (data) {
-                    clearTimeout(connectionTimeout);
+                    global.clearTimeout(connectionTimeout);
                     if (data[0] === 20) {
                         callbackWith(true, socket);
                     }
@@ -367,9 +378,39 @@ var TCPSocketHandler = (function (_super) {
         });
     };
 
+    /**
+    * Checks twice if a server is reachable from outside.
+    *
+    * @method core.net.tcp.TCPSocketHandler#checkIfServerIsReachableFromOutsideTwice
+    *
+    * @param {net.Server} server Server to check
+    * @param {Function} callback Callback which gets called with a success flag. `True` if reachable, `false`if unreachable
+    */
+    TCPSocketHandler.prototype.checkIfServerIsReachableFromOutsideByMaxReachableTries = function (server, callback) {
+        var _this = this;
+        var numOfTries = 0;
+
+        var check = function () {
+            if (++numOfTries &lt;= _this._maxReachableTries) {
+                _this.checkIfServerIsReachableFromOutside(server, function (success) {
+                    if (success) {
+                        callback(success);
+                    } else {
+                        check();
+                    }
+                });
+            } else {
+                callback(false);
+            }
+        };
+
+        check();
+    };
+
     TCPSocketHandler.prototype.getDefaultSocketOptions = function () {
         return {
             idleConnectionKillTimeout: this._idleConnectionKillTimeout,
+            simulatorRTT: this._simulatorRTT,
             doKeepAlive: true
         };
     };
