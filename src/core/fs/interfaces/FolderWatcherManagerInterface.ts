@@ -40,6 +40,10 @@ interface FolderWatcherManagerInterface extends ClosableAsyncInterface {
 	 *  - change
 	 *  - unlink
 	 *
+	 *  Possible watcher events are:
+	 *  - watcher.add
+	 *  - watcher.remove
+	 *
 	 * @method core.fs.FolderWatcherManagerInterface#on
 	 *
 	 * @param {string} eventName

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.67</p>
+      <p class="stat">67.27</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">285</p>
+      <p class="stat">302</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">48.99</p>
+      <p class="stat">47.01</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.56</p>
+      <p class="stat">2.18</p>
     </div>
   </div>
 </div>
@@ -97,6 +97,8 @@
     d.prototype = new __();
 };
 var events = require(&#039;events&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * PingPongNodeUpdateHandlerInterface implementation.
@@ -160,6 +162,9 @@ var PingPongNodeUpdateHandler = (function (_super) {
 
         this._myNode = myNode;
         this._reactionTime = config.get(&#039;protocol.waitForNodeReactionInSeconds&#039;) * 1000;
+
+        console.log(this._reactionTime);
+
         this._maxWaitingListSize = config.get(&#039;protocol.pingpong.maxWaitingListSize&#039;);
         this._protocolConnectionManager = protocolConnectionManager;
         this._proxyManager = proxyManager;
@@ -183,6 +188,8 @@ var PingPongNodeUpdateHandler = (function (_super) {
     */
     PingPongNodeUpdateHandler.prototype._addToWaitingList = function (node, possibleNodeToCheck) {
         var waitingListNumber = this._getWaitingListNumberByNode(node);
+
+        logger.info(&#039;Bucket is full, adding to waiting list&#039;, { pingpong: 1, node: node.getId().toHexString(), longestNotSeen: possibleNodeToCheck.getId().toHexString(), bucketIndex: waitingListNumber });
 
         if (waitingListNumber &gt; -1) {
             var existingWaitingList = this._waitingLists[waitingListNumber];
@@ -218,15 +225,17 @@ var PingPongNodeUpdateHandler = (function (_super) {
     */
     PingPongNodeUpdateHandler.prototype._createSlotTimeout = function (waitingListNumber) {
         var _this = this;
-        return setTimeout(function () {
-            var slot = _this._waitingLists[waitingListNumber].splice(0, 1)[0];
+        return global.setTimeout(function (waitingListNum) {
+            var slot = _this._waitingLists[waitingListNum].splice(0, 1)[0];
+
+            logger.info(&#039;Node has not answered, is replaced&#039;, { pingpong: 1, replace: slot.nodeToCheck.getId().toHexString(), with: slot.newNode.getId().toHexString(), bucketIndex: waitingListNum });
 
             _this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
 
             _this.emit(&#039;pingTimeout&#039;, slot.nodeToCheck);
 
-            _this._handleNextInWaitingList(waitingListNumber);
-        }, this._reactionTime);
+            _this._handleNextInWaitingList(waitingListNum);
+        }, this._reactionTime, waitingListNumber);
     };
 
     /**
@@ -263,6 +272,8 @@ var PingPongNodeUpdateHandler = (function (_super) {
             } else {
                 this._routingTable.updateContactNode(slot.newNode, function (err, longestNotSeenContact) {
                     if (err &amp;&amp; longestNotSeenContact) {
+                        logger.info(&#039;Bucket check&#039;, { newNodeDiffer: _this._getWaitingListNumberByNode(slot.newNode), oldNodeDiffer: _this._getWaitingListNumberByNode(longestNotSeenContact) });
+
                         slot.nodeToCheck = longestNotSeenContact;
                         _this._pingNodeByWaitingSlot(slot, waitingListNumber);
                     } else {
@@ -290,8 +301,9 @@ var PingPongNodeUpdateHandler = (function (_super) {
             var first = list[0];
 
             if (node.getId().equals(first.nodeToCheck.getId())) {
+                global.clearTimeout(first.timeout);
+                logger.info(&#039;Received pong, discarding node info&#039;, { pingpong: 1, pongFrom: node.getId().toHexString(), pongLastSeen: node.getLastSeen(), discard: first.newNode.getId().toHexString(), bucketIndex: waitingListNumber });
                 list.splice(0, 1);
-                clearTimeout(first.timeout);
 
                 this.emit(&#039;gotPonged&#039;, node);
 
@@ -310,9 +322,12 @@ var PingPongNodeUpdateHandler = (function (_super) {
     */
     PingPongNodeUpdateHandler.prototype._newNodeInformation = function (node) {
         var _this = this;
+        logger.info(&#039;Received new node information, checking routing table.&#039;, { pingpong: 1, from: node.getId().toHexString() });
         this._routingTable.updateContactNode(node, function (err, longestNotSeenContact) {
             if (err &amp;&amp; longestNotSeenContact) {
                 _this._addToWaitingList(node, longestNotSeenContact);
+            } else {
+                logger.info(&#039;Node exists and was udpated.&#039;, { pingpong: 1, updated: node.getId().toHexString() });
             }
         });
     };
@@ -328,9 +343,11 @@ var PingPongNodeUpdateHandler = (function (_super) {
     */
     PingPongNodeUpdateHandler.prototype._pingNodeByWaitingSlot = function (slot, waitingListNumber) {
         var _this = this;
+        logger.info(&#039;Pinging node&#039;, { pingpong: 1, bucketIndex: waitingListNumber, pinged: slot.nodeToCheck.getId().toHexString(), potentialReplace: slot.newNode.getId().toHexString() });
         this._protocolConnectionManager.writeMessageTo(slot.nodeToCheck, &#039;PING&#039;, new Buffer(0), function (err) {
             if (err) {
                 _this._waitingLists[waitingListNumber].splice(0, 1);
+
                 _this._routingTable.replaceContactNode(slot.nodeToCheck, slot.newNode);
             } else {
                 slot.timeout = _this._createSlotTimeout(waitingListNumber);

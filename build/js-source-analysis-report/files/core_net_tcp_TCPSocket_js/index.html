@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.55</p>
+      <p class="stat">70.19</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">181</p>
+      <p class="stat">302</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">36.63</p>
+      <p class="stat">47.00</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.28</p>
+      <p class="stat">2.35</p>
     </div>
   </div>
 </div>
@@ -99,6 +99,9 @@
 var events = require(&#039;events&#039;);
 var net = require(&#039;net&#039;);
 
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
+var stackTrace = require(&#039;stack-trace&#039;);
+
 /**
 * TCP Socket implementation.
 *
@@ -116,33 +119,42 @@ var TCPSocket = (function (_super) {
         /**
         * Flag which indicates if an idle socket will be closed on a `timeout` event.
         *
-        * @member {boolean} TCPSocket~_closeOnTimeout
+        * @member {boolean} core.net.tcp.TCPSocket~_closeOnTimeout
         */
         this._closeOnTimeout = false;
         /**
+        * The options passed in the constructor (for reference)
+        *
+        * @member {core.net.TCPSocketOptions} core.net.tcp.TCPSocket~_constructorOpts
+        */
+        this._constructorOpts = null;
+        /**
         * List of event names of net.Socket which will be simply propagated on emission
         *
-        * @member {string[]} TCPSocket~_eventsToPropagate
+        * @member {string[]} core.net.tcp.TCPSocket~_eventsToPropagate
         */
-        this._eventsToPropagate = [&#039;data&#039;, &#039;close&#039;, &#039;error&#039;];
+        this._eventsToPropagate = [&#039;data&#039;, &#039;close&#039;, &#039;end&#039;, &#039;error&#039;];
         /**
         * Identification string.
         *
-        * @member {string} TCPSocket~_identifier
+        * @member {string} core.net.tcp.TCPSocket~_identifier
         */
         this._identifier = &#039;&#039;;
         /**
+        * If this is set (for testing purposes only), this number of milliseconds) is
+        * used to simulate a Round trip time. All writes to the socket are delayed by the specified ms.
+        *
+        * @member {number} core.net.tcp.TCPSocket~_simulatorRTT
+        */
+        this._simulatorRTT = 0;
+        /**
         * node.js socket instance
         *
-        * @member {net.Socket} TCPSocket~_socket
+        * @member {net.Socket} core.net.tcp.TCPSocket~_socket
         */
         this._socket = null;
-        /**
-        * The options passed in the constructor (for reference)
-        *
-        * @member {core.net.TCPSocketOptions} TCPSocket~_constructorOpts
-        */
-        this._constructorOpts = null;
+        this._preventWrite = false;
+        this._uuid = &#039;&#039;;
 
         if (!(socket &amp;&amp; socket instanceof net.Socket)) {
             throw new Error(&#039;TCPSocket.constructor: Invalid or no socket specified&#039;);
@@ -160,6 +172,8 @@ var TCPSocket = (function (_super) {
             this.getSocket().setKeepAlive(true, opts.keepAliveDelay || 0);
         }
 
+        this._simulatorRTT = opts.simulatorRTT || 0;
+
         // set the timeout
         if (opts.idleConnectionKillTimeout &gt; 0) {
             this._closeOnTimeout = true;
@@ -167,26 +181,50 @@ var TCPSocket = (function (_super) {
         }
 
         this.setupListeners();
+
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+        }
+
+        this._uuid = s4() + s4() + &#039;-&#039; + s4() + &#039;-&#039; + s4() + &#039;-&#039; + s4() + &#039;-&#039; + s4() + s4() + s4();
+
+        logger.info(&#039;added socket&#039;);
     }
     TCPSocket.prototype.end = function (data, encoding) {
-        this.getSocket().end(data, encoding);
+        if (this.getSocket() &amp;&amp; !this._preventWrite) {
+            this._preventWrite = true;
+            logger.info(&#039;socket ending...&#039;, { ident: this.getIdentifier() });
+            this.getSocket().end(data, encoding);
+        }
     };
 
     TCPSocket.prototype.forceDestroy = function () {
+        /*if (this._socket) {
+        logger.info(&#039;destroying socket&#039;);
+        
         this._closeOnTimeout = false;
-        this.getSocket().removeAllListeners();
-        try  {
-            this.getSocket().end();
-            this.getSocket().destroy();
-        } catch (e) {
+        
+        try {
+        //this.getSocket().removeAllListeners();
+        this.getSocket().end();
+        this.getSocket().destroy();
         }
+        catch (e) {}
         this._socket = null;
         this.emit(&#039;destroy&#039;);
         this.removeAllListeners();
+        }*/
+        logger.error(&#039;Force destroy is deprecated.&#039;);
     };
 
     TCPSocket.prototype.getIdentifier = function () {
         return this._identifier;
+    };
+
+    TCPSocket.prototype.getIP = function () {
+        var socket = this.getSocket();
+
+        return socket.remoteAddress;
     };
 
     TCPSocket.prototype.getIPPortString = function () {
@@ -201,6 +239,7 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.onTimeout = function () {
         if (this._closeOnTimeout) {
+            logger.info(&#039;timing out socket&#039;, { ident: this.getIdentifier(), sockid: this._uuid });
             this.end();
         }
     };
@@ -233,20 +272,102 @@ var TCPSocket = (function (_super) {
             return _this.onTimeout();
         });
 
+        socket.on(&#039;error&#039;, function (err) {
+            //var trace = stackTrace.parse(err);
+            logger.error(&#039;THIS IS A SOCKET ERROR!&#039;, {
+                emsg: err.message,
+                stack: err.stack,
+                /*trace: {
+                typeName: trace.getTypeName(),
+                fnName  : trace.getFunctionName(),
+                fileName: trace.getFileName(),
+                line    : trace.getLineNumber()
+                },*/
+                ident: _this.getIdentifier(),
+                sockid: _this._uuid
+            });
+
+            if (!_this._preventWrite) {
+                logger.info(&#039;preventing write&#039;, { ident: _this.getIdentifier(), sockid: _this._uuid });
+            }
+            _this._preventWrite = true;
+
+            try  {
+                socket.destroy();
+            } catch (e) {
+            }
+        });
+
+        socket.on(&#039;close&#039;, function (had_error) {
+            if (!_this._preventWrite) {
+                logger.info(&#039;preventing write&#039;, { ident: _this.getIdentifier(), sockid: _this._uuid });
+            }
+            _this._preventWrite = true;
+            _this._socket = null;
+
+            logger.info(&#039;socket closed&#039;, { ident: _this.getIdentifier(), had_error: had_error, sockid: _this._uuid });
+
+            _this.emit(&#039;destroy&#039;);
+
+            process.nextTick(function () {
+                _this.removeAllListeners();
+            });
+        });
+
+        socket.on(&#039;end&#039;, function () {
+            if (!_this._preventWrite) {
+                logger.info(&#039;preventing write&#039;, { ident: _this.getIdentifier(), sockid: _this._uuid });
+            }
+            _this._preventWrite = true;
+        });
+
         this._propagateEvents(this._eventsToPropagate);
     };
 
-    TCPSocket.prototype.writeBuffer = function (buffer, callback) {
-        var success = this.getSocket().write(buffer, callback);
+    TCPSocket.prototype.writeBuffer = function (buffer, callback, forceAvoidSimulation) {
+        var _this = this;
+        if (this._simulatorRTT &amp;&amp; !forceAvoidSimulation) {
+            global.setTimeout(function () {
+                _this.writeBuffer(buffer, callback, true);
+            }, this._simulatorRTT);
+            return;
+        }
 
-        buffer = null;
+        var success = false;
 
-        return success;
+        if (!this._preventWrite &amp;&amp; this.getSocket().writable) {
+            try  {
+                success = this.getSocket().write(buffer, callback);
+            } catch (e) {
+            }
+
+            buffer = null;
+        }
+
+        return true;
     };
 
-    TCPSocket.prototype.writeString = function (message, encoding, callback) {
+    TCPSocket.prototype.writeString = function (message, encoding, callback, forceAvoidSimulation) {
+        var _this = this;
         if (typeof encoding === &quot;undefined&quot;) { encoding = &#039;utf8&#039;; }
-        return this.getSocket().write(message, encoding, callback);
+        if (this._preventWrite)
+            return;
+
+        if (this._simulatorRTT &amp;&amp; !forceAvoidSimulation) {
+            global.setTimeout(function () {
+                _this.writeString(message, encoding, callback, true);
+            }, this._simulatorRTT);
+            return;
+        }
+
+        var success = false;
+
+        try  {
+            success = this.getSocket().write(message, encoding, callback);
+        } catch (e) {
+        }
+
+        return success;
     };
 
     /**
@@ -262,7 +383,7 @@ var TCPSocket = (function (_super) {
         events.forEach(function (event) {
             (function (evt) {
                 _this.getSocket().on(evt, function () {
-                    return _this.emit.apply(_this, [evt].concat(Array.prototype.splice.call(arguments, 0)));
+                    _this.emit.apply(_this, [evt].concat(Array.prototype.splice.call(arguments, 0)));
                 });
             })(event);
         });

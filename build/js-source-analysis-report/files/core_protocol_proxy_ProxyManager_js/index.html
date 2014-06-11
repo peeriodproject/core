@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">69.56</p>
+      <p class="stat">68.68</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">546</p>
+      <p class="stat">553</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">72.65</p>
+      <p class="stat">75.32</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.45</p>
+      <p class="stat">3.79</p>
     </div>
   </div>
 </div>
@@ -99,6 +99,8 @@
 var events = require(&#039;events&#039;);
 
 var Id = require(&#039;../../topology/Id&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * ProxyManagerInterface implementation.
@@ -309,7 +311,7 @@ var ProxyManager = (function (_super) {
     };
 
     /**
-    * Adds a node the list one is proxying for. Tells the connection manager to keep the sockets open from this node.
+    * Adds a node to the list one is proxying for. Tells the connection manager to keep the sockets open from this node.
     *
     * @method core.protocol.proxy.ProxyManager~_addToProxyingFor
     *
@@ -330,10 +332,10 @@ var ProxyManager = (function (_super) {
         var _this = this;
         this._canProxyCycle = false;
         if (this._proxyWaitTimeout) {
-            clearTimeout(this._proxyWaitTimeout);
+            global.clearTimeout(this._proxyWaitTimeout);
             this._proxyWaitTimeout = 0;
         }
-        this._proxyWaitTimeout = setTimeout(function () {
+        this._proxyWaitTimeout = global.setTimeout(function () {
             _this._canProxyCycle = true;
             _this._unsuccessfulProxyTries = 0;
             _this._ignoreProxies = [];
@@ -389,9 +391,10 @@ var ProxyManager = (function (_super) {
             if (requestedProxy) {
                 this._removeFromRequestedProxies(identifier);
 
-                if (msgType === &#039;PROXY_ACCEPT&#039;) {
+                if (msgType === &#039;PROXY_ACCEPT&#039; &amp;&amp; Object.keys(this._confirmedProxies).length &lt; this._maxNumberOfProxies) {
                     this._addToConfirmedProxies(identifier, sender);
                     this.emit(&#039;newProxy&#039;, sender);
+                    logger.info(&#039;Got new proxy&#039;, { id: sender.getId().toHexString(), lengthNow: Object.keys(this._confirmedProxies).length });
                 } else {
                     this.emit(&#039;proxyReject&#039;, sender);
                 }
@@ -405,6 +408,7 @@ var ProxyManager = (function (_super) {
                     if (!err) {
                         _this._addToProxyingFor(identifier, sender);
                         _this.emit(&#039;proxyingFor&#039;, sender);
+                        logger.info(&#039;Proxying now for&#039;, { id: sender.getId().toHexString() });
                     }
                 });
             } else {
@@ -512,7 +516,7 @@ var ProxyManager = (function (_super) {
     ProxyManager.prototype._removeFromRequestedProxies = function (identifier) {
         var requestedProxy = this._requestedProxies[identifier];
 
-        clearTimeout(requestedProxy);
+        global.clearTimeout(requestedProxy);
         delete this._requestedProxies[identifier];
         this._ignoreProxies.push[identifier];
     };
@@ -530,7 +534,7 @@ var ProxyManager = (function (_super) {
         var identifier = this._nodeToIdentifier(node);
         this._protocolConnectionManager.writeMessageTo(node, &#039;PROXY_REQUEST&#039;, new Buffer(0), function (err) {
             if (!err) {
-                _this._requestedProxies[identifier] = setTimeout(function () {
+                _this._requestedProxies[identifier] = global.setTimeout(function () {
                     _this._requestProxyTimeout(identifier);
                 }, _this._reactionTime);
             }
@@ -552,6 +556,7 @@ var ProxyManager = (function (_super) {
             this._ignoreProxies.push(identifier);
 
             // this event is for testing purposes only
+            logger.info(&#039;Proxy request timed out&#039;, { identifier: identifier });
             this.emit(&#039;requestProxyTimeout&#039;, identifier);
             this._proxyCycleOnNextTick();
         }
@@ -603,11 +608,13 @@ var ProxyManager = (function (_super) {
                     delete _this._confirmedProxies[identifier];
                     _this._updateMyNodeAddresses();
                     _this.emit(&#039;lostProxy&#039;, confirmedProxy);
+                    logger.info(&#039;Lost proxy&#039;, { id: confirmedProxy.getId().toHexString() });
                 }
                 if (proxyingFor) {
                     _this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(proxyingFor);
                     delete _this._proxyingFor[identifier];
                     _this.emit(&#039;lostProxyingFor&#039;, proxyingFor);
+                    logger.info(&#039;No longer proxying for&#039;, { id: proxyingFor.getId().toHexString() });
                 }
 
                 if (doStartCycle) {

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">72.07</p>
+      <p class="stat">71.41</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">287</p>
+      <p class="stat">296</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">44.96</p>
+      <p class="stat">46.95</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.58</p>
+      <p class="stat">1.73</p>
     </div>
   </div>
 </div>
@@ -99,6 +99,8 @@
 var events = require(&#039;events&#039;);
 
 var Id = require(&#039;../../topology/Id&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * NetworkMaintainerInterface implementation.
@@ -218,6 +220,8 @@ var NetworkMaintainer = (function (_super) {
 
             this._prepopulateBucketRefreshes();
 
+            logger.info(&#039;Joining the network&#039;);
+
             this._proxyManager.on(&#039;contactNodeInformation&#039;, function (node) {
                 _this._handleBucketAccess(node);
             });
@@ -235,7 +239,7 @@ var NetworkMaintainer = (function (_super) {
     */
     NetworkMaintainer.prototype._clearBucketRefreshTimeout = function (bucketNumber) {
         if (this._bucketRefreshes[bucketNumber]) {
-            clearTimeout(this._bucketRefreshes[bucketNumber]);
+            global.clearTimeout(this._bucketRefreshes[bucketNumber]);
             this._bucketRefreshes[bucketNumber] = 0;
         }
     };
@@ -285,14 +289,19 @@ var NetworkMaintainer = (function (_super) {
     NetworkMaintainer.prototype._findEntryNodeAndJoin = function (avoidNode) {
         var _this = this;
         this._nodeSeekerManager.forceFindActiveNode(avoidNode, function (node) {
+            logger.info(&#039;Found an entry node, starting search for own id...&#039;, { with: node.getId().toHexString() });
+
             _this._findClosestNodesManager.startCycleFor(_this._myIdToSearchFor, [node]);
 
             _this._findClosestNodesManager.once(&#039;foundClosestNodes&#039;, function (searchForId, resultingList) {
+                //logger.info(&#039;Find closest nodes cycle finished&#039;, {for: searchForId.toHexString(), resultLen: resultingList.length});
                 if (!resultingList.length) {
+                    logger.info(&#039;Resulting list is empty, trying to find another node.&#039;);
                     setImmediate(function () {
                         _this._findEntryNodeAndJoin(node);
                     });
                 } else {
+                    logger.info(&#039;The initial contact query is done.&#039;, { resultLen: resultingList.length });
                     _this.emit(&#039;initialContactQueryCompleted&#039;);
                     _this._finalizeEntryWithBucketRefreshes();
                 }
@@ -367,7 +376,7 @@ var NetworkMaintainer = (function (_super) {
     NetworkMaintainer.prototype._setBucketRefreshTimeout = function (bucketNumber) {
         var _this = this;
         if (!this._bucketRefreshes[bucketNumber]) {
-            this._bucketRefreshes[bucketNumber] = setTimeout(function () {
+            this._bucketRefreshes[bucketNumber] = global.setTimeout(function () {
                 _this._bucketRefreshes[bucketNumber] = 0;
                 _this._refreshBucket(bucketNumber);
             }, this._bucketRefreshRateInMs);

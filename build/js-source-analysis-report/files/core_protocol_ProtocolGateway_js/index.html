@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">63.14</p>
+      <p class="stat">65.05</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">94</p>
+      <p class="stat">106</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">16.29</p>
+      <p class="stat">20.36</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.82</p>
+      <p class="stat">1.04</p>
     </div>
   </div>
 </div>
@@ -106,6 +106,8 @@ var NodeSeekerFactory = require(&#039;./networkMaintenance/nodeDiscovery/nodeSee
 var NodePublisherFactory = require(&#039;./networkMaintenance/nodeDiscovery/nodePublisher/NodePublisherFactory&#039;);
 
 var NetworkMaintainer = require(&#039;./networkMaintenance/NetworkMaintainer&#039;);
+
+var logger = require(&#039;../utils/logger/LoggerFactory&#039;).create();
 
 var ProtocolGateway = (function () {
     function ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable) {
@@ -150,10 +152,10 @@ var ProtocolGateway = (function () {
         // build up the NodeSeekerManager
         var nodeSeekerFactory = new NodeSeekerFactory(this._appConfig, this._routingTable);
 
-        this._nodeSeekerManager = new NodeSeekerManager(nodeSeekerFactory, this._protocolConnectionManager, this._proxyManager);
+        this._nodeSeekerManager = new NodeSeekerManager(this._protocolConfig, this._myNode, nodeSeekerFactory, this._protocolConnectionManager, this._proxyManager);
 
         // build up the NodePublishers
-        var nodePublisherFactory = new NodePublisherFactory(appConfig, this._myNode);
+        var nodePublisherFactory = new NodePublisherFactory(appConfig, protocolConfig, this._myNode);
 
         nodePublisherFactory.createPublisherList(function (list) {
             _this._nodePublishers = list;
@@ -163,13 +165,15 @@ var ProtocolGateway = (function () {
         this._networkMaintainer = new NetworkMaintainer(this._topologyConfig, this._protocolConfig, this._myNode, this._nodeSeekerManager, this._findClosestNodesManager, this._proxyManager);
     }
     ProtocolGateway.prototype.start = function () {
-        var _this = this;
         /**
         *
         * If it needs a proxy, kick off proxy manager only when the NetworkMaintainer has finished its entry
         * If it doesnt need a proxy, kick off proxy manager right away
         *
         */
+        var _this = this;
+        logger.info(&#039;New node joining the network&#039;, { id: this._myNode.getId().toHexString() });
+
         if (this._proxyManager.needsAdditionalProxy()) {
             this._networkMaintainer.once(&#039;initialContactQueryCompleted&#039;, function () {
                 _this._proxyManager.kickOff();
@@ -177,6 +181,14 @@ var ProtocolGateway = (function () {
         } else {
             this._proxyManager.kickOff();
         }
+
+        this._networkMaintainer.once(&#039;initialContactQueryCompleted&#039;, function () {
+            logger.info(&#039;Initial contact query completed. Kicking off proxy manager...&#039;, { id: _this._myNode.getId().toHexString() });
+        });
+
+        this._networkMaintainer.once(&#039;joinedNetwork&#039;, function () {
+            logger.info(&#039;Successfully joined the network.&#039;, { id: _this._myNode.getId().toHexString() });
+        });
 
         this._networkMaintainer.joinNetwork();
     };

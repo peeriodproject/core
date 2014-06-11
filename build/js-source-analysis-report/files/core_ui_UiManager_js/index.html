@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">75.49</p>
+      <p class="stat">72.24</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">189</p>
+      <p class="stat">370</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">29.13</p>
+      <p class="stat">33.91</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.51</p>
+      <p class="stat">1.91</p>
     </div>
   </div>
 </div>
@@ -91,30 +91,90 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../ts-definitions/node/node.d.ts&#039; /&gt;
-/// &lt;reference path=&#039;../../../ts-definitions/express/express.d.ts&#039; /&gt;
 var http = require(&#039;http&#039;);
 
+var path = require(&#039;path&#039;);
+
 //var sockjs = require(&#039;sockjs&#039;);
-var Primus = require(&#039;primus&#039;);
-var node_static = require(&#039;node-static&#039;);
+var PrimusIo = require(&#039;primus.io&#039;);
+var nodeStatic = require(&#039;node-static&#039;);
 
 var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
 
 /**
 * @class core.ui.UiManager
 * @implements core.ui.UiManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.ui.UiComponentListInterface} components
+* @param {core.utils.ClosableAsyncOptions} options
 */
 var UiManager = (function () {
     function UiManager(config, components, options) {
         var _this = this;
         this._components = [];
-        this._connections = [];
+        //private _connections:Array&lt;net.Socket&gt; = [];
+        /**
+        * A map of UiComponents per channel
+        *
+        * todo ts-definition
+        *
+        * @member {} core.ui.UiManager~_channelComponentsMap
+        */
+        this._channelComponentsMap = {};
+        /**
+        * todo ts-definitions
+        *
+        * @member {Array} core.ui.UiManager~_channels
+        */
+        this._channelsMap = {};
+        /**
+        * The internally uses config
+        *
+        * @member {core.config.ConfigInterface} core.ui.UiManager~_config
+        */
         this._config = null;
+        /**
+        * The base http server for serving the UI to the client
+        *
+        * @member {http.Server} core.ui.UiManager~_httpServer
+        */
         this._httpServer = null;
+        /**
+        * A list of currently open http sockets
+        *
+        * @member {Array&lt;http.Socket&gt;} core.ui.UiManager~_httpSockets
+        */
         this._httpSockets = [];
+        /**
+        * A flag inidcates weather the UiManager is open and the server is running or not.
+        *
+        * @member {boolean} core.ui.UiManager~_isOpen
+        */
         this._isOpen = false;
+        /**
+        * options
+        *
+        * todo description
+        *
+        * @member {core.utils.ClosableAsyncOptions} core.ui.UiManager~_options
+        */
         this._options = {};
+        /**
+        * The static server will serve static files such as templates, css and scripts to the client
+        *
+        * todo type definition
+        *
+        * @member {} core.ui.UiManager~_staticServer
+        */
         this._staticServer = null;
+        /**
+        * The socket server is responsible for realtime ui updates
+        *
+        * todo type definition
+        *
+        * @member {} core.ui.UiManager~_socketServer
+        */
         this._socketServer = null;
         var defaults = {
             closeOnProcessExit: false,
@@ -134,6 +194,7 @@ var UiManager = (function () {
             });
         }
 
+        //this._createChannelsMap()
         this.open(this._options.onOpenCallback);
     }
     UiManager.prototype.close = function (callback) {
@@ -145,14 +206,28 @@ var UiManager = (function () {
             return process.nextTick(internalCallback.bind(null, null));
         }
 
+        //this._socketServer.write(&#039;closing&#039;);
         // closing websocket connections
-        if (this._connections.length) {
-            for (var i in this._connections) {
-                this._connections[i].end(); // null, { reconnect: true }
+        /*if (this._connections.length) {
+        for (var i in this._connections) {
+        this._connections[i].end(); // null, { reconnect: true }
+        }
+        
+        this._connections = null;
+        this._connections = [];
+        }*/
+        var channelNames = Object.keys(this._channelsMap);
+
+        if (channelNames.length) {
+            for (var i in channelNames) {
+                var channelName = channelNames[i];
+
+                // destroy the channel
+                this._channelsMap[channelName].destroy();
             }
 
-            this._connections = null;
-            this._connections = [];
+            this._channelsMap = null;
+            this._channelsMap = {};
         }
 
         this._httpServer.close(function () {
@@ -166,6 +241,15 @@ var UiManager = (function () {
 
         for (var i in this._httpSockets) {
             this._httpSockets[i].destroy();
+        }
+    };
+
+    UiManager.prototype.getSocketServer = function () {
+        if (process.env.NODE_ENV === &#039;test&#039;) {
+            return this._socketServer;
+        } else {
+            console.error(&#039;Do not use this method outside the test environment!&#039;);
+            return null;
         }
     };
 
@@ -208,49 +292,142 @@ var UiManager = (function () {
         });
     };
 
+    UiManager.prototype._setupSocketChannelComponentMap = function () {
+        if (this._components.length) {
+            for (var i in this._components) {
+                var component = this._components[i];
+                var channelName = component.getChannelName();
+
+                if (this._channelsMap[channelName] || this._channelComponentsMap[channelName]) {
+                    throw new Error(&#039;UiManager._createChannelComnentMap: Another Component already owns the &quot;&#039; + channelName + &#039;&quot; channel.&#039;);
+                } else {
+                    // create channel
+                    this._channelsMap[channelName] = this._socketServer.channel(channelName);
+
+                    // register component to channel
+                    this._channelComponentsMap[channelName] = component;
+                }
+            }
+        }
+    };
+
+    /**
+    * Handles a single http request by using the {@link core.ui.UiManager~_staticServer} to process the request.
+    *
+    * @see core.ui.UiManager~_handleStatic
+    *
+    * @method core.ui.UiManager~_handleHttpRequest
+    *
+    * @param {http.request} request
+    * @param response
+    * @private
+    */
     UiManager.prototype._handleHttpRequest = function (request, response) {
         var _this = this;
         request.addListener(&#039;end&#039;, function () {
-            _this._staticServer.serve(request, response, function (err, result) {
-                _this._handleStatic(err, request, response, result);
-            });
-            response.end();
+            _this._staticServer.serve(request, response);
         });
 
         request.resume();
     };
 
-    UiManager.prototype._handleSocket = function (spark) {
-        spark.on(&#039;data&#039;, function message(data) {
-            //console.log(data);
-            spark.write(data);
-        });
-
-        this._connections.push(spark);
+    UiManager.prototype._handleSocketChannel = function (channelName, spark) {
+        if (this._channelComponentsMap[channelName]) {
+            this._channelComponentsMap[channelName].onConnection(spark);
+        }
+        //this._connections.push(spark);
     };
 
-    UiManager.prototype._handleStatic = function (err, request, response, result) {
-        if (err) {
-            console.error(&quot;Error serving &quot; + request.url + &quot; - &quot; + err.message);
+    // todo spark ts-definitions
+    /*private _handleSocket (spark:any):void {
+    var channels:Array&lt;string&gt; = Object.keys(this._channelComponentsMap);
+    
+    if (channels.length) {
+    for (var i in channels) {
+    var channel:string = channels[i];
+    var channelComponent:UiComponentInterface = this._channelComponentsMap[channel];
+    
+    spark.on(channel, function (message, callback) {
+    channelComponent.onMessage(message, callback);
+    });
+    }
+    /*spark.on(&#039;chat&#039;, function (name, fn) {
+    console.log(name); //-&gt; Bob
+    fn(&#039;woot&#039;);
+    
+    spark.send(&#039;What is your name&#039;, function (name) {
+    console.log(name); //-&gt; My name is Ann
+    });
+    });* /
+    }
+    
+    this._connections.push(spark);
+    }*/
+    /*private _bindComponentsToConnection (spark:any):void {
+    if (this._components.length) {
+    for (var i in this._components) {
+    var component:UiComponentInterface = this._components[i];
+    //var channelName:string = component.getChannelName();
+    
+    //spark.on(channelName)
+    }
+    }
+    }*/
+    /**
+    * Sets up the websocket server and hooks it into the {@link core.ui.UiManager~_httpServer}
+    *
+    * @see core.ui.UiManager~_socketServer
+    *
+    * @method core.ui.UiManager~_setupSocketServer
+    */
+    UiManager.prototype._setupSocketServer = function () {
+        this._socketServer = new PrimusIo(this._httpServer, {
+            port: this._config.get(&#039;ui.UiManager.socketServer.port&#039;),
+            transformer: this._config.get(&#039;ui.UiManager.socketServer.transformer&#039;),
+            parser: this._config.get(&#039;ui.UiManager.socketServer.parser&#039;)
+        });
 
-            // Respond to the client
-            response.writeHead(err.status, err.headers);
-            response.end();
+        var staticPublicPath = this._config.get(&#039;ui.UiManager.staticServer.publicPath&#039;);
+        var clientLibPath = path.resolve(path.join(staticPublicPath, &#039;primus.io.js&#039;));
+
+        // todo check if file exists
+        this._socketServer.save(clientLibPath);
+
+        this._setupSocketChannelComponentMap();
+        this._setupSocketChannels();
+    };
+
+    UiManager.prototype._setupSocketChannels = function () {
+        var _this = this;
+        var channelNames = Object.keys(this._channelsMap);
+
+        if (channelNames.length) {
+            for (var i in channelNames) {
+                var channelName = channelNames[i];
+
+                this._channelsMap[channelName].on(&#039;connection&#039;, function (connection) {
+                    _this._handleSocketChannel(channelName, connection);
+                });
+            }
         }
     };
 
-    UiManager.prototype._setupSocketServer = function () {
-        var _this = this;
-        this._socketServer = new Primus(this._httpServer, {});
-        this._socketServer.on(&#039;connection&#039;, function (connection) {
-            _this._handleSocket(connection);
-        });
-    };
-
+    /**
+    * Sets up the static server.
+    *
+    * @see core.ui.UiManager~_staticServer
+    *
+    * @method core.ui.UiManager~_setupStaticServer
+    */
     UiManager.prototype._setupStaticServer = function () {
-        this._staticServer = new node_static.Server(this._config.get(&#039;ui.UiManager.publicDirectory&#039;));
+        this._staticServer = new nodeStatic.Server(this._config.get(&#039;ui.UiManager.staticServer.publicPath&#039;));
     };
 
+    /**
+    * Sets up the base http server
+    *
+    * @method core.ui.UiManager~_setupHttpServer
+    */
     UiManager.prototype._setupHttpServer = function () {
         var _this = this;
         this._httpServer = http.createServer(function (request, response) {
@@ -266,14 +443,17 @@ var UiManager = (function () {
         });
     };
 
+    /**
+    * Starts the http server (and the ) and calls the callback on listening.
+    *
+    * @method core.ui.UiManager~_startServers
+    */
     UiManager.prototype._startServers = function (callback) {
-        var _this = this;
-        this._socketServer.on(&#039;connection&#039;, function (spark) {
-            _this._handleSocket(spark);
-        });
-
+        /*this._socketServer.on(&#039;connection&#039;, (spark) =&gt; {
+        this._handleSocket(spark);
+        });*/
         //console.log(&#039; [*] Listening on 127.0.0.1:9999&#039; );
-        this._httpServer.listen(this._config.get(&#039;ui.UiManager.serverPort&#039;), &#039;localhost&#039;, function () {
+        this._httpServer.listen(this._config.get(&#039;ui.UiManager.staticServer.port&#039;), &#039;localhost&#039;, 511, function () {
             callback();
         });
     };

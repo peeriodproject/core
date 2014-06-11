@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.83</p>
+      <p class="stat">71.35</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">89</p>
+      <p class="stat">128</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">16.96</p>
+      <p class="stat">18.60</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.45</p>
+      <p class="stat">0.74</p>
     </div>
   </div>
 </div>
@@ -92,6 +92,8 @@
   <div class="row">
     <textarea id="file-source" class="col-md-12">var http = require(&#039;http&#039;);
 
+var logger = require(&#039;../../../../utils/logger/LoggerFactory&#039;).create();
+
 /**
 * NodePublisher which posts a JSON stringified representation of the contact information to a list of HTTP servers.
 *
@@ -102,7 +104,7 @@
 * @param {core.topology.MyNodeInterface} myNode My node.
 */
 var HttpNodePublisher = (function () {
-    function HttpNodePublisher(serverList, myNode) {
+    function HttpNodePublisher(serverList, myNode, republishInSeconds) {
         var _this = this;
         /**
         * My node.
@@ -111,6 +113,12 @@ var HttpNodePublisher = (function () {
         */
         this._myNode = null;
         /**
+        * Number of ms after which my node will be republished.
+        *
+        * @member {number} core.protocol.nodeDiscovery.HttpNodePublisher~_republishInSeconds
+        */
+        this._republishInMs = 0;
+        /**
         * A list of HTTP servers my node can be published to.
         *
         * @member {core.net.HttpServerList} core.protocol.nodeDiscovery.HttpNodePublisher~_serverList
@@ -118,15 +126,20 @@ var HttpNodePublisher = (function () {
         this._serverList = null;
         this._serverList = serverList;
 
+        this._republishInMs = republishInSeconds * 1000;
+
         this._myNode = myNode;
         this._myNode.onAddressChange(function () {
             _this._publishMyNode();
         });
 
         this._publishMyNode();
+
+        this._setPublishTimeout();
     }
     HttpNodePublisher.prototype.publish = function (myNode) {
         var addresses = myNode.getAddresses();
+
         if (addresses.length) {
             var json = {
                 id: myNode.getId().toHexString(),
@@ -170,10 +183,36 @@ var HttpNodePublisher = (function () {
             method: &#039;POST&#039;,
             hostname: server.hostname,
             port: server.port,
-            path: server.path
+            path: server.path,
+            headers: {
+                &#039;Content-type&#039;: &#039;application/json; charset=utf-8&#039;,
+                &#039;Content-length&#039;: Buffer.byteLength(data)
+            }
         });
 
         req.end(data);
+
+        req.on(&#039;error&#039;, function (err) {
+            logger.error(&#039;HTTP Node publisher error caught&#039;, { err: err.message });
+        });
+        req.on(&#039;socket&#039;, function (socket) {
+            socket.on(&#039;error&#039;, function (err) {
+                logger.error(&#039;HTTP Node publisher error caught SOCK&#039;, { err: err.message });
+            });
+        });
+    };
+
+    /**
+    * Sets the timeout after which my node is automatically republished.
+    *
+    * @method core.protocol.nodeDiscovery.HttpNodePublisher~_setPublishTimeout
+    */
+    HttpNodePublisher.prototype._setPublishTimeout = function () {
+        var _this = this;
+        global.setTimeout(function () {
+            _this._publishMyNode();
+            _this._setPublishTimeout();
+        }, this._republishInMs);
     };
     return HttpNodePublisher;
 })();

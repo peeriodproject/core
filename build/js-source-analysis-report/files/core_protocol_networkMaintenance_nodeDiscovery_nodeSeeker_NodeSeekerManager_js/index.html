@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">72.56</p>
+      <p class="stat">69.06</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">123</p>
+      <p class="stat">179</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">26.95</p>
+      <p class="stat">25.56</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.53</p>
+      <p class="stat">0.92</p>
     </div>
   </div>
 </div>
@@ -90,7 +90,9 @@
 
 <div class="container">
   <div class="row">
-    <textarea id="file-source" class="col-md-12">/**
+    <textarea id="file-source" class="col-md-12">var logger = require(&#039;../../../../utils/logger/LoggerFactory&#039;).create();
+
+/**
 * NodeSeekerManagerInterface implementation
 *
 * @class core.protocol.nodeDiscovery.NodeSeekerManager
@@ -101,7 +103,7 @@
 * @param {core.protocol.proxy.ProxyManagerInterface} proxyManager A working proxy manager.
 */
 var NodeSeekerManager = (function () {
-    function NodeSeekerManager(nodeSeekerFactory, protocolConnectionManager, proxyManager) {
+    function NodeSeekerManager(protocolConfig, myNode, nodeSeekerFactory, protocolConnectionManager, proxyManager) {
         var _this = this;
         /**
         * Stores the optional node to avoid.
@@ -121,6 +123,24 @@ var NodeSeekerManager = (function () {
         * @member {boolean} core.protocol.nodeDiscovery.NodeSeekerManager~_forceSearchActive
         */
         this._forceSearchActive = false;
+        /**
+        * Timeout which calls `iterativeSeekAndPing` when elapsed
+        *
+        * @member {number} core.protocol.nodeDiscovery.NodeSeekerManager~_iterativeSeekTimeout
+        */
+        this._iterativeSeekTimeout = 0;
+        /**
+        * Number of milliseconds for `_iterativeSeekTimeout`
+        *
+        * @member {number} core.protocol.nodeDiscovery.NodeSeekerManager~_iterativeSeekTimeoutMs
+        */
+        this._iterativeSeekTimeoutMs = 0;
+        /**
+        * My node instance
+        *
+        * @member {core.topology.MyNodeInterface} core.protocol.nodeDiscovery.NodeSeekerManager~_myNode
+        */
+        this._myNode = null;
         /**
         * A NodeSeekerFactory
         *
@@ -145,6 +165,9 @@ var NodeSeekerManager = (function () {
         * @member {core.protocol.oroxy.ProxyManagerInterface} core.protocol.nodeDiscovery.NodeSeekerManager~_proxyManager
         */
         this._proxyManager = null;
+        this._iterativeSeekTimeoutMs = protocolConfig.get(&#039;protocol.nodeDiscovery.iterativeSeekTimeoutInMs&#039;);
+
+        this._myNode = myNode;
         this._protocolConnectionManager = protocolConnectionManager;
         this._nodeSeekerFactory = nodeSeekerFactory;
         this._proxyManager = proxyManager;
@@ -160,6 +183,7 @@ var NodeSeekerManager = (function () {
     }
     NodeSeekerManager.prototype.forceFindActiveNode = function (avoidNode, callback) {
         var _this = this;
+        logger.info(&#039;Force find active node initiated.&#039;);
         this._avoidNode = avoidNode;
 
         if (!this._nodeSeekerList) {
@@ -170,40 +194,61 @@ var NodeSeekerManager = (function () {
         this._forceSearchActive = true;
 
         this._proxyManager.once(&#039;contactNodeInformation&#039;, function (node) {
+            logger.info(&#039;NodeSeeker: on contact node!&#039;);
+
             _this._forceSearchActive = false;
 
+            if (_this._iterativeSeekTimeout) {
+                logger.info(&#039;clearing iterative seek timeout&#039;);
+                global.clearTimeout(_this._iterativeSeekTimeout);
+                _this._iterativeSeekTimeout = 0;
+            }
+
             if (_this._avoidNode &amp;&amp; _this._avoidNode.getId().equals(node.getId())) {
+                logger.info(&#039;Force finding again on nex event loop&#039;);
                 setImmediate(function () {
+                    logger.info(&#039;Force finding again, as the node should be avoided.&#039;);
                     _this.forceFindActiveNode(_this._avoidNode, callback);
                 });
             } else {
+                logger.info(&#039;Found a node, calling back&#039;);
                 _this._avoidNode = null;
                 callback(node);
             }
         });
 
-        this._iterativeSeekAndPing();
+        this._iterativeSeekAndPing(avoidNode);
     };
 
     /**
     * Iterates over the list of NodeSeekers and sends PING to the found nodes, until the search has been deactivated.
     *
     * @method core.protocol.nodeDiscovery.NodeSeekerManager~_iterativeSeekAndPing
+    *
+    * @param {core.topology.ContactNodeInterface} avoidNode An optional node to avoid, which is not PINGed if returned by one of the seekers.
     */
-    NodeSeekerManager.prototype._iterativeSeekAndPing = function () {
+    NodeSeekerManager.prototype._iterativeSeekAndPing = function (avoidNode) {
         var _this = this;
         if (this._forceSearchActive) {
+            logger.info(&#039;Doing iterative seek.&#039;);
+
             setImmediate(function () {
                 for (var i = 0; i &lt; _this._nodeSeekerList.length; i++) {
                     _this._nodeSeekerList[i].seek(function (node) {
-                        if (node) {
+                        logger.info(&#039;a seeker found a node.&#039;);
+                        if (node &amp;&amp; !node.getId().equals(_this._myNode.getId()) &amp;&amp; !(avoidNode &amp;&amp; node.getId().equals(avoidNode.getId()))) {
                             _this._pingNodeIfActive(node);
                         }
                     });
                 }
 
-                _this._iterativeSeekAndPing();
+                _this._iterativeSeekTimeout = global.setTimeout(function () {
+                    logger.info(&#039;setting new iterative seek timeout&#039;);
+                    _this._iterativeSeekAndPing(avoidNode);
+                }, _this._iterativeSeekTimeoutMs);
             });
+        } else {
+            logger.info(&#039;do not seek again.&#039;);
         }
     };
 
@@ -216,6 +261,7 @@ var NodeSeekerManager = (function () {
     */
     NodeSeekerManager.prototype._pingNodeIfActive = function (node) {
         if (this._forceSearchActive) {
+            logger.info(&#039;pinging node.&#039;);
             this._protocolConnectionManager.writeMessageTo(node, &#039;PING&#039;, new Buffer(0));
         }
     };
