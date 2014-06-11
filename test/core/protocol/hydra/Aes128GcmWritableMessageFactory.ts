@@ -6,7 +6,7 @@ require('should');
 
 import Aes128GcmWritableMessageFactory = require('../../../../src/core/protocol/hydra/messages/Aes128GcmWritableMessageFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> Aes128GcmWritableMessageFactory @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> Aes128GcmWritableMessageFactory', function () {
 
 	var factory:Aes128GcmWritableMessageFactory = new Aes128GcmWritableMessageFactory();
 

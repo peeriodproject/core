@@ -3,16 +3,6 @@ var crypto = require('crypto');
 var HydraByteCheatsheet = require('./HydraByteCheatsheet');
 
 /**
-* If this is true, all message integrity checks automatically succeed.
-* This is due to the node versioning conflict. Authentication tags in node.js's crypto module are supported since
-* v.0.11.10 only.
-* As soon as v.0.12 lands and node-webkit has caught up, this will be fixed!!
-*
-* @type {boolean}
-*/
-var SKIP_AUTH = true;
-
-/**
 * Decrypts an encrypted payload with AES-128-GCM. Also does integrity checks if needed.
 *
 * @class core.protocol.hydra.Aes128GcmReadableDecryptedMessage
@@ -71,12 +61,12 @@ var Aes128GcmReadableDecryptedMessage = (function () {
             this._encryptedContentFull = this._encryptedContentFull.slice(0, contentLength - 16);
         }
 
-        this._payload = decipher.update(this._encryptedContentFull);
+        this._payload = decipher.update(this._encryptedContentFull).slice(1);
 
         try  {
             decipher.final();
         } catch (e) {
-            if (this._isReceiver && !SKIP_AUTH) {
+            if (this._isReceiver && !Aes128GcmReadableDecryptedMessage.SKIP_AUTH) {
                 this._payload = null;
                 throw new Error('Aes128GcmReadableDecryptedMessage: Integrity check fail!');
             }
@@ -117,10 +107,9 @@ var Aes128GcmReadableDecryptedMessage = (function () {
             throw new Error('Aes128GcmReadableDecryptedMessage: Unknown indicator byte');
         }
 
-        this._encryptedContentFull = this._encryptedContentFull.slice(1);
-
         return this._isReceiver;
     };
+    Aes128GcmReadableDecryptedMessage.SKIP_AUTH = true;
     return Aes128GcmReadableDecryptedMessage;
 })();
 
