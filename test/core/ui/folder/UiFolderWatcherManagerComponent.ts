@@ -8,7 +8,7 @@ import testUtils = require('../../../utils/testUtils');
 import FolderWatcherManager = require('../../../../src/core/fs/FolderWatcherManager');
 import UiFolderWatcherManagerComponent = require('../../../../src/core/ui/folder/UiFolderWatcherManagerComponent');
 
-describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent @joern', function () {
+describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function () {
 	var sandbox:SinonSandbox;
 	var component:UiFolderWatcherManagerComponent;
 	var eventListeners:{ [eventName:string]:Function };
@@ -58,6 +58,12 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent @joern', fu
 
 	it('should correctly return the channel name', function () {
 		component.getChannelName().should.equal('folder');
+	});
+
+	it('should correctly return the state', function () {
+		var state = component.getState();
+		state.should.be.an.instanceof(Array);
+		state.length.should.equal(0);
 	});
 
 	it('should correctly send a new folder to the ui', function () {

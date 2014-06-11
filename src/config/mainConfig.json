@@ -85,6 +85,7 @@
                 "publicPath": "public"
             },
             "socketServer": {
+                "parser": "JSON",
                 "port": 8080,
                 "transformer": "websockets"
             }

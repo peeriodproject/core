@@ -2,8 +2,9 @@
 
 import FolderWatcherManagerInterface = require('../../fs/interfaces/FolderWatcherManagerInterface');
 import UiComponentInterface = require('../interfaces/UiComponentInterface');
-import UiFolderMapInterface = require('./interfaces/UiFolderMapInterface');
 import UiFolderInterface = require('./interfaces/UiFolderInterface');
+import UiFolderListInterface = require('./interfaces/UiFolderListInterface');
+import UiFolderMapInterface = require('./interfaces/UiFolderMapInterface');
 
 /**
  * The UiFolderWatcherManagerComponent acts as a controller between the {@link core.fs.FolderWatcherManager} and the user interface.
@@ -44,6 +45,17 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 
 	public getChannelName ():string {
 		return 'folder';
+	}
+
+	public getState():UiFolderListInterface {
+		var keys:Array<string> = Object.keys(this._folders);
+		var folders:UiFolderListInterface = [];
+
+		for (var j in keys) {
+			folders.push(this._folders[keys[j]]);
+		}
+
+		return folders;
 	}
 
 	public onConnection (spark:any):void {
@@ -220,15 +232,10 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 	 */
 	private _updateUi():void {
 		if (this._connections.length) {
+			var state:Object = this.getState();
+
 			for (var i in this._connections) {
-				var keys:Array<string> = Object.keys(this._folders);
-				var folders:Array<UiFolderInterface> = [];
-
-				for (var j in keys) {
-					folders.push(this._folders[keys[j]]);
-				}
-
-				this._connections[i].send('update', folders);
+				this._connections[i].send('update', state);
 			}
 		}
 	}

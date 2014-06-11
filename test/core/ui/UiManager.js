@@ -118,6 +118,9 @@ describe('CORE --> UI --> UiManager', function () {
             getChannelName: function () {
                 return 'chat';
             },
+            getState: function () {
+                return { foo: 'bar' };
+            },
             onConnection: function (spark) {
                 spark.send('message', 'welcome to this chat', function (message) {
                     message.should.equal('i am glad to be here!');
@@ -139,6 +142,10 @@ describe('CORE --> UI --> UiManager', function () {
                     res.statusCode.should.equal(200);
 
                     var chat = socket.channel('chat');
+
+                    chat.send('getInitialState', function (state) {
+                        JSON.stringify(state).should.equal(JSON.stringify({ foo: 'bar' }));
+                    });
 
                     chat.on('message', function (message, callback) {
                         message.should.equal('welcome to this chat');

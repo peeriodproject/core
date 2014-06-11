@@ -102,7 +102,7 @@ class UiManager implements UiManagerInterface {
 	 */
 	private _socketServer = null;
 
-	constructor (config:ConfigInterface, components:UiComponentListInterface, options:ClosableAsyncOptions) {
+	constructor (config:ConfigInterface, components:UiComponentListInterface, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
 			closeOnProcessExit: false,
 			onCloseCallback   : function () {
@@ -261,8 +261,15 @@ class UiManager implements UiManagerInterface {
 	}
 
 	private _handleSocketChannel (channelName:string, spark:any) {
-		if (this._channelComponentsMap[channelName]) {
-			this._channelComponentsMap[channelName].onConnection(spark);
+		var component:UiComponentInterface = this._channelComponentsMap[channelName];
+
+		if (component) {
+			// automagically getInitialState listener
+			spark.on('getInitialState', function (callback) {
+				callback(component.getState());
+			});
+
+			component.onConnection(spark);
 		}
 
 		//this._connections.push(spark);

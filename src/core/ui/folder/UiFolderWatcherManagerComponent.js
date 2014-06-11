@@ -35,6 +35,17 @@ var UiFolderWatcherManagerComponent = (function () {
         return 'folder';
     };
 
+    UiFolderWatcherManagerComponent.prototype.getState = function () {
+        var keys = Object.keys(this._folders);
+        var folders = [];
+
+        for (var j in keys) {
+            folders.push(this._folders[keys[j]]);
+        }
+
+        return folders;
+    };
+
     UiFolderWatcherManagerComponent.prototype.onConnection = function (spark) {
         this._connections.push(spark);
     };
@@ -210,15 +221,10 @@ var UiFolderWatcherManagerComponent = (function () {
     */
     UiFolderWatcherManagerComponent.prototype._updateUi = function () {
         if (this._connections.length) {
+            var state = this.getState();
+
             for (var i in this._connections) {
-                var keys = Object.keys(this._folders);
-                var folders = [];
-
-                for (var j in keys) {
-                    folders.push(this._folders[keys[j]]);
-                }
-
-                this._connections[i].send('update', folders);
+                this._connections[i].send('update', state);
             }
         }
     };
