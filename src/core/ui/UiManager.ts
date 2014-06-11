@@ -174,7 +174,13 @@ class UiManager implements UiManagerInterface {
 	}
 
 	public getSocketServer () {
-		return this._socketServer;
+		if (process.env.NODE_ENV === 'test') {
+			return this._socketServer;
+		}
+		else {
+			console.error('Do not use this method outside the test environment!');
+			return null;
+		}
 	}
 
 	/**

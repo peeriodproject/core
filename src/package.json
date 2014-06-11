@@ -23,7 +23,6 @@
     "winston": "^0.7.3",
     "winston-irc": "^0.3.4",
     "ws": "^0.4.31",
-    "longjohn": "*"
     "primus.io": "^3.1.1"
   }
 }

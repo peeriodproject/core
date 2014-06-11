@@ -9,7 +9,9 @@ interface UiManagerInterface extends ClosableAsyncInterface {
 	/**
 	 * Returns the socket server instance.
 	 *
-	 * CAUTION: this is only exposed for socket testing
+	 * CAUTION: the socket server is only exposed for socket testing and should return null outside the test environment
+	 *
+	 * @method core.ui.UiManagerInterface#getSocketServer
 	 */
 	getSocketServer ():any;
 }

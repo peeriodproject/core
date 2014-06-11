@@ -9,7 +9,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var UiManager = require('../../../src/core/ui/UiManager');
 var UiComponent = require('../../../src/core/ui/UiComponent');
 
-describe('CORE --> UI --> UiManager @prio', function () {
+describe('CORE --> UI --> UiManager', function () {
     var sandbox;
     var configStub;
     var uiManager;

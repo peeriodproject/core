@@ -12,7 +12,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import UiManager = require('../../../src/core/ui/UiManager');
 import UiComponent = require('../../../src/core/ui/UiComponent');
 
-describe('CORE --> UI --> UiManager @prio', function () {
+describe('CORE --> UI --> UiManager', function () {
 	var sandbox:SinonSandbox;
 	var configStub:any;
 	var uiManager:UiManager;
