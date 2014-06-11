@@ -1,7 +1,5 @@
 /// <reference path='../../../../ts-definitions/node/node.d.ts' />
 
-import net = require('net');
-
 /**
  * @interface
  * @class core.ui.UiComponentInterface
@@ -18,6 +16,8 @@ interface UiComponentInterface {
 	/**
 	 * The onConnection gets called as soon as someone connects to component channel
 	 *
+	 * todo ts-definition
+	 * 
 	 * @method core.ui.UiComponentInterface#onConnection
 	 *
 	 * @param {net.Socket} spark
