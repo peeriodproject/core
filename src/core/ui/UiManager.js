@@ -19,6 +19,7 @@ var ObjectUtils = require('../utils/ObjectUtils');
 */
 var UiManager = (function () {
     function UiManager(config, components, options) {
+        if (typeof options === "undefined") { options = {}; }
         var _this = this;
         this._components = [];
         //private _connections:Array<net.Socket> = [];
@@ -240,8 +241,15 @@ var UiManager = (function () {
     };
 
     UiManager.prototype._handleSocketChannel = function (channelName, spark) {
-        if (this._channelComponentsMap[channelName]) {
-            this._channelComponentsMap[channelName].onConnection(spark);
+        var component = this._channelComponentsMap[channelName];
+
+        if (component) {
+            // automagically getInitialState listener
+            spark.on('getInitialState', function (callback) {
+                callback(component.getState());
+            });
+
+            component.onConnection(spark);
         }
         //this._connections.push(spark);
     };

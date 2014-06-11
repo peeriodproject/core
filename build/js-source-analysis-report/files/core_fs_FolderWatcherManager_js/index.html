@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">71.54</p>
+      <p class="stat">71.51</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">393</p>
+      <p class="stat">485</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">67.51</p>
+      <p class="stat">68.44</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.81</p>
+      <p class="stat">2.91</p>
     </div>
   </div>
 </div>
@@ -102,28 +102,56 @@ var EventEmitter = events.EventEmitter;
 /**
 * @class core.fs.FolderWatcherManager
 * @implements core.fs.FolderWatcherManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.utils.StateHandlerFactoryInterface} stateHandlerFactory
+* @param {core.fs.FolderWatcherFactoryInterface} folderWatcherFactory
+* @param {core.utils.ClosableAsyncOptions} options
 */
 var FolderWatcherManager = (function () {
     function FolderWatcherManager(config, stateHandlerFactory, folderWatcherFactory, options) {
         if (typeof options === &quot;undefined&quot;) { options = {}; }
         var _this = this;
+        /**
+        * The internally used config instance
+        *
+        * @member {core.config.ConfigInterface} core.fs.FolderWatcherManager~_config
+        */
         this._config = null;
+        /**
+        * The EventEmitter instance used to emit events.
+        *
+        * @see Use {@link core.fs.FolderWatcherManager#on} and {@link core.fs.FolderWatcherManager#off} to (un)bind your listeners to the emitter
+        *
+        * @member {events.EventEmitter} core.fs.FolderWatcherManager~_eventEmitter
+        */
         this._eventEmitter = null;
+        /**
+        * The internally used FolderWatcherFactory
+        *
+        * @member {core.fs.FolderWatcherFactoryInterface} core.fs.FolderWatcherManager~_folderWatcherFactory
+        */
         this._folderWatcherFactory = null;
         /**
         * Contains invalid absolute paths that are (currently) not available in the file system.
         *
-        *
+        * @member {core.fs.PathListInterface} core.fs.FolderWatcherManager~_invalidWatcherPaths
         */
         this._invalidWatcherPaths = [];
         this._isOpen = false;
+        /**
+        *
+        * @member {core.utils.ClosableAsyncOptions} core.fs.FolderWatcherManager~_options
+        */
         this._options = null;
         /**
+        * The internally used StateHandler to save and load the current set of folders to watch.
         *
         * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_stateLoader
         */
         this._stateHandler = null;
         /**
+        * The list of currently active {@link core.fs.FolderWatcherInteface} instances
         *
         * @member {core.fs.FolderWatcherListInterface} core.fs.FolderWatcherManager~_watchers
         */
@@ -323,7 +351,11 @@ var FolderWatcherManager = (function () {
         var internalCallback = callback || function () {
         };
 
-        this._removeFolderWatcher(pathToWatch);
+        var removed = this._removeFolderWatcher(pathToWatch);
+
+        if (removed) {
+            this._triggerEvent(&#039;watcher.remove&#039;, pathToWatch, null);
+        }
 
         return process.nextTick(internalCallback.bind(null, null));
     };
@@ -337,6 +369,7 @@ var FolderWatcherManager = (function () {
     */
     FolderWatcherManager.prototype._addToInvalidWatcherPaths = function (pathToWatch) {
         if (this._invalidWatcherPaths.indexOf(pathToWatch) === -1) {
+            this._forceTriggerEvent(&#039;watcher.invalid&#039;, pathToWatch, null);
             this._invalidWatcherPaths.push(pathToWatch);
         }
     };
@@ -344,7 +377,7 @@ var FolderWatcherManager = (function () {
     /**
     * Binds to the add, change and unlink event from the file watcher and triggers the corresponding event.
     *
-    * todo Add the ability to detect file movements a rename operations
+    * todo Add the ability to detect file movements and rename operations
     *
     * @method core.fs.FolderWatcherManager~_bindToWatcherEvents
     *
@@ -391,6 +424,16 @@ var FolderWatcherManager = (function () {
         }
     };
 
+    /**
+    * Creates {@link core.fs.FolderWatcherInterface} for the specified paths and calls the callback afterwards.
+    *
+    * @see core.fs.FolderWatcherManager~_createWatcher
+    *
+    * @method core.fs.FolderWatcherManager~_createWatchers
+    *
+    * @param {core.fs.PathListInterface} pathsToWatch
+    * @param {Function} callback
+    */
     FolderWatcherManager.prototype._createWatchers = function (pathsToWatch, callback) {
         if (!pathsToWatch || !Array.isArray(pathsToWatch) || !pathsToWatch.length) {
             return callback(null);
@@ -408,6 +451,8 @@ var FolderWatcherManager = (function () {
     /**
     * Creates a watcher for the specified (valid) path
     *
+    * @method core.fs.FolderWatcherManager~_createWatcher
+    *
     * @param {string} pathToWatch
     * @returns {boolean}
     */
@@ -420,23 +465,53 @@ var FolderWatcherManager = (function () {
 
             this._bindToWatcherEvents(this._watchers[pathToWatch]);
 
-            this._triggerEvent(&#039;added&#039;);
+            this._forceTriggerEvent(&#039;watcher.add&#039;, pathToWatch, null);
             created = true;
         }
 
         return created;
     };
 
+    /**
+    * Emits the specified event
+    *
+    * @method core.fs.FolderWatcherManager~_forceTriggerEvent
+    *
+    * @param {string} eventName
+    * @param {string} changedPath
+    * @param {fs.Stats} stats
+    */
+    FolderWatcherManager.prototype._forceTriggerEvent = function (eventName, changedPath, stats) {
+        this._eventEmitter.emit(eventName, changedPath, stats);
+    };
+
+    /**
+    * Returns an array of currently paths that are currently spied on.
+    *
+    * @method core.fs.FolderWatcherManager~_getActiveWatcherPaths
+    *
+    * @returns {core.fs.PathListInterface}
+    */
     FolderWatcherManager.prototype._getActiveWatcherPaths = function () {
         return Object.keys(this._watchers);
     };
 
+    /**
+    * Returns `true` if the specified path is absolute
+    *
+    * @method core.fs.FolderWatcherManager~_isAbsolutePath
+    *
+    * @param {string} aPath
+    * @returns {boolean}
+    */
     FolderWatcherManager.prototype._isAbsolutePath = function (aPath) {
         return path.resolve(aPath) === aPath;
     };
 
     /**
-    * Removes an active folder watcher
+    * Removes an active folder watcher from the manager and triggers the corresponding `watcher.remove` event
+    *
+    * @method core.fs.FolderWatcherManager~_removeFolderWatcher
     *
     * @param {string} pathToWatch
     * @returns {boolean} `true` if successfully removed
@@ -471,12 +546,29 @@ var FolderWatcherManager = (function () {
         }
     };
 
+    /**
+    * Triggers the specified event if the FolderWatcherManager is (still) open
+    *
+    * @method core.fs.FolderWatcherManager~_triggerEvent
+    *
+    * @param {string} eventName
+    * @param {string} changedPath
+    * @param {fs.Stats} stats
+    */
     FolderWatcherManager.prototype._triggerEvent = function (eventName, changedPath, stats) {
         if (this._isOpen) {
-            this._eventEmitter.emit(eventName, changedPath, stats);
+            this._forceTriggerEvent(eventName, changedPath, stats);
         }
     };
 
+    /**
+    * Returns `true` if a watcher for the specified path exists.
+    *
+    * @method core.fs.FolderWatcherManager~_watcherExists
+    *
+    * @param {string} pathToWatch
+    * @returns {boolean}
+    */
     FolderWatcherManager.prototype._watcherExists = function (pathToWatch) {
         return this._watchers[pathToWatch] ? true : false;
     };

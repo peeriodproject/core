@@ -21,7 +21,9 @@ var UiFolderWatcherManagerComponent = (function () {
         */
         this._folderWatcherManager = null;
         /**
+        * The map of currently known folders
         *
+        * @member {core.ui.folder.UiFolderMapInterface} core.ui.UiFolderWatcherManagerComponent~_folders
         */
         this._folders = {};
         this._folderWatcherManager = folderWatcherManager;
@@ -31,6 +33,17 @@ var UiFolderWatcherManagerComponent = (function () {
     }
     UiFolderWatcherManagerComponent.prototype.getChannelName = function () {
         return 'folder';
+    };
+
+    UiFolderWatcherManagerComponent.prototype.getState = function () {
+        var keys = Object.keys(this._folders);
+        var folders = [];
+
+        for (var j in keys) {
+            folders.push(this._folders[keys[j]]);
+        }
+
+        return folders;
     };
 
     UiFolderWatcherManagerComponent.prototype.onConnection = function (spark) {
@@ -208,15 +221,10 @@ var UiFolderWatcherManagerComponent = (function () {
     */
     UiFolderWatcherManagerComponent.prototype._updateUi = function () {
         if (this._connections.length) {
+            var state = this.getState();
+
             for (var i in this._connections) {
-                var keys = Object.keys(this._folders);
-                var folders = [];
-
-                for (var j in keys) {
-                    folders.push(this._folders[keys[j]]);
-                }
-
-                this._connections[i].send('update', folders);
+                this._connections[i].send('update', state);
             }
         }
     };

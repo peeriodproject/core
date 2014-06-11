@@ -10,6 +10,10 @@ var UiComponent = (function () {
         return undefined;
     };
 
+    UiComponent.prototype.getState = function () {
+        return {};
+    };
+
     /*onMessage (message:any):void {
     }*/
     UiComponent.prototype.onConnection = function (spark) {

@@ -8,7 +8,7 @@ import testUtils = require('../../../utils/testUtils');
 import FolderWatcherManager = require('../../../../src/core/fs/FolderWatcherManager');
 import UiFolderWatcherManagerComponent = require('../../../../src/core/ui/folder/UiFolderWatcherManagerComponent');
 
-describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent @joern', function () {
+describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function () {
 	var sandbox:SinonSandbox;
 	var component:UiFolderWatcherManagerComponent;
 	var eventListeners:{ [eventName:string]:Function };
@@ -43,11 +43,11 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent @joern', fu
 		sparkStub = null;
 	});
 
-	it ('should correctly instantiate without error', function () {
+	it('should correctly instantiate without error', function () {
 		component.should.be.an.instanceof(UiFolderWatcherManagerComponent);
 	});
 
-	it ('should correctly listen for FolderWatcherManager events', function () {
+	it('should correctly listen for FolderWatcherManager events', function () {
 		var eventNames:Array<string> = ['watcher.add', 'watcher.invalid', 'watcher.remove', 'add', 'unlink'];
 		var listenerNames:Array<string> = Object.keys(eventListeners);
 
@@ -56,7 +56,17 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent @joern', fu
 		}
 	});
 
-	it ('should correctly send a new folder to the ui', function () {
+	it('should correctly return the channel name', function () {
+		component.getChannelName().should.equal('folder');
+	});
+
+	it('should correctly return the state', function () {
+		var state = component.getState();
+		state.should.be.an.instanceof(Array);
+		state.length.should.equal(0);
+	});
+
+	it('should correctly send a new folder to the ui', function () {
 		// add a client connection
 		component.onConnection(sparkStub);
 
@@ -78,7 +88,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent @joern', fu
 		});
 	});
 
-	it ('should correctly remove a folder from the ui', function () {
+	it('should correctly remove a folder from the ui', function () {
 		// add a client connection
 		component.onConnection(sparkStub);
 
@@ -94,7 +104,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent @joern', fu
 		sparkStub.send.getCall(1).args[1].length.should.equal(0);
 	});
 
-	it ('should correctly set the folder status', function () {
+	it('should correctly set the folder status', function () {
 		// add a client connection
 		component.onConnection(sparkStub);
 
@@ -102,7 +112,6 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent @joern', fu
 		eventListeners['watcher.invalid']('/path/to/the/Folder Name');
 
 		sparkStub.send.calledTwice.should.be.true;
-
 
 
 		// check folder status
@@ -114,7 +123,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent @joern', fu
 		});
 	});
 
-	it ('should correctly increment the item count', function () {
+	it('should correctly increment the item count', function () {
 		// add a client connection
 		component.onConnection(sparkStub);
 
@@ -139,7 +148,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent @joern', fu
 		}
 	});
 
-	it ('should correctly decrement the item count', function () {
+	it('should correctly decrement the item count', function () {
 		// add a client connection
 		component.onConnection(sparkStub);
 

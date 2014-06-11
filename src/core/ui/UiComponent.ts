@@ -12,6 +12,10 @@ class UiComponent implements UiComponentInterface {
 		return undefined;
 	}
 
+	getState ():Object {
+		return {};
+	}
+
 	/*onMessage (message:any):void {
 	}*/
 
