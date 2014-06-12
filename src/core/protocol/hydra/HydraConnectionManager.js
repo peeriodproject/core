@@ -6,18 +6,84 @@ var __extends = this.__extends || function (d, b) {
 };
 var events = require('events');
 
+/**
+* HydraConnectionManagerInterface implementation.
+* See interface documentation for funtionality.
+*
+* @class core.protocol.hydra.HydraConnectionManager
+* @extends NodeJS.EventEmitter
+* @implements core.protocol.hydra.HydraConnectionManagerInterface
+*
+* @param {core.config.ConfigInterface} hydraConfig Hydra configuration
+* @param {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager A working protocol connection Manager
+* @param {core.protocol.hydra.WritableHydraMessageFactoryInterface} writableFactory A writable hydra message factory instance.
+* @param {core.protocol.hydra.ReadableHydraMessageFactoryInterface} readableFactory A readable hydra message factory instance.
+*/
 var HydraConnectionManager = (function (_super) {
     __extends(HydraConnectionManager, _super);
     function HydraConnectionManager(hydraConfig, protocolConnectionManager, writableFactory, readableFactory) {
         _super.call(this);
-        this._protocolConnectionManager = null;
-        this._keepMessageInPipelineForMs = 0;
-        this._waitForReconnectMs = 0;
-        this._retryConnectionMax = 0;
-        this._openSockets = {};
+        /**
+        * Keeps track of how often a node has been added / removed to / fram the circuit node list.
+        * Only when the count is zero is it really removed from the circuit node list.
+        * This is because a node can be part of multiple circuits.
+        *
+        * @member {Object} core.protocol.hydra.HydraConnectionManager~_circuitNodeCount
+        */
+        this._circuitNodeCount = {};
+        /**
+        * The key-value list of circuit nodes, where key is the IP address and value is the Node.
+        *
+        * @member {Object} core.protocol.hydra.HydraConnectionManager~_circuitNodes
+        */
         this._circuitNodes = {};
-        this._writableFactory = null;
+        /**
+        * The number of ms a message which cannot be sent should be kept in the pipeline to wait for a connection
+        * until it is discarded.
+        *
+        * @member {number} core.protocol.hydra.HydraConnectionManager~_keepMessageInPipelineForMs
+        */
+        this._keepMessageInPipelineForMs = 0;
+        /**
+        * The key-value list of open sockets, where key is the IP address and value is the identifier of the socket.
+        *
+        * @member {Object} core.protocol.hydra.HydraConnectionManager~_openSockets
+        */
+        this._openSockets = {};
+        /**
+        * The working protocol connection manager.
+        *
+        * @member {core.protocol.net.ProtocolConnectionManagerInterface} core.protocol.hydra.HydraConnectionManager~_protocolConnectionManager
+        */
+        this._protocolConnectionManager = null;
+        /**
+        * The readable hydra message factory.
+        *
+        * @member {core.protocol.hydra.ReadableHydraMessageFactoryInterface} core.protocol.hydra.HydraConnectionManager~_readableFactory
+        */
         this._readableFactory = null;
+        /**
+        * The number of maximum retries when trying to regain a connection to a circuit node, before a `globalConnectionFail`
+        * event is emitted.
+        * This is only relevant if there is knowledge of a reachable port of the HydraNode.
+        *
+        * @member {number} core.protocol.hydra.HydraConnectionManager~_retryConnectionMax
+        */
+        this._retryConnectionMax = 0;
+        /**
+        * The number of milliseconds to wait for a reconnect to a circuit node (without knowledge of its port), until a
+        * `globalConnectionFail` event is emitted.
+        * This is only relevant if there is NO knowledge of a reachable port of the HydraNode
+        *
+        * @member {number} core.protocol.hydra.HydraConnectionManager~_waitForReconnectMs
+        */
+        this._waitForReconnectMs = 0;
+        /**
+        * The writable hydra message factory.
+        *
+        * @member {core.protocol.hydra.WritableHydraMessageFactoryInterface} core.protocol.hydra.HydraConnectionManager~_writableFactory
+        */
+        this._writableFactory = null;
 
         this._writableFactory = writableFactory;
         this._readableFactory = readableFactory;
@@ -39,6 +105,10 @@ var HydraConnectionManager = (function (_super) {
         return this._circuitNodes;
     };
 
+    HydraConnectionManager.prototype.getCircuitNodeCount = function () {
+        return this._circuitNodeCount;
+    };
+
     /**
     * END Testing purposes only
     */
@@ -47,22 +117,30 @@ var HydraConnectionManager = (function (_super) {
 
         if (!this._circuitNodes[ip]) {
             this._circuitNodes[ip] = node;
+            this._circuitNodeCount[ip] = 1;
 
             var ident = this._openSockets[ip];
             if (ident) {
                 this._protocolConnectionManager.keepHydraSocketOpen(ident);
             }
+        } else {
+            this._circuitNodeCount[ip]++;
         }
     };
 
     HydraConnectionManager.prototype.removeFromCircuitNodes = function (node) {
         var ip = node.ip;
 
-        delete this._circuitNodes[ip];
+        if (this._circuitNodeCount[ip]) {
+            if (--this._circuitNodeCount[ip] === 0) {
+                delete this._circuitNodeCount[ip];
+                delete this._circuitNodes[ip];
 
-        var ident = this._openSockets[ip];
-        if (ident) {
-            this._protocolConnectionManager.keepHydraSocketNoLongerOpen(ident);
+                var ident = this._openSockets[ip];
+                if (ident) {
+                    this._protocolConnectionManager.keepHydraSocketNoLongerOpen(ident);
+                }
+            }
         }
     };
 
@@ -91,6 +169,18 @@ var HydraConnectionManager = (function (_super) {
         }
     };
 
+    /**
+    * 'Rehooks' the connection to a node. If there is knowledge of a reachable port, it tries to acitvely connect to it.
+    * If there is NO knowledge of a reachable port, the manager simply waits for a specific time for a reconnect
+    * initiated by the other side.
+    *
+    * If the reconnect fails, or the timeout elapses, a `globalConnectionFail` event is emitted with the IP as parameter,
+    * so that other classes can act accordingly (e.g. tearing down circuits etc.)
+    *
+    * @method core.protocol.hydra.HydraConnectionManager~_rehookConnection
+    *
+    * @param {core.protocol.HydraNode} node The node to 'reconnect' to
+    */
     HydraConnectionManager.prototype._rehookConnection = function (node) {
         var _this = this;
         if (!node.port) {
@@ -123,6 +213,11 @@ var HydraConnectionManager = (function (_super) {
         }
     };
 
+    /**
+    * Sets up the listeners on the protocol connection manager.
+    *
+    * @method core.protoco.hydra.HydraConnectionManager~_setupListeners
+    */
     HydraConnectionManager.prototype._setupListeners = function () {
         var _this = this;
         this._protocolConnectionManager.on('hydraSocket', function (identifier, socket) {
