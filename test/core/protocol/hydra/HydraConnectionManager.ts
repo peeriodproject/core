@@ -10,6 +10,9 @@ import HydraConnectionManager = require('../../../../src/core/protocol/hydra/Hyd
 import ProtocolConnectionManager = require('../../../../src/core/protocol/net/ProtocolConnectionManager');
 import ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 import TCPSocket = require('../../../../src/core/net/tcp/TCPSocket');
+import ReadableHydraMessageFactory = require('../../../../src/core/protocol/hydra/messages/ReadableHydraMessageFactory');
+import WritableHydraMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableHydraMessageFactory');
+import ReadableMessage = require('../../../../src/core/protocol/messages/ReadableMessage');
 
 describe('CORE --> PROTOCOL --> HYDRA --> HydraConnectionManager @current', function () {
 
@@ -21,8 +24,11 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConnectionManager @current', func
 
 	var hydraSocketListener:Function = null;
 	var terminatedConnectionListener:Function = null;
+	var messageListener:Function = null;
 
 	var connectErr = null;
+	var connectedTo = null;
+	var readableErr = null;
 
 	var socketEndedWithIdent = null;
 
@@ -45,6 +51,18 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConnectionManager @current', func
 	var emitTerminated = function (identifier) {
 		terminatedConnectionListener(identifier);
 	}
+
+	var emitMsg = function (identifier, ip, buffer) {
+		messageListener(identifier, ip, createMessage(buffer));
+	}
+
+	var createMessage = function (buff) {
+		return testUtils.stubPublicApi(sandbox, ReadableMessage, {
+			getPayload: function () {
+				return buff;
+			}
+		})
+	};
 
 	before(function () {
 		sandbox = sinon.sandbox.create();
@@ -71,9 +89,13 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConnectionManager @current', func
 				else if (evt === 'terminatedConnection') {
 					terminatedConnectionListener = cb;
 				}
+				else if (evt === 'hydraMessage') {
+					messageListener = cb;
+				}
 			},
 			hydraConnectTo: function (port, ip, cb) {
-				cb(connectErr);
+				if (cb) cb(connectErr);
+				connectedTo = ip;
 			},
 			hydraWriteMessageTo: function (identifier, payload) {
 				writtenTo = identifier;
@@ -81,7 +103,24 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConnectionManager @current', func
 			}
 		});
 
-		connectionManager = new HydraConnectionManager(configStub, protocolConnectionManagerStub);
+		var readableFactoryStub = testUtils.stubPublicApi(sandbox, ReadableHydraMessageFactory, {
+			create: function (msg) {
+				if (readableErr) {
+					throw new Error('');
+				}
+				else {
+					return msg;
+				}
+			}
+		});
+
+		var writableFactoryStub = testUtils.stubPublicApi(sandbox, WritableHydraMessageFactory, {
+			constructMessage: function (type, payload) {
+				return payload;
+			}
+		});
+
+		connectionManager = new HydraConnectionManager(configStub, protocolConnectionManagerStub, writableFactoryStub, readableFactoryStub);
 
 	});
 
@@ -187,10 +226,62 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConnectionManager @current', func
 	it('should write the message at once', function () {
 		emitSocket('hydra8', '5');
 
-		connectionManager.pipeMessage(new Buffer('foobar'), {ip:'5'});
+		connectionManager.pipeMessage('FOOBAR', new Buffer('foobar'), {ip:'5'});
 
 		writtenTo.should.equal('hydra8');
 		writtenWhat.toString().should.equal('foobar');
+	});
+
+	it('should write both messages as soon as the ips are present', function (done) {
+		connectionManager.pipeMessage('FOOBAR', new Buffer('msg1'), {ip:'6'});
+		connectionManager.pipeMessage('FOOBAR', new Buffer('msg2'), {ip:'7'});
+
+		setTimeout(function () {
+			emitSocket('hydra9', '6');
+
+			if (writtenTo === 'hydra9') {
+				setTimeout(function () {
+					emitSocket('hydra10', '7');
+					if (writtenTo === 'hydra10') done();
+				}, 100);
+			}
+		}, 100);
+	});
+
+	it('should not write the message if the pipeline timeout expires, but try to connect', function (done) {
+		connectErr = null;
+
+		connectionManager.pipeMessage('FOOBAR', new Buffer('msg3'), {ip:'8', port:80});
+
+		setTimeout(function () {
+			emitSocket('hydra11', '8');
+
+			if (writtenTo !== 'hydra11' && connectedTo === '8') done();
+
+		}, 1100);
+	});
+
+	it('should emit the message', function (done) {
+		connectionManager.once('hydraMessage', function (ip, msg) {
+			if (ip === '9' && msg.toString() === 'foobar') done();
+		});
+
+		emitMsg('hydra12', '9', new Buffer('foobar'));
+
+	});
+
+	it('should not emit a message', function (done) {
+		connectionManager.once('hydraMessage', function () {
+			throw new Error('Should not emit');
+		});
+
+		readableErr = true;
+
+		emitMsg('hydra12', '9', new Buffer('foobar'));
+
+		setTimeout(function () {
+			done();
+		}, 200);
 	});
 
 	after(function () {

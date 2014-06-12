@@ -5,6 +5,10 @@ import HydraNode = require('./interfaces/HydraNode');
 import ConfigInterface = require('../../config/interfaces/ConfigInterface');
 import ProtocolConnectionManagerInterface = require('../net/interfaces/ProtocolConnectionManagerInterface');
 import TCPSocketInterface = require('../../net/tcp/interfaces/TCPSocketInterface');
+import WritableHydraMessageFactoryInterface = require('./messages/interfaces/WritableHydraMessageFactoryInterface');
+import ReadableHydraMessageFactoryInterface = require('./messages/interfaces/ReadableHydraMessageFactoryInterface');
+import ReadableMessageInterface = require('../messages/interfaces/ReadableMessageInterface');
+import ReadableHydraMessageInterface = require('./messages/interfaces/ReadableHydraMessageInterface');
 
 class HydraConnectionManager extends events.EventEmitter implements HydraConnectionManagerInterface {
 
@@ -19,10 +23,15 @@ class HydraConnectionManager extends events.EventEmitter implements HydraConnect
 
 	private _circuitNodes:{[ip:string]:HydraNode} = {};
 
+	private _writableFactory:WritableHydraMessageFactoryInterface = null;
+	private _readableFactory:ReadableHydraMessageFactoryInterface = null;
 
-	public constructor (hydraConfig:ConfigInterface, protocolConnectionManager:ProtocolConnectionManagerInterface) {
+
+	public constructor (hydraConfig:ConfigInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, writableFactory:WritableHydraMessageFactoryInterface, readableFactory:ReadableHydraMessageFactoryInterface) {
 		super();
 
+		this._writableFactory = writableFactory;
+		this._readableFactory = readableFactory;
 		this._protocolConnectionManager = protocolConnectionManager;
 		this._keepMessageInPipelineForMs = hydraConfig.get('hydra.keepMessageInPipelineForSeconds') * 1000;
 		this._waitForReconnectMs = hydraConfig.get('hydra.waitForReconnectInSeconds') * 1000;
@@ -72,16 +81,17 @@ class HydraConnectionManager extends events.EventEmitter implements HydraConnect
 
 	}
 
-	public pipeMessage (payload:Buffer, to:HydraNode):void {
+	public pipeMessage (messageType:string, payload:Buffer, to:HydraNode):void {
 		var openSocketIdent:string = this._openSockets[to.ip];
+		var sendableBuffer:Buffer = this._writableFactory.constructMessage(messageType, payload, payload.length);
 
 		if (openSocketIdent) {
-			this._protocolConnectionManager.hydraWriteMessageTo(openSocketIdent, payload);
+			this._protocolConnectionManager.hydraWriteMessageTo(openSocketIdent, sendableBuffer);
 		}
 		else {
 
 			var messageListener = (identifier:string) => {
-				this._protocolConnectionManager.hydraWriteMessageTo(identifier, payload);
+				this._protocolConnectionManager.hydraWriteMessageTo(identifier, sendableBuffer);
 				global.clearTimeout(messageTimeout);
 			};
 
@@ -167,6 +177,21 @@ class HydraConnectionManager extends events.EventEmitter implements HydraConnect
 			var node:HydraNode = this._circuitNodes[theIp];
 			if (node) {
 				this._rehookConnection(node);
+			}
+		});
+
+		this._protocolConnectionManager.on('hydraMessage', (identifier:string, ip:string, message:ReadableMessageInterface) => {
+			var msgToEmit:ReadableHydraMessageInterface = null;
+
+			try {
+				msgToEmit = this._readableFactory.create(message.getPayload());
+			}
+			catch (e) {
+
+			}
+
+			if (msgToEmit && ip) {
+				this.emit('hydraMessage', ip, msgToEmit);
 			}
 		});
 	}

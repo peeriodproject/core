@@ -1,3 +1,5 @@
+/// <reference path='../../../../../ts-definitions/node/node.d.ts' />
+
 import events = require('events');
 import HydraNode = require('./HydraNode');
 
@@ -7,7 +9,7 @@ interface HydraConnectionManagerInterface extends NodeJS.EventEmitter {
 
 	removeFromCircuitNodes (node:HydraNode):void;
 
-	pipeMessage (payload:Buffer, to:HydraNode):void;
+	pipeMessage (messageType:string, payload:Buffer, to:HydraNode):void;
 
 }
 

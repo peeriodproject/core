@@ -8,7 +8,7 @@ var events = require('events');
 
 var HydraConnectionManager = (function (_super) {
     __extends(HydraConnectionManager, _super);
-    function HydraConnectionManager(hydraConfig, protocolConnectionManager) {
+    function HydraConnectionManager(hydraConfig, protocolConnectionManager, writableFactory, readableFactory) {
         _super.call(this);
         this._protocolConnectionManager = null;
         this._keepMessageInPipelineForMs = 0;
@@ -16,7 +16,11 @@ var HydraConnectionManager = (function (_super) {
         this._retryConnectionMax = 0;
         this._openSockets = {};
         this._circuitNodes = {};
+        this._writableFactory = null;
+        this._readableFactory = null;
 
+        this._writableFactory = writableFactory;
+        this._readableFactory = readableFactory;
         this._protocolConnectionManager = protocolConnectionManager;
         this._keepMessageInPipelineForMs = hydraConfig.get('hydra.keepMessageInPipelineForSeconds') * 1000;
         this._waitForReconnectMs = hydraConfig.get('hydra.waitForReconnectInSeconds') * 1000;
@@ -62,15 +66,16 @@ var HydraConnectionManager = (function (_super) {
         }
     };
 
-    HydraConnectionManager.prototype.pipeMessage = function (payload, to) {
+    HydraConnectionManager.prototype.pipeMessage = function (messageType, payload, to) {
         var _this = this;
         var openSocketIdent = this._openSockets[to.ip];
+        var sendableBuffer = this._writableFactory.constructMessage(messageType, payload, payload.length);
 
         if (openSocketIdent) {
-            this._protocolConnectionManager.hydraWriteMessageTo(openSocketIdent, payload);
+            this._protocolConnectionManager.hydraWriteMessageTo(openSocketIdent, sendableBuffer);
         } else {
             var messageListener = function (identifier) {
-                _this._protocolConnectionManager.hydraWriteMessageTo(identifier, payload);
+                _this._protocolConnectionManager.hydraWriteMessageTo(identifier, sendableBuffer);
                 global.clearTimeout(messageTimeout);
             };
 
@@ -154,6 +159,19 @@ var HydraConnectionManager = (function (_super) {
             var node = _this._circuitNodes[theIp];
             if (node) {
                 _this._rehookConnection(node);
+            }
+        });
+
+        this._protocolConnectionManager.on('hydraMessage', function (identifier, ip, message) {
+            var msgToEmit = null;
+
+            try  {
+                msgToEmit = _this._readableFactory.create(message.getPayload());
+            } catch (e) {
+            }
+
+            if (msgToEmit && ip) {
+                _this.emit('hydraMessage', ip, msgToEmit);
             }
         });
     };
