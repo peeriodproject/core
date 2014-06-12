@@ -17,6 +17,7 @@ import HydraNode = require('./HydraNode');
  *
  * @interface
  * @class core.protocol.hydra.HydraConnectionManagerInterface
+ * @extends NodeJS.EventEmitter
  */
 interface HydraConnectionManagerInterface extends NodeJS.EventEmitter {
 
