@@ -4,7 +4,7 @@ require('should');
 
 import AdditiveSharingMessage = require('../../../../src/core/protocol/hydra/messages/AdditiveSharingMessage');
 
-describe('CORE --> PROTOCOL --> HYDRA --> AdditiveSharingMessage @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> AdditiveSharingMessage', function () {
 
 	it('should correctly deformat a message with ipv4', function () {
 		// 44.123.255.7:55555

@@ -3,7 +3,7 @@ require('should');
 
 var AdditiveSharingMessage = require('../../../../src/core/protocol/hydra/messages/AdditiveSharingMessage');
 
-describe('CORE --> PROTOCOL --> HYDRA --> AdditiveSharingMessage @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> AdditiveSharingMessage', function () {
     it('should correctly deformat a message with ipv4', function () {
         // 44.123.255.7:55555
         var ipv4Address = new Buffer([0x04, 44, 123, 255, 7, 0xd9, 0x03]), payload = new Buffer('foobario', 'utf8');
