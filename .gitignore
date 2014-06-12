@@ -33,3 +33,5 @@ node_modules
 /utils/topologyTestRunner/zmap-results.json
 /utils/topologyTestRunner/configBuilder.pyc
 *.pyc
+
+/src/public/primus.io.js
