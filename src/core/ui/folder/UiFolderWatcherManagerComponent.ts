@@ -61,6 +61,10 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 	public onConnection (spark:any):void {
 		this._connections.push(spark);
 
+		spark.on('addFolder', (path) => {
+			this._folderWatcherManager.addFolderWatcher(path);
+		});
+
 	}
 
 	/**
