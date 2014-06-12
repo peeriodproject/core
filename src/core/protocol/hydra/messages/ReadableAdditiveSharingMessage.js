@@ -7,29 +7,29 @@ var MessageByteCheatsheet = require('../../messages/MessageByteCheatsheet');
 * Extracts a given buffer.
 * For detailed information of the message's parts see the interface.
 *
-* @class core.potocol.hydra.AdditiveSharingMessage
-* @implements core.potocol.hydra.AdditiveSharingMessageInterface
+* @class core.potocol.hydra.ReadableAdditiveSharingMessage
+* @implements core.potocol.hydra.ReadableAdditiveSharingMessageInterface
 *
 * @param {Buffer} buffer The buffer to split up into its separate parts.
 */
-var AdditiveSharingMessage = (function () {
-    function AdditiveSharingMessage(buffer) {
+var ReadableAdditiveSharingMessage = (function () {
+    function ReadableAdditiveSharingMessage(buffer) {
         /**
         * The extracted IP address.
         *
-        * @member {string} core.protocol.hydra.AdditiveSharingMessage~_ip
+        * @member {string} core.protocol.hydra.ReadableAdditiveSharingMessage~_ip
         */
         this._ip = null;
         /**
         * The extracted payload for the CREATE_CELL_ADDITIVE message.
         *
-        * @member {Buffer) core.protocol.hydra.AdditiveSharingMessage~_payload
+        * @member {Buffer) core.protocol.hydra.ReadableAdditiveSharingMessage~_payload
         */
         this._payload = null;
         /**
         * The extracted port.
         *
-        * @member {number} core.protocol.hydra.AdditiveSharingMessage~_port
+        * @member {number} core.protocol.hydra.ReadableAdditiveSharingMessage~_port
         */
         this._port = null;
         var addressIndicator = buffer[0];
@@ -57,11 +57,11 @@ var AdditiveSharingMessage = (function () {
 
             portFrom = 17;
         } else {
-            throw new Error('AdditiveSharingMessageInterface: Malformed address indicator');
+            throw new Error('ReadableAdditiveSharingMessage: Malformed address indicator');
         }
 
         if (ipError) {
-            throw new Error('AdditiveSharingMessageInterface: Malformed IP');
+            throw new Error('ReadableAdditiveSharingMessage: Malformed IP');
         }
 
         this._ip = ip;
@@ -69,19 +69,19 @@ var AdditiveSharingMessage = (function () {
 
         this._payload = buffer.slice(portFrom + 2);
     }
-    AdditiveSharingMessage.prototype.getIp = function () {
+    ReadableAdditiveSharingMessage.prototype.getIp = function () {
         return this._ip;
     };
 
-    AdditiveSharingMessage.prototype.getPayload = function () {
+    ReadableAdditiveSharingMessage.prototype.getPayload = function () {
         return this._payload;
     };
 
-    AdditiveSharingMessage.prototype.getPort = function () {
+    ReadableAdditiveSharingMessage.prototype.getPort = function () {
         return this._port;
     };
-    return AdditiveSharingMessage;
+    return ReadableAdditiveSharingMessage;
 })();
 
-module.exports = AdditiveSharingMessage;
-//# sourceMappingURL=AdditiveSharingMessage.js.map
+module.exports = ReadableAdditiveSharingMessage;
+//# sourceMappingURL=ReadableAdditiveSharingMessage.js.map

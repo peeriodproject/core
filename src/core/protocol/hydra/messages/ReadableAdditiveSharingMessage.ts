@@ -1,6 +1,6 @@
 import net = require('net');
 
-import AdditiveSharingMessageInterface = require('./interfaces/AdditiveSharingMessageInterface');
+import ReadableAdditiveSharingMessageInterface = require('./interfaces/ReadableAdditiveSharingMessageInterface');
 import MessageByteCheatsheet = require('../../messages/MessageByteCheatsheet');
 
 /**
@@ -8,31 +8,31 @@ import MessageByteCheatsheet = require('../../messages/MessageByteCheatsheet');
  * Extracts a given buffer.
  * For detailed information of the message's parts see the interface.
  *
- * @class core.potocol.hydra.AdditiveSharingMessage
- * @implements core.potocol.hydra.AdditiveSharingMessageInterface
+ * @class core.potocol.hydra.ReadableAdditiveSharingMessage
+ * @implements core.potocol.hydra.ReadableAdditiveSharingMessageInterface
  *
  * @param {Buffer} buffer The buffer to split up into its separate parts.
  */
-class AdditiveSharingMessage implements AdditiveSharingMessageInterface {
+class ReadableAdditiveSharingMessage implements ReadableAdditiveSharingMessageInterface {
 
 	/**
 	 * The extracted IP address.
 	 *
-	 * @member {string} core.protocol.hydra.AdditiveSharingMessage~_ip
+	 * @member {string} core.protocol.hydra.ReadableAdditiveSharingMessage~_ip
 	 */
 	private _ip:string = null;
 
 	/**
 	 * The extracted payload for the CREATE_CELL_ADDITIVE message.
 	 *
-	 * @member {Buffer) core.protocol.hydra.AdditiveSharingMessage~_payload
+	 * @member {Buffer) core.protocol.hydra.ReadableAdditiveSharingMessage~_payload
 	 */
 	private _payload:Buffer = null;
 
 	/**
 	 * The extracted port.
 	 *
-	 * @member {number} core.protocol.hydra.AdditiveSharingMessage~_port
+	 * @member {number} core.protocol.hydra.ReadableAdditiveSharingMessage~_port
 	 */
 	private _port:number = null;
 
@@ -66,11 +66,11 @@ class AdditiveSharingMessage implements AdditiveSharingMessageInterface {
 			portFrom = 17;
 		}
 		else {
-			throw new Error('AdditiveSharingMessageInterface: Malformed address indicator');
+			throw new Error('ReadableAdditiveSharingMessage: Malformed address indicator');
 		}
 
 		if (ipError) {
-			throw new Error('AdditiveSharingMessageInterface: Malformed IP');
+			throw new Error('ReadableAdditiveSharingMessage: Malformed IP');
 		}
 
 		this._ip = ip;
@@ -93,4 +93,4 @@ class AdditiveSharingMessage implements AdditiveSharingMessageInterface {
 
 }
 
-export = AdditiveSharingMessage;
+export = ReadableAdditiveSharingMessage;

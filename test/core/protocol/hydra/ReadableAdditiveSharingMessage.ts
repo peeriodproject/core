@@ -2,9 +2,9 @@
 
 require('should');
 
-import AdditiveSharingMessage = require('../../../../src/core/protocol/hydra/messages/AdditiveSharingMessage');
+import AdditiveSharingMessage = require('../../../../src/core/protocol/hydra/messages/ReadableAdditiveSharingMessage');
 
-describe('CORE --> PROTOCOL --> HYDRA --> AdditiveSharingMessage', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> ReadableAdditiveSharingMessage', function () {
 
 	it('should correctly deformat a message with ipv4', function () {
 		// 44.123.255.7:55555
@@ -23,7 +23,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> AdditiveSharingMessage', function () {
 
 		(function () {
 			var m = new AdditiveSharingMessage(ipv4Address);
-		}).should.throw('AdditiveSharingMessageInterface: Malformed IP');
+		}).should.throw('ReadableAdditiveSharingMessage: Malformed IP');
 	});
 
 	it('should correctly deformat a message with ipv6', function () {
@@ -43,7 +43,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> AdditiveSharingMessage', function () {
 
 		(function () {
 			var m = new AdditiveSharingMessage(ipv6Address);
-		}).should.throw('AdditiveSharingMessageInterface: Malformed IP');
+		}).should.throw('ReadableAdditiveSharingMessage: Malformed IP');
 	});
 
 	it('should throw an error when deformatting a message with unknow indicator byte', function () {
@@ -52,7 +52,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> AdditiveSharingMessage', function () {
 
 		(function () {
 			new AdditiveSharingMessage(Buffer.concat([ipv4Address, payload]));
-		}).should.throw('AdditiveSharingMessageInterface: Malformed address indicator');
+		}).should.throw('ReadableAdditiveSharingMessage: Malformed address indicator');
 
 	});
 

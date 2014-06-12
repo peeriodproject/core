@@ -12,14 +12,14 @@
  * - The payload (!!! no indicator byte present) of CREATE_CELL_ADDITIVE message
  *
  * @interface
- * @class core.protocol.hydra.AdditiveSharingMessageInterface
+ * @class core.protocol.hydra.ReadableAdditiveSharingMessageInterface
  */
-interface AdditiveSharingMessageInterface {
+interface ReadableAdditiveSharingMessageInterface {
 
 	/**
 	 * Returns the extracted IP to which the payload must be relayed to.
 	 *
-	 * @method core.protocol.hydra.AdditiveSharingMessageInterface#getIp
+	 * @method core.protocol.hydra.ReadableAdditiveSharingMessageInterface#getIp
 	 *
 	 * @returns {string}
 	 */
@@ -29,7 +29,7 @@ interface AdditiveSharingMessageInterface {
 	 * Returns the payload (as buffer) which must be relayed to the extracted address in a
 	 * CREATE_CELL_ADDITIVE message.
 	 *
-	 * @method core.protocol.hydra.AdditiveSharingMessageInterface#getPayload
+	 * @method core.protocol.hydra.ReadableAdditiveSharingMessageInterface#getPayload
 	 *
 	 * @returns {Buffer}
 	 */
@@ -38,7 +38,7 @@ interface AdditiveSharingMessageInterface {
 	/**
 	 * Returns the extracted port to which the payload must be relayed to.
 	 *
-	 * @method core.protocol.hydra.AdditiveSharingMessageInterface#getPort
+	 * @method core.protocol.hydra.ReadableAdditiveSharingMessageInterface#getPort
 	 *
 	 * @returns {number}
 	 */
@@ -46,4 +46,4 @@ interface AdditiveSharingMessageInterface {
 
 }
 
-export = AdditiveSharingMessageInterface;
+export = ReadableAdditiveSharingMessageInterface;
