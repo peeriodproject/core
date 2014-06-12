@@ -3,6 +3,7 @@
 import ReadableHydraMessageInterface = require('./ReadableHydraMessageInterface');
 
 /**
+ * @interface
  * @class core.protocol.hydra.ReadableHydraMessageFactoryInterface
  */
 interface ReadableHydraMessageFactoryInterface {
