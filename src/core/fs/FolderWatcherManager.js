@@ -62,7 +62,7 @@ var FolderWatcherManager = (function () {
         /**
         * The internally used StateHandler to save and load the current set of folders to watch.
         *
-        * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_stateLoader
+        * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_stateHandler
         */
         this._stateHandler = null;
         /**
@@ -188,7 +188,7 @@ var FolderWatcherManager = (function () {
             this._watchers[pathToWatch].close();
         }
 
-        this._stateHandler.save(Object.keys(this._watchers), function (err) {
+        this._stateHandler.save(this._getState(), function (err) {
             _this._isOpen = false;
             _this._watchers = null;
 
@@ -410,6 +410,19 @@ var FolderWatcherManager = (function () {
     */
     FolderWatcherManager.prototype._getActiveWatcherPaths = function () {
         return Object.keys(this._watchers);
+    };
+
+    /**
+    * Returns the state that will be saved with the {@link core.fs.FolderWatcherManager~_stateHandler}
+    *
+    * @method core.fs.FolderWatcherManager~_getState
+    *
+    * @returns {Object}
+    */
+    FolderWatcherManager.prototype._getState = function () {
+        return {
+            paths: Object.keys(this._watchers)
+        };
     };
 
     /**

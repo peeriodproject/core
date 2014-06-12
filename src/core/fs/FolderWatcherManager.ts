@@ -79,7 +79,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 	/**
 	 * The internally used StateHandler to save and load the current set of folders to watch.
 	 *
-	 * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_stateLoader
+	 * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_stateHandler
 	 */
 	private _stateHandler:StateHandlerInterface = null;
 
@@ -207,7 +207,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 			this._watchers[pathToWatch].close();
 		}
 
-		this._stateHandler.save(Object.keys(this._watchers), (err:Error) => {
+		this._stateHandler.save(this._getState(), (err:Error) => {
 			this._isOpen = false;
 			this._watchers = null;
 
@@ -433,6 +433,19 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 	 */
 	private _getActiveWatcherPaths ():PathListInterface {
 		return Object.keys(this._watchers);
+	}
+
+	/**
+	 * Returns the state that will be saved with the {@link core.fs.FolderWatcherManager~_stateHandler}
+	 *
+	 * @method core.fs.FolderWatcherManager~_getState
+	 *
+	 * @returns {Object}
+	 */
+	private _getState ():Object {
+		return {
+			paths: Object.keys(this._watchers)
+		};
 	}
 
 	/**
