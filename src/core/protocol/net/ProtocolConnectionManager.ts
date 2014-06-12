@@ -313,7 +313,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		return undefined;
 	}
 
-	public hydraConnectTo (port:number, ip:string, callback:(err:Error, identifier:string) => any):void {
+	public hydraConnectTo (port:number, ip:string, callback?:(err:Error, identifier:string) => any):void {
 		this._tcpSocketHandler.connectTo(port, ip, (socket:TCPSocketInterface) => {
 			if (socket) {
 				var identifier:string = this._setHydraIdentifier(socket);
@@ -576,7 +576,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 	/**
 	 * Destroys a socket connection. Removes all references within the manager, clears any incmoing pending timeouts.
-	 * unhooks it from the data pipeline and forces destroys the socket itself (removing all listeners and dumping the reference).
+	 * unhooks it from the data pipeline and force destroys the socket itself (removing all listeners and dumping the reference).
 	 * Emits a `terminatedConnection` event if the socket was a confirmed one and the event should not be blocked.
 	 *
 	 * @method core.protocol.net.ProtocolConnectionManager~_destroyConnection
