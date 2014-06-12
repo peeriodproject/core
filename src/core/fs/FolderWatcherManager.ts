@@ -444,7 +444,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 	 */
 	private _getState ():Object {
 		return {
-			paths: Object.keys(this._watchers)
+			paths: Object.keys(this._watchers).concat(this._invalidWatcherPaths)
 		};
 	}
 

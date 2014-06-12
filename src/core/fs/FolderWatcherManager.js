@@ -421,7 +421,7 @@ var FolderWatcherManager = (function () {
     */
     FolderWatcherManager.prototype._getState = function () {
         return {
-            paths: Object.keys(this._watchers)
+            paths: Object.keys(this._watchers).concat(this._invalidWatcherPaths)
         };
     };
 
