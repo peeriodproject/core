@@ -5,6 +5,7 @@ var http = require('http');
 var sinon = require('sinon');
 var testUtils = require('../../utils/testUtils');
 
+var AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var UiManager = require('../../../src/core/ui/UiManager');
 var UiComponent = require('../../../src/core/ui/UiComponent');
@@ -12,11 +13,11 @@ var UiComponent = require('../../../src/core/ui/UiComponent');
 describe('CORE --> UI --> UiManager', function () {
     var sandbox;
     var configStub;
+    var appQuitHandlerStub;
     var uiManager;
 
-    var createUiManager = function (config, components, callback) {
-        uiManager = new UiManager(config, components, {
-            closeOnProcessExit: false,
+    var createUiManager = function (config, appQuitHandler, components, callback) {
+        uiManager = new UiManager(config, appQuitHandler, components, {
             onOpenCallback: function () {
                 callback();
             }
@@ -54,17 +55,19 @@ describe('CORE --> UI --> UiManager', function () {
                 }
             }
         });
+        appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
     });
 
     afterEach(function () {
         sandbox.restore();
         configStub = null;
+        appQuitHandlerStub = null;
 
         fs.unlinkSync(testUtils.getFixturePath('core/ui/uiManager/public/primus.io.js'));
     });
 
     it('should correctly instantiate the UiManager', function (done) {
-        createUiManager(configStub, [], function () {
+        createUiManager(configStub, appQuitHandlerStub, [], function () {
             uiManager.close(function () {
                 uiManager.should.be.an.instanceof(UiManager);
 
@@ -74,7 +77,7 @@ describe('CORE --> UI --> UiManager', function () {
     });
 
     it('should correctly return the open/close state', function (done) {
-        createUiManager(configStub, [], function () {
+        createUiManager(configStub, appQuitHandlerStub, [], function () {
             uiManager.open(function () {
                 uiManager.isOpen(function (err, isOpen) {
                     (err === null).should.be.true;
@@ -102,7 +105,7 @@ describe('CORE --> UI --> UiManager', function () {
     });
 
     it('should correctly find the socket client library', function (done) {
-        createUiManager(configStub, [], function () {
+        createUiManager(configStub, appQuitHandlerStub, [], function () {
             uiManager.open(function () {
                 http.get('http://localhost:3000/primus.io.js', function (res) {
                     res.statusCode.should.equal(200);
@@ -134,7 +137,7 @@ describe('CORE --> UI --> UiManager', function () {
             }
         });
 
-        createUiManager(configStub, [componentStub], function () {
+        createUiManager(configStub, appQuitHandlerStub, [componentStub], function () {
             uiManager.open(function () {
                 var socket = uiManager.getSocketServer().Socket('ws://localhost:3000');
 

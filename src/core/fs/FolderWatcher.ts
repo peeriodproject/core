@@ -3,6 +3,7 @@
 import events = require('events');
 import fs = require('fs');
 
+import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import FolderWatcherDelayedEventInterface = require('./interfaces/FolderWatcherDelayedEventInterface');
 import FolderWatcherDelayedEventListInterface = require('./interfaces/FolderWatcherDelayedEventListInterface');
@@ -21,7 +22,10 @@ import ObjectUtils = require('../utils/ObjectUtils');
  * @class core.fs.FolderWatcher
  * @implements core.fs.FolderWatcherInterface
  *
+ * @param {core.config.ConfigInterface} config
+ * @param {core.utils.AppQuitHandlerInterface} appQuitHandler
  * @param {string} pathToWatch The absolute path to the folder the watcher should manage.
+ * @param {core.utils.ClosableOptions} options (optional)
  */
 class FolderWatcher implements FolderWatcherInterface {
 
@@ -54,7 +58,7 @@ class FolderWatcher implements FolderWatcherInterface {
 	// todo implement chokidar.d.ts
 	private _watcher:any = null;
 
-	constructor (config:ConfigInterface, pathToWatch:string, options:ClosableOptions = {}) {
+	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, pathToWatch:string, options:ClosableOptions = {}) {
 		var defaults:ClosableOptions = {
 			closeOnProcessExit: true
 		};
@@ -70,9 +74,10 @@ class FolderWatcher implements FolderWatcherInterface {
 		}
 
 		if (this._options.closeOnProcessExit) {
-			process.on('exit', () => {
+			appQuitHandler.add((done) => {
 				this.close();
-			})
+				done();
+			});
 		}
 
 		this.open();

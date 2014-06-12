@@ -10,11 +10,12 @@ var logger = require('../utils/logger/LoggerFactory').create();
 * @implements RoutingTableInterface
 *
 * @param {config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {core.topology.IdInterface} id
 * @param {core.topology.BucketStoreInterface} bucketStore
 */
 var RoutingTable = (function () {
-    function RoutingTable(config, id, bucketFactory, bucketStore, contactNodeFactory, options) {
+    function RoutingTable(config, appQuitHandler, id, bucketFactory, bucketStore, contactNodeFactory, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
         /**
@@ -80,8 +81,8 @@ var RoutingTable = (function () {
         this._options = ObjectUtils.extend(defaults, options);
 
         if (this._options.closeOnProcessExit) {
-            process.on('exit', function () {
-                _this.close(_this._options.onCloseCallback);
+            appQuitHandler.add(function (done) {
+                _this.close(done);
             });
         }
 

@@ -10,6 +10,7 @@ import testUtils = require('../../utils/testUtils');
 import SearchItemIdListInterface = require('../../../src/core/search/interfaces/SearchItemIdListInterface');
 import SearchItemInterface = require('../../../src/core/search/interfaces/SearchItemInterface');
 
+import AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchClient = require('../../../src/core/search/SearchClient');
 import SearchItem = require('../../../src/core/search/SearchItem');
@@ -20,6 +21,7 @@ import SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory
 describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
+	var appQuitHandlerStub:any;
 	var searchStoreLogsFolder:string = testUtils.getFixturePath('core/search/searchStoreLogs');
 	var searchStoreDataFolder:string = testUtils.getFixturePath('core/search/searchStoreData');
 	var searchClient:SearchClient = null;
@@ -56,9 +58,10 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 			}
 		});
 
-		searchClient = new SearchClient(config, 'mainIndex', new SearchStoreFactory(), new SearchItemFactory(), {
+		appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
+
+		searchClient = new SearchClient(config, appQuitHandlerStub, 'mainIndex', new SearchStoreFactory(), new SearchItemFactory(), {
 			logsPath          : searchStoreLogsFolder,
-			closeOnProcessExit: false,
 			onOpenCallback    : function (err:Error) {
 				if (err) {
 					throw err;
@@ -82,6 +85,7 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 
 			sandbox.restore();
 			config = null;
+			appQuitHandlerStub = null;
 
 			done();
 		});

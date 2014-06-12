@@ -17,9 +17,15 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @param {core.search.SearchClientOptions} options
 */
 var SearchClient = (function () {
-    function SearchClient(config, indexName, searchStoreFactory, searchItemFactory, options) {
+    function SearchClient(config, appQuitHandler, indexName, searchStoreFactory, searchItemFactory, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
+        /**
+        * The internally used appQuitHandler instance
+        *
+        * @member {core.utils.AppQuitHandler} core.search.SearchClient~_appQuitHandler
+        */
+        this._appQuitHandler = null;
         /**
         * The client which is used internally to make requests against the database api
         *
@@ -81,6 +87,7 @@ var SearchClient = (function () {
         };
 
         this._config = config;
+        this._appQuitHandler = appQuitHandler;
         this._indexName = indexName.toLowerCase();
         this._searchStoreFactory = searchStoreFactory;
         this._searchItemFactory = searchItemFactory;
@@ -89,8 +96,8 @@ var SearchClient = (function () {
         this._options.logsPath = path.resolve(__dirname, this._options.logsPath);
 
         if (this._options.closeOnProcessExit) {
-            process.on('exit', function () {
-                _this.close(_this._options.onCloseCallback);
+            appQuitHandler.add(function (done) {
+                _this.close(done);
             });
         }
 
@@ -312,7 +319,7 @@ var SearchClient = (function () {
             onOpenCallback: onSearchStoreOpen
         }));
 
-        this._searchStore = this._searchStoreFactory.create(this._config, searchStoreOptions);
+        this._searchStore = this._searchStoreFactory.create(this._config, this._appQuitHandler, searchStoreOptions);
     };
 
     SearchClient.prototype.typeExists = function (type, callback) {
@@ -418,6 +425,11 @@ var SearchClient = (function () {
     };
 
     /**
+    * Returns `true` if given response objects matches with the http status code ( >= 200 < 300) or the error matches the specified error name.
+    * This method is used to gracefully ignore expected errors such as `not found` or `already exists`.
+    *
+    * @method core.search.SearchClient~_isValidResponse
+    *
     * @param {Error} err
     * @param {number} status
     * @param {string} errorNameToIgnore

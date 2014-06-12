@@ -7,17 +7,8 @@ var SearchStore = require('./SearchStore');
 var SearchStoreFactory = (function () {
     function SearchStoreFactory() {
     }
-    /**
-    * Creates a search store instance
-    *
-    * @method core.search.SearchStoreFactory#create
-    *
-    * @param {core.config.ConfigInterface} config
-    * @param {core.search.SearchStoreOptions} options
-    * @returns {core.search.SearchStoreInterface}
-    */
-    SearchStoreFactory.prototype.create = function (config, options) {
-        return new SearchStore(config, options);
+    SearchStoreFactory.prototype.create = function (config, appQuitHandler, options) {
+        return new SearchStore(config, appQuitHandler, options);
     };
 
     /**

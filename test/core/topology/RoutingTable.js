@@ -4,6 +4,8 @@ require('should');
 var sinon = require('sinon');
 var testUtils = require('../../utils/testUtils');
 
+var AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
+
 var RoutingTable = require('../../../src/core/topology/RoutingTable');
 var Bucket = require('../../../src/core/topology/Bucket');
 var BucketFactory = require('../../../src/core/topology/BucketFactory');
@@ -15,6 +17,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 describe('CORE --> TOPOLOGY --> RoutingTable', function () {
     var sandbox;
     var configStub;
+    var appQuitHandlerStub;
     var me;
     var bucketStub;
     var bucketFactoryStub;
@@ -48,6 +51,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
                 }
             }
         });
+        appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
         me = ContactNodeFactory.createDummy();
         bucketStub = testUtils.stubPublicApi(sandbox, Bucket, {
             get: function (id, callback) {
@@ -68,12 +72,20 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 
     afterEach(function () {
         sandbox.restore();
+
+        configStub = null;
+        appQuitHandlerStub = null;
+        me = null;
+        bucketStub = null;
+        bucketFactoryStub = null;
+        bucketStoreStub = null;
+        contactNodeFactoryStub = null;
     });
 
     it('should correctly instantiate RoutingTable without error', function () {
         var routingTable;
 
-        routingTable = new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub);
+        routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub);
         routingTable.should.be.an.instanceof(RoutingTable);
         routingTable.close();
     });
@@ -90,7 +102,6 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
         };
 
         var opts = {
-            closeOnProcessExit: false,
             onCloseCallback: function () {
                 onClose();
                 checkDone();
@@ -101,14 +112,13 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             }
         };
 
-        routingTable = (new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub, opts));
+        routingTable = (new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub, opts));
         routingTable.close();
     });
 
     it('should correctly create topology.bitLength buckets', function (done) {
         var routingTable;
         var opts = {
-            closeOnProcessExit: false,
             onOpenCallback: function () {
                 bucketFactoryStub.create.callCount.should.equal(topologyBitLength);
 
@@ -116,13 +126,12 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             }
         };
 
-        routingTable = new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub, opts);
+        routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub, opts);
     });
 
     it('should correctly call the internal close method', function (done) {
         var routingTable;
         var opts = {
-            closeOnProcessExit: false,
             onCloseCallback: function () {
                 if (bucketStub.close.callCount === topologyBitLength) {
                     done();
@@ -130,16 +139,14 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             }
         };
 
-        routingTable = new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub, opts);
+        routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub, opts);
         routingTable.close();
     });
 
     it('should correctly return the isOpen value', function (done) {
         var routingTable;
 
-        routingTable = new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub, {
-            closeOnProcessExit: false
-        });
+        routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub);
         routingTable.isOpen(function (err, isOpen1) {
             isOpen1.should.be.true;
 
@@ -173,9 +180,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             }
         });
 
-        routingTable = new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub, {
-            closeOnProcessExit: false
-        });
+        routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub);
 
         routingTable.getAllContactNodesSize(function (err, size) {
             size.should.equal(topologyBitLength * 10);
@@ -189,9 +194,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
         var routingTable;
         var contact = ContactNodeFactory.createDummy();
 
-        routingTable = new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub, {
-            closeOnProcessExit: false
-        });
+        routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub);
 
         routingTable.getContactNode(contact.getId(), function (err, contact) {
             bucketStub.get.calledOnce.should.be.true;
@@ -204,9 +207,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
         var routingTable;
         var contact = ContactNodeFactory.createDummy();
 
-        routingTable = new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub, {
-            closeOnProcessExit: false
-        });
+        routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub);
 
         routingTable.updateContactNode(contact, function (err, longestNotSeenContact) {
             bucketStub.update.calledOnce.should.be.true;
@@ -219,7 +220,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
         var routingTable;
 
         beforeEach(function () {
-            routingTable = new RoutingTable(configStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub);
+            routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub);
         });
 
         afterEach(function () {
@@ -311,8 +312,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
                 var oldContact = ContactNodeFactory.createDummy(ids[1]);
                 var newContact = ContactNodeFactory.createDummy(ids[2]);
 
-                routingTable = new RoutingTable(configStub, owner.getId(), bucketFactory, bucketStore, contactNodeFactory, {
-                    closeOnProcessExit: false,
+                routingTable = new RoutingTable(configStub, appQuitHandlerStub, owner.getId(), bucketFactory, bucketStore, contactNodeFactory, {
                     onOpenCallback: function () {
                         routingTable.replaceContactNode(oldContact, newContact, function (err) {
                             err.should.be.an.instanceof(Error);
@@ -336,9 +336,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 
                 var newContact = ContactNodeFactory.createDummy(newIdBitString);
 
-                routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
-                    closeOnProcessExit: false
-                });
+                routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory);
 
                 routingTable.updateContactNode(oldContact, function (err) {
                     routingTable.replaceContactNode(oldContact, newContact, function (err) {
@@ -363,8 +361,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             it('should not fail if the buckets are empty', function (done) {
                 var routingTable;
 
-                routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
-                    closeOnProcessExit: false,
+                routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
                     onOpenCallback: function () {
                         routingTable.getRandomContactNode(function (err, contact) {
                             (err === null).should.be.true;
@@ -379,8 +376,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             it('should correctly return a random contact node', function (done) {
                 var routingTable;
 
-                routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
-                    closeOnProcessExit: false,
+                routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
                     onOpenCallback: function () {
                         createContactNodes(routingTable, 100, function () {
                             routingTable.getRandomContactNode(function (err, contact) {
@@ -413,9 +409,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
                 var routingTable;
                 var excludeContactNode = ContactNodeFactory.createDummy();
 
-                routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
-                    closeOnProcessExit: false
-                });
+                routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory);
 
                 routingTable.updateContactNode(excludeContactNode, function () {
                     createContactNodes(routingTable, 10, function () {
@@ -435,9 +429,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             it('should correctly limit the return value to k contact nodes', function (done) {
                 var routingTable;
 
-                routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
-                    closeOnProcessExit: false
-                });
+                routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory);
 
                 createContactNodes(routingTable, 100, function () {
                     routingTable.getClosestContactNodes(targetNode.getId(), null, function (err, contacts) {
@@ -451,9 +443,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             it('should correctly return all contact nodes', function (done) {
                 var routingTable;
 
-                routingTable = new RoutingTable(configStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
-                    closeOnProcessExit: false
-                });
+                routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory);
 
                 createContactNodes(routingTable, 10, function () {
                     routingTable.getClosestContactNodes(targetNode.getId(), null, function (err, contacts) {
@@ -516,9 +506,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
                 var owner = ContactNodeFactory.createDummy(ownerIdStr);
                 var customTargetNode = ContactNodeFactory.createDummy(targetIdStr);
 
-                routingTable = new RoutingTable(customConfigStub, owner.getId(), bucketFactory, bucketStore, contactNodeFactory, {
-                    closeOnProcessExit: false
-                });
+                routingTable = new RoutingTable(customConfigStub, appQuitHandlerStub, owner.getId(), bucketFactory, bucketStore, contactNodeFactory);
 
                 createContactNodesFromIds(ids, 0, function () {
                     routingTable.getClosestContactNodes(customTargetNode.getId(), null, function (err, contacts) {

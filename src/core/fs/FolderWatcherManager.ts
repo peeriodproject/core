@@ -4,6 +4,7 @@ import events = require('events');
 import fs = require('fs-extra');
 import path = require('path');
 
+import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
 import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import FolderWatcherFactoryInterface = require('./interfaces/FolderWatcherFactoryInterface');
@@ -23,11 +24,19 @@ var EventEmitter = events.EventEmitter;
  * @implements core.fs.FolderWatcherManagerInterface
  *
  * @param {core.config.ConfigInterface} config
+ * @param {core.utils.AppQuitHandlerInterface} appQuitHandler
  * @param {core.utils.StateHandlerFactoryInterface} stateHandlerFactory
  * @param {core.fs.FolderWatcherFactoryInterface} folderWatcherFactory
  * @param {core.utils.ClosableAsyncOptions} options
  */
 class FolderWatcherManager implements FolderWatcherManagerInterface {
+
+	/**
+	 * The internally used appQuitHandler instance
+	 *
+	 * @member {core.utils.AppQuitHandler} core ~_appQuitHandler
+	 */
+	private _appQuitHandler:AppQuitHandlerInterface = null;
 
 	/**
 	 * The internally used config instance
@@ -81,7 +90,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 	 */
 	private _watchers:FolderWatcherListInterface = null;
 
-	constructor (config:ConfigInterface, stateHandlerFactory:StateHandlerFactoryInterface, folderWatcherFactory:FolderWatcherFactoryInterface, options:ClosableAsyncOptions = {}) {
+	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, stateHandlerFactory:StateHandlerFactoryInterface, folderWatcherFactory:FolderWatcherFactoryInterface, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
 			closeOnProcessExit: true,
 			onCloseCallback   : function (err:Error) {
@@ -91,6 +100,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		};
 
 		this._config = config;
+		this._appQuitHandler = appQuitHandler;
 		this._folderWatcherFactory = folderWatcherFactory;
 		this._options = ObjectUtils.extend(defaults, options);
 
@@ -98,8 +108,8 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		this._stateHandler = stateHandlerFactory.create(statePath);
 
 		if (this._options.closeOnProcessExit) {
-			process.on('exit', () => {
-				this.close();
+			appQuitHandler.add((done) => {
+				this.close(done);
 			});
 		}
 
@@ -389,7 +399,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		var created:boolean = false;
 
 		if (!this._watchers[pathToWatch] && fs.existsSync(pathToWatch)) {
-			this._watchers[pathToWatch] = this._folderWatcherFactory.create(this._config, pathToWatch);
+			this._watchers[pathToWatch] = this._folderWatcherFactory.create(this._config, this._appQuitHandler, pathToWatch);
 			this._removeFromInvalidWatcherPaths(pathToWatch);
 
 			this._bindToWatcherEvents(this._watchers[pathToWatch]);

@@ -7,12 +7,14 @@ import fs = require('fs');
 import sinon = require('sinon');
 import testUtils = require('../../utils/testUtils');
 
+import AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchStore = require('../../../src/core/search/SearchStore');
 
 describe('CORE --> SEARCH --> SearchStore', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
+	var appQuitHandlerStub:any;
 	var searchStoreLogsFolder:string = testUtils.getFixturePath('core/search/searchStoreLogs');
 	var searchStoreDataFolder:string = testUtils.getFixturePath('core/search/searchStoreData');
 	var searchStore:SearchStore = null;
@@ -41,9 +43,10 @@ describe('CORE --> SEARCH --> SearchStore', function () {
 			}
 		});
 
-		searchStore = new SearchStore(config, {
+		appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
+
+		searchStore = new SearchStore(config, appQuitHandlerStub, {
 			logPath           : searchStoreLogsFolder,
-			closeOnProcessExit: false,
 			onOpenCallback    : function (err:Error) {
 				if (err) {
 					throw err;
@@ -63,6 +66,7 @@ describe('CORE --> SEARCH --> SearchStore', function () {
 
 			sandbox.restore();
 			config = null;
+			appQuitHandlerStub = null;
 
 			done();
 		});

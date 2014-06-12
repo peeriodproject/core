@@ -7,6 +7,7 @@ import fs = require('fs');
 import sinon = require('sinon');
 import testUtils = require('../../utils/testUtils');
 
+import AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 import JSONStateHandler = require('../../../src/core/utils/JSONStateHandler');
 import JSONStateHandlerFactory = require('../../../src/core/utils/JSONStateHandlerFactory');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
@@ -19,6 +20,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 	var validPathToWatch:string = testUtils.getFixturePath('core/fs/folderWatcherManagerTest/folderToWatch');
 	var sandbox:SinonSandbox;
 	var configStub:any;
+	var appQuitHandlerStub:any;
 	var folderWatcherStub:any;
 	var folderWatcherFactoryStub:any;
 	var stateHandlerStub:any;
@@ -53,6 +55,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 				}
 			}
 		});
+		appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
 
 		createStateHandlerStub();
 
@@ -77,14 +80,18 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 	afterEach(function () {
 		sandbox.restore();
 
+		configStub = null;
+		appQuitHandlerStub = null;
+		stateHandlerFactoryStub = null;
+		folderWatcherStub = null;
+		folderWatcherFactoryStub = null;
+
 		testUtils.deleteFolderRecursive(managerStoragePath);
 		testUtils.deleteFolderRecursive(validPathToWatch);
 	});
 
 	it('should correctly instantiate FolderWatcherManager without error', function (done) {
-		var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-			closeOnProcessExit: false
-		});
+		var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub);
 
 		folderWatcherManager.should.be.an.instanceof(FolderWatcherManager);
 
@@ -98,8 +105,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 			]
 		});
 
-		var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-			closeOnProcessExit: false,
+		var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
 			onOpenCallback: function (err) {
 				(err === null).should.be.true;
 
@@ -136,8 +142,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 			]
 		});
 
-		var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-			closeOnProcessExit: false,
+		var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
 			onOpenCallback: function (err) {
 				err.should.be.an.instanceof(Error);
 				err.message.should.equal('FolderWatcherManager~_checkFolderWatcherPaths: The specified path is not absolute. "./not/a/absolute/path"');
@@ -156,8 +161,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 
 		var onWatcherAdd = sinon.spy();
 
-		var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-			closeOnProcessExit: false,
+		var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
 			onOpenCallback: function (err) {
 				(err === null).should.be.true;
 
@@ -186,8 +190,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 
 		var onWatcherInvalid = sinon.spy();
 
-		var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-			closeOnProcessExit: false,
+		var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
 			onOpenCallback: function (err) {
 				testUtils.deleteFolderRecursive(validPathToWatch);
 
@@ -216,8 +219,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 
 		testUtils.deleteFolderRecursive(validPathToWatch);
 
-		var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-			closeOnProcessExit: false,
+		var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
 			onOpenCallback: function (err) {
 				testUtils.createFolder(validPathToWatch);
 
@@ -243,8 +245,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 
 		var onWatcherRemove = sinon.spy();
 
-		var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-			closeOnProcessExit: false,
+		var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
 			onOpenCallback: function (err) {
 				folderWatcherFactoryStub.create.calledOnce.should.be.true;
 
@@ -269,8 +270,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 			paths: []
 		});
 
-		var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-			closeOnProcessExit: false,
+		var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
 			onOpenCallback: function (err) {
 				folderWatcherFactoryStub.create.callCount.should.equal(0);
 
@@ -310,7 +310,6 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 			folderWatcherFactoryStub = testUtils.stubPublicApi(sandbox, FolderWatcherFactory, {
 				create: function (config, pathToWatch, options) {
 					options = options || {};
-					options.closeOnProcessExit = false;
 					return new FolderWatcher(folderWatcherConfigStub, pathToWatch, options);
 				}
 			});
@@ -329,8 +328,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 				]
 			});
 
-			var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-				closeOnProcessExit: false,
+			var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
 				onOpenCallback    : function (err) {
 					folderWatcherManager.on('add', function (changedPath:string, stats:fs.Stats) {
 						changedPath.should.equal(validPathToWatch + '/foo.txt');
@@ -355,8 +353,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 
 			fs.writeFileSync(filePath, new Buffer(100));
 
-			var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-				closeOnProcessExit: false,
+			var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
 				onOpenCallback    : function (err) {
 					folderWatcherManager.on('add', function (changedPath:string, stats:fs.Stats) {
 						fs.writeFileSync(filePath, new Buffer(500));
@@ -384,8 +381,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 			fs.writeFileSync(filePath, new Buffer(100));
 
 			var onAddChangeCallback = function() {};
-			var folderWatcherManager = new FolderWatcherManager(configStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-				closeOnProcessExit: false,
+			var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
 				onOpenCallback    : function (err) {
 					// on/off test
 					folderWatcherManager.on('change', onAddChangeCallback);

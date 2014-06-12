@@ -1,3 +1,4 @@
+import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import FolderWatcherFactoryInterface = require('./interfaces/FolderWatcherFactoryInterface');
 import FolderWatcherInterface = require('./interfaces/FolderWatcherInterface');
@@ -10,8 +11,8 @@ import FolderWatcher = require('./FolderWatcher');
  */
 class FolderWatcherFactory implements FolderWatcherFactoryInterface {
 
-	public create(config:ConfigInterface, pathToWatch:string):FolderWatcherInterface {
-		return new FolderWatcher(config, pathToWatch);
+	public create(config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, pathToWatch:string):FolderWatcherInterface {
+		return new FolderWatcher(config, appQuitHandler, pathToWatch);
 	}
 
 }

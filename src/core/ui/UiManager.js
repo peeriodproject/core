@@ -14,15 +14,20 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @implements core.ui.UiManagerInterface
 *
 * @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {core.ui.UiComponentListInterface} components
-* @param {core.utils.ClosableAsyncOptions} options
+* @param {core.utils.ClosableAsyncOptions} options (optional)
 */
 var UiManager = (function () {
-    function UiManager(config, components, options) {
+    function UiManager(config, appQuitHandler, components, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
+        /**
+        * A list of components managed by the manager instance
+        *
+        * @member {core.ui.UiComponentListInterface} core.ui.UiManager~_channelComponentsMap
+        */
         this._components = [];
-        //private _connections:Array<net.Socket> = [];
         /**
         * A map of UiComponents per channel
         *
@@ -86,7 +91,7 @@ var UiManager = (function () {
         */
         this._socketServer = null;
         var defaults = {
-            closeOnProcessExit: false,
+            closeOnProcessExit: true,
             onCloseCallback: function () {
             },
             onOpenCallback: function () {
@@ -98,8 +103,8 @@ var UiManager = (function () {
         this._options = ObjectUtils.extend(defaults, options);
 
         if (this._options.closeOnProcessExit) {
-            process.on('exit', function () {
-                _this.close(_this._options.onCloseCallback);
+            appQuitHandler.add(function (done) {
+                _this.close(done);
             });
         }
 
@@ -313,6 +318,11 @@ var UiManager = (function () {
         this._setupSocketChannels();
     };
 
+    /**
+    * Binds the members of the {@link core.ui.UiManager~_channelsMap} to the connection event of the corresponding channel
+    *
+    * @method core.ui.UiManager~_setupSocketChannels
+    */
     UiManager.prototype._setupSocketChannels = function () {
         var _this = this;
         var channelNames = Object.keys(this._channelsMap);
@@ -363,6 +373,8 @@ var UiManager = (function () {
     * Starts the http server (and the ) and calls the callback on listening.
     *
     * @method core.ui.UiManager~_startServers
+    *
+    * @param {Function} callback
     */
     UiManager.prototype._startServers = function (callback) {
         /*this._socketServer.on('connection', (spark) => {

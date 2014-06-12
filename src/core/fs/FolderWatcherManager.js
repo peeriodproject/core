@@ -12,14 +12,21 @@ var EventEmitter = events.EventEmitter;
 * @implements core.fs.FolderWatcherManagerInterface
 *
 * @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {core.utils.StateHandlerFactoryInterface} stateHandlerFactory
 * @param {core.fs.FolderWatcherFactoryInterface} folderWatcherFactory
 * @param {core.utils.ClosableAsyncOptions} options
 */
 var FolderWatcherManager = (function () {
-    function FolderWatcherManager(config, stateHandlerFactory, folderWatcherFactory, options) {
+    function FolderWatcherManager(config, appQuitHandler, stateHandlerFactory, folderWatcherFactory, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
+        /**
+        * The internally used appQuitHandler instance
+        *
+        * @member {core.utils.AppQuitHandler} core ~_appQuitHandler
+        */
+        this._appQuitHandler = null;
         /**
         * The internally used config instance
         *
@@ -73,6 +80,7 @@ var FolderWatcherManager = (function () {
         };
 
         this._config = config;
+        this._appQuitHandler = appQuitHandler;
         this._folderWatcherFactory = folderWatcherFactory;
         this._options = ObjectUtils.extend(defaults, options);
 
@@ -80,8 +88,8 @@ var FolderWatcherManager = (function () {
         this._stateHandler = stateHandlerFactory.create(statePath);
 
         if (this._options.closeOnProcessExit) {
-            process.on('exit', function () {
-                _this.close();
+            appQuitHandler.add(function (done) {
+                _this.close(done);
             });
         }
 
@@ -368,7 +376,7 @@ var FolderWatcherManager = (function () {
         var created = false;
 
         if (!this._watchers[pathToWatch] && fs.existsSync(pathToWatch)) {
-            this._watchers[pathToWatch] = this._folderWatcherFactory.create(this._config, pathToWatch);
+            this._watchers[pathToWatch] = this._folderWatcherFactory.create(this._config, this._appQuitHandler, pathToWatch);
             this._removeFromInvalidWatcherPaths(pathToWatch);
 
             this._bindToWatcherEvents(this._watchers[pathToWatch]);

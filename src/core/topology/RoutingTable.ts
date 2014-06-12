@@ -1,3 +1,4 @@
+import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
 import BucketFactoryInterface = require('./interfaces/BucketFactoryInterface');
 import BucketInterface = require('./interfaces/BucketInterface');
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
@@ -23,6 +24,7 @@ var logger = require('../utils/logger/LoggerFactory').create();
  * @implements RoutingTableInterface
  *
  * @param {config.ConfigInterface} config
+ * @param {core.utils.AppQuitHandlerInterface} appQuitHandler
  * @param {core.topology.IdInterface} id
  * @param {core.topology.BucketStoreInterface} bucketStore
  */
@@ -82,7 +84,7 @@ class RoutingTable implements RoutingTableInterface {
 	 */
 	private _options:RoutingTableOptions = null;
 
-	constructor (config:ConfigInterface, id:IdInterface, bucketFactory:BucketFactoryInterface, bucketStore:BucketStoreInterface, contactNodeFactory:ContactNodeFactoryInterface, options:RoutingTableOptions = {}) {
+	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, id:IdInterface, bucketFactory:BucketFactoryInterface, bucketStore:BucketStoreInterface, contactNodeFactory:ContactNodeFactoryInterface, options:RoutingTableOptions = {}) {
 
 		var defaults:RoutingTableOptions = {
 			closeOnProcessExit: true,
@@ -101,8 +103,8 @@ class RoutingTable implements RoutingTableInterface {
 		this._options = ObjectUtils.extend(defaults, options);
 
 		if (this._options.closeOnProcessExit) {
-			process.on('exit', () => {
-				this.close(this._options.onCloseCallback);
+			appQuitHandler.add((done) => {
+				this.close(done);
 			});
 		}
 
