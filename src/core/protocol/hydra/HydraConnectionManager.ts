@@ -26,6 +26,15 @@ import ReadableHydraMessageInterface = require('./messages/interfaces/ReadableHy
 class HydraConnectionManager extends events.EventEmitter implements HydraConnectionManagerInterface {
 
 	/**
+	 * Keeps track of how often a node has been added / removed to / fram the circuit node list.
+	 * Only when the count is zero is it really removed from the circuit node list.
+	 * This is because a node can be part of multiple circuits.
+	 *
+	 * @member {Object} core.protocol.hydra.HydraConnectionManager~_circuitNodeCount
+	 */
+	private _circuitNodeCount:{[ip:string]:number} = {};
+
+	/**
 	 * The key-value list of circuit nodes, where key is the IP address and value is the Node.
 	 *
 	 * @member {Object} core.protocol.hydra.HydraConnectionManager~_circuitNodes
@@ -112,6 +121,10 @@ class HydraConnectionManager extends events.EventEmitter implements HydraConnect
 		return this._circuitNodes;
 	}
 
+	public getCircuitNodeCount ():Object {
+		return this._circuitNodeCount;
+	}
+
 	/**
 	 * END Testing purposes only
 	 */
@@ -121,24 +134,32 @@ class HydraConnectionManager extends events.EventEmitter implements HydraConnect
 
 		if (!this._circuitNodes[ip]) {
 			this._circuitNodes[ip] = node;
+			this._circuitNodeCount[ip] = 1;
 
 			var ident:string = this._openSockets[ip];
 			if (ident) {
 				this._protocolConnectionManager.keepHydraSocketOpen(ident);
 			}
 		}
+		else {
+			this._circuitNodeCount[ip]++;
+		}
 	}
 
 	public removeFromCircuitNodes (node:HydraNode):void {
 		var ip:string = node.ip;
 
-		delete this._circuitNodes[ip];
+		if (this._circuitNodeCount[ip]) {
+			if (--this._circuitNodeCount[ip] === 0) {
+				delete this._circuitNodeCount[ip];
+				delete this._circuitNodes[ip];
 
-		var ident:string = this._openSockets[ip];
-		if (ident) {
-			this._protocolConnectionManager.keepHydraSocketNoLongerOpen(ident);
+				var ident:string = this._openSockets[ip];
+				if (ident) {
+					this._protocolConnectionManager.keepHydraSocketNoLongerOpen(ident);
+				}
+			}
 		}
-
 	}
 
 	public pipeMessage (messageType:string, payload:Buffer, to:HydraNode):void {

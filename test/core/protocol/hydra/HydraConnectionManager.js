@@ -126,6 +126,11 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConnectionManager @current', func
         connectionManager.getCircuitNodeList()['1'].ip.should.equal('1');
     });
 
+    it('should adjust the count of the circuit nodes', function () {
+        connectionManager.addToCircuitNodes({ ip: '1' });
+        connectionManager.getCircuitNodeCount()['1'].should.equal(2);
+    });
+
     it('should add the socket to open sockets and keep the existing hydra socket open', function (done) {
         connectionManager.on('1', function (identifier) {
             if (identifier === 'hydra1') {
@@ -137,6 +142,13 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConnectionManager @current', func
         });
 
         emitSocket('hydra1', '1');
+    });
+
+    it('should decrease the count of the circuit node, but keep the socket open', function () {
+        connectionManager.removeFromCircuitNodes({ ip: '1' });
+        connectionManager.getCircuitNodeCount()['1'].should.equal(1);
+        connectionManager.getCircuitNodeList()['1'].ip.should.equal('1');
+        (hydraSocketKeptNoLongerOpen == null).should.be.true;
     });
 
     it('should end the socket if it is already present under this ip', function () {
@@ -209,7 +221,8 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConnectionManager @current', func
 
         connectionManager.removeFromCircuitNodes({ ip: '2' });
 
-        (connectionManager.getCircuitNodeList()[2] === undefined).should.be.true;
+        (connectionManager.getCircuitNodeList()['2'] === undefined).should.be.true;
+        (connectionManager.getCircuitNodeCount()['2'] === undefined).should.be.true;
         hydraSocketKeptNoLongerOpen.should.equal('hydra6');
     });
 

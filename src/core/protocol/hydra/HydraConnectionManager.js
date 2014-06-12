@@ -24,6 +24,14 @@ var HydraConnectionManager = (function (_super) {
     function HydraConnectionManager(hydraConfig, protocolConnectionManager, writableFactory, readableFactory) {
         _super.call(this);
         /**
+        * Keeps track of how often a node has been added / removed to / fram the circuit node list.
+        * Only when the count is zero is it really removed from the circuit node list.
+        * This is because a node can be part of multiple circuits.
+        *
+        * @member {Object} core.protocol.hydra.HydraConnectionManager~_circuitNodeCount
+        */
+        this._circuitNodeCount = {};
+        /**
         * The key-value list of circuit nodes, where key is the IP address and value is the Node.
         *
         * @member {Object} core.protocol.hydra.HydraConnectionManager~_circuitNodes
@@ -97,6 +105,10 @@ var HydraConnectionManager = (function (_super) {
         return this._circuitNodes;
     };
 
+    HydraConnectionManager.prototype.getCircuitNodeCount = function () {
+        return this._circuitNodeCount;
+    };
+
     /**
     * END Testing purposes only
     */
@@ -105,22 +117,30 @@ var HydraConnectionManager = (function (_super) {
 
         if (!this._circuitNodes[ip]) {
             this._circuitNodes[ip] = node;
+            this._circuitNodeCount[ip] = 1;
 
             var ident = this._openSockets[ip];
             if (ident) {
                 this._protocolConnectionManager.keepHydraSocketOpen(ident);
             }
+        } else {
+            this._circuitNodeCount[ip]++;
         }
     };
 
     HydraConnectionManager.prototype.removeFromCircuitNodes = function (node) {
         var ip = node.ip;
 
-        delete this._circuitNodes[ip];
+        if (this._circuitNodeCount[ip]) {
+            if (--this._circuitNodeCount[ip] === 0) {
+                delete this._circuitNodeCount[ip];
+                delete this._circuitNodes[ip];
 
-        var ident = this._openSockets[ip];
-        if (ident) {
-            this._protocolConnectionManager.keepHydraSocketNoLongerOpen(ident);
+                var ident = this._openSockets[ip];
+                if (ident) {
+                    this._protocolConnectionManager.keepHydraSocketNoLongerOpen(ident);
+                }
+            }
         }
     };
 
