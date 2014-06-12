@@ -4,12 +4,14 @@ require('should');
 var sinon = require('sinon');
 var testUtils = require('../../utils/testUtils');
 
+var AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var SearchStore = require('../../../src/core/search/SearchStore');
 
 describe('CORE --> SEARCH --> SearchStore', function () {
     var sandbox;
     var config;
+    var appQuitHandlerStub;
     var searchStoreLogsFolder = testUtils.getFixturePath('core/search/searchStoreLogs');
     var searchStoreDataFolder = testUtils.getFixturePath('core/search/searchStoreData');
     var searchStore = null;
@@ -35,9 +37,10 @@ describe('CORE --> SEARCH --> SearchStore', function () {
             }
         });
 
-        searchStore = new SearchStore(config, {
+        appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
+
+        searchStore = new SearchStore(config, appQuitHandlerStub, {
             logPath: searchStoreLogsFolder,
-            closeOnProcessExit: false,
             onOpenCallback: function (err) {
                 if (err) {
                     throw err;
@@ -56,6 +59,7 @@ describe('CORE --> SEARCH --> SearchStore', function () {
 
             sandbox.restore();
             config = null;
+            appQuitHandlerStub = null;
 
             done();
         });

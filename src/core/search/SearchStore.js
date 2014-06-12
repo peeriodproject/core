@@ -17,10 +17,11 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @implements core.search.SearchStoreInterface
 *
 * @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {core.search.SearchStore.Options} options
 */
 var SearchStore = (function () {
-    function SearchStore(config, options) {
+    function SearchStore(config, appQuitHandler, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
         /**
@@ -57,8 +58,8 @@ var SearchStore = (function () {
         this._options = ObjectUtils.extend(SearchStore.getDefaults(), options);
 
         if (this._options.closeOnProcessExit) {
-            process.on('exit', function () {
-                _this.close(_this._options.onCloseCallback);
+            appQuitHandler.add(function (done) {
+                _this.close(done);
             });
         }
 

@@ -12,7 +12,7 @@ interface AppQuitHandlerInterface {
 	 *
 	 * @param {Function} callback
 	 */
-	add (callback:(done:Function) => any):void;
+	add (callback:(done:(err?:Error) => any) => any):void;
 
 	/**
 	 * Starts the quit procedure.
@@ -24,7 +24,7 @@ interface AppQuitHandlerInterface {
 	 *
 	 * @param {Function} callback
 	 */
-	remove (callback:(done:Function) => any):void;
+	remove (callback:(done:(err?:Error) => any) => any):void;
 
 }
 

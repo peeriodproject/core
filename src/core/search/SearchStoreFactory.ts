@@ -1,3 +1,4 @@
+import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import SearchStoreFactoryInterface = require('./interfaces/SearchStoreFactoryInterface');
 import SearchStoreInterface = require('./interfaces/SearchStoreInterface');
@@ -11,17 +12,8 @@ import SearchStore = require('./SearchStore');
  */
 class SearchStoreFactory implements SearchStoreFactoryInterface {
 
-	/**
-	 * Creates a search store instance
-	 *
-	 * @method core.search.SearchStoreFactory#create
-	 *
-	 * @param {core.config.ConfigInterface} config
-	 * @param {core.search.SearchStoreOptions} options
-	 * @returns {core.search.SearchStoreInterface}
-	 */
-	public create (config:ConfigInterface, options?:SearchStoreOptions):SearchStoreInterface {
-		return new SearchStore(config, options);
+	public create (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, options?:SearchStoreOptions):SearchStoreInterface {
+		return new SearchStore(config, appQuitHandler, options);
 	}
 
 	/**

@@ -8,6 +8,7 @@ import path = require('path');
 var PrimusIo = require('primus.io');
 var nodeStatic = require('node-static');
 
+import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
 import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import UiComponentInterface = require('./interfaces/UiComponentInterface');
@@ -22,14 +23,18 @@ import ObjectUtils = require('../utils/ObjectUtils');
  * @implements core.ui.UiManagerInterface
  *
  * @param {core.config.ConfigInterface} config
+ * @param {core.utils.AppQuitHandlerInterface} appQuitHandler
  * @param {core.ui.UiComponentListInterface} components
- * @param {core.utils.ClosableAsyncOptions} options
+ * @param {core.utils.ClosableAsyncOptions} options (optional)
  */
 class UiManager implements UiManagerInterface {
 
+	/**
+	 * A list of components managed by the manager instance
+	 *
+	 * @member {core.ui.UiComponentListInterface} core.ui.UiManager~_channelComponentsMap
+	 */
 	private _components:UiComponentListInterface = [];
-
-	//private _connections:Array<net.Socket> = [];
 
 	/**
 	 * A map of UiComponents per channel
@@ -102,9 +107,9 @@ class UiManager implements UiManagerInterface {
 	 */
 	private _socketServer = null;
 
-	constructor (config:ConfigInterface, components:UiComponentListInterface, options:ClosableAsyncOptions = {}) {
+	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, components:UiComponentListInterface, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
-			closeOnProcessExit: false,
+			closeOnProcessExit: true,
 			onCloseCallback   : function () {
 			},
 			onOpenCallback    : function () {
@@ -116,8 +121,8 @@ class UiManager implements UiManagerInterface {
 		this._options = ObjectUtils.extend(defaults, options);
 
 		if (this._options.closeOnProcessExit) {
-			process.on('exit', () => {
-				this.close(this._options.onCloseCallback);
+			appQuitHandler.add((done) => {
+				this.close(done);
 			});
 		}
 
@@ -336,6 +341,11 @@ class UiManager implements UiManagerInterface {
 		this._setupSocketChannels();
 	}
 
+	/**
+	 * Binds the members of the {@link core.ui.UiManager~_channelsMap} to the connection event of the corresponding channel
+	 *
+	 * @method core.ui.UiManager~_setupSocketChannels
+	 */
 	private _setupSocketChannels ():void {
 		var channelNames:Array<string> = Object.keys(this._channelsMap);
 
@@ -384,6 +394,8 @@ class UiManager implements UiManagerInterface {
 	 * Starts the http server (and the ) and calls the callback on listening.
 	 *
 	 * @method core.ui.UiManager~_startServers
+	 *
+	 * @param {Function} callback
 	 */
 	private _startServers (callback:Function):void {
 		/*this._socketServer.on('connection', (spark) => {

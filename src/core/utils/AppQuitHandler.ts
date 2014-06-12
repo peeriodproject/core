@@ -37,7 +37,7 @@ class AppQuitHandler implements AppQuitHandlerInterface {
 		this._app = app;
 	}
 
-	public add (callback:(done:Function) => any):void {
+	public add (callback:(done:(err?:Error) => any) => any):void {
 		if (this._callbacks.indexOf(callback) === -1) {
 			this._callbacks.push(callback);
 		}
@@ -55,7 +55,7 @@ class AppQuitHandler implements AppQuitHandlerInterface {
 		}
 	}
 
-	public remove (callback:(done:Function) => any):void {
+	public remove (callback:(done:(err?:Error) => any) => any):void {
 		var index = this._callbacks.indexOf(callback);
 
 		if (index !== -1) {

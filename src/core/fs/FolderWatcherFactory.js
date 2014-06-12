@@ -7,8 +7,8 @@ var FolderWatcher = require('./FolderWatcher');
 var FolderWatcherFactory = (function () {
     function FolderWatcherFactory() {
     }
-    FolderWatcherFactory.prototype.create = function (config, pathToWatch) {
-        return new FolderWatcher(config, pathToWatch);
+    FolderWatcherFactory.prototype.create = function (config, appQuitHandler, pathToWatch) {
+        return new FolderWatcher(config, appQuitHandler, pathToWatch);
     };
     return FolderWatcherFactory;
 })();

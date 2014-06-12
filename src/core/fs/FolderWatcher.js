@@ -12,10 +12,13 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @class core.fs.FolderWatcher
 * @implements core.fs.FolderWatcherInterface
 *
+* @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {string} pathToWatch The absolute path to the folder the watcher should manage.
+* @param {core.utils.ClosableOptions} options (optional)
 */
 var FolderWatcher = (function () {
-    function FolderWatcher(config, pathToWatch, options) {
+    function FolderWatcher(config, appQuitHandler, pathToWatch, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
         this._config = null;
@@ -53,8 +56,9 @@ var FolderWatcher = (function () {
         };
 
         if (this._options.closeOnProcessExit) {
-            process.on('exit', function () {
+            appQuitHandler.add(function (done) {
                 _this.close();
+                done();
             });
         }
 
