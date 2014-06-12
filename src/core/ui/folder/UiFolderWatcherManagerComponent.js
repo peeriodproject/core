@@ -47,7 +47,12 @@ var UiFolderWatcherManagerComponent = (function () {
     };
 
     UiFolderWatcherManagerComponent.prototype.onConnection = function (spark) {
+        var _this = this;
         this._connections.push(spark);
+
+        spark.on('addFolder', function (path) {
+            _this._folderWatcherManager.addFolderWatcher(path);
+        });
     };
 
     /**

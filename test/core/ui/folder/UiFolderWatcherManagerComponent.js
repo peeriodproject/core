@@ -11,6 +11,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
     var eventListeners;
     var folderWatcherManagerStub;
     var sparkStub;
+    var sparkOnListeners;
 
     beforeEach(function () {
         sandbox = sinon.sandbox.create();
@@ -24,9 +25,17 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
                 eventListeners[eventName] = callback;
             }
         });
+        sparkOnListeners = {};
 
         sparkStub = {
-            send: sandbox.spy()
+            send: sandbox.spy(),
+            on: function (eventName, listener) {
+                if (!sparkOnListeners[eventName]) {
+                    sparkOnListeners[eventName] = [];
+                }
+
+                sparkOnListeners[eventName].push(listener);
+            }
         };
         component = new UiFolderWatcherManagerComponent(folderWatcherManagerStub);
     });
@@ -37,6 +46,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
         folderWatcherManagerStub = null;
         eventListeners = null;
         sparkStub = null;
+        sparkOnListeners = null;
     });
 
     it('should correctly instantiate without error', function () {
@@ -160,6 +170,18 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
         for (var i in folders) {
             folders[i].items.should.equal(0);
         }
+    });
+
+    it('should correctly call the FolderWatcherManager.addFolderWatcher method when the spark receives an "addFolder" event', function () {
+        var newFolderPath = '/the/path/to/the/folder/to/add';
+
+        component.onConnection(sparkStub);
+
+        sparkOnListeners['addFolder'].length.should.equal(1);
+        sparkOnListeners['addFolder'][0](newFolderPath);
+
+        folderWatcherManagerStub.addFolderWatcher.calledOnce.should.be.true;
+        folderWatcherManagerStub.addFolderWatcher.getCall(0).args[0].should.equal(newFolderPath);
     });
 });
 //# sourceMappingURL=UiFolderWatcherManagerComponent.js.map

@@ -39,6 +39,10 @@ var FolderWatcherFactory = require('./fs/FolderWatcherFactory');
 var FolderWatcherManager = require('./fs/FolderWatcherManager');
 var PathValidator = require('./fs/PathValidator');
 
+// ui imports
+var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
+var UiManager = require('./ui/UiManager');
+
 var App = {
     start: function (dataPath, win) {
         //this.startTopology(dataPath, win);
@@ -46,11 +50,13 @@ var App = {
     },
     startIndexer: function (dataPath, win) {
         var testFolderPath = path.resolve(__dirname, '../../utils/TestFolder');
+        var externalFolderPath = path.resolve('/Volumes/External/path/Folder');
 
-        var fsConfig = new JSONConfig('../../config/mainConfig.json', ['fs']);
+        var fsConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'fs']);
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var searchConfig = new JSONConfig('../../config/mainConfig.json', ['search']);
         var pluginConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'plugin']);
+        var uiConfig = new JSONConfig('../../config/mainConfig.json', ['ui']);
 
         var searchStoreFactory = new SearchStoreFactory();
         var searchItemFactory = new SearchItemFactory();
@@ -68,8 +74,16 @@ var App = {
         var stateHandlerFactory = new JSONStateHandlerFactory();
         var folderWatcherFactory = new FolderWatcherFactory();
 
-        var folderWatcherManager = new FolderWatcherManager(appConfig, stateHandlerFactory, folderWatcherFactory);
+        var folderWatcherManager = new FolderWatcherManager(fsConfig, stateHandlerFactory, folderWatcherFactory);
         var pathValidator = new PathValidator();
+
+        // ui components
+        var uiFolderWatcherManagerComponent = new UiFolderWatcherManagerComponent(folderWatcherManager);
+        var uiManager = new UiManager(uiConfig, [uiFolderWatcherManagerComponent]);
+
+        // -----------------------
+        folderWatcherManager.addFolderWatcher(testFolderPath);
+        folderWatcherManager.addFolderWatcher(externalFolderPath);
         //var IndexManager = new IndexManager(searchConfig, folderWatcherManager, pathValidator, searchManager);
     },
     startTopology: function (dataPath, win) {
