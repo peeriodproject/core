@@ -7,7 +7,7 @@ import PluginInterface = require('./PluginInterface');
 import PluginMapInterface = require('./PluginMapInterface');
 import PluginPathListInterface = require('./PluginPathListInterface');
 import PluginRunnerInterface = require('./PluginRunnerInterface');
-import PluginRunnerListInterface = require('./PluginRunnerListInterface');
+import PluginRunnerMapInterface = require('./PluginRunnerMapInterface');
 import PluginStateInterface = require('./PluginStateInterface');
 
 /**
@@ -74,7 +74,7 @@ interface PluginManagerInterface extends ClosableAsyncInterface {
 	 *
 	 * @param {Function} callback
 	 */
-	getActivePluginRunners (callback:(pluginRunners:PluginRunnerListInterface) => void):void;
+	getActivePluginRunners (callback:(pluginRunners:PluginRunnerMapInterface) => void):void;
 
 	/**
 	 * Returns a list of plugins which are responsible for the given path
@@ -84,7 +84,7 @@ interface PluginManagerInterface extends ClosableAsyncInterface {
 	 * @param {string} itemPath
 	 * @param {Function} callback
 	 */
-	getPluginRunnersForItem (itemPath:string, callback:(pluginRunners:PluginRunnerListInterface) => void):void;
+	getPluginRunnersForItem (itemPath:string, callback:(pluginRunners:PluginRunnerMapInterface) => void):void;
 	/**
 	 * Returns the plugin state
 	 *

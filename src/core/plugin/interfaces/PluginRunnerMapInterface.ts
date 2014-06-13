@@ -2,10 +2,10 @@ import PluginRunnerInerface = require('./PluginRunnerInterface');
 
 /**
  * @interface
- * @class core.plugin.PluginRunnerListInerface
+ * @class core.plugin.PluginRunnerMapInerface
  */
-interface PluginRunnerListInerface {
+interface PluginRunnerMapInerface {
 	[identifier:string]: PluginRunnerInerface
 }
 
-export = PluginRunnerListInerface;
+export = PluginRunnerMapInerface;

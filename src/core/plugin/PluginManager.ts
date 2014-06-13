@@ -13,10 +13,10 @@ import PluginInterface = require('./interfaces/PluginInterface');
 import PluginManagerInterface = require('./interfaces/PluginManagerInterface');
 import PluginLoaderFactoryInterface = require('./interfaces/PluginLoaderFactoryInterface');
 import PluginLoaderInterface = require('./interfaces/PluginLoaderInterface');
-import PluginLoaderListInterface = require('./interfaces/PluginLoaderListInterface');
+import PluginLoaderMapInterface = require('./interfaces/PluginLoaderMapInterface');
 import PluginRunnerFactoryInterface = require('./interfaces/PluginRunnerFactoryInterface');
 import PluginRunnerInterface = require('./interfaces/PluginRunnerInterface');
-import PluginRunnerListInterface = require('./interfaces/PluginRunnerListInterface');
+import PluginRunnerMapInterface = require('./interfaces/PluginRunnerMapInterface');
 import PluginStateInterface = require('./interfaces/PluginStateInterface');
 import PluginStateObjectInterface = require('./interfaces/PluginStateObjectInterface');
 import PluginStateObjectListInterface = require('./interfaces/PluginStateObjectListInterface');
@@ -87,7 +87,7 @@ class PluginManager implements PluginManagerInterface {
 	 *
 	 * @member {core.plugin.PluginLoadersListInterface} core.plugin.PluginManager~_pluginLoaders
 	 */
-	private _pluginLoaders:PluginLoaderListInterface = {};
+	private _pluginLoaders:PluginLoaderMapInterface = {};
 
 	/**
 	 * The internally used {@link core.plugin.PluginRunnerFactoryInterface} instance
@@ -99,9 +99,9 @@ class PluginManager implements PluginManagerInterface {
 	/**
 	 * The list of (active) {@link core.plugin.PluginRunnerInterface}
 	 *
-	 * @member {core.plugin.PluginRunnerListInterface} core.plugin.PluginManager~_pluginRunners
+	 * @member {core.plugin.PluginRunnerMapInterface} core.plugin.PluginManager~_pluginRunners
 	 */
-	private _pluginRunners:PluginRunnerListInterface = {};
+	private _pluginRunners:PluginRunnerMapInterface = {};
 
 	/**
 	 * Represents the state of activated, deactivated and idle plugins
@@ -224,7 +224,7 @@ class PluginManager implements PluginManagerInterface {
 		this._pluginFinder.findPlugins(internalCallback);
 	}
 
-	public getActivePluginRunners (callback:(pluginRunners:PluginRunnerListInterface) => void):void {
+	public getActivePluginRunners (callback:(pluginRunners:PluginRunnerMapInterface) => void):void {
 		return process.nextTick(callback.bind(null, this._pluginRunners));
 	}
 
@@ -240,9 +240,9 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	// todo check file extension
-	public getPluginRunnersForItem (itemPath:string, callback:(pluginRunners:PluginRunnerListInterface) => void):void {
+	public getPluginRunnersForItem (itemPath:string, callback:(pluginRunners:PluginRunnerMapInterface) => void):void {
 		var mimeType = this._getMimeType(itemPath);
-		var responsibleRunners:PluginRunnerListInterface = {};
+		var responsibleRunners:PluginRunnerMapInterface = {};
 		// todo replace array<string> with PluginIdentifierListInterface
 		var map:Array<string> = this._mimeTypeMap[mimeType];
 
@@ -267,7 +267,7 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, fileHash:string, callback:(pluginDatas:Object) => any):void {
-		this.getPluginRunnersForItem(itemPath, (runners:PluginRunnerListInterface) => {
+		this.getPluginRunnersForItem(itemPath, (runners:PluginRunnerMapInterface) => {
 			var runnersLength:number = Object.keys(runners).length;
 			var counter:number = 0;
 			var useApacheTika:Array<string> = [];
