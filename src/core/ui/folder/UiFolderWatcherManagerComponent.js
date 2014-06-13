@@ -39,8 +39,8 @@ var UiFolderWatcherManagerComponent = (function () {
         var keys = Object.keys(this._folders);
         var folders = [];
 
-        for (var j in keys) {
-            folders.push(this._folders[keys[j]]);
+        for (var i = 0, l = keys.length; i < l; i++) {
+            folders.push(this._folders[keys[i]]);
         }
 
         return folders;
@@ -128,7 +128,7 @@ var UiFolderWatcherManagerComponent = (function () {
         folderPaths.sort();
         folderPaths.reverse();
 
-        for (var i in folderPaths) {
+        for (var i = 0, l = folderPaths.length; i < l; i++) {
             var path = folderPaths[i];
 
             if (itemPath.indexOf(path) === 0) {
@@ -228,7 +228,7 @@ var UiFolderWatcherManagerComponent = (function () {
         if (this._connections.length) {
             var state = this.getState();
 
-            for (var i in this._connections) {
+            for (var i = 0, l = this._connections.length; i < l; i++) {
                 this._connections[i].send('update', state);
             }
         }

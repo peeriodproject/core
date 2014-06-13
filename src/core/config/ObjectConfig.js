@@ -84,17 +84,17 @@ var ObjectConfig = (function () {
                 if (value && typeof value === 'object' && !Array.isArray(value)) {
                     recurse(value, configKeys, newKey);
                 } else if (configKeys.length) {
-                    for (var i in configKeys) {
+                    for (var ci = 0, cl = configKeys.length; ci < cl; ci++) {
                         // the key starts with the given config key, so add the property
-                        if (newKey.indexOf(configKeys[i]) === 0) {
+                        if (newKey.indexOf(configKeys[ci]) === 0) {
                             res[newKey.toLowerCase()] = value;
                             break;
                         }
                     }
                 } else {
                     if (Array.isArray(value)) {
-                        for (var j in value) {
-                            if (typeof value[j] === 'object') {
+                        for (var vi = 0, vl = value.length; vi < vl; vi++) {
+                            if (typeof value[vi] === 'object') {
                                 throw new Error('Config~_convertObjectToDotNotation: Arrays can only contain primitives.');
                             }
                         }

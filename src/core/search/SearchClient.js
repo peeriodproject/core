@@ -119,7 +119,7 @@ var SearchClient = (function () {
         };
 
         if (pluginIdentifiers.length) {
-            for (var i in pluginIdentifiers) {
+            for (var i = 0, l = pluginIdentifiers.length; i < l; i++) {
                 var identifier = pluginIdentifiers[i];
 
                 this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {

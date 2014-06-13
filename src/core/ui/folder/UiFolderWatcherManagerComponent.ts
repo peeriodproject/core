@@ -51,8 +51,8 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 		var keys:Array<string> = Object.keys(this._folders);
 		var folders:UiFolderListInterface = [];
 
-		for (var j in keys) {
-			folders.push(this._folders[keys[j]]);
+		for (var i = 0, l = keys.length; i < l; i++) {
+			folders.push(this._folders[keys[i]]);
 		}
 
 		return folders;
@@ -139,7 +139,7 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 		folderPaths.sort();
 		folderPaths.reverse();
 
-		for (var i in folderPaths) {
+		for (var i = 0, l = folderPaths.length; i < l; i++) {
 			var path:string = folderPaths[i];
 
 			if (itemPath.indexOf(path) === 0) {
@@ -238,7 +238,7 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 		if (this._connections.length) {
 			var state:Object = this.getState();
 
-			for (var i in this._connections) {
+			for (var i = 0, l = this._connections.length; i < l; i++) {
 				this._connections[i].send('update', state);
 			}
 		}

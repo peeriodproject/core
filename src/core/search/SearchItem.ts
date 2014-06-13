@@ -29,7 +29,7 @@ class SearchItem implements SearchItemInterface {
 
 		var calcScoreAverage:boolean = false;
 
-		for (var i in data) {
+		for (var i = 0, l = data.length; i < l; i++) {
 			var item = data[i];
 			var source:Object = item['_source'];
 

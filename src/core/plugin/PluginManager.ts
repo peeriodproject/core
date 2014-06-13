@@ -247,7 +247,7 @@ class PluginManager implements PluginManagerInterface {
 		var map:Array<string> = this._mimeTypeMap[mimeType];
 
 		if (map && map.length) {
-			for (var i in map) {
+			for (var i = 0, l = map.length; i < l; i++) {
 				var key:string = map[i];
 
 				responsibleRunners[key] = this._pluginRunners[key];
@@ -389,7 +389,7 @@ class PluginManager implements PluginManagerInterface {
 				var mimeTypes:Array<string> = pluginLoader.getFileMimeTypes();
 
 				if (mimeTypes.length) {
-					for (var i in mimeTypes) {
+					for (var i = 0, l = mimeTypes.length; i < l; i++) {
 						var mimeType:string = mimeTypes[i];
 
 						if (!this._mimeTypeMap[mimeType]) {

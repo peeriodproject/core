@@ -20,7 +20,7 @@ var SearchItem = (function () {
 
         var calcScoreAverage = false;
 
-        for (var i in data) {
+        for (var i = 0, l = data.length; i < l; i++) {
             var item = data[i];
             var source = item['_source'];
 

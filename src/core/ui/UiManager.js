@@ -133,7 +133,7 @@ var UiManager = (function () {
         var channelNames = Object.keys(this._channelsMap);
 
         if (channelNames.length) {
-            for (var i in channelNames) {
+            for (var i = 0, l = channelNames.length; i < l; i++) {
                 var channelName = channelNames[i];
 
                 // destroy the channel
@@ -153,7 +153,7 @@ var UiManager = (function () {
             internalCallback(null);
         });
 
-        for (var i in this._httpSockets) {
+        for (var i = 0, l = this._httpSockets.length; i < l; i++) {
             this._httpSockets[i].destroy();
         }
     };
@@ -208,7 +208,7 @@ var UiManager = (function () {
 
     UiManager.prototype._setupSocketChannelComponentMap = function () {
         if (this._components.length) {
-            for (var i in this._components) {
+            for (var i = 0, l = this._components.length; i < l; i++) {
                 var component = this._components[i];
                 var channelName = component.getChannelName();
 
@@ -328,7 +328,7 @@ var UiManager = (function () {
         var channelNames = Object.keys(this._channelsMap);
 
         if (channelNames.length) {
-            for (var i in channelNames) {
+            for (var i = 0, l = channelNames.length; i < l; i++) {
                 var channelName = channelNames[i];
 
                 this._channelsMap[channelName].on('connection', function (connection) {

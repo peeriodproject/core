@@ -122,6 +122,7 @@ class IrcLogger implements LoggerInterface {
 
 		var functionName:string = '';
 
+		// todo proper for loop!
 		for (var i in stack) {
 			var name = stack[i].getFunctionName();
 			var fileName = stack[i].getFileName();

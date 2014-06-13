@@ -162,7 +162,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		// check active watchers
 		this._checkFolderWatcherPaths(this._getActiveWatcherPaths(), (err:Error, invalidPaths:PathListInterface, validPaths:PathListInterface) => {
 			if (invalidPaths && invalidPaths.length) {
-				for (var i in invalidPaths) {
+				for (var i = 0, l = invalidPaths.length; i < l; i++) {
 					var invalidPath:string = invalidPaths[i];
 					var removed:boolean = false;
 
@@ -181,7 +181,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		// check invalid Paths
 		this._checkFolderWatcherPaths(this._invalidWatcherPaths, (err:Error, invalidPaths:PathListInterface, validPaths:PathListInterface) => {
 			if (validPaths && validPaths.length) {
-				for (var i in validPaths) {
+				for (var i = 0, l = validPaths.length; i < l; i++) {
 					var validPath:string = validPaths[i];
 
 					this._createWatcher(validPath);
@@ -261,7 +261,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 				}
 				else {
 					if (invalidPaths && invalidPaths.length) {
-						for (var i in invalidPaths) {
+						for (var i = 0, l = invalidPaths.length; i < l; i++) {
 							this._addToInvalidWatcherPaths(invalidPaths[i]);
 						}
 					}
@@ -336,7 +336,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		var invalidPaths:PathListInterface = [];
 		var err:Error = null;
 
-		for (var i in pathsToWatch) {
+		for (var i = 0, l = pathsToWatch.length; i < l; i++) {
 			var pathToWatch:string = pathsToWatch[i];
 
 			if (!this._isAbsolutePath(pathToWatch)) {
@@ -378,7 +378,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 			return callback(null);
 		}
 
-		for (var i in pathsToWatch) {
+		for (var i = 0, l = pathsToWatch.length; i < l; i++) {
 			var pathToWatch:string = pathsToWatch[i];
 
 			this._createWatcher(pathToWatch);

@@ -151,7 +151,7 @@ class PluginLoader implements PluginLoaderInterface {
 		// checking inner type
 		else if (Array.isArray(field)) {
 			if (field.length) {
-				for (var i in field) {
+				for (var i = 0, l = field.length; i < l; i++) {
 					if (field[i] && field[i].constructor !== map[key + '_item']) {
 						//var name:string = Object.prototype.toString.call(map[key + '_item']).slice(8, -1);
 						var name:string = map[key + '_item'].name;

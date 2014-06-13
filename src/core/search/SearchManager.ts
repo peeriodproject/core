@@ -168,7 +168,7 @@ class SearchManager implements SearchManagerInterface {
 		var identifiers:Array<string> = Object.keys(pluginData);
 
 		if (identifiers.length) {
-			for (var i in identifiers) {
+			for (var i = 0, l = identifiers.length; i < l; i++) {
 				var identifier:string = identifiers[i];
 
 				pluginData[identifier] = ObjectUtils.extend(pluginData[identifier], {
