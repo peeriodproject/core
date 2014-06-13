@@ -18,7 +18,7 @@ module.exports = function (grunt) {
         plato: {
             source: {
                 options: {
-                    exclude: /node_modules|reports|interfaces|namespace\.js|\.json/
+                    exclude: /node_modules|reports|interfaces|public|namespace\.js|\.json/
                 },
                 files  : {
                     'build/js-source-analysis-report': ['src/**/*.js']
