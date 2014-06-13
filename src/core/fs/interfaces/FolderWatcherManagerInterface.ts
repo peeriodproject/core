@@ -1,6 +1,6 @@
 import fs = require('fs');
 
-import FolderWatcherListInterface = require('./FolderWatcherListInterface');
+import FolderWatcherListInterface = require('./FolderWatcherMapInterface');
 import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
 
 /**
