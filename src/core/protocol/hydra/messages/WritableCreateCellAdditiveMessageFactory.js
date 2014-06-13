@@ -26,7 +26,7 @@ var WritableCreateCellAdditiveMessageFactory = (function () {
             throw new Error('WritableCreateCellAdditiveMessageFactory: UUID must have 16 octets.');
         }
 
-        var indicatorBuffer = new Buffer([isInitiator ? HydraByteCheatsheet.createCellAdditive.isInitiator : HydraByteCheatsheet.createCellAdditive.isInitiator]);
+        var indicatorBuffer = new Buffer([isInitiator ? HydraByteCheatsheet.createCellAdditive.isInitiator : HydraByteCheatsheet.createCellAdditive.notInitiator]);
 
         var circuitIdBuffer = isInitiator ? new Buffer(circuitId, 'hex') : new Buffer(0);
 

@@ -26,7 +26,7 @@ class WritableCreateCellAdditiveMessageFactory implements WritableCreateCellAddi
 			throw new Error('WritableCreateCellAdditiveMessageFactory: UUID must have 16 octets.')
 		}
 
-		var indicatorBuffer:Buffer = new Buffer([isInitiator ? HydraByteCheatsheet.createCellAdditive.isInitiator : HydraByteCheatsheet.createCellAdditive.isInitiator]);
+		var indicatorBuffer:Buffer = new Buffer([isInitiator ? HydraByteCheatsheet.createCellAdditive.isInitiator : HydraByteCheatsheet.createCellAdditive.notInitiator]);
 
 		var circuitIdBuffer:Buffer = isInitiator ? new Buffer(circuitId, 'hex') : new Buffer(0);
 
