@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">71.51</p>
+      <p class="stat">70.91</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">485</p>
+      <p class="stat">506</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">68.44</p>
+      <p class="stat">77.57</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.91</p>
+      <p class="stat">3.18</p>
     </div>
   </div>
 </div>
@@ -104,14 +104,21 @@ var EventEmitter = events.EventEmitter;
 * @implements core.fs.FolderWatcherManagerInterface
 *
 * @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {core.utils.StateHandlerFactoryInterface} stateHandlerFactory
 * @param {core.fs.FolderWatcherFactoryInterface} folderWatcherFactory
 * @param {core.utils.ClosableAsyncOptions} options
 */
 var FolderWatcherManager = (function () {
-    function FolderWatcherManager(config, stateHandlerFactory, folderWatcherFactory, options) {
+    function FolderWatcherManager(config, appQuitHandler, stateHandlerFactory, folderWatcherFactory, options) {
         if (typeof options === &quot;undefined&quot;) { options = {}; }
         var _this = this;
+        /**
+        * The internally used appQuitHandler instance
+        *
+        * @member {core.utils.AppQuitHandler} core ~_appQuitHandler
+        */
+        this._appQuitHandler = null;
         /**
         * The internally used config instance
         *
@@ -147,7 +154,7 @@ var FolderWatcherManager = (function () {
         /**
         * The internally used StateHandler to save and load the current set of folders to watch.
         *
-        * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_stateLoader
+        * @member {core.utils.StateHandlerInterface} core.fs.FolderWatcherManager~_stateHandler
         */
         this._stateHandler = null;
         /**
@@ -165,6 +172,7 @@ var FolderWatcherManager = (function () {
         };
 
         this._config = config;
+        this._appQuitHandler = appQuitHandler;
         this._folderWatcherFactory = folderWatcherFactory;
         this._options = ObjectUtils.extend(defaults, options);
 
@@ -172,8 +180,8 @@ var FolderWatcherManager = (function () {
         this._stateHandler = stateHandlerFactory.create(statePath);
 
         if (this._options.closeOnProcessExit) {
-            process.on(&#039;exit&#039;, function () {
-                _this.close();
+            appQuitHandler.add(function (done) {
+                _this.close(done);
             });
         }
 
@@ -226,7 +234,7 @@ var FolderWatcherManager = (function () {
         // check active watchers
         this._checkFolderWatcherPaths(this._getActiveWatcherPaths(), function (err, invalidPaths, validPaths) {
             if (invalidPaths &amp;&amp; invalidPaths.length) {
-                for (var i in invalidPaths) {
+                for (var i = 0, l = invalidPaths.length; i &lt; l; i++) {
                     var invalidPath = invalidPaths[i];
                     var removed = false;
 
@@ -245,7 +253,7 @@ var FolderWatcherManager = (function () {
         // check invalid Paths
         this._checkFolderWatcherPaths(this._invalidWatcherPaths, function (err, invalidPaths, validPaths) {
             if (validPaths &amp;&amp; validPaths.length) {
-                for (var i in validPaths) {
+                for (var i = 0, l = validPaths.length; i &lt; l; i++) {
                     var validPath = validPaths[i];
 
                     _this._createWatcher(validPath);
@@ -272,7 +280,7 @@ var FolderWatcherManager = (function () {
             this._watchers[pathToWatch].close();
         }
 
-        this._stateHandler.save(Object.keys(this._watchers), function (err) {
+        this._stateHandler.save(this._getState(), function (err) {
             _this._isOpen = false;
             _this._watchers = null;
 
@@ -326,7 +334,7 @@ var FolderWatcherManager = (function () {
                     internalCallback(err);
                 } else {
                     if (invalidPaths &amp;&amp; invalidPaths.length) {
-                        for (var i in invalidPaths) {
+                        for (var i = 0, l = invalidPaths.length; i &lt; l; i++) {
                             _this._addToInvalidWatcherPaths(invalidPaths[i]);
                         }
                     }
@@ -401,7 +409,7 @@ var FolderWatcherManager = (function () {
         var invalidPaths = [];
         var err = null;
 
-        for (var i in pathsToWatch) {
+        for (var i = 0, l = pathsToWatch.length; i &lt; l; i++) {
             var pathToWatch = pathsToWatch[i];
 
             if (!this._isAbsolutePath(pathToWatch)) {
@@ -439,7 +447,7 @@ var FolderWatcherManager = (function () {
             return callback(null);
         }
 
-        for (var i in pathsToWatch) {
+        for (var i = 0, l = pathsToWatch.length; i &lt; l; i++) {
             var pathToWatch = pathsToWatch[i];
 
             this._createWatcher(pathToWatch);
@@ -460,7 +468,7 @@ var FolderWatcherManager = (function () {
         var created = false;
 
         if (!this._watchers[pathToWatch] &amp;&amp; fs.existsSync(pathToWatch)) {
-            this._watchers[pathToWatch] = this._folderWatcherFactory.create(this._config, pathToWatch);
+            this._watchers[pathToWatch] = this._folderWatcherFactory.create(this._config, this._appQuitHandler, pathToWatch);
             this._removeFromInvalidWatcherPaths(pathToWatch);
 
             this._bindToWatcherEvents(this._watchers[pathToWatch]);
@@ -494,6 +502,19 @@ var FolderWatcherManager = (function () {
     */
     FolderWatcherManager.prototype._getActiveWatcherPaths = function () {
         return Object.keys(this._watchers);
+    };
+
+    /**
+    * Returns the state that will be saved with the {@link core.fs.FolderWatcherManager~_stateHandler}
+    *
+    * @method core.fs.FolderWatcherManager~_getState
+    *
+    * @returns {Object}
+    */
+    FolderWatcherManager.prototype._getState = function () {
+        return {
+            paths: Object.keys(this._watchers).concat(this._invalidWatcherPaths)
+        };
     };
 
     /**

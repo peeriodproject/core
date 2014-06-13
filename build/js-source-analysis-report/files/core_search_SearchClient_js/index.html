@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">71.36</p>
+      <p class="stat">71.08</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">430</p>
+      <p class="stat">442</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">59.19</p>
+      <p class="stat">61.51</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.22</p>
+      <p class="stat">3.28</p>
     </div>
   </div>
 </div>
@@ -109,9 +109,15 @@ var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
 * @param {core.search.SearchClientOptions} options
 */
 var SearchClient = (function () {
-    function SearchClient(config, indexName, searchStoreFactory, searchItemFactory, options) {
+    function SearchClient(config, appQuitHandler, indexName, searchStoreFactory, searchItemFactory, options) {
         if (typeof options === &quot;undefined&quot;) { options = {}; }
         var _this = this;
+        /**
+        * The internally used appQuitHandler instance
+        *
+        * @member {core.utils.AppQuitHandler} core.search.SearchClient~_appQuitHandler
+        */
+        this._appQuitHandler = null;
         /**
         * The client which is used internally to make requests against the database api
         *
@@ -173,6 +179,7 @@ var SearchClient = (function () {
         };
 
         this._config = config;
+        this._appQuitHandler = appQuitHandler;
         this._indexName = indexName.toLowerCase();
         this._searchStoreFactory = searchStoreFactory;
         this._searchItemFactory = searchItemFactory;
@@ -181,8 +188,8 @@ var SearchClient = (function () {
         this._options.logsPath = path.resolve(__dirname, this._options.logsPath);
 
         if (this._options.closeOnProcessExit) {
-            process.on(&#039;exit&#039;, function () {
-                _this.close(_this._options.onCloseCallback);
+            appQuitHandler.add(function (done) {
+                _this.close(done);
             });
         }
 
@@ -204,7 +211,7 @@ var SearchClient = (function () {
         };
 
         if (pluginIdentifiers.length) {
-            for (var i in pluginIdentifiers) {
+            for (var i = 0, l = pluginIdentifiers.length; i &lt; l; i++) {
                 var identifier = pluginIdentifiers[i];
 
                 this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
@@ -404,7 +411,7 @@ var SearchClient = (function () {
             onOpenCallback: onSearchStoreOpen
         }));
 
-        this._searchStore = this._searchStoreFactory.create(this._config, searchStoreOptions);
+        this._searchStore = this._searchStoreFactory.create(this._config, this._appQuitHandler, searchStoreOptions);
     };
 
     SearchClient.prototype.typeExists = function (type, callback) {
@@ -510,6 +517,11 @@ var SearchClient = (function () {
     };
 
     /**
+    * Returns `true` if given response objects matches with the http status code ( &gt;= 200 &lt; 300) or the error matches the specified error name.
+    * This method is used to gracefully ignore expected errors such as `not found` or `already exists`.
+    *
+    * @method core.search.SearchClient~_isValidResponse
+    *
     * @param {Error} err
     * @param {number} status
     * @param {string} errorNameToIgnore

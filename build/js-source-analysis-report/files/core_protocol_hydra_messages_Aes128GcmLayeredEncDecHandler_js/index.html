@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.36</p>
+      <p class="stat">68.01</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">111</p>
+      <p class="stat">174</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">44.02</p>
+      <p class="stat">45.42</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.85</p>
+      <p class="stat">0.90</p>
     </div>
   </div>
 </div>
@@ -93,8 +93,21 @@
     <textarea id="file-source" class="col-md-12">var Aes128GcmReadableDecryptedMessage = require(&#039;./Aes128GcmReadableDecryptedMessage&#039;);
 var Aes128GcmWritableMessageFactory = require(&#039;./Aes128GcmWritableMessageFactory&#039;);
 
+/**
+* Layered encryption/decryption handler using AES-128-GCM
+*
+* @class core.protocol.hydra.Aes128GcmLayeredEncDecHandler
+* @implements core.protocol.hydra.LayeredEncDecHandlerInterface
+*
+* @param {core.protocol.hydra.HydraNode} initialNode Optional. Node which gets added to the node list at once.
+*/
 var Aes128GcmLayeredEncDecHandler = (function () {
     function Aes128GcmLayeredEncDecHandler(initialNode) {
+        /**
+        * Ordered list which stores the nodes used for layered encryption / decryption.
+        *
+        * @member {Array&lt;core.protocol.hydra.HydraNode&gt;} core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_nodes
+        */
         this._nodes = [];
         if (initialNode) {
             this.addNode(initialNode);
@@ -122,35 +135,49 @@ var Aes128GcmLayeredEncDecHandler = (function () {
         if (!this._nodes.length) {
             callback(new Error(&#039;Aes128GcmLayeredEncDecHandler: No nodes for encryption&#039;), null);
         } else {
-            this._iterativeEncrypt(0, payload, earlyExit, callback);
-        }
-    };
+            var startAt = this._nodes.length - 1;
 
-    Aes128GcmLayeredEncDecHandler.prototype._iterativeEncrypt = function (index, payload, earlyExit, callback) {
-        var _this = this;
-        var nodeSize = this._nodes.length - 1;
-        var node = this._nodes[nodeSize - index];
-        var isExit = earlyExit ? this._compareNodes(node, earlyExit) : (index === nodeSize);
+            if (earlyExit) {
+                var found = false;
 
-        if (earlyExit &amp;&amp; index === nodeSize &amp;&amp; !isExit) {
-            callback(new Error(&#039;Aes128GcmLayeredEncDecHandler: All nodes exhausted, no early exit node found.&#039;), null);
-        } else {
-            this._encryptFactory.encryptMessage(node.outgoingKey, (index === 0), payload, function (err, encryptedMsg) {
-                if (err) {
-                    callback(err, null);
-                } else {
-                    if (isExit) {
-                        callback(null, encryptedMsg);
-                    } else {
-                        setImmediate(function () {
-                            _this._iterativeEncrypt(++index, encryptedMsg, earlyExit, callback);
-                        });
+                for (var i = 0; i &lt; this._nodes.length; i++) {
+                    if (this._compareNodes(this._nodes[i], earlyExit)) {
+                        startAt = i;
+                        found = true;
+                        break;
                     }
                 }
-            });
+
+                if (!found) {
+                    callback(new Error(&#039;Aes128GcmLayeredEncDecHandler: All nodes exhausted, no early exit node found.&#039;), null);
+                    return;
+                }
+            }
+
+            this._iterativeEncrypt(startAt, true, payload, callback);
         }
     };
 
+    /**
+    * Returns the ordered list of nodes used for layered encryption / decryption.
+    *
+    * @method core.protocol.hydra.Aes128GcmLayeredEncDecHandler#getNodes
+    *
+    * @returns {Array&lt;core.protocol.hydra.HydraNode&gt;}
+    */
+    Aes128GcmLayeredEncDecHandler.prototype.getNodes = function () {
+        return this._nodes;
+    };
+
+    /**
+    * Compares two hydra nodes by their outgoing symmetric keys.
+    *
+    * @method core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_compareNodes
+    *
+    * @param {core.protocol.hydra.HydraNode} a
+    * @param {core.protocol.hydra.HydraNode} b
+    * @returns {boolean} `true` if the keys are identical, `false` otherwise
+    */
     Aes128GcmLayeredEncDecHandler.prototype._compareNodes = function (a, b) {
         var c = a.outgoingKey;
         var d = b.outgoingKey;
@@ -171,9 +198,18 @@ var Aes128GcmLayeredEncDecHandler = (function () {
         return ret;
     };
 
+    /**
+    * Iteratively decrypts a message in the &#039;peeling off layer by layer&#039; fashion.
+    *
+    * @method core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_iterativeDecrypt
+    *
+    * @param {number} index Index of node in list to decrypt with
+    * @param {Buffer} payload Payload to decrypt
+    * @param {Function} callback
+    */
     Aes128GcmLayeredEncDecHandler.prototype._iterativeDecrypt = function (index, payload, callback) {
         var _this = this;
-        if (index === this._nodes.length - 1) {
+        if (index === this._nodes.length) {
             callback(new Error(&#039;Aes128GcmLayeredEncDecHandler: All nodes exhausted, could not completely decrypt.&#039;), null);
         } else {
             var calledBack = false;
@@ -196,6 +232,33 @@ var Aes128GcmLayeredEncDecHandler = (function () {
                 }
             }
         }
+    };
+
+    /**
+    * Iteratively encrypts a message layer by layer (up to finsish or early exit node)
+    *
+    * @method core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_iterativeEncrypt
+    *
+    * @param {number} index Index of node in list to encrypt with.
+    * @param {boolean} isReceiver Indicates whether the message should be encrypted as a &#039;receiver&#039; message
+    * @param {Buffer} payload Payload to encrypt
+    * @param {Function} callback
+    */
+    Aes128GcmLayeredEncDecHandler.prototype._iterativeEncrypt = function (index, isReceiver, payload, callback) {
+        var _this = this;
+        this._encryptFactory.encryptMessage(this._nodes[index].outgoingKey, isReceiver, payload, function (err, encryptedMsg) {
+            if (err) {
+                callback(err, null);
+            } else {
+                if (index === 0) {
+                    callback(null, encryptedMsg);
+                } else {
+                    setImmediate(function () {
+                        _this._iterativeEncrypt(--index, false, encryptedMsg, callback);
+                    });
+                }
+            }
+        });
     };
     return Aes128GcmLayeredEncDecHandler;
 })();
