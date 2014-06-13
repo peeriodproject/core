@@ -1,7 +1,7 @@
 import FolderWatcherInterface = require('./FolderWatcherInterface');
 
 /**
- * @interface core.fs.FolderWatcherListInterface
+ * @interface core.fs.FolderWatcherMapInterface
  */
 interface FolderWatcherMapInterface {
 	[path:string]:FolderWatcherInterface;

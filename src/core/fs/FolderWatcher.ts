@@ -6,7 +6,7 @@ import fs = require('fs');
 import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import FolderWatcherDelayedEventInterface = require('./interfaces/FolderWatcherDelayedEventInterface');
-import FolderWatcherDelayedEventListInterface = require('./interfaces/FolderWatcherDelayedEventListInterface');
+import FolderWatcherDelayedEventMapInterface = require('./interfaces/FolderWatcherDelayedEventMapInterface');
 import FolderWatcherDelaysInterface = require('./interfaces/FolderWatcherDelaysInterface');
 import FolderWatcherInterface = require('./interfaces/FolderWatcherInterface');
 import ClosableOptions = require('../utils/interfaces/ClosableOptions');
@@ -33,7 +33,7 @@ class FolderWatcher implements FolderWatcherInterface {
 
 	private _currentEmptyFilePaths:PathListInterface = [];
 
-	private _currentDelayedEvents:FolderWatcherDelayedEventListInterface = {};
+	private _currentDelayedEvents:FolderWatcherDelayedEventMapInterface = {};
 
 	private _eventDelayOptions:FolderWatcherDelaysInterface = null;
 

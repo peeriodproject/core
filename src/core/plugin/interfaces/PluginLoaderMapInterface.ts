@@ -2,10 +2,10 @@ import PluginLoaderInterface = require('./PluginLoaderInterface');
 
 /**
  * @interface
- * @class core.plugin.PluginLoaderListInterface
+ * @class core.plugin.PluginLoaderMapInterface
  */
-interface PluginLoaderListInterface {
+interface PluginLoaderMapInterface {
 	[identifier:string]: PluginLoaderInterface
 }
 
-export = PluginLoaderListInterface;
+export = PluginLoaderMapInterface;

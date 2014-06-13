@@ -9,7 +9,7 @@ import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions'
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import FolderWatcherFactoryInterface = require('./interfaces/FolderWatcherFactoryInterface');
 import FolderWatcherInterface = require('./interfaces/FolderWatcherInterface');
-import FolderWatcherListInterface = require('./interfaces/FolderWatcherListInterface');
+import FolderWatcherMapInterface = require('./interfaces/FolderWatcherMapInterface');
 import FolderWatcherManagerInterface = require('./interfaces/FolderWatcherManagerInterface');
 import PathListInterface = require('./interfaces/PathListInterface');
 import StateHandlerInterface = require('../utils/interfaces/StateHandlerInterface');
@@ -86,9 +86,9 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 	/**
 	 * The list of currently active {@link core.fs.FolderWatcherInteface} instances
 	 *
-	 * @member {core.fs.FolderWatcherListInterface} core.fs.FolderWatcherManager~_watchers
+	 * @member {core.fs.FolderWatcherMapInterface} core.fs.FolderWatcherManager~_watchers
 	 */
-	private _watchers:FolderWatcherListInterface = null;
+	private _watchers:FolderWatcherMapInterface = null;
 
 	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, stateHandlerFactory:StateHandlerFactoryInterface, folderWatcherFactory:FolderWatcherFactoryInterface, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
