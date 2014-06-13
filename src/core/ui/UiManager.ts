@@ -153,7 +153,7 @@ class UiManager implements UiManagerInterface {
 		var channelNames = Object.keys(this._channelsMap);
 
 		if (channelNames.length) {
-			for (var i in channelNames) {
+			for (var i = 0, l = channelNames.length; i < l; i++) {
 				var channelName:string = channelNames[i];
 
 				// destroy the channel
@@ -173,7 +173,7 @@ class UiManager implements UiManagerInterface {
 			internalCallback(null);
 		});
 
-		for (var i in this._httpSockets) {
+		for (var i = 0, l = this._httpSockets.length; i < l; i++) {
 			this._httpSockets[i].destroy();
 		}
 	}
@@ -228,7 +228,7 @@ class UiManager implements UiManagerInterface {
 
 	private _setupSocketChannelComponentMap ():void {
 		if (this._components.length) {
-			for (var i in this._components) {
+			for (var i = 0, l = this._components.length; i < l; i++) {
 				var component:UiComponentInterface = this._components[i];
 				var channelName = component.getChannelName();
 
@@ -350,7 +350,7 @@ class UiManager implements UiManagerInterface {
 		var channelNames:Array<string> = Object.keys(this._channelsMap);
 
 		if (channelNames.length) {
-			for (var i in channelNames) {
+			for (var i = 0, l = channelNames.length; i < l; i++) {
 				var channelName:string = channelNames[i];
 
 				this._channelsMap[channelName].on('connection', (connection) => {

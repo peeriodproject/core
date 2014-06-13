@@ -74,7 +74,7 @@ var PluginManager = (function () {
         /**
         * The list of (active) {@link core.plugin.PluginRunnerInterface}
         *
-        * @member {core.plugin.PluginRunnerListInterface} core.plugin.PluginManager~_pluginRunners
+        * @member {core.plugin.PluginRunnerMapInterface} core.plugin.PluginManager~_pluginRunners
         */
         this._pluginRunners = {};
         /**
@@ -216,7 +216,7 @@ var PluginManager = (function () {
         var map = this._mimeTypeMap[mimeType];
 
         if (map && map.length) {
-            for (var i in map) {
+            for (var i = 0, l = map.length; i < l; i++) {
                 var key = map[i];
 
                 responsibleRunners[key] = this._pluginRunners[key];
@@ -353,7 +353,7 @@ var PluginManager = (function () {
                 var mimeTypes = pluginLoader.getFileMimeTypes();
 
                 if (mimeTypes.length) {
-                    for (var i in mimeTypes) {
+                    for (var i = 0, l = mimeTypes.length; i < l; i++) {
                         var mimeType = mimeTypes[i];
 
                         if (!_this._mimeTypeMap[mimeType]) {

@@ -41,6 +41,7 @@
     "should": "~3.2.0",
     "sinon": "~1.9.1",
     "supertest": "~0.10.0",
-    "travis-cov": "~0.2.5"
+    "travis-cov": "~0.2.5",
+    "grunt-benchmark": "^0.2.0"
   }
 }

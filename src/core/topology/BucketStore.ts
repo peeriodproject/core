@@ -5,6 +5,7 @@ import lmdb = require('node-lmdb');
 
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
 import ContactNodeInterface = require('./interfaces/ContactNodeInterface');
+import ContactNodeListInterface = require('./interfaces/ContactNodeListInterface');
 import ContactNodeObjectInterface = require('./interfaces/ContactNodeObjectInterface');
 import ContactNodeObjectListInterface = require('./interfaces/ContactNodeObjectListInterface');
 
@@ -68,11 +69,11 @@ class BucketStore implements BucketStoreInterface {
 	}
 
 	// todo remove depencency to ContactNodeInterface and use keyed objects instead
-	public addAll (bucketKey:string, contacts:Array<ContactNodeInterface>):boolean {
+	public addAll (bucketKey:string, contacts:ContactNodeListInterface):boolean {
 		var txn:lmdb.Txn = this._beginTransaction();
 		var added:boolean = false;
 
-		for (var i in contacts) {
+		for (var i = 0, l = contacts.length; i < l; i++) {
 			var contact:ContactNodeInterface = contacts[i];
 
 			added = this._add(txn, bucketKey, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());

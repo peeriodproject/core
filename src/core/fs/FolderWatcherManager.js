@@ -68,7 +68,7 @@ var FolderWatcherManager = (function () {
         /**
         * The list of currently active {@link core.fs.FolderWatcherInteface} instances
         *
-        * @member {core.fs.FolderWatcherListInterface} core.fs.FolderWatcherManager~_watchers
+        * @member {core.fs.FolderWatcherMapInterface} core.fs.FolderWatcherManager~_watchers
         */
         this._watchers = null;
         var defaults = {
@@ -142,7 +142,7 @@ var FolderWatcherManager = (function () {
         // check active watchers
         this._checkFolderWatcherPaths(this._getActiveWatcherPaths(), function (err, invalidPaths, validPaths) {
             if (invalidPaths && invalidPaths.length) {
-                for (var i in invalidPaths) {
+                for (var i = 0, l = invalidPaths.length; i < l; i++) {
                     var invalidPath = invalidPaths[i];
                     var removed = false;
 
@@ -161,7 +161,7 @@ var FolderWatcherManager = (function () {
         // check invalid Paths
         this._checkFolderWatcherPaths(this._invalidWatcherPaths, function (err, invalidPaths, validPaths) {
             if (validPaths && validPaths.length) {
-                for (var i in validPaths) {
+                for (var i = 0, l = validPaths.length; i < l; i++) {
                     var validPath = validPaths[i];
 
                     _this._createWatcher(validPath);
@@ -242,7 +242,7 @@ var FolderWatcherManager = (function () {
                     internalCallback(err);
                 } else {
                     if (invalidPaths && invalidPaths.length) {
-                        for (var i in invalidPaths) {
+                        for (var i = 0, l = invalidPaths.length; i < l; i++) {
                             _this._addToInvalidWatcherPaths(invalidPaths[i]);
                         }
                     }
@@ -317,7 +317,7 @@ var FolderWatcherManager = (function () {
         var invalidPaths = [];
         var err = null;
 
-        for (var i in pathsToWatch) {
+        for (var i = 0, l = pathsToWatch.length; i < l; i++) {
             var pathToWatch = pathsToWatch[i];
 
             if (!this._isAbsolutePath(pathToWatch)) {
@@ -355,7 +355,7 @@ var FolderWatcherManager = (function () {
             return callback(null);
         }
 
-        for (var i in pathsToWatch) {
+        for (var i = 0, l = pathsToWatch.length; i < l; i++) {
             var pathToWatch = pathsToWatch[i];
 
             this._createWatcher(pathToWatch);

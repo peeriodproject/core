@@ -2,10 +2,10 @@ import FolderWatcherDelayedEventInterface = require('./FolderWatcherDelayedEvent
 
 /**
  * @interface
- * @class core.fs.FolderWatcherDelayedEventListInterface
+ * @class core.fs.FolderWatcherDelayedEventMapInterface
  */
-interface FolderWatcherDelayedEventListInterface {
+interface FolderWatcherDelayedEventMapInterface {
 	[path:string]:FolderWatcherDelayedEventInterface;
 }
 
-export = FolderWatcherDelayedEventListInterface;
+export = FolderWatcherDelayedEventMapInterface;

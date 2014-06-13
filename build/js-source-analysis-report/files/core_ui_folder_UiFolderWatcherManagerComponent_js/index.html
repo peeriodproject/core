@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">74.35</p>
+      <p class="stat">73.89</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">216</p>
+      <p class="stat">229</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">42.58</p>
+      <p class="stat">47.89</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.04</p>
+      <p class="stat">1.20</p>
     </div>
   </div>
 </div>
@@ -113,7 +113,9 @@ var UiFolderWatcherManagerComponent = (function () {
         */
         this._folderWatcherManager = null;
         /**
+        * The map of currently known folders
         *
+        * @member {core.ui.folder.UiFolderMapInterface} core.ui.UiFolderWatcherManagerComponent~_folders
         */
         this._folders = {};
         this._folderWatcherManager = folderWatcherManager;
@@ -125,8 +127,24 @@ var UiFolderWatcherManagerComponent = (function () {
         return &#039;folder&#039;;
     };
 
+    UiFolderWatcherManagerComponent.prototype.getState = function () {
+        var keys = Object.keys(this._folders);
+        var folders = [];
+
+        for (var i = 0, l = keys.length; i &lt; l; i++) {
+            folders.push(this._folders[keys[i]]);
+        }
+
+        return folders;
+    };
+
     UiFolderWatcherManagerComponent.prototype.onConnection = function (spark) {
+        var _this = this;
         this._connections.push(spark);
+
+        spark.on(&#039;addFolder&#039;, function (path) {
+            _this._folderWatcherManager.addFolderWatcher(path);
+        });
     };
 
     /**
@@ -202,7 +220,7 @@ var UiFolderWatcherManagerComponent = (function () {
         folderPaths.sort();
         folderPaths.reverse();
 
-        for (var i in folderPaths) {
+        for (var i = 0, l = folderPaths.length; i &lt; l; i++) {
             var path = folderPaths[i];
 
             if (itemPath.indexOf(path) === 0) {
@@ -300,15 +318,10 @@ var UiFolderWatcherManagerComponent = (function () {
     */
     UiFolderWatcherManagerComponent.prototype._updateUi = function () {
         if (this._connections.length) {
-            for (var i in this._connections) {
-                var keys = Object.keys(this._folders);
-                var folders = [];
+            var state = this.getState();
 
-                for (var j in keys) {
-                    folders.push(this._folders[keys[j]]);
-                }
-
-                this._connections[i].send(&#039;update&#039;, folders);
+            for (var i = 0, l = this._connections.length; i &lt; l; i++) {
+                this._connections[i].send(&#039;update&#039;, state);
             }
         }
     };

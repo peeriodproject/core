@@ -9,7 +9,7 @@ import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions'
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import FolderWatcherFactoryInterface = require('./interfaces/FolderWatcherFactoryInterface');
 import FolderWatcherInterface = require('./interfaces/FolderWatcherInterface');
-import FolderWatcherListInterface = require('./interfaces/FolderWatcherListInterface');
+import FolderWatcherMapInterface = require('./interfaces/FolderWatcherMapInterface');
 import FolderWatcherManagerInterface = require('./interfaces/FolderWatcherManagerInterface');
 import PathListInterface = require('./interfaces/PathListInterface');
 import StateHandlerInterface = require('../utils/interfaces/StateHandlerInterface');
@@ -86,9 +86,9 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 	/**
 	 * The list of currently active {@link core.fs.FolderWatcherInteface} instances
 	 *
-	 * @member {core.fs.FolderWatcherListInterface} core.fs.FolderWatcherManager~_watchers
+	 * @member {core.fs.FolderWatcherMapInterface} core.fs.FolderWatcherManager~_watchers
 	 */
-	private _watchers:FolderWatcherListInterface = null;
+	private _watchers:FolderWatcherMapInterface = null;
 
 	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, stateHandlerFactory:StateHandlerFactoryInterface, folderWatcherFactory:FolderWatcherFactoryInterface, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
@@ -162,7 +162,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		// check active watchers
 		this._checkFolderWatcherPaths(this._getActiveWatcherPaths(), (err:Error, invalidPaths:PathListInterface, validPaths:PathListInterface) => {
 			if (invalidPaths && invalidPaths.length) {
-				for (var i in invalidPaths) {
+				for (var i = 0, l = invalidPaths.length; i < l; i++) {
 					var invalidPath:string = invalidPaths[i];
 					var removed:boolean = false;
 
@@ -181,7 +181,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		// check invalid Paths
 		this._checkFolderWatcherPaths(this._invalidWatcherPaths, (err:Error, invalidPaths:PathListInterface, validPaths:PathListInterface) => {
 			if (validPaths && validPaths.length) {
-				for (var i in validPaths) {
+				for (var i = 0, l = validPaths.length; i < l; i++) {
 					var validPath:string = validPaths[i];
 
 					this._createWatcher(validPath);
@@ -261,7 +261,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 				}
 				else {
 					if (invalidPaths && invalidPaths.length) {
-						for (var i in invalidPaths) {
+						for (var i = 0, l = invalidPaths.length; i < l; i++) {
 							this._addToInvalidWatcherPaths(invalidPaths[i]);
 						}
 					}
@@ -336,7 +336,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		var invalidPaths:PathListInterface = [];
 		var err:Error = null;
 
-		for (var i in pathsToWatch) {
+		for (var i = 0, l = pathsToWatch.length; i < l; i++) {
 			var pathToWatch:string = pathsToWatch[i];
 
 			if (!this._isAbsolutePath(pathToWatch)) {
@@ -378,7 +378,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 			return callback(null);
 		}
 
-		for (var i in pathsToWatch) {
+		for (var i = 0, l = pathsToWatch.length; i < l; i++) {
 			var pathToWatch:string = pathsToWatch[i];
 
 			this._createWatcher(pathToWatch);

@@ -131,19 +131,19 @@ class RoutingTable implements RoutingTableInterface {
 	}
 
 	public getAllContactNodesSize (callback:(err:Error, count:number) => any):void {
-		var bucketAmount = Object.keys(this._buckets).length;
+		var bucketKeys = Object.keys(this._buckets);
 		var processed:number = 0;
 		var contactNodeCount:number = 0;
 
 		var checkCallback:Function = function (err) {
-			if (processed === bucketAmount) {
+			if (processed === bucketKeys.length) {
 				callback(null, contactNodeCount);
 			}
 		};
 
-		if (bucketAmount) {
-			for (var i in this._buckets) {
-				this._buckets[i].size(function (err, size) {
+		if (bucketKeys.length) {
+			for (var i = 0, l = bucketKeys.length; i < l; i++) {
+				this._buckets[bucketKeys[i]].size(function (err, size) {
 					processed++;
 					contactNodeCount += size;
 
@@ -181,7 +181,7 @@ class RoutingTable implements RoutingTableInterface {
 		var crawlBucket = (crawlBucketKey:number, crawlReverse:boolean, onCrawlEnd:Function) => {
 			var bucketGetAllCallback = (err:Error, contacts:ContactNodeListInterface) => {
 				if (contacts.length) {
-					for (var i in contacts) {
+					for (var i = 0, l = contacts.length; i < l; i++) {
 						var contact:ContactNodeInterface = contacts[i];
 						var contactId:IdInterface = contact.getId();
 
@@ -253,7 +253,7 @@ class RoutingTable implements RoutingTableInterface {
 			// console.log(distances);
 
 			if (distances.length) {
-				for (var i in distances) {
+				for (var i = 0, l = distances.length; i < l; i++) {
 					if (i < topologyK) {
 						closestContactNodes.push(getContactFromDistanceMap(distances[i]));
 					}

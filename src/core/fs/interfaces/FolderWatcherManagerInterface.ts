@@ -1,6 +1,6 @@
 import fs = require('fs');
 
-import FolderWatcherListInterface = require('./FolderWatcherListInterface');
+import FolderWatcherMapInterface = require('./FolderWatcherMapInterface');
 import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
 
 /**
@@ -30,7 +30,7 @@ interface FolderWatcherManagerInterface extends ClosableAsyncInterface {
 	 *
 	 * @param {Function} callback
 	 */
-	getFolderWatchers (callback:(folderWatchers:FolderWatcherListInterface) => any):void;
+	getFolderWatchers (callback:(folderWatchers:FolderWatcherMapInterface) => any):void;
 
 	/**
 	 * Adds the callback to the event emitter for the specified event name.

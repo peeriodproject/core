@@ -26,7 +26,7 @@ var ContactNodeFactory = (function () {
         var addresses = [];
 
         if (object.addresses && object.addresses.length) {
-            for (var i in object.addresses) {
+            for (var i = 0, l = object.addresses.length; i < l; i++) {
                 var address = object.addresses[i];
                 addresses.push(addressFactory.create(address._ip, address._port));
             }

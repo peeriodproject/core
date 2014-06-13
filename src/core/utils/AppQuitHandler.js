@@ -39,7 +39,7 @@ var AppQuitHandler = (function () {
             return this._checkAndQuit();
         }
 
-        for (var i in this._callbacks) {
+        for (var i = 0, l = this._callbacks.length; i < l; i++) {
             this._callbacks[i](function () {
                 _this._callbackDone();
             });

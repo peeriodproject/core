@@ -140,7 +140,7 @@ class SearchClient implements SearchClientInterface {
 		};
 
 		if (pluginIdentifiers.length) {
-			for (var i in pluginIdentifiers) {
+			for (var i = 0, l = pluginIdentifiers.length; i < l; i++) {
 				var identifier:string = pluginIdentifiers[i];
 
 				this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {

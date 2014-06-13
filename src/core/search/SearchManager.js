@@ -150,7 +150,7 @@ var SearchManager = (function () {
         var identifiers = Object.keys(pluginData);
 
         if (identifiers.length) {
-            for (var i in identifiers) {
+            for (var i = 0, l = identifiers.length; i < l; i++) {
                 var identifier = identifiers[i];
 
                 pluginData[identifier] = ObjectUtils.extend(pluginData[identifier], {
