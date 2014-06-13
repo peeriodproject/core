@@ -68,7 +68,7 @@ var FolderWatcherManager = (function () {
         /**
         * The list of currently active {@link core.fs.FolderWatcherInteface} instances
         *
-        * @member {core.fs.FolderWatcherListInterface} core.fs.FolderWatcherManager~_watchers
+        * @member {core.fs.FolderWatcherMapInterface} core.fs.FolderWatcherManager~_watchers
         */
         this._watchers = null;
         var defaults = {
