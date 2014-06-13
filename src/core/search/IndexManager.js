@@ -4,12 +4,14 @@
 * @implements core.search.IndexManagerInterface
 *
 * @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {core.fs.FolderWatcherManagerInterface} folerWatcherManager
 * @param {core.fs.PathValidatorInterface} pathValidator
 * @param {core.search.SearchManagerInterface} searchManager
 */
 var IndexManager = (function () {
-    function IndexManager(config, folderWatcherManager, pathValidator, searchManager) {
+    function IndexManager(config, appQuitHandler, folderWatcherManager, pathValidator, searchManager) {
+        var _this = this;
         /**
         * The inernally used config instance
         *
@@ -94,6 +96,12 @@ var IndexManager = (function () {
         this._indexRunnersInParallelAmount = this._config.get('search.indexManager.indexRunnersInParallel');
 
         // todo add merged options & process.exit hook
+        //if (this._options.closeOnProcessExit) {
+        appQuitHandler.add(function (done) {
+            _this.close(done);
+        });
+
+        //}
         this.open();
     }
     IndexManager.prototype.addToIndex = function (pathToAdd, stats, callback) {

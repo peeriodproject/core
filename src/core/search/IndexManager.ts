@@ -2,6 +2,7 @@
 
 import fs = require('fs');
 
+import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import FolderWatcherManagerInterface = require('../fs/interfaces/FolderWatcherManagerInterface');
 import IndexManagerInterface = require('./interfaces/IndexManagerInterface');
@@ -13,6 +14,7 @@ import SearchManagerInterface = require('./interfaces/SearchManagerInterface');
  * @implements core.search.IndexManagerInterface
  *
  * @param {core.config.ConfigInterface} config
+ * @param {core.utils.AppQuitHandlerInterface} appQuitHandler
  * @param {core.fs.FolderWatcherManagerInterface} folerWatcherManager
  * @param {core.fs.PathValidatorInterface} pathValidator
  * @param {core.search.SearchManagerInterface} searchManager
@@ -105,7 +107,7 @@ class IndexManager implements IndexManagerInterface {
 	 */
 	private _searchManager:SearchManagerInterface = null;
 
-	constructor (config:ConfigInterface, folderWatcherManager:FolderWatcherManagerInterface, pathValidator:PathValidatorInterface, searchManager:SearchManagerInterface) {
+	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, folderWatcherManager:FolderWatcherManagerInterface, pathValidator:PathValidatorInterface, searchManager:SearchManagerInterface) {
 		// todo add defaults, optional options...
 
 		this._config = config;
@@ -117,6 +119,12 @@ class IndexManager implements IndexManagerInterface {
 		this._indexRunnersInParallelAmount = this._config.get('search.indexManager.indexRunnersInParallel');
 
 		// todo add merged options & process.exit hook
+
+		//if (this._options.closeOnProcessExit) {
+			appQuitHandler.add((done) => {
+				this.close(done);
+			});
+		//}
 
 		this.open();
 	}
