@@ -14,7 +14,7 @@ import ReadableHydraMessageFactory = require('../../../../src/core/protocol/hydr
 import WritableHydraMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableHydraMessageFactory');
 import ReadableMessage = require('../../../../src/core/protocol/messages/ReadableMessage');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraConnectionManager @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraConnectionManager', function () {
 
 	var sandbox:SinonSandbox = null;
 	var connectionManager:HydraConnectionManager = null;

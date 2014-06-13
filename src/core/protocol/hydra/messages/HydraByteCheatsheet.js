@@ -6,6 +6,10 @@ var sheet = {
     encryptedMessages: {
         "isReceiver": 0x01,
         "notReceiver": 0x00
+    },
+    createCellAdditive: {
+        "isInitiator": 0x01,
+        "notInitiator": 0x00
     }
 };
 
