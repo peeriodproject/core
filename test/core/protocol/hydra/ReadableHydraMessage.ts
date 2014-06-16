@@ -31,4 +31,17 @@ describe('CORE --> PROTOCOL --> HYDRA --> ReadableHydraMessage', function () {
 		msg.getPayload().length.should.equal(0);
 	});
 
+	it('should have a circuit id on circuit message', function () {
+		var buf = Buffer.concat([
+			new Buffer([0x04]),
+			new Buffer('cafebabecafebabecafebabecafebabe', 'hex'),
+			new Buffer('foobar', 'utf8')
+		]);
+
+		var msg = new ReadableHydraMessage(buf);
+
+		msg.getPayload().toString().should.equal('foobar');
+		msg.getCircuitId().should.equal('cafebabecafebabecafebabecafebabe');
+	});
+
 });

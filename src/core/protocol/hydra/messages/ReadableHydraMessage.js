@@ -12,6 +12,10 @@ var HydraByteCheatsheet = require('./HydraByteCheatsheet');
 var ReadableHydraMessage = (function () {
     function ReadableHydraMessage(buffer) {
         /**
+        * @member {string} core.protocol.hydra.ReadableHydraMessage~_circuitId
+        */
+        this._circuitId = null;
+        /**
         * @member {string} core.protocol.hydra.ReadableHydraMessage~_msgType
         */
         this._msgType = null;
@@ -20,6 +24,7 @@ var ReadableHydraMessage = (function () {
         */
         this._payload = null;
         var bufLen = buffer.length;
+        var sliceFrom = 1;
 
         if (!bufLen) {
             throw new Error('ReadableHydraMessage: Unrecognizable hydra message');
@@ -27,10 +32,17 @@ var ReadableHydraMessage = (function () {
 
         this._extractMessageType(buffer[0]);
 
-        this._payload = new Buffer(bufLen - 1);
+        if (this._isCircuitMessage()) {
+            this._circuitId = buffer.slice(sliceFrom, sliceFrom + 16).toString('hex');
+            sliceFrom += 16;
+        }
 
-        buffer.copy(this._payload, 0, 1);
+        this._payload = buffer.slice(sliceFrom);
     }
+    ReadableHydraMessage.prototype.getCircuitId = function () {
+        return this._circuitId;
+    };
+
     ReadableHydraMessage.prototype.getMessageType = function () {
         return this._msgType;
     };
@@ -57,6 +69,10 @@ var ReadableHydraMessage = (function () {
         if (!this._msgType) {
             throw new Error('ReadableHydraMessage: Could not find msg type for given input.');
         }
+    };
+
+    ReadableHydraMessage.prototype._isCircuitMessage = function () {
+        return HydraByteCheatsheet.circuitMessages.indexOf(this.getMessageType()) > -1;
     };
     return ReadableHydraMessage;
 })();

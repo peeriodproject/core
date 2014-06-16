@@ -10,7 +10,8 @@ interface WritableHydraMessageFactoryInterface {
 
 	/**
 	 * Constructs a hydra message from a payload in whatever fashion.
-	 * Merely prepends the message indicator byte taken by its human readable representation.
+	 * Merely prepends the message indicator byte taken by its human readable representation
+	 * plus the circuit Id (if present).
 	 *
 	 * @method core.protocol.hydra.WritableHydraMessageFactoryInterface#constructMessage
 	 *
@@ -18,7 +19,7 @@ interface WritableHydraMessageFactoryInterface {
 	 * @param {Buffer} payload The payload of the message
 	 * @param {number} payloadLength Optional number of octets of the payload.
 	 */
-	constructMessage (msgType:string, payload:Buffer, payloadLength?:number):Buffer;
+	constructMessage (msgType:string, payload:Buffer, payloadLength?:number, circuitId?:string):Buffer;
 
 }
 

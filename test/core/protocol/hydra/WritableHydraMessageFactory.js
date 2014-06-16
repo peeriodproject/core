@@ -23,5 +23,13 @@ describe('CORE --> PROTOCOL --> HYDRA --> WritableHydraMessageFactory', function
             factory.constructMessage('FOOBAR', new Buffer(2));
         }).should.throw();
     });
+
+    it('should correctly construct a hydra message with a circuitId', function () {
+        var factory = new WritableHydraMessageFactory();
+
+        var buf = factory.constructMessage('ENCRYPTED_DIGEST', new Buffer('1111', 'hex'), 2, 'cafebabecafebabecafebabecafebabe');
+
+        buf.toString('hex').should.equal('04cafebabecafebabecafebabecafebabe1111');
+    });
 });
 //# sourceMappingURL=WritableHydraMessageFactory.js.map

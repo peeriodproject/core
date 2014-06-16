@@ -1,8 +1,18 @@
 var sheet = {
     hydraMessageTypes: {
         "ADDITIVE_SHARING": 0x01,
-        "CREATE_CELL_ADDITIVE": 0x02
+        "CREATE_CELL_ADDITIVE": 0x02,
+        "ENCRYPTED_SPITOUT": 0x03,
+        "ENCRYPTED_DIGEST": 0x04,
+        "CELL_CREATED": 0x05,
+        "TEARDOWN": 0x06
     },
+    circuitMessages: [
+        "ENCRYPTED_SPITOUT",
+        "ENCRYPTED_DIGEST",
+        "CELL_CREATED",
+        "TEARDOWN"
+    ],
     encryptedMessages: {
         "isReceiver": 0x01,
         "notReceiver": 0x00

@@ -1044,7 +1044,8 @@ declare module "crypto" {
 	export function createHmac(algorithm: string, key: Buffer): Hmac;
     interface Hash {
         update(data: any, input_encoding?: string): Hash;
-        digest(encoding: string): string;
+		digest(encoding: 'buffer'):Buffer;
+        digest(encoding: string): any;
 		digest(): Buffer;
     }
     interface Hmac {

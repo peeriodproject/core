@@ -6,7 +6,7 @@ require('should');
 
 import WritableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> WritableCreateCellAdditiveMessageFactory @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> WritableCreateCellAdditiveMessageFactory', function () {
 
 	var compareBuffers = function(a, b) {
 

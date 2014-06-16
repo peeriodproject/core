@@ -13,6 +13,11 @@ import HydraByteCheatsheet = require('./HydraByteCheatsheet');
 class ReadableHydraMessage implements ReadableHydraMessageInterface {
 
 	/**
+	 * @member {string} core.protocol.hydra.ReadableHydraMessage~_circuitId
+	 */
+	private _circuitId:string = null;
+
+	/**
 	 * @member {string} core.protocol.hydra.ReadableHydraMessage~_msgType
 	 */
 	private _msgType:string = null;
@@ -24,6 +29,7 @@ class ReadableHydraMessage implements ReadableHydraMessageInterface {
 
 	constructor (buffer:Buffer) {
 		var bufLen:number = buffer.length;
+		var sliceFrom:number = 1;
 
 		if (!bufLen) {
 			throw new Error('ReadableHydraMessage: Unrecognizable hydra message');
@@ -31,9 +37,17 @@ class ReadableHydraMessage implements ReadableHydraMessageInterface {
 
 		this._extractMessageType(buffer[0]);
 
-		this._payload = new Buffer(bufLen - 1);
+		if (this._isCircuitMessage()) {
+			this._circuitId = buffer.slice(sliceFrom, sliceFrom + 16).toString('hex');
+			sliceFrom += 16;
+		}
 
-		buffer.copy(this._payload, 0, 1);
+
+		this._payload = buffer.slice(sliceFrom);
+	}
+
+	public getCircuitId ():string {
+		return this._circuitId;
 	}
 
 	public getMessageType ():string {
@@ -62,6 +76,10 @@ class ReadableHydraMessage implements ReadableHydraMessageInterface {
 		if (!this._msgType) {
 			throw new Error('ReadableHydraMessage: Could not find msg type for given input.');
 		}
+	}
+
+	private _isCircuitMessage ():boolean {
+		return HydraByteCheatsheet.circuitMessages.indexOf(this.getMessageType()) > -1;
 	}
 
 }
