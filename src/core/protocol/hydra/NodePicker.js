@@ -114,27 +114,25 @@ var NodePicker = (function () {
                 }, _this._waitingTimeInMs);
             } else {
                 _this._routingTable.getRandomContactNode(function (err, contactNode) {
-                    if (err || !contactNode) {
-                        errorCount++;
-                    } else {
+                    var noError = false;
+
+                    if (!err && contactNode) {
                         var node = _this._contactNodeToRandHydraNode(contactNode);
 
-                        if (node && !_this._nodeExistsInBatch(node, returnBatch)) {
-                            if (!avoidRelayNodes || !_this._nodeExistsInBatch(node, _this._relayNodes)) {
-                                if (!_this._nodeExistsInBatch(node, _this._nodesUsed)) {
-                                    returnBatch.push(node);
-                                } else if (threshold < _this._threshold) {
-                                    threshold++;
-                                    returnBatch.push(node);
-                                } else {
-                                    errorCount++;
-                                }
-                            } else {
-                                errorCount++;
+                        if (node && !_this._nodeExistsInBatch(node, returnBatch) && (!avoidRelayNodes || !_this._nodeExistsInBatch(node, _this._relayNodes))) {
+                            if (!_this._nodeExistsInBatch(node, _this._nodesUsed)) {
+                                noError = true;
+                                returnBatch.push(node);
+                            } else if (threshold < _this._threshold) {
+                                noError = true;
+                                threshold++;
+                                returnBatch.push(node);
                             }
-                        } else {
-                            errorCount++;
                         }
+                    }
+
+                    if (!noError) {
+                        errorCount++;
                     }
 
                     getRandomNode();

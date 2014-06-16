@@ -142,7 +142,6 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
         createRandomList([null, 'd', 'd', 'a', 'e', null, 'f', 'f', 'g']);
 
         nodePicker.pickNextAdditiveNodeBatch(function (b) {
-            console.log(b);
             if (b[0].ip === 'd' && b[1].ip === 'e' && b[2].ip === 'g' && Date.now() - now > 2000)
                 done();
         });

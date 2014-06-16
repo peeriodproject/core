@@ -31,7 +31,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 						getPort: function () {
 							return 80;
 						},
-						getIp: function () {
+						getIp  : function () {
 							return ip;
 						}
 					})];
@@ -45,14 +45,13 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 	};
 
 
-
 	var routingTable:any = null;
 	var config:any = null;
 
 	var createRandomList = function (ips:Array<string>) {
 		randomNodeList = [];
 		i = 0;
-		for (var j=0, l=ips.length; j<l; j++) {
+		for (var j = 0, l = ips.length; j < l; j++) {
 			setRandomNode(ips[j]);
 		}
 	};
@@ -62,7 +61,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 
 		config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
 			get: function (what) {
-				if (what === 'hydra.additiveSharingNodeAmount')	return 3;
+				if (what === 'hydra.additiveSharingNodeAmount')    return 3;
 				if (what === 'hydra.nodePicker.roundThreshold') return 2;
 				if (what === 'hydra.nodePicker.waitingTimeInSeconds') return 1;
 				if (what === 'hydra.nodePicker.errorThreshold') return 2;
@@ -147,7 +146,6 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 		createRandomList([null, 'd', 'd', 'a', 'e', null, 'f', 'f', 'g']);
 
 		nodePicker.pickNextAdditiveNodeBatch(function (b) {
-			console.log(b);
 			if (b[0].ip === 'd' && b[1].ip === 'e' && b[2].ip === 'g' && Date.now() - now > 2000) done();
 		});
 	});

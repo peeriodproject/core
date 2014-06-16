@@ -19,7 +19,7 @@ class NodePicker implements NodePickerInterface {
 	_relayNodes:HydraNodeList = [];
 	_nodesUsed:HydraNodeList = [];
 
-	public constructor (hydraConfig:ConfigInterface, relayNodeAmount: number, routingTable:RoutingTableInterface) {
+	public constructor (hydraConfig:ConfigInterface, relayNodeAmount:number, routingTable:RoutingTableInterface) {
 		this._relayNodeAmount = relayNodeAmount;
 		this._additiveNodeAmount = hydraConfig.get('hydra.additiveSharingNodeAmount');
 		this._threshold = hydraConfig.get('hydra.nodePicker.roundThreshold');
@@ -53,7 +53,7 @@ class NodePicker implements NodePickerInterface {
 		return this._errorThreshold;
 	}
 
-	public pickRelayNodeBatch (callback: (batch:HydraNodeList) => any):void {
+	public pickRelayNodeBatch (callback:(batch:HydraNodeList) => any):void {
 		if (this._relayNodes.length) {
 			throw new Error('NodePicker: Relay nodes can only be picked once!');
 		}
@@ -65,7 +65,7 @@ class NodePicker implements NodePickerInterface {
 		});
 	}
 
-	public pickNextAdditiveNodeBatch (callback: (batch:HydraNodeList) => any):void {
+	public pickNextAdditiveNodeBatch (callback:(batch:HydraNodeList) => any):void {
 		if (!this._relayNodes.length) {
 			throw new Error('NodePicker: Picking additive nodes before relay nodes is not allowed!');
 		}
@@ -87,8 +87,8 @@ class NodePicker implements NodePickerInterface {
 
 			if (address.getIp() && address.getPort()) {
 				retNode = {
-					ip:address.getIp(),
-					port:address.getPort()
+					ip  : address.getIp(),
+					port: address.getPort()
 				};
 			}
 		}
@@ -100,7 +100,7 @@ class NodePicker implements NodePickerInterface {
 		var exists:boolean = false;
 		var ip:string = node.ip;
 
-		for (var i=0, l=batch.length; i<l; i++) {
+		for (var i = 0, l = batch.length; i < l; i++) {
 			if (batch[i].ip === ip) {
 				exists = true;
 				break;
@@ -110,7 +110,7 @@ class NodePicker implements NodePickerInterface {
 		return exists;
 	}
 
-	private _pickBatch (amount:number, avoidRelayNodes:boolean, callback: (batch:HydraNodeList) => any):void {
+	private _pickBatch (amount:number, avoidRelayNodes:boolean, callback:(batch:HydraNodeList) => any):void {
 		var returnBatch:HydraNodeList = [];
 		var errorCount:number = 0;
 		var threshold:number = 0;
@@ -128,33 +128,28 @@ class NodePicker implements NodePickerInterface {
 			}
 			else {
 				this._routingTable.getRandomContactNode((err:Error, contactNode:ContactNodeInterface) => {
-					if (err || !contactNode) {
-						errorCount++;
-					}
-					else {
+					var noError:boolean = false;
+
+					if (!err  && contactNode) {
+
 						var node:HydraNode = this._contactNodeToRandHydraNode(contactNode);
 
-						if (node && !this._nodeExistsInBatch(node, returnBatch)) {
+						if (node && !this._nodeExistsInBatch(node, returnBatch) && (!avoidRelayNodes || !this._nodeExistsInBatch(node, this._relayNodes))) {
 
-							if (!avoidRelayNodes || !this._nodeExistsInBatch(node, this._relayNodes)) {
-								if (!this._nodeExistsInBatch(node, this._nodesUsed)) {
-									returnBatch.push(node);
-								}
-								else if (threshold < this._threshold) {
-									threshold++;
-									returnBatch.push(node);
-								}
-								else {
-									errorCount++;
-								}
+							if (!this._nodeExistsInBatch(node, this._nodesUsed)) {
+								noError = true;
+								returnBatch.push(node);
 							}
-							else {
-								errorCount++;
+							else if (threshold < this._threshold) {
+								noError = true;
+								threshold++;
+								returnBatch.push(node);
 							}
 						}
-						else {
-							errorCount++;
-						}
+					}
+
+					if (!noError) {
+						errorCount++;
 					}
 
 					getRandomNode();
