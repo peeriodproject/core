@@ -1,6 +1,7 @@
 /// <reference path='../../../../../ts-definitions/node/node.d.ts' />
 
 import HydraNodeList = require('./HydraNodeList');
+import HydraNode = require('./HydraNode');
 
 /**
  * The NodePicker interface is a class that should be passed to a hydra circuit. It is used for choosing
@@ -22,6 +23,16 @@ import HydraNodeList = require('./HydraNodeList');
  * @class core.protocol.hydra.NodePickerInterface
  */
 interface NodePickerInterface {
+
+	/**
+	 * Picks an additional relay node. This can be called after `pickRelayNodeBatch`. This is useful when
+	 * trying to substitute a node which has rejected a CREATE_CELL request.
+	 *
+	 * @method core.protocol.hydra.NodePickerInterface#pickAdditionalRelayNode
+	 *
+	 * @param {Function} callback A function which gets called with the resulting node as argument.
+	 */
+	pickAdditionalRelayNode (callback: (node:HydraNode) => any):void;
 
 	/**
 	 * Picks a batch of nodes which can be used as nodes for one round of an additive sharing scheme.

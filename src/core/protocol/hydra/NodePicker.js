@@ -99,13 +99,27 @@ var NodePicker = (function () {
     /**
     * END TESTING PURPOSES ONLY
     */
+    NodePicker.prototype.pickAdditionalRelayNode = function (callback) {
+        var _this = this;
+        if (!this._relayNodes.length) {
+            throw new Error('NodePicker: Picking additional relay node before general relay nodes is not allowed!');
+        }
+
+        this._pickBatch(1, 0, true, function (batch) {
+            var node = batch[0];
+
+            _this._relayNodes.push(node);
+            callback(node);
+        });
+    };
+
     NodePicker.prototype.pickNextAdditiveNodeBatch = function (callback) {
         var _this = this;
         if (!this._relayNodes.length) {
             throw new Error('NodePicker: Picking additive nodes before relay nodes is not allowed!');
         }
 
-        this._pickBatch(this._additiveNodeAmount, true, function (batch) {
+        this._pickBatch(this._additiveNodeAmount, this._threshold, true, function (batch) {
             _this._nodesUsed = _this._nodesUsed.concat(batch);
             callback(batch);
         });
@@ -117,7 +131,7 @@ var NodePicker = (function () {
             throw new Error('NodePicker: Relay nodes can only be picked once!');
         }
 
-        this._pickBatch(this._relayNodeAmount, false, function (batch) {
+        this._pickBatch(this._relayNodeAmount, this._threshold, false, function (batch) {
             _this._relayNodes = batch;
 
             callback(batch);
@@ -181,10 +195,11 @@ var NodePicker = (function () {
     * @method core.protocol.hydra.NodePicker~_pickBatch
     *
     * @param {number} amount The number of nodes to pick.
+    * @param {number} usedThreshold The threshold of nodes already used which can be picked again.
     * @param {boolean} avoidRelayNodes If this is true, then any chosen node may not be part of the (already chosen) relay node list.
     * @param {Function} callback Callback function which gets called with the resulting batch of nodes as argument.
     */
-    NodePicker.prototype._pickBatch = function (amount, avoidRelayNodes, callback) {
+    NodePicker.prototype._pickBatch = function (amount, usedThreshold, avoidRelayNodes, callback) {
         var _this = this;
         var returnBatch = [];
         var errorCount = 0;
@@ -209,7 +224,7 @@ var NodePicker = (function () {
                             if (!_this._nodeExistsInBatch(node, _this._nodesUsed)) {
                                 noError = true;
                                 returnBatch.push(node);
-                            } else if (threshold < _this._threshold) {
+                            } else if (threshold < usedThreshold) {
                                 noError = true;
                                 threshold++;
                                 returnBatch.push(node);

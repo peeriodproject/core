@@ -103,6 +103,12 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 		}).should.throw('NodePicker: Picking additive nodes before relay nodes is not allowed!');
 	});
 
+	it('should throw an error when trying to pick an additional relay nodes before general relay nodes', function () {
+		(function () {
+			nodePicker.pickAdditionalRelayNode(null);
+		}).should.throw('NodePicker: Picking additional relay node before general relay nodes is not allowed!');
+	});
+
 	it('should pick three relay nodes', function (done) {
 		createRandomList(['a', 'b', 'a', 'c']);
 
@@ -159,6 +165,14 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 		b[3].ip.should.equal('d');
 		b[4].ip.should.equal('e');
 		b[5].ip.should.equal('g');
+	});
+
+	it('should pick an additional relay node', function (done) {
+		createRandomList(['a', 'd', 'h']);
+
+		nodePicker.pickAdditionalRelayNode(function (node) {
+			if (node.ip === 'h' && nodePicker.getRelayNodes()[3].ip === 'h') done();
+		});
 	});
 
 });
