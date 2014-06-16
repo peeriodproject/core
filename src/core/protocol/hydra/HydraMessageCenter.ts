@@ -20,14 +20,16 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		var circuitId:string = message.getCircuitId();
 
 		if (circuitId) {
-			this.emit(circuitId, ip, message);
+			// before we emit, we need to create the appropriate message type!
+			//this.emit(circuitId, ip, message);
 		}
 		else {
 			if (message.getMessageType() === 'ADDITIVE_SHARING') {
 				this._connectionManager.pipeMessage('CREATE_CELL_ADDITIVE', message.getPayload(), {ip:ip});
 			}
 			else if (message.getMessageType() === 'CREATE_CELL_ADDITIVE') {
-				this.emit('createCellAdditiveMessage', message);
+				//before we emit, we need to make to message a CreateCellAdditiveMessage
+				//this.emit('createCellAdditiveMessage', message);
 			}
 		}
 	}
