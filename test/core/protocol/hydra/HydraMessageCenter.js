@@ -20,6 +20,7 @@ var WritableHydraMessageFactory = require('../../../../src/core/protocol/hydra/m
 var WritableCellCreatedRejectedMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCellCreatedRejectedMessageFactory');
 var WritableAdditiveSharingMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableAdditiveSharingMessageFactory');
 var WritableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory');
+var LayeredEncDecHandler = require('../../../../src/core/protocol/hydra/messages/Aes128GcmLayeredEncDecHandler');
 
 describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter @current', function () {
     var sandbox;
@@ -60,7 +61,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter @current', function
     });
 
     it('should correctly initialize the message center', function () {
-        messageCenter = new HydraMessageCenter(connectionManager, new ReadableCellCreatedRejectedMessageFactory(), new ReadableAdditiveSharingMessageFactory(), new ReadableCreateCellAdditiveMessageFactory(), new WritableCreateCellAdditiveMessageFactory(), new WritableAdditiveSharingMessageFactory());
+        messageCenter = new HydraMessageCenter(connectionManager, new ReadableCellCreatedRejectedMessageFactory(), new ReadableAdditiveSharingMessageFactory(), new ReadableCreateCellAdditiveMessageFactory(), new WritableCreateCellAdditiveMessageFactory(), new WritableAdditiveSharingMessageFactory(), new WritableHydraMessageFactory());
         messageCenter.should.be.instanceof(HydraMessageCenter);
     });
 
@@ -129,6 +130,85 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter @current', function
         readableCreate.getUUID().should.equal('cafebabecafebabecafebabecafebabe');
         readableCreate.isInitiator().should.be.false;
         readableCreate.getAdditivePayload().toString('hex').should.equal(additivePayload.toString('hex'));
+    });
+
+    it('should pipe a CREATE_CELL_ADDITIVE message as initiator', function () {
+        var additivePayload = crypto.randomBytes(2048);
+        var circuitId = crypto.randomBytes(16).toString('hex');
+        var uuid = crypto.randomBytes(16).toString('hex');
+
+        messageCenter.sendCreateCellAdditiveMessageAsInitiator({ ip: '127.1.1.1', port: 80 }, circuitId, uuid, additivePayload);
+
+        lastMessageSent.type.should.equal('CREATE_CELL_ADDITIVE');
+        lastMessageSent.to.ip.should.equal('127.1.1.1');
+        lastMessageSent.to.port.should.equal(80);
+
+        var readableCreate = (new ReadableCreateCellAdditiveMessageFactory()).create(lastMessageSent.payload);
+
+        readableCreate.getUUID().should.equal(uuid);
+        readableCreate.getCircuitId().should.equal(circuitId);
+        readableCreate.getAdditivePayload().toString('hex').should.equal(additivePayload.toString('hex'));
+        readableCreate.isInitiator().should.be.true;
+    });
+
+    it('should spitout a RELAY_CREATE_CELL message', function (done) {
+        var key1 = crypto.randomBytes(16);
+        var key2 = crypto.randomBytes(16);
+        var additivePayload = crypto.randomBytes(2048);
+        var circuitId = crypto.randomBytes(16).toString('hex');
+        var uuid = crypto.randomBytes(16).toString('hex');
+
+        var encDecHandler = new LayeredEncDecHandler({
+            ip: '3.3.3.3',
+            port: 888,
+            incomingKey: key1,
+            outgoingKey: key1
+        });
+
+        encDecHandler.addNode({
+            ip: '4.4.4.4',
+            port: 777,
+            incomingKey: key2,
+            outgoingKey: key2
+        });
+
+        var encDecHandler2 = new LayeredEncDecHandler({
+            ip: '4.4.4.4',
+            port: 777,
+            incomingKey: key2,
+            outgoingKey: key2
+        });
+
+        encDecHandler2.addNode({
+            ip: '3.3.3.3',
+            port: 888,
+            incomingKey: key1,
+            outgoingKey: key1
+        });
+
+        messageCenter.spitoutRelayCreateCellMessage(encDecHandler, '5.5.5.5', 88, uuid, additivePayload, circuitId);
+
+        setTimeout(function () {
+            lastMessageSent.type.should.equal('ENCRYPTED_SPITOUT');
+            lastMessageSent.to.ip.should.equal('4.4.4.4');
+            lastMessageSent.to.port.should.equal(777);
+
+            encDecHandler.decrypt(lastMessageSent.payload, function (err, buff) {
+                var msg = (new ReadableHydraMessageFactory()).create(buff);
+
+                if (msg.getMessageType() === 'ADDITIVE_SHARING') {
+                    var msg2 = (new ReadableAdditiveSharingMessageFactory()).create(msg.getPayload());
+
+                    if (msg2.getIp() === '5.5.5.5') {
+                        var msg3 = (new ReadableCreateCellAdditiveMessageFactory()).create(msg2.getPayload());
+
+                        msg3.getUUID().should.equal(uuid);
+                        msg3.getAdditivePayload().toString('hex').should.equal(additivePayload.toString('hex'));
+                        done();
+                    }
+                }
+            });
+        }, 100);
     });
 });
 //# sourceMappingURL=HydraMessageCenter.js.map

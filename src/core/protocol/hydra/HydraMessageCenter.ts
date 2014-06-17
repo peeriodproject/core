@@ -14,6 +14,7 @@ import ReadableCreateCellAdditiveMessageFactoryInterface = require('./messages/i
 import WritableCreateCellAdditiveMessageFactoryInterface = require('./messages/interfaces/WritableCreateCellAdditiveMessageFactoryInterface');
 import WritableAdditiveSharingMessageFactoryInterface = require('./messages/interfaces/WritableAdditiveSharingMessageFactoryInterface');
 import LayeredEncDecHandlerInterface = require('./messages/interfaces/LayeredEncDecHandlerInterface');
+import WritableHydraMessageFactoryInterface = require('./messages/interfaces/WritableHydraMessageFactoryInterface');
 
 class HydraMessageCenter extends events.EventEmitter implements HydraMessageCenterInterface {
 
@@ -24,8 +25,9 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 	_readableCreateCellAdditiveFactory:ReadableCreateCellAdditiveMessageFactoryInterface = null;
 	_writableCreateCellAdditiveFactory:WritableCreateCellAdditiveMessageFactoryInterface = null;
 	_writableAdditiveSharingFactory:WritableAdditiveSharingMessageFactoryInterface = null;
+	_writableHydraMessageFactory:WritableHydraMessageFactoryInterface = null;
 
-	public constructor (connectionManager:HydraConnectionManagerInterface, readableCellCreatedRejectedFactory:ReadableCellCreatedRejectedMessageFactoryInterface, readableAdditiveSharingFactory:ReadableAdditiveSharingMessageFactoryInterface, readableCreateCellAdditiveFactory:ReadableCreateCellAdditiveMessageFactoryInterface, writableCreateCellAdditiveFactory:WritableCreateCellAdditiveMessageFactoryInterface, writableAdditiveSharingFactory:WritableAdditiveSharingMessageFactoryInterface) {
+	public constructor (connectionManager:HydraConnectionManagerInterface, readableCellCreatedRejectedFactory:ReadableCellCreatedRejectedMessageFactoryInterface, readableAdditiveSharingFactory:ReadableAdditiveSharingMessageFactoryInterface, readableCreateCellAdditiveFactory:ReadableCreateCellAdditiveMessageFactoryInterface, writableCreateCellAdditiveFactory:WritableCreateCellAdditiveMessageFactoryInterface, writableAdditiveSharingFactory:WritableAdditiveSharingMessageFactoryInterface, writableHydraMessageFactory:WritableHydraMessageFactoryInterface) {
 		super();
 
 		this._connectionManager = connectionManager;
@@ -34,6 +36,7 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		this._readableCreateCellAdditiveFactory = readableCreateCellAdditiveFactory;
 		this._writableCreateCellAdditiveFactory = writableCreateCellAdditiveFactory;
 		this._writableAdditiveSharingFactory = writableAdditiveSharingFactory;
+		this._writableHydraMessageFactory = writableHydraMessageFactory;
 
 		this._setupListeners();
 	}
@@ -61,9 +64,11 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 	}
 
 	public spitoutRelayCreateCellMessage (encDecHandler:LayeredEncDecHandlerInterface, targetIp:string, targetPort:number, uuid:string, additivePayload:Buffer, circuitId:string):void {
-		var msg:Buffer = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
+		var payload:Buffer = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
 
-		if (msg) {
+		if (payload) {
+			var msg = this._writableHydraMessageFactory.constructMessage('ADDITIVE_SHARING', payload, payload.length);
+
 			encDecHandler.encrypt(msg, null, (err:Error, encMessage:Buffer) => {
 				var nodes:HydraNodeList = encDecHandler.getNodes();
 
@@ -87,13 +92,18 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		return msg;
 	}
 
-	private _emitMessage (message:ReadableHydraMessageInterface, ip:string, msgFactory:any, eventAppendix?:string) {
+	private _emitMessage (message:ReadableHydraMessageInterface, ip:string, msgFactory?:any, eventAppendix?:string) {
 		var msg:any = null;
 
-		try {
-			msg = msgFactory.create(message.getPayload());
+		if (msgFactory) {
+			try {
+				msg = msgFactory.create(message.getPayload());
+			}
+			catch (e) {
+			}
 		}
-		catch (e) {
+		else {
+			msg = message;
 		}
 
 		if (msg) {

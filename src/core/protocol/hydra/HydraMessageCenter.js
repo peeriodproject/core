@@ -8,7 +8,7 @@ var events = require('events');
 
 var HydraMessageCenter = (function (_super) {
     __extends(HydraMessageCenter, _super);
-    function HydraMessageCenter(connectionManager, readableCellCreatedRejectedFactory, readableAdditiveSharingFactory, readableCreateCellAdditiveFactory, writableCreateCellAdditiveFactory, writableAdditiveSharingFactory) {
+    function HydraMessageCenter(connectionManager, readableCellCreatedRejectedFactory, readableAdditiveSharingFactory, readableCreateCellAdditiveFactory, writableCreateCellAdditiveFactory, writableAdditiveSharingFactory, writableHydraMessageFactory) {
         _super.call(this);
         this._connectionManager = null;
         this._readableCellCreatedRejectedFactory = null;
@@ -16,6 +16,7 @@ var HydraMessageCenter = (function (_super) {
         this._readableCreateCellAdditiveFactory = null;
         this._writableCreateCellAdditiveFactory = null;
         this._writableAdditiveSharingFactory = null;
+        this._writableHydraMessageFactory = null;
 
         this._connectionManager = connectionManager;
         this._readableCellCreatedRejectedFactory = readableCellCreatedRejectedFactory;
@@ -23,6 +24,7 @@ var HydraMessageCenter = (function (_super) {
         this._readableCreateCellAdditiveFactory = readableCreateCellAdditiveFactory;
         this._writableCreateCellAdditiveFactory = writableCreateCellAdditiveFactory;
         this._writableAdditiveSharingFactory = writableAdditiveSharingFactory;
+        this._writableHydraMessageFactory = writableHydraMessageFactory;
 
         this._setupListeners();
     }
@@ -49,9 +51,11 @@ var HydraMessageCenter = (function (_super) {
 
     HydraMessageCenter.prototype.spitoutRelayCreateCellMessage = function (encDecHandler, targetIp, targetPort, uuid, additivePayload, circuitId) {
         var _this = this;
-        var msg = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
+        var payload = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
 
-        if (msg) {
+        if (payload) {
+            var msg = this._writableHydraMessageFactory.constructMessage('ADDITIVE_SHARING', payload, payload.length);
+
             encDecHandler.encrypt(msg, null, function (err, encMessage) {
                 var nodes = encDecHandler.getNodes();
 
@@ -77,9 +81,13 @@ var HydraMessageCenter = (function (_super) {
     HydraMessageCenter.prototype._emitMessage = function (message, ip, msgFactory, eventAppendix) {
         var msg = null;
 
-        try  {
-            msg = msgFactory.create(message.getPayload());
-        } catch (e) {
+        if (msgFactory) {
+            try  {
+                msg = msgFactory.create(message.getPayload());
+            } catch (e) {
+            }
+        } else {
+            msg = message;
         }
 
         if (msg) {
