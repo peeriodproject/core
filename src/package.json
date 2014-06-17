@@ -24,6 +24,7 @@
     "winston": "^0.7.3",
     "winston-irc": "^0.3.4",
     "ws": "^0.4.31",
-    "primus.io": "^3.1.1"
+    "primus.io": "^3.1.1",
+    "buffertools": "^2.1.2"
   }
 }
