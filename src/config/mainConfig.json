@@ -50,7 +50,18 @@
     "hydra": {
         "keepMessageInPipelineForSeconds": 4,
         "waitForReconnectInSeconds": 4.5,
-        "retryConnectionMax": 2
+        "retryConnectionMax": 2,
+        "additiveSharingNodeAmount": 4,
+        "nodePicker": {
+            "roundThreshold": 2,
+            "waitingTimeInSeconds": 3,
+            "errorThreshold": 5
+        },
+        "circuit": {
+            "extensionReactionTimeBaseInSeconds": 3,
+            "extensionReactionTimeFactor": 1.2,
+            "maximumExtensionRetries": 3
+        }
     },
     "plugin"  : {
         "folderPath"              : "plugin",

@@ -9,7 +9,7 @@ import HydraByteCheatsheet = require('./HydraByteCheatsheet');
  */
 class WritableHydraMessageFactory implements WritableHydraMessageFactoryInterface {
 
-	public constructMessage (msgType:string, payload:Buffer, payloadLength?:number):Buffer {
+	public constructMessage (msgType:string, payload:Buffer, payloadLength?:number, circuitId?:string):Buffer {
 		payloadLength = payloadLength ? payloadLength : payload.length;
 
 		var indicatorByte:number = HydraByteCheatsheet.hydraMessageTypes[msgType];
@@ -18,7 +18,9 @@ class WritableHydraMessageFactory implements WritableHydraMessageFactoryInterfac
 			throw new Error('WritableHydraMessageFactory: Unknow message type.');
 		}
 
-		return Buffer.concat([new Buffer([indicatorByte]), payload], payloadLength + 1);
+		var circIdBuf:Buffer = (circuitId && HydraByteCheatsheet.circuitMessages.indexOf(msgType) > -1) ? new Buffer(circuitId, 'hex') : new Buffer(0);
+
+		return Buffer.concat([new Buffer([indicatorByte]), circIdBuf, payload], payloadLength + 1 + circIdBuf.length);
 	}
 
 }

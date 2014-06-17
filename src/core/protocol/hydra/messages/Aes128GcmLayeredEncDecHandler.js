@@ -14,7 +14,7 @@ var Aes128GcmLayeredEncDecHandler = (function () {
         /**
         * Ordered list which stores the nodes used for layered encryption / decryption.
         *
-        * @member {Array<core.protocol.hydra.HydraNode>} core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_nodes
+        * @member {core.protocol.hydra.HydraNodeList} core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_nodes
         */
         this._nodes = [];
         if (initialNode) {
@@ -66,13 +66,6 @@ var Aes128GcmLayeredEncDecHandler = (function () {
         }
     };
 
-    /**
-    * Returns the ordered list of nodes used for layered encryption / decryption.
-    *
-    * @method core.protocol.hydra.Aes128GcmLayeredEncDecHandler#getNodes
-    *
-    * @returns {Array<core.protocol.hydra.HydraNode>}
-    */
     Aes128GcmLayeredEncDecHandler.prototype.getNodes = function () {
         return this._nodes;
     };

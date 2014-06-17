@@ -1,5 +1,6 @@
 import LayeredEncDecHandlerInterface = require('./interfaces/LayeredEncDecHandlerInterface');
 import HydraNode = require('../interfaces/HydraNode');
+import HydraNodeList = require('../interfaces/HydraNodeList');
 import Aes128GcmReadableDecryptedMessage = require('./Aes128GcmReadableDecryptedMessage');
 import Aes128GcmWritableMessageFactory = require('./Aes128GcmWritableMessageFactory');
 
@@ -16,9 +17,9 @@ class Aes128GcmLayeredEncDecHandler implements LayeredEncDecHandlerInterface {
 	/**
 	 * Ordered list which stores the nodes used for layered encryption / decryption.
 	 *
-	 * @member {Array<core.protocol.hydra.HydraNode>} core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_nodes
+	 * @member {core.protocol.hydra.HydraNodeList} core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_nodes
 	 */
-	private _nodes:Array<HydraNode> = [];
+	private _nodes:HydraNodeList = [];
 
 	/**
 	 * Factory for protocol compliant AES 128 GCM encryption
@@ -81,14 +82,7 @@ class Aes128GcmLayeredEncDecHandler implements LayeredEncDecHandlerInterface {
 		}
 	}
 
-	/**
-	 * Returns the ordered list of nodes used for layered encryption / decryption.
-	 *
-	 * @method core.protocol.hydra.Aes128GcmLayeredEncDecHandler#getNodes
-	 *
-	 * @returns {Array<core.protocol.hydra.HydraNode>}
-	 */
-	public getNodes ():Array<HydraNode> {
+	public getNodes ():HydraNodeList {
 		return this._nodes;
 	}
 

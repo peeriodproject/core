@@ -9,7 +9,7 @@ var HydraByteCheatsheet = require('./HydraByteCheatsheet');
 var WritableHydraMessageFactory = (function () {
     function WritableHydraMessageFactory() {
     }
-    WritableHydraMessageFactory.prototype.constructMessage = function (msgType, payload, payloadLength) {
+    WritableHydraMessageFactory.prototype.constructMessage = function (msgType, payload, payloadLength, circuitId) {
         payloadLength = payloadLength ? payloadLength : payload.length;
 
         var indicatorByte = HydraByteCheatsheet.hydraMessageTypes[msgType];
@@ -18,7 +18,9 @@ var WritableHydraMessageFactory = (function () {
             throw new Error('WritableHydraMessageFactory: Unknow message type.');
         }
 
-        return Buffer.concat([new Buffer([indicatorByte]), payload], payloadLength + 1);
+        var circIdBuf = (circuitId && HydraByteCheatsheet.circuitMessages.indexOf(msgType) > -1) ? new Buffer(circuitId, 'hex') : new Buffer(0);
+
+        return Buffer.concat([new Buffer([indicatorByte]), circIdBuf, payload], payloadLength + 1 + circIdBuf.length);
     };
     return WritableHydraMessageFactory;
 })();

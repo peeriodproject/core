@@ -5,7 +5,7 @@ require('should');
 
 var ReadableCreateCellAdditiveMessage = require('../../../../src/core/protocol/hydra/messages/ReadableCreateCellAdditiveMessage');
 
-describe('CORE --> PROTOCOL --> HYDRA --> RedableCreateCellAdditiveMessage @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> RedableCreateCellAdditiveMessage', function () {
     it('should correctly deformat the message (not initiator)', function () {
         var indicator = new Buffer([0x00]);
 
