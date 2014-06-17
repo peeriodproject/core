@@ -4,13 +4,13 @@ var sheet = {
 		"CREATE_CELL_ADDITIVE": 0x02,
 		"ENCRYPTED_SPITOUT": 0x03,
 		"ENCRYPTED_DIGEST": 0x04,
-		"CELL_CREATED": 0x05,
+		"CELL_CREATED_REJECTED": 0x05,
 		"TEARDOWN": 0x06
 	},
 	circuitMessages: [
 		"ENCRYPTED_SPITOUT",
 		"ENCRYPTED_DIGEST",
-		"CELL_CREATED",
+		"CELL_CREATED_REJECTED",
 		"TEARDOWN"
 	],
 	encryptedMessages: {
