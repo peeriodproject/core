@@ -1083,7 +1083,7 @@ declare module "crypto" {
 		generateKeys(encoding: 'buffer'):Buffer;
         generateKeys(encoding?: string): any;
 		generateKeys():Buffer;
-        computeSecret(other_public_key: string, input_encoding?: string, output_encoding?: string): string;
+        computeSecret(other_public_key: any, input_encoding?: string, output_encoding?: string): any;
         getPrime(encoding?: string): string;
         getGenerator(encoding: string): string;
         getPublicKey(encoding?: string): string;

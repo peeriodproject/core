@@ -144,10 +144,10 @@ var HydraConnectionManager = (function (_super) {
         }
     };
 
-    HydraConnectionManager.prototype.pipeMessage = function (messageType, payload, to) {
+    HydraConnectionManager.prototype.pipeMessage = function (messageType, payload, to, circuitId) {
         var _this = this;
         var openSocketIdent = this._openSockets[to.ip];
-        var sendableBuffer = this._writableFactory.constructMessage(messageType, payload, payload.length);
+        var sendableBuffer = this._writableFactory.constructMessage(messageType, payload, payload.length, circuitId);
 
         if (openSocketIdent) {
             this._protocolConnectionManager.hydraWriteMessageTo(openSocketIdent, sendableBuffer);

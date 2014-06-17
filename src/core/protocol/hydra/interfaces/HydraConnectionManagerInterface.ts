@@ -47,8 +47,9 @@ interface HydraConnectionManagerInterface extends NodeJS.EventEmitter {
 	 * @param {string} messageType Human readable representation of the message type.
 	 * @param {Buffer} payload The payload of the message
 	 * @param {core.protocol.hydra.HydraNode} to Node to send the message to
+	 * @param {string} circuitId Optional circuit ID to prepend to the message.
 	 */
-	pipeMessage (messageType:string, payload:Buffer, to:HydraNode):void;
+	pipeMessage (messageType:string, payload:Buffer, to:HydraNode, circuitId?:string):void;
 
 }
 

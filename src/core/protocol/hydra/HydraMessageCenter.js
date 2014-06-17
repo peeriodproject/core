@@ -27,6 +27,42 @@ var HydraMessageCenter = (function (_super) {
         this._setupListeners();
     }
     HydraMessageCenter.prototype.sendAdditiveSharingMessage = function (to, targetIp, targetPort, uuid, additivePayload) {
+        var msg = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
+
+        if (msg) {
+            this._connectionManager.pipeMessage('ADDITIVE_SHARING', msg, to);
+        }
+    };
+
+    HydraMessageCenter.prototype.sendCreateCellAdditiveMessageAsInitiator = function (to, circuitId, uuid, additivePayload) {
+        var msg = null;
+
+        try  {
+            msg = this._writableCreateCellAdditiveFactory.constructMessage(true, uuid, additivePayload, circuitId);
+        } catch (e) {
+        }
+
+        if (msg) {
+            this._connectionManager.pipeMessage('CREATE_CELL_ADDITIVE', msg, to);
+        }
+    };
+
+    HydraMessageCenter.prototype.spitoutRelayCreateCellMessage = function (encDecHandler, targetIp, targetPort, uuid, additivePayload, circuitId) {
+        var _this = this;
+        var msg = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
+
+        if (msg) {
+            encDecHandler.encrypt(msg, null, function (err, encMessage) {
+                var nodes = encDecHandler.getNodes();
+
+                if (!err && encMessage) {
+                    _this._connectionManager.pipeMessage('ENCRYPTED_SPITOUT', encMessage, nodes[nodes.length - 1], circuitId);
+                }
+            });
+        }
+    };
+
+    HydraMessageCenter.prototype._getAdditiveSharingMessagePayload = function (targetIp, targetPort, uuid, additivePayload) {
         var msg = null;
 
         try  {
@@ -35,7 +71,7 @@ var HydraMessageCenter = (function (_super) {
         } catch (e) {
         }
 
-        this._connectionManager.pipeMessage('ADDITIVE_SHARING', msg, to);
+        return msg;
     };
 
     HydraMessageCenter.prototype._emitMessage = function (message, ip, msgFactory, eventAppendix) {

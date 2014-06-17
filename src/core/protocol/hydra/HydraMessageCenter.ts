@@ -1,6 +1,7 @@
 import events = require('events');
 
 import HydraNode = require('./interfaces/HydraNode');
+import HydraNodeList = require('./interfaces/HydraNodeList');
 import HydraMessageCenterInterface = require('./interfaces/HydraMessageCenterInterface');
 import HydraConnectionManagerInterface = require('./interfaces/HydraConnectionManagerInterface');
 
@@ -12,6 +13,7 @@ import ReadableAdditiveSharingMessageInterface = require('./messages/interfaces/
 import ReadableCreateCellAdditiveMessageFactoryInterface = require('./messages/interfaces/ReadableCreateCellAdditiveMessageFactoryInterface');
 import WritableCreateCellAdditiveMessageFactoryInterface = require('./messages/interfaces/WritableCreateCellAdditiveMessageFactoryInterface');
 import WritableAdditiveSharingMessageFactoryInterface = require('./messages/interfaces/WritableAdditiveSharingMessageFactoryInterface');
+import LayeredEncDecHandlerInterface = require('./messages/interfaces/LayeredEncDecHandlerInterface');
 
 class HydraMessageCenter extends events.EventEmitter implements HydraMessageCenterInterface {
 
@@ -37,15 +39,52 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 	}
 
 	public sendAdditiveSharingMessage (to:HydraNode, targetIp:string, targetPort:number, uuid:string, additivePayload:Buffer):void {
+		var msg:Buffer = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
+
+		if (msg) {
+			this._connectionManager.pipeMessage('ADDITIVE_SHARING', msg, to);
+		}
+	}
+
+	public sendCreateCellAdditiveMessageAsInitiator (to:HydraNode, circuitId:string, uuid:string, additivePayload:Buffer):void {
+		var msg:Buffer = null;
+
+		try {
+			msg = this._writableCreateCellAdditiveFactory.constructMessage(true, uuid, additivePayload, circuitId);
+		}
+		catch (e) {
+		}
+
+		if (msg) {
+			this._connectionManager.pipeMessage('CREATE_CELL_ADDITIVE', msg, to);
+		}
+	}
+
+	public spitoutRelayCreateCellMessage (encDecHandler:LayeredEncDecHandlerInterface, targetIp:string, targetPort:number, uuid:string, additivePayload:Buffer, circuitId:string):void {
+		var msg:Buffer = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
+
+		if (msg) {
+			encDecHandler.encrypt(msg, null, (err:Error, encMessage:Buffer) => {
+				var nodes:HydraNodeList = encDecHandler.getNodes();
+
+				if (!err && encMessage) {
+					this._connectionManager.pipeMessage('ENCRYPTED_SPITOUT', encMessage, nodes[nodes.length - 1], circuitId);
+				}
+			});
+		}
+	}
+
+	private _getAdditiveSharingMessagePayload (targetIp:string, targetPort:number, uuid:string, additivePayload:Buffer):Buffer {
 		var msg:Buffer = null;
 
 		try {
 			var createCellBuf:Buffer = this._writableCreateCellAdditiveFactory.constructMessage(false, uuid, additivePayload);
 			msg = this._writableAdditiveSharingFactory.constructMessage(targetIp, targetPort, createCellBuf, createCellBuf.length);
 		}
-		catch (e) {}
+		catch (e) {
+		}
 
-		this._connectionManager.pipeMessage('ADDITIVE_SHARING', msg, to);
+		return msg;
 	}
 
 	private _emitMessage (message:ReadableHydraMessageInterface, ip:string, msgFactory:any, eventAppendix?:string) {

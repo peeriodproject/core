@@ -162,9 +162,9 @@ class HydraConnectionManager extends events.EventEmitter implements HydraConnect
 		}
 	}
 
-	public pipeMessage (messageType:string, payload:Buffer, to:HydraNode):void {
+	public pipeMessage (messageType:string, payload:Buffer, to:HydraNode, circuitId?:string):void {
 		var openSocketIdent:string = this._openSockets[to.ip];
-		var sendableBuffer:Buffer = this._writableFactory.constructMessage(messageType, payload, payload.length);
+		var sendableBuffer:Buffer = this._writableFactory.constructMessage(messageType, payload, payload.length, circuitId);
 
 		if (openSocketIdent) {
 			this._protocolConnectionManager.hydraWriteMessageTo(openSocketIdent, sendableBuffer);
