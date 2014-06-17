@@ -60,7 +60,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter @current', function
     });
 
     it('should correctly initialize the message center', function () {
-        messageCenter = new HydraMessageCenter(connectionManager, new ReadableCellCreatedRejectedMessageFactory(), new ReadableAdditiveSharingMessageFactory(), new ReadableCreateCellAdditiveMessageFactory());
+        messageCenter = new HydraMessageCenter(connectionManager, new ReadableCellCreatedRejectedMessageFactory(), new ReadableAdditiveSharingMessageFactory(), new ReadableCreateCellAdditiveMessageFactory(), new WritableCreateCellAdditiveMessageFactory(), new WritableAdditiveSharingMessageFactory());
         messageCenter.should.be.instanceof(HydraMessageCenter);
     });
 
@@ -108,6 +108,27 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter @current', function
         });
 
         emitHydraMessage('127.0.0.1', readableHydraMessageFactory.create((new WritableHydraMessageFactory()).constructMessage('CREATE_CELL_ADDITIVE', msg)));
+    });
+
+    it('should pipe an ADDITIVE_SHARING message to the connection manager', function () {
+        var additivePayload = crypto.randomBytes(2048);
+
+        messageCenter.sendAdditiveSharingMessage({ ip: '127.0.0.2', port: 88 }, '44.44.44.44', 80, 'cafebabecafebabecafebabecafebabe', additivePayload);
+
+        lastMessageSent.type.should.equal('ADDITIVE_SHARING');
+        lastMessageSent.to.ip.should.equal('127.0.0.2');
+        lastMessageSent.to.port.should.equal(88);
+
+        var readableAdditive = (new ReadableAdditiveSharingMessageFactory()).create(lastMessageSent.payload);
+
+        readableAdditive.getIp().should.equal('44.44.44.44');
+        readableAdditive.getPort().should.equal(80);
+
+        var readableCreate = (new ReadableCreateCellAdditiveMessageFactory()).create(readableAdditive.getPayload());
+
+        readableCreate.getUUID().should.equal('cafebabecafebabecafebabecafebabe');
+        readableCreate.isInitiator().should.be.false;
+        readableCreate.getAdditivePayload().toString('hex').should.equal(additivePayload.toString('hex'));
     });
 });
 //# sourceMappingURL=HydraMessageCenter.js.map

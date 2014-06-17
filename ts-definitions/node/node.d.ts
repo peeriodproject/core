@@ -1080,7 +1080,9 @@ declare module "crypto" {
     export function createDiffieHellman(prime_length: number): DiffieHellman;
     export function createDiffieHellman(prime: number, encoding?: string): DiffieHellman;
     interface DiffieHellman {
-        generateKeys(encoding?: string): string;
+		generateKeys(encoding: 'buffer'):Buffer;
+        generateKeys(encoding?: string): any;
+		generateKeys():Buffer;
         computeSecret(other_public_key: string, input_encoding?: string, output_encoding?: string): string;
         getPrime(encoding?: string): string;
         getGenerator(encoding: string): string;

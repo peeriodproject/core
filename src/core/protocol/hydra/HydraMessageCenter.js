@@ -8,20 +8,36 @@ var events = require('events');
 
 var HydraMessageCenter = (function (_super) {
     __extends(HydraMessageCenter, _super);
-    function HydraMessageCenter(connectionManager, readableCellCreatedRejectedFactory, readableAdditiveSharingFactory, readableCreateCellAdditiveFactory) {
+    function HydraMessageCenter(connectionManager, readableCellCreatedRejectedFactory, readableAdditiveSharingFactory, readableCreateCellAdditiveFactory, writableCreateCellAdditiveFactory, writableAdditiveSharingFactory) {
         _super.call(this);
         this._connectionManager = null;
         this._readableCellCreatedRejectedFactory = null;
         this._readableAdditiveSharingFactory = null;
         this._readableCreateCellAdditiveFactory = null;
+        this._writableCreateCellAdditiveFactory = null;
+        this._writableAdditiveSharingFactory = null;
 
         this._connectionManager = connectionManager;
         this._readableCellCreatedRejectedFactory = readableCellCreatedRejectedFactory;
         this._readableAdditiveSharingFactory = readableAdditiveSharingFactory;
         this._readableCreateCellAdditiveFactory = readableCreateCellAdditiveFactory;
+        this._writableCreateCellAdditiveFactory = writableCreateCellAdditiveFactory;
+        this._writableAdditiveSharingFactory = writableAdditiveSharingFactory;
 
         this._setupListeners();
     }
+    HydraMessageCenter.prototype.sendAdditiveSharingMessage = function (to, targetIp, targetPort, uuid, additivePayload) {
+        var msg = null;
+
+        try  {
+            var createCellBuf = this._writableCreateCellAdditiveFactory.constructMessage(false, uuid, additivePayload);
+            msg = this._writableAdditiveSharingFactory.constructMessage(targetIp, targetPort, createCellBuf, createCellBuf.length);
+        } catch (e) {
+        }
+
+        this._connectionManager.pipeMessage('ADDITIVE_SHARING', msg, to);
+    };
+
     HydraMessageCenter.prototype._emitMessage = function (message, ip, msgFactory, eventAppendix) {
         var msg = null;
 
