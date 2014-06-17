@@ -56,6 +56,10 @@
             "roundThreshold": 2,
             "waitingTimeInSeconds": 3,
             "errorThreshold": 5
+        },
+        "circuit": {
+            "extensionReactionTimeBaseInSeconds": 3,
+            "extensionReactionTimeFactor": 1.2
         }
     },
     "plugin"  : {
