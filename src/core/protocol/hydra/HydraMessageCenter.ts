@@ -33,7 +33,7 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		var msg:any = null;
 
 		try {
-			msgFactory.create(message.getPayload());
+			msg = msgFactory.create(message.getPayload());
 		}
 		catch (e) {
 		}
@@ -58,7 +58,8 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 				try {
 					msg = this._readableAdditiveSharingFactory.create(message.getPayload());
 				}
-				catch (e) {}
+				catch (e) {
+				}
 
 				if (msg) {
 					this._connectionManager.pipeMessage('CREATE_CELL_ADDITIVE', msg.getPayload(), { ip: msg.getIp(), port: msg.getPort() });

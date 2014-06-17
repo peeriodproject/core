@@ -26,7 +26,7 @@ var HydraMessageCenter = (function (_super) {
         var msg = null;
 
         try  {
-            msgFactory.create(message.getPayload());
+            msg = msgFactory.create(message.getPayload());
         } catch (e) {
         }
 
