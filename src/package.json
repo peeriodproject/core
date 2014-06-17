@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "main": "index.html",
   "window": {
-    "show": true,
+    "show": false,
+    "frame": false,
     "show_in_taskbar": false
   },
   "dependencies": {
