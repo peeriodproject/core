@@ -351,13 +351,22 @@ class UiManager implements UiManagerInterface {
 
 		if (channelNames.length) {
 			for (var i = 0, l = channelNames.length; i < l; i++) {
-				var channelName:string = channelNames[i];
-
-				this._channelsMap[channelName].on('connection', (connection) => {
-					this._handleSocketChannel(channelName, connection);
-				});
+				this._setupSocketChannel(channelNames[i]);
 			}
 		}
+	}
+
+	/**
+	 * Binds the a member of the {@link core.ui.UiManager~_channelsMap} to the connection event of the corresponding channel
+	 *
+	 * @method core.ui.UiManager~setupSocketChannel
+	 *
+	 * @param {string} channelName
+	 */
+	private _setupSocketChannel (channelName:string):void {
+		this._channelsMap[channelName].on('connection', (connection) => {
+			this._handleSocketChannel(channelName, connection);
+		});
 	}
 
 	/**
