@@ -18,6 +18,8 @@ var HydraCircuit = (function (_super) {
         this._extensionReactionTimeBaseInMs = 0;
         this._extensionReactionTimeFactor = 0;
         this._layeredEncDecFactory = null;
+        this._maximumExtensionRetries = 0;
+
         this._numOfRelayNodes = numOfRelayNodes;
         this._additiveSharingNodeAmount = hydraConfig.get('hydra.additiveSharingNodeAmount');
         this._nodePicker = nodePicker;
@@ -25,6 +27,7 @@ var HydraCircuit = (function (_super) {
         this._connectionManager = connectionManager;
         this._extensionReactionTimeFactor = hydraConfig.get('hydra.circuit.extensionReactionTimeFactor');
         this._extensionReactionTimeBaseInMs = hydraConfig.get('hydra.circuit.extensionReactionTimeBaseInSeconds') * 1000;
+        this._maximumExtensionRetries = hydraConfig.get('hydra.circuit.maximumExtensionRetries');
         this._layeredEncDecFactory = layeredEncDecFactory;
     }
     return HydraCircuit;

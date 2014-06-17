@@ -1,6 +1,7 @@
 /// <reference path='../../../../../../ts-definitions/node/node.d.ts' />
 
 import HydraNode = require('../../interfaces/HydraNode');
+import HydraNodeList = require('../../interfaces/HydraNodeList');
 
 /**
  * LayeredEncDecHandlerInterface takes a number of nodes (in the correct order) and handles
@@ -44,6 +45,15 @@ interface LayeredEncDecHandlerInterface {
 	 * and with the encryptedPayload as buffer.
 	 */
 	encrypt (payload:Buffer, earlyExit:HydraNode, callback: (err:Error, encryptedPayload:Buffer) => any):void;
+
+	/**
+	 * Returns the ordered list of nodes used for layered encryption / decryption.
+	 *
+	 * @method core.protocol.hydra.LayeredEncDecHandlerInterface#getNodes
+	 *
+	 * @returns {core.protocol.hydra.HydraNodeList}
+	 */
+	getNodes ():HydraNodeList;
 }
 
 export = LayeredEncDecHandlerInterface;

@@ -29,8 +29,11 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 
 	private _layeredEncDecFactory:LayeredEncDecHandlerFactoryInterface = null;
 
+	private _maximumExtensionRetries:number = 0;
+
 	public constructor (hydraConfig:ConfigInterface, numOfRelayNodes:number, nodePicker:NodePickerInterface, messageCenter:HydraMessageCenterInterface, connectionManager:HydraConnectionManagerInterface, layeredEncDecFactory:LayeredEncDecHandlerFactoryInterface) {
 		super();
+
 		this._numOfRelayNodes = numOfRelayNodes;
 		this._additiveSharingNodeAmount = hydraConfig.get('hydra.additiveSharingNodeAmount');
 		this._nodePicker = nodePicker;
@@ -38,6 +41,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 		this._connectionManager = connectionManager;
 		this._extensionReactionTimeFactor = hydraConfig.get('hydra.circuit.extensionReactionTimeFactor');
 		this._extensionReactionTimeBaseInMs = hydraConfig.get('hydra.circuit.extensionReactionTimeBaseInSeconds') * 1000;
+		this._maximumExtensionRetries = hydraConfig.get('hydra.circuit.maximumExtensionRetries');
 		this._layeredEncDecFactory = layeredEncDecFactory;
 	}
 

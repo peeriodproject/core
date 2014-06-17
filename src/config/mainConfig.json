@@ -59,7 +59,8 @@
         },
         "circuit": {
             "extensionReactionTimeBaseInSeconds": 3,
-            "extensionReactionTimeFactor": 1.2
+            "extensionReactionTimeFactor": 1.2,
+            "maximumExtensionRetries": 3
         }
     },
     "plugin"  : {
