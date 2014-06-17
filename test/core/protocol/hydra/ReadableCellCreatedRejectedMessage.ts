@@ -8,7 +8,7 @@ import ReadableCellCreatedRejectedMessage = require('../../../../src/core/protoc
 
 
 
-describe('CORE --> PROTOCOL --> HYDRA --> ReadableCellCreatedRejectedMessage @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> ReadableCellCreatedRejectedMessage', function () {
 
 	it('should correctly deformat a non-rejected message', function () {
 

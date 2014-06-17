@@ -5,7 +5,7 @@ require('should');
 
 var ReadableCellCreatedRejectedMessage = require('../../../../src/core/protocol/hydra/messages/ReadableCellCreatedRejectedMessage');
 
-describe('CORE --> PROTOCOL --> HYDRA --> ReadableCellCreatedRejectedMessage @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> ReadableCellCreatedRejectedMessage', function () {
     it('should correctly deformat a non-rejected message', function () {
         var dhPart = crypto.randomBytes(2048);
         var secretHash = crypto.randomBytes(20);
