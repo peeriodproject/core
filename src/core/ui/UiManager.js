@@ -324,18 +324,27 @@ var UiManager = (function () {
     * @method core.ui.UiManager~_setupSocketChannels
     */
     UiManager.prototype._setupSocketChannels = function () {
-        var _this = this;
         var channelNames = Object.keys(this._channelsMap);
 
         if (channelNames.length) {
             for (var i = 0, l = channelNames.length; i < l; i++) {
-                var channelName = channelNames[i];
-
-                this._channelsMap[channelName].on('connection', function (connection) {
-                    _this._handleSocketChannel(channelName, connection);
-                });
+                this._setupSocketChannel(channelNames[i]);
             }
         }
+    };
+
+    /**
+    * Binds the a member of the {@link core.ui.UiManager~_channelsMap} to the connection event of the corresponding channel
+    *
+    * @method core.ui.UiManager~setupSocketChannel
+    *
+    * @param {string} channelName
+    */
+    UiManager.prototype._setupSocketChannel = function (channelName) {
+        var _this = this;
+        this._channelsMap[channelName].on('connection', function (connection) {
+            _this._handleSocketChannel(channelName, connection);
+        });
     };
 
     /**

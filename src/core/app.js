@@ -5,6 +5,8 @@ var path = require('path');
 var JSONConfig = require('./config/JSONConfig');
 var logger = require('./utils/logger/LoggerFactory').create();
 
+var AppQuitHandler = require('./utils/AppQuitHandler');
+
 // topology imports
 var BucketFactory = require('./topology/BucketFactory');
 var BucketStore = require('./topology/BucketStore');
@@ -41,14 +43,32 @@ var PathValidator = require('./fs/PathValidator');
 
 // ui imports
 var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
+var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
 var UiManager = require('./ui/UiManager');
 
 var App = {
-    start: function (dataPath, win) {
+    appQuitHandler: null,
+    _uiComponents: [],
+    addUiComponent: function (component) {
+        this._uiComponents.push(component);
+    },
+    start: function (gui, nwApp, dataPath, win) {
+        this.appQuitHandler = new AppQuitHandler(nwApp);
+
         //this.startTopology(dataPath, win);
         this.startIndexer(dataPath, win);
+
+        this.startUi(gui);
+    },
+    quit: function () {
+        console.log('quitting...');
+        return process.nextTick(function () {
+            this.appQuitHandler.quit();
+        }.bind(this));
     },
     startIndexer: function (dataPath, win) {
+        win.showDevTools();
+
         var testFolderPath = path.resolve(__dirname, '../../utils/TestFolder');
         var externalFolderPath = path.resolve('/Volumes/External/path/Folder');
 
@@ -56,11 +76,10 @@ var App = {
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var searchConfig = new JSONConfig('../../config/mainConfig.json', ['search']);
         var pluginConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'plugin']);
-        var uiConfig = new JSONConfig('../../config/mainConfig.json', ['ui']);
 
         var searchStoreFactory = new SearchStoreFactory();
         var searchItemFactory = new SearchItemFactory();
-        var searchClient = new SearchClient(searchConfig, 'mainIndex', searchStoreFactory, searchItemFactory);
+        var searchClient = new SearchClient(searchConfig, this.appQuitHandler, 'mainIndex', searchStoreFactory, searchItemFactory);
 
         var pluginFinder = new PluginFinder(pluginConfig);
         var pluginValidator = new PluginValidator();
@@ -74,17 +93,24 @@ var App = {
         var stateHandlerFactory = new JSONStateHandlerFactory();
         var folderWatcherFactory = new FolderWatcherFactory();
 
-        var folderWatcherManager = new FolderWatcherManager(fsConfig, stateHandlerFactory, folderWatcherFactory);
+        var folderWatcherManager = new FolderWatcherManager(fsConfig, this.appQuitHandler, stateHandlerFactory, folderWatcherFactory);
         var pathValidator = new PathValidator();
 
         // ui components
         var uiFolderWatcherManagerComponent = new UiFolderWatcherManagerComponent(folderWatcherManager);
-        var uiManager = new UiManager(uiConfig, [uiFolderWatcherManagerComponent]);
+        this.addUiComponent(uiFolderWatcherManagerComponent);
 
+        //var indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
         // -----------------------
         folderWatcherManager.addFolderWatcher(testFolderPath);
         folderWatcherManager.addFolderWatcher(externalFolderPath);
-        //var IndexManager = new IndexManager(searchConfig, folderWatcherManager, pathValidator, searchManager);
+    },
+    startUi: function (gui) {
+        var uiConfig = new JSONConfig('../../config/mainConfig.json', ['ui']);
+
+        this.addUiComponent(new UiFolderDropzoneComponent(gui.Window));
+
+        var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
     },
     startTopology: function (dataPath, win) {
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
@@ -98,6 +124,7 @@ var App = {
         var protocolGateway = null;
 
         networkBootstrapper.bootstrap(function (err) {
+            var _this = this;
             if (err) {
                 logger.error('Network Bootstrapper: ERROR', {
                     err: err
@@ -149,7 +176,7 @@ var App = {
                 bucketStore = new BucketStore('foo', topologyConfig.get('topology.bucketStore.databasePath'));
                 bucketFactory = new BucketFactory();
                 contactNodeFactory = new ContactNodeFactory();
-                routingTable = new RoutingTable(topologyConfig, myId, bucketFactory, bucketStore, contactNodeFactory);
+                routingTable = new RoutingTable(topologyConfig, _this.appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory);
 
                 protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable);
 
