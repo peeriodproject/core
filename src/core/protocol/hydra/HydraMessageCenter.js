@@ -8,26 +8,54 @@ var events = require('events');
 
 var HydraMessageCenter = (function (_super) {
     __extends(HydraMessageCenter, _super);
-    function HydraMessageCenter(connectionManager) {
+    function HydraMessageCenter(connectionManager, readableCellCreatedRejectedFactory, readableAdditiveSharingFactory, readableCreateCellAdditiveFactory) {
         _super.call(this);
         this._connectionManager = null;
+        this._readableCellCreatedRejectedFactory = null;
+        this._readableAdditiveSharingFactory = null;
+        this._readableCreateCellAdditiveFactory = null;
 
         this._connectionManager = connectionManager;
+        this._readableCellCreatedRejectedFactory = readableCellCreatedRejectedFactory;
+        this._readableAdditiveSharingFactory = readableAdditiveSharingFactory;
+        this._readableCreateCellAdditiveFactory = readableCreateCellAdditiveFactory;
 
         this._setupListeners();
     }
+    HydraMessageCenter.prototype._emitMessage = function (message, ip, msgFactory, eventAppendix) {
+        var msg = null;
+
+        try  {
+            msgFactory.create(message.getPayload());
+        } catch (e) {
+        }
+
+        if (msg) {
+            this.emit(message.getMessageType() + (eventAppendix ? '_' + eventAppendix : ''), ip, msg);
+        }
+    };
+
     HydraMessageCenter.prototype._onMessage = function (ip, message) {
         var circuitId = message.getCircuitId();
 
         if (circuitId) {
-            // before we emit, we need to create the appropriate message type!
-            //this.emit(circuitId, ip, message);
+            if (message.getMessageType() === 'CELL_CREATED_REJECTED') {
+                this._emitMessage(message, ip, this._readableCellCreatedRejectedFactory, circuitId);
+            }
         } else {
             if (message.getMessageType() === 'ADDITIVE_SHARING') {
-                this._connectionManager.pipeMessage('CREATE_CELL_ADDITIVE', message.getPayload(), { ip: ip });
+                var msg = null;
+
+                try  {
+                    msg = this._readableAdditiveSharingFactory.create(message.getPayload());
+                } catch (e) {
+                }
+
+                if (msg) {
+                    this._connectionManager.pipeMessage('CREATE_CELL_ADDITIVE', msg.getPayload(), { ip: msg.getIp(), port: msg.getPort() });
+                }
             } else if (message.getMessageType() === 'CREATE_CELL_ADDITIVE') {
-                //before we emit, we need to make to message a CreateCellAdditiveMessage
-                //this.emit('createCellAdditiveMessage', message);
+                this._emitMessage(message, ip, this._readableCreateCellAdditiveFactory);
             }
         }
     };
