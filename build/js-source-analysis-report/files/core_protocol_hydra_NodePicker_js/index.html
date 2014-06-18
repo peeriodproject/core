@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.89</p>
+      <p class="stat">70.32</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">239</p>
+      <p class="stat">252</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">47.18</p>
+      <p class="stat">48.44</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.34</p>
+      <p class="stat">1.42</p>
     </div>
   </div>
 </div>
@@ -109,6 +109,16 @@ var NodePicker = (function () {
         * @member {number} core.protocol.hydra.NodePicker~_additiveNodeAmount
         */
         this._additiveNodeAmount = 0;
+        /**
+        * Usually, two addresses are considered equal, if merely their IP is identical. This is a safety measure as
+        * multiple computers in a network can work together to break the additive sharing scheme.
+        * If this is true, however, two addresses are considered equal if their IP AND their port matches.
+        *
+        * WARNING! This should only be used for testing purposes.
+        *
+        * @member {boolean} core.protocol.hydra.NodePicker~_allowIdenticalIps
+        */
+        this._allowIdenticalIps = false;
         /**
         * Threshold of &#039;errors&#039; (unsuccessful random node tries) until the waiting timeout is set.
         * This gets populated by the config.
@@ -155,6 +165,7 @@ var NodePicker = (function () {
         */
         this._waitingTimeInMs = 0;
         this._relayNodeAmount = relayNodeAmount;
+        this._allowIdenticalIps = hydraConfig.get(&#039;hydra.nodePicker.allowIdenticalIps&#039;);
         this._additiveNodeAmount = hydraConfig.get(&#039;hydra.additiveSharingNodeAmount&#039;);
         this._threshold = hydraConfig.get(&#039;hydra.nodePicker.roundThreshold&#039;);
         this._waitingTimeInMs = hydraConfig.get(&#039;hydra.nodePicker.waitingTimeInSeconds&#039;) * 1000;
@@ -258,6 +269,7 @@ var NodePicker = (function () {
 
     /**
     * Checks if the ip of a hydra node already exists within a given list of hydra nodes.
+    * If identical IPs are allowed, the ports need to differ.
     *
     * @method core.protocol.hydra.NodePicker~_nodeExistsInBatch
     *
@@ -269,9 +281,10 @@ var NodePicker = (function () {
     NodePicker.prototype._nodeExistsInBatch = function (node, batch) {
         var exists = false;
         var ip = node.ip;
+        var port = node.port;
 
         for (var i = 0, l = batch.length; i &lt; l; i++) {
-            if (batch[i].ip === ip) {
+            if (batch[i].ip === ip &amp;&amp; (!this._allowIdenticalIps || batch[i].port === port)) {
                 exists = true;
                 break;
             }

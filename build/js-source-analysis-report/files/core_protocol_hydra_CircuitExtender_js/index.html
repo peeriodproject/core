@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">62.35</p>
+      <p class="stat">65.11</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">143</p>
+      <p class="stat">265</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">36.75</p>
+      <p class="stat">37.88</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.55</p>
+      <p class="stat">1.62</p>
     </div>
   </div>
 </div>
@@ -95,30 +95,133 @@
 var AdditiveSharingScheme = require(&#039;../../crypto/AdditiveSharingScheme&#039;);
 var HKDF = require(&#039;../../crypto/HKDF&#039;);
 
+/**
+* CircuitExtenderInterface implementation.
+*
+* @class core.protocol.hydra.CircuitExtender
+* @implements core.protocol.hydra.CircuitExtenderInterface
+*
+* @param {number} reactionTimeInMs The number of milliseconds used as a basis for how long the instance waits for a response until the request is considered a failure.
+* @param {number} reactionTimeFactor For each relay node, the reaction time base is multiplied with this factor to adapt to the circuit&#039;s length.
+* @param {core.protocol.hydra.HydraConnectionInterface} connectionManager A working hydra connection manager instance.
+* @param {core.protocol.hydra.HydraMessageCenterInterface} messageCenter  A working hydra message center instance.
+* @param {core.protocol.hydra.LayeredEncDecHandlerInterface} encDecHandler The layered encryption/decryption handler of the circuit which should be extended.
+*/
 var CircuitExtender = (function () {
     function CircuitExtender(reactionTimeInMs, reactionTimeFactor, connectionManager, messageCenter, encDecHandler) {
-        this._reactionTimeInMs = 0;
-        this._reactionTimeFactor = 0;
-        this._connectionManager = null;
-        this._messageCenter = null;
-        this._encDecHandler = null;
-        this._nodes = [];
+        /**
+        * Stores the circuitId from which responses are expected. This is usually generated on the first extension and then
+        * stays the same (only changes if the first node rejects the request, and `extend` is called again.
+        *
+        * @member {string} core.protocol.hydra.CircuitExtender~_circuitId
+        */
         this._circuitId = null;
-        this._currentDiffieHellman = null;
+        /**
+        * The working hydra connection manager instance.
+        *
+        * @member {core.protocol.hydra.HydraConnectionManagerInterface} core.protocol.hydra.CircuitExtender~_connectionManager
+        */
+        this._connectionManager = null;
+        /**
+        * Stores the current callback for the active extension.
+        *
+        * @member {Function} core.protocol.hydra.CircuitExtender~_currentCallback
+        */
         this._currentCallback = null;
-        this._currentUUID = null;
-        this._expectReactionFrom = null;
-        this._currentReactionTimeout = 0;
+        /**
+        * Stores the current Diffie-Hellman object for the active extension.
+        *
+        * @member {crypto.DiffieHellman} core.protocol.hydra.CircuitExtender~_currentDiffieHellman
+        */
+        this._currentDiffieHellman = null;
+        /**
+        * Stores the current node to extend with for the active extension.
+        *
+        * @member {core.protocol.hydra.HydraNode} core.protocol.hydra.CircuitExtender~_currentNodeToExtendWith
+        */
         this._currentNodeToExtendWith = null;
+        /**
+        * Stores the current timeout object for the active extension.
+        *
+        * @member {number} core.protocol.hydra.CircuitExtender~_currentReactionTimeout
+        */
+        this._currentReactionTimeout = 0;
+        /**
+        * Stores the current UUID for the active extension.
+        *
+        * @member {string} core.protocol.hydra.CircuitExtender~_currentUUID
+        */
+        this._currentUUID = null;
+        /**
+        * The layered encryption/decryption handler of the circuit this CircuitExtender instance is assigned to.
+        *
+        * @member {core.protocol.hydra.LayeredEncDecHandlerInterface} core.protocol.hydra.CircuitExtender~_encDecHandler
+        */
+        this._encDecHandler = null;
+        /**
+        * Stores the event listener which is set on the message center for CELL_CREATED_REJECT_{circuitId} messages.
+        * Normally this listener doesn&#039;t change, but it gets detached if an error occurs or the first node to extend with
+        * rejects the request (and thus the circuitId changes)
+        *
+        * @member {Function} core.protocol.hydra.CircuitExtender~_eventListener
+        */
         this._eventListener = null;
+        /**
+        * Stores the node from whom a reaction is expected. This is usally the very first node to extend with, and does not
+        * change (as it is also the first node in the circuit then).
+        *
+        * @member {core.protocol.hydra.HydraNode} core.protocol.hydra.CircuitExtender~_expectReactionFrom
+        */
+        this._expectReactionFrom = null;
+        /**
+        * The working hydra message center instance.
+        *
+        * @member {core.protocol.hydra.HydraMessageCenterInterface} core.protocol.hydra.CircuitExtender~_messageCenter
+        */
+        this._messageCenter = null;
+        /**
+        * Stores the node array from the layered encryption/decryption handler.
+        *
+        * @member {core.protocol.hydra.HydraNodeList} core.protocol.hydra.CircuitExtender~_nodes
+        */
+        this._nodes = [];
+        /**
+        * The reaction time factor. (see above)
+        *
+        * @member {number} core.protocol.hydra.CircuitExtender~_reactionTimeFactor
+        */
+        this._reactionTimeFactor = 0;
+        /**
+        * The reaction time base in milliseconds. (see above)
+        *
+        * @member {number} core.protocol.hydra.CircuitExtender~_reactionTimeInMs
+        */
+        this._reactionTimeInMs = 0;
         this._reactionTimeInMs = reactionTimeInMs;
         this._reactionTimeFactor = reactionTimeFactor;
         this._connectionManager = connectionManager;
         this._messageCenter = messageCenter;
         this._encDecHandler = encDecHandler;
-
         this._nodes = this._encDecHandler.getNodes();
     }
+    /**
+    * BEGIN TESTING PURPOSES ONLY
+    */
+    CircuitExtender.prototype.getCircuitId = function () {
+        return this._circuitId;
+    };
+
+    CircuitExtender.prototype.getExpectReactionFrom = function () {
+        return this._expectReactionFrom;
+    };
+
+    CircuitExtender.prototype.getNodes = function () {
+        return this._nodes;
+    };
+
+    /**
+    * END TESTING PURPOSES ONLY
+    */
     CircuitExtender.prototype.extend = function (nodeToExtendWith, additiveNodes, callback) {
         var _this = this;
         var isFirst = this._nodes.length === 0;
@@ -127,7 +230,6 @@ var CircuitExtender = (function () {
 
         if (isFirst) {
             this._circuitId = crypto.pseudoRandomBytes(16).toString(&#039;hex&#039;);
-
             this._expectReactionFrom = nodeToExtendWith;
 
             this._eventListener = function (ip, message) {
@@ -138,21 +240,16 @@ var CircuitExtender = (function () {
         }
 
         this._currentUUID = crypto.pseudoRandomBytes(16).toString(&#039;hex&#039;);
-
         this._currentNodeToExtendWith = nodeToExtendWith;
-
         this._currentDiffieHellman = crypto.getDiffieHellman(&#039;modp14&#039;);
 
         var dhPublicKey = this._currentDiffieHellman.generateKeys();
 
-        AdditiveSharingScheme.getShares(dhPublicKey, additiveNodes.length + 1, 2048, function (shares) {
+        AdditiveSharingScheme.getShares(dhPublicKey, additiveNodes.length + 1, 256, function (shares) {
             for (var i = 0, l = additiveNodes.length; i &lt; l; i++) {
                 _this._messageCenter.sendAdditiveSharingMessage(additiveNodes[i], nodeToExtendWith.ip, nodeToExtendWith.port, _this._currentUUID, shares[i]);
             }
 
-            // now only the last share is missing. If this is the first one, directly send it to the node, else layer encrypt and send
-            // RELAY_EXTEND_CELL
-            // then, set the timeout
             if (isFirst) {
                 _this._messageCenter.sendCreateCellAdditiveMessageAsInitiator(nodeToExtendWith, _this._circuitId, _this._currentUUID, shares[shares.length - 1]);
             } else {
@@ -165,6 +262,21 @@ var CircuitExtender = (function () {
         });
     };
 
+    /**
+    * Handles the reaction message, i.e. a CELL_CREATED_REJECTED message event emitted on the expected circuitId.
+    * It checks if the IP the message comes from matches the expected IP.
+    * If yes, and the UUID also matches, the Diffie-Hellman secret is computed and the SHA-1 hash compared to the
+    * received hash. If either UUID or SHA-1 hash do not match, the extension is considered a failure and errors out.
+    *
+    * Otherwise the extension is considered a success and the symmetric keys are derived via the HMAC based
+    * extract-and-expand function (HKDF). The new node is added to the layered enc/dec handler and then passed to the
+    * invoked callback.
+    *
+    * @method core.protocol.hydra.CircuitExtender~_onReaction
+    *
+    * @param {string} fromIp The IP address the reaction message originates from.
+    * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} message The reaction message.
+    */
     CircuitExtender.prototype._onReaction = function (fromIp, message) {
         if (this._expectReactionFrom.ip === fromIp) {
             if (this._currentReactionTimeout) {
@@ -184,13 +296,10 @@ var CircuitExtender = (function () {
                     sha1.update(secret);
 
                     if (sha1.digest(&#039;hex&#039;) === message.getSecretHash().toString(&#039;hex&#039;)) {
-                        // all well, calculate keys, set the node on _nodes and _encDecHandler and callback
                         var hkdf = new HKDF(&#039;sha256&#039;, secret);
-
-                        var keysConcat = hkdf.derive(256, new Buffer(message.getUUID(), &#039;hex&#039;));
-
-                        var outgoingKey = keysConcat.slice(0, 128);
-                        var incomingKey = keysConcat.slice(128);
+                        var keysConcat = hkdf.derive(32, new Buffer(message.getUUID(), &#039;hex&#039;));
+                        var outgoingKey = keysConcat.slice(0, 16);
+                        var incomingKey = keysConcat.slice(16);
 
                         var newNode = {
                             incomingKey: incomingKey,
@@ -214,6 +323,14 @@ var CircuitExtender = (function () {
         }
     };
 
+    /**
+    * Handles a rejected request by checking if the node to extend with was the first node. If yes, the listener on
+    * the circuitId must be detached to &#039;make way&#039; for subsequent requests.
+    *
+    * At last the callbak is invoked with `isRejected`-flag set to true.
+    *
+    * @method core.protocol.hydra.CircuitExtender~_handleRejection
+    */
     CircuitExtender.prototype._handleRejection = function () {
         if (!this._nodes.length) {
             this._messageCenter.removeListener(&#039;CELL_CREATED_REJECTED_&#039; + this._circuitId, this._eventListener);
@@ -222,10 +339,15 @@ var CircuitExtender = (function () {
         this._currentCallback(null, true, null);
     };
 
+    /**
+    * Handles an errorous request by detaching the event listener and invoking the callback with an error.
+    *
+    * @method core.protocol.hydra.CircuitExtender~_extensionError
+    *
+    * @param {string} errMsg Message for the passed in error.
+    */
     CircuitExtender.prototype._extensionError = function (errMsg) {
-        if (!this._nodes.length) {
-            this._messageCenter.removeListener(&#039;CELL_CREATED_REJECTED_&#039; + this._circuitId, this._eventListener);
-        }
+        this._messageCenter.removeListener(&#039;CELL_CREATED_REJECTED_&#039; + this._circuitId, this._eventListener);
 
         this._currentCallback(new Error(&#039;CircuitExtender: &#039; + errMsg), false, null);
     };
