@@ -28,6 +28,17 @@ class NodePicker implements NodePickerInterface {
 	_additiveNodeAmount:number = 0;
 
 	/**
+	 * Usually, two addresses are considered equal, if merely their IP is identical. This is a safety measure as
+	 * multiple computers in a network can work together to break the additive sharing scheme.
+	 * If this is true, however, two addresses are considered equal if their IP AND their port matches.
+	 *
+	 * WARNING! This should only be used for testing purposes.
+	 *
+	 * @member {boolean} core.protocol.hydra.NodePicker~_allowIdenticalIps
+	 */
+	_allowIdenticalIps:boolean = false;
+
+	/**
 	 * Threshold of 'errors' (unsuccessful random node tries) until the waiting timeout is set.
 	 * This gets populated by the config.
 	 *
@@ -81,6 +92,7 @@ class NodePicker implements NodePickerInterface {
 
 	public constructor (hydraConfig:ConfigInterface, relayNodeAmount:number, routingTable:RoutingTableInterface) {
 		this._relayNodeAmount = relayNodeAmount;
+		this._allowIdenticalIps = hydraConfig.get('hydra.nodePicker.allowIdenticalIps');
 		this._additiveNodeAmount = hydraConfig.get('hydra.additiveSharingNodeAmount');
 		this._threshold = hydraConfig.get('hydra.nodePicker.roundThreshold');
 		this._waitingTimeInMs = hydraConfig.get('hydra.nodePicker.waitingTimeInSeconds') * 1000;
@@ -183,6 +195,7 @@ class NodePicker implements NodePickerInterface {
 
 	/**
 	 * Checks if the ip of a hydra node already exists within a given list of hydra nodes.
+	 * If identical IPs are allowed, the ports need to differ.
 	 *
 	 * @method core.protocol.hydra.NodePicker~_nodeExistsInBatch
 	 *
@@ -194,9 +207,10 @@ class NodePicker implements NodePickerInterface {
 	private _nodeExistsInBatch (node:HydraNode, batch:HydraNodeList):boolean {
 		var exists:boolean = false;
 		var ip:string = node.ip;
+		var port:number = node.port;
 
 		for (var i = 0, l = batch.length; i < l; i++) {
-			if (batch[i].ip === ip) {
+			if (batch[i].ip === ip && (!this._allowIdenticalIps || batch[i].port === port)) {
 				exists = true;
 				break;
 			}

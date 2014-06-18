@@ -12,7 +12,7 @@ var ContactNode = require('../../../../src/core/topology/ContactNode');
 
 var ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> NodePicker @current', function () {
     var sandbox;
 
     var randomNodeList = [];
@@ -20,13 +20,15 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 
     var nodePicker = null;
 
+    var returnPort = 80;
+
     var setRandomNode = function (ip) {
         if (ip) {
             randomNodeList.push(testUtils.stubPublicApi(sandbox, ContactNode, {
                 getAddresses: function () {
                     return [testUtils.stubPublicApi(sandbox, ContactNodeAddress, {
                             getPort: function () {
-                                return 80;
+                                return returnPort;
                             },
                             getIp: function () {
                                 return ip;
@@ -63,6 +65,8 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
                     return 1;
                 if (what === 'hydra.nodePicker.errorThreshold')
                     return 2;
+                if (what === 'hydra.nodePicker.allowIdenticalIps')
+                    return true;
             }
         });
 
@@ -170,6 +174,18 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
         nodePicker.pickAdditionalRelayNode(function (node) {
             if (node.ip === 'h' && nodePicker.getRelayNodes()[3].ip === 'h')
                 done();
+        });
+    });
+
+    it('should pick nodes with the same ip but different port', function (done) {
+        returnPort = 70;
+        createRandomList(['d', 'e', 'f']);
+
+        nodePicker.pickNextAdditiveNodeBatch(function (b) {
+            b[0].ip.should.equal('d');
+            b[1].ip.should.equal('e');
+            b[2].ip.should.equal('f');
+            done();
         });
     });
 });

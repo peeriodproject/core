@@ -18,6 +18,16 @@ var NodePicker = (function () {
         */
         this._additiveNodeAmount = 0;
         /**
+        * Usually, two addresses are considered equal, if merely their IP is identical. This is a safety measure as
+        * multiple computers in a network can work together to break the additive sharing scheme.
+        * If this is true, however, two addresses are considered equal if their IP AND their port matches.
+        *
+        * WARNING! This should only be used for testing purposes.
+        *
+        * @member {boolean} core.protocol.hydra.NodePicker~_allowIdenticalIps
+        */
+        this._allowIdenticalIps = false;
+        /**
         * Threshold of 'errors' (unsuccessful random node tries) until the waiting timeout is set.
         * This gets populated by the config.
         *
@@ -63,6 +73,7 @@ var NodePicker = (function () {
         */
         this._waitingTimeInMs = 0;
         this._relayNodeAmount = relayNodeAmount;
+        this._allowIdenticalIps = hydraConfig.get('hydra.nodePicker.allowIdenticalIps');
         this._additiveNodeAmount = hydraConfig.get('hydra.additiveSharingNodeAmount');
         this._threshold = hydraConfig.get('hydra.nodePicker.roundThreshold');
         this._waitingTimeInMs = hydraConfig.get('hydra.nodePicker.waitingTimeInSeconds') * 1000;
@@ -166,6 +177,7 @@ var NodePicker = (function () {
 
     /**
     * Checks if the ip of a hydra node already exists within a given list of hydra nodes.
+    * If identical IPs are allowed, the ports need to differ.
     *
     * @method core.protocol.hydra.NodePicker~_nodeExistsInBatch
     *
@@ -177,9 +189,10 @@ var NodePicker = (function () {
     NodePicker.prototype._nodeExistsInBatch = function (node, batch) {
         var exists = false;
         var ip = node.ip;
+        var port = node.port;
 
         for (var i = 0, l = batch.length; i < l; i++) {
-            if (batch[i].ip === ip) {
+            if (batch[i].ip === ip && (!this._allowIdenticalIps || batch[i].port === port)) {
                 exists = true;
                 break;
             }

@@ -118,6 +118,9 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 			if (message.getMessageType() === 'CELL_CREATED_REJECTED') {
 				this._emitMessage(message, ip, this._readableCellCreatedRejectedFactory, circuitId);
 			}
+			else if (message.getMessageType() === 'ENCRYPTED_SPITOUT' || message.getMessageType() === 'ENCRYPTED_DIGEST') {
+				this._emitMessage(message, ip, null, circuitId);
+			}
 		}
 		else {
 			if (message.getMessageType() === 'ADDITIVE_SHARING') {
