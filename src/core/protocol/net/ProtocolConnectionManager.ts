@@ -76,6 +76,13 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	private _generalWritableMessageFactory:GeneralWritableMessageFactoryInterface = null;
 
 	/**
+	 * Keeps track of the connection establishings pending (for `hydraConnectTo`)
+	 *
+	 * @member {Array} core.protocol.net.ProtocolConnectionManager~_hydraEstablishingConnections
+	 */
+	private _hydraEstablishingConnections:{[ip:string]:number;} = <any>[];
+
+	/**
 	 * Simple number which gets increased everytime to make hydra identifiers unique.
 	 *
 	 * @member {number} core.protocol.net.ProtocolConnectionManager~_hydraIdentifierCount
@@ -314,6 +321,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	}
 
 	public hydraConnectTo (port:number, ip:string, callback?:(err:Error, identifier:string) => any):void {
+
 		this._tcpSocketHandler.connectTo(port, ip, (socket:TCPSocketInterface) => {
 			if (socket) {
 				var identifier:string = this._setHydraIdentifier(socket);

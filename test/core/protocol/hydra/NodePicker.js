@@ -13,6 +13,8 @@ var ContactNode = require('../../../../src/core/topology/ContactNode');
 var ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 
 describe('CORE --> PROTOCOL --> HYDRA --> NodePicker @current', function () {
+    this.timeout(0);
+
     var sandbox;
 
     var randomNodeList = [];

@@ -15,6 +15,8 @@ import ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 
 describe('CORE --> PROTOCOL --> HYDRA --> NodePicker @current', function () {
 
+	this.timeout(0);
+
 	var sandbox:SinonSandbox;
 
 	var randomNodeList:any = [];
@@ -23,6 +25,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker @current', function () {
 	var nodePicker:NodePicker = null;
 
 	var returnPort:number = 80;
+
 
 
 	var setRandomNode = function (ip:string) {
