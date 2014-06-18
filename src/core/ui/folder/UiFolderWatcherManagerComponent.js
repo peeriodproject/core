@@ -53,6 +53,10 @@ var UiFolderWatcherManagerComponent = (function () {
         spark.on('addFolder', function (path) {
             _this._folderWatcherManager.addFolderWatcher(path);
         });
+
+        spark.on('removeFolder', function (path) {
+            _this._folderWatcherManager.removeFolderWatcher(path);
+        });
     };
 
     /**
