@@ -73,6 +73,9 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 			this._folderWatcherManager.removeFolderWatcher(path);
 		});
 
+		spark.on('syncFolders', () => {
+			this._folderWatcherManager.checkFolderWatcherPaths();
+		});
 	}
 
 	/**

@@ -61,6 +61,10 @@ var UiFolderWatcherManagerComponent = (function () {
         spark.on('removeFolder', function (path) {
             _this._folderWatcherManager.removeFolderWatcher(path);
         });
+
+        spark.on('syncFolders', function () {
+            _this._folderWatcherManager.checkFolderWatcherPaths();
+        });
     };
 
     /**

@@ -201,4 +201,13 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
 		folderWatcherManagerStub.removeFolderWatcher.getCall(0).args[0].should.equal(newFolderPath);
 	});
 
+	it ('should correctly call the FolderWatcherManager.removeFolderWatcher method when the spark receives an "syncFolders" event', function () {
+		component.onConnection(sparkStub);
+
+		sparkOnListeners['syncFolders'].length.should.equal(1);
+		sparkOnListeners['syncFolders'][0]();
+
+		folderWatcherManagerStub.checkFolderWatcherPaths.calledOnce.should.be.true;
+	});
+
 });
