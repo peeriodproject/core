@@ -183,5 +183,17 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
         folderWatcherManagerStub.addFolderWatcher.calledOnce.should.be.true;
         folderWatcherManagerStub.addFolderWatcher.getCall(0).args[0].should.equal(newFolderPath);
     });
+
+    it('should correctly call the FolderWatcherManager.removeFolderWatcher method when the spark receives an "removeFolder" event', function () {
+        var newFolderPath = '/the/path/to/the/folder/to/remove';
+
+        component.onConnection(sparkStub);
+
+        sparkOnListeners['removeFolder'].length.should.equal(1);
+        sparkOnListeners['removeFolder'][0](newFolderPath);
+
+        folderWatcherManagerStub.removeFolderWatcher.calledOnce.should.be.true;
+        folderWatcherManagerStub.removeFolderWatcher.getCall(0).args[0].should.equal(newFolderPath);
+    });
 });
 //# sourceMappingURL=UiFolderWatcherManagerComponent.js.map
