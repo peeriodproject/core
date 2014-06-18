@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">61.14</p>
+      <p class="stat">64.54</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">174</p>
+      <p class="stat">189</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">19.90</p>
+      <p class="stat">20.19</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.86</p>
+      <p class="stat">2.03</p>
     </div>
   </div>
 </div>
@@ -135,19 +135,28 @@ var PathValidator = require(&#039;./fs/PathValidator&#039;);
 
 // ui imports
 var UiFolderWatcherManagerComponent = require(&#039;./ui/folder/UiFolderWatcherManagerComponent&#039;);
+var UiFolderDropzoneComponent = require(&#039;./ui/folder/UiFolderDropzoneComponent&#039;);
 var UiManager = require(&#039;./ui/UiManager&#039;);
 
 var App = {
     appQuitHandler: null,
-    start: function (nwApp, dataPath, win) {
+    _uiComponents: [],
+    addUiComponent: function (component) {
+        this._uiComponents.push(component);
+    },
+    start: function (gui, nwApp, dataPath, win) {
         this.appQuitHandler = new AppQuitHandler(nwApp);
 
         //this.startTopology(dataPath, win);
         this.startIndexer(dataPath, win);
+
+        this.startUi(gui);
     },
     quit: function () {
         console.log(&#039;quitting...&#039;);
-        this.appQuitHandler.quit();
+        return process.nextTick(function () {
+            this.appQuitHandler.quit();
+        }.bind(this));
     },
     startIndexer: function (dataPath, win) {
         win.showDevTools();
@@ -159,7 +168,6 @@ var App = {
         var appConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;]);
         var searchConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;search&#039;]);
         var pluginConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;plugin&#039;]);
-        var uiConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;ui&#039;]);
 
         var searchStoreFactory = new SearchStoreFactory();
         var searchItemFactory = new SearchItemFactory();
@@ -182,12 +190,19 @@ var App = {
 
         // ui components
         var uiFolderWatcherManagerComponent = new UiFolderWatcherManagerComponent(folderWatcherManager);
-        var uiManager = new UiManager(uiConfig, this.appQuitHandler, [uiFolderWatcherManagerComponent]);
+        this.addUiComponent(uiFolderWatcherManagerComponent);
 
+        //var indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
         // -----------------------
         folderWatcherManager.addFolderWatcher(testFolderPath);
         folderWatcherManager.addFolderWatcher(externalFolderPath);
-        //var IndexManager = new IndexManager(searchConfig, folderWatcherManager, pathValidator, searchManager);
+    },
+    startUi: function (gui) {
+        var uiConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;ui&#039;]);
+
+        this.addUiComponent(new UiFolderDropzoneComponent(gui.Window));
+
+        var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
     },
     startTopology: function (dataPath, win) {
         var appConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;]);
@@ -263,7 +278,8 @@ var App = {
     }
 };
 
-module.exports = App;</textarea>
+module.exports = App;
+//# sourceMappingURL=app.js.map</textarea>
   </div>
 </div>
 

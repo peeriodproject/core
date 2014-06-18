@@ -49,7 +49,7 @@
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">174</p>
+      <p class="stat">167</p>
     </div>
   </div>
   <div class="row historical">
@@ -106,7 +106,7 @@ var Aes128GcmLayeredEncDecHandler = (function () {
         /**
         * Ordered list which stores the nodes used for layered encryption / decryption.
         *
-        * @member {Array&lt;core.protocol.hydra.HydraNode&gt;} core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_nodes
+        * @member {core.protocol.hydra.HydraNodeList} core.protocol.hydra.Aes128GcmLayeredEncDecHandler~_nodes
         */
         this._nodes = [];
         if (initialNode) {
@@ -158,13 +158,6 @@ var Aes128GcmLayeredEncDecHandler = (function () {
         }
     };
 
-    /**
-    * Returns the ordered list of nodes used for layered encryption / decryption.
-    *
-    * @method core.protocol.hydra.Aes128GcmLayeredEncDecHandler#getNodes
-    *
-    * @returns {Array&lt;core.protocol.hydra.HydraNode&gt;}
-    */
     Aes128GcmLayeredEncDecHandler.prototype.getNodes = function () {
         return this._nodes;
     };

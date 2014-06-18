@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">71.52</p>
+      <p class="stat">71.84</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">64</p>
+      <p class="stat">80</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">18.98</p>
+      <p class="stat">24.53</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.29</p>
+      <p class="stat">0.42</p>
     </div>
   </div>
 </div>
@@ -104,6 +104,10 @@
 var ReadableHydraMessage = (function () {
     function ReadableHydraMessage(buffer) {
         /**
+        * @member {string} core.protocol.hydra.ReadableHydraMessage~_circuitId
+        */
+        this._circuitId = null;
+        /**
         * @member {string} core.protocol.hydra.ReadableHydraMessage~_msgType
         */
         this._msgType = null;
@@ -112,6 +116,7 @@ var ReadableHydraMessage = (function () {
         */
         this._payload = null;
         var bufLen = buffer.length;
+        var sliceFrom = 1;
 
         if (!bufLen) {
             throw new Error(&#039;ReadableHydraMessage: Unrecognizable hydra message&#039;);
@@ -119,10 +124,17 @@ var ReadableHydraMessage = (function () {
 
         this._extractMessageType(buffer[0]);
 
-        this._payload = new Buffer(bufLen - 1);
+        if (this._isCircuitMessage()) {
+            this._circuitId = buffer.slice(sliceFrom, sliceFrom + 16).toString(&#039;hex&#039;);
+            sliceFrom += 16;
+        }
 
-        buffer.copy(this._payload, 0, 1);
+        this._payload = buffer.slice(sliceFrom);
     }
+    ReadableHydraMessage.prototype.getCircuitId = function () {
+        return this._circuitId;
+    };
+
     ReadableHydraMessage.prototype.getMessageType = function () {
         return this._msgType;
     };
@@ -149,6 +161,10 @@ var ReadableHydraMessage = (function () {
         if (!this._msgType) {
             throw new Error(&#039;ReadableHydraMessage: Could not find msg type for given input.&#039;);
         }
+    };
+
+    ReadableHydraMessage.prototype._isCircuitMessage = function () {
+        return HydraByteCheatsheet.circuitMessages.indexOf(this.getMessageType()) &gt; -1;
     };
     return ReadableHydraMessage;
 })();
