@@ -13,7 +13,7 @@ import ContactNode = require('../../../../src/core/topology/ContactNode');
 import HydraNode = require('../../../../src/core/protocol/hydra/interfaces/HydraNode');
 import ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> NodePicker @current', function () {
 
 	var sandbox:SinonSandbox;
 
@@ -22,6 +22,8 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 
 	var nodePicker:NodePicker = null;
 
+	var returnPort:number = 80;
+
 
 	var setRandomNode = function (ip:string) {
 		if (ip) {
@@ -29,7 +31,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 				getAddresses: function () {
 					return [testUtils.stubPublicApi(sandbox, ContactNodeAddress, {
 						getPort: function () {
-							return 80;
+							return returnPort;
 						},
 						getIp  : function () {
 							return ip;
@@ -60,11 +62,12 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 		sandbox = sinon.sandbox.create();
 
 		config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
-			get: function (what) {
+			get: function (what):any {
 				if (what === 'hydra.additiveSharingNodeAmount')    return 3;
 				if (what === 'hydra.nodePicker.roundThreshold') return 2;
 				if (what === 'hydra.nodePicker.waitingTimeInSeconds') return 1;
 				if (what === 'hydra.nodePicker.errorThreshold') return 2;
+				if (what === 'hydra.nodePicker.allowIdenticalIps') return true;
 			}
 		});
 
@@ -172,6 +175,19 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 
 		nodePicker.pickAdditionalRelayNode(function (node) {
 			if (node.ip === 'h' && nodePicker.getRelayNodes()[3].ip === 'h') done();
+		});
+	});
+
+	it('should pick nodes with the same ip but different port', function (done) {
+		returnPort = 70;
+		createRandomList(['d', 'e', 'f']);
+
+		nodePicker.pickNextAdditiveNodeBatch(function (b) {
+
+			b[0].ip.should.equal('d');
+			b[1].ip.should.equal('e');
+			b[2].ip.should.equal('f');
+			done();
 		});
 	});
 

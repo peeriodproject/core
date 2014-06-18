@@ -53,6 +53,7 @@
         "retryConnectionMax": 2,
         "additiveSharingNodeAmount": 4,
         "nodePicker": {
+            "allowIdenticalIps": false,
             "roundThreshold": 2,
             "waitingTimeInSeconds": 3,
             "errorThreshold": 5

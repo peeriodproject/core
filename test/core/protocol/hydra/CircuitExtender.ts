@@ -179,7 +179,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> CircuitExtender @current', function ()
 			if (receivedCount === 3) {
 
 				var dh = AdditiveSharingScheme.getCleartext(bufList, 256);
-				console.log(dh.length);
+
 				var secret = dhGroup.computeSecret(dh);
 				var sha = crypto.createHash('sha1');
 				var secretHash:Buffer = sha.update(secret).digest();
@@ -201,8 +201,265 @@ describe('CORE --> PROTOCOL --> HYDRA --> CircuitExtender @current', function ()
 			circuitExtender.getExpectReactionFrom().ip.should.equal('4.4.4.4');
 			circuitExtender.getCircuitId().should.equal(circuitId);
 
+			// for decryption
+			newNode.outgoingKey = newNode.incomingKey;
+
 			done();
 		});
 	});
+
+	it('should request a subsequent circuit extension and handle the acceptance', function (done) {
+		var nodeToExtendWith = {
+			ip: '5.5.5.5',
+			port: 80
+		};
+		var additiveNodes = [
+			{
+				ip: '2.2.2.2',
+				port: 70
+			},
+			{
+				ip: '3.3.3.3',
+				port: 75
+			}
+		];
+
+		var uuid:string = null;
+		var dhGroup = crypto.getDiffieHellman('modp14');
+		dhGroup.generateKeys();
+
+		var receivedCount = 0;
+		var bufList:Array<Buffer> = [];
+
+		messagePipeEmitter.on('message', function (msgType:string, payload:Buffer, to:HydraNode, circId:string) {
+			receivedCount++;
+
+			var check = function () {
+				if (receivedCount === 3) {
+
+					var dh = AdditiveSharingScheme.getCleartext(bufList, 256);
+
+					var secret = dhGroup.computeSecret(dh);
+					var sha = crypto.createHash('sha1');
+					var secretHash:Buffer = sha.update(secret).digest();
+
+					messagePipeEmitter.removeAllListeners('message');
+					emitHydraMessage('4.4.4.4', 'CELL_CREATED_REJECTED', (new WritableCellCreatedRejectedMessageFactory()).constructMessage(uuid, secretHash, dhGroup.getPublicKey()), circuitExtender.getCircuitId());
+				}
+			};
+
+			if (msgType === 'ADDITIVE_SHARING') {
+				(['2.2.2.2', '3.3.3.3']).should.containEql(to.ip);
+				var msg = (new ReadableCreateCellAdditiveMessageFactory()).create((new ReadableAdditiveSharingMessageFactory()).create(payload).getPayload());
+
+				bufList.push(msg.getAdditivePayload());
+
+				check();
+			}
+			else if (msgType === 'ENCRYPTED_SPITOUT') {
+				to.ip.should.equal('4.4.4.4');
+
+				layeredEncDec.decrypt(payload, function (err, buff:Buffer) {
+					if (err) throw err;
+
+					var m = (new ReadableAdditiveSharingMessageFactory()).create((new ReadableHydraMessageFactory()).create(buff).getPayload());
+
+					m.getIp().should.equal('5.5.5.5');
+
+					var msg = (new ReadableCreateCellAdditiveMessageFactory()).create(m.getPayload());
+
+					uuid = msg.getUUID();
+
+					bufList.push(msg.getAdditivePayload());
+
+					check();
+				});
+
+			}
+
+
+		});
+
+		circuitExtender.extend(nodeToExtendWith, additiveNodes, (err, isRejected, newNode) => {
+			(err === null).should.be.true;
+			isRejected.should.be.false;
+			newNode.ip.should.equal('5.5.5.5');
+			newNode.incomingKey.length.should.equal(16);
+			newNode.outgoingKey.length.should.equal(16);
+
+			circuitExtender.getNodes()[1].ip.should.equal('5.5.5.5');
+			circuitExtender.getExpectReactionFrom().ip.should.equal('4.4.4.4');
+
+			newNode.outgoingKey = newNode.incomingKey;
+
+			done();
+		});
+	});
+
+	it('should timeout the extension', function (done) {
+		var nodeToExtendWith = {
+			ip: '6.6.6.6',
+			port: 80
+		};
+		var additiveNodes = [
+			{
+				ip: '2.2.2.2',
+				port: 70
+			},
+			{
+				ip: '3.3.3.3',
+				port: 75
+			}
+		];
+
+		circuitExtender.extend(nodeToExtendWith, additiveNodes, function (err, isRejected, node) {
+			err.message.should.equal('CircuitExtender: Timed out');
+			isRejected.should.be.false;
+			(node === null).should.be.true;
+
+			done();
+		});
+	});
+
+	it('should error out when the uuids do not match on extension', function (done) {
+		layeredEncDec = new LayeredEncDecHandler();
+		circuitExtender = new CircuitExtender(1000, 1.1, connectionManager, messageCenter, layeredEncDec);
+
+		var nodeToExtendWith = {
+			ip: '4.4.4.4',
+			port: 80
+		};
+		var additiveNodes = [
+			{
+				ip: '2.2.2.2',
+				port: 70
+			},
+			{
+				ip: '3.3.3.3',
+				port: 75
+			}
+		];
+
+		var circuitId:string = null;
+		var uuid:string = null;
+		var dhGroup = crypto.getDiffieHellman('modp14');
+		dhGroup.generateKeys();
+
+		var receivedCount = 0;
+		var bufList:Array<Buffer> = [];
+
+		messagePipeEmitter.on('message', function (msgType:string, payload:Buffer, to:HydraNode, circId:string) {
+			receivedCount++;
+
+			if (msgType === 'ADDITIVE_SHARING') {
+				(['2.2.2.2', '3.3.3.3']).should.containEql(to.ip);
+				var msg = (new ReadableCreateCellAdditiveMessageFactory()).create((new ReadableAdditiveSharingMessageFactory()).create(payload).getPayload());
+
+				bufList.push(msg.getAdditivePayload());
+			}
+			else if (msgType === 'CREATE_CELL_ADDITIVE') {
+				to.ip.should.equal('4.4.4.4');
+				var msg = (new ReadableCreateCellAdditiveMessageFactory()).create(payload);
+				circuitId = msg.getCircuitId();
+				uuid = msg.getUUID();
+
+				bufList.push(msg.getAdditivePayload());
+			}
+
+			if (receivedCount === 3) {
+
+				var dh = AdditiveSharingScheme.getCleartext(bufList, 256);
+
+				var secret = dhGroup.computeSecret(dh);
+				var sha = crypto.createHash('sha1');
+				var secretHash:Buffer = sha.update(secret).digest();
+
+				messagePipeEmitter.removeAllListeners('message');
+
+				emitHydraMessage('4.4.4.4', 'CELL_CREATED_REJECTED', (new WritableCellCreatedRejectedMessageFactory()).constructMessage(crypto.randomBytes(16).toString('hex'), secretHash, dhGroup.getPublicKey()), circuitId);
+			}
+		});
+
+		circuitExtender.extend(nodeToExtendWith, additiveNodes, (err, isRejected, newNode) => {
+			err.message.should.equal('CircuitExtender: Expected UUID does not match received UUID.');
+			isRejected.should.be.false;
+			(newNode === null).should.be.true;
+
+			messageCenter.listeners('CELL_CREATED_REJECTED_' + circuitId).length.should.equal(0);
+			done();
+		});
+	});
+
+	it('should error out when the secret hashes do not match', function (done) {
+		layeredEncDec = new LayeredEncDecHandler();
+		circuitExtender = new CircuitExtender(1000, 1.1, connectionManager, messageCenter, layeredEncDec);
+
+		var nodeToExtendWith = {
+			ip: '4.4.4.4',
+			port: 80
+		};
+		var additiveNodes = [
+			{
+				ip: '2.2.2.2',
+				port: 70
+			},
+			{
+				ip: '3.3.3.3',
+				port: 75
+			}
+		];
+
+		var circuitId:string = null;
+		var uuid:string = null;
+		var dhGroup = crypto.getDiffieHellman('modp14');
+		dhGroup.generateKeys();
+
+		var receivedCount = 0;
+		var bufList:Array<Buffer> = [];
+
+		messagePipeEmitter.on('message', function (msgType:string, payload:Buffer, to:HydraNode, circId:string) {
+			receivedCount++;
+
+			if (msgType === 'ADDITIVE_SHARING') {
+				(['2.2.2.2', '3.3.3.3']).should.containEql(to.ip);
+				var msg = (new ReadableCreateCellAdditiveMessageFactory()).create((new ReadableAdditiveSharingMessageFactory()).create(payload).getPayload());
+
+				bufList.push(msg.getAdditivePayload());
+			}
+			else if (msgType === 'CREATE_CELL_ADDITIVE') {
+				to.ip.should.equal('4.4.4.4');
+				var msg = (new ReadableCreateCellAdditiveMessageFactory()).create(payload);
+				circuitId = msg.getCircuitId();
+				uuid = msg.getUUID();
+
+				bufList.push(msg.getAdditivePayload());
+			}
+
+			if (receivedCount === 3) {
+
+				var dh = AdditiveSharingScheme.getCleartext(bufList, 256);
+
+				var secret = dhGroup.computeSecret(dh);
+				var sha = crypto.createHash('sha1');
+				var secretHash:Buffer = sha.update(secret).digest();
+
+				secretHash[0]++;
+
+				messagePipeEmitter.removeAllListeners('message');
+
+				emitHydraMessage('4.4.4.4', 'CELL_CREATED_REJECTED', (new WritableCellCreatedRejectedMessageFactory()).constructMessage(uuid, secretHash, dhGroup.getPublicKey()), circuitId);
+			}
+		});
+
+		circuitExtender.extend(nodeToExtendWith, additiveNodes, (err, isRejected, newNode) => {
+			err.message.should.equal('CircuitExtender: Hashes of shared secret do not match.');
+			isRejected.should.be.false;
+			(newNode === null).should.be.true;
+
+			messageCenter.listeners('CELL_CREATED_REJECTED_' + circuitId).length.should.equal(0);
+			done();
+		});
+	});
+
 
 });
