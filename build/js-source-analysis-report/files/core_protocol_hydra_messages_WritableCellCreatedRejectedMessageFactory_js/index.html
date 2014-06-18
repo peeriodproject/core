@@ -112,13 +112,13 @@ var WritableCellCreatedRejectedMessageFactory = (function () {
             throw new Error(&#039;WritableCellCreatedRejectedMessageFactory: Secret hash must be of SHA-1 hash length.&#039;);
         }
 
-        if (dhPayload &amp;&amp; dhPayload.length !== 2048) {
-            throw new Error(&#039;WritableCellCreatedRejectedMessageFactory: Diffie-Hellman payload must be of length 2048!&#039;);
+        if (dhPayload &amp;&amp; dhPayload.length !== 256) {
+            throw new Error(&#039;WritableCellCreatedRejectedMessageFactory: Diffie-Hellman payload must be of length 256!&#039;);
         }
 
         var uuidBuf = new Buffer(uuid, &#039;hex&#039;);
 
-        return secretHash ? Buffer.concat([uuidBuf, secretHash, dhPayload], 2084) : uuidBuf;
+        return secretHash ? Buffer.concat([uuidBuf, secretHash, dhPayload], 292) : uuidBuf;
     };
     return WritableCellCreatedRejectedMessageFactory;
 })();

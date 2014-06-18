@@ -40,7 +40,11 @@ var UiFolderWatcherManagerComponent = (function () {
         var folders = [];
 
         for (var i = 0, l = keys.length; i < l; i++) {
-            folders.push(this._folders[keys[i]]);
+            var folder = this._folders[keys[i]];
+
+            if (folder) {
+                folders.push(folder);
+            }
         }
 
         return folders;
@@ -56,6 +60,10 @@ var UiFolderWatcherManagerComponent = (function () {
 
         spark.on('removeFolder', function (path) {
             _this._folderWatcherManager.removeFolderWatcher(path);
+        });
+
+        spark.on('syncFolders', function () {
+            _this._folderWatcherManager.checkFolderWatcherPaths();
         });
     };
 
@@ -152,6 +160,8 @@ var UiFolderWatcherManagerComponent = (function () {
     * @param {string} path
     */
     UiFolderWatcherManagerComponent.prototype._removeFolder = function (path) {
+        this._folders[path] = null;
+
         delete this._folders[path];
     };
 

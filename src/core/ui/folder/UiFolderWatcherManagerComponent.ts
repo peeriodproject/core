@@ -52,7 +52,11 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 		var folders:UiFolderListInterface = [];
 
 		for (var i = 0, l = keys.length; i < l; i++) {
-			folders.push(this._folders[keys[i]]);
+			var folder = this._folders[keys[i]];
+
+			if (folder) {
+				folders.push(folder);
+			}
 		}
 
 		return folders;
@@ -69,6 +73,9 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 			this._folderWatcherManager.removeFolderWatcher(path);
 		});
 
+		spark.on('syncFolders', () => {
+			this._folderWatcherManager.checkFolderWatcherPaths();
+		});
 	}
 
 	/**
@@ -163,6 +170,8 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 	 * @param {string} path
 	 */
 	private _removeFolder(path:string):void {
+		this._folders[path] = null;
+
 		delete this._folders[path];
 	}
 
