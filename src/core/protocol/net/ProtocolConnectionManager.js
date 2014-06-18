@@ -62,12 +62,6 @@ var ProtocolConnectionManager = (function (_super) {
         */
         this._generalWritableMessageFactory = null;
         /**
-        * Keeps track of the connection establishings pending (for `hydraConnectTo`)
-        *
-        * @member {Array} core.protocol.net.ProtocolConnectionManager~_hydraEstablishingConnections
-        */
-        this._hydraEstablishingConnections = [];
-        /**
         * Simple number which gets increased everytime to make hydra identifiers unique.
         *
         * @member {number} core.protocol.net.ProtocolConnectionManager~_hydraIdentifierCount

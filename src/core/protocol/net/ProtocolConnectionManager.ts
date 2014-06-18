@@ -76,13 +76,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	private _generalWritableMessageFactory:GeneralWritableMessageFactoryInterface = null;
 
 	/**
-	 * Keeps track of the connection establishings pending (for `hydraConnectTo`)
-	 *
-	 * @member {Array} core.protocol.net.ProtocolConnectionManager~_hydraEstablishingConnections
-	 */
-	private _hydraEstablishingConnections:{[ip:string]:number;} = <any>[];
-
-	/**
 	 * Simple number which gets increased everytime to make hydra identifiers unique.
 	 *
 	 * @member {number} core.protocol.net.ProtocolConnectionManager~_hydraIdentifierCount

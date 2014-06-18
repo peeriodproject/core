@@ -12,6 +12,11 @@ interface HydraNode {
 	circuitId?:string;
 
 	/**
+	 * Socket identifier
+	 */
+	socketIdentifier?:string;
+
+	/**
 	 * 'Incoming' symmetric key. This is optional, because as a node within a circuit,
 	 * the encryption must be handled differently, as the node actually only shares keys with the initiator.
 	 */
@@ -26,7 +31,7 @@ interface HydraNode {
 	/**
 	 * The IP address of the node.
 	 */
-	ip:string;
+	ip?:string;
 
 	/**
 	 * An optional port through which the node can be reached.
