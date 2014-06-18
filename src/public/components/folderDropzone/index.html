@@ -86,7 +86,7 @@
 			_background: localStorage.getItem('background'),
 			_color     : localStorage.getItem('color'),
 			_inverted  : localStorage.getItem('inverted'),
-			_invertedColor: localStorage.getItem('invertedColor'),
+			_invertedColor: localStorage.getItem('invertedBackgroundColor'),
 
 			init: function () {
 				//this._head = document.head;
@@ -118,7 +118,7 @@
 					this._inverted = e.newValue;
 				}
 
-				else if (e.key === 'invertedColor') {
+				else if (e.key === 'invertedBackgroundColor') {
 					this._invertedColor = e.newValue;
 				}
 

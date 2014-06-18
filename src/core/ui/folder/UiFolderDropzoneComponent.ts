@@ -35,7 +35,7 @@ class UiFolderDropzoneComponent implements UiComponentInterface {
 		return 'folderdropzone';
 	}
 
-	public getState():Object {
+	public getState():PathListInterface {
 		return this._paths;
 	}
 
@@ -48,7 +48,7 @@ class UiFolderDropzoneComponent implements UiComponentInterface {
 			localStorage.setItem('background', background.background);
 			localStorage.setItem('color', background.color);
 			localStorage.setItem('inverted', background.inverted);
-			localStorage.setItem('invertedColor', background.invertedBackgroundColor);
+			localStorage.setItem('invertedBackgroundColor', background.invertedBackgroundColor);
 		});
 
 		spark.on('open', () => {
@@ -56,7 +56,9 @@ class UiFolderDropzoneComponent implements UiComponentInterface {
 		});
 
 		spark.on('close', () => {
-			this._getWindow().close();
+			if (this._window) {
+				this._window.close();
+			}
 		});
 	}
 
@@ -102,9 +104,12 @@ class UiFolderDropzoneComponent implements UiComponentInterface {
 			});
 		}
 
+		this._window.resizeTo(this._windowDimensions.width, this._windowDimensions.height);
 		this._window.moveTo(this._windowPosition.x, this._windowPosition.y);
 		this._window.show();
 		this._window.setAlwaysOnTop(true);
+
+		return this._window;
 	}
 
 	private _updateUi () {
