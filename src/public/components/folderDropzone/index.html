@@ -79,7 +79,6 @@
 	(function () {
 		// Get the current window aka this
 		var win = require('nw.gui').Window.get();
-		win.showDevTools();
 
 		var styleHandler = {
 			_style: null,
@@ -202,7 +201,7 @@
 
 		document.getElementById('reload').onclick = function () {
 			win.reload();
-			alert(localStorage.getItem('foo'));
+			win.showDevTools();
 		}
 	})();
 </script>
