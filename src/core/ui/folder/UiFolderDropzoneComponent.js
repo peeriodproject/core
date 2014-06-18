@@ -35,7 +35,7 @@ var UiFolderDropzoneComponent = (function () {
             localStorage.setItem('background', background.background);
             localStorage.setItem('color', background.color);
             localStorage.setItem('inverted', background.inverted);
-            localStorage.setItem('invertedColor', background.invertedBackgroundColor);
+            localStorage.setItem('invertedBackgroundColor', background.invertedBackgroundColor);
         });
 
         spark.on('open', function () {
@@ -43,7 +43,9 @@ var UiFolderDropzoneComponent = (function () {
         });
 
         spark.on('close', function () {
-            _this._getWindow().close();
+            if (_this._window) {
+                _this._window.close();
+            }
         });
     };
 
@@ -90,9 +92,12 @@ var UiFolderDropzoneComponent = (function () {
             });
         }
 
+        this._window.resizeTo(this._windowDimensions.width, this._windowDimensions.height);
         this._window.moveTo(this._windowPosition.x, this._windowPosition.y);
         this._window.show();
         this._window.setAlwaysOnTop(true);
+
+        return this._window;
     };
 
     UiFolderDropzoneComponent.prototype._updateUi = function () {
