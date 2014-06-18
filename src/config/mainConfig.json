@@ -90,8 +90,8 @@
     },
     "fs"      : {
         "folderWatcher": {
-            "interval"      : 1000,
-            "binaryInterval": 5000,
+            "interval"      : 5000,
+            "binaryInterval": 15000,
             "eventDelay"    : 1000
         }
     },
