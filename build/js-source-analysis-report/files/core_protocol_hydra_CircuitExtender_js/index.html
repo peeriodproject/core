@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/hydra/CircuitExtender.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/hydra/CircuitExtender.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">62.35</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">143</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">36.75</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.55</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var crypto = require(&#039;crypto&#039;);
+
+var AdditiveSharingScheme = require(&#039;../../crypto/AdditiveSharingScheme&#039;);
+var HKDF = require(&#039;../../crypto/HKDF&#039;);
+
+var CircuitExtender = (function () {
+    function CircuitExtender(reactionTimeInMs, reactionTimeFactor, connectionManager, messageCenter, encDecHandler) {
+        this._reactionTimeInMs = 0;
+        this._reactionTimeFactor = 0;
+        this._connectionManager = null;
+        this._messageCenter = null;
+        this._encDecHandler = null;
+        this._nodes = [];
+        this._circuitId = null;
+        this._currentDiffieHellman = null;
+        this._currentCallback = null;
+        this._currentUUID = null;
+        this._expectReactionFrom = null;
+        this._currentReactionTimeout = 0;
+        this._currentNodeToExtendWith = null;
+        this._eventListener = null;
+        this._reactionTimeInMs = reactionTimeInMs;
+        this._reactionTimeFactor = reactionTimeFactor;
+        this._connectionManager = connectionManager;
+        this._messageCenter = messageCenter;
+        this._encDecHandler = encDecHandler;
+
+        this._nodes = this._encDecHandler.getNodes();
+    }
+    CircuitExtender.prototype.extend = function (nodeToExtendWith, additiveNodes, callback) {
+        var _this = this;
+        var isFirst = this._nodes.length === 0;
+
+        this._currentCallback = callback;
+
+        if (isFirst) {
+            this._circuitId = crypto.pseudoRandomBytes(16).toString(&#039;hex&#039;);
+
+            this._expectReactionFrom = nodeToExtendWith;
+
+            this._eventListener = function (ip, message) {
+                _this._onReaction(ip, message);
+            };
+
+            this._messageCenter.on(&#039;CELL_CREATED_REJECTED_&#039; + this._circuitId, this._eventListener);
+        }
+
+        this._currentUUID = crypto.pseudoRandomBytes(16).toString(&#039;hex&#039;);
+
+        this._currentNodeToExtendWith = nodeToExtendWith;
+
+        this._currentDiffieHellman = crypto.getDiffieHellman(&#039;modp14&#039;);
+
+        var dhPublicKey = this._currentDiffieHellman.generateKeys();
+
+        AdditiveSharingScheme.getShares(dhPublicKey, additiveNodes.length + 1, 2048, function (shares) {
+            for (var i = 0, l = additiveNodes.length; i &lt; l; i++) {
+                _this._messageCenter.sendAdditiveSharingMessage(additiveNodes[i], nodeToExtendWith.ip, nodeToExtendWith.port, _this._currentUUID, shares[i]);
+            }
+
+            // now only the last share is missing. If this is the first one, directly send it to the node, else layer encrypt and send
+            // RELAY_EXTEND_CELL
+            // then, set the timeout
+            if (isFirst) {
+                _this._messageCenter.sendCreateCellAdditiveMessageAsInitiator(nodeToExtendWith, _this._circuitId, _this._currentUUID, shares[shares.length - 1]);
+            } else {
+                _this._messageCenter.spitoutRelayCreateCellMessage(_this._encDecHandler, nodeToExtendWith.ip, nodeToExtendWith.port, _this._currentUUID, shares[shares.length - 1], _this._circuitId);
+            }
+
+            _this._currentReactionTimeout = global.setTimeout(function () {
+                _this._extensionError(&#039;Timed out&#039;);
+            }, _this._reactionTimeInMs * Math.pow(_this._reactionTimeFactor, _this._nodes.length));
+        });
+    };
+
+    CircuitExtender.prototype._onReaction = function (fromIp, message) {
+        if (this._expectReactionFrom.ip === fromIp) {
+            if (this._currentReactionTimeout) {
+                global.clearTimeout(this._currentReactionTimeout);
+                this._currentReactionTimeout = 0;
+            }
+
+            if (message.getUUID() !== this._currentUUID) {
+                this._extensionError(&#039;Expected UUID does not match received UUID.&#039;);
+            } else {
+                if (message.isRejected()) {
+                    this._handleRejection();
+                } else {
+                    var secret = this._currentDiffieHellman.computeSecret(message.getDHPayload());
+                    var sha1 = crypto.createHash(&#039;sha1&#039;);
+
+                    sha1.update(secret);
+
+                    if (sha1.digest(&#039;hex&#039;) === message.getSecretHash().toString(&#039;hex&#039;)) {
+                        // all well, calculate keys, set the node on _nodes and _encDecHandler and callback
+                        var hkdf = new HKDF(&#039;sha256&#039;, secret);
+
+                        var keysConcat = hkdf.derive(256, new Buffer(message.getUUID(), &#039;hex&#039;));
+
+                        var outgoingKey = keysConcat.slice(0, 128);
+                        var incomingKey = keysConcat.slice(128);
+
+                        var newNode = {
+                            incomingKey: incomingKey,
+                            outgoingKey: outgoingKey,
+                            ip: this._currentNodeToExtendWith.ip,
+                            port: this._currentNodeToExtendWith.port
+                        };
+
+                        if (!this._nodes.length) {
+                            newNode.circuitId = this._circuitId;
+                        }
+
+                        this._encDecHandler.addNode(newNode);
+
+                        this._currentCallback(null, false, newNode);
+                    } else {
+                        this._extensionError(&#039;Hashes of shared secret do not match.&#039;);
+                    }
+                }
+            }
+        }
+    };
+
+    CircuitExtender.prototype._handleRejection = function () {
+        if (!this._nodes.length) {
+            this._messageCenter.removeListener(&#039;CELL_CREATED_REJECTED_&#039; + this._circuitId, this._eventListener);
+        }
+
+        this._currentCallback(null, true, null);
+    };
+
+    CircuitExtender.prototype._extensionError = function (errMsg) {
+        if (!this._nodes.length) {
+            this._messageCenter.removeListener(&#039;CELL_CREATED_REJECTED_&#039; + this._circuitId, this._eventListener);
+        }
+
+        this._currentCallback(new Error(&#039;CircuitExtender: &#039; + errMsg), false, null);
+    };
+    return CircuitExtender;
+})();
+
+module.exports = CircuitExtender;
+//# sourceMappingURL=CircuitExtender.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>
