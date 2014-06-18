@@ -42,6 +42,15 @@ class UiFolderDropzoneComponent implements UiComponentInterface {
 	public onConnection (spark:any):void {
 		this._connections.push(spark);
 
+		spark.on('background', (background:{ background:string; color:string; inverted:string; invertedBackgroundColor:string; }) => {
+			var localStorage = this._guiWindow.get().window.localStorage;
+
+			localStorage.setItem('background', background.background);
+			localStorage.setItem('color', background.color);
+			localStorage.setItem('inverted', background.inverted);
+			localStorage.setItem('invertedColor', background.invertedBackgroundColor);
+		});
+
 		spark.on('open', () => {
 			this._getWindow().focus();
 		});
@@ -58,7 +67,7 @@ class UiFolderDropzoneComponent implements UiComponentInterface {
 	 */
 	private _getWindow ():any {
 		if (!this._window) {
-			this._window = this._guiWindow.open('app://local/public/components/folderDropzone/index.html', {
+			this._window = this._guiWindow.open('./public/components/folderDropzone/index.html', {
 				name   : 'Dropzone',
 				frame  : false,
 				toolbar: false,
@@ -95,6 +104,7 @@ class UiFolderDropzoneComponent implements UiComponentInterface {
 
 		this._window.moveTo(this._windowPosition.x, this._windowPosition.y);
 		this._window.show();
+		this._window.setAlwaysOnTop(true);
 	}
 
 	private _updateUi () {

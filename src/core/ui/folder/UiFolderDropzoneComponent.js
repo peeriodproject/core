@@ -29,6 +29,15 @@ var UiFolderDropzoneComponent = (function () {
         var _this = this;
         this._connections.push(spark);
 
+        spark.on('background', function (background) {
+            var localStorage = _this._guiWindow.get().window.localStorage;
+
+            localStorage.setItem('background', background.background);
+            localStorage.setItem('color', background.color);
+            localStorage.setItem('inverted', background.inverted);
+            localStorage.setItem('invertedColor', background.invertedBackgroundColor);
+        });
+
         spark.on('open', function () {
             _this._getWindow().focus();
         });
@@ -46,7 +55,7 @@ var UiFolderDropzoneComponent = (function () {
     UiFolderDropzoneComponent.prototype._getWindow = function () {
         var _this = this;
         if (!this._window) {
-            this._window = this._guiWindow.open('app://local/public/components/folderDropzone/index.html', {
+            this._window = this._guiWindow.open('./public/components/folderDropzone/index.html', {
                 name: 'Dropzone',
                 frame: false,
                 toolbar: false,
@@ -83,6 +92,7 @@ var UiFolderDropzoneComponent = (function () {
 
         this._window.moveTo(this._windowPosition.x, this._windowPosition.y);
         this._window.show();
+        this._window.setAlwaysOnTop(true);
     };
 
     UiFolderDropzoneComponent.prototype._updateUi = function () {
