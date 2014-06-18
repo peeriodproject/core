@@ -12,7 +12,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> RedableCreateCellAdditiveMessage', fun
 		var indicator = new Buffer([0x00]);
 
 		var uuid = new Buffer('1c24b4bc201bfd3f37d8712eede483ba', 'hex');
-		var payload = crypto.randomBytes(2048);
+		var payload = crypto.randomBytes(256);
 
 		var msg = new ReadableCreateCellAdditiveMessage(Buffer.concat([indicator, uuid, payload]));
 
@@ -26,7 +26,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> RedableCreateCellAdditiveMessage', fun
 		var indicator = new Buffer([0x01]);
 		var circuitId = new Buffer('1c24b4bcffffffff37d8712eede483ba', 'hex');
 		var uuid = new Buffer('1c24b4bc201bfd3f37d8712eede483ba', 'hex');
-		var payload = crypto.randomBytes(2048);
+		var payload = crypto.randomBytes(256);
 
 		var msg = new ReadableCreateCellAdditiveMessage(Buffer.concat([indicator, circuitId, uuid, payload]));
 
@@ -40,18 +40,18 @@ describe('CORE --> PROTOCOL --> HYDRA --> RedableCreateCellAdditiveMessage', fun
 		var indicator = new Buffer([0x04]);
 
 		var uuid = new Buffer('1c24b4bc201bfd3f37d8712eede483ba', 'hex');
-		var payload = crypto.randomBytes(2048);
+		var payload = crypto.randomBytes(256);
 
 		(function () {
 			new ReadableCreateCellAdditiveMessage(Buffer.concat([indicator, uuid, payload]));
 		}).should.throw('CreateCellAdditiveMessage: Unknow indicator byte.');
 	});
 
-	it('should throw an error if the length of the additive payload is not 2048', function () {
+	it('should throw an error if the length of the additive payload is not 256', function () {
 		var indicator = new Buffer([0x00]);
 
 		var uuid = new Buffer('1c24b4bc201bfd3f37d8712eede483ba', 'hex');
-		var payload = crypto.randomBytes(2047);
+		var payload = crypto.randomBytes(255);
 
 		(function () {
 			new ReadableCreateCellAdditiveMessage(Buffer.concat([indicator, uuid, payload]));

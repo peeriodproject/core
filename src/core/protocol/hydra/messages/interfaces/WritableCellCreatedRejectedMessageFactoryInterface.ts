@@ -17,7 +17,7 @@ interface WritableCellCreatedRejectedMessageFactoryInterface {
 	 *
 	 * @param {string} uuid The universally unique identifier (16 bytes)
 	 * @param {Buffer} secretHash Optional. If the message is a rejected message, this must not be provided. 20 bytes.
-	 * @param {Buffer} dhPayload The other half of the Diffie-Hellman key exchange. 2048 bytes.
+	 * @param {Buffer} dhPayload The other half of the Diffie-Hellman key exchange. 256 bytes.
 	 *
 	 * @returns {Buffer}
 	 */

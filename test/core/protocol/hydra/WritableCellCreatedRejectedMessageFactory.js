@@ -26,7 +26,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> WritableCellCreatedRejectedMessageFact
     it('should correctly format a non-reject message', function () {
         var uuidBuf = crypto.randomBytes(16);
         var secret = crypto.randomBytes(20);
-        var dh = crypto.randomBytes(2048);
+        var dh = crypto.randomBytes(256);
 
         compareBuffers(factory.constructMessage(uuidBuf.toString('hex'), secret, dh), Buffer.concat([uuidBuf, secret, dh])).should.be.true;
     });
@@ -47,12 +47,12 @@ describe('CORE --> PROTOCOL --> HYDRA --> WritableCellCreatedRejectedMessageFact
         }).should.throw('WritableCellCreatedRejectedMessageFactory: Secret hash AND Diffie-Hellman must be present.');
 
         (function () {
-            factory.constructMessage('cafebabecafebabecafebabecafebabe', crypto.randomBytes(19), crypto.randomBytes(2048));
+            factory.constructMessage('cafebabecafebabecafebabecafebabe', crypto.randomBytes(19), crypto.randomBytes(256));
         }).should.throw('WritableCellCreatedRejectedMessageFactory: Secret hash must be of SHA-1 hash length.');
 
         (function () {
-            factory.constructMessage('cafebabecafebabecafebabecafebabe', crypto.randomBytes(20), crypto.randomBytes(2040));
-        }).should.throw('WritableCellCreatedRejectedMessageFactory: Diffie-Hellman payload must be of length 2048!');
+            factory.constructMessage('cafebabecafebabecafebabecafebabe', crypto.randomBytes(20), crypto.randomBytes(250));
+        }).should.throw('WritableCellCreatedRejectedMessageFactory: Diffie-Hellman payload must be of length 256!');
     });
 });
 //# sourceMappingURL=WritableCellCreatedRejectedMessageFactory.js.map

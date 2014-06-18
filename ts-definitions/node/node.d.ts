@@ -1086,7 +1086,8 @@ declare module "crypto" {
         computeSecret(other_public_key: any, input_encoding?: string, output_encoding?: string): any;
         getPrime(encoding?: string): string;
         getGenerator(encoding: string): string;
-        getPublicKey(encoding?: string): string;
+        getPublicKey(encoding: string): string;
+		getPublicKey(): Buffer;
         getPrivateKey(encoding?: string): string;
         setPublicKey(public_key: string, encoding?: string): void;
         setPrivateKey(public_key: string, encoding?: string): void;

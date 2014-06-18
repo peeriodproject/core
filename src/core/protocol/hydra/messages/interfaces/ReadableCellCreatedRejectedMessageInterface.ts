@@ -11,7 +11,7 @@
  * If the message confirms the cell creation, the payload is:
  * - 16 bytes for UUID
  * - 20 bytes for the SHA-1 Hahs of the shared secret
- * - 2048 bytes for the other half of the Diffie-Hellman key exchange
+ * - 256 bytes for the other half of the Diffie-Hellman key exchange
  *
  * @interface
  * @class core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface
@@ -19,7 +19,7 @@
 interface ReadableCellCreatedRejectedMessageInterface {
 
 	/**
-	 * Returns the 2048 bytes of the other half of the Diffie-Hellman key exchange.
+	 * Returns the 256 bytes of the other half of the Diffie-Hellman key exchange.
 	 * This is only present if the message is not rejected.
 	 *
 	 * @method core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface#getDHPayload

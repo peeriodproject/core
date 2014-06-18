@@ -27,6 +27,18 @@ var CircuitExtender = (function () {
 
         this._nodes = this._encDecHandler.getNodes();
     }
+    CircuitExtender.prototype.getNodes = function () {
+        return this._nodes;
+    };
+
+    CircuitExtender.prototype.getCircuitId = function () {
+        return this._circuitId;
+    };
+
+    CircuitExtender.prototype.getExpectReactionFrom = function () {
+        return this._expectReactionFrom;
+    };
+
     CircuitExtender.prototype.extend = function (nodeToExtendWith, additiveNodes, callback) {
         var _this = this;
         var isFirst = this._nodes.length === 0;
@@ -53,7 +65,7 @@ var CircuitExtender = (function () {
 
         var dhPublicKey = this._currentDiffieHellman.generateKeys();
 
-        AdditiveSharingScheme.getShares(dhPublicKey, additiveNodes.length + 1, 2048, function (shares) {
+        AdditiveSharingScheme.getShares(dhPublicKey, additiveNodes.length + 1, 256, function (shares) {
             for (var i = 0, l = additiveNodes.length; i < l; i++) {
                 _this._messageCenter.sendAdditiveSharingMessage(additiveNodes[i], nodeToExtendWith.ip, nodeToExtendWith.port, _this._currentUUID, shares[i]);
             }
@@ -95,10 +107,10 @@ var CircuitExtender = (function () {
                         // all well, calculate keys, set the node on _nodes and _encDecHandler and callback
                         var hkdf = new HKDF('sha256', secret);
 
-                        var keysConcat = hkdf.derive(256, new Buffer(message.getUUID(), 'hex'));
+                        var keysConcat = hkdf.derive(32, new Buffer(message.getUUID(), 'hex'));
 
-                        var outgoingKey = keysConcat.slice(0, 128);
-                        var incomingKey = keysConcat.slice(128);
+                        var outgoingKey = keysConcat.slice(0, 16);
+                        var incomingKey = keysConcat.slice(16);
 
                         var newNode = {
                             incomingKey: incomingKey,

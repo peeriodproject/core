@@ -38,7 +38,7 @@ var ReadableCellCreatedRejectedMessage = (function () {
             this._secretHash = buffer.slice(16, 36);
             this._dhPayload = buffer.slice(36);
 
-            if (this._dhPayload.length !== 2048) {
+            if (this._dhPayload.length !== 256) {
                 throw new Error('ReadableCellCreatedRejectedMessage: Diffie-Hellman bad length!');
             }
         }

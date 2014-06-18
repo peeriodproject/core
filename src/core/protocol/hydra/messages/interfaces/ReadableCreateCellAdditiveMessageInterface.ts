@@ -10,7 +10,7 @@
  * and if the node who sent the message is the node who awaits the response in the end.
  * - 16 bytes for the circuitID, if the message is from the initiator
  * - 16 bytes for a UUID of the additive message batch. This is for keeping track of additive sharing schemes.
- * - 2048 bytes for the 'real' payload of the additive sharing message. All payloads combined result in the cleartext,
+ * - 256 bytes for the 'real' payload of the additive sharing message. All payloads combined result in the cleartext,
  * which is the half of the Diffie Hellman handshake.
  *
  * @class
