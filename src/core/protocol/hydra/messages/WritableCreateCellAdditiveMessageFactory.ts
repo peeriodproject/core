@@ -10,8 +10,8 @@ import HydraByteCheatsheet = require('./HydraByteCheatsheet');
 class WritableCreateCellAdditiveMessageFactory implements WritableCreateCellAdditiveMessageFactoryInterface {
 
 	public constructMessage (isInitiator:boolean, uuid:string, additivePayload:Buffer, circuitId?:string):Buffer {
-		if (additivePayload.length !== 2048) {
-			throw new Error('WritableCreateCellAdditiveMessageFactory: Additive payload must be of length 2048!');
+		if (additivePayload.length !== 256) {
+			throw new Error('WritableCreateCellAdditiveMessageFactory: Additive payload must be of length 256!');
 		}
 
 		if (isInitiator && !circuitId) {
@@ -32,7 +32,7 @@ class WritableCreateCellAdditiveMessageFactory implements WritableCreateCellAddi
 
 		var uuidBuffer:Buffer = new Buffer(uuid, 'hex');
 
-		return Buffer.concat([indicatorBuffer, circuitIdBuffer, uuidBuffer, additivePayload], isInitiator ? 2081 : 2065);
+		return Buffer.concat([indicatorBuffer, circuitIdBuffer, uuidBuffer, additivePayload], isInitiator ? 289 : 273);
 	}
 
 }

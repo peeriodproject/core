@@ -21,14 +21,14 @@ class WritableCellCreatedRejectedMessageFactory implements WritableCellCreatedRe
 			throw new Error('WritableCellCreatedRejectedMessageFactory: Secret hash must be of SHA-1 hash length.');
 		}
 
-		if (dhPayload && dhPayload.length !== 2048) {
-			throw new Error('WritableCellCreatedRejectedMessageFactory: Diffie-Hellman payload must be of length 2048!');
+		if (dhPayload && dhPayload.length !== 256) {
+			throw new Error('WritableCellCreatedRejectedMessageFactory: Diffie-Hellman payload must be of length 256!');
 		}
 
 		var uuidBuf:Buffer = new Buffer(uuid, 'hex');
 
 
-		return secretHash ? Buffer.concat([uuidBuf, secretHash, dhPayload], 2084) : uuidBuf;
+		return secretHash ? Buffer.concat([uuidBuf, secretHash, dhPayload], 292) : uuidBuf;
 	}
 }
 

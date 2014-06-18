@@ -41,7 +41,7 @@ var ReadableCreateCellAdditiveMessage = (function () {
 
         this._additivePayload = buffer.slice(continueAt + 16);
 
-        if (this._additivePayload.length !== 2048) {
+        if (this._additivePayload.length !== 256) {
             throw new Error('CreateCellAdditiveMessage: Additive payload bad length error.');
         }
     }

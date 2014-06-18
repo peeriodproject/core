@@ -30,7 +30,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> WritableCreateCellAdditiveMessageFacto
 		var uuid = '9d4bf7a0d1a7fce7163137c302582eb8';
 		var circuitId = 'b10e92e6d08a2ddda968eaf053cdaf1b';
 
-		var additivePayload = crypto.randomBytes(2048);
+		var additivePayload = crypto.randomBytes(256);
 
 		var m = factory.constructMessage(true, uuid, additivePayload, circuitId);
 
@@ -39,7 +39,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> WritableCreateCellAdditiveMessageFacto
 
 	it('should correctly format the message (not initiator)', function () {
 		var uuid = '9d4bf7a0d1a7fce7163137c302582eb8';
-		var additivePayload = crypto.randomBytes(2048);
+		var additivePayload = crypto.randomBytes(256);
 
 		var m = factory.constructMessage(false, uuid, additivePayload);
 
@@ -48,17 +48,17 @@ describe('CORE --> PROTOCOL --> HYDRA --> WritableCreateCellAdditiveMessageFacto
 
 	it('should throw an error when the payload has wrong length', function () {
 		var uuid = '9d4bf7a0d1a7fce7163137c302582eb8';
-		var additivePayload = crypto.randomBytes(2047);
+		var additivePayload = crypto.randomBytes(255);
 
 		(function () {
 			factory.constructMessage(false, uuid, additivePayload);
-		}).should.throw('WritableCreateCellAdditiveMessageFactory: Additive payload must be of length 2048!');
+		}).should.throw('WritableCreateCellAdditiveMessageFactory: Additive payload must be of length 256!');
 	});
 
 	it('should throw an error when it\'s initiator but has no circuit id', function () {
 		var uuid = '9d4bf7a0d1a7fce7163137c302582eb8';
 
-		var additivePayload = crypto.randomBytes(2048);
+		var additivePayload = crypto.randomBytes(256);
 
 		(function () {
 			factory.constructMessage(true, uuid, additivePayload);
@@ -68,7 +68,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> WritableCreateCellAdditiveMessageFacto
 	it('should throw error when the length is not right 1', function () {
 		var uuid = '9d4bf7a0d1a7fce7163137c302582eb';
 
-		var additivePayload = crypto.randomBytes(2048);
+		var additivePayload = crypto.randomBytes(256);
 
 		(function () {
 			factory.constructMessage(false, uuid, additivePayload);
@@ -79,7 +79,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> WritableCreateCellAdditiveMessageFacto
 		var uuid = '9d4bf7a0d1a7fce7163137c302582ebf';
 		var circuitId = 'd4bf7a0d1a7fce7163137c302582ebf';
 
-		var additivePayload = crypto.randomBytes(2048);
+		var additivePayload = crypto.randomBytes(256);
 
 		(function () {
 			factory.constructMessage(true, uuid, additivePayload, circuitId);

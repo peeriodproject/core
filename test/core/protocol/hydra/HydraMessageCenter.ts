@@ -73,14 +73,14 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter @current', function
 		var circuitId = 'cafebabecafebabecafebabecafebabe';
 		var uuid = '32b611d793ba13d78570ea5fcce18731';
 		var secretHash = crypto.randomBytes(20);
-		var dhPart = crypto.randomBytes(2048);
+		var dhPart = crypto.randomBytes(256);
 
 		var hydraFact = new WritableHydraMessageFactory();
 		var cellCreatedFact = new WritableCellCreatedRejectedMessageFactory();
 
 		var cellCreatedBuf = cellCreatedFact.constructMessage(uuid, secretHash, dhPart);
 
-		var msg = hydraFact.constructMessage('CELL_CREATED_REJECTED', cellCreatedBuf, 2084, circuitId);
+		var msg = hydraFact.constructMessage('CELL_CREATED_REJECTED', cellCreatedBuf, 292, circuitId);
 
 		messageCenter.on('CELL_CREATED_REJECTED_cafebabecafebabecafebabecafebabe', function (ip, msg) {
 			if (ip === '127.0.0.1' && msg.getUUID() === '32b611d793ba13d78570ea5fcce18731' && !msg.isRejected()) done();
@@ -104,7 +104,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter @current', function
 	it('should emit a CREATE_CELL_ADDITIVE message', function (done) {
 		var createCellAdditiveFact = new WritableCreateCellAdditiveMessageFactory();
 
-		var msg = createCellAdditiveFact.constructMessage(false, 'cafebabecafebabecafebabecafebabe', crypto.randomBytes(2048));
+		var msg = createCellAdditiveFact.constructMessage(false, 'cafebabecafebabecafebabecafebabe', crypto.randomBytes(256));
 
 		messageCenter.on('CREATE_CELL_ADDITIVE', function (ip, msg) {
 			if (ip === '127.0.0.1' && msg.getUUID() === 'cafebabecafebabecafebabecafebabe') done();
@@ -114,7 +114,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter @current', function
 	});
 
 	it('should pipe an ADDITIVE_SHARING message to the connection manager', function () {
-		var additivePayload = crypto.randomBytes(2048);
+		var additivePayload = crypto.randomBytes(256);
 
 		messageCenter.sendAdditiveSharingMessage({ip:'127.0.0.2', port:88}, '44.44.44.44', 80, 'cafebabecafebabecafebabecafebabe', additivePayload);
 
@@ -136,7 +136,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter @current', function
 	});
 
 	it('should pipe a CREATE_CELL_ADDITIVE message as initiator', function () {
-		var additivePayload = crypto.randomBytes(2048);
+		var additivePayload = crypto.randomBytes(256);
 		var circuitId = crypto.randomBytes(16).toString('hex');
 		var uuid = crypto.randomBytes(16).toString('hex');
 
@@ -158,7 +158,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter @current', function
 	it('should spitout a RELAY_CREATE_CELL message', function (done) {
 		var key1 = crypto.randomBytes(16);
 		var key2 = crypto.randomBytes(16);
-		var additivePayload = crypto.randomBytes(2048);
+		var additivePayload = crypto.randomBytes(256);
 		var circuitId = crypto.randomBytes(16).toString('hex');
 		var uuid = crypto.randomBytes(16).toString('hex');
 
@@ -197,23 +197,28 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter @current', function
 			lastMessageSent.to.ip.should.equal('4.4.4.4');
 			lastMessageSent.to.port.should.equal(777);
 
+			console.log(lastMessageSent.payload);
+
 			encDecHandler.decrypt(lastMessageSent.payload, (err, buff) => {
-				var msg = (new ReadableHydraMessageFactory()).create(buff);
+				if (!err && buff) {
+					var msg = (new ReadableHydraMessageFactory()).create(buff);
 
-				if (msg.getMessageType() === 'ADDITIVE_SHARING') {
-					var msg2 = (new ReadableAdditiveSharingMessageFactory()).create(msg.getPayload());
+					if (msg.getMessageType() === 'ADDITIVE_SHARING') {
+						var msg2 = (new ReadableAdditiveSharingMessageFactory()).create(msg.getPayload());
 
-					if (msg2.getIp() === '5.5.5.5') {
-						var msg3 = (new ReadableCreateCellAdditiveMessageFactory()).create(msg2.getPayload());
+						if (msg2.getIp() === '5.5.5.5') {
+							var msg3 = (new ReadableCreateCellAdditiveMessageFactory()).create(msg2.getPayload());
 
-						msg3.getUUID().should.equal(uuid);
-						msg3.getAdditivePayload().toString('hex').should.equal(additivePayload.toString('hex'));
-						done();
+							msg3.getUUID().should.equal(uuid);
+							msg3.getAdditivePayload().toString('hex').should.equal(additivePayload.toString('hex'));
+							done();
+						}
 					}
 				}
+				else throw err;
 			});
 
-		}, 100);
+		}, 400);
 
 	});
 

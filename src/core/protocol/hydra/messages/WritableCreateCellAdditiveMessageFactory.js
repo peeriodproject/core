@@ -10,8 +10,8 @@ var WritableCreateCellAdditiveMessageFactory = (function () {
     function WritableCreateCellAdditiveMessageFactory() {
     }
     WritableCreateCellAdditiveMessageFactory.prototype.constructMessage = function (isInitiator, uuid, additivePayload, circuitId) {
-        if (additivePayload.length !== 2048) {
-            throw new Error('WritableCreateCellAdditiveMessageFactory: Additive payload must be of length 2048!');
+        if (additivePayload.length !== 256) {
+            throw new Error('WritableCreateCellAdditiveMessageFactory: Additive payload must be of length 256!');
         }
 
         if (isInitiator && !circuitId) {
@@ -32,7 +32,7 @@ var WritableCreateCellAdditiveMessageFactory = (function () {
 
         var uuidBuffer = new Buffer(uuid, 'hex');
 
-        return Buffer.concat([indicatorBuffer, circuitIdBuffer, uuidBuffer, additivePayload], isInitiator ? 2081 : 2065);
+        return Buffer.concat([indicatorBuffer, circuitIdBuffer, uuidBuffer, additivePayload], isInitiator ? 289 : 273);
     };
     return WritableCreateCellAdditiveMessageFactory;
 })();

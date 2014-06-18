@@ -7,11 +7,11 @@ var ReadableCellCreatedRejectedMessage = require('../../../../src/core/protocol/
 
 describe('CORE --> PROTOCOL --> HYDRA --> ReadableCellCreatedRejectedMessage', function () {
     it('should correctly deformat a non-rejected message', function () {
-        var dhPart = crypto.randomBytes(2048);
+        var dhPart = crypto.randomBytes(256);
         var secretHash = crypto.randomBytes(20);
         var uuidBuf = crypto.randomBytes(16);
 
-        var msg = new ReadableCellCreatedRejectedMessage(Buffer.concat([uuidBuf, secretHash, dhPart], 2084));
+        var msg = new ReadableCellCreatedRejectedMessage(Buffer.concat([uuidBuf, secretHash, dhPart], 292));
 
         msg.isRejected().should.be.false;
         msg.getDHPayload().toString('hex').should.equal(dhPart.toString('hex'));
@@ -20,12 +20,12 @@ describe('CORE --> PROTOCOL --> HYDRA --> ReadableCellCreatedRejectedMessage', f
     });
 
     it('should throw an error when the DH part has bad length', function () {
-        var dhPart = crypto.randomBytes(2047);
+        var dhPart = crypto.randomBytes(255);
         var secretHash = crypto.randomBytes(20);
         var uuidBuf = crypto.randomBytes(16);
 
         (function () {
-            var msg = new ReadableCellCreatedRejectedMessage(Buffer.concat([uuidBuf, secretHash, dhPart], 2083));
+            var msg = new ReadableCellCreatedRejectedMessage(Buffer.concat([uuidBuf, secretHash, dhPart], 291));
         }).should.throw('ReadableCellCreatedRejectedMessage: Diffie-Hellman bad length!');
     });
 

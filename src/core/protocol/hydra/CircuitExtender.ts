@@ -46,6 +46,18 @@ class CircuitExtender implements CircuitExtenderInterface {
 		this._nodes = this._encDecHandler.getNodes();
 	}
 
+	public getNodes ():HydraNodeList {
+		return this._nodes;
+	}
+
+	public getCircuitId ():string {
+		return this._circuitId;
+	}
+
+	public getExpectReactionFrom ():HydraNode {
+		return this._expectReactionFrom;
+	}
+
 	public extend (nodeToExtendWith:HydraNode, additiveNodes:HydraNodeList, callback:(err:Error, isRejection:boolean, newNode:HydraNode) => any):void {
 		var isFirst:boolean = this._nodes.length === 0;
 
@@ -71,7 +83,7 @@ class CircuitExtender implements CircuitExtenderInterface {
 
 		var dhPublicKey:Buffer = this._currentDiffieHellman.generateKeys();
 
-		AdditiveSharingScheme.getShares(dhPublicKey, additiveNodes.length + 1, 2048, (shares:Array<Buffer>) => {
+		AdditiveSharingScheme.getShares(dhPublicKey, additiveNodes.length + 1, 256, (shares:Array<Buffer>) => {
 			// okay, now let the message center pipe it through
 			for (var i = 0, l = additiveNodes.length; i < l; i++) {
 				this._messageCenter.sendAdditiveSharingMessage(additiveNodes[i], nodeToExtendWith.ip, nodeToExtendWith.port, this._currentUUID, shares[i]);
@@ -119,10 +131,10 @@ class CircuitExtender implements CircuitExtenderInterface {
 						var hkdf:HKDF = new HKDF('sha256', secret);
 
 
-						var keysConcat:Buffer = hkdf.derive(256, new Buffer(message.getUUID(), 'hex'));
+						var keysConcat:Buffer = hkdf.derive(32, new Buffer(message.getUUID(), 'hex'));
 
-						var outgoingKey:Buffer = keysConcat.slice(0, 128);
-						var incomingKey:Buffer = keysConcat.slice(128);
+						var outgoingKey:Buffer = keysConcat.slice(0, 16);
+						var incomingKey:Buffer = keysConcat.slice(16);
 
 						var newNode:HydraNode = {
 							incomingKey: incomingKey,
