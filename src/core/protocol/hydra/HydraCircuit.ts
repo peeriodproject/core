@@ -7,7 +7,7 @@ import HydraCircuitInterface = require('./interfaces/HydraCircuitInterface');
 import ConfigInterface = require('../../config/interfaces/ConfigInterface');
 import NodePickerInterface = require('./interfaces/NodePickerInterface');
 import HydraMessageCenterInterface = require('./interfaces/HydraMessageCenterInterface');
-import HydraConnectionManagerInterface = require('./interfaces/HydraConnectionManagerInterface');
+import ConnectionManagerInterface = require('./interfaces/ConnectionManagerInterface');
 import LayeredEncDecHandlerInterface = require('./messages/interfaces/LayeredEncDecHandlerInterface');
 import LayeredEncDecHandlerFactoryInterface = require('./messages/interfaces/LayeredEncDecHandlerFactoryInterface');
 
@@ -21,7 +21,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 
 	private _messageCenter:HydraMessageCenterInterface = null;
 
-	private _connectionManager:HydraConnectionManagerInterface = null;
+	private _connectionManager:ConnectionManagerInterface = null;
 
 	private _extensionReactionTimeBaseInMs:number = 0;
 
@@ -31,7 +31,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 
 	private _maximumExtensionRetries:number = 0;
 
-	public constructor (hydraConfig:ConfigInterface, numOfRelayNodes:number, nodePicker:NodePickerInterface, messageCenter:HydraMessageCenterInterface, connectionManager:HydraConnectionManagerInterface, layeredEncDecFactory:LayeredEncDecHandlerFactoryInterface) {
+	public constructor (hydraConfig:ConfigInterface, numOfRelayNodes:number, nodePicker:NodePickerInterface, messageCenter:HydraMessageCenterInterface, connectionManager:ConnectionManagerInterface, layeredEncDecFactory:LayeredEncDecHandlerFactoryInterface) {
 		super();
 
 		this._numOfRelayNodes = numOfRelayNodes;
