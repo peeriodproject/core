@@ -186,7 +186,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent @joern', function
         nwWindowStub._window.resizeTo.getCall(1).args[1].should.equal(853);
     });
 
-    it('should correctly set the path list and update the UI on drop', function () {
+    it('should correctly set the path list, update the UI on drop and clean up the path list @prio', function () {
         component.onConnection(sparkStub);
 
         triggerListeners(sparkOnListeners['open']);
@@ -200,6 +200,9 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent @joern', function
         // check paths
         sparkStub.send.getCall(0).args[1][0].should.equal('/path/one');
         sparkStub.send.getCall(0).args[1][1].should.equal('/path/two');
+
+        // paths should be removed from the list
+        component.getState().length.should.equal(0);
     });
 });
 //# sourceMappingURL=UiFolderDropzoneComponent.js.map

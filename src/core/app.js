@@ -69,9 +69,8 @@ var App = {
     startIndexer: function (dataPath, win) {
         win.showDevTools();
 
-        var testFolderPath = path.resolve(__dirname, '../../utils/TestFolder');
-        var externalFolderPath = path.resolve('/Volumes/External/path/Folder');
-
+        //var testFolderPath:string = path.resolve(__dirname, '../../utils/TestFolder');
+        //var externalFolderPath:string = path.resolve('/Volumes/External/path/Folder');
         var fsConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'fs']);
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var searchConfig = new JSONConfig('../../config/mainConfig.json', ['search']);
@@ -99,11 +98,10 @@ var App = {
         // ui components
         var uiFolderWatcherManagerComponent = new UiFolderWatcherManagerComponent(folderWatcherManager);
         this.addUiComponent(uiFolderWatcherManagerComponent);
-
         //var indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
         // -----------------------
-        folderWatcherManager.addFolderWatcher(testFolderPath);
-        folderWatcherManager.addFolderWatcher(externalFolderPath);
+        //folderWatcherManager.addFolderWatcher(testFolderPath);
+        //folderWatcherManager.addFolderWatcher(externalFolderPath);
     },
     startUi: function (gui) {
         var uiConfig = new JSONConfig('../../config/mainConfig.json', ['ui']);

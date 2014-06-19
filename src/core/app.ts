@@ -79,8 +79,8 @@ var App = {
 
 		win.showDevTools();
 
-		var testFolderPath:string = path.resolve(__dirname, '../../utils/TestFolder');
-		var externalFolderPath:string = path.resolve('/Volumes/External/path/Folder');
+		//var testFolderPath:string = path.resolve(__dirname, '../../utils/TestFolder');
+		//var externalFolderPath:string = path.resolve('/Volumes/External/path/Folder');
 
 		var fsConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'fs']);
 		var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
@@ -115,8 +115,8 @@ var App = {
 
 		// -----------------------
 
-		folderWatcherManager.addFolderWatcher(testFolderPath);
-		folderWatcherManager.addFolderWatcher(externalFolderPath);
+		//folderWatcherManager.addFolderWatcher(testFolderPath);
+		//folderWatcherManager.addFolderWatcher(externalFolderPath);
 	},
 
 	startUi: function (gui) {
