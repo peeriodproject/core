@@ -44,6 +44,7 @@ interface FolderWatcherManagerInterface extends ClosableAsyncInterface {
 	 *  - watcher.add
 	 *  - watcher.invalid
 	 *  - watcher.remove
+	 *  - watcher.removeInvalid
 	 *
 	 * @method core.fs.FolderWatcherManagerInterface#on
 	 *

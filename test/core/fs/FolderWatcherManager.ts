@@ -18,6 +18,7 @@ import FolderWatcherManager = require('../../../src/core/fs/FolderWatcherManager
 describe('CORE --> FS --> FolderWatcherManager', function () {
 	var managerStoragePath:string = testUtils.getFixturePath('core/fs/folderWatcherManagerTest');
 	var validPathToWatch:string = testUtils.getFixturePath('core/fs/folderWatcherManagerTest/folderToWatch');
+	var invalidPathToWatch:string = testUtils.getFixturePath('core/fs/folderWatcherManagerTest/invalidPathToWatch');
 	var sandbox:SinonSandbox;
 	var configStub:any;
 	var appQuitHandlerStub:any;
@@ -265,6 +266,31 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 		folderWatcherManager.on('watcher.remove', onWatcherRemove);
 	});
 
+	it('should correctly remove a invalid folder watcher', function (done) {
+		createStateHandlerStub({
+			paths: [
+				invalidPathToWatch
+			]
+		});
+
+		var onWatcherRemoveInvalid = sinon.spy();
+
+		var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+			onOpenCallback: function (err) {
+				folderWatcherFactoryStub.create.calledOnce.should.be.false;
+
+				folderWatcherManager.removeFolderWatcher(invalidPathToWatch, function () {
+					onWatcherRemoveInvalid.calledOnce.should.be.true;
+					onWatcherRemoveInvalid.getCall(0).args[0].should.equal(invalidPathToWatch);
+
+					closeAndDone(folderWatcherManager, done);
+				});
+			}
+		});
+
+		folderWatcherManager.on('watcher.removeInvalid', onWatcherRemoveInvalid);
+	});
+
 	it('should correctly add the folder watcher', function (done) {
 		createStateHandlerStub({
 			paths: []
@@ -321,7 +347,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 			testUtils.deleteFolderRecursive(validPathToWatch);
 		});
 
-		it ('should correctly forward the add event', function (done) {
+		it('should correctly forward the add event', function (done) {
 			createStateHandlerStub({
 				paths: [
 					validPathToWatch
@@ -329,7 +355,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 			});
 
 			var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-				onOpenCallback    : function (err) {
+				onOpenCallback: function (err) {
 					folderWatcherManager.on('add', function (changedPath:string, stats:fs.Stats) {
 						changedPath.should.equal(validPathToWatch + '/foo.txt');
 						(stats !== null).should.be.true;
@@ -342,7 +368,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 			});
 		});
 
-		it ('should correctly forward the change event', function (done) {
+		it('should correctly forward the change event', function (done) {
 			var filePath:string = validPathToWatch + '/foo.txt';
 
 			createStateHandlerStub({
@@ -354,7 +380,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 			fs.writeFileSync(filePath, new Buffer(100));
 
 			var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-				onOpenCallback    : function (err) {
+				onOpenCallback: function (err) {
 					folderWatcherManager.on('add', function (changedPath:string, stats:fs.Stats) {
 						fs.writeFileSync(filePath, new Buffer(500));
 					});
@@ -369,7 +395,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 			});
 		});
 
-		it ('should correctly forward the unlink event', function (done) {
+		it('should correctly forward the unlink event', function (done) {
 			var filePath:string = validPathToWatch + '/foo.txt';
 
 			createStateHandlerStub({
@@ -380,9 +406,10 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
 
 			fs.writeFileSync(filePath, new Buffer(100));
 
-			var onAddChangeCallback = function() {};
+			var onAddChangeCallback = function () {
+			};
 			var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
-				onOpenCallback    : function (err) {
+				onOpenCallback: function (err) {
 					// on/off test
 					folderWatcherManager.on('change', onAddChangeCallback);
 					folderWatcherManager.off('change', onAddChangeCallback);

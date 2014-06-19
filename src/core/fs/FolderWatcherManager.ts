@@ -276,6 +276,8 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 						});
 					}
 					else {
+						this._isOpen = true;
+
 						return internalCallback(null);
 					}
 				}
@@ -286,11 +288,19 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 	public removeFolderWatcher (pathToWatch:string, callback?:(err:Error) => any):void {
 		var internalCallback:Function = callback || function () {
 		};
+		var removed:boolean = false;
 
-		var removed:boolean = this._removeFolderWatcher(pathToWatch);
+		removed = this._removeFolderWatcher(pathToWatch);
 
 		if (removed) {
 			this._triggerEvent('watcher.remove', pathToWatch, null);
+		}
+		else {
+			removed = this._removeFromInvalidWatcherPaths(pathToWatch);
+
+			if (removed) {
+				this._triggerEvent('watcher.removeInvalid', pathToWatch, null);
+			}
 		}
 
 		return process.nextTick(internalCallback.bind(null, null));
@@ -489,13 +499,18 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 	 * @method core.fs.FolderWatcherManager~_addToInvalidWatcherPaths
 	 *
 	 * @param {string} pathToWatch
+	 * @returns {boolean} successfully removed
 	 */
-	private _removeFromInvalidWatcherPaths (pathToWatch:string):void {
+	private _removeFromInvalidWatcherPaths (pathToWatch:string):boolean {
 		var index:number = this._invalidWatcherPaths.indexOf(pathToWatch);
+		var removed:boolean = false;
 
 		if (index !== -1) {
 			this._invalidWatcherPaths.splice(index, 1);
+			removed = true;
 		}
+
+		return removed;
 	}
 
 	/**

@@ -206,6 +206,10 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 			this._removeFolder(path);
 			this._updateUi();
 		});
+		this._folderWatcherManager.on('watcher.removeInvalid', (path) => {
+			this._removeFolder(path);
+			this._updateUi();
+		});
 	}
 
 	/**

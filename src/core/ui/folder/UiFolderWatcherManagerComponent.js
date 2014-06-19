@@ -197,6 +197,10 @@ var UiFolderWatcherManagerComponent = (function () {
             _this._removeFolder(path);
             _this._updateUi();
         });
+        this._folderWatcherManager.on('watcher.removeInvalid', function (path) {
+            _this._removeFolder(path);
+            _this._updateUi();
+        });
     };
 
     /**
