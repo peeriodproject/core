@@ -16,6 +16,8 @@ interface ConnectionManagerInterface extends NodeJS.EventEmitter {
 
 	pipeMessageTo (node:HydraNode, messageType:string, payload:Buffer):void;
 
+	addToCircuitNodes (socketIdentifier:string, node:HydraNode):void;
+
 	removeFromCircuitNodes (node:HydraNode):HydraNode;
 }
 

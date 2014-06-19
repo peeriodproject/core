@@ -32,6 +32,8 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 */
 	private _circuitId:string = null;
 
+	private _circuitTerminationListener:Function = null;
+
 	/**
 	 * The working hydra connection manager instance.
 	 *
@@ -169,7 +171,14 @@ class CircuitExtender implements CircuitExtenderInterface {
 				this._onReaction(from, message);
 			};
 
+			this._circuitTerminationListener = (circuitId:string) => {
+				if (circuitId === this._circuitId) {
+					this._onFirstCircuitTermination();
+				}
+			};
+
 			this._messageCenter.on('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
+			this._connectionManager.on('circuitTermination', this._circuitTerminationListener);
 		}
 
 		this._currentUUID = crypto.pseudoRandomBytes(16).toString('hex');
@@ -191,6 +200,7 @@ class CircuitExtender implements CircuitExtenderInterface {
 			}
 
 			this._currentReactionTimeout = global.setTimeout(() => {
+				this._removeTerminationListener();
 				this._extensionError('Timed out');
 			}, this._reactionTimeInMs * Math.pow(this._reactionTimeFactor, this._nodes.length));
 		});
@@ -215,10 +225,8 @@ class CircuitExtender implements CircuitExtenderInterface {
 
 		if (this._expectReactionFrom === from) {
 
-			if (this._currentReactionTimeout) {
-				global.clearTimeout(this._currentReactionTimeout);
-				this._currentReactionTimeout = 0;
-			}
+			this._clearReactionTimeout();
+			this._removeTerminationListener();
 
 			if (message.getUUID() !== this._currentUUID) {
 				this._extensionError('Expected UUID does not match received UUID.');
@@ -292,6 +300,26 @@ class CircuitExtender implements CircuitExtenderInterface {
 		}
 
 		this._currentCallback(new Error('CircuitExtender: ' + errMsg), false, null);
+	}
+
+	private _onFirstCircuitTermination ():void {
+		this._clearReactionTimeout();
+		this._removeTerminationListener();
+		this._extensionError('Circuit socket terminated.');
+	}
+
+	private _clearReactionTimeout ():void {
+		if (this._currentReactionTimeout) {
+			global.clearTimeout(this._currentReactionTimeout);
+			this._currentReactionTimeout = 0;
+		}
+	}
+
+	private _removeTerminationListener ():void {
+		if (this._circuitTerminationListener) {
+			this._connectionManager.removeListener('circuitTermination', this._circuitTerminationListener);
+			this._circuitTerminationListener = null;
+		}
 	}
 
 }

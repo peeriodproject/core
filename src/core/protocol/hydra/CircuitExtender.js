@@ -24,6 +24,7 @@ var CircuitExtender = (function () {
         * @member {string} core.protocol.hydra.CircuitExtender~_circuitId
         */
         this._circuitId = null;
+        this._circuitTerminationListener = null;
         /**
         * The working hydra connection manager instance.
         *
@@ -145,7 +146,14 @@ var CircuitExtender = (function () {
                 _this._onReaction(from, message);
             };
 
+            this._circuitTerminationListener = function (circuitId) {
+                if (circuitId === _this._circuitId) {
+                    _this._onFirstCircuitTermination();
+                }
+            };
+
             this._messageCenter.on('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
+            this._connectionManager.on('circuitTermination', this._circuitTerminationListener);
         }
 
         this._currentUUID = crypto.pseudoRandomBytes(16).toString('hex');
@@ -166,6 +174,7 @@ var CircuitExtender = (function () {
             }
 
             _this._currentReactionTimeout = global.setTimeout(function () {
+                _this._removeTerminationListener();
                 _this._extensionError('Timed out');
             }, _this._reactionTimeInMs * Math.pow(_this._reactionTimeFactor, _this._nodes.length));
         });
@@ -188,10 +197,8 @@ var CircuitExtender = (function () {
     */
     CircuitExtender.prototype._onReaction = function (from, message) {
         if (this._expectReactionFrom === from) {
-            if (this._currentReactionTimeout) {
-                global.clearTimeout(this._currentReactionTimeout);
-                this._currentReactionTimeout = 0;
-            }
+            this._clearReactionTimeout();
+            this._removeTerminationListener();
 
             if (message.getUUID() !== this._currentUUID) {
                 this._extensionError('Expected UUID does not match received UUID.');
@@ -261,6 +268,26 @@ var CircuitExtender = (function () {
         }
 
         this._currentCallback(new Error('CircuitExtender: ' + errMsg), false, null);
+    };
+
+    CircuitExtender.prototype._onFirstCircuitTermination = function () {
+        this._clearReactionTimeout();
+        this._removeTerminationListener();
+        this._extensionError('Circuit socket terminated.');
+    };
+
+    CircuitExtender.prototype._clearReactionTimeout = function () {
+        if (this._currentReactionTimeout) {
+            global.clearTimeout(this._currentReactionTimeout);
+            this._currentReactionTimeout = 0;
+        }
+    };
+
+    CircuitExtender.prototype._removeTerminationListener = function () {
+        if (this._circuitTerminationListener) {
+            this._connectionManager.removeListener('circuitTermination', this._circuitTerminationListener);
+            this._circuitTerminationListener = null;
+        }
     };
     return CircuitExtender;
 })();

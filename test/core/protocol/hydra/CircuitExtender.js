@@ -26,7 +26,7 @@ var WritableAdditiveSharingMessageFactory = require('../../../../src/core/protoc
 var WritableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory');
 var LayeredEncDecHandler = require('../../../../src/core/protocol/hydra/messages/Aes128GcmLayeredEncDecHandler');
 
-describe('CORE --> PROTOCOL --> HYDRA --> CircuitExtender @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> CircuitExtender', function () {
     // as this class is closely connected to the MessageCenter, we do not stub the message center
     var sandbox;
 

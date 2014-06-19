@@ -22,6 +22,12 @@ var ConnectionManager = (function (_super) {
 
         this._setupListeners();
     }
+    ConnectionManager.prototype.addToCircuitNodes = function (socketIdentifier, node) {
+        node.socketIdentifier = socketIdentifier;
+        this._circuitNodes[socketIdentifier] = node;
+        this._protocolConnectionManager.keepHydraSocketOpen(socketIdentifier);
+    };
+
     ConnectionManager.prototype.removeFromCircuitNodes = function (node) {
         return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier);
     };
@@ -75,9 +81,7 @@ var ConnectionManager = (function (_super) {
 
                 this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
                     if (!err && identifier) {
-                        node.socketIdentifier = identifier;
-                        _this._circuitNodes[identifier] = node;
-                        _this._protocolConnectionManager.keepHydraSocketOpen(identifier);
+                        _this.addToCircuitNodes(identifier, node);
 
                         var pipeline = _this._circuitPipeline[circuitId];
 

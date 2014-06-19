@@ -32,6 +32,12 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 		this._setupListeners();
 	}
 
+	public addToCircuitNodes (socketIdentifier:string, node:HydraNode) {
+		node.socketIdentifier = socketIdentifier;
+		this._circuitNodes[socketIdentifier] = node;
+		this._protocolConnectionManager.keepHydraSocketOpen(socketIdentifier);
+	}
+
 	public removeFromCircuitNodes (node:HydraNode):HydraNode {
 		return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier);
 	}
@@ -86,9 +92,7 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 
 				this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, (err:Error, identifier:string) => {
 					if (!err && identifier) {
-						node.socketIdentifier = identifier;
-						this._circuitNodes[identifier] = node;
-						this._protocolConnectionManager.keepHydraSocketOpen(identifier);
+						this.addToCircuitNodes(identifier, node);
 
 						var pipeline = this._circuitPipeline[circuitId];
 
