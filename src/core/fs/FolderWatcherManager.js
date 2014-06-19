@@ -256,6 +256,8 @@ var FolderWatcherManager = (function () {
                             return internalCallback(err);
                         });
                     } else {
+                        _this._isOpen = true;
+
                         return internalCallback(null);
                     }
                 }
@@ -266,11 +268,18 @@ var FolderWatcherManager = (function () {
     FolderWatcherManager.prototype.removeFolderWatcher = function (pathToWatch, callback) {
         var internalCallback = callback || function () {
         };
+        var removed = false;
 
-        var removed = this._removeFolderWatcher(pathToWatch);
+        removed = this._removeFolderWatcher(pathToWatch);
 
         if (removed) {
             this._triggerEvent('watcher.remove', pathToWatch, null);
+        } else {
+            removed = this._removeFromInvalidWatcherPaths(pathToWatch);
+
+            if (removed) {
+                this._triggerEvent('watcher.removeInvalid', pathToWatch, null);
+            }
         }
 
         return process.nextTick(internalCallback.bind(null, null));
@@ -466,13 +475,18 @@ var FolderWatcherManager = (function () {
     * @method core.fs.FolderWatcherManager~_addToInvalidWatcherPaths
     *
     * @param {string} pathToWatch
+    * @returns {boolean} successfully removed
     */
     FolderWatcherManager.prototype._removeFromInvalidWatcherPaths = function (pathToWatch) {
         var index = this._invalidWatcherPaths.indexOf(pathToWatch);
+        var removed = false;
 
         if (index !== -1) {
             this._invalidWatcherPaths.splice(index, 1);
+            removed = true;
         }
+
+        return removed;
     };
 
     /**

@@ -17,6 +17,7 @@ var FolderWatcherManager = require('../../../src/core/fs/FolderWatcherManager');
 describe('CORE --> FS --> FolderWatcherManager', function () {
     var managerStoragePath = testUtils.getFixturePath('core/fs/folderWatcherManagerTest');
     var validPathToWatch = testUtils.getFixturePath('core/fs/folderWatcherManagerTest/folderToWatch');
+    var invalidPathToWatch = testUtils.getFixturePath('core/fs/folderWatcherManagerTest/invalidPathToWatch');
     var sandbox;
     var configStub;
     var appQuitHandlerStub;
@@ -263,6 +264,31 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
         });
 
         folderWatcherManager.on('watcher.remove', onWatcherRemove);
+    });
+
+    it('should correctly remove a invalid folder watcher', function (done) {
+        createStateHandlerStub({
+            paths: [
+                invalidPathToWatch
+            ]
+        });
+
+        var onWatcherRemoveInvalid = sinon.spy();
+
+        var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+            onOpenCallback: function (err) {
+                folderWatcherFactoryStub.create.calledOnce.should.be.false;
+
+                folderWatcherManager.removeFolderWatcher(invalidPathToWatch, function () {
+                    onWatcherRemoveInvalid.calledOnce.should.be.true;
+                    onWatcherRemoveInvalid.getCall(0).args[0].should.equal(invalidPathToWatch);
+
+                    closeAndDone(folderWatcherManager, done);
+                });
+            }
+        });
+
+        folderWatcherManager.on('watcher.removeInvalid', onWatcherRemoveInvalid);
     });
 
     it('should correctly add the folder watcher', function (done) {
