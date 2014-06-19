@@ -32,6 +32,10 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 		this._setupListeners();
 	}
 
+	public getCircuitNodes ():{[identifier:string]:HydraNode} {
+		return this._circuitNodes;
+	}
+
 	public addToCircuitNodes (socketIdentifier:string, node:HydraNode) {
 		node.socketIdentifier = socketIdentifier;
 		this._circuitNodes[socketIdentifier] = node;
@@ -40,22 +44,6 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 
 	public removeFromCircuitNodes (node:HydraNode):HydraNode {
 		return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier);
-	}
-
-	private _removeFromCircuitNodesByIdentifier (identifier:string):HydraNode {
-
-		if (identifier) {
-			var circNode:HydraNode = this._circuitNodes[identifier];
-
-			if (circNode) {
-				this._protocolConnectionManager.keepHydraSocketNoLongerOpen(identifier);
-				delete this._circuitNodes[identifier];
-
-				return circNode;
-			}
-		}
-
-		return undefined;
 	}
 
 	public pipeMessageTo (node:HydraNode, messageType:string, payload:Buffer) {
@@ -111,6 +99,22 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 		else if (this._circuitNodes[node.socketIdentifier]) {
 			this._protocolConnectionManager.hydraWriteMessageTo(node.socketIdentifier, sendableBuffer);
 		}
+	}
+
+	private _removeFromCircuitNodesByIdentifier (identifier:string):HydraNode {
+
+		if (identifier) {
+			var circNode:HydraNode = this._circuitNodes[identifier];
+
+			if (circNode) {
+				this._protocolConnectionManager.keepHydraSocketNoLongerOpen(identifier);
+				delete this._circuitNodes[identifier];
+
+				return circNode;
+			}
+		}
+
+		return undefined;
 	}
 
 	private _setupListeners ():void {

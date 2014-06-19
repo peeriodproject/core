@@ -28,7 +28,7 @@ var CircuitExtender = (function () {
         /**
         * The working hydra connection manager instance.
         *
-        * @member {core.protocol.hydra.HydraConnectionManagerInterface} core.protocol.hydra.CircuitExtender~_connectionManager
+        * @member {core.protocol.hydra.ConnectionManagerInterface} core.protocol.hydra.CircuitExtender~_connectionManager
         */
         this._connectionManager = null;
         /**
@@ -148,7 +148,7 @@ var CircuitExtender = (function () {
 
             this._circuitTerminationListener = function (circuitId) {
                 if (circuitId === _this._circuitId) {
-                    _this._onFirstCircuitTermination();
+                    _this._onCircuitTermination();
                 }
             };
 
@@ -174,7 +174,6 @@ var CircuitExtender = (function () {
             }
 
             _this._currentReactionTimeout = global.setTimeout(function () {
-                _this._removeTerminationListener();
                 _this._extensionError('Timed out');
             }, _this._reactionTimeInMs * Math.pow(_this._reactionTimeFactor, _this._nodes.length));
         });
@@ -198,7 +197,6 @@ var CircuitExtender = (function () {
     CircuitExtender.prototype._onReaction = function (from, message) {
         if (this._expectReactionFrom === from) {
             this._clearReactionTimeout();
-            this._removeTerminationListener();
 
             if (message.getUUID() !== this._currentUUID) {
                 this._extensionError('Expected UUID does not match received UUID.');
@@ -246,7 +244,8 @@ var CircuitExtender = (function () {
     */
     CircuitExtender.prototype._handleRejection = function () {
         if (!this._nodes.length) {
-            this._messageCenter.removeListener('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
+            this._removeMessageListener();
+            this._removeTerminationListener();
             this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
         }
 
@@ -261,7 +260,8 @@ var CircuitExtender = (function () {
     * @param {string} errMsg Message for the passed in error.
     */
     CircuitExtender.prototype._extensionError = function (errMsg) {
-        this._messageCenter.removeListener('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
+        this._removeMessageListener();
+        this._removeTerminationListener();
 
         if (!this._nodes.length) {
             this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
@@ -270,10 +270,21 @@ var CircuitExtender = (function () {
         this._currentCallback(new Error('CircuitExtender: ' + errMsg), false, null);
     };
 
-    CircuitExtender.prototype._onFirstCircuitTermination = function () {
-        this._clearReactionTimeout();
+    CircuitExtender.prototype._removeMessageListener = function () {
+        if (this._eventListener) {
+            this._messageCenter.removeListener('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
+            this._eventListener = null;
+        }
+    };
+
+    CircuitExtender.prototype._onCircuitTermination = function () {
+        this._removeMessageListener();
         this._removeTerminationListener();
-        this._extensionError('Circuit socket terminated.');
+
+        if (!this._nodes.length) {
+            this._clearReactionTimeout();
+            this._extensionError('Circuit socket terminated');
+        }
     };
 
     CircuitExtender.prototype._clearReactionTimeout = function () {
