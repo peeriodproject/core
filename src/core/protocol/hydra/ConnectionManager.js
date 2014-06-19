@@ -22,6 +22,10 @@ var ConnectionManager = (function (_super) {
 
         this._setupListeners();
     }
+    ConnectionManager.prototype.getCircuitNodes = function () {
+        return this._circuitNodes;
+    };
+
     ConnectionManager.prototype.addToCircuitNodes = function (socketIdentifier, node) {
         node.socketIdentifier = socketIdentifier;
         this._circuitNodes[socketIdentifier] = node;
@@ -30,21 +34,6 @@ var ConnectionManager = (function (_super) {
 
     ConnectionManager.prototype.removeFromCircuitNodes = function (node) {
         return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier);
-    };
-
-    ConnectionManager.prototype._removeFromCircuitNodesByIdentifier = function (identifier) {
-        if (identifier) {
-            var circNode = this._circuitNodes[identifier];
-
-            if (circNode) {
-                this._protocolConnectionManager.keepHydraSocketNoLongerOpen(identifier);
-                delete this._circuitNodes[identifier];
-
-                return circNode;
-            }
-        }
-
-        return undefined;
     };
 
     ConnectionManager.prototype.pipeMessageTo = function (node, messageType, payload) {
@@ -98,6 +87,21 @@ var ConnectionManager = (function (_super) {
         } else if (this._circuitNodes[node.socketIdentifier]) {
             this._protocolConnectionManager.hydraWriteMessageTo(node.socketIdentifier, sendableBuffer);
         }
+    };
+
+    ConnectionManager.prototype._removeFromCircuitNodesByIdentifier = function (identifier) {
+        if (identifier) {
+            var circNode = this._circuitNodes[identifier];
+
+            if (circNode) {
+                this._protocolConnectionManager.keepHydraSocketNoLongerOpen(identifier);
+                delete this._circuitNodes[identifier];
+
+                return circNode;
+            }
+        }
+
+        return undefined;
     };
 
     ConnectionManager.prototype._setupListeners = function () {

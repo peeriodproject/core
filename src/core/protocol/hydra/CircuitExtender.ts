@@ -5,7 +5,7 @@ import HKDF = require('../../crypto/HKDF');
 import CircuitExtenderInterface = require('./interfaces/CircuitExtenderInterface');
 import HydraNode = require('./interfaces/HydraNode');
 import HydraNodeList = require('./interfaces/HydraNodeList');
-import HydraConnectionManagerInterface = require('./interfaces/HydraConnectionManagerInterface');
+import ConnectionManagerInterface = require('./interfaces/ConnectionManagerInterface');
 import HydraMessageCenterInterface = require('./interfaces/HydraMessageCenterInterface');
 import LayeredEncDecHandlerInterface = require('./messages/interfaces/LayeredEncDecHandlerInterface');
 import ReadableCellCreatedRejectedMessageInterface = require('./messages/interfaces/ReadableCellCreatedRejectedMessageInterface');
@@ -37,9 +37,9 @@ class CircuitExtender implements CircuitExtenderInterface {
 	/**
 	 * The working hydra connection manager instance.
 	 *
-	 * @member {core.protocol.hydra.HydraConnectionManagerInterface} core.protocol.hydra.CircuitExtender~_connectionManager
+	 * @member {core.protocol.hydra.ConnectionManagerInterface} core.protocol.hydra.CircuitExtender~_connectionManager
 	 */
-	private _connectionManager:HydraConnectionManagerInterface = null;
+	private _connectionManager:ConnectionManagerInterface = null;
 
 	/**
 	 * Stores the current callback for the active extension.
@@ -128,7 +128,7 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 */
 	private _reactionTimeInMs:number = 0;
 
-	public constructor (reactionTimeInMs:number, reactionTimeFactor:number, connectionManager:HydraConnectionManagerInterface, messageCenter:HydraMessageCenterInterface, encDecHandler:LayeredEncDecHandlerInterface) {
+	public constructor (reactionTimeInMs:number, reactionTimeFactor:number, connectionManager:ConnectionManagerInterface, messageCenter:HydraMessageCenterInterface, encDecHandler:LayeredEncDecHandlerInterface) {
 		this._reactionTimeInMs = reactionTimeInMs;
 		this._reactionTimeFactor = reactionTimeFactor;
 		this._connectionManager = connectionManager;
@@ -173,7 +173,7 @@ class CircuitExtender implements CircuitExtenderInterface {
 
 			this._circuitTerminationListener = (circuitId:string) => {
 				if (circuitId === this._circuitId) {
-					this._onFirstCircuitTermination();
+					this._onCircuitTermination();
 				}
 			};
 
@@ -188,6 +188,7 @@ class CircuitExtender implements CircuitExtenderInterface {
 		var dhPublicKey:Buffer = this._currentDiffieHellman.generateKeys();
 
 		AdditiveSharingScheme.getShares(dhPublicKey, additiveNodes.length + 1, 256, (shares:Array<Buffer>) => {
+
 			for (var i = 0, l = additiveNodes.length; i < l; i++) {
 				this._messageCenter.sendAdditiveSharingMessage(additiveNodes[i], nodeToExtendWith.ip, nodeToExtendWith.port, this._currentUUID, shares[i]);
 			}
@@ -199,8 +200,9 @@ class CircuitExtender implements CircuitExtenderInterface {
 				this._messageCenter.spitoutRelayCreateCellMessage(this._encDecHandler, nodeToExtendWith.ip, nodeToExtendWith.port, this._currentUUID, shares[shares.length - 1], this._circuitId);
 			}
 
+
+
 			this._currentReactionTimeout = global.setTimeout(() => {
-				this._removeTerminationListener();
 				this._extensionError('Timed out');
 			}, this._reactionTimeInMs * Math.pow(this._reactionTimeFactor, this._nodes.length));
 		});
@@ -226,7 +228,6 @@ class CircuitExtender implements CircuitExtenderInterface {
 		if (this._expectReactionFrom === from) {
 
 			this._clearReactionTimeout();
-			this._removeTerminationListener();
 
 			if (message.getUUID() !== this._currentUUID) {
 				this._extensionError('Expected UUID does not match received UUID.');
@@ -278,7 +279,8 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 */
 	private _handleRejection ():void {
 		if (!this._nodes.length) {
-			this._messageCenter.removeListener('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
+			this._removeMessageListener();
+			this._removeTerminationListener();
 			this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
 		}
 
@@ -293,7 +295,8 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 * @param {string} errMsg Message for the passed in error.
 	 */
 	private _extensionError (errMsg:string):void {
-		this._messageCenter.removeListener('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
+		this._removeMessageListener();
+		this._removeTerminationListener();
 
 		if (!this._nodes.length) {
 			this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
@@ -302,10 +305,21 @@ class CircuitExtender implements CircuitExtenderInterface {
 		this._currentCallback(new Error('CircuitExtender: ' + errMsg), false, null);
 	}
 
-	private _onFirstCircuitTermination ():void {
-		this._clearReactionTimeout();
+	private _removeMessageListener ():void {
+		if (this._eventListener) {
+			this._messageCenter.removeListener('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
+			this._eventListener = null;
+		}
+	}
+
+	private _onCircuitTermination ():void {
+		this._removeMessageListener();
 		this._removeTerminationListener();
-		this._extensionError('Circuit socket terminated.');
+
+		if (!this._nodes.length) {
+			this._clearReactionTimeout();
+			this._extensionError('Circuit socket terminated');
+		}
 	}
 
 	private _clearReactionTimeout ():void {

@@ -13,7 +13,7 @@ import ContactNode = require('../../../../src/core/topology/ContactNode');
 import HydraNode = require('../../../../src/core/protocol/hydra/interfaces/HydraNode');
 import ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PROTOCOL --> HYDRA --> NodePicker @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 
 	this.timeout(0);
 
