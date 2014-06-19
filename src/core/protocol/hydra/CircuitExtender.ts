@@ -32,6 +32,8 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 */
 	private _circuitId:string = null;
 
+	private _circuitTerminationListener:Function = null;
+
 	/**
 	 * The working hydra connection manager instance.
 	 *
@@ -163,12 +165,20 @@ class CircuitExtender implements CircuitExtenderInterface {
 		if (isFirst) {
 			this._circuitId = crypto.pseudoRandomBytes(16).toString('hex');
 			this._expectReactionFrom = nodeToExtendWith;
+			this._expectReactionFrom.circuitId = this._circuitId;
 
-			this._eventListener = (ip:string, message:ReadableCellCreatedRejectedMessageInterface) => {
-				this._onReaction(ip, message);
+			this._eventListener = (from:HydraNode, message:ReadableCellCreatedRejectedMessageInterface) => {
+				this._onReaction(from, message);
+			};
+
+			this._circuitTerminationListener = (circuitId:string) => {
+				if (circuitId === this._circuitId) {
+					this._onFirstCircuitTermination();
+				}
 			};
 
 			this._messageCenter.on('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
+			this._connectionManager.on('circuitTermination', this._circuitTerminationListener);
 		}
 
 		this._currentUUID = crypto.pseudoRandomBytes(16).toString('hex');
@@ -190,6 +200,7 @@ class CircuitExtender implements CircuitExtenderInterface {
 			}
 
 			this._currentReactionTimeout = global.setTimeout(() => {
+				this._removeTerminationListener();
 				this._extensionError('Timed out');
 			}, this._reactionTimeInMs * Math.pow(this._reactionTimeFactor, this._nodes.length));
 		});
@@ -210,14 +221,12 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 * @param {string} fromIp The IP address the reaction message originates from.
 	 * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} message The reaction message.
 	 */
-	private _onReaction (fromIp:string, message:ReadableCellCreatedRejectedMessageInterface):void {
+	private _onReaction (from:HydraNode, message:ReadableCellCreatedRejectedMessageInterface):void {
 
-		if (this._expectReactionFrom.ip === fromIp) {
+		if (this._expectReactionFrom === from) {
 
-			if (this._currentReactionTimeout) {
-				global.clearTimeout(this._currentReactionTimeout);
-				this._currentReactionTimeout = 0;
-			}
+			this._clearReactionTimeout();
+			this._removeTerminationListener();
 
 			if (message.getUUID() !== this._currentUUID) {
 				this._extensionError('Expected UUID does not match received UUID.');
@@ -239,16 +248,13 @@ class CircuitExtender implements CircuitExtenderInterface {
 						var outgoingKey:Buffer = keysConcat.slice(0, 16);
 						var incomingKey:Buffer = keysConcat.slice(16);
 
-						var newNode:HydraNode = {
-							incomingKey: incomingKey,
-							outgoingKey: outgoingKey,
+						var newNode:HydraNode = this._nodes.length ? {
 							ip         : this._currentNodeToExtendWith.ip,
 							port       : this._currentNodeToExtendWith.port
-						};
+						} : this._currentNodeToExtendWith;
 
-						if (!this._nodes.length) {
-							newNode.circuitId = this._circuitId;
-						}
+						newNode.incomingKey = incomingKey;
+						newNode.outgoingKey = outgoingKey;
 
 						this._encDecHandler.addNode(newNode);
 
@@ -273,6 +279,7 @@ class CircuitExtender implements CircuitExtenderInterface {
 	private _handleRejection ():void {
 		if (!this._nodes.length) {
 			this._messageCenter.removeListener('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
+			this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
 		}
 
 		this._currentCallback(null, true, null);
@@ -288,7 +295,31 @@ class CircuitExtender implements CircuitExtenderInterface {
 	private _extensionError (errMsg:string):void {
 		this._messageCenter.removeListener('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
 
+		if (!this._nodes.length) {
+			this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
+		}
+
 		this._currentCallback(new Error('CircuitExtender: ' + errMsg), false, null);
+	}
+
+	private _onFirstCircuitTermination ():void {
+		this._clearReactionTimeout();
+		this._removeTerminationListener();
+		this._extensionError('Circuit socket terminated.');
+	}
+
+	private _clearReactionTimeout ():void {
+		if (this._currentReactionTimeout) {
+			global.clearTimeout(this._currentReactionTimeout);
+			this._currentReactionTimeout = 0;
+		}
+	}
+
+	private _removeTerminationListener ():void {
+		if (this._circuitTerminationListener) {
+			this._connectionManager.removeListener('circuitTermination', this._circuitTerminationListener);
+			this._circuitTerminationListener = null;
+		}
 	}
 
 }

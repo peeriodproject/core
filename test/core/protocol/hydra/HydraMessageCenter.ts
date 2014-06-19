@@ -24,7 +24,7 @@ import WritableAdditiveSharingMessageFactory = require('../../../../src/core/pro
 import WritableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory');
 import LayeredEncDecHandler = require('../../../../src/core/protocol/hydra/messages/Aes128GcmLayeredEncDecHandler');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter', function () {
 
 	var sandbox:SinonSandbox;
 	var messageCenter:HydraMessageCenter = null;

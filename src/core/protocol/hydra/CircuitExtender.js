@@ -24,6 +24,7 @@ var CircuitExtender = (function () {
         * @member {string} core.protocol.hydra.CircuitExtender~_circuitId
         */
         this._circuitId = null;
+        this._circuitTerminationListener = null;
         /**
         * The working hydra connection manager instance.
         *
@@ -139,12 +140,20 @@ var CircuitExtender = (function () {
         if (isFirst) {
             this._circuitId = crypto.pseudoRandomBytes(16).toString('hex');
             this._expectReactionFrom = nodeToExtendWith;
+            this._expectReactionFrom.circuitId = this._circuitId;
 
-            this._eventListener = function (ip, message) {
-                _this._onReaction(ip, message);
+            this._eventListener = function (from, message) {
+                _this._onReaction(from, message);
+            };
+
+            this._circuitTerminationListener = function (circuitId) {
+                if (circuitId === _this._circuitId) {
+                    _this._onFirstCircuitTermination();
+                }
             };
 
             this._messageCenter.on('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
+            this._connectionManager.on('circuitTermination', this._circuitTerminationListener);
         }
 
         this._currentUUID = crypto.pseudoRandomBytes(16).toString('hex');
@@ -165,6 +174,7 @@ var CircuitExtender = (function () {
             }
 
             _this._currentReactionTimeout = global.setTimeout(function () {
+                _this._removeTerminationListener();
                 _this._extensionError('Timed out');
             }, _this._reactionTimeInMs * Math.pow(_this._reactionTimeFactor, _this._nodes.length));
         });
@@ -185,12 +195,10 @@ var CircuitExtender = (function () {
     * @param {string} fromIp The IP address the reaction message originates from.
     * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} message The reaction message.
     */
-    CircuitExtender.prototype._onReaction = function (fromIp, message) {
-        if (this._expectReactionFrom.ip === fromIp) {
-            if (this._currentReactionTimeout) {
-                global.clearTimeout(this._currentReactionTimeout);
-                this._currentReactionTimeout = 0;
-            }
+    CircuitExtender.prototype._onReaction = function (from, message) {
+        if (this._expectReactionFrom === from) {
+            this._clearReactionTimeout();
+            this._removeTerminationListener();
 
             if (message.getUUID() !== this._currentUUID) {
                 this._extensionError('Expected UUID does not match received UUID.');
@@ -209,16 +217,13 @@ var CircuitExtender = (function () {
                         var outgoingKey = keysConcat.slice(0, 16);
                         var incomingKey = keysConcat.slice(16);
 
-                        var newNode = {
-                            incomingKey: incomingKey,
-                            outgoingKey: outgoingKey,
+                        var newNode = this._nodes.length ? {
                             ip: this._currentNodeToExtendWith.ip,
                             port: this._currentNodeToExtendWith.port
-                        };
+                        } : this._currentNodeToExtendWith;
 
-                        if (!this._nodes.length) {
-                            newNode.circuitId = this._circuitId;
-                        }
+                        newNode.incomingKey = incomingKey;
+                        newNode.outgoingKey = outgoingKey;
 
                         this._encDecHandler.addNode(newNode);
 
@@ -242,6 +247,7 @@ var CircuitExtender = (function () {
     CircuitExtender.prototype._handleRejection = function () {
         if (!this._nodes.length) {
             this._messageCenter.removeListener('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
+            this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
         }
 
         this._currentCallback(null, true, null);
@@ -257,7 +263,31 @@ var CircuitExtender = (function () {
     CircuitExtender.prototype._extensionError = function (errMsg) {
         this._messageCenter.removeListener('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
 
+        if (!this._nodes.length) {
+            this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
+        }
+
         this._currentCallback(new Error('CircuitExtender: ' + errMsg), false, null);
+    };
+
+    CircuitExtender.prototype._onFirstCircuitTermination = function () {
+        this._clearReactionTimeout();
+        this._removeTerminationListener();
+        this._extensionError('Circuit socket terminated.');
+    };
+
+    CircuitExtender.prototype._clearReactionTimeout = function () {
+        if (this._currentReactionTimeout) {
+            global.clearTimeout(this._currentReactionTimeout);
+            this._currentReactionTimeout = 0;
+        }
+    };
+
+    CircuitExtender.prototype._removeTerminationListener = function () {
+        if (this._circuitTerminationListener) {
+            this._connectionManager.removeListener('circuitTermination', this._circuitTerminationListener);
+            this._circuitTerminationListener = null;
+        }
     };
     return CircuitExtender;
 })();

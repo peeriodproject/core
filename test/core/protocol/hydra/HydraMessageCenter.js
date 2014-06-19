@@ -22,7 +22,7 @@ var WritableAdditiveSharingMessageFactory = require('../../../../src/core/protoc
 var WritableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory');
 var LayeredEncDecHandler = require('../../../../src/core/protocol/hydra/messages/Aes128GcmLayeredEncDecHandler');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraMessageCenter', function () {
     var sandbox;
     var messageCenter = null;
     var readableHydraMessageFactory = new ReadableHydraMessageFactory();

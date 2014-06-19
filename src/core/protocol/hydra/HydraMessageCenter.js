@@ -32,7 +32,7 @@ var HydraMessageCenter = (function (_super) {
         var msg = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
 
         if (msg) {
-            this._connectionManager.pipeMessage('ADDITIVE_SHARING', msg, to);
+            this._connectionManager.pipeMessageTo(to, 'ADDITIVE_SHARING', msg);
         }
     };
 
@@ -45,7 +45,7 @@ var HydraMessageCenter = (function (_super) {
         }
 
         if (msg) {
-            this._connectionManager.pipeMessage('CREATE_CELL_ADDITIVE', msg, to);
+            this._connectionManager.pipeCircuitMessageTo(to, 'CREATE_CELL_ADDITIVE', msg, true);
         }
     };
 
@@ -60,7 +60,7 @@ var HydraMessageCenter = (function (_super) {
                 var nodes = encDecHandler.getNodes();
 
                 if (!err && encMessage) {
-                    _this._connectionManager.pipeMessage('ENCRYPTED_SPITOUT', encMessage, nodes[nodes.length - 1], circuitId);
+                    _this._connectionManager.pipeCircuitMessageTo(nodes[0], 'ENCRYPTED_SPITOUT', encMessage);
                 }
             });
         }
@@ -78,7 +78,7 @@ var HydraMessageCenter = (function (_super) {
         return msg;
     };
 
-    HydraMessageCenter.prototype._emitMessage = function (message, ip, msgFactory, eventAppendix) {
+    HydraMessageCenter.prototype._emitMessage = function (message, node, msgFactory, eventAppendix) {
         var msg = null;
 
         if (msgFactory) {
@@ -91,41 +91,46 @@ var HydraMessageCenter = (function (_super) {
         }
 
         if (msg) {
-            this.emit(message.getMessageType() + (eventAppendix ? '_' + eventAppendix : ''), ip, msg);
+            this.emit(message.getMessageType() + (eventAppendix ? '_' + eventAppendix : ''), node, msg);
         }
     };
 
-    HydraMessageCenter.prototype._onMessage = function (ip, message) {
-        var circuitId = message.getCircuitId();
+    HydraMessageCenter.prototype._onCircuitMessage = function (message, circuitNode) {
+        var circuitId = circuitNode.circuitId;
 
-        if (circuitId) {
-            if (message.getMessageType() === 'CELL_CREATED_REJECTED') {
-                this._emitMessage(message, ip, this._readableCellCreatedRejectedFactory, circuitId);
-            } else if (message.getMessageType() === 'ENCRYPTED_SPITOUT' || message.getMessageType() === 'ENCRYPTED_DIGEST') {
-                this._emitMessage(message, ip, null, circuitId);
+        if (message.getMessageType() === 'CELL_CREATED_REJECTED') {
+            this._emitMessage(message, circuitNode, this._readableCellCreatedRejectedFactory, circuitId);
+        } else if (message.getMessageType() === 'ENCRYPTED_SPITOUT' || message.getMessageType() === 'ENCRYPTED_DIGEST') {
+            this._emitMessage(message, circuitNode, null, circuitId);
+        }
+    };
+
+    HydraMessageCenter.prototype._onMessage = function (identifier, message) {
+        if (message.getMessageType() === 'ADDITIVE_SHARING') {
+            var msg = null;
+
+            try  {
+                msg = this._readableAdditiveSharingFactory.create(message.getPayload());
+            } catch (e) {
             }
-        } else {
-            if (message.getMessageType() === 'ADDITIVE_SHARING') {
-                var msg = null;
 
-                try  {
-                    msg = this._readableAdditiveSharingFactory.create(message.getPayload());
-                } catch (e) {
-                }
-
-                if (msg) {
-                    this._connectionManager.pipeMessage('CREATE_CELL_ADDITIVE', msg.getPayload(), { ip: msg.getIp(), port: msg.getPort() });
-                }
-            } else if (message.getMessageType() === 'CREATE_CELL_ADDITIVE') {
-                this._emitMessage(message, ip, this._readableCreateCellAdditiveFactory);
+            if (msg) {
+                this._connectionManager.pipeMessageTo({ ip: msg.getIp(), port: msg.getPort() }, 'CREATE_CELL_ADDITIVE', msg.getPayload());
             }
+        } else if (message.getMessageType() === 'CREATE_CELL_ADDITIVE') {
+            // IF INITIATOR, KEEP THE SOCKET OPEN!
+            this._emitMessage(message, identifier, this._readableCreateCellAdditiveFactory);
         }
     };
 
     HydraMessageCenter.prototype._setupListeners = function () {
         var _this = this;
-        this._connectionManager.on('hydraMessage', function (ip, msg) {
-            _this._onMessage(ip, msg);
+        this._connectionManager.on('circuitMessage', function (msg, circuitNode) {
+            _this._onCircuitMessage(msg, circuitNode);
+        });
+
+        this._connectionManager.on('message', function (msg, identifier) {
+            _this._onMessage(identifier, msg);
         });
     };
     return HydraMessageCenter;
