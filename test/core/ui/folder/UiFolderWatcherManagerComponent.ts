@@ -114,6 +114,22 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
 		sparkStub.send.getCall(1).args[1].length.should.equal(0);
 	});
 
+	it('should correctly remove a invalid folder from the ui', function () {
+		// add a client connection
+		component.onConnection(sparkStub);
+
+		// add a new folder
+		eventListeners['watcher.invalid']('/path/to/the/Folder Name');
+		eventListeners['watcher.removeInvalid']('/path/to/the/Folder Name');
+
+		sparkStub.send.calledTwice.should.be.true;
+		// check message key
+		sparkStub.send.getCall(1).args[0].should.equal('update');
+
+		// check folders list
+		sparkStub.send.getCall(1).args[1].length.should.equal(0);
+	});
+
 	it('should correctly set the folder status', function () {
 		// add a client connection
 		component.onConnection(sparkStub);
