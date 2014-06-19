@@ -6,15 +6,45 @@ var __extends = this.__extends || function (d, b) {
 };
 var events = require('events');
 
+/**
+* ConnectionManagerInterface implementation.
+*
+* @class core.protocol.hydra.ConnectionManager
+* @extends NodeJS.EventEmitter
+* @implements core.protocol.hydra.ConnectionManagerInterface
+*
+* @param {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager A working protocol connection manager.
+* @param {core.protocol.hydra.WritableHydraMessageFactoryInterface} writableFactory
+* @param {core.protocol.hydra.ReadableHydraMessageFactoryInterface} readableFactory
+*/
 var ConnectionManager = (function (_super) {
     __extends(ConnectionManager, _super);
     function ConnectionManager(protocolConnectionManager, writableFactory, readableFactory) {
         _super.call(this);
-        this._protocolConnectionManager = null;
-        this._writableFactory = null;
-        this._readableFactory = null;
+        /**
+        * The list of circuit nodes assigned to specific sockets.
+        *
+        * @member {{[identifier:string]:HydraNode}} core.protocol.hydra.ConnectionManager~_circuitNodes
+        */
         this._circuitNodes = {};
+        /**
+        * Pipeline for messages. Messages aggregate here until one socket has been established.
+        *
+        * @member {{[circuitId:string]:Array<Buffer>}} core.protocol.hydra.ConnectionManager~_circuitPipeline
+        */
         this._circuitPipeline = {};
+        /**
+        * @member {core.protocol.hydra.ReadableHydraMessageFactoryInterface} core.protocol.hydra.ConnectionManager~_readableFactory
+        */
+        this._readableFactory = null;
+        /**
+        * @member {core.protocol.net.ProtocolConnectionManagerInterface} core.protocol.hydra.ConnectionManager~_protocolConnectionManager
+        */
+        this._protocolConnectionManager = null;
+        /**
+        * @member {core.protocol.hydra.WritableHydraMessageFactoryInterface} core.protocol.hydra.ConnectionManager~_writableFactory
+        */
+        this._writableFactory = null;
 
         this._protocolConnectionManager = protocolConnectionManager;
         this._writableFactory = writableFactory;
@@ -22,35 +52,20 @@ var ConnectionManager = (function (_super) {
 
         this._setupListeners();
     }
+    /**
+    * BEGIN TESTING PURPOSES ONLY
+    */
     ConnectionManager.prototype.getCircuitNodes = function () {
         return this._circuitNodes;
     };
 
+    /**
+    * END TESTING PURPOSES ONLY
+    */
     ConnectionManager.prototype.addToCircuitNodes = function (socketIdentifier, node) {
         node.socketIdentifier = socketIdentifier;
         this._circuitNodes[socketIdentifier] = node;
         this._protocolConnectionManager.keepHydraSocketOpen(socketIdentifier);
-    };
-
-    ConnectionManager.prototype.removeFromCircuitNodes = function (node) {
-        return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier);
-    };
-
-    ConnectionManager.prototype.pipeMessageTo = function (node, messageType, payload) {
-        var _this = this;
-        var sendableBuffer = null;
-
-        try  {
-            sendableBuffer = this._writableFactory.constructMessage(messageType, payload, payload.length, node.circuitId);
-        } catch (e) {
-            return;
-        }
-
-        this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
-            if (!err && identifier) {
-                _this._protocolConnectionManager.hydraWriteMessageTo(identifier, sendableBuffer);
-            }
-        });
     };
 
     ConnectionManager.prototype.pipeCircuitMessageTo = function (node, messageType, payload, skipCircIdOnConstruction) {
@@ -89,6 +104,35 @@ var ConnectionManager = (function (_super) {
         }
     };
 
+    ConnectionManager.prototype.pipeMessageTo = function (node, messageType, payload) {
+        var _this = this;
+        var sendableBuffer = null;
+
+        try  {
+            sendableBuffer = this._writableFactory.constructMessage(messageType, payload, payload.length, node.circuitId);
+        } catch (e) {
+            return;
+        }
+
+        this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
+            if (!err && identifier) {
+                _this._protocolConnectionManager.hydraWriteMessageTo(identifier, sendableBuffer);
+            }
+        });
+    };
+
+    ConnectionManager.prototype.removeFromCircuitNodes = function (node) {
+        return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier);
+    };
+
+    /**
+    * Removes a node from the circuit list by the socket identifier.
+    *
+    * @method core.protocol.hydra.ConnectionManager~_removeFromCircuitNodesByIdentifier
+    *
+    * @param {string} identifier Socket identifier.
+    * @returns {core.protocol.hydra.HydraNode} node The removed node. `undefined` if the node was not present.
+    */
     ConnectionManager.prototype._removeFromCircuitNodesByIdentifier = function (identifier) {
         if (identifier) {
             var circNode = this._circuitNodes[identifier];
@@ -104,6 +148,11 @@ var ConnectionManager = (function (_super) {
         return undefined;
     };
 
+    /**
+    * Sets up the listeners on the protocol connection manager so that they can be propagated.
+    *
+    * @method core.protocol.hydra.ConnectionManager~_setupListeners
+    */
     ConnectionManager.prototype._setupListeners = function () {
         var _this = this;
         this._protocolConnectionManager.on('terminatedConnection', function (identifier) {

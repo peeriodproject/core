@@ -18,7 +18,7 @@ import ReadableCellCreatedRejectedMessageInterface = require('./messages/interfa
  *
  * @param {number} reactionTimeInMs The number of milliseconds used as a basis for how long the instance waits for a response until the request is considered a failure.
  * @param {number} reactionTimeFactor For each relay node, the reaction time base is multiplied with this factor to adapt to the circuit's length.
- * @param {core.protocol.hydra.HydraConnectionInterface} connectionManager A working hydra connection manager instance.
+ * @param {core.protocol.hydra.ConnectionManagerInterface} connectionManager A working connection manager instance.
  * @param {core.protocol.hydra.HydraMessageCenterInterface} messageCenter  A working hydra message center instance.
  * @param {core.protocol.hydra.LayeredEncDecHandlerInterface} encDecHandler The layered encryption/decryption handler of the circuit which should be extended.
  */
@@ -32,6 +32,11 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 */
 	private _circuitId:string = null;
 
+	/**
+	 * Listener on the termination event of circuits.
+	 *
+	 * @member {Function} core.protocol.hydra.CircuitExtender~_circuitTerminationListener
+	 */
 	private _circuitTerminationListener:Function = null;
 
 	/**
@@ -209,6 +214,71 @@ class CircuitExtender implements CircuitExtenderInterface {
 	}
 
 	/**
+	 * Clears the reaction timeout (if there is one)
+	 *
+	 * @method core.protocol.hydra.CircuitExtender~_clearReactionTimeout
+	 */
+	private _clearReactionTimeout ():void {
+		if (this._currentReactionTimeout) {
+			global.clearTimeout(this._currentReactionTimeout);
+			this._currentReactionTimeout = 0;
+		}
+	}
+
+	/**
+	 * Handles an errorous request by detaching the event listener and invoking the callback with an error.
+	 *
+	 * @method core.protocol.hydra.CircuitExtender~_extensionError
+	 *
+	 * @param {string} errMsg Message for the passed in error.
+	 */
+	private _extensionError (errMsg:string):void {
+		this._removeMessageListener();
+		this._removeTerminationListener();
+
+		if (!this._nodes.length) {
+			this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
+		}
+
+		this._currentCallback(new Error('CircuitExtender: ' + errMsg), false, null);
+	}
+
+	/**
+	 * Handles a rejected request by checking if the node to extend with was the first node. If yes, the listener on
+	 * the circuitId must be detached to 'make way' for subsequent requests.
+	 *
+	 * At last the callbak is invoked with `isRejected`-flag set to true.
+	 *
+	 * @method core.protocol.hydra.CircuitExtender~_handleRejection
+	 */
+	private _handleRejection ():void {
+		if (!this._nodes.length) {
+			this._removeMessageListener();
+			this._removeTerminationListener();
+			this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
+		}
+
+		this._currentCallback(null, true, null);
+	}
+
+	/**
+	 * Method which gets invoked if the socket of the first node is terminated.
+	 * Removes the listeners and if the node has not been added to the circuit, considers the extension
+	 * as errorous.
+	 *
+	 * @method core.protocol.hydra.CircuitExtender~_onCircuitTermination
+	 */
+	private _onCircuitTermination ():void {
+		this._removeMessageListener();
+		this._removeTerminationListener();
+
+		if (!this._nodes.length) {
+			this._clearReactionTimeout();
+			this._extensionError('Circuit socket terminated');
+		}
+	}
+
+	/**
 	 * Handles the reaction message, i.e. a CELL_CREATED_REJECTED message event emitted on the expected circuitId.
 	 * It checks if the IP the message comes from matches the expected IP.
 	 * If yes, and the UUID also matches, the Diffie-Hellman secret is computed and the SHA-1 hash compared to the
@@ -270,41 +340,10 @@ class CircuitExtender implements CircuitExtenderInterface {
 	}
 
 	/**
-	 * Handles a rejected request by checking if the node to extend with was the first node. If yes, the listener on
-	 * the circuitId must be detached to 'make way' for subsequent requests.
+	 * Removes the listener on the CELL_CREATED_REJECTED event related to this circuit's circuitId.
 	 *
-	 * At last the callbak is invoked with `isRejected`-flag set to true.
-	 *
-	 * @method core.protocol.hydra.CircuitExtender~_handleRejection
+	 * @method core.protocol.hydra.CircuitExtender~_removeMessageListener
 	 */
-	private _handleRejection ():void {
-		if (!this._nodes.length) {
-			this._removeMessageListener();
-			this._removeTerminationListener();
-			this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
-		}
-
-		this._currentCallback(null, true, null);
-	}
-
-	/**
-	 * Handles an errorous request by detaching the event listener and invoking the callback with an error.
-	 *
-	 * @method core.protocol.hydra.CircuitExtender~_extensionError
-	 *
-	 * @param {string} errMsg Message for the passed in error.
-	 */
-	private _extensionError (errMsg:string):void {
-		this._removeMessageListener();
-		this._removeTerminationListener();
-
-		if (!this._nodes.length) {
-			this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
-		}
-
-		this._currentCallback(new Error('CircuitExtender: ' + errMsg), false, null);
-	}
-
 	private _removeMessageListener ():void {
 		if (this._eventListener) {
 			this._messageCenter.removeListener('CELL_CREATED_REJECTED_' + this._circuitId, this._eventListener);
@@ -312,23 +351,11 @@ class CircuitExtender implements CircuitExtenderInterface {
 		}
 	}
 
-	private _onCircuitTermination ():void {
-		this._removeMessageListener();
-		this._removeTerminationListener();
-
-		if (!this._nodes.length) {
-			this._clearReactionTimeout();
-			this._extensionError('Circuit socket terminated');
-		}
-	}
-
-	private _clearReactionTimeout ():void {
-		if (this._currentReactionTimeout) {
-			global.clearTimeout(this._currentReactionTimeout);
-			this._currentReactionTimeout = 0;
-		}
-	}
-
+	/**
+	 * Removes the listener on the `circuitTermination` event of the connection manager.
+	 *
+	 * @method core.protocol.hydra.CircuitExtender~_removeTerminationListener
+	 */
 	private _removeTerminationListener ():void {
 		if (this._circuitTerminationListener) {
 			this._connectionManager.removeListener('circuitTermination', this._circuitTerminationListener);

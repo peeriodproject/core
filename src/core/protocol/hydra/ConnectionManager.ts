@@ -10,17 +10,47 @@ import ReadableMessageInterface = require('../messages/interfaces/ReadableMessag
 import ReadableHydraMessageInterface = require('./messages/interfaces/ReadableHydraMessageInterface');
 import ConnectionManagerInterface = require('./interfaces/ConnectionManagerInterface');
 
+/**
+ * ConnectionManagerInterface implementation.
+ *
+ * @class core.protocol.hydra.ConnectionManager
+ * @extends NodeJS.EventEmitter
+ * @implements core.protocol.hydra.ConnectionManagerInterface
+ *
+ * @param {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager A working protocol connection manager.
+ * @param {core.protocol.hydra.WritableHydraMessageFactoryInterface} writableFactory
+ * @param {core.protocol.hydra.ReadableHydraMessageFactoryInterface} readableFactory
+ */
 class ConnectionManager extends events.EventEmitter implements ConnectionManagerInterface {
 
-	private _protocolConnectionManager:ProtocolConnectionManagerInterface = null;
-
-	private _writableFactory:WritableHydraMessageFactoryInterface = null;
-
-	private _readableFactory:ReadableHydraMessageFactoryInterface = null;
-
+	/**
+	 * The list of circuit nodes assigned to specific sockets.
+	 *
+	 * @member {{[identifier:string]:HydraNode}} core.protocol.hydra.ConnectionManager~_circuitNodes
+	 */
 	private _circuitNodes:{[identifier:string]:HydraNode} = {};
 
+	/**
+	 * Pipeline for messages. Messages aggregate here until one socket has been established.
+	 *
+	 * @member {{[circuitId:string]:Array<Buffer>}} core.protocol.hydra.ConnectionManager~_circuitPipeline
+	 */
 	private _circuitPipeline:{[circuitId:string]:Array<Buffer>} = {};
+
+	/**
+	 * @member {core.protocol.hydra.ReadableHydraMessageFactoryInterface} core.protocol.hydra.ConnectionManager~_readableFactory
+	 */
+	private _readableFactory:ReadableHydraMessageFactoryInterface = null;
+
+	/**
+	 * @member {core.protocol.net.ProtocolConnectionManagerInterface} core.protocol.hydra.ConnectionManager~_protocolConnectionManager
+	 */
+	private _protocolConnectionManager:ProtocolConnectionManagerInterface = null;
+
+	/**
+	 * @member {core.protocol.hydra.WritableHydraMessageFactoryInterface} core.protocol.hydra.ConnectionManager~_writableFactory
+	 */
+	private _writableFactory:WritableHydraMessageFactoryInterface = null;
 
 	public constructor (protocolConnectionManager:ProtocolConnectionManagerInterface, writableFactory:WritableHydraMessageFactoryInterface, readableFactory:ReadableHydraMessageFactoryInterface) {
 		super();
@@ -32,35 +62,22 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 		this._setupListeners();
 	}
 
+	/**
+	 * BEGIN TESTING PURPOSES ONLY
+	 */
+
 	public getCircuitNodes ():{[identifier:string]:HydraNode} {
 		return this._circuitNodes;
 	}
+
+	/**
+	 * END TESTING PURPOSES ONLY
+	 */
 
 	public addToCircuitNodes (socketIdentifier:string, node:HydraNode) {
 		node.socketIdentifier = socketIdentifier;
 		this._circuitNodes[socketIdentifier] = node;
 		this._protocolConnectionManager.keepHydraSocketOpen(socketIdentifier);
-	}
-
-	public removeFromCircuitNodes (node:HydraNode):HydraNode {
-		return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier);
-	}
-
-	public pipeMessageTo (node:HydraNode, messageType:string, payload:Buffer) {
-		var sendableBuffer:Buffer = null;
-
-		try {
-			sendableBuffer = this._writableFactory.constructMessage(messageType, payload, payload.length, node.circuitId);
-		}
-		catch (e) {
-			return;
-		}
-
-		this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, (err:Error, identifier:string) => {
-			if (!err && identifier) {
-				this._protocolConnectionManager.hydraWriteMessageTo(identifier, sendableBuffer);
-			}
-		});
 	}
 
 	public pipeCircuitMessageTo (node:HydraNode, messageType:string, payload:Buffer, skipCircIdOnConstruction?:boolean) {
@@ -84,7 +101,7 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 
 						var pipeline = this._circuitPipeline[circuitId];
 
-						for (var i=0, l=pipeline.length; i<l; i++) {
+						for (var i = 0, l = pipeline.length; i < l; i++) {
 							this._protocolConnectionManager.hydraWriteMessageTo(identifier, pipeline[i]);
 						}
 
@@ -101,6 +118,35 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 		}
 	}
 
+	public pipeMessageTo (node:HydraNode, messageType:string, payload:Buffer) {
+		var sendableBuffer:Buffer = null;
+
+		try {
+			sendableBuffer = this._writableFactory.constructMessage(messageType, payload, payload.length, node.circuitId);
+		}
+		catch (e) {
+			return;
+		}
+
+		this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, (err:Error, identifier:string) => {
+			if (!err && identifier) {
+				this._protocolConnectionManager.hydraWriteMessageTo(identifier, sendableBuffer);
+			}
+		});
+	}
+
+	public removeFromCircuitNodes (node:HydraNode):HydraNode {
+		return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier);
+	}
+
+	/**
+	 * Removes a node from the circuit list by the socket identifier.
+	 *
+	 * @method core.protocol.hydra.ConnectionManager~_removeFromCircuitNodesByIdentifier
+	 *
+	 * @param {string} identifier Socket identifier.
+	 * @returns {core.protocol.hydra.HydraNode} node The removed node. `undefined` if the node was not present.
+	 */
 	private _removeFromCircuitNodesByIdentifier (identifier:string):HydraNode {
 
 		if (identifier) {
@@ -117,6 +163,11 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 		return undefined;
 	}
 
+	/**
+	 * Sets up the listeners on the protocol connection manager so that they can be propagated.
+	 *
+	 * @method core.protocol.hydra.ConnectionManager~_setupListeners
+	 */
 	private _setupListeners ():void {
 
 		this._protocolConnectionManager.on('terminatedConnection', (identifier:string) => {
