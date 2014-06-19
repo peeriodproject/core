@@ -11,7 +11,7 @@ var HKDF = require('../../crypto/HKDF');
 *
 * @param {number} reactionTimeInMs The number of milliseconds used as a basis for how long the instance waits for a response until the request is considered a failure.
 * @param {number} reactionTimeFactor For each relay node, the reaction time base is multiplied with this factor to adapt to the circuit's length.
-* @param {core.protocol.hydra.HydraConnectionInterface} connectionManager A working hydra connection manager instance.
+* @param {core.protocol.hydra.ConnectionManagerInterface} connectionManager A working connection manager instance.
 * @param {core.protocol.hydra.HydraMessageCenterInterface} messageCenter  A working hydra message center instance.
 * @param {core.protocol.hydra.LayeredEncDecHandlerInterface} encDecHandler The layered encryption/decryption handler of the circuit which should be extended.
 */
