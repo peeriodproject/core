@@ -186,7 +186,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent @joern', function
         nwWindowStub._window.resizeTo.getCall(1).args[1].should.equal(853);
     });
 
-    it('should correctly set the path list, update the UI on drop and clean up the path list @prio', function () {
+    it('should correctly set the path list, update the UI on drop and clean up the path list', function () {
         component.onConnection(sparkStub);
 
         triggerListeners(sparkOnListeners['open']);
