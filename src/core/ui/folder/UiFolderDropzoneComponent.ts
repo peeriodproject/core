@@ -119,6 +119,9 @@ class UiFolderDropzoneComponent implements UiComponentInterface {
 			for (var i = 0, l = this._connections.length; i < l; i++) {
 				this._connections[i].send('update', state);
 			}
+
+			this._paths = null;
+			this._paths = [];
 		}
 	}
 
