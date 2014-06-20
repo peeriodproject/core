@@ -28,7 +28,7 @@ var WritableAdditiveSharingMessageFactory = require('../../../../src/core/protoc
 var WritableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory');
 var LayeredEncDecHandler = require('../../../../src/core/protocol/hydra/messages/Aes128GcmLayeredEncDecHandler');
 
-describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration)', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration) @current', function () {
     this.timeout(0);
 
     var sandbox = null;
@@ -394,7 +394,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration)', func
         });
 
         circuitExtender.extend(nodeToExtendWith, additiveNodes, function (err, isRejected, newNode) {
-            err.message.should.equal('CircuitExtender: Timed out');
+            err.message.should.equal('CircuitExtender: Circuit socket terminated');
 
             connectionManager.listeners('CELL_CREATED_REJECTED_' + circuitExtender.getCircuitId()).length.should.equal(0);
             connectionManager.listeners('circuitTermination').length.should.equal(0);
