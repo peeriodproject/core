@@ -47,6 +47,7 @@ import IndexManager = require('./search/IndexManager');
 // ui imports
 import UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 import UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
+import UiPluginManagerComponent = require('./ui/plugin/UiPluginManagerComponent');
 import UiManager = require('./ui/UiManager');
 
 var App = {
@@ -108,8 +109,9 @@ var App = {
 		var pathValidator = new PathValidator();
 
 		// ui components
-		var uiFolderWatcherManagerComponent = new UiFolderWatcherManagerComponent(folderWatcherManager);
-		this.addUiComponent(uiFolderWatcherManagerComponent);
+		// ----------------------
+		this.addUiComponent(new UiFolderWatcherManagerComponent(folderWatcherManager));
+		this.addUiComponent(new UiPluginManagerComponent(pluginManager));
 
 		//var indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
 

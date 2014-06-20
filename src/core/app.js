@@ -44,6 +44,7 @@ var PathValidator = require('./fs/PathValidator');
 // ui imports
 var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
+var UiPluginManagerComponent = require('./ui/plugin/UiPluginManagerComponent');
 var UiManager = require('./ui/UiManager');
 
 var App = {
@@ -96,8 +97,9 @@ var App = {
         var pathValidator = new PathValidator();
 
         // ui components
-        var uiFolderWatcherManagerComponent = new UiFolderWatcherManagerComponent(folderWatcherManager);
-        this.addUiComponent(uiFolderWatcherManagerComponent);
+        // ----------------------
+        this.addUiComponent(new UiFolderWatcherManagerComponent(folderWatcherManager));
+        this.addUiComponent(new UiPluginManagerComponent(pluginManager));
         //var indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
         // -----------------------
         //folderWatcherManager.addFolderWatcher(testFolderPath);
