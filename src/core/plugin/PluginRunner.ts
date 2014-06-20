@@ -18,7 +18,7 @@ import PluginGlobalsFactory = require('./PluginGlobalsFactory');
  *
  * @params {core.config.ConfigInterface} config
  * @params {string} identifier todo remove identifer
- * @params {string} plugnScriptPath
+ * @params {string} pluginScriptPath
  */
 class PluginRunner implements PluginRunnerInterface {
 
@@ -38,12 +38,19 @@ class PluginRunner implements PluginRunnerInterface {
 		this._config = config;
 		this._pluginScriptPath = pluginScriptPath;
 
+		// todo wait for node webkits child_process.spawn fix and remove own binary
+		// we're using our own node binary as a temporary fix here!
+		// @see https://github.com/rogerwang/node-webkit/issues/213
+		var nodeBinaryPath:string = path.join(__dirname, '../../bin/', this._config.get('plugin.binaryPath'));
+
 		this._sandbox = new SandCastle({
 			memoryLimitMB: 100,
 			timeout      : 2000,
 			useStrictMode: true,
-			api          : this._getPluginApiPath()
+			api          : this._getPluginApiPath(),
+			spawnExecPath: nodeBinaryPath
 		});
+
 		this._pluginGlobalsFactory = new PluginGlobalsFactory();
 		this._pluginCode = fs.readFileSync(this._pluginScriptPath, 'utf-8');
 	}
@@ -57,6 +64,12 @@ class PluginRunner implements PluginRunnerInterface {
 
 	public getMapping (callback:Function):void {
 		this._createAndRunSandbox(null, null, null, 'main.getMapping', callback, function (output:any) {
+			callback(null, output);
+		});
+	}
+
+	public getSearchFields (callback:Function):void {
+		this._createAndRunSandbox(null, null, null, 'main.getSearchFields', callback, function (output:any) {
 			callback(null, output);
 		});
 	}

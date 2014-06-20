@@ -19,7 +19,7 @@ import PluginRunnerFactory = require('../../../src/core/plugin/PluginRunnerFacto
 import PluginValidator = require('../../../src/core/plugin/PluginValidator');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
+describe('CORE --> PLUGIN --> PluginManager', function () {
 	var sandbox:SinonSandbox;
 	var appDataPath:string = testUtils.getFixturePath('core/plugin/appDataPath');
 	var createConfig:any = function ():any {
@@ -180,7 +180,7 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
 		});
 	});
 
-	it('should correctly activate the plugin trigger the "pluginAdded" event and return it\'s runner', function (done) {
+	it('should correctly activate the plugin, trigger the "pluginAdded" event and return it\'s runner', function (done) {
 		var config:any = createConfig();
 		var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
 		var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator, {
@@ -191,6 +191,9 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
 		var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory, {
 			create: function () {
 				return {
+					getMain: function () {
+						return 'index.js'
+					},
 					getFileMimeTypes: function () {
 						return ['application/pdf'];
 					}
@@ -240,6 +243,9 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
 		var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory, {
 			create: function () {
 				return {
+					getMain: function () {
+						return 'index.js'
+					},
 					getFileMimeTypes: function () {
 						return ['image/jpeg'];
 					}
@@ -277,6 +283,9 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
 		var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory, {
 			create: function () {
 				return {
+					getMain: function () {
+						return 'index.js'
+					},
 					getFileMimeTypes: function () {
 						return ['image/jpeg'];
 					},

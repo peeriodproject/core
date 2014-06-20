@@ -1,11 +1,11 @@
-import PluginRunnerInerface = require('./PluginRunnerInterface');
+import PluginRunnerInterface = require('./PluginRunnerInterface');
 
 /**
  * @interface
  * @class core.plugin.PluginRunnerMapInerface
  */
-interface PluginRunnerMapInerface {
-	[identifier:string]: PluginRunnerInerface
+interface PluginRunnerMapInterface {
+	[identifier:string]:PluginRunnerInterface;
 }
 
-export = PluginRunnerMapInerface;
+export = PluginRunnerMapInterface;

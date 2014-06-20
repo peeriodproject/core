@@ -79,7 +79,7 @@ describe('CORE --> PLUGIN --> PluginLoader', function () {
         });
 
         it('should correctly return the main file', function () {
-            var mainPath = path.resolve(pluginsFolderPath, pluginFolderName, 'lib/main.js');
+            var mainPath = path.resolve(pluginsFolderPath, pluginFolderName, 'lib/index.js');
 
             pluginLoader.getMain().should.equal(mainPath);
         });

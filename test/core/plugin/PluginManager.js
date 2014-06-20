@@ -14,7 +14,7 @@ var PluginRunnerFactory = require('../../../src/core/plugin/PluginRunnerFactory'
 var PluginValidator = require('../../../src/core/plugin/PluginValidator');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
+describe('CORE --> PLUGIN --> PluginManager', function () {
     var sandbox;
     var appDataPath = testUtils.getFixturePath('core/plugin/appDataPath');
     var createConfig = function () {
@@ -172,7 +172,7 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
         });
     });
 
-    it('should correctly activate the plugin trigger the "pluginAdded" event and return it\'s runner', function (done) {
+    it('should correctly activate the plugin, trigger the "pluginAdded" event and return it\'s runner', function (done) {
         var config = createConfig();
         var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
         var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator, {
@@ -183,6 +183,9 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
         var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory, {
             create: function () {
                 return {
+                    getMain: function () {
+                        return 'index.js';
+                    },
                     getFileMimeTypes: function () {
                         return ['application/pdf'];
                     }
@@ -232,6 +235,9 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
         var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory, {
             create: function () {
                 return {
+                    getMain: function () {
+                        return 'index.js';
+                    },
                     getFileMimeTypes: function () {
                         return ['image/jpeg'];
                     }
@@ -269,6 +275,9 @@ describe('CORE --> PLUGIN --> PluginManager @_joern', function () {
         var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory, {
             create: function () {
                 return {
+                    getMain: function () {
+                        return 'index.js';
+                    },
                     getFileMimeTypes: function () {
                         return ['image/jpeg'];
                     },

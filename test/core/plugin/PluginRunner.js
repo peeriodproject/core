@@ -38,6 +38,8 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
                     return path.resolve(process.cwd(), './src/core/plugin/api');
                 } else if (key === 'plugin.api.pluginApiName') {
                     return 'PluginApi.js';
+                } else if (key === 'plugin.binaryPath') {
+                    return './core/plugin/pluginRunner/node';
                 }
             }
         });
