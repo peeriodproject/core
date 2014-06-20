@@ -25,7 +25,7 @@ var events = require('events');
 */
 var HydraMessageCenter = (function (_super) {
     __extends(HydraMessageCenter, _super);
-    function HydraMessageCenter(connectionManager, readableCellCreatedRejectedFactory, readableAdditiveSharingFactory, readableCreateCellAdditiveFactory, writableCreateCellAdditiveFactory, writableAdditiveSharingFactory, writableHydraMessageFactory) {
+    function HydraMessageCenter(connectionManager, readableHydraMessageFactory, readableCellCreatedRejectedFactory, readableAdditiveSharingFactory, readableCreateCellAdditiveFactory, writableCreateCellAdditiveFactory, writableAdditiveSharingFactory, writableHydraMessageFactory) {
         _super.call(this);
         /**
         * @member {core.protocol.hydra.ConnectionManagerInterface} core.protocol.hydra.HydraMessageCenterInterface~_connectionManager
@@ -44,6 +44,10 @@ var HydraMessageCenter = (function (_super) {
         */
         this._readableCreateCellAdditiveFactory = null;
         /**
+        * @member {core.protocol.hydra.ReadableHydraMessageFactoryInterface} core.protocol.hydra.HydraMessageCenterInterface~_readableHydraMessageFactory
+        */
+        this._readableHydraMessageFactory = null;
+        /**
         * @member {core.protocol.hydra.WritableAdditiveSharingMessageFactoryInterface} core.protocol.hydra.HydraMessageCenterInterface~_writableAdditiveSharingFactory
         */
         this._writableAdditiveSharingFactory = null;
@@ -57,6 +61,7 @@ var HydraMessageCenter = (function (_super) {
         this._writableHydraMessageFactory = null;
 
         this._connectionManager = connectionManager;
+        this._readableHydraMessageFactory = readableHydraMessageFactory;
         this._readableCellCreatedRejectedFactory = readableCellCreatedRejectedFactory;
         this._readableAdditiveSharingFactory = readableAdditiveSharingFactory;
         this._readableCreateCellAdditiveFactory = readableCreateCellAdditiveFactory;
@@ -66,6 +71,19 @@ var HydraMessageCenter = (function (_super) {
 
         this._setupListeners();
     }
+    HydraMessageCenter.prototype.forceCircuitMessageThrough = function (payload, from) {
+        var msg = null;
+
+        try  {
+            msg = this._readableHydraMessageFactory.create(payload);
+        } catch (e) {
+        }
+
+        if (msg) {
+            this._onCircuitMessage(msg, from);
+        }
+    };
+
     HydraMessageCenter.prototype.sendAdditiveSharingMessage = function (to, targetIp, targetPort, uuid, additivePayload) {
         var msg = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
 

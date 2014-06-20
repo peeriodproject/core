@@ -74,6 +74,15 @@ import TCPSocketInterface = require('../../../net/tcp/interfaces/TCPSocketInterf
 interface ProtocolConnectionManagerInterface extends NodeJS.EventEmitter {
 
 	/**
+	 * Tries to close a hydra socket by the given identifier.
+	 *
+	 * @method core.protocol.ProtocolConnectionManagerInterface#closeHydraSocket
+	 *
+	 * @param {string} identifier The socket identifier.
+	 */
+	closeHydraSocket (identifier:string):void;
+
+	/**
 	 * Forces a raw buffer through the incoming data pipeline. Lets the pipeline deformat the buffer.
 	 * If a ReadableMessage will be returned, AND IT IS NO HYDRA MESSAGE, the message will be emitted in
 	 * a `message` event. If it is a hydra message or the unwrapped message is not intended for MyNode,

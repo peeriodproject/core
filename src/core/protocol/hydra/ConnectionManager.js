@@ -126,7 +126,7 @@ var ConnectionManager = (function (_super) {
     };
 
     /**
-    * Removes a node from the circuit list by the socket identifier.
+    * Removes a node from the circuit list by the socket identifier and closes the underlying TCP socket.
     *
     * @method core.protocol.hydra.ConnectionManager~_removeFromCircuitNodesByIdentifier
     *
@@ -138,7 +138,7 @@ var ConnectionManager = (function (_super) {
             var circNode = this._circuitNodes[identifier];
 
             if (circNode) {
-                this._protocolConnectionManager.keepHydraSocketNoLongerOpen(identifier);
+                this._protocolConnectionManager.closeHydraSocket(identifier);
                 delete this._circuitNodes[identifier];
 
                 return circNode;

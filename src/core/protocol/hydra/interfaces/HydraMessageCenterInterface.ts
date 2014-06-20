@@ -14,6 +14,8 @@ import LayeredEncDecHandlerInterface = require('../messages/interfaces/LayeredEn
  */
 interface HydraMessageCenterInterface extends NodeJS.EventEmitter {
 
+	forceCircuitMessageThrough (payload:Buffer, from:HydraNode):void;
+
 	/**
 	 * Sends an ADDITIVE_SHARING message.
 	 *

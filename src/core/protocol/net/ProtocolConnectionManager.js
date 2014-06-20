@@ -266,6 +266,14 @@ var ProtocolConnectionManager = (function (_super) {
         }
     };
 
+    ProtocolConnectionManager.prototype.closeHydraSocket = function (identifier) {
+        var socket = this._hydraSockets[identifier];
+
+        if (socket) {
+            socket.end();
+        }
+    };
+
     ProtocolConnectionManager.prototype.getHydraSocketIp = function (identifier) {
         var socket = this._hydraSockets[identifier];
 
