@@ -303,6 +303,14 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
+	public closeHydraSocket (identifier:string):void {
+		var socket:TCPSocketInterface = this._hydraSockets[identifier];
+
+		if (socket) {
+			socket.end();
+		}
+	}
+
 	public getHydraSocketIp (identifier:string):string {
 		var socket:TCPSocketInterface = this._hydraSockets[identifier];
 
