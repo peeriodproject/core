@@ -48,9 +48,9 @@
         }
     },
     "hydra": {
-        "keepMessageInPipelineForSeconds": 4,
-        "waitForReconnectInSeconds": 4.5,
-        "retryConnectionMax": 2,
+        "desiredNumberOfCircuits": 4,
+        "minimumNumberOfRelayNodes": 3,
+        "maximumNumberOfRelayNodes": 5,
         "additiveSharingNodeAmount": 4,
         "nodePicker": {
             "allowIdenticalIps": false,
