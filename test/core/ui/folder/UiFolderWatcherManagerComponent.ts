@@ -57,7 +57,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
 		component.should.be.an.instanceof(UiFolderWatcherManagerComponent);
 	});
 
-	it('should correctly listen for FolderWatcherManager events @prio', function () {
+	it('should correctly listen for FolderWatcherManager events', function () {
 		var eventNames:Array<string> = ['watcher.add', 'watcher.invalid', 'watcher.remove', 'watcher.removeInvalid', 'add', 'unlink'];
 		var listenerNames:Array<string> = Object.keys(eventListeners);
 
