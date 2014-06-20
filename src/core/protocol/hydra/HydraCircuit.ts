@@ -25,7 +25,7 @@ import ReadableHydraMessageInterface = require('./messages/interfaces/ReadableHy
  * @param {core.protocol.hydra.NodePickerInterface} nodePicker A usable NodePicker instance with similar configuration.
  * @param {core.protocol.hydra.HydraMessageCenterInterface} messageCenter A working message center instance.
  * @param {core.protocol.hydra.ConnectionManagerInterface} connectionManager A working connection manager instance.
- * @param {core.protocol.hydra.LayeredEncDecHandlerInterface} layeredEncDecFactory A factory for creating a fresh layered encryption/decryption handler (corresponding construction)
+ * @param {core.protocol.hydra.LayeredEncDecHandlerFactoryInterface} layeredEncDecFactory A factory for creating a fresh layered encryption/decryption handler (corresponding construction)
  * @param {core.protocol.hydra.CircuitExtenderFactoryInterface} circuitExtenderFactory A circuit extender factory (correspoding construction)
  */
 class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface {
