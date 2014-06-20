@@ -347,7 +347,7 @@ var SearchClient = (function () {
             refresh: true,
             body: data
         }, function (err, response, status) {
-            if (response['created']) {
+            if (response && response['created']) {
                 callback(err, response['_id']);
             } else {
                 callback(err, null);

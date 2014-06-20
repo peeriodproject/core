@@ -43,7 +43,7 @@ describe('CORE --> UI --> UiManager', function () {
         configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
             get: function (key) {
                 if (key === 'ui.UiManager.staticServer.port') {
-                    return 3000;
+                    return 7474;
                 } else if (key === 'ui.UiManager.staticServer.publicPath') {
                     return testUtils.getFixturePath('core/ui/uiManager/public');
                 } else if (key === 'ui.UiManager.socketServer.path') {
@@ -83,7 +83,7 @@ describe('CORE --> UI --> UiManager', function () {
                     (err === null).should.be.true;
                     isOpen.should.be.true;
 
-                    http.get('http://localhost:3000', function (res) {
+                    http.get('http://localhost:7474', function (res) {
                         res.statusCode.should.equal(200);
 
                         uiManager.close(function () {
@@ -91,7 +91,7 @@ describe('CORE --> UI --> UiManager', function () {
                                 (err === null).should.be.true;
                                 isOpen.should.be.false;
 
-                                http.get('http://localhost:3000', function (res) {
+                                http.get('http://localhost:7474', function (res) {
                                 }).on('error', function (e) {
                                     e.code.should.equal('ECONNREFUSED');
                                     closeAndDone(done);
@@ -107,7 +107,7 @@ describe('CORE --> UI --> UiManager', function () {
     it('should correctly find the socket client library', function (done) {
         createUiManager(configStub, appQuitHandlerStub, [], function () {
             uiManager.open(function () {
-                http.get('http://localhost:3000/primus.io.js', function (res) {
+                http.get('http://localhost:7474/primus.io.js', function (res) {
                     res.statusCode.should.equal(200);
 
                     closeAndDone(done);
@@ -139,9 +139,9 @@ describe('CORE --> UI --> UiManager', function () {
 
         createUiManager(configStub, appQuitHandlerStub, [componentStub], function () {
             uiManager.open(function () {
-                var socket = uiManager.getSocketServer().Socket('ws://localhost:3000');
+                var socket = uiManager.getSocketServer().Socket('ws://localhost:7474');
 
-                http.get('http://localhost:3000', function (res) {
+                http.get('http://localhost:7474', function (res) {
                     res.statusCode.should.equal(200);
 
                     var chat = socket.channel('chat');

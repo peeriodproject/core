@@ -98,7 +98,7 @@
     "ui"      : {
         "UiManager": {
             "staticServer": {
-                "port": 3000,
+                "port": 7474,
                 "publicPath": "public"
             },
             "socketServer": {
