@@ -15,6 +15,7 @@ import WritableCreateCellAdditiveMessageFactoryInterface = require('./messages/i
 import WritableAdditiveSharingMessageFactoryInterface = require('./messages/interfaces/WritableAdditiveSharingMessageFactoryInterface');
 import LayeredEncDecHandlerInterface = require('./messages/interfaces/LayeredEncDecHandlerInterface');
 import WritableHydraMessageFactoryInterface = require('./messages/interfaces/WritableHydraMessageFactoryInterface');
+import ReadableHydraMessageFactoryInterface = require('./messages/interfaces/ReadableHydraMessageFactoryInterface');
 
 /**
  * HydraMessageCenterInterface implementation
@@ -56,6 +57,11 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 	_readableCreateCellAdditiveFactory:ReadableCreateCellAdditiveMessageFactoryInterface = null;
 
 	/**
+	 * @member {core.protocol.hydra.ReadableHydraMessageFactoryInterface} core.protocol.hydra.HydraMessageCenterInterface~_readableHydraMessageFactory
+	 */
+	_readableHydraMessageFactory:ReadableHydraMessageFactoryInterface = null;
+
+	/**
 	 * @member {core.protocol.hydra.WritableAdditiveSharingMessageFactoryInterface} core.protocol.hydra.HydraMessageCenterInterface~_writableAdditiveSharingFactory
 	 */
 	_writableAdditiveSharingFactory:WritableAdditiveSharingMessageFactoryInterface = null;
@@ -70,10 +76,11 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 	 */
 	_writableHydraMessageFactory:WritableHydraMessageFactoryInterface = null;
 
-	public constructor (connectionManager:ConnectionManagerInterface, readableCellCreatedRejectedFactory:ReadableCellCreatedRejectedMessageFactoryInterface, readableAdditiveSharingFactory:ReadableAdditiveSharingMessageFactoryInterface, readableCreateCellAdditiveFactory:ReadableCreateCellAdditiveMessageFactoryInterface, writableCreateCellAdditiveFactory:WritableCreateCellAdditiveMessageFactoryInterface, writableAdditiveSharingFactory:WritableAdditiveSharingMessageFactoryInterface, writableHydraMessageFactory:WritableHydraMessageFactoryInterface) {
+	public constructor (connectionManager:ConnectionManagerInterface, readableHydraMessageFactory: ReadableHydraMessageFactoryInterface, readableCellCreatedRejectedFactory:ReadableCellCreatedRejectedMessageFactoryInterface, readableAdditiveSharingFactory:ReadableAdditiveSharingMessageFactoryInterface, readableCreateCellAdditiveFactory:ReadableCreateCellAdditiveMessageFactoryInterface, writableCreateCellAdditiveFactory:WritableCreateCellAdditiveMessageFactoryInterface, writableAdditiveSharingFactory:WritableAdditiveSharingMessageFactoryInterface, writableHydraMessageFactory:WritableHydraMessageFactoryInterface) {
 		super();
 
 		this._connectionManager = connectionManager;
+		this._readableHydraMessageFactory = readableHydraMessageFactory;
 		this._readableCellCreatedRejectedFactory = readableCellCreatedRejectedFactory;
 		this._readableAdditiveSharingFactory = readableAdditiveSharingFactory;
 		this._readableCreateCellAdditiveFactory = readableCreateCellAdditiveFactory;
@@ -82,6 +89,21 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		this._writableHydraMessageFactory = writableHydraMessageFactory;
 
 		this._setupListeners();
+	}
+
+	public forceCircuitMessageThrough (payload:Buffer, from:HydraNode):void {
+		var msg:ReadableHydraMessageInterface = null;
+
+		try {
+			msg = this._readableHydraMessageFactory.create(payload);
+		}
+		catch (e) {
+
+		}
+
+		if (msg) {
+			this._onCircuitMessage(msg, from);
+		}
 	}
 
 	public sendAdditiveSharingMessage (to:HydraNode, targetIp:string, targetPort:number, uuid:string, additivePayload:Buffer):void {

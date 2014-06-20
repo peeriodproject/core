@@ -76,7 +76,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration) @curre
 
     it('should correctly instantiate the connection manager, message center, and extender', function () {
         connectionManager = new ConnectionManager(protocolConnectionManagerStub, new WritableHydraMessageFactory(), new ReadableHydraMessageFactory());
-        messageCenter = new HydraMessageCenter(connectionManager, new ReadableCellCreatedRejectedMessageFactory(), new ReadableAdditiveSharingMessageFactory(), new ReadableCreateCellAdditiveMessageFactory(), new WritableCreateCellAdditiveMessageFactory(), new WritableAdditiveSharingMessageFactory(), new WritableHydraMessageFactory());
+        messageCenter = new HydraMessageCenter(connectionManager, new ReadableHydraMessageFactory(), new ReadableCellCreatedRejectedMessageFactory(), new ReadableAdditiveSharingMessageFactory(), new ReadableCreateCellAdditiveMessageFactory(), new WritableCreateCellAdditiveMessageFactory(), new WritableAdditiveSharingMessageFactory(), new WritableHydraMessageFactory());
         layeredEncDec = new LayeredEncDecHandler();
 
         circuitExtender = new CircuitExtender(1000, 1.1, connectionManager, messageCenter, layeredEncDec);
