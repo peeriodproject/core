@@ -113,6 +113,8 @@ var HydraCircuit = (function (_super) {
         * @member {Function} core.protocol.hydra.HydraCircuit~_terminationListener
         */
         this._terminationListener = null;
+        // TESTING ONLY
+        this.alsoClosedSocket = false;
 
         this._numOfRelayNodes = numOfRelayNodes;
         this._nodePicker = nodePicker;
@@ -122,15 +124,26 @@ var HydraCircuit = (function (_super) {
         this._circuitNodes = this._layeredEncDecHandler.getNodes();
         this._circuitExtender = circuitExtenderFactory.create(hydraConfig.get('hydra.circuit.extensionReactionTimeBaseInSeconds') * 1000, hydraConfig.get('hydra.circuit.extensionReactionTimeFactor'), this._layeredEncDecHandler);
         this._maximumExtensionRetries = hydraConfig.get('hydra.circuit.maximumExtensionRetries');
-
-        this._construct();
     }
     /**
-    * Kicks off the construction of the circuit.
-    *
-    * @method core.protocol.hydra.HydraCircuit~_construct
+    * BEGIN TESTING PURPOSES
     */
-    HydraCircuit.prototype._construct = function () {
+    HydraCircuit.prototype.getCircuitNodes = function () {
+        return this._circuitNodes;
+    };
+
+    HydraCircuit.prototype.getCircuitId = function () {
+        return this._circuitId;
+    };
+
+    HydraCircuit.prototype.getLayeredEncDec = function () {
+        return this._layeredEncDecHandler;
+    };
+
+    /**
+    * END TESTING PURPOSES
+    */
+    HydraCircuit.prototype.construct = function () {
         var _this = this;
         this._nodePicker.pickRelayNodeBatch(function (batch) {
             _this._nodesToExtendWith = batch;
@@ -267,6 +280,9 @@ var HydraCircuit = (function (_super) {
             this._removeEventListeners();
 
             if (closeSocket && this._circuitNodes.length) {
+                // Testing only
+                this.alsoClosedSocket = true;
+
                 this._connectionManager.removeFromCircuitNodes(this._circuitNodes[0]);
             }
 

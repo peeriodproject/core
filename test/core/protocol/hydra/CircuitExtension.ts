@@ -30,7 +30,7 @@ import WritableAdditiveSharingMessageFactory = require('../../../../src/core/pro
 import WritableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory');
 import LayeredEncDecHandler = require('../../../../src/core/protocol/hydra/messages/Aes128GcmLayeredEncDecHandler');
 
-describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration) @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration)', function () {
 
 	this.timeout(0);
 

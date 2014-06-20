@@ -139,6 +139,9 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 	 */
 	private _terminationListener:Function = null;
 
+	// TESTING ONLY
+	public alsoClosedSocket:boolean = false;
+
 	public constructor (hydraConfig:ConfigInterface, numOfRelayNodes:number, nodePicker:NodePickerInterface, messageCenter:HydraMessageCenterInterface, connectionManager:ConnectionManagerInterface, layeredEncDecFactory:LayeredEncDecHandlerFactoryInterface, circuitExtenderFactory:CircuitExtenderFactoryInterface) {
 		super();
 
@@ -150,16 +153,29 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 		this._circuitNodes = this._layeredEncDecHandler.getNodes();
 		this._circuitExtender = circuitExtenderFactory.create(hydraConfig.get('hydra.circuit.extensionReactionTimeBaseInSeconds') * 1000, hydraConfig.get('hydra.circuit.extensionReactionTimeFactor'), this._layeredEncDecHandler);
 		this._maximumExtensionRetries = hydraConfig.get('hydra.circuit.maximumExtensionRetries');
-
-		this._construct();
 	}
 
 	/**
-	 * Kicks off the construction of the circuit.
-	 *
-	 * @method core.protocol.hydra.HydraCircuit~_construct
+	 * BEGIN TESTING PURPOSES
 	 */
-	private _construct ():void {
+
+	public getCircuitNodes ():HydraNodeList {
+		return this._circuitNodes;
+	}
+
+	public getCircuitId ():string {
+		return this._circuitId;
+	}
+
+	public getLayeredEncDec ():LayeredEncDecHandlerInterface {
+		return this._layeredEncDecHandler;
+	}
+
+	/**
+	 * END TESTING PURPOSES
+	 */
+
+	public construct ():void {
 		this._nodePicker.pickRelayNodeBatch((batch:HydraNodeList) => {
 			this._nodesToExtendWith = batch;
 
@@ -185,6 +201,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 
 		this._nodePicker.pickNextAdditiveNodeBatch((batch:HydraNodeList) => {
 			this._circuitExtender.extend(nodeToExtendWith, batch, (err:Error, isRejected:boolean, newNode:HydraNode) => {
+
 				// successful
 				if (newNode) {
 					this._extensionRetryCount = 0;
@@ -302,6 +319,9 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 			this._removeEventListeners();
 
 			if (closeSocket && this._circuitNodes.length) {
+				// Testing only
+				this.alsoClosedSocket = true;
+
 				this._connectionManager.removeFromCircuitNodes(this._circuitNodes[0]);
 			}
 

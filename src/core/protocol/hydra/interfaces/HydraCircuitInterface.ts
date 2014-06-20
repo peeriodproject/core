@@ -18,6 +18,12 @@
  */
 interface HydraCircuitInterface extends NodeJS.EventEmitter {
 
+	/**
+	 * Kicks off the construction of the circuit.
+	 *
+	 * @method core.protocol.hydra.HydraCircuitInterface~_construct
+	 */
+	construct ():void;
 }
 
 export = HydraCircuitInterface;
