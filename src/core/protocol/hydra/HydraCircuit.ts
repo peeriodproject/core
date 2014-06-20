@@ -13,37 +13,131 @@ import CircuitExtenderInterface = require('./interfaces/CircuitExtenderInterface
 import CircuitExtenderFactoryInterface = require('./interfaces/CircuitExtenderFactoryInterface');
 import ReadableHydraMessageInterface = require('./messages/interfaces/ReadableHydraMessageInterface');
 
+/**
+ * HydraCircuitInterface implementation
+ *
+ * @class core.protocol.hydra.HydraCircuit
+ * @extends NodeJS.EventEmitter
+ * @implements core.protocol.hydra.HydraCircuitInterface
+ *
+ * @param {core.config.ConfigInterface} hydraConfig Hydra configuration
+ * @param {number} numOfRelayNodes The number of desired circuit nodes this circuit should expand to.
+ * @param {core.protocol.hydra.NodePickerInterface} nodePicker A usable NodePicker instance with similar configuration.
+ * @param {core.protocol.hydra.HydraMessageCenterInterface} messageCenter A working message center instance.
+ * @param {core.protocol.hydra.ConnectionManagerInterface} connectionManager A working connection manager instance.
+ * @param {core.protocol.hydra.LayeredEncDecHandlerInterface} layeredEncDecFactory A factory for creating a fresh layered encryption/decryption handler (corresponding construction)
+ * @param {core.protocol.hydra.CircuitExtenderFactoryInterface} circuitExtenderFactory A circuit extender factory (correspoding construction)
+ */
 class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface {
 
-	private _numOfRelayNodes:number = 0;
-
-	private _nodePicker:NodePickerInterface = null;
-
-	private _messageCenter:HydraMessageCenterInterface = null;
-
-	private _connectionManager:ConnectionManagerInterface = null;
-
-	private _maximumExtensionRetries:number = 0;
-
+	/**
+	 * Stores this instance's circuit extender.
+	 *
+	 * @member {core.protocol.hydra.CircuitExtenderInterface} core.protocol.hydra.HydraCircuit~_circuitExtender
+	 */
 	private _circuitExtender:CircuitExtenderInterface = null;
 
-	private _constructed:boolean = false;
-
-	private _isTornDown:boolean = false;
-
-	private _nodesToExtendWith:HydraNodeList = null;
-
-	private _extensionRetryCount:number = 0;
-
+	/**
+	 * Stores this circuit's circuit ID shared with the first node. Gets populated once the first extension has been
+	 * completed.
+	 *
+	 * @member {string} core.protocol.hydra.HydraCircuit~_circuitId
+	 */
 	private _circuitId:string = null;
 
-	private _layeredEncDecHandler:LayeredEncDecHandlerInterface = null;
-
+	/**
+	 * Stores this circuit's relay nodes. References the same array as the node array of the layered enc/dec handler
+	 *
+	 * @member {core.protocol.hydra.HydraNodeList} core.protocol.hydra.HydraCircuit~_circuitNodes
+	 */
 	private _circuitNodes:HydraNodeList;
 
-	private _terminationListener:Function = null;
+	/**
+	 * The working connection manager instance.
+	 *
+	 * @member {core.protocol.hydra.ConnectionManagerInterface} core.protocol.hydra.HydraCircuit~_connectionManager
+	 */
+	private _connectionManager:ConnectionManagerInterface = null;
 
+	/**
+	 * Flag indicating whether the circuit has been fully constructed, i.e. the number of active relay nodes equals
+	 * the number of desired relay nodes.
+	 *
+	 * @member {boolean} core.protocol.hydra.HydraCircuit~_constructed
+	 */
+	private _constructed:boolean = false;
+
+	/**
+	 * Stores the listener function on the ENCRYPTED_DIGEST event emitted by the message center.
+	 *
+	 * @member {Function} core.protocol.hydra.HydraCircuit~_digestListener
+	 */
 	private _digestListener:Function = null;
+
+	/**
+	 * Keeps track of the number of retries in one extension cycle. Gets reset to zero as soon as the extension
+	 * succeeded.
+	 *
+	 * @member {number} core.protocol.hydra.HydraCircuit~_extensionRetryCount
+	 */
+	private _extensionRetryCount:number = 0;
+
+	/**
+	 * Flag indicating whether this circuit is torn down and is thus unusable.
+	 * Also used for preventing multiple teardowns.
+	 *
+	 * @member {boolean) core.protocol.hydra.HydraCircuit~_isTornDown
+	 */
+	private _isTornDown:boolean = false;
+
+	/**
+	 * Stores the layered encryption/decryption handler for this circuit, and is kind of the heart of the circuit.
+	 *
+	 * @member {core.protocol.hydra.LayeredEncDecHandlerInterface) core.protocol.hydra.HydraCircuit~_layeredEncDecHandler
+	 */
+	private _layeredEncDecHandler:LayeredEncDecHandlerInterface = null;
+
+	/**
+	 * The number of maximum retries per extension cycle until the circuit is torn down.
+	 *
+	 * @member {number) core.protocol.hydra.HydraCircuit~_maximumExtensionRetries
+	 */
+	private _maximumExtensionRetries:number = 0;
+
+	/**
+	 * The working message center.
+	 *
+	 * @member {core.protocol.hydra.HydraMessageCenterInterface) core.protocol.hydra.HydraCircuit~_messageCenter
+	 */
+	private _messageCenter:HydraMessageCenterInterface = null;
+
+	/**
+	 * The NodePicker used for choosing relay nodes and additive nodes.
+	 *
+	 * @member {core.protocol.hydra.NodePickerInterface) core.protocol.hydra.HydraCircuit~_nodePicker
+	 */
+	private _nodePicker:NodePickerInterface = null;
+
+	/**
+	 * Stores the array of relay nodes chosen by the node picker.
+	 *
+	 * @member {core.protocol.hydra.HydraNodeList) core.protocol.hydra.HydraCircuit~_nodesToExtendWith
+	 */
+	private _nodesToExtendWith:HydraNodeList = null;
+
+	/**
+	 * The desired number of relay nodes this circuit should strive for.
+	 *
+	 * @member {number) core.protocol.hydra.HydraCircuit~_numOfRelayNodes
+	 */
+	private _numOfRelayNodes:number = 0;
+
+	/**
+	 * Stores the listener on the connection manager's 'circuitTermination' event.
+	 *
+	 * @member {Function} core.protocol.hydra.HydraCircuit~_terminationListener
+	 */
+	private _terminationListener:Function = null;
 
 	public constructor (hydraConfig:ConfigInterface, numOfRelayNodes:number, nodePicker:NodePickerInterface, messageCenter:HydraMessageCenterInterface, connectionManager:ConnectionManagerInterface, layeredEncDecFactory:LayeredEncDecHandlerFactoryInterface, circuitExtenderFactory:CircuitExtenderFactoryInterface) {
 		super();
@@ -60,6 +154,11 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 		this._construct();
 	}
 
+	/**
+	 * Kicks off the construction of the circuit.
+	 *
+	 * @method core.protocol.hydra.HydraCircuit~_construct
+	 */
 	private _construct ():void {
 		this._nodePicker.pickRelayNodeBatch((batch:HydraNodeList) => {
 			this._nodesToExtendWith = batch;
@@ -68,6 +167,15 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 		});
 	}
 
+	/**
+	 * Extends the circuit by one node (at least tries so) and handles the response appropriately
+	 * (error => teardown, rejection => try again if retries left, else teardown, success => extend further or finalize)
+	 *
+	 * @method core.protocol.hydra.HydraCircuit~_extensionCycle
+	 *
+	 * @param {core.protocol.hydra.HydraNode} retryNode An optional node to retry the extension with. If this is set, the node
+	 * to extend with is not picked from the `_nodesToExtendWith` array.
+	 */
 	private _extensionCycle (retryNode?:HydraNode):void {
 		if (retryNode) {
 			this._extensionRetryCount++;
@@ -118,6 +226,46 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 
 	}
 
+	/**
+	 * Message listener on ENCRYPTED_DIGEST messages. Tries to decrypt the message and forces it back to the message
+	 * center so it can further unwrap the message and act accordingly.
+	 *
+	 * @method core.protocol.hydra.HydraCircuit~_onEncryptedDigest
+	 *
+	 * @param {core.protocol.hydra.HydraNode} from The originating node.
+	 * @param {core.protocol.hydra.ReadableHydraMessageInterface} message The hydra message with encrypted payload.
+	 */
+	private _onEncryptedDigest (from:HydraNode, message:ReadableHydraMessageInterface) {
+		if (from === this._circuitNodes[0]) {
+			this._layeredEncDecHandler.decrypt(message.getPayload(), (err:Error, decryptedBuffer:Buffer) => {
+				if (err) {
+					this._teardown(true);
+				}
+				else if (decryptedBuffer && !this._isTornDown) {
+					this._messageCenter.forceCircuitMessageThrough(decryptedBuffer, from);
+				}
+			});
+		}
+	}
+
+	/**
+	 * Removes the event listeners from the connection manager and the message center.
+	 *
+	 * @method core.protocol.hydra.HydraCircuit~_removeEventListeners
+	 */
+	private _removeEventListeners ():void {
+		if (this._circuitId) {
+			this._connectionManager.removeListener('circuitTermination', this._terminationListener);
+			this._messageCenter.removeListener('ENCRYPTED_DIGEST_' + this._circuitId, this._digestListener);
+		}
+	}
+
+	/**
+	 * Sets up the listeners on the connection manager and the message center.
+	 * This function gets called as soon as the circuit has been extended with a first node. (thus has nodes at all, man!)
+	 *
+	 * @method core.protocol.hydra.HydraCircuit~_setupListeners
+	 */
 	private _setupListeners ():void {
 
 		this._circuitId = this._circuitNodes[0].circuitId;
@@ -140,25 +288,14 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 		this._messageCenter.on('ENCRYPTED_DIGEST_' + this._circuitId, this._digestListener);
 	}
 
-	private _onEncryptedDigest (from:HydraNode, message:ReadableHydraMessageInterface) {
-		if (from === this._circuitNodes[0]) {
-			this._layeredEncDecHandler.decrypt(message.getPayload(), (err:Error, decryptedBuffer:Buffer) => {
-				if (err) {
-					this._teardown(true);
-				}
-				else if (decryptedBuffer) {
-					this._messageCenter.forceCircuitMessageThrough(decryptedBuffer, from);
-				}
-			});
-		}
-	}
-
-	private _removeEventListeners ():void {
-		this._connectionManager.removeListener('circuitTermination', this._terminationListener);
-		this._messageCenter.removeListener('ENCRYPTED_DIGEST_' + this._circuitId, this._digestListener);
-	}
-
-	private _teardown (closeSocket:boolean) {
+	/**
+	 * Tears down the socket and thus renders it unusable.
+	 *
+	 * @method core.protocol.hydra.HydraCircuit~_teardown
+	 *
+	 * @param {boolean} closeSocket If true, the socket assigned to the first circuit node is closed and cleaned up by the connection manager.
+	 */
+	private _teardown (closeSocket:boolean):void {
 		if (!this._isTornDown) {
 			this._isTornDown = true;
 
