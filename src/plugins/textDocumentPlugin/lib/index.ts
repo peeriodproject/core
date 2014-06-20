@@ -18,6 +18,38 @@ export module main {
 		exit({ foo: 'foo', bar: bar });
 	}
 
+	export function getSearchFields () {
+		var  fields = {
+			"action" : "index.html",
+			"method" : "get",
+			"html" :
+				[
+					{
+						"type" : "p",
+						"html" : "You must login"
+					},
+					{
+						"name" : "username",
+						"id" : "txt-username",
+						"caption" : "Username",
+						"type" : "text",
+						"placeholder" : "E.g. user@example.com"
+					},
+					{
+						"name" : "password",
+						"caption" : "Password",
+						"type" : "password"
+					},
+					{
+						"type" : "submit",
+						"value" : "Login"
+					}
+				]
+		};
+
+		exit(fields);
+	}
+
 	/**
 	 * Returns the mapping used in the elasticsearch index to store the plugin data
 	 * The mapping doesn't include the document root!
