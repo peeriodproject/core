@@ -302,8 +302,6 @@ class PluginManager implements PluginManagerInterface {
 								checkAndSendCallback();
 							});
 						}
-
-						//console.log(JSON.stringify(mergedPluginData));
 					});
 				}
 				else {
@@ -378,19 +376,15 @@ class PluginManager implements PluginManagerInterface {
 		this._pluginValidator.validateState(pluginState, (err:Error) => {
 			var identifier:string = pluginState.name;
 
-			console.log('validated!');
-
 			if (err) {
 				return internalCallback(err);
 			}
 			else {
 				// register plugin to mime type list
 				// todo create extensions list
-				console.log('going to create loader')
 				var pluginLoader:PluginLoaderInterface = this._pluginLoaderFactory.create(this._config, pluginState.path);
 				var mimeTypes:Array<string> = pluginLoader.getFileMimeTypes();
 
-				console.log('got mimeTypes');
 				if (mimeTypes.length) {
 					for (var i = 0, l = mimeTypes.length; i < l; i++) {
 						var mimeType:string = mimeTypes[i];
@@ -405,11 +399,8 @@ class PluginManager implements PluginManagerInterface {
 				}
 
 				this._pluginLoaders[identifier] = pluginLoader;
-
-				console.log('going to create runner');
 				this._pluginRunners[identifier] = this._pluginRunnerFactory.create(this._config, pluginState.name, pluginLoader.getMain());
 
-				console.log('emitting event', identifier);
 				this._eventEmitter.emit('pluginAdded', identifier);
 
 				internalCallback(null);

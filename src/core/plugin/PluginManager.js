@@ -271,7 +271,6 @@ var PluginManager = (function () {
                                 checkAndSendCallback();
                             });
                         }
-                        //console.log(JSON.stringify(mergedPluginData));
                     });
                 } else {
                     sendCallback();
@@ -342,18 +341,14 @@ var PluginManager = (function () {
         this._pluginValidator.validateState(pluginState, function (err) {
             var identifier = pluginState.name;
 
-            console.log('validated!');
-
             if (err) {
                 return internalCallback(err);
             } else {
                 // register plugin to mime type list
                 // todo create extensions list
-                console.log('going to create loader');
                 var pluginLoader = _this._pluginLoaderFactory.create(_this._config, pluginState.path);
                 var mimeTypes = pluginLoader.getFileMimeTypes();
 
-                console.log('got mimeTypes');
                 if (mimeTypes.length) {
                     for (var i = 0, l = mimeTypes.length; i < l; i++) {
                         var mimeType = mimeTypes[i];
@@ -367,11 +362,8 @@ var PluginManager = (function () {
                 }
 
                 _this._pluginLoaders[identifier] = pluginLoader;
-
-                console.log('going to create runner');
                 _this._pluginRunners[identifier] = _this._pluginRunnerFactory.create(_this._config, pluginState.name, pluginLoader.getMain());
 
-                console.log('emitting event', identifier);
                 _this._eventEmitter.emit('pluginAdded', identifier);
 
                 internalCallback(null);

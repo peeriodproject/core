@@ -3,7 +3,7 @@ var sinon = require('sinon');
 
 var UiFolderDropzoneComponent = require('../../../../src/core/ui/folder/UiFolderDropzoneComponent');
 
-describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent @joern', function () {
+describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
     var sandbox;
     var component;
 

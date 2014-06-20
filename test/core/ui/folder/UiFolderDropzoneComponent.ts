@@ -7,7 +7,7 @@ import testUtils = require('../../../utils/testUtils');
 
 import UiFolderDropzoneComponent = require('../../../../src/core/ui/folder/UiFolderDropzoneComponent');
 
-describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent @joern', function () {
+describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
 	var sandbox:SinonSandbox;
 	var component:UiFolderDropzoneComponent;
 	//var eventListeners:{ [eventName:string]:Function };

@@ -9,7 +9,6 @@ import UiFolderMapInterface = require('./interfaces/UiFolderMapInterface');
 /**
  * The UiFolderWatcherManagerComponent acts as a controller between the {@link core.fs.FolderWatcherManager} and the user interface.
  *
- *
  * @class core.ui.UiFolderWatcherManagerComponent
  * @implements core.ui.UiComponentInterface
  *

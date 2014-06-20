@@ -72,6 +72,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
 
 	it('should correctly return the state', function () {
 		var state = component.getState();
+
 		state.should.be.an.instanceof(Array);
 		state.length.should.equal(0);
 	});
