@@ -88,6 +88,12 @@ var CircuitExtender = (function () {
         */
         this._expectReactionFrom = null;
         /**
+        * Indicates whether an extension process is currently going on.
+        *
+        * @member {boolean} core.protocol.hydra.CircuitExtender~_isExtending
+        */
+        this._isExtending = false;
+        /**
         * The working hydra message center instance.
         *
         * @member {core.protocol.hydra.HydraMessageCenterInterface} core.protocol.hydra.CircuitExtender~_messageCenter
@@ -141,6 +147,7 @@ var CircuitExtender = (function () {
         var isFirst = this._nodes.length === 0;
 
         this._currentCallback = callback;
+        this._isExtending = true;
 
         if (isFirst) {
             this._circuitId = crypto.pseudoRandomBytes(16).toString('hex');
@@ -197,6 +204,18 @@ var CircuitExtender = (function () {
     };
 
     /**
+    * @method core.protocol.hydra.CircuitExtender~_doCallback
+    *
+    * @param {Error} err
+    * @param {boolean} isRejected
+    * @param {core.protocol.hydra.HydraNode} newNode
+    */
+    CircuitExtender.prototype._doCallback = function (err, isRejected, newNode) {
+        this._isExtending = false;
+        this._currentCallback(err, isRejected, newNode);
+    };
+
+    /**
     * Handles an errorous request by detaching the event listener and invoking the callback with an error.
     *
     * @method core.protocol.hydra.CircuitExtender~_extensionError
@@ -211,7 +230,7 @@ var CircuitExtender = (function () {
             this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
         }
 
-        this._currentCallback(new Error('CircuitExtender: ' + errMsg), false, null);
+        this._doCallback(new Error('CircuitExtender: ' + errMsg), false, null);
     };
 
     /**
@@ -229,7 +248,7 @@ var CircuitExtender = (function () {
             this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
         }
 
-        this._currentCallback(null, true, null);
+        this._doCallback(null, true, null);
     };
 
     /**
@@ -243,7 +262,7 @@ var CircuitExtender = (function () {
         this._removeMessageListener();
         this._removeTerminationListener();
 
-        if (!this._nodes.length) {
+        if (this._isExtending) {
             this._clearReactionTimeout();
             this._extensionError('Circuit socket terminated');
         }
@@ -295,7 +314,7 @@ var CircuitExtender = (function () {
 
                         this._encDecHandler.addNode(newNode);
 
-                        this._currentCallback(null, false, newNode);
+                        this._doCallback(null, false, newNode);
                     } else {
                         this._extensionError('Hashes of shared secret do not match.');
                     }
