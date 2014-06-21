@@ -9,6 +9,19 @@ exports.main = {
         });
     },
 
+    getSearchFields: function () {
+        exit({
+            "action": "index.html",
+            "method": "get",
+            "html"  : [
+                {
+                    "type": "p",
+                    "html": "You must login"
+                }
+            ]
+        });
+    },
+
     onBeforeItemAdd: function () {
         exit({
             fileBuffer: fileBuffer,
