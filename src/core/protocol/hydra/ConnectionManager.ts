@@ -135,8 +135,8 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 		});
 	}
 
-	public removeFromCircuitNodes (node:HydraNode):HydraNode {
-		return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier);
+	public removeFromCircuitNodes (node:HydraNode, closeSocket:boolean = true):HydraNode {
+		return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier, closeSocket);
 	}
 
 	/**
@@ -145,15 +145,22 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 	 * @method core.protocol.hydra.ConnectionManager~_removeFromCircuitNodesByIdentifier
 	 *
 	 * @param {string} identifier Socket identifier.
+	 * @parma {boolean} Indicates if the underlying TCP socket should also be ended.
 	 * @returns {core.protocol.hydra.HydraNode} node The removed node. `undefined` if the node was not present.
 	 */
-	private _removeFromCircuitNodesByIdentifier (identifier:string):HydraNode {
+	private _removeFromCircuitNodesByIdentifier (identifier:string, closeSocket:boolean):HydraNode {
 
 		if (identifier) {
 			var circNode:HydraNode = this._circuitNodes[identifier];
 
 			if (circNode) {
-				this._protocolConnectionManager.closeHydraSocket(identifier);
+				if (closeSocket) {
+					this._protocolConnectionManager.closeHydraSocket(identifier);
+				}
+				else {
+					this._protocolConnectionManager.keepHydraSocketNoLongerOpen(identifier);
+				}
+
 				delete this._circuitNodes[identifier];
 
 				return circNode;
@@ -171,7 +178,7 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 	private _setupListeners ():void {
 
 		this._protocolConnectionManager.on('terminatedConnection', (identifier:string) => {
-			var circuitNode:HydraNode = this._removeFromCircuitNodesByIdentifier(identifier);
+			var circuitNode:HydraNode = this._removeFromCircuitNodesByIdentifier(identifier, false);
 
 			if (circuitNode) {
 				this.emit('circuitTermination', circuitNode.circuitId);

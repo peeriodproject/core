@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">65.11</p>
+      <p class="stat">66.80</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">265</p>
+      <p class="stat">352</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">37.88</p>
+      <p class="stat">45.40</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.62</p>
+      <p class="stat">2.08</p>
     </div>
   </div>
 </div>
@@ -103,7 +103,7 @@ var HKDF = require(&#039;../../crypto/HKDF&#039;);
 *
 * @param {number} reactionTimeInMs The number of milliseconds used as a basis for how long the instance waits for a response until the request is considered a failure.
 * @param {number} reactionTimeFactor For each relay node, the reaction time base is multiplied with this factor to adapt to the circuit&#039;s length.
-* @param {core.protocol.hydra.HydraConnectionInterface} connectionManager A working hydra connection manager instance.
+* @param {core.protocol.hydra.ConnectionManagerInterface} connectionManager A working connection manager instance.
 * @param {core.protocol.hydra.HydraMessageCenterInterface} messageCenter  A working hydra message center instance.
 * @param {core.protocol.hydra.LayeredEncDecHandlerInterface} encDecHandler The layered encryption/decryption handler of the circuit which should be extended.
 */
@@ -117,9 +117,15 @@ var CircuitExtender = (function () {
         */
         this._circuitId = null;
         /**
+        * Listener on the termination event of circuits.
+        *
+        * @member {Function} core.protocol.hydra.CircuitExtender~_circuitTerminationListener
+        */
+        this._circuitTerminationListener = null;
+        /**
         * The working hydra connection manager instance.
         *
-        * @member {core.protocol.hydra.HydraConnectionManagerInterface} core.protocol.hydra.CircuitExtender~_connectionManager
+        * @member {core.protocol.hydra.ConnectionManagerInterface} core.protocol.hydra.CircuitExtender~_connectionManager
         */
         this._connectionManager = null;
         /**
@@ -174,6 +180,12 @@ var CircuitExtender = (function () {
         */
         this._expectReactionFrom = null;
         /**
+        * Indicates whether an extension process is currently going on.
+        *
+        * @member {boolean} core.protocol.hydra.CircuitExtender~_isExtending
+        */
+        this._isExtending = false;
+        /**
         * The working hydra message center instance.
         *
         * @member {core.protocol.hydra.HydraMessageCenterInterface} core.protocol.hydra.CircuitExtender~_messageCenter
@@ -227,16 +239,25 @@ var CircuitExtender = (function () {
         var isFirst = this._nodes.length === 0;
 
         this._currentCallback = callback;
+        this._isExtending = true;
 
         if (isFirst) {
             this._circuitId = crypto.pseudoRandomBytes(16).toString(&#039;hex&#039;);
             this._expectReactionFrom = nodeToExtendWith;
+            this._expectReactionFrom.circuitId = this._circuitId;
 
-            this._eventListener = function (ip, message) {
-                _this._onReaction(ip, message);
+            this._eventListener = function (from, message) {
+                _this._onReaction(from, message);
+            };
+
+            this._circuitTerminationListener = function (circuitId) {
+                if (circuitId === _this._circuitId) {
+                    _this._onCircuitTermination();
+                }
             };
 
             this._messageCenter.on(&#039;CELL_CREATED_REJECTED_&#039; + this._circuitId, this._eventListener);
+            this._connectionManager.on(&#039;circuitTermination&#039;, this._circuitTerminationListener);
         }
 
         this._currentUUID = crypto.pseudoRandomBytes(16).toString(&#039;hex&#039;);
@@ -263,6 +284,83 @@ var CircuitExtender = (function () {
     };
 
     /**
+    * Clears the reaction timeout (if there is one)
+    *
+    * @method core.protocol.hydra.CircuitExtender~_clearReactionTimeout
+    */
+    CircuitExtender.prototype._clearReactionTimeout = function () {
+        if (this._currentReactionTimeout) {
+            global.clearTimeout(this._currentReactionTimeout);
+            this._currentReactionTimeout = 0;
+        }
+    };
+
+    /**
+    * @method core.protocol.hydra.CircuitExtender~_doCallback
+    *
+    * @param {Error} err
+    * @param {boolean} isRejected
+    * @param {core.protocol.hydra.HydraNode} newNode
+    */
+    CircuitExtender.prototype._doCallback = function (err, isRejected, newNode) {
+        this._isExtending = false;
+        this._currentCallback(err, isRejected, newNode);
+    };
+
+    /**
+    * Handles an errorous request by detaching the event listener and invoking the callback with an error.
+    *
+    * @method core.protocol.hydra.CircuitExtender~_extensionError
+    *
+    * @param {string} errMsg Message for the passed in error.
+    */
+    CircuitExtender.prototype._extensionError = function (errMsg) {
+        this._removeMessageListener();
+        this._removeTerminationListener();
+
+        if (!this._nodes.length) {
+            this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
+        }
+
+        this._doCallback(new Error(&#039;CircuitExtender: &#039; + errMsg), false, null);
+    };
+
+    /**
+    * Handles a rejected request by checking if the node to extend with was the first node. If yes, the listener on
+    * the circuitId must be detached to &#039;make way&#039; for subsequent requests.
+    *
+    * At last the callbak is invoked with `isRejected`-flag set to true.
+    *
+    * @method core.protocol.hydra.CircuitExtender~_handleRejection
+    */
+    CircuitExtender.prototype._handleRejection = function () {
+        if (!this._nodes.length) {
+            this._removeMessageListener();
+            this._removeTerminationListener();
+            this._connectionManager.removeFromCircuitNodes(this._currentNodeToExtendWith);
+        }
+
+        this._doCallback(null, true, null);
+    };
+
+    /**
+    * Method which gets invoked if the socket of the first node is terminated.
+    * Removes the listeners and if the node has not been added to the circuit, considers the extension
+    * as errorous.
+    *
+    * @method core.protocol.hydra.CircuitExtender~_onCircuitTermination
+    */
+    CircuitExtender.prototype._onCircuitTermination = function () {
+        this._removeMessageListener();
+        this._removeTerminationListener();
+
+        if (this._isExtending) {
+            this._clearReactionTimeout();
+            this._extensionError(&#039;Circuit socket terminated&#039;);
+        }
+    };
+
+    /**
     * Handles the reaction message, i.e. a CELL_CREATED_REJECTED message event emitted on the expected circuitId.
     * It checks if the IP the message comes from matches the expected IP.
     * If yes, and the UUID also matches, the Diffie-Hellman secret is computed and the SHA-1 hash compared to the
@@ -277,12 +375,9 @@ var CircuitExtender = (function () {
     * @param {string} fromIp The IP address the reaction message originates from.
     * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} message The reaction message.
     */
-    CircuitExtender.prototype._onReaction = function (fromIp, message) {
-        if (this._expectReactionFrom.ip === fromIp) {
-            if (this._currentReactionTimeout) {
-                global.clearTimeout(this._currentReactionTimeout);
-                this._currentReactionTimeout = 0;
-            }
+    CircuitExtender.prototype._onReaction = function (from, message) {
+        if (this._expectReactionFrom === from) {
+            this._clearReactionTimeout();
 
             if (message.getUUID() !== this._currentUUID) {
                 this._extensionError(&#039;Expected UUID does not match received UUID.&#039;);
@@ -301,20 +396,17 @@ var CircuitExtender = (function () {
                         var outgoingKey = keysConcat.slice(0, 16);
                         var incomingKey = keysConcat.slice(16);
 
-                        var newNode = {
-                            incomingKey: incomingKey,
-                            outgoingKey: outgoingKey,
+                        var newNode = this._nodes.length ? {
                             ip: this._currentNodeToExtendWith.ip,
                             port: this._currentNodeToExtendWith.port
-                        };
+                        } : this._currentNodeToExtendWith;
 
-                        if (!this._nodes.length) {
-                            newNode.circuitId = this._circuitId;
-                        }
+                        newNode.incomingKey = incomingKey;
+                        newNode.outgoingKey = outgoingKey;
 
                         this._encDecHandler.addNode(newNode);
 
-                        this._currentCallback(null, false, newNode);
+                        this._doCallback(null, false, newNode);
                     } else {
                         this._extensionError(&#039;Hashes of shared secret do not match.&#039;);
                     }
@@ -324,32 +416,27 @@ var CircuitExtender = (function () {
     };
 
     /**
-    * Handles a rejected request by checking if the node to extend with was the first node. If yes, the listener on
-    * the circuitId must be detached to &#039;make way&#039; for subsequent requests.
+    * Removes the listener on the CELL_CREATED_REJECTED event related to this circuit&#039;s circuitId.
     *
-    * At last the callbak is invoked with `isRejected`-flag set to true.
-    *
-    * @method core.protocol.hydra.CircuitExtender~_handleRejection
+    * @method core.protocol.hydra.CircuitExtender~_removeMessageListener
     */
-    CircuitExtender.prototype._handleRejection = function () {
-        if (!this._nodes.length) {
+    CircuitExtender.prototype._removeMessageListener = function () {
+        if (this._eventListener) {
             this._messageCenter.removeListener(&#039;CELL_CREATED_REJECTED_&#039; + this._circuitId, this._eventListener);
+            this._eventListener = null;
         }
-
-        this._currentCallback(null, true, null);
     };
 
     /**
-    * Handles an errorous request by detaching the event listener and invoking the callback with an error.
+    * Removes the listener on the `circuitTermination` event of the connection manager.
     *
-    * @method core.protocol.hydra.CircuitExtender~_extensionError
-    *
-    * @param {string} errMsg Message for the passed in error.
+    * @method core.protocol.hydra.CircuitExtender~_removeTerminationListener
     */
-    CircuitExtender.prototype._extensionError = function (errMsg) {
-        this._messageCenter.removeListener(&#039;CELL_CREATED_REJECTED_&#039; + this._circuitId, this._eventListener);
-
-        this._currentCallback(new Error(&#039;CircuitExtender: &#039; + errMsg), false, null);
+    CircuitExtender.prototype._removeTerminationListener = function () {
+        if (this._circuitTerminationListener) {
+            this._connectionManager.removeListener(&#039;circuitTermination&#039;, this._circuitTerminationListener);
+            this._circuitTerminationListener = null;
+        }
     };
     return CircuitExtender;
 })();
