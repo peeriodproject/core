@@ -63,27 +63,27 @@ class PluginRunner implements PluginRunnerInterface {
 	}
 
 	public getMapping (callback:Function):void {
-		this._createAndRunSandbox(null, null, null, 'main.getMapping', callback, function (output:any) {
+		this._createAndRunStaticSandbox('main.getMapping', callback, function (output:any) {
 			callback(null, output);
 		});
 	}
 
 	public getSearchFields (callback:Function):void {
-		this._createAndRunSandbox(null, null, null, 'main.getSearchFields', callback, function (output:any) {
+		this._createAndRunStaticSandbox('main.getSearchFields', callback, function (output:any) {
 			callback(null, output);
 		});
 	}
 
 	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, globals:Object, callback:Function):void {
-		this._createAndRunSandbox(itemPath, stats, globals, 'main.onBeforeItemAdd', callback, function (output:any) {
+		this._createAndRunItemSandbox(itemPath, stats, globals, 'main.onBeforeItemAdd', callback, function (output:any) {
 			callback(null, output);
 		});
 	}
 
 	/**
-	 * Creates a sandbox, registers a timeout handler, addes the onExit callback and runs the specified method name.
+	 * Creates a sandbox for a specified itemPath, registers a timeout handler, adds the onExit callback and runs the specified method name.
 	 *
-	 * @method core.plugin.PluginRunner~_createAndRunSandbox
+	 * @method core.plugin.PluginRunner~_createAndRunItemSandbox
 	 *
 	 * @param {string} itemPath
 	 * @param {fs.Stats} stats
@@ -92,19 +92,29 @@ class PluginRunner implements PluginRunnerInterface {
 	 * @param {Function} callback
 	 * @param {Function} onExit
 	 */
-	private _createAndRunSandbox (itemPath:string, stats:fs.Stats, globals:Object, methodName:string, callback:Function, onExit:(output:any) => void):void {
+	private _createAndRunItemSandbox (itemPath:string, stats:fs.Stats, globals:Object, methodName:string, callback:Function, onExit:(output:any) => void):void {
 		this._createSandbox(itemPath);
 		this._registerSandboxTimeoutHandler(itemPath, callback);
-		this._sandboxScripts[itemPath].on('exit', function (err, output, methodName) {
-			if (err) {
-				return callback(err, null, methodName);
-			}
-			else {
-				return onExit(output);
-			}
-		});
+		this._registerSandboxExitHandler(itemPath, callback, onExit);
 
 		this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
+	}
+
+	/**
+	 * Creates a static sandbox for the specified methodName, registers a timeout handler, adds the onExit callback and runs the specified method name.
+	 *
+	 * @method core.plugin.PluginRunner~_createAndRunStaticSandbox
+	 *
+	 * @param {string} methodName
+	 * @param {Function} callback
+	 * @param {Function} onExit
+	 */
+	private _createAndRunStaticSandbox (methodName:string, callback:Function, onExit:(output:any) => void):void {
+		this._createSandbox(methodName);
+		this._registerSandboxTimeoutHandler(methodName, callback);
+		this._registerSandboxExitHandler(methodName, callback, onExit);
+
+		this._sandboxScripts[methodName].run(methodName);
 	}
 
 	/**
@@ -135,6 +145,28 @@ class PluginRunner implements PluginRunnerInterface {
 		if (this._sandboxScripts[itemPath]) {
 			this._sandboxScripts[itemPath].on('timeout', function (methodName) {
 				callback(new Error('PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call "' + methodName), null);
+			});
+		}
+	}
+
+	/**
+	 * Binds a `exit` handler to the event. It calls the specified callback on error, or the onExit method after the sandbox finished it's run.
+	 *
+	 * @method core.plugin.PluginRunner~_registerSandboxExitHandler
+	 *
+	 * @param {string} identifier
+	 * @param {Function} callback
+	 * @param {Function} onExit
+	 */
+	private _registerSandboxExitHandler (identifier:string, callback:Function, onExit:(output:any) => void):void {
+		if (this._sandboxScripts[identifier]) {
+			this._sandboxScripts[identifier].on('exit', function (err, output, methodName) {
+				if (err) {
+					return callback(err, null, methodName);
+				}
+				else {
+					return onExit(output);
+				}
 			});
 		}
 	}

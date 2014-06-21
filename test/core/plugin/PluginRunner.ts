@@ -130,6 +130,27 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
 				cleanupAndDone(pluginRunner, done);
 			});
 		});
+
+		it('should correctly call the getSearchFields method', function (done) {
+			var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
+
+			pluginRunner.getSearchFields(function (err:Error, output) {
+				(err === null).should.be.true;
+
+				output.should.containDeep({
+					"action": "index.html",
+					"method": "get",
+					"html"  : [
+						{
+							"type": "p",
+							"html": "You must login"
+						}
+					]
+				});
+
+				cleanupAndDone(pluginRunner, done);
+			});
+		});
 	});
 
 });
