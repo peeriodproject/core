@@ -1,54 +1,16 @@
 // sandbox exit callback
-declare function exit(output?:any):void;
+declare function exit (output?:any):void;
 
 // api methods
-declare function getState():any;
-declare function setState(state:any):void;
+declare function getState ():any;
+declare function setState (state:any):void;
 
 // plugin globals
-declare function getFileName():string;
-declare function getStats():Object;
+declare function getFileName ():string;
+declare function getStats ():Object;
 
-export module main {
 
-	export function onTest() {
-		setState('foobar');
-		var bar = getState();
-
-		exit({ foo: 'foo', bar: bar });
-	}
-
-	export function getSearchFields () {
-		var  fields = {
-			"action" : "index.html",
-			"method" : "get",
-			"html" :
-				[
-					{
-						"type" : "p",
-						"html" : "You must login"
-					},
-					{
-						"name" : "username",
-						"id" : "txt-username",
-						"caption" : "Username",
-						"type" : "text",
-						"placeholder" : "E.g. user@example.com"
-					},
-					{
-						"name" : "password",
-						"caption" : "Password",
-						"type" : "password"
-					},
-					{
-						"type" : "submit",
-						"value" : "Login"
-					}
-				]
-		};
-
-		exit(fields);
-	}
+export var main = {
 
 	/**
 	 * Returns the mapping used in the elasticsearch index to store the plugin data
@@ -56,17 +18,17 @@ export module main {
 	 *
 	 * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/indices-put-mapping.html
 	 */
-	export function getMapping () {
-		var mapping = {
-			_source: {
+	getMapping: function () {
+		exit({
+			_source   : {
 				excludes: ['file']
 			},
 			properties: {
 				file: {
-					type  : 'attachment',
-					indexed_chars: -1,
+					type          : 'attachment',
+					indexed_chars : -1,
 					detect_anguage: true,
-					fields: {
+					fields        : {
 						file          : {
 							store      : 'yes',
 							term_vector: 'with_positions_offsets'
@@ -75,7 +37,7 @@ export module main {
 							store: 'yes'
 						},
 						title         : {
-							store   : 'yes'
+							store: 'yes'
 						},
 						date          : {
 							store: 'yes'
@@ -90,23 +52,48 @@ export module main {
 						content_length: {
 							store: 'yes'
 						},
-						language: {
+						language      : {
 							store: 'yes'
 						}
 					}
 				}
 			}
-		};
+		});
+	},
 
-		exit(mapping);
-	}
+	getSearchFields: function () {
+		exit({
+			"action": "index.html",
+			"method": "get",
+			"html"  : [
+				{
+					"type": "p",
+					"html": "You must login"
+				},
+				{
+					"name"       : "username",
+					"id"         : "txt-username",
+					"caption"    : "Username",
+					"type"       : "text",
+					"placeholder": "E.g. user@example.com"
+				},
+				{
+					"name"   : "password",
+					"caption": "Password",
+					"type"   : "password"
+				},
+				{
+					"type" : "submit",
+					"value": "Login"
+				}
+			]
+		});
+	},
 
-	export function onBeforeItemAdd () {
-		var data = {
-			name: getFileName(),
+	onBeforeItemAdd: function () {
+		exit({
+			name : getFileName(),
 			stats: getStats()
-		};
-
-		exit(data);
+		});
 	}
-}
+};
