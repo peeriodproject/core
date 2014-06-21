@@ -66,6 +66,10 @@ var ConnectionManager = (function (_super) {
         node.socketIdentifier = socketIdentifier;
         this._circuitNodes[socketIdentifier] = node;
         this._protocolConnectionManager.keepHydraSocketOpen(socketIdentifier);
+
+        if (!node.ip) {
+            node.ip = this._protocolConnectionManager.getHydraSocketIp(socketIdentifier);
+        }
     };
 
     ConnectionManager.prototype.pipeCircuitMessageTo = function (node, messageType, payload, skipCircIdOnConstruction) {
@@ -79,7 +83,7 @@ var ConnectionManager = (function (_super) {
             return;
         }
 
-        if (!node.socketIdentifier) {
+        if (!node.socketIdentifier && node.port && node.ip) {
             if (!this._circuitPipeline[circuitId]) {
                 this._circuitPipeline[circuitId] = [];
 
@@ -121,8 +125,9 @@ var ConnectionManager = (function (_super) {
         });
     };
 
-    ConnectionManager.prototype.removeFromCircuitNodes = function (node) {
-        return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier);
+    ConnectionManager.prototype.removeFromCircuitNodes = function (node, closeSocket) {
+        if (typeof closeSocket === "undefined") { closeSocket = true; }
+        return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier, closeSocket);
     };
 
     /**
@@ -131,14 +136,20 @@ var ConnectionManager = (function (_super) {
     * @method core.protocol.hydra.ConnectionManager~_removeFromCircuitNodesByIdentifier
     *
     * @param {string} identifier Socket identifier.
+    * @parma {boolean} Indicates if the underlying TCP socket should also be ended.
     * @returns {core.protocol.hydra.HydraNode} node The removed node. `undefined` if the node was not present.
     */
-    ConnectionManager.prototype._removeFromCircuitNodesByIdentifier = function (identifier) {
+    ConnectionManager.prototype._removeFromCircuitNodesByIdentifier = function (identifier, closeSocket) {
         if (identifier) {
             var circNode = this._circuitNodes[identifier];
 
             if (circNode) {
-                this._protocolConnectionManager.closeHydraSocket(identifier);
+                if (closeSocket) {
+                    this._protocolConnectionManager.closeHydraSocket(identifier);
+                } else {
+                    this._protocolConnectionManager.keepHydraSocketNoLongerOpen(identifier);
+                }
+
                 delete this._circuitNodes[identifier];
 
                 return circNode;
@@ -156,7 +167,7 @@ var ConnectionManager = (function (_super) {
     ConnectionManager.prototype._setupListeners = function () {
         var _this = this;
         this._protocolConnectionManager.on('terminatedConnection', function (identifier) {
-            var circuitNode = _this._removeFromCircuitNodesByIdentifier(identifier);
+            var circuitNode = _this._removeFromCircuitNodesByIdentifier(identifier, false);
 
             if (circuitNode) {
                 _this.emit('circuitTermination', circuitNode.circuitId);

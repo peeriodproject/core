@@ -65,9 +65,10 @@ interface ConnectionManagerInterface extends NodeJS.EventEmitter {
 	 * @method core.protocol.hydra.ConnectionManagerInterface#removeFromCircuitNodes
 	 *
 	 * @param {core.protocol.hydra.HydraNode} node The node to remove.
+	 * @param {boolean} closeSocket This is true by default and indicates if the underlying TCP socket should also be ended.
 	 * @returns {core.protocol.hydra.HydraNode} node The removed node. `undefined` if the node was not present.
 	 */
-	removeFromCircuitNodes (node:HydraNode):HydraNode;
+	removeFromCircuitNodes (node:HydraNode, closeSocket?:boolean):HydraNode;
 }
 
 export = ConnectionManagerInterface;

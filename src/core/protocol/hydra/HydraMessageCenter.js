@@ -25,7 +25,7 @@ var events = require('events');
 */
 var HydraMessageCenter = (function (_super) {
     __extends(HydraMessageCenter, _super);
-    function HydraMessageCenter(connectionManager, readableHydraMessageFactory, readableCellCreatedRejectedFactory, readableAdditiveSharingFactory, readableCreateCellAdditiveFactory, writableCreateCellAdditiveFactory, writableAdditiveSharingFactory, writableHydraMessageFactory) {
+    function HydraMessageCenter(connectionManager, readableHydraMessageFactory, readableCellCreatedRejectedFactory, readableAdditiveSharingFactory, readableCreateCellAdditiveFactory, writableCreateCellAdditiveFactory, writableAdditiveSharingFactory, writableHydraMessageFactory, writableCellCreatedRejectedFactory) {
         _super.call(this);
         /**
         * @member {core.protocol.hydra.ConnectionManagerInterface} core.protocol.hydra.HydraMessageCenterInterface~_connectionManager
@@ -56,6 +56,10 @@ var HydraMessageCenter = (function (_super) {
         */
         this._writableCreateCellAdditiveFactory = null;
         /**
+        * @member {core.protocol.hydra.WritableCellCreatedRejectedMessageFactoryInterface} core.protocol.hydra.HydraMessageCenterInterface~_writableCellCreatedRejectedFactory
+        */
+        this._writableCellCreatedRejectedFactory = null;
+        /**
         * @member {core.protocol.hydra.WritableHydraMessageFactoryInterface} core.protocol.hydra.HydraMessageCenterInterface~_writableHydraMessageFactory
         */
         this._writableHydraMessageFactory = null;
@@ -68,6 +72,7 @@ var HydraMessageCenter = (function (_super) {
         this._writableCreateCellAdditiveFactory = writableCreateCellAdditiveFactory;
         this._writableAdditiveSharingFactory = writableAdditiveSharingFactory;
         this._writableHydraMessageFactory = writableHydraMessageFactory;
+        this._writableCellCreatedRejectedFactory = writableCellCreatedRejectedFactory;
 
         this._setupListeners();
     }
@@ -105,6 +110,19 @@ var HydraMessageCenter = (function (_super) {
         }
     };
 
+    HydraMessageCenter.prototype.sendCellCreatedRejectedMessage = function (to, uuid, secretHash, dhPayload) {
+        var msg = null;
+
+        try  {
+            msg = this._writableCellCreatedRejectedFactory.constructMessage(uuid, secretHash, dhPayload);
+        } catch (e) {
+        }
+
+        if (msg) {
+            this._connectionManager.pipeCircuitMessageTo(to, 'CELL_CREATED_REJECTED', msg);
+        }
+    };
+
     HydraMessageCenter.prototype.spitoutRelayCreateCellMessage = function (encDecHandler, targetIp, targetPort, uuid, additivePayload) {
         var _this = this;
         var payload = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
@@ -129,11 +147,11 @@ var HydraMessageCenter = (function (_super) {
     * @method core.protocol.hydra.HydraMessageCenter~_emitMessage
     *
     * @param {core.protocol.hydra.ReadableHydraMessageInterface} message The message to 'unwrap' and emit.
-    * @param {core.protocol.hydra.HydraNode} node The originating node of the message.
+    * @param {any} nodeOrIdentifier The originating hydra node or the socket identifier the message came through.
     * @param {any} msgFactory Optional. Expects any readable message factory. If this is provided, the payload of the message is unwrapped by the message factory.
     * @param {string} eventAppendix Optional. A string which gets appended to the event name, if present.
     */
-    HydraMessageCenter.prototype._emitMessage = function (message, node, msgFactory, eventAppendix) {
+    HydraMessageCenter.prototype._emitMessage = function (message, nodeOrIdentifier, msgFactory, eventAppendix) {
         var msg = null;
 
         if (msgFactory) {
@@ -146,7 +164,7 @@ var HydraMessageCenter = (function (_super) {
         }
 
         if (msg) {
-            this.emit(message.getMessageType() + (eventAppendix ? '_' + eventAppendix : ''), node, msg);
+            this.emit(message.getMessageType() + (eventAppendix ? '_' + eventAppendix : ''), nodeOrIdentifier, msg);
         }
     };
 

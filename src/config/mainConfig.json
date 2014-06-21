@@ -47,25 +47,27 @@
             "republishInSeconds"      : 3600
         }
     },
-    "hydra"   : {
-        "keepMessageInPipelineForSeconds": 4,
-        "waitForReconnectInSeconds"      : 4.5,
-        "retryConnectionMax"             : 2,
-        "additiveSharingNodeAmount"      : 4,
-        "nodePicker"                     : {
-            "allowIdenticalIps"   : false,
-            "roundThreshold"      : 2,
+    "hydra": {
+        "desiredNumberOfCircuits": 4,
+        "maximumNumberOfMaintainedCells": 3,
+        "minimumNumberOfRelayNodes": 3,
+        "maximumNumberOfRelayNodes": 5,
+        "additiveSharingNodeAmount": 4,
+        "waitForAdditiveBatchFinishInSeconds": 3,
+        "nodePicker": {
+            "allowIdenticalIps": false,
+            "roundThreshold": 2,
             "waitingTimeInSeconds": 3,
-            "errorThreshold"      : 5
+            "errorThreshold": 5
         },
-        "circuit"                        : {
+        "circuit": {
             "extensionReactionTimeBaseInSeconds": 3,
-            "extensionReactionTimeFactor"       : 1.2,
-            "maximumExtensionRetries"           : 3
+            "extensionReactionTimeFactor": 1.2,
+            "maximumExtensionRetries": 3
         }
     },
     "plugin"  : {
-        "folderPath"              : "plugins",
+        "folderPath"              : "plugin",
         "pluginConfigName"        : "plugin.json",
         "pluginManagerStateConfig": "pluginManager.json",
         "binaryPath"              : "core/plugin/pluginRunner/node",
@@ -99,12 +101,12 @@
     "ui"      : {
         "UiManager": {
             "staticServer": {
-                "port"      : 7474,
+                "port": 7474,
                 "publicPath": "public"
             },
             "socketServer": {
-                "parser"     : "JSON",
-                "port"       : 8080,
+                "parser": "JSON",
+                "port": 8080,
                 "transformer": "websockets"
             }
         }

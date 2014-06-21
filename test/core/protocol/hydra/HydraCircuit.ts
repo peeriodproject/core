@@ -27,7 +27,7 @@ import LayeredEncDecHandler = require('../../../../src/core/protocol/hydra/messa
 
 import LayeredEncDecHandlerFactory = require('../../../../src/core/protocol/hydra/messages/Aes128GcmLayeredEncDecHandlerFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraCircuit @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraCircuit', function () {
 
 	var sandbox:SinonSandbox = null;
 

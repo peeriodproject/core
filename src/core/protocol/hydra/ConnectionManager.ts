@@ -74,13 +74,17 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 	 * END TESTING PURPOSES ONLY
 	 */
 
-	public addToCircuitNodes (socketIdentifier:string, node:HydraNode) {
+	public addToCircuitNodes (socketIdentifier:string, node:HydraNode):void {
 		node.socketIdentifier = socketIdentifier;
 		this._circuitNodes[socketIdentifier] = node;
 		this._protocolConnectionManager.keepHydraSocketOpen(socketIdentifier);
+
+		if (!node.ip) {
+			node.ip = this._protocolConnectionManager.getHydraSocketIp(socketIdentifier);
+		}
 	}
 
-	public pipeCircuitMessageTo (node:HydraNode, messageType:string, payload:Buffer, skipCircIdOnConstruction?:boolean) {
+	public pipeCircuitMessageTo (node:HydraNode, messageType:string, payload:Buffer, skipCircIdOnConstruction?:boolean):void {
 		var sendableBuffer:Buffer = null;
 		var circuitId:string = node.circuitId;
 
@@ -91,7 +95,7 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 			return;
 		}
 
-		if (!node.socketIdentifier) {
+		if (!node.socketIdentifier && node.port && node.ip) {
 			if (!this._circuitPipeline[circuitId]) {
 				this._circuitPipeline[circuitId] = [];
 
@@ -118,7 +122,7 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 		}
 	}
 
-	public pipeMessageTo (node:HydraNode, messageType:string, payload:Buffer) {
+	public pipeMessageTo (node:HydraNode, messageType:string, payload:Buffer):void {
 		var sendableBuffer:Buffer = null;
 
 		try {
@@ -135,8 +139,8 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 		});
 	}
 
-	public removeFromCircuitNodes (node:HydraNode):HydraNode {
-		return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier);
+	public removeFromCircuitNodes (node:HydraNode, closeSocket:boolean = true):HydraNode {
+		return this._removeFromCircuitNodesByIdentifier(node.socketIdentifier, closeSocket);
 	}
 
 	/**
@@ -145,15 +149,22 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 	 * @method core.protocol.hydra.ConnectionManager~_removeFromCircuitNodesByIdentifier
 	 *
 	 * @param {string} identifier Socket identifier.
+	 * @parma {boolean} Indicates if the underlying TCP socket should also be ended.
 	 * @returns {core.protocol.hydra.HydraNode} node The removed node. `undefined` if the node was not present.
 	 */
-	private _removeFromCircuitNodesByIdentifier (identifier:string):HydraNode {
+	private _removeFromCircuitNodesByIdentifier (identifier:string, closeSocket:boolean):HydraNode {
 
 		if (identifier) {
 			var circNode:HydraNode = this._circuitNodes[identifier];
 
 			if (circNode) {
-				this._protocolConnectionManager.closeHydraSocket(identifier);
+				if (closeSocket) {
+					this._protocolConnectionManager.closeHydraSocket(identifier);
+				}
+				else {
+					this._protocolConnectionManager.keepHydraSocketNoLongerOpen(identifier);
+				}
+
 				delete this._circuitNodes[identifier];
 
 				return circNode;
@@ -171,7 +182,7 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 	private _setupListeners ():void {
 
 		this._protocolConnectionManager.on('terminatedConnection', (identifier:string) => {
-			var circuitNode:HydraNode = this._removeFromCircuitNodesByIdentifier(identifier);
+			var circuitNode:HydraNode = this._removeFromCircuitNodesByIdentifier(identifier, false);
 
 			if (circuitNode) {
 				this.emit('circuitTermination', circuitNode.circuitId);
