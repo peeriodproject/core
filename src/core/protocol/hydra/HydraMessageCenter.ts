@@ -16,6 +16,7 @@ import WritableAdditiveSharingMessageFactoryInterface = require('./messages/inte
 import LayeredEncDecHandlerInterface = require('./messages/interfaces/LayeredEncDecHandlerInterface');
 import WritableHydraMessageFactoryInterface = require('./messages/interfaces/WritableHydraMessageFactoryInterface');
 import ReadableHydraMessageFactoryInterface = require('./messages/interfaces/ReadableHydraMessageFactoryInterface');
+import WritableCellCreatedRejectedMessageFactoryInterface = require('./messages/interfaces/WritableCellCreatedRejectedMessageFactoryInterface');
 
 /**
  * HydraMessageCenterInterface implementation
@@ -72,11 +73,16 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 	_writableCreateCellAdditiveFactory:WritableCreateCellAdditiveMessageFactoryInterface = null;
 
 	/**
+	 * @member {core.protocol.hydra.WritableCellCreatedRejectedMessageFactoryInterface} core.protocol.hydra.HydraMessageCenterInterface~_writableCellCreatedRejectedFactory
+	 */
+	_writableCellCreatedRejectedFactory:WritableCellCreatedRejectedMessageFactoryInterface = null;
+
+	/**
 	 * @member {core.protocol.hydra.WritableHydraMessageFactoryInterface} core.protocol.hydra.HydraMessageCenterInterface~_writableHydraMessageFactory
 	 */
 	_writableHydraMessageFactory:WritableHydraMessageFactoryInterface = null;
 
-	public constructor (connectionManager:ConnectionManagerInterface, readableHydraMessageFactory: ReadableHydraMessageFactoryInterface, readableCellCreatedRejectedFactory:ReadableCellCreatedRejectedMessageFactoryInterface, readableAdditiveSharingFactory:ReadableAdditiveSharingMessageFactoryInterface, readableCreateCellAdditiveFactory:ReadableCreateCellAdditiveMessageFactoryInterface, writableCreateCellAdditiveFactory:WritableCreateCellAdditiveMessageFactoryInterface, writableAdditiveSharingFactory:WritableAdditiveSharingMessageFactoryInterface, writableHydraMessageFactory:WritableHydraMessageFactoryInterface) {
+	public constructor (connectionManager:ConnectionManagerInterface, readableHydraMessageFactory: ReadableHydraMessageFactoryInterface, readableCellCreatedRejectedFactory:ReadableCellCreatedRejectedMessageFactoryInterface, readableAdditiveSharingFactory:ReadableAdditiveSharingMessageFactoryInterface, readableCreateCellAdditiveFactory:ReadableCreateCellAdditiveMessageFactoryInterface, writableCreateCellAdditiveFactory:WritableCreateCellAdditiveMessageFactoryInterface, writableAdditiveSharingFactory:WritableAdditiveSharingMessageFactoryInterface, writableHydraMessageFactory:WritableHydraMessageFactoryInterface, writableCellCreatedRejectedFactory:WritableCellCreatedRejectedMessageFactoryInterface) {
 		super();
 
 		this._connectionManager = connectionManager;
@@ -87,6 +93,7 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		this._writableCreateCellAdditiveFactory = writableCreateCellAdditiveFactory;
 		this._writableAdditiveSharingFactory = writableAdditiveSharingFactory;
 		this._writableHydraMessageFactory = writableHydraMessageFactory;
+		this._writableCellCreatedRejectedFactory = writableCellCreatedRejectedFactory;
 
 		this._setupListeners();
 	}
@@ -128,6 +135,20 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		}
 	}
 
+	public sendCellCreatedRejectedMessage (to:HydraNode, uuid:string, secretHash?:Buffer, dhPayload?:Buffer):void {
+		var msg:Buffer = null;
+
+		try {
+			msg = this._writableCellCreatedRejectedFactory.constructMessage(uuid, secretHash, dhPayload);
+		}
+		catch (e) {
+		}
+
+		if (msg) {
+			this._connectionManager.pipeCircuitMessageTo(to, 'CELL_CREATED_REJECTED', msg);
+		}
+	}
+
 	public spitoutRelayCreateCellMessage (encDecHandler:LayeredEncDecHandlerInterface, targetIp:string, targetPort:number, uuid:string, additivePayload:Buffer):void {
 		var payload:Buffer = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
 
@@ -151,11 +172,11 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 	 * @method core.protocol.hydra.HydraMessageCenter~_emitMessage
 	 *
 	 * @param {core.protocol.hydra.ReadableHydraMessageInterface} message The message to 'unwrap' and emit.
-	 * @param {core.protocol.hydra.HydraNode} node The originating node of the message.
+	 * @param {any} nodeOrIdentifier The originating hydra node or the socket identifier the message came through.
 	 * @param {any} msgFactory Optional. Expects any readable message factory. If this is provided, the payload of the message is unwrapped by the message factory.
 	 * @param {string} eventAppendix Optional. A string which gets appended to the event name, if present.
 	 */
-	private _emitMessage (message:ReadableHydraMessageInterface, node:HydraNode, msgFactory?:any, eventAppendix?:string) {
+	private _emitMessage (message:ReadableHydraMessageInterface, nodeOrIdentifier:any, msgFactory?:any, eventAppendix?:string) {
 		var msg:any = null;
 
 		if (msgFactory) {
@@ -170,7 +191,7 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		}
 
 		if (msg) {
-			this.emit(message.getMessageType() + (eventAppendix ? '_' + eventAppendix : ''), node, msg);
+			this.emit(message.getMessageType() + (eventAppendix ? '_' + eventAppendix : ''), nodeOrIdentifier, msg);
 		}
 	}
 

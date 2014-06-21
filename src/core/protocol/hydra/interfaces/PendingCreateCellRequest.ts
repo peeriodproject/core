@@ -36,6 +36,11 @@ interface PendingCreateCellRequest {
 	 * The timeout indicating how long this object will live and wait for its completion, before being removed.
 	 */
 	timeout:number;
+
+	/**
+	 * Listener on the termination of a circuit. The listener is removed as soon as a Cell could be created / rejected / timed out.
+	 */
+	terminationListener?:Function;
 }
 
 export = PendingCreateCellRequest;

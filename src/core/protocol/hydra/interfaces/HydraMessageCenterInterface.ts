@@ -43,6 +43,17 @@ interface HydraMessageCenterInterface extends NodeJS.EventEmitter {
 	sendCreateCellAdditiveMessageAsInitiator (to:HydraNode, circuitId:string, uuid:string, additivePayload:Buffer):void;
 
 	/**
+	 * Constructs a CELL_CREATED_REJECTED messahe with the given params and sends it to the given hydra node.
+	 * The hydra node SHOULD already have a socket identifier assigned and MUST have a circuit id assigned.
+	 *
+	 * @param {core.protocol.hydra.HydraNode} to The node to send the message to
+	 * @param {string} uuid The UUID of the additive sharing scheme assigned to this CREATE_CELL_ADDITIVE request.
+	 * @param {Buffer} secretHash Optional. SHA-1 hash of the shared secret. This must only be present when accepting the request.
+	 * @parma {Buffer} dhPayload Optional. The other half of the DH key exchange. This must only be present when accepting the request.
+	 */
+	sendCellCreatedRejectedMessage (to:HydraNode, uuid:string, secretHash?:Buffer, dhPayload?:Buffer):void;
+
+	/**
 	 * Sends a ENCRYPTED_SPITOUT message to the first node of a layered encryption/decryption handler.
 	 * The payload of the message is a RELAY_CREATE_CELL message (pseudomessage of ADDITIVE_SHARING)
 	 *

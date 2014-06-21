@@ -53,6 +53,7 @@
         "minimumNumberOfRelayNodes": 3,
         "maximumNumberOfRelayNodes": 5,
         "additiveSharingNodeAmount": 4,
+        "waitForAdditiveBatchFinishInSeconds": 3,
         "nodePicker": {
             "allowIdenticalIps": false,
             "roundThreshold": 2,

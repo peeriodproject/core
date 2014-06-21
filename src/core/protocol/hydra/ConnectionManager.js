@@ -66,6 +66,10 @@ var ConnectionManager = (function (_super) {
         node.socketIdentifier = socketIdentifier;
         this._circuitNodes[socketIdentifier] = node;
         this._protocolConnectionManager.keepHydraSocketOpen(socketIdentifier);
+
+        if (!node.ip) {
+            node.ip = this._protocolConnectionManager.getHydraSocketIp(socketIdentifier);
+        }
     };
 
     ConnectionManager.prototype.pipeCircuitMessageTo = function (node, messageType, payload, skipCircIdOnConstruction) {
@@ -79,7 +83,7 @@ var ConnectionManager = (function (_super) {
             return;
         }
 
-        if (!node.socketIdentifier) {
+        if (!node.socketIdentifier && node.port && node.ip) {
             if (!this._circuitPipeline[circuitId]) {
                 this._circuitPipeline[circuitId] = [];
 

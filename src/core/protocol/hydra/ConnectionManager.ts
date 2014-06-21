@@ -74,13 +74,17 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 	 * END TESTING PURPOSES ONLY
 	 */
 
-	public addToCircuitNodes (socketIdentifier:string, node:HydraNode) {
+	public addToCircuitNodes (socketIdentifier:string, node:HydraNode):void {
 		node.socketIdentifier = socketIdentifier;
 		this._circuitNodes[socketIdentifier] = node;
 		this._protocolConnectionManager.keepHydraSocketOpen(socketIdentifier);
+
+		if (!node.ip) {
+			node.ip = this._protocolConnectionManager.getHydraSocketIp(socketIdentifier);
+		}
 	}
 
-	public pipeCircuitMessageTo (node:HydraNode, messageType:string, payload:Buffer, skipCircIdOnConstruction?:boolean) {
+	public pipeCircuitMessageTo (node:HydraNode, messageType:string, payload:Buffer, skipCircIdOnConstruction?:boolean):void {
 		var sendableBuffer:Buffer = null;
 		var circuitId:string = node.circuitId;
 
@@ -91,7 +95,7 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 			return;
 		}
 
-		if (!node.socketIdentifier) {
+		if (!node.socketIdentifier && node.port && node.ip) {
 			if (!this._circuitPipeline[circuitId]) {
 				this._circuitPipeline[circuitId] = [];
 
@@ -118,7 +122,7 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 		}
 	}
 
-	public pipeMessageTo (node:HydraNode, messageType:string, payload:Buffer) {
+	public pipeMessageTo (node:HydraNode, messageType:string, payload:Buffer):void {
 		var sendableBuffer:Buffer = null;
 
 		try {
