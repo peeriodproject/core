@@ -65,9 +65,9 @@ var CellManager = (function (_super) {
         /**
         * The list of CREATE_CELL_ADDITIVE requests which do not have a complete batch of messages yet.
         *
-        * @member {Array<core.protocol.hydra.PendingCreateCellRequest>} core.protocol.hydra.CellManager~_pendingRequests
+        * @member {Object} core.protocol.hydra.CellManager~_pendingRequests
         */
-        this._pendingRequests = [];
+        this._pendingRequests = {};
         /**
         * Number of milliseconds to wait for the completion of an additive batch until the messages are discarded.
         *
@@ -84,6 +84,20 @@ var CellManager = (function (_super) {
 
         this._setupListeners();
     }
+    /**
+    * BEGIN TESTING PURPOSES
+    */
+    CellManager.prototype.getPending = function () {
+        return this._pendingRequests;
+    };
+
+    CellManager.prototype.getCells = function () {
+        return this._maintainedCells;
+    };
+
+    /**
+    * END TESTING PURPOSES
+    */
     /**
     * Accepts a CREATE_CELL_ADDITIVE request.
     * Computes the secrets, adds the keys, and finally pipes out the CELL_CREATED_REJECTED message.
@@ -112,7 +126,7 @@ var CellManager = (function (_super) {
         initiatorNode.incomingKey = incomingKey;
         initiatorNode.outgoingKey = outgoingKey;
 
-        // @todo here we have to create the HydraCell (in the HydraCell, hook the temrination listener AT ONCE)
+        // @todo here we have to create the HydraCell (in the HydraCell, hook the termination listener AT ONCE)
         this._messageCenter.sendCellCreatedRejectedMessage(initiatorNode, pending.uuid, sha1, dhPublicKey);
 
         var cell = this._cellFactory.create(initiatorNode);
@@ -216,6 +230,7 @@ var CellManager = (function (_super) {
                 additivePayloads: [],
                 timeout: global.setTimeout(function (uuid) {
                     _this._onPendingRequestTimeout(uuid);
+                    _this.emit('timeout'); // testing only
                 }, this._waitForAdditiveBatchFinishInMs, uuid)
             };
         }
@@ -230,6 +245,7 @@ var CellManager = (function (_super) {
 
             this._connectionManager.addToCircuitNodes(socketIdentifier, initiatorNode);
 
+            pending.circuitId = circuitId;
             pending.initiator = initiatorNode;
             pending.terminationListener = function (terminatedCircId) {
                 if (terminatedCircId === circuitId) {
