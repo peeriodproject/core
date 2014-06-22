@@ -85,7 +85,7 @@ var HydraMessageCenter = (function (_super) {
         }
 
         if (msg) {
-            this._onCircuitMessage(msg, from);
+            this._onCircuitMessage(msg, from, true);
         }
     };
 
@@ -150,8 +150,9 @@ var HydraMessageCenter = (function (_super) {
     * @param {any} nodeOrIdentifier The originating hydra node or the socket identifier the message came through.
     * @param {any} msgFactory Optional. Expects any readable message factory. If this is provided, the payload of the message is unwrapped by the message factory.
     * @param {string} eventAppendix Optional. A string which gets appended to the event name, if present.
+    * @param {boolean} decrypted Optional. Indicates whether this message is the decryption of an encrypted message.
     */
-    HydraMessageCenter.prototype._emitMessage = function (message, nodeOrIdentifier, msgFactory, eventAppendix) {
+    HydraMessageCenter.prototype._emitMessage = function (message, nodeOrIdentifier, msgFactory, eventAppendix, decrypted) {
         var msg = null;
 
         if (msgFactory) {
@@ -164,7 +165,7 @@ var HydraMessageCenter = (function (_super) {
         }
 
         if (msg) {
-            this.emit(message.getMessageType() + (eventAppendix ? '_' + eventAppendix : ''), nodeOrIdentifier, msg);
+            this.emit(message.getMessageType() + (eventAppendix ? '_' + eventAppendix : ''), nodeOrIdentifier, msg, decrypted);
         }
     };
 
@@ -198,14 +199,15 @@ var HydraMessageCenter = (function (_super) {
     *
     * @param {core.protocol.hydra.ReadableHydraMessageInterface} message The message to handle.
     * @param {core.protocol.hydra.HydraNode} circuitNode The node this message originates from.
+    * @param {boolean} decrypted Optional. Indicates whether this message is the decryption of an encrypted message.
     */
-    HydraMessageCenter.prototype._onCircuitMessage = function (message, circuitNode) {
+    HydraMessageCenter.prototype._onCircuitMessage = function (message, circuitNode, decrypted) {
         var circuitId = circuitNode.circuitId;
 
         if (message.getMessageType() === 'CELL_CREATED_REJECTED') {
-            this._emitMessage(message, circuitNode, this._readableCellCreatedRejectedFactory, circuitId);
+            this._emitMessage(message, circuitNode, this._readableCellCreatedRejectedFactory, circuitId, decrypted);
         } else if (message.getMessageType() === 'ENCRYPTED_SPITOUT' || message.getMessageType() === 'ENCRYPTED_DIGEST') {
-            this._emitMessage(message, circuitNode, null, circuitId);
+            this._emitMessage(message, circuitNode, null, circuitId, decrypted);
         }
     };
 

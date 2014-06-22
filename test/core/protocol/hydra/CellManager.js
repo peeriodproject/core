@@ -17,7 +17,7 @@ var ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 var WritableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory');
 var ReadableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/ReadableCreateCellAdditiveMessageFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> CellManager @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> CellManager', function () {
     var cellManager = null;
 
     var sandbox = null;

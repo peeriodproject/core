@@ -22,7 +22,7 @@ import ReadableCreateCellAdditiveMessageFactory = require('../../../../src/core/
 
 import ReadableCellCreatedRejectedMessageFactory = require('../../../../src/core/protocol/hydra/messages/ReadableCellCreatedRejectedMessageFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> CellManager @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> CellManager', function () {
 
 	var cellManager:CellManager = null;
 

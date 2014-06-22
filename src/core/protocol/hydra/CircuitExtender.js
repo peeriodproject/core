@@ -154,8 +154,8 @@ var CircuitExtender = (function () {
             this._expectReactionFrom = nodeToExtendWith;
             this._expectReactionFrom.circuitId = this._circuitId;
 
-            this._eventListener = function (from, message) {
-                _this._onReaction(from, message);
+            this._eventListener = function (from, message, decrypted) {
+                _this._onReaction(from, message, decrypted);
             };
 
             this._circuitTerminationListener = function (circuitId) {
@@ -283,8 +283,8 @@ var CircuitExtender = (function () {
     * @param {string} fromIp The IP address the reaction message originates from.
     * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} message The reaction message.
     */
-    CircuitExtender.prototype._onReaction = function (from, message) {
-        if (this._expectReactionFrom === from) {
+    CircuitExtender.prototype._onReaction = function (from, message, decrypted) {
+        if (this._expectReactionFrom === from && (!this._nodes.length || decrypted)) {
             this._clearReactionTimeout();
 
             if (message.getUUID() !== this._currentUUID) {

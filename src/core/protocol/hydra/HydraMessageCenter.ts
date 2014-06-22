@@ -109,7 +109,7 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		}
 
 		if (msg) {
-			this._onCircuitMessage(msg, from);
+			this._onCircuitMessage(msg, from, true);
 		}
 	}
 
@@ -175,8 +175,9 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 	 * @param {any} nodeOrIdentifier The originating hydra node or the socket identifier the message came through.
 	 * @param {any} msgFactory Optional. Expects any readable message factory. If this is provided, the payload of the message is unwrapped by the message factory.
 	 * @param {string} eventAppendix Optional. A string which gets appended to the event name, if present.
+	 * @param {boolean} decrypted Optional. Indicates whether this message is the decryption of an encrypted message.
 	 */
-	private _emitMessage (message:ReadableHydraMessageInterface, nodeOrIdentifier:any, msgFactory?:any, eventAppendix?:string) {
+	private _emitMessage (message:ReadableHydraMessageInterface, nodeOrIdentifier:any, msgFactory?:any, eventAppendix?:string, decrypted?:boolean) {
 		var msg:any = null;
 
 		if (msgFactory) {
@@ -191,7 +192,7 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		}
 
 		if (msg) {
-			this.emit(message.getMessageType() + (eventAppendix ? '_' + eventAppendix : ''), nodeOrIdentifier, msg);
+			this.emit(message.getMessageType() + (eventAppendix ? '_' + eventAppendix : ''), nodeOrIdentifier, msg, decrypted);
 		}
 	}
 
@@ -226,15 +227,16 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 	 *
 	 * @param {core.protocol.hydra.ReadableHydraMessageInterface} message The message to handle.
 	 * @param {core.protocol.hydra.HydraNode} circuitNode The node this message originates from.
+	 * @param {boolean} decrypted Optional. Indicates whether this message is the decryption of an encrypted message.
 	 */
-	private _onCircuitMessage (message:ReadableHydraMessageInterface, circuitNode:HydraNode):void {
+	private _onCircuitMessage (message:ReadableHydraMessageInterface, circuitNode:HydraNode, decrypted?:boolean):void {
 		var circuitId:string = circuitNode.circuitId;
 
 		if (message.getMessageType() === 'CELL_CREATED_REJECTED') {
-			this._emitMessage(message, circuitNode, this._readableCellCreatedRejectedFactory, circuitId);
+			this._emitMessage(message, circuitNode, this._readableCellCreatedRejectedFactory, circuitId, decrypted);
 		}
 		else if (message.getMessageType() === 'ENCRYPTED_SPITOUT' || message.getMessageType() === 'ENCRYPTED_DIGEST') {
-			this._emitMessage(message, circuitNode, null, circuitId);
+			this._emitMessage(message, circuitNode, null, circuitId, decrypted);
 		}
 	}
 

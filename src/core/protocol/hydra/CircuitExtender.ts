@@ -180,8 +180,8 @@ class CircuitExtender implements CircuitExtenderInterface {
 			this._expectReactionFrom = nodeToExtendWith;
 			this._expectReactionFrom.circuitId = this._circuitId;
 
-			this._eventListener = (from:HydraNode, message:ReadableCellCreatedRejectedMessageInterface) => {
-				this._onReaction(from, message);
+			this._eventListener = (from:HydraNode, message:ReadableCellCreatedRejectedMessageInterface, decrypted:boolean) => {
+				this._onReaction(from, message, decrypted);
 			};
 
 			this._circuitTerminationListener = (circuitId:string) => {
@@ -313,9 +313,9 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 * @param {string} fromIp The IP address the reaction message originates from.
 	 * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} message The reaction message.
 	 */
-	private _onReaction (from:HydraNode, message:ReadableCellCreatedRejectedMessageInterface):void {
+	private _onReaction (from:HydraNode, message:ReadableCellCreatedRejectedMessageInterface, decrypted:boolean):void {
 
-		if (this._expectReactionFrom === from) {
+		if (this._expectReactionFrom === from && (!this._nodes.length || decrypted)) {
 
 			this._clearReactionTimeout();
 

@@ -30,7 +30,7 @@ import WritableAdditiveSharingMessageFactory = require('../../../../src/core/pro
 import WritableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory');
 import LayeredEncDecHandler = require('../../../../src/core/protocol/hydra/messages/Aes128GcmLayeredEncDecHandler');
 
-describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration)', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration) @current', function () {
 
 	this.timeout(0);
 
@@ -59,14 +59,27 @@ describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration)', func
 	var writableHydraMessageFactory:WritableHydraMessageFactory = new WritableHydraMessageFactory();
 	var readablyHydraMessageFactory:ReadableHydraMessageFactory = new ReadableHydraMessageFactory();
 
-	var emitHydraMessage:Function = function (type:string, identifier:string, messagePayload:Buffer, circuitId?:string) {
+	var emitHydraMessage:Function = function (type:string, identifier:string, messagePayload:Buffer, circuitId?:string, decrypted?:boolean) {
+
 		var msgPayload = writableHydraMessageFactory.constructMessage(type, messagePayload, messagePayload.length, circuitId);
-		var msg:any = testUtils.stubPublicApi(sandbox, ReadableMessage, {
-			getPayload: function () {
-				return msgPayload;
+
+		if (decrypted) {
+
+			var from = connectionManager.getCircuitNodes()[identifier];
+
+			if (from) {
+				messageCenter.forceCircuitMessageThrough(msgPayload, from);
 			}
-		});
-		messageCallback(identifier, null, msg);
+		}
+		else {
+			var msg:any = testUtils.stubPublicApi(sandbox, ReadableMessage, {
+				getPayload: function () {
+					return msgPayload;
+				}
+			});
+
+			messageCallback(identifier, null, msg, decrypted);
+		}
 	}
 
 	var connectionError:Error = null;
@@ -280,7 +293,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration)', func
 
 					messageListener.removeAllListeners('message');
 
-					emitHydraMessage('CELL_CREATED_REJECTED', theSocketIdentifier, (new WritableCellCreatedRejectedMessageFactory()).constructMessage(uuid), layeredEncDec.getNodes()[0].circuitId);
+					emitHydraMessage('CELL_CREATED_REJECTED', theSocketIdentifier, (new WritableCellCreatedRejectedMessageFactory()).constructMessage(uuid), layeredEncDec.getNodes()[0].circuitId, true);
 				});
 
 			}
@@ -339,7 +352,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration)', func
 
 				messageListener.removeAllListeners('message');
 
-				emitHydraMessage('CELL_CREATED_REJECTED', theSocketIdentifier, (new WritableCellCreatedRejectedMessageFactory()).constructMessage(uuid, secretHash, dhGroup.getPublicKey()), circuitExtender.getCircuitId());
+				emitHydraMessage('CELL_CREATED_REJECTED', theSocketIdentifier, (new WritableCellCreatedRejectedMessageFactory()).constructMessage(uuid, secretHash, dhGroup.getPublicKey()), circuitExtender.getCircuitId(), true);
 			}
 		}
 
@@ -421,7 +434,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration)', func
 					var msg = (new ReadableCreateCellAdditiveMessageFactory()).create((new ReadableAdditiveSharingMessageFactory()).create(readablyHydraMessageFactory.create(decryptedBuf).getPayload()).getPayload());
 					var uuid = msg.getUUID();
 
-					emitHydraMessage('CELL_CREATED_REJECTED', theSocketIdentifier, (new WritableCellCreatedRejectedMessageFactory()).constructMessage(uuid), circuitExtender.getCircuitId());
+					emitHydraMessage('CELL_CREATED_REJECTED', theSocketIdentifier, (new WritableCellCreatedRejectedMessageFactory()).constructMessage(uuid), circuitExtender.getCircuitId(), true);
 				});
 
 			}
