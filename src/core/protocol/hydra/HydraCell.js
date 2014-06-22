@@ -19,6 +19,7 @@ var HydraCell = (function (_super) {
         this._terminationListener = null;
         this._spitoutListener = null;
         this._digestListener = null;
+        this._extensionListener = null;
 
         this._predecessor = predecessorNode;
         this._connectionManager = connectionManager;
@@ -40,14 +41,27 @@ var HydraCell = (function (_super) {
             }
         };
 
+        this._extensionListener = function (from, msg, decrypted) {
+            if (from === _this._predecessor) {
+                if (decrypted && !_this._successor) {
+                    // extend cell
+                    // @todo
+                } else {
+                    _this._teardown(true, true);
+                }
+            }
+        };
+
         this._connectionManager.on('circuitTermination', this._terminationListener);
         this._messageCenter.on('ENCRYPTED_SPITOUT_' + this._predecessor.circuitId, this._spitoutListener);
+        this._messageCenter.on('ADDITIVE_SHARING_' + this._predecessor.circuitId, this._extensionListener);
     };
 
     HydraCell.prototype._removeListeners = function () {
         this._connectionManager.removeListener('circuitTermination', this._terminationListener);
 
         this._messageCenter.removeListener('ENCRYPTED_SPITOUT_' + this._predecessor.circuitId, this._spitoutListener);
+        this._messageCenter.removeListener('ADDITIVE_SHARING_' + this._predecessor.circuitId, this._extensionListener);
 
         if (this._digestListener) {
             this._messageCenter.removeListener('ENCRYPTED_DIGEST_' + this._successor.circuitId, this._digestListener);

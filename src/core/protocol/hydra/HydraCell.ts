@@ -5,6 +5,7 @@ import HydraMessageCenterInterface = require('./interfaces/HydraMessageCenterInt
 import HydraNode = require('./interfaces/HydraNode');
 import ConnectionManagerInterface = require('./interfaces/ConnectionManagerInterface');
 import ReadableDecryptedMessageInterface = require('./messages/interfaces/ReadableDecryptedMessageInterface');
+import ReadableAdditiveSharingMessageInterface = require('./messages/interfaces/ReadableAdditiveSharingMessageInterface');
 import ReadableDecryptedMessageFactoryInterface = require('./messages/interfaces/ReadableDecryptedMessageFactoryInterface');
 import WritableEncryptedMessageFactoryInterface = require('./messages/interfaces/WritableEncryptedMessageFactoryInterface');
 import ReadableHydraMessageInterface = require('./messages/interfaces/ReadableHydraMessageInterface');
@@ -23,6 +24,7 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 	private _terminationListener:Function = null;
 	private _spitoutListener:Function = null;
 	private _digestListener:Function = null;
+	private _extensionListener:Function = null;
 
 	public constructor (predecessorNode:HydraNode, connectionManager:ConnectionManagerInterface, messageCenter:HydraMessageCenterInterface, decryptionFactory:ReadableDecryptedMessageFactoryInterface, encryptionFactory:WritableEncryptedMessageFactoryInterface) {
 		super();
@@ -47,18 +49,33 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 			}
 		};
 
+		this._extensionListener = (from:HydraNode, msg:ReadableAdditiveSharingMessageInterface, decrypted:boolean) => {
+			if (from === this._predecessor) {
+				if (decrypted && !this._successor) {
+					// extend cell
+					// @todo
+				}
+				else {
+					this._teardown(true, true);
+				}
+			}
+		};
+
 		this._connectionManager.on('circuitTermination', this._terminationListener);
 		this._messageCenter.on('ENCRYPTED_SPITOUT_' + this._predecessor.circuitId, this._spitoutListener);
+		this._messageCenter.on('ADDITIVE_SHARING_' + this._predecessor.circuitId, this._extensionListener);
 	}
 
 	private _removeListeners ():void {
 		this._connectionManager.removeListener('circuitTermination', this._terminationListener);
 
 		this._messageCenter.removeListener('ENCRYPTED_SPITOUT_' + this._predecessor.circuitId, this._spitoutListener);
+		this._messageCenter.removeListener('ADDITIVE_SHARING_' + this._predecessor.circuitId, this._extensionListener);
 
 		if (this._digestListener) {
 			this._messageCenter.removeListener('ENCRYPTED_DIGEST_' + this._successor.circuitId, this._digestListener);
 		}
+
 	}
 
 	private _onSpitoutMessage (message:ReadableHydraMessageInterface) {

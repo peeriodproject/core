@@ -235,6 +235,9 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		if (message.getMessageType() === 'CELL_CREATED_REJECTED') {
 			this._emitMessage(message, circuitNode, this._readableCellCreatedRejectedFactory, circuitId, decrypted);
 		}
+		else if (message.getMessageType() === 'ADDITIVE_SHARING') {
+			this._emitMessage(message, circuitNode, this._readableAdditiveSharingFactory, circuitId, decrypted);
+		}
 		else if (message.getMessageType() === 'ENCRYPTED_SPITOUT' || message.getMessageType() === 'ENCRYPTED_DIGEST') {
 			this._emitMessage(message, circuitNode, null, circuitId, decrypted);
 		}
@@ -263,8 +266,6 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 			}
 		}
 		else if (message.getMessageType() === 'CREATE_CELL_ADDITIVE') {
-
-			// IF INITIATOR, KEEP THE SOCKET OPEN!
 			this._emitMessage(message, identifier, this._readableCreateCellAdditiveFactory);
 		}
 	}
