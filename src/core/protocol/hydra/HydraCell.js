@@ -17,6 +17,8 @@ var HydraCell = (function (_super) {
         this._predecessor = null;
         this._successor = null;
         this._terminationListener = null;
+        this._spitoutListener = null;
+        this._digestListener = null;
 
         this._predecessor = predecessorNode;
         this._connectionManager = connectionManager;
@@ -32,11 +34,36 @@ var HydraCell = (function (_super) {
             _this._onCircuitTermination(terminatedCircuitId);
         };
 
+        this._spitoutListener = function (from, msg) {
+            if (from === _this._predecessor) {
+                _this._onSpitoutMessage(msg);
+            }
+        };
+
         this._connectionManager.on('circuitTermination', this._terminationListener);
+        this._messageCenter.on('ENCRYPTED_SPITOUT_' + this._predecessor.circuitId, this._spitoutListener);
     };
 
     HydraCell.prototype._removeListeners = function () {
         this._connectionManager.removeListener('circuitTermination', this._terminationListener);
+
+        this._messageCenter.removeListener('ENCRYPTED_SPITOUT_' + this._predecessor.circuitId, this._spitoutListener);
+
+        if (this._digestListener) {
+            this._messageCenter.removeListener('ENCRYPTED_DIGEST_' + this._successor.circuitId, this._digestListener);
+        }
+    };
+
+    HydraCell.prototype._onSpitoutMessage = function (message) {
+        var decryptedMessage = this._decrypter.create(message.getPayload(), this._predecessor.incomingKey);
+
+        if (decryptedMessage.isReceiver()) {
+            this._messageCenter.forceCircuitMessageThrough(decryptedMessage.getPayload(), this._predecessor);
+        } else if (this._successor) {
+            this._connectionManager.pipeCircuitMessageTo(this._successor, 'ENCRYPTED_SPITOUT', message.getPayload());
+        } else {
+            this._teardown(true, false);
+        }
     };
 
     HydraCell.prototype._onCircuitTermination = function (terminatedCircuitId) {
@@ -54,10 +81,8 @@ var HydraCell = (function (_super) {
         if (killPredecessor) {
             this._connectionManager.removeFromCircuitNodes(this._predecessor);
         }
-        if (killSuccessor) {
-            if (this._successor) {
-                this._connectionManager.removeFromCircuitNodes(this._successor);
-            }
+        if (killSuccessor && this._successor) {
+            this._connectionManager.removeFromCircuitNodes(this._successor);
         }
 
         this.emit('isTornDown');

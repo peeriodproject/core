@@ -7,6 +7,7 @@ import ConnectionManagerInterface = require('./interfaces/ConnectionManagerInter
 import ReadableDecryptedMessageInterface = require('./messages/interfaces/ReadableDecryptedMessageInterface');
 import ReadableDecryptedMessageFactoryInterface = require('./messages/interfaces/ReadableDecryptedMessageFactoryInterface');
 import WritableEncryptedMessageFactoryInterface = require('./messages/interfaces/WritableEncryptedMessageFactoryInterface');
+import ReadableHydraMessageInterface = require('./messages/interfaces/ReadableHydraMessageInterface');
 
 class HydraCell extends events.EventEmitter implements HydraCellInterface {
 
@@ -20,6 +21,8 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 
 
 	private _terminationListener:Function = null;
+	private _spitoutListener:Function = null;
+	private _digestListener:Function = null;
 
 	public constructor (predecessorNode:HydraNode, connectionManager:ConnectionManagerInterface, messageCenter:HydraMessageCenterInterface, decryptionFactory:ReadableDecryptedMessageFactoryInterface, encryptionFactory:WritableEncryptedMessageFactoryInterface) {
 		super();
@@ -38,11 +41,38 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 			this._onCircuitTermination(terminatedCircuitId);
 		};
 
+		this._spitoutListener = (from:HydraNode, msg:ReadableHydraMessageInterface) => {
+			if (from === this._predecessor) {
+				this._onSpitoutMessage(msg);
+			}
+		};
+
 		this._connectionManager.on('circuitTermination', this._terminationListener);
+		this._messageCenter.on('ENCRYPTED_SPITOUT_' + this._predecessor.circuitId, this._spitoutListener);
 	}
 
 	private _removeListeners ():void {
 		this._connectionManager.removeListener('circuitTermination', this._terminationListener);
+
+		this._messageCenter.removeListener('ENCRYPTED_SPITOUT_' + this._predecessor.circuitId, this._spitoutListener);
+
+		if (this._digestListener) {
+			this._messageCenter.removeListener('ENCRYPTED_DIGEST_' + this._successor.circuitId, this._digestListener);
+		}
+	}
+
+	private _onSpitoutMessage (message:ReadableHydraMessageInterface) {
+		var decryptedMessage:ReadableDecryptedMessageInterface = this._decrypter.create(message.getPayload(), this._predecessor.incomingKey);
+
+		if (decryptedMessage.isReceiver()) {
+			this._messageCenter.forceCircuitMessageThrough(decryptedMessage.getPayload(), this._predecessor);
+		}
+		else if (this._successor) {
+			this._connectionManager.pipeCircuitMessageTo(this._successor, 'ENCRYPTED_SPITOUT', message.getPayload());
+		}
+		else {
+			this._teardown(true, false);
+		}
 	}
 
 	private _onCircuitTermination (terminatedCircuitId:string):void {
@@ -62,10 +92,8 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 		if (killPredecessor) {
 			this._connectionManager.removeFromCircuitNodes(this._predecessor);
 		}
-		if (killSuccessor) {
-			if (this._successor) {
-				this._connectionManager.removeFromCircuitNodes(this._successor);
-			}
+		if (killSuccessor && this._successor) {
+			this._connectionManager.removeFromCircuitNodes(this._successor);
 		}
 
 		this.emit('isTornDown');
