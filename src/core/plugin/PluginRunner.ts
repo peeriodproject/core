@@ -45,7 +45,7 @@ class PluginRunner implements PluginRunnerInterface {
 
 		this._sandbox = new SandCastle({
 			memoryLimitMB: 100,
-			timeout      : 2000,
+			timeout      : 10000,
 			useStrictMode: true,
 			api          : this._getPluginApiPath(),
 			spawnExecPath: nodeBinaryPath
