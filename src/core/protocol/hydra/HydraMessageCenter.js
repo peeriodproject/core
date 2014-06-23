@@ -89,6 +89,19 @@ var HydraMessageCenter = (function (_super) {
         }
     };
 
+    HydraMessageCenter.prototype.getFullBufferOfMessage = function (type, msg) {
+        var buffer = null;
+
+        try  {
+            if (type === 'CELL_CREATED_REJECTED') {
+                buffer = this._writableCellCreatedRejectedFactory.constructMessage(msg.getUUID(), msg.getSecretHash(), msg.getDHPayload());
+            }
+        } catch (e) {
+        }
+
+        return buffer;
+    };
+
     HydraMessageCenter.prototype.sendAdditiveSharingMessage = function (to, targetIp, targetPort, uuid, additivePayload) {
         var msg = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
 
@@ -138,6 +151,17 @@ var HydraMessageCenter = (function (_super) {
                 }
             });
         }
+    };
+
+    HydraMessageCenter.prototype.unwrapAdditiveSharingPayload = function (message) {
+        var msg = null;
+
+        try  {
+            msg = this._readableCreateCellAdditiveFactory.create(message.getPayload());
+        } catch (e) {
+        }
+
+        return msg;
     };
 
     /**

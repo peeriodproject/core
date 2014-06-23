@@ -6,6 +6,7 @@ import HydraMessageCenterInterface = require('./interfaces/HydraMessageCenterInt
 import HydraCell = require('./HydraCell');
 import ReadableDecryptedMessageFactoryInterface = require('./messages/interfaces/ReadableDecryptedMessageFactoryInterface');
 import WritableEncryptedMessageFactoryInterface = require('./messages/interfaces/WritableEncryptedMessageFactoryInterface');
+import ConfigInterface = require('../../config/interfaces/ConfigInterface');
 
 /**
  * HydraCellFactoryInterface implementation.
@@ -19,6 +20,11 @@ import WritableEncryptedMessageFactoryInterface = require('./messages/interfaces
  * @param {core.protocol.hydra.WritableEncryptedMessageFactoryInterface} encryptionFactory
  */
 class HydraCellFactory implements HydraCellFactoryInterface {
+
+	/**
+	 * @member {core.config.ConfigInterface} core.protocol.hydra.HydraCellFactory~_config
+	 */
+	private _config:ConfigInterface = null;
 
 	/**
 	 * @member {core.protocol.hydra.ConnectionManagerInterface} core.protocol.hydra.HydraCellFactory~_connectionManager
@@ -40,7 +46,8 @@ class HydraCellFactory implements HydraCellFactoryInterface {
 	 */
 	private _messageCenter:HydraMessageCenterInterface = null;
 
-	public constructor (connectionManager:ConnectionManagerInterface, messageCenter:HydraMessageCenterInterface, decryptionFactory:ReadableDecryptedMessageFactoryInterface, encryptionFactory:WritableEncryptedMessageFactoryInterface) {
+	public constructor (hydraConfig:ConfigInterface, connectionManager:ConnectionManagerInterface, messageCenter:HydraMessageCenterInterface, decryptionFactory:ReadableDecryptedMessageFactoryInterface, encryptionFactory:WritableEncryptedMessageFactoryInterface) {
+		this._config = hydraConfig;
 		this._connectionManager = connectionManager;
 		this._messageCenter = messageCenter;
 		this._decryptionFactory = decryptionFactory;
@@ -48,7 +55,7 @@ class HydraCellFactory implements HydraCellFactoryInterface {
 	}
 
 	public create (predecessorNode:HydraNode):HydraCellInterface {
-		return new HydraCell(predecessorNode, this._connectionManager, this._messageCenter, this._decryptionFactory, this._encryptionFactory);
+		return new HydraCell(predecessorNode, this._config, this._connectionManager, this._messageCenter, this._decryptionFactory, this._encryptionFactory);
 	}
 
 }

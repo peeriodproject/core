@@ -4,6 +4,8 @@ import events = require('events');
 
 import HydraNode = require('./HydraNode');
 import LayeredEncDecHandlerInterface = require('../messages/interfaces/LayeredEncDecHandlerInterface');
+import ReadableAdditiveSharingMessageInterface = require('../messages/interfaces/ReadableAdditiveSharingMessageInterface');
+import ReadableCreateCellAdditiveMessageInterface = require('../messages/interfaces/ReadableCreateCellAdditiveMessageInterface');
 
 /**
  * The Hydra Message Center handles all incoming messages, transforms and distributes them and is responsible
@@ -15,6 +17,8 @@ import LayeredEncDecHandlerInterface = require('../messages/interfaces/LayeredEn
 interface HydraMessageCenterInterface extends NodeJS.EventEmitter {
 
 	forceCircuitMessageThrough (payload:Buffer, from:HydraNode):void;
+
+	getFullBufferOfMessage (type:string, msg:any):Buffer;
 
 	/**
 	 * Sends an ADDITIVE_SHARING message.
@@ -66,6 +70,17 @@ interface HydraMessageCenterInterface extends NodeJS.EventEmitter {
 	 * @param {Buffer} additivePayload The additive payload.
 	 */
 	spitoutRelayCreateCellMessage (encDecHandler:LayeredEncDecHandlerInterface, targetIp:string, targetPort:number, uuid:string, additivePayload:Buffer, circuitId:string):void;
+
+	/**
+	 * Unwraps the CREATE_CELL_ADDITIVE message from an ADDITIVE_SHARING payload.
+	 * This is used by cells for example, to extract the uuid of the current additive scheme.
+	 *
+	 * @method core.protocol.hydra.HydraMessageCenterInterface#unwrapAdditiveSharingPayload
+	 *
+	 * @param {core.protocol.hydra.ReadableAdditiveSharingMessageInterface} message
+	 * @returns {core.protocol.hydra.ReadableCreateCellAdditiveMessageInterface}
+	 */
+	unwrapAdditiveSharingPayload (message:ReadableAdditiveSharingMessageInterface):ReadableCreateCellAdditiveMessageInterface;
 }
 
 export = HydraMessageCenterInterface;

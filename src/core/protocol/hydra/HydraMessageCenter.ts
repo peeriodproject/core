@@ -8,6 +8,7 @@ import ConnectionManagerInterface = require('./interfaces/ConnectionManagerInter
 // messages
 import ReadableHydraMessageInterface = require('./messages/interfaces/ReadableHydraMessageInterface');
 import ReadableCellCreatedRejectedMessageFactoryInterface = require('./messages/interfaces/ReadableCellCreatedRejectedMessageFactoryInterface');
+import ReadableCreateCellAdditiveMessageInterface = require('./messages/interfaces/ReadableCreateCellAdditiveMessageInterface');
 import ReadableAdditiveSharingMessageFactoryInterface = require('./messages/interfaces/ReadableAdditiveSharingMessageFactoryInterface');
 import ReadableAdditiveSharingMessageInterface = require('./messages/interfaces/ReadableAdditiveSharingMessageInterface');
 import ReadableCreateCellAdditiveMessageFactoryInterface = require('./messages/interfaces/ReadableCreateCellAdditiveMessageFactoryInterface');
@@ -113,6 +114,18 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		}
 	}
 
+	public getFullBufferOfMessage (type:string, msg:any):Buffer {
+		var buffer:Buffer = null;
+
+		try {
+			if (type === 'CELL_CREATED_REJECTED') {
+				buffer = this._writableCellCreatedRejectedFactory.constructMessage(msg.getUUID(), msg.getSecretHash(), msg.getDHPayload());
+			}
+		} catch (e) {}
+
+		return buffer;
+	}
+
 	public sendAdditiveSharingMessage (to:HydraNode, targetIp:string, targetPort:number, uuid:string, additivePayload:Buffer):void {
 		var msg:Buffer = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
 
@@ -163,6 +176,19 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 				}
 			});
 		}
+	}
+
+	public unwrapAdditiveSharingPayload (message:ReadableAdditiveSharingMessageInterface):ReadableCreateCellAdditiveMessageInterface {
+		var msg:ReadableCreateCellAdditiveMessageInterface = null;
+
+		try {
+			msg = this._readableCreateCellAdditiveFactory.create(message.getPayload());
+		}
+		catch (e) {
+
+		}
+
+		return msg;
 	}
 
 	/**
