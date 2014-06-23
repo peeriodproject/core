@@ -159,15 +159,9 @@ class PluginManager implements PluginManagerInterface {
 			var plugins:PluginStateObjectListInterface = this._pluginState.active;
 			var activated:number = 0;
 			var errors:Array<Error> = [];
-			var manager = this;
 
-			return (function activatePlugin (i) {
-				if (i >= plugins.length) {
-					// callback
-					return;
-				}
-
-				manager._activatePlugin(plugins[i], function (err:Error) {
+			for (var i = 0, l = plugins.length; i < l; i++) {
+				this._activatePlugin(plugins[i], (err:Error) => {
 					activated++;
 
 					if (err) {
@@ -177,12 +171,13 @@ class PluginManager implements PluginManagerInterface {
 					if (activated === plugins.length) {
 						// todo implement error callback!
 						internalCallback(null);
-						manager._pluginStateIsActive = true;
+						this._pluginStateIsActive = true;
 					}
 				});
-
-				return process.nextTick(activatePlugin.bind(null, i + 1));
-			}(0));
+			}
+		}
+		else {
+			return process.nextTick(internalCallback.bind(null, null));
 		}
 	}
 
@@ -229,10 +224,6 @@ class PluginManager implements PluginManagerInterface {
 		return process.nextTick(callback.bind(null, this._pluginRunners));
 	}
 
-	/**
-	 * @param {string} identifier
-	 * @returns {core.plugin.PluginRunnerInterface}
-	 */
 	public getActivePluginRunner (identifier:string, callback:(pluginRunner:PluginRunnerInterface) => void):void {
 		var runner:PluginRunnerInterface = this._pluginRunners[identifier] ? this._pluginRunners[identifier] : null;
 
@@ -409,7 +400,7 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	/**
-	 * Returns the path where the manager should load/store the plugin state
+	 * Returns the absolute path where the manager should load and store the plugin state
 	 *
 	 * @method core.plugin.PluginManager~_getManagerStoragePath
 	 *

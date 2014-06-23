@@ -120,6 +120,7 @@ var PluginManager = (function () {
     };
 
     PluginManager.prototype.activatePluginState = function (callback) {
+        var _this = this;
         var internalCallback = callback || function (err) {
         };
 
@@ -127,15 +128,9 @@ var PluginManager = (function () {
             var plugins = this._pluginState.active;
             var activated = 0;
             var errors = [];
-            var manager = this;
 
-            return (function activatePlugin(i) {
-                if (i >= plugins.length) {
-                    // callback
-                    return;
-                }
-
-                manager._activatePlugin(plugins[i], function (err) {
+            for (var i = 0, l = plugins.length; i < l; i++) {
+                this._activatePlugin(plugins[i], function (err) {
                     activated++;
 
                     if (err) {
@@ -145,12 +140,12 @@ var PluginManager = (function () {
                     if (activated === plugins.length) {
                         // todo implement error callback!
                         internalCallback(null);
-                        manager._pluginStateIsActive = true;
+                        _this._pluginStateIsActive = true;
                     }
                 });
-
-                return process.nextTick(activatePlugin.bind(null, i + 1));
-            }(0));
+            }
+        } else {
+            return process.nextTick(internalCallback.bind(null, null));
         }
     };
 
@@ -197,10 +192,6 @@ var PluginManager = (function () {
         return process.nextTick(callback.bind(null, this._pluginRunners));
     };
 
-    /**
-    * @param {string} identifier
-    * @returns {core.plugin.PluginRunnerInterface}
-    */
     PluginManager.prototype.getActivePluginRunner = function (identifier, callback) {
         var runner = this._pluginRunners[identifier] ? this._pluginRunners[identifier] : null;
 
@@ -372,7 +363,7 @@ var PluginManager = (function () {
     };
 
     /**
-    * Returns the path where the manager should load/store the plugin state
+    * Returns the absolute path where the manager should load and store the plugin state
     *
     * @method core.plugin.PluginManager~_getManagerStoragePath
     *
