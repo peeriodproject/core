@@ -126,7 +126,6 @@ var CellManager = (function (_super) {
         initiatorNode.incomingKey = incomingKey;
         initiatorNode.outgoingKey = outgoingKey;
 
-        // @todo here we have to create the HydraCell (in the HydraCell, hook the termination listener AT ONCE)
         this._messageCenter.sendCellCreatedRejectedMessage(initiatorNode, pending.uuid, sha1, dhPublicKey);
 
         var cell = this._cellFactory.create(initiatorNode);
@@ -238,6 +237,7 @@ var CellManager = (function (_super) {
         pending.additivePayloads.push(message.getAdditivePayload());
 
         if (message.isInitiator()) {
+            var circuitId = message.getCircuitId();
             var circuitId = message.getCircuitId();
             var initiatorNode = {
                 circuitId: circuitId

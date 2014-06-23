@@ -10,8 +10,8 @@ import ReadableHydraMessage = require('./ReadableHydraMessage');
  */
 class ReadableHydraMessageFactory implements ReadableHydraMessageFactoryInterface {
 
-	public create (buffer:Buffer):ReadableHydraMessageInterface {
-		return new ReadableHydraMessage(buffer);
+	public create (buffer:Buffer, noCircuitIdExtraction:boolean = false):ReadableHydraMessageInterface {
+		return new ReadableHydraMessage(buffer, noCircuitIdExtraction);
 	}
 }
 

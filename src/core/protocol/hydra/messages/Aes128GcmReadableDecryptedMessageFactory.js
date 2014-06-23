@@ -15,6 +15,7 @@ var Aes128GcmReadableDecryptedMessageFactory = (function () {
         try  {
             msg = new Aes128GcmReadableDecryptedMessage(encryptedContent, key);
         } catch (e) {
+            throw e;
         }
 
         return msg;

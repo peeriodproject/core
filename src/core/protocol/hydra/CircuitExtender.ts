@@ -314,7 +314,6 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} message The reaction message.
 	 */
 	private _onReaction (from:HydraNode, message:ReadableCellCreatedRejectedMessageInterface, decrypted:boolean):void {
-
 		if (this._expectReactionFrom === from && (!this._nodes.length || decrypted)) {
 
 			this._clearReactionTimeout();

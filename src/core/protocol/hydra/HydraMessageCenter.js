@@ -4,6 +4,7 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
+var crypto = require('crypto');
 var events = require('events');
 
 /**
@@ -63,6 +64,9 @@ var HydraMessageCenter = (function (_super) {
         * @member {core.protocol.hydra.WritableHydraMessageFactoryInterface} core.protocol.hydra.HydraMessageCenterInterface~_writableHydraMessageFactory
         */
         this._writableHydraMessageFactory = null;
+        this.ident = null;
+
+        this.ident = crypto.randomBytes(12).toString('hex');
 
         this._connectionManager = connectionManager;
         this._readableHydraMessageFactory = readableHydraMessageFactory;
@@ -80,8 +84,9 @@ var HydraMessageCenter = (function (_super) {
         var msg = null;
 
         try  {
-            msg = this._readableHydraMessageFactory.create(payload);
+            msg = this._readableHydraMessageFactory.create(payload, true);
         } catch (e) {
+            throw e;
         }
 
         if (msg) {
@@ -91,11 +96,14 @@ var HydraMessageCenter = (function (_super) {
 
     HydraMessageCenter.prototype.getFullBufferOfMessage = function (type, msg) {
         var buffer = null;
+        var middleMessage = null;
 
         try  {
             if (type === 'CELL_CREATED_REJECTED') {
-                buffer = this._writableCellCreatedRejectedFactory.constructMessage(msg.getUUID(), msg.getSecretHash(), msg.getDHPayload());
+                middleMessage = this._writableCellCreatedRejectedFactory.constructMessage(msg.getUUID(), msg.getSecretHash(), msg.getDHPayload());
             }
+
+            buffer = this._writableHydraMessageFactory.constructMessage(type, middleMessage);
         } catch (e) {
         }
 
@@ -183,6 +191,7 @@ var HydraMessageCenter = (function (_super) {
             try  {
                 msg = msgFactory.create(message.getPayload());
             } catch (e) {
+                throw e;
             }
         } else {
             msg = message;

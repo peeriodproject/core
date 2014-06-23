@@ -339,7 +339,7 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 			this._messageCenter.forceCircuitMessageThrough(decryptedMessage.getPayload(), this._predecessor);
 		}
 		else if (this._successor && this._successor.socketIdentifier) {
-			this._connectionManager.pipeCircuitMessageTo(this._successor, 'ENCRYPTED_SPITOUT', message.getPayload());
+			this._connectionManager.pipeCircuitMessageTo(this._successor, 'ENCRYPTED_SPITOUT', decryptedMessage.getPayload());
 		}
 		else {
 			this._teardown(true, true);

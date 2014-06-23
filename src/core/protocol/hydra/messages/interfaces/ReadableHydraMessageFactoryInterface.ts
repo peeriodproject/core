@@ -14,9 +14,10 @@ interface ReadableHydraMessageFactoryInterface {
 	 * @method core.protocol.hydra.ReadableHydraMessageFactoryInterface#create
 	 *
 	 * @param {Buffer} buffer Buffer to create the message from
+	 * @oaram {boolean} noCircuitIdExtranction Optional. If this is true, the circuit ID is not extracted, no matter what type of message.
 	 * @returns core.protocol.hydra.ReadableHydraMessageInterface
 	 */
-	create (buffer:Buffer):ReadableHydraMessageInterface;
+	create (buffer:Buffer, noCircuitIdExtraction?:boolean):ReadableHydraMessageInterface;
 }
 
 export = ReadableHydraMessageFactoryInterface;

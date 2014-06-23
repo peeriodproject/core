@@ -31,7 +31,7 @@ import WritableCellCreatedRejectedMessageFactory = require('../../../../src/core
 import WritableAdditiveSharingMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableAdditiveSharingMessageFactory');
 import WritableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraCell @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraCell', function () {
 
 	var sandbox:SinonSandbox = null;
 

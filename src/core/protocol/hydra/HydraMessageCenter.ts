@@ -1,3 +1,4 @@
+import crypto = require('crypto');
 import events = require('events');
 
 import HydraNode = require('./interfaces/HydraNode');
@@ -83,8 +84,12 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 	 */
 	_writableHydraMessageFactory:WritableHydraMessageFactoryInterface = null;
 
+	public ident:string = null;
+
 	public constructor (connectionManager:ConnectionManagerInterface, readableHydraMessageFactory: ReadableHydraMessageFactoryInterface, readableCellCreatedRejectedFactory:ReadableCellCreatedRejectedMessageFactoryInterface, readableAdditiveSharingFactory:ReadableAdditiveSharingMessageFactoryInterface, readableCreateCellAdditiveFactory:ReadableCreateCellAdditiveMessageFactoryInterface, writableCreateCellAdditiveFactory:WritableCreateCellAdditiveMessageFactoryInterface, writableAdditiveSharingFactory:WritableAdditiveSharingMessageFactoryInterface, writableHydraMessageFactory:WritableHydraMessageFactoryInterface, writableCellCreatedRejectedFactory:WritableCellCreatedRejectedMessageFactoryInterface) {
 		super();
+
+		this.ident = crypto.randomBytes(12).toString('hex');
 
 		this._connectionManager = connectionManager;
 		this._readableHydraMessageFactory = readableHydraMessageFactory;
@@ -103,10 +108,10 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		var msg:ReadableHydraMessageInterface = null;
 
 		try {
-			msg = this._readableHydraMessageFactory.create(payload);
+			msg = this._readableHydraMessageFactory.create(payload, true);
 		}
 		catch (e) {
-
+			throw e;
 		}
 
 		if (msg) {
@@ -116,11 +121,14 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 
 	public getFullBufferOfMessage (type:string, msg:any):Buffer {
 		var buffer:Buffer = null;
+		var middleMessage:Buffer = null;
 
 		try {
 			if (type === 'CELL_CREATED_REJECTED') {
-				buffer = this._writableCellCreatedRejectedFactory.constructMessage(msg.getUUID(), msg.getSecretHash(), msg.getDHPayload());
+				middleMessage = this._writableCellCreatedRejectedFactory.constructMessage(msg.getUUID(), msg.getSecretHash(), msg.getDHPayload());
 			}
+
+			buffer = this._writableHydraMessageFactory.constructMessage(type, middleMessage);
 		} catch (e) {}
 
 		return buffer;
@@ -211,6 +219,7 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 				msg = msgFactory.create(message.getPayload());
 			}
 			catch (e) {
+				throw e;
 			}
 		}
 		else {
@@ -279,12 +288,14 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 	 */
 	private _onMessage (identifier:string, message:ReadableHydraMessageInterface):void {
 		if (message.getMessageType() === 'ADDITIVE_SHARING') {
+
 			var msg:ReadableAdditiveSharingMessageInterface = null;
 
 			try {
 				msg = this._readableAdditiveSharingFactory.create(message.getPayload());
 			}
 			catch (e) {
+
 			}
 
 			if (msg) {

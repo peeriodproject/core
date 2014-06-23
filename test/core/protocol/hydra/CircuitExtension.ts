@@ -61,7 +61,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration)', func
 
 	var emitHydraMessage:Function = function (type:string, identifier:string, messagePayload:Buffer, circuitId?:string, decrypted?:boolean) {
 
-		var msgPayload = writableHydraMessageFactory.constructMessage(type, messagePayload, messagePayload.length, circuitId);
+		var msgPayload = writableHydraMessageFactory.constructMessage(type, messagePayload, messagePayload.length, decrypted ? null : circuitId);
 
 		if (decrypted) {
 

@@ -56,7 +56,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration)', func
     var readablyHydraMessageFactory = new ReadableHydraMessageFactory();
 
     var emitHydraMessage = function (type, identifier, messagePayload, circuitId, decrypted) {
-        var msgPayload = writableHydraMessageFactory.constructMessage(type, messagePayload, messagePayload.length, circuitId);
+        var msgPayload = writableHydraMessageFactory.constructMessage(type, messagePayload, messagePayload.length, decrypted ? null : circuitId);
 
         if (decrypted) {
             var from = connectionManager.getCircuitNodes()[identifier];

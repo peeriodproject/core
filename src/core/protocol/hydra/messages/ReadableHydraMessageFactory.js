@@ -9,8 +9,9 @@ var ReadableHydraMessage = require('./ReadableHydraMessage');
 var ReadableHydraMessageFactory = (function () {
     function ReadableHydraMessageFactory() {
     }
-    ReadableHydraMessageFactory.prototype.create = function (buffer) {
-        return new ReadableHydraMessage(buffer);
+    ReadableHydraMessageFactory.prototype.create = function (buffer, noCircuitIdExtraction) {
+        if (typeof noCircuitIdExtraction === "undefined") { noCircuitIdExtraction = false; }
+        return new ReadableHydraMessage(buffer, noCircuitIdExtraction);
     };
     return ReadableHydraMessageFactory;
 })();
