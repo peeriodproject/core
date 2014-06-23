@@ -21,7 +21,7 @@ class PluginGlobalsFactory implements PluginGlobalsFactoryInterface {
 	public create (itemPath:string, stats:fs.Stats, globals:Object):Object {
 		return ObjectUtils.extend({
 			fileName  : itemPath, // todo remove path
-			fileStats : stats ? Object.freeze(stats) : stats
+			fileStats : stats ? Object.freeze(stats) : {}
 		}, globals);
 	}
 

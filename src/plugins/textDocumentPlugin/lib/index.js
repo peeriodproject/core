@@ -80,8 +80,8 @@ exports.main = {
     },
     onBeforeItemAdd: function () {
         exit({
-            name: getFileName(),
-            stats: getStats()
+            name: fileName,
+            stats: fileStats
         });
     }
 };

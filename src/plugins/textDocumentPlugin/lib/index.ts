@@ -9,6 +9,9 @@ declare function setState (state:any):void;
 declare function getFileName ():string;
 declare function getStats ():Object;
 
+declare var fileName:string;
+declare var fileStats:Object;
+
 
 export var main = {
 
@@ -92,8 +95,8 @@ export var main = {
 
 	onBeforeItemAdd: function () {
 		exit({
-			name : getFileName(),
-			stats: getStats()
+			name : fileName,
+			stats: fileStats
 		});
 	}
 };

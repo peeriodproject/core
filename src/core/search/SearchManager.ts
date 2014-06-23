@@ -95,7 +95,10 @@ class SearchManager implements SearchManagerInterface {
 			}
 
 			this._pluginManager.getActivePluginRunner(pluginIdentifier, (pluginRunner:PluginRunnerInterface) => {
-				pluginRunner.getMapping((mapping:Object) => {
+				pluginRunner.getMapping((err:Error, mapping:Object) => {
+					if (err) {
+						console.error(err);
+					}
 					if (mapping) {
 						mapping = this._updateMapping(mapping);
 

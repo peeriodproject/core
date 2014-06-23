@@ -82,7 +82,10 @@ var SearchManager = (function () {
             }
 
             _this._pluginManager.getActivePluginRunner(pluginIdentifier, function (pluginRunner) {
-                pluginRunner.getMapping(function (mapping) {
+                pluginRunner.getMapping(function (err, mapping) {
+                    if (err) {
+                        console.error(err);
+                    }
                     if (mapping) {
                         mapping = _this._updateMapping(mapping);
 

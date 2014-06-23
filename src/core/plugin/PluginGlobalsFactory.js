@@ -16,7 +16,7 @@ var PluginGlobalsFactory = (function () {
     PluginGlobalsFactory.prototype.create = function (itemPath, stats, globals) {
         return ObjectUtils.extend({
             fileName: itemPath,
-            fileStats: stats ? Object.freeze(stats) : stats
+            fileStats: stats ? Object.freeze(stats) : {}
         }, globals);
     };
     return PluginGlobalsFactory;
