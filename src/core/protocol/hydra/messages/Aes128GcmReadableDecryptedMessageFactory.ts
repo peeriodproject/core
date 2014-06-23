@@ -17,7 +17,6 @@ class Aes128GcmReadableDecryptedMessageFactory implements ReadableDecryptedMessa
 			msg = new Aes128GcmReadableDecryptedMessage(encryptedContent, key);
 		}
 		catch (e) {
-			throw e;
 		}
 
 		return msg;

@@ -238,7 +238,6 @@ var CellManager = (function (_super) {
 
         if (message.isInitiator()) {
             var circuitId = message.getCircuitId();
-            var circuitId = message.getCircuitId();
             var initiatorNode = {
                 circuitId: circuitId
             };

@@ -4,7 +4,6 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-var crypto = require('crypto');
 var events = require('events');
 
 /**
@@ -64,9 +63,6 @@ var HydraMessageCenter = (function (_super) {
         * @member {core.protocol.hydra.WritableHydraMessageFactoryInterface} core.protocol.hydra.HydraMessageCenterInterface~_writableHydraMessageFactory
         */
         this._writableHydraMessageFactory = null;
-        this.ident = null;
-
-        this.ident = crypto.randomBytes(12).toString('hex');
 
         this._connectionManager = connectionManager;
         this._readableHydraMessageFactory = readableHydraMessageFactory;
@@ -86,7 +82,6 @@ var HydraMessageCenter = (function (_super) {
         try  {
             msg = this._readableHydraMessageFactory.create(payload, true);
         } catch (e) {
-            throw e;
         }
 
         if (msg) {

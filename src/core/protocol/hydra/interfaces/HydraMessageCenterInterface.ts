@@ -16,8 +16,6 @@ import ReadableCreateCellAdditiveMessageInterface = require('../messages/interfa
  */
 interface HydraMessageCenterInterface extends NodeJS.EventEmitter {
 
-	ident:string;
-
 	/**
 	 * Forces a decrypted message through the pipe, i.e. creating a hydra message and letting the message center
 	 * emit the appropriate message type.

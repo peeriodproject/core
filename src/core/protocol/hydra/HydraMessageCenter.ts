@@ -1,4 +1,3 @@
-import crypto = require('crypto');
 import events = require('events');
 
 import HydraNode = require('./interfaces/HydraNode');
@@ -84,12 +83,8 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 	 */
 	_writableHydraMessageFactory:WritableHydraMessageFactoryInterface = null;
 
-	public ident:string = null;
-
 	public constructor (connectionManager:ConnectionManagerInterface, readableHydraMessageFactory: ReadableHydraMessageFactoryInterface, readableCellCreatedRejectedFactory:ReadableCellCreatedRejectedMessageFactoryInterface, readableAdditiveSharingFactory:ReadableAdditiveSharingMessageFactoryInterface, readableCreateCellAdditiveFactory:ReadableCreateCellAdditiveMessageFactoryInterface, writableCreateCellAdditiveFactory:WritableCreateCellAdditiveMessageFactoryInterface, writableAdditiveSharingFactory:WritableAdditiveSharingMessageFactoryInterface, writableHydraMessageFactory:WritableHydraMessageFactoryInterface, writableCellCreatedRejectedFactory:WritableCellCreatedRejectedMessageFactoryInterface) {
 		super();
-
-		this.ident = crypto.randomBytes(12).toString('hex');
 
 		this._connectionManager = connectionManager;
 		this._readableHydraMessageFactory = readableHydraMessageFactory;
@@ -111,7 +106,6 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 			msg = this._readableHydraMessageFactory.create(payload, true);
 		}
 		catch (e) {
-			throw e;
 		}
 
 		if (msg) {

@@ -253,7 +253,6 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 
 		if (message.isInitiator()) {
 			var circuitId:string = message.getCircuitId();
-			var circuitId:string = message.getCircuitId();
 			var initiatorNode:HydraNode = {
 				circuitId: circuitId
 			};
