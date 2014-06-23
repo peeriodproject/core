@@ -4,6 +4,7 @@
 */
 var UiPluginManagerComponent = (function () {
     function UiPluginManagerComponent(pluginManager) {
+        var _this = this;
         /**
         * todo ts-definition
         */
@@ -18,10 +19,8 @@ var UiPluginManagerComponent = (function () {
             /*pluginManager.findNewPlugins(function (err, data) {
             console.log(err, data);
             });*/
-            console.log('opened!');
             pluginManager.activatePluginState(function () {
-                console.log('plugin state activated!');
-                //this._setInitialState();
+                _this._setInitialState();
             });
         });
     }
@@ -40,42 +39,38 @@ var UiPluginManagerComponent = (function () {
     UiPluginManagerComponent.prototype._setupPluginManagerEvents = function () {
         var _this = this;
         this._pluginManager.addEventListener('pluginAdded', function (identifier) {
-            console.log('plugin added!', identifier);
             _this._addPlugin(identifier);
         });
     };
 
-    /*private _setInitialState ():void {
-    console.log('_setInitialState');
-    this._pluginManager.getActivePluginRunners((runners:PluginRunnerMapInterface) => {
-    / *console.log('RUNNERS', runners);
-    var runnerIdentifiers:Array<string> = Object.keys(runners);
-    var callbackCount:number = 0;
-    var checkAndUpdate:Function = () => {
-    if (callbackCount === runnerIdentifiers.length) {
-    this._updateUi();
-    }
+    UiPluginManagerComponent.prototype._setInitialState = function () {
+        var _this = this;
+        this._pluginManager.getActivePluginRunners(function (runners) {
+            var runnerIdentifiers = Object.keys(runners);
+            var callbackCount = 0;
+            var checkAndUpdate = function () {
+                if (callbackCount === runnerIdentifiers.length) {
+                    _this._updateUi();
+                }
+            };
+
+            if (!runnerIdentifiers.length) {
+                return;
+            }
+
+            for (var i = 0, l = runnerIdentifiers.length; i < l; i++) {
+                var identifier = runnerIdentifiers[i];
+
+                runners[identifier].getSearchFields(function (err, fields) {
+                    _this._addSearchFields(identifier, err, fields);
+
+                    callbackCount++;
+                    checkAndUpdate();
+                });
+            }
+        });
     };
-    
-    if (!runnerIdentifiers.length) {
-    return;
-    }
-    
-    for (var i = 0, l = runnerIdentifiers.length; i < l; i++) {
-    var identifier:string = runnerIdentifiers[i];
-    
-    console.log('getting search fields', identifier);
-    runners[identifier].getSearchFields((fields) => {
-    console.log('got search fields', fields);
-    this._state[identifier] = fields;
-    
-    callbackCount++;
-    checkAndUpdate();
-    });
-    
-    }* /
-    });
-    }*/
+
     /**
     * Adds the fields of the corresponding PluginRunner to the state
     *
@@ -88,26 +83,28 @@ var UiPluginManagerComponent = (function () {
                 return;
             }
 
-            console.log('--------------');
-            console.log('get mapping fields');
-            runner.getMapping(function (err, mapping) {
-                console.log('MAPPING');
-                console.log(mapping);
-            });
-
-            console.log('get search fields');
             runner.getSearchFields(function (err, fields) {
-                console.log('got search fields');
-                console.log(err);
-                if (err) {
-                    console.error(err);
-                }
-                console.log(fields);
-                _this._state[identifier] = fields;
+                _this._addSearchFields(identifier, err, fields);
                 //this._updateUi();
             });
-            console.log('-------');
         });
+    };
+
+    /**
+    * Adds the givent fields to the specified identifier and logs an error to the console if present
+    *
+    * @member core.ui.UiPluginManagerComponent~_addSearchFields
+    *
+    * @param {string} identifier
+    * @param {Error} err
+    * @param {Object} fields
+    */
+    UiPluginManagerComponent.prototype._addSearchFields = function (identifier, err, fields) {
+        if (err) {
+            console.error(err);
+        } else if (fields) {
+            this._state[identifier] = fields;
+        }
     };
 
     /**
@@ -120,8 +117,6 @@ var UiPluginManagerComponent = (function () {
     UiPluginManagerComponent.prototype._updateUi = function () {
         if (this._connections.length) {
             var state = this.getState();
-
-            console.log(state);
 
             for (var i = 0, l = this._connections.length; i < l; i++) {
                 this._connections[i].send('update', state);

@@ -9,7 +9,7 @@ import PluginManager = require('../../../../src/core/plugin/PluginManager');
 import PluginRunner = require('../../../../src/core/plugin/PluginRunner');
 import UiPluginManagerComponent = require('../../../../src/core/ui/plugin/UiPluginManagerComponent');
 
-describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent', function () {
+describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent @joern', function () {
 	var sandbox:SinonSandbox;
 	var component:UiPluginManagerComponent;
 	var eventListeners:{ [eventName:string]:Function };
@@ -22,7 +22,7 @@ describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent', function () {
 		eventListeners = {};
 		pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
 			getSearchFields: function (callback) {
-				callback({ fields: 'foobar' });
+				callback(null, { fields: 'foobar' });
 			}
 		});
 		pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager, {
@@ -85,6 +85,7 @@ describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent', function () {
 	});
 
 	it('should correctly return the state', function (done) {
+		// waiting for pluginManager.open
 		setImmediate(function () {
 			var state = component.getState();
 
@@ -96,6 +97,7 @@ describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent', function () {
 	});
 
 	it('should correctly get the initial state of the plugins on construction', function (done) {
+		// waiting for pluginManager.open
 		setImmediate(function () {
 			pluginManagerStub.getActivePluginRunners.calledOnce.should.be.true;
 			pluginRunnerStub.getSearchFields.calledOnce.should.be.true;
@@ -108,10 +110,11 @@ describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent', function () {
 		component.onConnection(sparkStub);
 		eventListeners['pluginAdded']('fooIdentifier');
 
-		// waiting for the initial state load
+		// waiting for pluginManager.open
 		setImmediate(function () {
+			// waiting for pluginManager.activatePluginState
 			setImmediate(function () {
-				sparkStub.send.calledTwice.should.be.true;
+				sparkStub.send.calledOnce.should.be.true;
 				sparkStub.send.getCall(0).args[0].should.equal('update');
 				sparkStub.send.getCall(0).args[1].should.containDeep({
 					identifier   : { fields: 'foobar' },

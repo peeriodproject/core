@@ -26,10 +26,8 @@ class UiPluginManagerComponent  implements UiComponentInterface {
 			/*pluginManager.findNewPlugins(function (err, data) {
 				console.log(err, data);
 			});*/
-			console.log('opened!');
 			pluginManager.activatePluginState(() => {
-				console.log('plugin state activated!');
-				//this._setInitialState();
+				this._setInitialState();
 			});
 		});
 	}
@@ -49,15 +47,12 @@ class UiPluginManagerComponent  implements UiComponentInterface {
 
 	private _setupPluginManagerEvents ():void {
 		this._pluginManager.addEventListener('pluginAdded', (identifier) => {
-			console.log('plugin added!', identifier);
 			this._addPlugin(identifier);
 		});
 	}
 
-	/*private _setInitialState ():void {
-		console.log('_setInitialState');
+	private _setInitialState ():void {
 		this._pluginManager.getActivePluginRunners((runners:PluginRunnerMapInterface) => {
-			/ *console.log('RUNNERS', runners);
 			var runnerIdentifiers:Array<string> = Object.keys(runners);
 			var callbackCount:number = 0;
 			var checkAndUpdate:Function = () => {
@@ -73,18 +68,16 @@ class UiPluginManagerComponent  implements UiComponentInterface {
 			for (var i = 0, l = runnerIdentifiers.length; i < l; i++) {
 				var identifier:string = runnerIdentifiers[i];
 
-				console.log('getting search fields', identifier);
-				runners[identifier].getSearchFields((fields) => {
-					console.log('got search fields', fields);
-					this._state[identifier] = fields;
+				runners[identifier].getSearchFields((err:Error, fields:Object) => {
+					this._addSearchFields(identifier, err, fields);
 
 					callbackCount++;
 					checkAndUpdate();
 				});
 
-			}* /
+			}
 		});
-	}*/
+	}
 
 	/**
 	 * Adds the fields of the corresponding PluginRunner to the state
@@ -97,27 +90,30 @@ class UiPluginManagerComponent  implements UiComponentInterface {
 				return;
 			}
 
-			console.log('--------------');
-			console.log('get mapping fields');
-			runner.getMapping((err, mapping) => {
-				console.log('MAPPING');
-				console.log(mapping);
-			});
-
-			console.log('get search fields');
 			runner.getSearchFields((err, fields) => {
-				console.log('got search fields');
-				console.log(err);
-				if (err) {
-					console.error(err);
-				}
-				console.log(fields);
-				this._state[identifier] = fields;
+				this._addSearchFields(identifier, err, fields);
 
 				//this._updateUi();
 			});
-			console.log('-------');
 		});
+	}
+
+	/**
+	 * Adds the givent fields to the specified identifier and logs an error to the console if present
+	 *
+	 * @member core.ui.UiPluginManagerComponent~_addSearchFields
+	 *
+	 * @param {string} identifier
+	 * @param {Error} err
+	 * @param {Object} fields
+	 */
+	private _addSearchFields (identifier:string, err:Error, fields:Object):void {
+		if (err) {
+			console.error(err);
+		}
+		else if (fields) {
+			this._state[identifier] = fields;
+		}
 	}
 
 	/**
@@ -131,14 +127,11 @@ class UiPluginManagerComponent  implements UiComponentInterface {
 		if (this._connections.length) {
 			var state:Object = this.getState();
 
-			console.log(state);
-
 			for (var i = 0, l = this._connections.length; i < l; i++) {
 				this._connections[i].send('update', state);
 			}
 		}
 	}
-
 
 }
 
