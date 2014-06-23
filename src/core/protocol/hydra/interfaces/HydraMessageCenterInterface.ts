@@ -16,8 +16,28 @@ import ReadableCreateCellAdditiveMessageInterface = require('../messages/interfa
  */
 interface HydraMessageCenterInterface extends NodeJS.EventEmitter {
 
+	/**
+	 * Forces a decrypted message through the pipe, i.e. creating a hydra message and letting the message center
+	 * emit the appropriate message type.
+	 * The emitted event will have the flag `decrypted` set to true.
+	 * This is used by Cells and Circuits after they decrypted digest/spitout messages.
+	 *
+	 * @method core.protocol.hydra.HydraMessageCenterInterface#forceCircuitMessageThrough
+	 *
+	 * @param {Buffer} The payload to use to build the right message.
+	 * @param {core.protocol.hydra.HydraNode} The node the message originated from.
+	 */
 	forceCircuitMessageThrough (payload:Buffer, from:HydraNode):void;
 
+	/**
+	 * Returns the full buffer of an already unwrapped hydra message type.
+	 * Does not prepend the indicator byte of the message type.
+	 *
+	 * @method core.protocol.hydra.hydraMessageCenterInterface#getFullBufferOfMessage
+	 *
+	 * @param {string} type The human readable representation of the message to get the full buffer from.
+	 * @param {any} msg Any already unwrapped message.
+	 */
 	getFullBufferOfMessage (type:string, msg:any):Buffer;
 
 	/**
