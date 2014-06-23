@@ -149,7 +149,8 @@ class FolderWatcher implements FolderWatcherInterface {
 			ignored       : /[\/\\]\./,
 			persistent    : true,
 			interval      : this._eventDelayOptions.interval,
-			binaryInterval: this._eventDelayOptions.binaryInterval
+			binaryInterval: this._eventDelayOptions.binaryInterval,
+			usePolling	  : this._config.get('fs.folderWatcher.usePolling')
 		});
 
 		this._registerWatcherEvents();

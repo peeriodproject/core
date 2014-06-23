@@ -95,7 +95,8 @@
         "folderWatcher": {
             "interval"      : 5000,
             "binaryInterval": 15000,
-            "eventDelay"    : 1000
+            "eventDelay"    : 1000,
+            "usePolling"    : false
         }
     },
     "ui"      : {
