@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.67</p>
+      <p class="stat">67.95</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">238</p>
+      <p class="stat">259</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">38.00</p>
+      <p class="stat">40.38</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.46</p>
+      <p class="stat">1.65</p>
     </div>
   </div>
 </div>
@@ -117,7 +117,7 @@ var events = require(&#039;events&#039;);
 */
 var HydraMessageCenter = (function (_super) {
     __extends(HydraMessageCenter, _super);
-    function HydraMessageCenter(connectionManager, readableHydraMessageFactory, readableCellCreatedRejectedFactory, readableAdditiveSharingFactory, readableCreateCellAdditiveFactory, writableCreateCellAdditiveFactory, writableAdditiveSharingFactory, writableHydraMessageFactory) {
+    function HydraMessageCenter(connectionManager, readableHydraMessageFactory, readableCellCreatedRejectedFactory, readableAdditiveSharingFactory, readableCreateCellAdditiveFactory, writableCreateCellAdditiveFactory, writableAdditiveSharingFactory, writableHydraMessageFactory, writableCellCreatedRejectedFactory) {
         _super.call(this);
         /**
         * @member {core.protocol.hydra.ConnectionManagerInterface} core.protocol.hydra.HydraMessageCenterInterface~_connectionManager
@@ -148,6 +148,10 @@ var HydraMessageCenter = (function (_super) {
         */
         this._writableCreateCellAdditiveFactory = null;
         /**
+        * @member {core.protocol.hydra.WritableCellCreatedRejectedMessageFactoryInterface} core.protocol.hydra.HydraMessageCenterInterface~_writableCellCreatedRejectedFactory
+        */
+        this._writableCellCreatedRejectedFactory = null;
+        /**
         * @member {core.protocol.hydra.WritableHydraMessageFactoryInterface} core.protocol.hydra.HydraMessageCenterInterface~_writableHydraMessageFactory
         */
         this._writableHydraMessageFactory = null;
@@ -160,6 +164,7 @@ var HydraMessageCenter = (function (_super) {
         this._writableCreateCellAdditiveFactory = writableCreateCellAdditiveFactory;
         this._writableAdditiveSharingFactory = writableAdditiveSharingFactory;
         this._writableHydraMessageFactory = writableHydraMessageFactory;
+        this._writableCellCreatedRejectedFactory = writableCellCreatedRejectedFactory;
 
         this._setupListeners();
     }
@@ -172,7 +177,7 @@ var HydraMessageCenter = (function (_super) {
         }
 
         if (msg) {
-            this._onCircuitMessage(msg, from);
+            this._onCircuitMessage(msg, from, true);
         }
     };
 
@@ -194,6 +199,19 @@ var HydraMessageCenter = (function (_super) {
 
         if (msg) {
             this._connectionManager.pipeCircuitMessageTo(to, &#039;CREATE_CELL_ADDITIVE&#039;, msg, true);
+        }
+    };
+
+    HydraMessageCenter.prototype.sendCellCreatedRejectedMessage = function (to, uuid, secretHash, dhPayload) {
+        var msg = null;
+
+        try  {
+            msg = this._writableCellCreatedRejectedFactory.constructMessage(uuid, secretHash, dhPayload);
+        } catch (e) {
+        }
+
+        if (msg) {
+            this._connectionManager.pipeCircuitMessageTo(to, &#039;CELL_CREATED_REJECTED&#039;, msg);
         }
     };
 
@@ -221,11 +239,12 @@ var HydraMessageCenter = (function (_super) {
     * @method core.protocol.hydra.HydraMessageCenter~_emitMessage
     *
     * @param {core.protocol.hydra.ReadableHydraMessageInterface} message The message to &#039;unwrap&#039; and emit.
-    * @param {core.protocol.hydra.HydraNode} node The originating node of the message.
+    * @param {any} nodeOrIdentifier The originating hydra node or the socket identifier the message came through.
     * @param {any} msgFactory Optional. Expects any readable message factory. If this is provided, the payload of the message is unwrapped by the message factory.
     * @param {string} eventAppendix Optional. A string which gets appended to the event name, if present.
+    * @param {boolean} decrypted Optional. Indicates whether this message is the decryption of an encrypted message.
     */
-    HydraMessageCenter.prototype._emitMessage = function (message, node, msgFactory, eventAppendix) {
+    HydraMessageCenter.prototype._emitMessage = function (message, nodeOrIdentifier, msgFactory, eventAppendix, decrypted) {
         var msg = null;
 
         if (msgFactory) {
@@ -238,7 +257,7 @@ var HydraMessageCenter = (function (_super) {
         }
 
         if (msg) {
-            this.emit(message.getMessageType() + (eventAppendix ? &#039;_&#039; + eventAppendix : &#039;&#039;), node, msg);
+            this.emit(message.getMessageType() + (eventAppendix ? &#039;_&#039; + eventAppendix : &#039;&#039;), nodeOrIdentifier, msg, decrypted);
         }
     };
 
@@ -272,14 +291,17 @@ var HydraMessageCenter = (function (_super) {
     *
     * @param {core.protocol.hydra.ReadableHydraMessageInterface} message The message to handle.
     * @param {core.protocol.hydra.HydraNode} circuitNode The node this message originates from.
+    * @param {boolean} decrypted Optional. Indicates whether this message is the decryption of an encrypted message.
     */
-    HydraMessageCenter.prototype._onCircuitMessage = function (message, circuitNode) {
+    HydraMessageCenter.prototype._onCircuitMessage = function (message, circuitNode, decrypted) {
         var circuitId = circuitNode.circuitId;
 
         if (message.getMessageType() === &#039;CELL_CREATED_REJECTED&#039;) {
-            this._emitMessage(message, circuitNode, this._readableCellCreatedRejectedFactory, circuitId);
+            this._emitMessage(message, circuitNode, this._readableCellCreatedRejectedFactory, circuitId, decrypted);
+        } else if (message.getMessageType() === &#039;ADDITIVE_SHARING&#039;) {
+            this._emitMessage(message, circuitNode, this._readableAdditiveSharingFactory, circuitId, decrypted);
         } else if (message.getMessageType() === &#039;ENCRYPTED_SPITOUT&#039; || message.getMessageType() === &#039;ENCRYPTED_DIGEST&#039;) {
-            this._emitMessage(message, circuitNode, null, circuitId);
+            this._emitMessage(message, circuitNode, null, circuitId, decrypted);
         }
     };
 
@@ -304,7 +326,6 @@ var HydraMessageCenter = (function (_super) {
                 this._connectionManager.pipeMessageTo({ ip: msg.getIp(), port: msg.getPort() }, &#039;CREATE_CELL_ADDITIVE&#039;, msg.getPayload());
             }
         } else if (message.getMessageType() === &#039;CREATE_CELL_ADDITIVE&#039;) {
-            // IF INITIATOR, KEEP THE SOCKET OPEN!
             this._emitMessage(message, identifier, this._readableCreateCellAdditiveFactory);
         }
     };
