@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.63</p>
+      <p class="stat">70.24</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">487</p>
+      <p class="stat">476</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">60.53</p>
+      <p class="stat">56.54</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.20</p>
+      <p class="stat">3.19</p>
     </div>
   </div>
 </div>
@@ -212,6 +212,7 @@ var PluginManager = (function () {
     };
 
     PluginManager.prototype.activatePluginState = function (callback) {
+        var _this = this;
         var internalCallback = callback || function (err) {
         };
 
@@ -219,15 +220,9 @@ var PluginManager = (function () {
             var plugins = this._pluginState.active;
             var activated = 0;
             var errors = [];
-            var manager = this;
 
-            return (function activatePlugin(i) {
-                if (i &gt;= plugins.length) {
-                    // callback
-                    return;
-                }
-
-                manager._activatePlugin(plugins[i], function (err) {
+            for (var i = 0, l = plugins.length; i &lt; l; i++) {
+                this._activatePlugin(plugins[i], function (err) {
                     activated++;
 
                     if (err) {
@@ -237,12 +232,12 @@ var PluginManager = (function () {
                     if (activated === plugins.length) {
                         // todo implement error callback!
                         internalCallback(null);
-                        manager._pluginStateIsActive = true;
+                        _this._pluginStateIsActive = true;
                     }
                 });
-
-                return process.nextTick(activatePlugin.bind(null, i + 1));
-            }(0));
+            }
+        } else {
+            return process.nextTick(internalCallback.bind(null, null));
         }
     };
 
@@ -289,10 +284,6 @@ var PluginManager = (function () {
         return process.nextTick(callback.bind(null, this._pluginRunners));
     };
 
-    /**
-    * @param {string} identifier
-    * @returns {core.plugin.PluginRunnerInterface}
-    */
     PluginManager.prototype.getActivePluginRunner = function (identifier, callback) {
         var runner = this._pluginRunners[identifier] ? this._pluginRunners[identifier] : null;
 
@@ -363,7 +354,6 @@ var PluginManager = (function () {
                                 checkAndSendCallback();
                             });
                         }
-                        //console.log(JSON.stringify(mergedPluginData));
                     });
                 } else {
                     sendCallback();
@@ -396,7 +386,7 @@ var PluginManager = (function () {
 
     PluginManager.prototype.open = function (callback) {
         var _this = this;
-        var internalCallback = callback || this._options.onCloseCallback;
+        var internalCallback = callback || this._options.onOpenCallback;
 
         if (this._isOpen) {
             return process.nextTick(internalCallback.bind(null, null));
@@ -437,8 +427,6 @@ var PluginManager = (function () {
             if (err) {
                 return internalCallback(err);
             } else {
-                _this._pluginRunners[identifier] = _this._pluginRunnerFactory.create(_this._config, pluginState.name, pluginState.path);
-
                 // register plugin to mime type list
                 // todo create extensions list
                 var pluginLoader = _this._pluginLoaderFactory.create(_this._config, pluginState.path);
@@ -457,6 +445,7 @@ var PluginManager = (function () {
                 }
 
                 _this._pluginLoaders[identifier] = pluginLoader;
+                _this._pluginRunners[identifier] = _this._pluginRunnerFactory.create(_this._config, pluginState.name, pluginLoader.getMain());
 
                 _this._eventEmitter.emit(&#039;pluginAdded&#039;, identifier);
 
@@ -466,7 +455,7 @@ var PluginManager = (function () {
     };
 
     /**
-    * Returns the path where the manager should load/store the plugin state
+    * Returns the absolute path where the manager should load and store the plugin state
     *
     * @method core.plugin.PluginManager~_getManagerStoragePath
     *

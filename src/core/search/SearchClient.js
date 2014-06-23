@@ -148,9 +148,7 @@ var SearchClient = (function () {
                 map = mapping;
             }
 
-            if (err) {
-                internalCallback(err);
-            } else {
+            if (!err && _this._client) {
                 _this._client.indices.putMapping({
                     index: _this._indexName,
                     type: type.toLowerCase(),
@@ -159,6 +157,8 @@ var SearchClient = (function () {
                     err = err || null;
                     internalCallback(err);
                 });
+            } else {
+                internalCallback(err);
             }
         });
     };
@@ -184,7 +184,7 @@ var SearchClient = (function () {
         var internalCallback = callback || function (err) {
         };
 
-        if (this._isOpen) {
+        if (this._isOpen && this._client) {
             this._client.indices.delete({
                 index: this._indexName
             }, function (err, response, status) {
@@ -323,12 +323,16 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.typeExists = function (type, callback) {
-        this._client.indices.existsType({
-            index: this._indexName,
-            type: type
-        }, function (err, response, status) {
-            callback(response);
-        });
+        if (this._client) {
+            this._client.indices.existsType({
+                index: this._indexName,
+                type: type
+            }, function (err, response, status) {
+                callback(response);
+            });
+        } else {
+            callback(false);
+        }
     };
 
     /**

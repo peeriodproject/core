@@ -170,10 +170,7 @@ class SearchClient implements SearchClientInterface {
 				map = mapping;
 			}
 
-			if (err) {
-				internalCallback(err);
-			}
-			else {
+			if (!err && this._client) {
 				this._client.indices.putMapping({
 					index: this._indexName,
 					type : type.toLowerCase(),
@@ -182,6 +179,9 @@ class SearchClient implements SearchClientInterface {
 					err = err || null;
 					internalCallback(err);
 				});
+			}
+			else {
+				internalCallback(err);
 			}
 		});
 	}
@@ -205,7 +205,7 @@ class SearchClient implements SearchClientInterface {
 		var internalCallback = callback || function (err:Error) {
 		};
 
-		if (this._isOpen) {
+		if (this._isOpen && this._client) {
 			this._client.indices.delete({
 				index: this._indexName
 			}, (err:Error, response, status) => {
@@ -349,12 +349,17 @@ class SearchClient implements SearchClientInterface {
 	}
 
 	public typeExists (type:string, callback:(exists:boolean) => any):void {
-		this._client.indices.existsType({
-			index: this._indexName,
-			type : type
-		}, function (err, response, status) {
-			callback(response);
-		});
+		if (this._client) {
+			this._client.indices.existsType({
+				index: this._indexName,
+				type : type
+			}, function (err, response, status) {
+				callback(response);
+			});
+		}
+		else {
+			callback(false);
+		}
 	}
 
 	/**

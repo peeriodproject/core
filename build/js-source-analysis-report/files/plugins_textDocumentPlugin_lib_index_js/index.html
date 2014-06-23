@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">63.51</p>
+      <p class="stat">60.09</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">72</p>
+      <p class="stat">84</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">11.02</p>
+      <p class="stat">7.31</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.34</p>
+      <p class="stat">0.37</p>
     </div>
   </div>
 </div>
@@ -90,23 +90,15 @@
 
 <div class="container">
   <div class="row">
-    <textarea id="file-source" class="col-md-12">(function (main) {
-    function onTest() {
-        setState(&#039;foobar&#039;);
-        var bar = getState();
-
-        exit({ foo: &#039;foo&#039;, bar: bar });
-    }
-    main.onTest = onTest;
-
+    <textarea id="file-source" class="col-md-12">exports.main = {
     /**
     * Returns the mapping used in the elasticsearch index to store the plugin data
     * The mapping doesn&#039;t include the document root!
     *
     * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/indices-put-mapping.html
     */
-    function getMapping() {
-        var mapping = {
+    getMapping: function () {
+        exit({
             _source: {
                 excludes: [&#039;file&#039;]
             },
@@ -145,23 +137,43 @@
                     }
                 }
             }
-        };
-
-        exit(mapping);
-    }
-    main.getMapping = getMapping;
-
-    function onBeforeItemAdd() {
-        var data = {
+        });
+    },
+    getSearchFields: function () {
+        exit({
+            &quot;action&quot;: &quot;index.html&quot;,
+            &quot;method&quot;: &quot;get&quot;,
+            &quot;html&quot;: [
+                {
+                    &quot;type&quot;: &quot;p&quot;,
+                    &quot;html&quot;: &quot;You must login&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;username&quot;,
+                    &quot;id&quot;: &quot;txt-username&quot;,
+                    &quot;caption&quot;: &quot;Username&quot;,
+                    &quot;type&quot;: &quot;text&quot;,
+                    &quot;placeholder&quot;: &quot;E.g. user@example.com&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;password&quot;,
+                    &quot;caption&quot;: &quot;Password&quot;,
+                    &quot;type&quot;: &quot;password&quot;
+                },
+                {
+                    &quot;type&quot;: &quot;submit&quot;,
+                    &quot;value&quot;: &quot;Login&quot;
+                }
+            ]
+        });
+    },
+    onBeforeItemAdd: function () {
+        exit({
             name: getFileName(),
             stats: getStats()
-        };
-
-        exit(data);
+        });
     }
-    main.onBeforeItemAdd = onBeforeItemAdd;
-})(exports.main || (exports.main = {}));
-var main = exports.main;
+};
 //# sourceMappingURL=index.js.map</textarea>
   </div>
 </div>
