@@ -153,10 +153,34 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 		this._decrypter = decryptionFactory;
 		this._encrypter = encryptionFactory;
 
-		this._extensionReactionInMs = hydraConfig.get('cell.extensionReactionInSeconds') * 1000;
+		this._extensionReactionInMs = hydraConfig.get('hydra.cell.extensionReactionInSeconds') * 1000;
 
 		this._setupListeners();
 	}
+
+	/**
+	 * BEGIN TESTING PURPOSES ONLY
+	 */
+
+	public getPredecessor ():HydraNode {
+		return this._predecessor;
+	}
+
+	public getSuccessor ():HydraNode {
+		return this._successor;
+	}
+
+	public getCurrentUUID ():string {
+		return this._currentExtensionUuid;
+	}
+
+	public getExtensionTimeout ():number {
+		return this._currentExtensionTimeout;
+	}
+
+	/**
+	 * END TESTING PURPOSES ONLY
+	 */
 
 	/**
 	 * Clears the timeout of a cell extension (if present)

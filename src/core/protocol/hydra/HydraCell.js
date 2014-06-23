@@ -130,10 +130,32 @@ var HydraCell = (function (_super) {
         this._decrypter = decryptionFactory;
         this._encrypter = encryptionFactory;
 
-        this._extensionReactionInMs = hydraConfig.get('cell.extensionReactionInSeconds') * 1000;
+        this._extensionReactionInMs = hydraConfig.get('hydra.cell.extensionReactionInSeconds') * 1000;
 
         this._setupListeners();
     }
+    /**
+    * BEGIN TESTING PURPOSES ONLY
+    */
+    HydraCell.prototype.getPredecessor = function () {
+        return this._predecessor;
+    };
+
+    HydraCell.prototype.getSuccessor = function () {
+        return this._successor;
+    };
+
+    HydraCell.prototype.getCurrentUUID = function () {
+        return this._currentExtensionUuid;
+    };
+
+    HydraCell.prototype.getExtensionTimeout = function () {
+        return this._currentExtensionTimeout;
+    };
+
+    /**
+    * END TESTING PURPOSES ONLY
+    */
     /**
     * Clears the timeout of a cell extension (if present)
     *
