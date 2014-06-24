@@ -123,6 +123,15 @@ var CircuitManager = (function (_super) {
     };
 
     /**
+    * Emits the current amount of production ready circuits.
+    *
+    * @method core.protocol.hydra.CircuitManager~_emitCircuitCount
+    */
+    CircuitManager.prototype._emitCircuitCount = function () {
+        this.emit('circuitCount', this._productionReadyCircuits.length);
+    };
+
+    /**
     * Generates a number between the minimum and maximum number of relay nodes a circuit can have (including edges).
     *
     * @method core.protocol.hydra.HydraCircuitManager~_generateRelayNodeAmount
@@ -166,6 +175,8 @@ var CircuitManager = (function (_super) {
         if (this._productionReadyCircuits.length === this._desiredNumberOfCircuits) {
             this.emit('desiredCircuitAmountReached');
         }
+
+        this._emitCircuitCount();
     };
 
     /**
@@ -179,6 +190,8 @@ var CircuitManager = (function (_super) {
     CircuitManager.prototype._onCircuitTeardown = function (circuit) {
         this._iterateOverListAndRemoveCircuit(this._circuitsUnderConstruction, circuit);
         this._iterateOverListAndRemoveCircuit(this._productionReadyCircuits, circuit);
+
+        this._emitCircuitCount();
 
         this._checkAndConstructCircuit();
     };

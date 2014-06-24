@@ -131,6 +131,15 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 	}
 
 	/**
+	 * Emits the current amount of production ready circuits.
+	 *
+	 * @method core.protocol.hydra.CircuitManager~_emitCircuitCount
+	 */
+	private _emitCircuitCount ():void {
+		this.emit('circuitCount', this._productionReadyCircuits.length);
+	}
+
+	/**
 	 * Generates a number between the minimum and maximum number of relay nodes a circuit can have (including edges).
 	 *
 	 * @method core.protocol.hydra.HydraCircuitManager~_generateRelayNodeAmount
@@ -177,6 +186,8 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 		if (this._productionReadyCircuits.length === this._desiredNumberOfCircuits) {
 			this.emit('desiredCircuitAmountReached');
 		}
+
+		this._emitCircuitCount();
 	}
 
 	/**
@@ -191,6 +202,8 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 
 		this._iterateOverListAndRemoveCircuit(this._circuitsUnderConstruction, circuit);
 		this._iterateOverListAndRemoveCircuit(this._productionReadyCircuits, circuit);
+
+		this._emitCircuitCount();
 
 		this._checkAndConstructCircuit();
 	}
