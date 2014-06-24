@@ -9,51 +9,55 @@ declare function setState (state:any):void;
 declare function getFileName ():string;
 declare function getStats ():Object;
 
+declare var fileName:string;
+declare var fileStats:Object;
+declare var fileBuffer:any;
+
 
 export var main = {
 
 	/**
 	 * Returns the mapping used in the elasticsearch index to store the plugin data
-	 * The mapping doesn't include the document root!
+	 * The mapping doesn"t include the document root!
 	 *
 	 * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/indices-put-mapping.html
 	 */
 	getMapping: function () {
 		exit({
 			_source   : {
-				excludes: ['file']
+				excludes: ["file"]
 			},
 			properties: {
 				file: {
-					type          : 'attachment',
+					type          : "attachment",
 					indexed_chars : -1,
 					detect_anguage: true,
 					fields        : {
 						file          : {
-							store      : 'yes',
-							term_vector: 'with_positions_offsets'
+							store      : "yes",
+							term_vector: "with_positions_offsets"
 						},
 						author        : {
-							store: 'yes'
+							store: "yes"
 						},
 						title         : {
-							store: 'yes'
+							store: "yes"
 						},
 						date          : {
-							store: 'yes'
+							store: "yes"
 						},
 						keywords      : {
-							store   : 'yes',
-							analyzer: 'keyword'
+							store   : "yes",
+							analyzer: "keyword"
 						},
 						content_type  : {
-							store: 'yes'
+							store: "yes"
 						},
 						content_length: {
-							store: 'yes'
+							store: "yes"
 						},
 						language      : {
-							store: 'yes'
+							store: "yes"
 						}
 					}
 				}
@@ -92,8 +96,9 @@ export var main = {
 
 	onBeforeItemAdd: function () {
 		exit({
-			name : getFileName(),
-			stats: getStats()
+			//name : fileName,
+			//stats: fileStats,
+			file: fileBuffer
 		});
 	}
 };

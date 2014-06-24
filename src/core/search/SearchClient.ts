@@ -164,7 +164,7 @@ class SearchClient implements SearchClientInterface {
 			if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
 				// wrap mapping in type root
 				map = {};
-				map[type] = mapping;
+				map[type.toLowerCase()] = mapping;
 			}
 			else {
 				map = mapping;
@@ -222,10 +222,6 @@ class SearchClient implements SearchClientInterface {
 		}
 	}
 
-	public getItem (query:Object, callback:(err:Error, item:SearchItemInterface) => any):void {
-		return process.nextTick(callback.bind(null, null, null));
-	}
-
 	public getItemById (id:string, callback:(err:Error, item:SearchItemInterface) => any):void {
 		this._client.get({
 			index: this._indexName,
@@ -274,16 +270,12 @@ class SearchClient implements SearchClientInterface {
 		});
 	}
 
-	/*public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
-		// todo iplementation
-		return process.nextTick(callback.bind(null, null, null));
-	}*/
-
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
 	public itemExists (pathToIndex:string, callback:(exists:boolean) => void):void {
+		console.log('todo SearchClient#itemExists');
 		// todo iplementation
 		return process.nextTick(callback.bind(null, null, null));
 	}

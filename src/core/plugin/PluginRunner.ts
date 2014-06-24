@@ -44,8 +44,8 @@ class PluginRunner implements PluginRunnerInterface {
 		var nodeBinaryPath:string = path.join(__dirname, '../../bin/', this._config.get('plugin.binaryPath'));
 
 		this._sandbox = new SandCastle({
-			memoryLimitMB: 100,
-			timeout      : 10000,
+			memoryLimitMB: 1024,
+			timeout      : 30000,
 			useStrictMode: true,
 			api          : this._getPluginApiPath(),
 			spawnExecPath: nodeBinaryPath

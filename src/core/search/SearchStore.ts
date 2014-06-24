@@ -10,6 +10,7 @@ import SearchStoreInterface = require('./interfaces/SearchStoreInterface');
 import SearchStoreOptions = require('./interfaces/SearchStoreOptions');
 
 import ObjectUtils = require('../utils/ObjectUtils');
+
 /**
  * @see http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/
  * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/setup-configuration.html

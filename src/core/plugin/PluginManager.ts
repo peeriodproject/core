@@ -285,10 +285,15 @@ class PluginManager implements PluginManagerInterface {
 
 						for (var key in runners) {
 							// call the plugin!
-							runners[key].onBeforeItemAdd(itemPath, stats, globals, (data:Object) => {
+							runners[key].onBeforeItemAdd(itemPath, stats, globals, (err:Error, data:Object) => {
 								counter++;
 
-								mergedPluginData[key] = data;
+								if (err) {
+									console.log(err);
+								}
+								else if (data) {
+									mergedPluginData[key] = data;
+								}
 
 								checkAndSendCallback();
 							});
@@ -489,7 +494,23 @@ class PluginManager implements PluginManagerInterface {
 		var tikaGlobals = {
 		};
 
-		callback(null, tikaGlobals);
+		fs.stat(itemPath, function (err:Error, stats:fs.Stats) {
+			if (err) {
+				return callback(err, tikaGlobals);
+			}
+			else if (stats.isFile()) {
+				fs.readFile(itemPath, function (err:Error, data:Buffer) {
+					if (err) {
+						return callback(err, null);
+					}
+					else {
+						tikaGlobals['fileBuffer'] = data.toString('base64');
+						return callback(null, tikaGlobals);
+					}
+				})
+			}
+		});
+		//callback(null, tikaGlobals);
 	}
 
 	private _loadGlobals (itemPath:string, fileHash:string, callback:(err:Error, globals:Object) => any):void {
@@ -498,22 +519,7 @@ class PluginManager implements PluginManagerInterface {
 			fileHash: fileHash
 		};
 
-		fs.stat(itemPath, function (err:Error, stats:fs.Stats) {
-			if (err) {
-				return callback(err, null);
-			}
-			else if (stats.isFile()) {
-				fs.readFile(itemPath, function (err:Error, data:Buffer) {
-					if (err) {
-						return callback(err, null);
-					}
-					else {
-						globals['fileBuffer'] = data;
-						return callback(null, globals);
-					}
-				})
-			}
-		});
+		callback(null, globals);
 	}
 
 }

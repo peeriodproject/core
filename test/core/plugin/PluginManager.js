@@ -295,7 +295,7 @@ describe('CORE --> PLUGIN --> PluginManager', function () {
         };
         var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
             onBeforeItemAdd: function (itemPath, stats, tikaGlobals, callback) {
-                callback(pluginDataStub);
+                callback(null, pluginDataStub);
             }
         });
         var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory, {

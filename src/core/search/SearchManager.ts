@@ -54,6 +54,8 @@ class SearchManager implements SearchManagerInterface {
 	close (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function () {};
 
+		console.log('todo SearchManager#close');
+
 		return process.nextTick(internalCallback.bind(null, null));
 	}
 
@@ -73,12 +75,17 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	public itemExists (pathToIndex:string, callback:(exists:boolean) => void):void {
-		// todo iplementation
+		console.log('todo SearchManager#itemExists');
+
 		return process.nextTick(callback.bind(null, null, null));
 	}
 
 	open (callback?:(err:Error) => any):void {
+		var internalCallback = callback || function () {};
 
+		console.log('todo SearchManager#open');
+
+		return process.nextTick(internalCallback.bind(null, null));
 	}
 
 	private _registerPluginManagerEvents ():void {
@@ -95,7 +102,10 @@ class SearchManager implements SearchManagerInterface {
 			}
 
 			this._pluginManager.getActivePluginRunner(pluginIdentifier, (pluginRunner:PluginRunnerInterface) => {
-				pluginRunner.getMapping((mapping:Object) => {
+				pluginRunner.getMapping((err:Error, mapping:Object) => {
+					if (err) {
+						console.error(err);
+					}
 					if (mapping) {
 						mapping = this._updateMapping(mapping);
 
@@ -107,6 +117,7 @@ class SearchManager implements SearchManagerInterface {
 					}
 					else {
 						// todo plugin uses elasticsearch auto mapping feature! Maybe it's better to throw an error here?
+						console.log('todo: plugin uses elasticsearch auto mapping feature! Maybe it\'s better to throw an error here?');
 					}
 				});
 			});
@@ -119,7 +130,6 @@ class SearchManager implements SearchManagerInterface {
 	 * @method core.search.SearchManager~_updateMapping
 	 *
 	 * @param {Object} mapping
-	 * @param {boolean} isApacheTikaPlugin
 	 * @returns {Object} the restricted mapping
 	 */
 	private _updateMapping(mapping:Object):Object {
@@ -127,10 +137,10 @@ class SearchManager implements SearchManagerInterface {
 		var properties:Object = mapping['properties'] || {};
 
 		// remove file content from source
-		// todo iterate over mapping and find attachment filed by type
+		// todo iterate over mapping and find attachment field by type
 		if (properties && properties['file']) {
 			mapping['_source'] = ObjectUtils.extend(source, {
-				excludes: 'file'
+				excludes: ['file']
 			});
 		}
 
@@ -138,16 +148,87 @@ class SearchManager implements SearchManagerInterface {
 		mapping['properties'] = ObjectUtils.extend(properties, {
 			itemHash: {
 				type: 'string',
-				store: 'yes'
+				store: 'yes',
+				index: 'not_analyzed'
 			},
 			itemPath: {
 				type: 'string',
-				store: 'yes'
-			}/*,
-			todo add item stats inner object to mapping
+				store: 'yes',
+				index: 'not_analyzed'
+			},
 			itemStats: {
-				type:Object
-			}*/
+				type : 'nested',
+				properties: {
+					atime: {
+						type: 'date',
+						format: 'dateOptionalTime',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					blksize: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					blocks: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					ctime: {
+						type: 'date',
+						format: 'dateOptionalTime',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					dev: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					gid: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					ino: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					mode: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					mtime: {
+						type: 'date',
+						format: 'dateOptionalTime',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					nlink: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					rdev: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					size: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					uid: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					}
+				}
+			}
 		});
 
 		return mapping;
