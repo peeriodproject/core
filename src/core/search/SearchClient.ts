@@ -164,7 +164,7 @@ class SearchClient implements SearchClientInterface {
 			if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
 				// wrap mapping in type root
 				map = {};
-				map[type] = mapping;
+				map[type.toLowerCase()] = mapping;
 			}
 			else {
 				map = mapping;
