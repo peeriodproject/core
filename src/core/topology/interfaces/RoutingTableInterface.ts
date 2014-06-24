@@ -62,6 +62,17 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	getRandomContactNode (callback:(err:Error, contact:ContactNodeInterface) => any):void;
 
 	/**
+	 * Returns `amount` nodes from the bucket with the provided index.
+	 * If the bucket holds less than the desired amount, all nodes in the bucket are returned.
+	 *
+	 * @method core.topology.RoutingTableInterface#getRandomContactNodesFromBucket
+	 *
+	 * @param {number} amount The number of desired nodes.
+	 * @param {Function} callback Function which gets called when the search has completed, with a possible error and the array of nodes as arguments.
+	 */
+	getRandomContactNodesFromBucket (bucketIndex:number, amount:number, callback:(err:Error, contactNodes:ContactNodeListInterface) => any):void;
+
+	/**
 	 * Removes the given contact node and adds the new node to the bucket. It returns an error in the callback if the nodes
 	 * are not stored within the same bucket.
 	 *
