@@ -4,7 +4,7 @@ require('should');
 
 import BroadcastReadableMessage = require('../../../src/core/protocol/broadcast/messages/BroadcastReadableMessage');
 
-describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastReadableMessage @current', function () {
+describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastReadableMessage', function () {
 
 	it('should correctly deformat the message', function () {
 		var expectedTimestamp = Date.now();
