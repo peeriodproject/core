@@ -1,4 +1,6 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
+var ObjectUtils = require('../utils/ObjectUtils');
+
 /**
 * @class core.search.IndexManager
 * @implements core.search.IndexManagerInterface
@@ -10,7 +12,8 @@
 * @param {core.search.SearchManagerInterface} searchManager
 */
 var IndexManager = (function () {
-    function IndexManager(config, appQuitHandler, folderWatcherManager, pathValidator, searchManager) {
+    function IndexManager(config, appQuitHandler, folderWatcherManager, pathValidator, searchManager, options) {
+        if (typeof options === "undefined") { options = {}; }
         var _this = this;
         /**
         * The inernally used config instance
@@ -18,6 +21,12 @@ var IndexManager = (function () {
         * @member {core.config.ConfigInterface} core.search.IndexManager~_config
         */
         this._config = null;
+        /**
+        * The map of paths that are currently processed
+        *
+        * @member {core.search.IndexManagerPendingListObjectMapInterface} core.search.IndexManager~_currentPendingPathsToIndex
+        */
+        this._currentPendingPathsToIndex = {};
         /**
         * The internally used FolderWatcherManager instance
         *
@@ -61,47 +70,53 @@ var IndexManager = (function () {
         */
         this._isOpen = false;
         /**
+        * The merged options object
+        *
+        * @member {core.utils.ClosableAsyncOptions} core.search.IndexManager~_options
+        */
+        this._options = {};
+        /**
         * The internally used PathValidatorInterface instance
         *
         * @member {core.fs.PathValidatorInterface} core.search.IndexManager~_pathValidator
         */
         this._pathValidator = null;
         /**
-        * The list of pending paths to index
+        * The map of pending paths to index
         *
-        * todo add type definition
-        *
-        * @member {} core.search.IndexManager~_pendingPathsToIndex
+        * @member {core.search.IndexManagerPendingListObjectMapInterface} core.search.IndexManager~_pendingPathsToIndex
         */
         this._pendingPathsToIndex = {};
-        /**
-        * The list of path that are currently processed
-        *
-        * @member {} core.search.IndexManager~_currentPendingPathsToIndex
-        */
-        this._currentPendingPathsToIndex = {};
         /**
         * The internally used SearchManagerInterface instance
         *
         * @member {core.search.SearchManagerInterface} core.search.IndexManager~_searchManager
         */
         this._searchManager = null;
-        // todo add defaults, optional options...
+        var defaults = {
+            onOpenCallback: function () {
+            },
+            onCloseCallback: function () {
+            },
+            closeOnProcessExit: true
+        };
+
         this._config = config;
         this._folderWatcherManager = folderWatcherManager;
         this._pathValidator = pathValidator;
         this._searchManager = searchManager;
 
+        this._options = ObjectUtils.extend(defaults, options);
+
         this._indexRunnerDelayInMilliSeconds = this._config.get('search.indexManager.indexRunnerDelayInMilliSeconds');
         this._indexRunnersInParallelAmount = this._config.get('search.indexManager.indexRunnersInParallel');
 
-        // todo add merged options & process.exit hook
-        //if (this._options.closeOnProcessExit) {
-        appQuitHandler.add(function (done) {
-            _this.close(done);
-        });
+        if (this._options.closeOnProcessExit) {
+            appQuitHandler.add(function (done) {
+                _this.close(done);
+            });
+        }
 
-        //}
         this.open();
     }
     IndexManager.prototype.addToIndex = function (pathToAdd, stats, callback) {
@@ -211,7 +226,6 @@ var IndexManager = (function () {
         };
 
         if (this._isIndexing) {
-            //console.log('stopping the index runner');
             this._stopIndexRunner();
             this._isIndexing = false;
         }
@@ -224,7 +238,6 @@ var IndexManager = (function () {
         };
 
         if (!this._isIndexing) {
-            //console.log('starting the index runner');
             this._isIndexing = true;
             this._startIndexRunner();
         }
@@ -233,7 +246,9 @@ var IndexManager = (function () {
     };
 
     IndexManager.prototype._bindToFolderWatcherManagerEvents = function () {
+        var _this = this;
         this._folderWatcherManager.on('add', function (changedPath, stats) {
+            _this.addToIndex(changedPath, stats);
             //this._triggerEvent('add', changedPath, stats);
         });
         this._folderWatcherManager.on('change', function (changedPath, stats) {
@@ -244,38 +259,55 @@ var IndexManager = (function () {
         });
     };
 
+    /**
+    *
+    * @private
+    */
     IndexManager.prototype._indexRunner = function () {
-        ////console.log('pending');
-        ////console.log(this._pendingPathsToIndex);
-        // copy items from the pending paths list into the current batch
-        if (Object.keys(this._pendingPathsToIndex).length) {
+        var keys = Object.keys(this._pendingPathsToIndex);
+
+        if (keys.length) {
             for (var pathToIndex in this._pendingPathsToIndex) {
                 this._currentPendingPathsToIndex[pathToIndex] = this._pendingPathsToIndex[pathToIndex];
 
                 delete this._pendingPathsToIndex[pathToIndex];
-                //console.log(this._currentPendingPathsToIndex[pathToIndex]);
             }
 
             this._processPendingPathsToIndex();
         }
 
-        ////console.log('current');
-        ////console.log(this._currentPendingPathsToIndex);
         this._startIndexRunner();
     };
 
+    /**
+    * Creates {@link core.search.IndexManager~_indexInrrersInParallelAmount} new
+    * [PendingPathProcessors]{@link @method core.search.IndexManager~_createPendingPathProcessor}
+    *
+    * @method core.search.IndexManager~_processPendingPathToIndex
+    */
     IndexManager.prototype._processPendingPathsToIndex = function () {
-        //console.log('process pending path to index');
-        // run x index processes in parallel
         var processesStarted = 0;
         var created = true;
 
         while (created && processesStarted < this._indexRunnersInParallelAmount) {
             created = this._createPendingPathProcessor();
+
+            if (created) {
+                processesStarted++;
+            }
         }
     };
 
-    // todo add return type
+    /**
+    * Creates a {@link core.search.IndexManagerPendingListObjectInterface} of the given arguments
+    *
+    * @method core.search.IndexManager~_createPendingListObject
+    *
+    * @param {string} pathToIndex
+    * @param {fs.Stats} stats
+    * @param {Function} callback
+    * @returns {core.search.IndexManagerPendingListObjectInterface}
+    */
     IndexManager.prototype._createPendingListObject = function (pathToIndex, stats, callback) {
         return {
             isIndexing: false,
@@ -309,7 +341,6 @@ var IndexManager = (function () {
             }
 
             if (pathToIndex && pathData) {
-                //console.log('created parallel index runner for', pathToIndex);
                 this._processPendingPathToIndex(pathToIndex, pathData.stats, function (err) {
                     _this._indexRunnersInParallelRunning--;
 
@@ -348,19 +379,16 @@ var IndexManager = (function () {
 
         this._getItemStatsFromSearchManager(pathToIndex, function (searchManagerHash, searchManagerStats) {
             // item exists
-            if (searchManagerStats) {
+            if (searchManagerHash && searchManagerStats) {
                 ////console.log('validating item');
                 _this._validateItem(pathToIndex, searchManagerHash, searchManagerStats, function (err, isValid, fileHash, fileStats) {
-                    //console.log('item is valid:', isValid);
                     if (isValid) {
-                        //console.log('item is already fully indexed');
                         // todo check against the amount of plugins which indexed this file. Maybe some plugins are new
                         callback(new Error('IndexManager~_processPendingPathToIndex: The item at path "' + pathToIndex + '" is already indexed.'));
                     } else {
                         _this._addItem(pathToIndex, stats, fileHash, callback);
                     }
                 });
-                /**/
             } else {
                 // adding new item
                 _this._pathValidator.getHash(pathToIndex, function (err, fileHash) {
@@ -449,7 +477,6 @@ var IndexManager = (function () {
     * @param {Error} err
     */
     IndexManager.prototype._removeCurrentPendingPathToIndex = function (pathToIndex, err) {
-        //console.log('removing from current list and calling callback for', pathToIndex);
         this._currentPendingPathsToIndex[pathToIndex].callback(err);
 
         delete this._currentPendingPathsToIndex[pathToIndex];
@@ -465,8 +492,6 @@ var IndexManager = (function () {
         var _this = this;
         if (this._isIndexing) {
             this._indexRunnerTimeout = setTimeout(function () {
-                ////console.log('index runner interval');
-                ////console.log(this._pendingPathsToIndex);
                 _this._indexRunner();
             }, this._indexRunnerDelayInMilliSeconds);
         }
