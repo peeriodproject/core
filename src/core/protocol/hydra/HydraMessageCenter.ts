@@ -8,6 +8,7 @@ import ConnectionManagerInterface = require('./interfaces/ConnectionManagerInter
 // messages
 import ReadableHydraMessageInterface = require('./messages/interfaces/ReadableHydraMessageInterface');
 import ReadableCellCreatedRejectedMessageFactoryInterface = require('./messages/interfaces/ReadableCellCreatedRejectedMessageFactoryInterface');
+import ReadableCreateCellAdditiveMessageInterface = require('./messages/interfaces/ReadableCreateCellAdditiveMessageInterface');
 import ReadableAdditiveSharingMessageFactoryInterface = require('./messages/interfaces/ReadableAdditiveSharingMessageFactoryInterface');
 import ReadableAdditiveSharingMessageInterface = require('./messages/interfaces/ReadableAdditiveSharingMessageInterface');
 import ReadableCreateCellAdditiveMessageFactoryInterface = require('./messages/interfaces/ReadableCreateCellAdditiveMessageFactoryInterface');
@@ -102,15 +103,29 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		var msg:ReadableHydraMessageInterface = null;
 
 		try {
-			msg = this._readableHydraMessageFactory.create(payload);
+			msg = this._readableHydraMessageFactory.create(payload, true);
 		}
 		catch (e) {
-
 		}
 
 		if (msg) {
 			this._onCircuitMessage(msg, from, true);
 		}
+	}
+
+	public getFullBufferOfMessage (type:string, msg:any):Buffer {
+		var buffer:Buffer = null;
+		var middleMessage:Buffer = null;
+
+		try {
+			if (type === 'CELL_CREATED_REJECTED') {
+				middleMessage = this._writableCellCreatedRejectedFactory.constructMessage(msg.getUUID(), msg.getSecretHash(), msg.getDHPayload());
+			}
+
+			buffer = this._writableHydraMessageFactory.constructMessage(type, middleMessage);
+		} catch (e) {}
+
+		return buffer;
 	}
 
 	public sendAdditiveSharingMessage (to:HydraNode, targetIp:string, targetPort:number, uuid:string, additivePayload:Buffer):void {
@@ -165,6 +180,19 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		}
 	}
 
+	public unwrapAdditiveSharingPayload (message:ReadableAdditiveSharingMessageInterface):ReadableCreateCellAdditiveMessageInterface {
+		var msg:ReadableCreateCellAdditiveMessageInterface = null;
+
+		try {
+			msg = this._readableCreateCellAdditiveFactory.create(message.getPayload());
+		}
+		catch (e) {
+
+		}
+
+		return msg;
+	}
+
 	/**
 	 * Lets a provided factory read the payload of the message and emits this message.
 	 * The name of the event is the human readably message type, appended with an eventAppend (e.g. a circuit id), if provided.
@@ -185,6 +213,7 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 				msg = msgFactory.create(message.getPayload());
 			}
 			catch (e) {
+				throw e;
 			}
 		}
 		else {
@@ -253,12 +282,14 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 	 */
 	private _onMessage (identifier:string, message:ReadableHydraMessageInterface):void {
 		if (message.getMessageType() === 'ADDITIVE_SHARING') {
+
 			var msg:ReadableAdditiveSharingMessageInterface = null;
 
 			try {
 				msg = this._readableAdditiveSharingFactory.create(message.getPayload());
 			}
 			catch (e) {
+
 			}
 
 			if (msg) {

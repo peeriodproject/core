@@ -253,8 +253,10 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 	 * @param {core.protocol.hydra.ReadableHydraMessageInterface} message The hydra message with encrypted payload.
 	 */
 	private _onEncryptedDigest (from:HydraNode, message:ReadableHydraMessageInterface) {
+
 		if (from === this._circuitNodes[0]) {
 			this._layeredEncDecHandler.decrypt(message.getPayload(), (err:Error, decryptedBuffer:Buffer) => {
+
 				if (err) {
 					this._teardown(true);
 				}

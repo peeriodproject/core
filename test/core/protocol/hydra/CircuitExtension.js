@@ -28,7 +28,7 @@ var WritableAdditiveSharingMessageFactory = require('../../../../src/core/protoc
 var WritableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory');
 var LayeredEncDecHandler = require('../../../../src/core/protocol/hydra/messages/Aes128GcmLayeredEncDecHandler');
 
-describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration) @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration)', function () {
     this.timeout(0);
 
     var sandbox = null;
@@ -56,7 +56,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> Circuit extension (integration) @curre
     var readablyHydraMessageFactory = new ReadableHydraMessageFactory();
 
     var emitHydraMessage = function (type, identifier, messagePayload, circuitId, decrypted) {
-        var msgPayload = writableHydraMessageFactory.constructMessage(type, messagePayload, messagePayload.length, circuitId);
+        var msgPayload = writableHydraMessageFactory.constructMessage(type, messagePayload, messagePayload.length, decrypted ? null : circuitId);
 
         if (decrypted) {
             var from = connectionManager.getCircuitNodes()[identifier];

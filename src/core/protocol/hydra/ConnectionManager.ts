@@ -200,6 +200,7 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 			}
 
 			if (msgToEmit) {
+
 				var circuitNode:HydraNode = this._circuitNodes[identifier];
 
 				if (circuitNode) {

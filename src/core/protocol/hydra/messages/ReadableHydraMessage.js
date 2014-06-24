@@ -8,9 +8,11 @@ var HydraByteCheatsheet = require('./HydraByteCheatsheet');
 * @implements core.protocol.hydra.ReadableHydraMessageInterface
 *
 * @param {Buffer} buffer Input data to deconstruct.
+* @param {boolean} noCircuitIdExtranction Optional. If this is true, the circuit ID is not extracted, no matter what type of message.
 */
 var ReadableHydraMessage = (function () {
-    function ReadableHydraMessage(buffer) {
+    function ReadableHydraMessage(buffer, noCircuitIdExtraction) {
+        if (typeof noCircuitIdExtraction === "undefined") { noCircuitIdExtraction = false; }
         /**
         * @member {string} core.protocol.hydra.ReadableHydraMessage~_circuitId
         */
@@ -32,7 +34,7 @@ var ReadableHydraMessage = (function () {
 
         this._extractMessageType(buffer[0]);
 
-        if (this._isCircuitMessage()) {
+        if (!noCircuitIdExtraction && this._isCircuitMessage()) {
             this._circuitId = buffer.slice(sliceFrom, sliceFrom + 16).toString('hex');
             sliceFrom += 16;
         }

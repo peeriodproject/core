@@ -43,7 +43,7 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	getClosestContactNodes (id:IdInterface, excludeId:IdInterface, callback:(err:Error, contacts:ContactNodeListInterface) => any):void;
 
 	/**
-	 * Returns the specified contact code by id
+	 * Returns the specified contact node by id
 	 *
 	 * @method core.topology.RoutingTableInterface#getContactNode
 	 *

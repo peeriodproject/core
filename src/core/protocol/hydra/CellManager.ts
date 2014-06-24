@@ -140,8 +140,6 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 		initiatorNode.incomingKey = incomingKey;
 		initiatorNode.outgoingKey = outgoingKey;
 
-		// @todo here we have to create the HydraCell (in the HydraCell, hook the termination listener AT ONCE)
-
 		this._messageCenter.sendCellCreatedRejectedMessage(initiatorNode, pending.uuid, sha1, dhPublicKey);
 
 		var cell:HydraCellInterface = this._cellFactory.create(initiatorNode);

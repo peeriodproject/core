@@ -80,13 +80,29 @@ var HydraMessageCenter = (function (_super) {
         var msg = null;
 
         try  {
-            msg = this._readableHydraMessageFactory.create(payload);
+            msg = this._readableHydraMessageFactory.create(payload, true);
         } catch (e) {
         }
 
         if (msg) {
             this._onCircuitMessage(msg, from, true);
         }
+    };
+
+    HydraMessageCenter.prototype.getFullBufferOfMessage = function (type, msg) {
+        var buffer = null;
+        var middleMessage = null;
+
+        try  {
+            if (type === 'CELL_CREATED_REJECTED') {
+                middleMessage = this._writableCellCreatedRejectedFactory.constructMessage(msg.getUUID(), msg.getSecretHash(), msg.getDHPayload());
+            }
+
+            buffer = this._writableHydraMessageFactory.constructMessage(type, middleMessage);
+        } catch (e) {
+        }
+
+        return buffer;
     };
 
     HydraMessageCenter.prototype.sendAdditiveSharingMessage = function (to, targetIp, targetPort, uuid, additivePayload) {
@@ -140,6 +156,17 @@ var HydraMessageCenter = (function (_super) {
         }
     };
 
+    HydraMessageCenter.prototype.unwrapAdditiveSharingPayload = function (message) {
+        var msg = null;
+
+        try  {
+            msg = this._readableCreateCellAdditiveFactory.create(message.getPayload());
+        } catch (e) {
+        }
+
+        return msg;
+    };
+
     /**
     * Lets a provided factory read the payload of the message and emits this message.
     * The name of the event is the human readably message type, appended with an eventAppend (e.g. a circuit id), if provided.
@@ -159,6 +186,7 @@ var HydraMessageCenter = (function (_super) {
             try  {
                 msg = msgFactory.create(message.getPayload());
             } catch (e) {
+                throw e;
             }
         } else {
             msg = message;

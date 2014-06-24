@@ -4,6 +4,8 @@ import events = require('events');
 
 import HydraNode = require('./HydraNode');
 import LayeredEncDecHandlerInterface = require('../messages/interfaces/LayeredEncDecHandlerInterface');
+import ReadableAdditiveSharingMessageInterface = require('../messages/interfaces/ReadableAdditiveSharingMessageInterface');
+import ReadableCreateCellAdditiveMessageInterface = require('../messages/interfaces/ReadableCreateCellAdditiveMessageInterface');
 
 /**
  * The Hydra Message Center handles all incoming messages, transforms and distributes them and is responsible
@@ -14,7 +16,29 @@ import LayeredEncDecHandlerInterface = require('../messages/interfaces/LayeredEn
  */
 interface HydraMessageCenterInterface extends NodeJS.EventEmitter {
 
+	/**
+	 * Forces a decrypted message through the pipe, i.e. creating a hydra message and letting the message center
+	 * emit the appropriate message type.
+	 * The emitted event will have the flag `decrypted` set to true.
+	 * This is used by Cells and Circuits after they decrypted digest/spitout messages.
+	 *
+	 * @method core.protocol.hydra.HydraMessageCenterInterface#forceCircuitMessageThrough
+	 *
+	 * @param {Buffer} The payload to use to build the right message.
+	 * @param {core.protocol.hydra.HydraNode} The node the message originated from.
+	 */
 	forceCircuitMessageThrough (payload:Buffer, from:HydraNode):void;
+
+	/**
+	 * Returns the full buffer of an already unwrapped hydra message type.
+	 * Does not prepend the indicator byte of the message type.
+	 *
+	 * @method core.protocol.hydra.hydraMessageCenterInterface#getFullBufferOfMessage
+	 *
+	 * @param {string} type The human readable representation of the message to get the full buffer from.
+	 * @param {any} msg Any already unwrapped message.
+	 */
+	getFullBufferOfMessage (type:string, msg:any):Buffer;
 
 	/**
 	 * Sends an ADDITIVE_SHARING message.
@@ -66,6 +90,17 @@ interface HydraMessageCenterInterface extends NodeJS.EventEmitter {
 	 * @param {Buffer} additivePayload The additive payload.
 	 */
 	spitoutRelayCreateCellMessage (encDecHandler:LayeredEncDecHandlerInterface, targetIp:string, targetPort:number, uuid:string, additivePayload:Buffer, circuitId:string):void;
+
+	/**
+	 * Unwraps the CREATE_CELL_ADDITIVE message from an ADDITIVE_SHARING payload.
+	 * This is used by cells for example, to extract the uuid of the current additive scheme.
+	 *
+	 * @method core.protocol.hydra.HydraMessageCenterInterface#unwrapAdditiveSharingPayload
+	 *
+	 * @param {core.protocol.hydra.ReadableAdditiveSharingMessageInterface} message
+	 * @returns {core.protocol.hydra.ReadableCreateCellAdditiveMessageInterface}
+	 */
+	unwrapAdditiveSharingPayload (message:ReadableAdditiveSharingMessageInterface):ReadableCreateCellAdditiveMessageInterface;
 }
 
 export = HydraMessageCenterInterface;
