@@ -143,7 +143,7 @@ var SearchClient = (function () {
             if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
                 // wrap mapping in type root
                 map = {};
-                map[type] = mapping;
+                map[type.toLowerCase()] = mapping;
             } else {
                 map = mapping;
             }
@@ -199,10 +199,6 @@ var SearchClient = (function () {
         }
     };
 
-    SearchClient.prototype.getItem = function (query, callback) {
-        return process.nextTick(callback.bind(null, null, null));
-    };
-
     SearchClient.prototype.getItemById = function (id, callback) {
         var _this = this;
         this._client.get({
@@ -250,15 +246,13 @@ var SearchClient = (function () {
         });
     };
 
-    /*public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
-    // todo iplementation
-    return process.nextTick(callback.bind(null, null, null));
-    }*/
     SearchClient.prototype.isOpen = function (callback) {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
     SearchClient.prototype.itemExists = function (pathToIndex, callback) {
+        console.log('todo SearchClient#itemExists');
+
         // todo iplementation
         return process.nextTick(callback.bind(null, null, null));
     };

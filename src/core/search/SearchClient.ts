@@ -270,16 +270,12 @@ class SearchClient implements SearchClientInterface {
 		});
 	}
 
-	/*public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
-		// todo iplementation
-		return process.nextTick(callback.bind(null, null, null));
-	}*/
-
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
 	public itemExists (pathToIndex:string, callback:(exists:boolean) => void):void {
+		console.log('todo SearchClient#itemExists');
 		// todo iplementation
 		return process.nextTick(callback.bind(null, null, null));
 	}

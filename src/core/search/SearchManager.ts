@@ -54,6 +54,8 @@ class SearchManager implements SearchManagerInterface {
 	close (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function () {};
 
+		console.log('todo SearchManager#close');
+
 		return process.nextTick(internalCallback.bind(null, null));
 	}
 
@@ -73,14 +75,16 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	public itemExists (pathToIndex:string, callback:(exists:boolean) => void):void {
-		// todo iplementation
+		console.log('todo SearchManager#itemExists');
+
 		return process.nextTick(callback.bind(null, null, null));
 	}
 
 	open (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function () {};
 
-		// todo proper implementation
+		console.log('todo SearchManager#open');
+
 		return process.nextTick(internalCallback.bind(null, null));
 	}
 
@@ -113,6 +117,7 @@ class SearchManager implements SearchManagerInterface {
 					}
 					else {
 						// todo plugin uses elasticsearch auto mapping feature! Maybe it's better to throw an error here?
+						console.log('todo: plugin uses elasticsearch auto mapping feature! Maybe it\'s better to throw an error here?');
 					}
 				});
 			});
@@ -164,32 +169,27 @@ class SearchManager implements SearchManagerInterface {
 						type: 'long',
 						store: 'yes',
 						index: 'not_analyzed'
-
 					},
 					blocks: {
 						type: 'long',
 						store: 'yes',
 						index: 'not_analyzed'
-
 					},
 					ctime: {
 						type: 'date',
 						format: 'dateOptionalTime',
 						store: 'yes',
 						index: 'not_analyzed'
-
 					},
 					dev: {
 						type: 'long',
 						store: 'yes',
 						index: 'not_analyzed'
-
 					},
 					gid: {
 						type: 'long',
 						store: 'yes',
 						index: 'not_analyzed'
-
 					},
 					ino: {
 						type: 'long',
@@ -230,9 +230,6 @@ class SearchManager implements SearchManagerInterface {
 				}
 			}
 		});
-
-		console.log('updated mapping');
-		console.log(mapping);
 
 		return mapping;
 	}

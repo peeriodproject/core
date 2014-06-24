@@ -41,6 +41,8 @@ var SearchManager = (function () {
         var internalCallback = callback || function () {
         };
 
+        console.log('todo SearchManager#close');
+
         return process.nextTick(internalCallback.bind(null, null));
     };
 
@@ -59,11 +61,18 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype.itemExists = function (pathToIndex, callback) {
-        // todo iplementation
+        console.log('todo SearchManager#itemExists');
+
         return process.nextTick(callback.bind(null, null, null));
     };
 
     SearchManager.prototype.open = function (callback) {
+        var internalCallback = callback || function () {
+        };
+
+        console.log('todo SearchManager#open');
+
+        return process.nextTick(internalCallback.bind(null, null));
     };
 
     SearchManager.prototype._registerPluginManagerEvents = function () {
@@ -96,6 +105,7 @@ var SearchManager = (function () {
                         });
                     } else {
                         // todo plugin uses elasticsearch auto mapping feature! Maybe it's better to throw an error here?
+                        console.log('todo: plugin uses elasticsearch auto mapping feature! Maybe it\'s better to throw an error here?');
                     }
                 });
             });
@@ -108,7 +118,6 @@ var SearchManager = (function () {
     * @method core.search.SearchManager~_updateMapping
     *
     * @param {Object} mapping
-    * @param {boolean} isApacheTikaPlugin
     * @returns {Object} the restricted mapping
     */
     SearchManager.prototype._updateMapping = function (mapping) {
@@ -116,10 +125,10 @@ var SearchManager = (function () {
         var properties = mapping['properties'] || {};
 
         // remove file content from source
-        // todo iterate over mapping and find attachment filed by type
+        // todo iterate over mapping and find attachment field by type
         if (properties && properties['file']) {
             mapping['_source'] = ObjectUtils.extend(source, {
-                excludes: 'file'
+                excludes: ['file']
             });
         }
 
@@ -127,11 +136,86 @@ var SearchManager = (function () {
         mapping['properties'] = ObjectUtils.extend(properties, {
             itemHash: {
                 type: 'string',
-                store: 'yes'
+                store: 'yes',
+                index: 'not_analyzed'
             },
             itemPath: {
                 type: 'string',
-                store: 'yes'
+                store: 'yes',
+                index: 'not_analyzed'
+            },
+            itemStats: {
+                type: 'nested',
+                properties: {
+                    atime: {
+                        type: 'date',
+                        format: 'dateOptionalTime',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    blksize: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    blocks: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    ctime: {
+                        type: 'date',
+                        format: 'dateOptionalTime',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    dev: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    gid: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    ino: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    mode: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    mtime: {
+                        type: 'date',
+                        format: 'dateOptionalTime',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    nlink: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    rdev: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    size: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    uid: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    }
+                }
             }
         });
 

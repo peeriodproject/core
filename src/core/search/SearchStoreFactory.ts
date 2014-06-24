@@ -16,6 +16,7 @@ class SearchStoreFactory implements SearchStoreFactoryInterface {
 		return new SearchStore(config, appQuitHandler, options);
 	}
 
+
 	/**
 	 * todo check if we can remove this method
 	 */
