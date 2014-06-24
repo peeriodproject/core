@@ -54,8 +54,6 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 */
 	typeExists (type:string, callback:(exists:boolean) => any):void
 
-	getItem (query:Object, callback:(err:Error, item:SearchItemInterface) => any):void;
-
 	/**
 	 * Returns the first item which matches the specified id accross all types (plugin identifiers)
 	 *

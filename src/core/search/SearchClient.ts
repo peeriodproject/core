@@ -222,10 +222,6 @@ class SearchClient implements SearchClientInterface {
 		}
 	}
 
-	public getItem (query:Object, callback:(err:Error, item:SearchItemInterface) => any):void {
-		return process.nextTick(callback.bind(null, null, null));
-	}
-
 	public getItemById (id:string, callback:(err:Error, item:SearchItemInterface) => any):void {
 		this._client.get({
 			index: this._indexName,
