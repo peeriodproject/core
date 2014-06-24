@@ -57,6 +57,8 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @curre
 
 	var socketNodeMap = {}
 
+	this.timeout(0);
+
 
 
 	it('should build up 5 nodes', function () {
