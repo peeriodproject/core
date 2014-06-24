@@ -122,7 +122,6 @@ class SearchManager implements SearchManagerInterface {
 	 * @method core.search.SearchManager~_updateMapping
 	 *
 	 * @param {Object} mapping
-	 * @param {boolean} isApacheTikaPlugin
 	 * @returns {Object} the restricted mapping
 	 */
 	private _updateMapping(mapping:Object):Object {
@@ -130,10 +129,10 @@ class SearchManager implements SearchManagerInterface {
 		var properties:Object = mapping['properties'] || {};
 
 		// remove file content from source
-		// todo iterate over mapping and find attachment filed by type
+		// todo iterate over mapping and find attachment field by type
 		if (properties && properties['file']) {
 			mapping['_source'] = ObjectUtils.extend(source, {
-				excludes: 'file'
+				excludes: ['file']
 			});
 		}
 
@@ -141,17 +140,96 @@ class SearchManager implements SearchManagerInterface {
 		mapping['properties'] = ObjectUtils.extend(properties, {
 			itemHash: {
 				type: 'string',
-				store: 'yes'
+				store: 'yes',
+				index: 'not_analyzed'
 			},
 			itemPath: {
 				type: 'string',
-				store: 'yes'
-			}/*,
-			todo add item stats inner object to mapping
+				store: 'yes',
+				index: 'not_analyzed'
+			},
 			itemStats: {
-				type:Object
-			}*/
+				type : 'nested',
+				properties: {
+					atime: {
+						type: 'date',
+						format: 'dateOptionalTime',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					blksize: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+
+					},
+					blocks: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+
+					},
+					ctime: {
+						type: 'date',
+						format: 'dateOptionalTime',
+						store: 'yes',
+						index: 'not_analyzed'
+
+					},
+					dev: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+
+					},
+					gid: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+
+					},
+					ino: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					mode: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					mtime: {
+						type: 'date',
+						format: 'dateOptionalTime',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					nlink: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					rdev: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					size: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					uid: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					}
+				}
+			}
 		});
+
+		console.log('updated mapping');
+		console.log(mapping);
 
 		return mapping;
 	}
