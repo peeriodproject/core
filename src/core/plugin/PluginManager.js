@@ -254,10 +254,14 @@ var PluginManager = (function () {
 
                         for (var key in runners) {
                             // call the plugin!
-                            runners[key].onBeforeItemAdd(itemPath, stats, globals, function (data) {
+                            runners[key].onBeforeItemAdd(itemPath, stats, globals, function (err, data) {
                                 counter++;
 
-                                mergedPluginData[key] = data;
+                                if (err) {
+                                    console.log(err);
+                                } else if (data) {
+                                    mergedPluginData[key] = data;
+                                }
 
                                 checkAndSendCallback();
                             });
@@ -447,7 +451,21 @@ var PluginManager = (function () {
     PluginManager.prototype._loadApacheTikaGlobals = function (itemPath, callback) {
         var tikaGlobals = {};
 
-        callback(null, tikaGlobals);
+        fs.stat(itemPath, function (err, stats) {
+            if (err) {
+                return callback(err, tikaGlobals);
+            } else if (stats.isFile()) {
+                fs.readFile(itemPath, function (err, data) {
+                    if (err) {
+                        return callback(err, null);
+                    } else {
+                        tikaGlobals['fileBuffer'] = data.toString('base64');
+                        return callback(null, tikaGlobals);
+                    }
+                });
+            }
+        });
+        //callback(null, tikaGlobals);
     };
 
     PluginManager.prototype._loadGlobals = function (itemPath, fileHash, callback) {
@@ -456,20 +474,7 @@ var PluginManager = (function () {
             fileHash: fileHash
         };
 
-        fs.stat(itemPath, function (err, stats) {
-            if (err) {
-                return callback(err, null);
-            } else if (stats.isFile()) {
-                fs.readFile(itemPath, function (err, data) {
-                    if (err) {
-                        return callback(err, null);
-                    } else {
-                        globals['fileBuffer'] = data;
-                        return callback(null, globals);
-                    }
-                });
-            }
-        });
+        callback(null, globals);
     };
     return PluginManager;
 })();
