@@ -15,14 +15,41 @@ var NodePublisherFactory = require('./networkMaintenance/nodeDiscovery/nodePubli
 
 var NetworkMaintainer = require('./networkMaintenance/NetworkMaintainer');
 
+// HYDRA
+var HydraMessageCenter = require('./hydra/HydraMessageCenter');
+
+var CircuitManager = require('./hydra/CircuitManager');
+
+var CellManager = require('./hydra/CellManager');
+
+var ConnectionManager = require('./hydra/ConnectionManager');
+
+var CircuitExtenderFactory = require('./hydra/CircuitExtenderFactory');
+var HydraCircuitFactory = require('./hydra/HydraCircuitFactory');
+var HydraCellFactory = require('./hydra/HydraCellFactory');
+
+// Message factories
+var ReadableHydraMessageFactory = require('./hydra/messages/ReadableHydraMessageFactory');
+var WritableHydraMessageFactory = require('./hydra/messages/WritableHydraMessageFactory');
+var ReadableCellCreatedRejectedMessageFactory = require('./hydra/messages/ReadableCellCreatedRejectedMessageFactory');
+var WritableCellCreatedRejectedMessageFactory = require('./hydra/messages/WritableCellCreatedRejectedMessageFactory');
+var ReadableAdditiveSharingMessageFactory = require('./hydra/messages/ReadableAdditiveSharingMessageFactory');
+var ReadableCreateCellAdditiveMessageFactory = require('./hydra/messages/ReadableCreateCellAdditiveMessageFactory');
+var WritableCreateCellAdditiveMessageFactory = require('./hydra/messages/WritableCreateCellAdditiveMessageFactory');
+var WritableAdditiveSharingMessageFactory = require('./hydra/messages/WritableAdditiveSharingMessageFactory');
+var Aes128GcmLayeredEncDecHandlerFactory = require('./hydra/messages/Aes128GcmLayeredEncDecHandlerFactory');
+var Aes128GcmWritableMessageFactory = require('./hydra/messages/Aes128GcmWritableMessageFactory');
+var Aes128GcmReadableDecryptedMessageFactory = require('./hydra/messages/Aes128GcmReadableDecryptedMessageFactory');
+
 var logger = require('../utils/logger/LoggerFactory').create();
 
 var ProtocolGateway = (function () {
-    function ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable) {
+    function ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable) {
         var _this = this;
         this._myNode = null;
         this._tcpSocketHandler = null;
         this._appConfig = null;
+        this._hydraConfig = null;
         this._protocolConfig = null;
         this._protocolConnectionManager = null;
         this._proxyManager = null;
@@ -33,9 +60,14 @@ var ProtocolGateway = (function () {
         this._nodeSeekerManager = null;
         this._nodePublishers = null;
         this._networkMaintainer = null;
+        this._hydraMessageCenter = null;
+        this._hydraConnectionManager = null;
+        this._hydraCircuitManager = null;
+        this._hydraCellManager = null;
         this._appConfig = appConfig;
         this._protocolConfig = protocolConfig;
         this._topologyConfig = topologyConfig;
+        this._hydraConfig = hydraConfig;
 
         this._myNode = myNode;
         this._tcpSocketHandler = tcpSocketHandler;
@@ -71,6 +103,29 @@ var ProtocolGateway = (function () {
 
         // build up the NetworkMaintainer
         this._networkMaintainer = new NetworkMaintainer(this._topologyConfig, this._protocolConfig, this._myNode, this._nodeSeekerManager, this._findClosestNodesManager, this._proxyManager);
+
+        // HYDRA THINGS
+        var readableHydraMessageFactory = new ReadableHydraMessageFactory();
+        var writableHydraMessageFactory = new WritableHydraMessageFactory();
+        var readableCellCreatedRejectedMessageFactory = new ReadableCellCreatedRejectedMessageFactory();
+        var writableCellCreatedRejectedMessageFactory = new WritableCellCreatedRejectedMessageFactory();
+        var readableAdditiveSharingMessageFactory = new ReadableAdditiveSharingMessageFactory();
+        var readableCreateCellAdditiveMessageFactory = new ReadableCreateCellAdditiveMessageFactory();
+        var writableCreateCellAdditiveMessageFactory = new WritableCreateCellAdditiveMessageFactory();
+        var writableAdditiveSharingMessageFactory = new WritableAdditiveSharingMessageFactory();
+
+        this._hydraConnectionManager = new ConnectionManager(this._protocolConnectionManager, writableHydraMessageFactory, readableHydraMessageFactory);
+        this._hydraMessageCenter = new HydraMessageCenter(this._hydraConnectionManager, readableHydraMessageFactory, readableCellCreatedRejectedMessageFactory, readableAdditiveSharingMessageFactory, readableCreateCellAdditiveMessageFactory, writableCreateCellAdditiveMessageFactory, writableAdditiveSharingMessageFactory, writableHydraMessageFactory, writableCellCreatedRejectedMessageFactory);
+
+        var circuitExtenderFactory = new CircuitExtenderFactory(this._hydraConnectionManager, this._hydraMessageCenter);
+        var aes128GcmLayeredEncDecHandlerFactory = new Aes128GcmLayeredEncDecHandlerFactory();
+        var aes128GcmDecryptionFactory = new Aes128GcmReadableDecryptedMessageFactory();
+        var aes128GcmEncryptionFactory = new Aes128GcmWritableMessageFactory();
+        var hydraCircuitFactory = new HydraCircuitFactory(this._hydraConfig, this._routingTable, this._hydraConnectionManager, this._hydraMessageCenter, circuitExtenderFactory, aes128GcmLayeredEncDecHandlerFactory);
+        var hydraCellFactory = new HydraCellFactory(this._hydraConfig, this._hydraConnectionManager, this._hydraMessageCenter, aes128GcmDecryptionFactory, aes128GcmEncryptionFactory);
+
+        this._hydraCircuitManager = new CircuitManager(this._hydraConfig, hydraCircuitFactory);
+        this._hydraCellManager = new CellManager(this._hydraConfig, this._hydraConnectionManager, this._hydraMessageCenter, hydraCellFactory);
     }
     ProtocolGateway.prototype.start = function () {
         /**
@@ -96,6 +151,13 @@ var ProtocolGateway = (function () {
 
         this._networkMaintainer.once('joinedNetwork', function () {
             logger.info('Successfully joined the network.', { id: _this._myNode.getId().toHexString() });
+
+            // start the hydra things
+            _this._hydraCircuitManager.kickOff();
+
+            _this._hydraCircuitManager.once('desiredCircuitAmountReached', function () {
+                logger.info('Hydra circuit construction done.', { id: _this._myNode.getId().toHexString() });
+            });
         });
 
         this._networkMaintainer.joinNetwork();
