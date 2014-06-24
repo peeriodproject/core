@@ -78,7 +78,10 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	open (callback?:(err:Error) => any):void {
+		var internalCallback = callback || function () {};
 
+		// todo proper implementation
+		return process.nextTick(internalCallback.bind(null, null));
 	}
 
 	private _registerPluginManagerEvents ():void {
