@@ -4,15 +4,21 @@ var ObjectUtils = require('../utils/ObjectUtils');
 /**
 * @class core.plugin.PluginGlobalsFactory
 * @implements core.plugin.PluginGlobalsFactoryInterface
-*
-* @param {string} itemPath
-* @param {fs.Stats} stats
-* @param {Object} globals
 */
 var PluginGlobalsFactory = (function () {
     function PluginGlobalsFactory() {
         this._cache = {};
     }
+    /**
+    * Extends the plugin globals by adding the file name nad fs.Stats object
+    *
+    * @method core.plugin.PluginGlobalsFactory#create
+    *
+    * @param {string} itemPath
+    * @param {fs.Stats} stats
+    * @param {Object} globals
+    * @returns {Object}
+    */
     PluginGlobalsFactory.prototype.create = function (itemPath, stats, globals) {
         return ObjectUtils.extend({
             fileName: itemPath,
