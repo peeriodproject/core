@@ -97,6 +97,13 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 	private _extensionResponseListener:Function = null;
 
 	/**
+	 * The event listener on FILE_TRANSFER messages. Gets bound on construction and unbound when the cell is torn down.
+	 *
+	 * @member {Function} core.protocol.hydra.HydraCell~_fileTransferListener
+	 */
+	private _fileTransferListener:Function = null;
+
+	/**
 	 * A flag indicating whether the cell has been torn down (and is thus rendered unusable) or not.
 	 *
 	 * @member {boolean} core.protocol.hydra.HydraCell~_isTornDown
@@ -181,6 +188,17 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 	/**
 	 * END TESTING PURPOSES ONLY
 	 */
+
+	public getPredecessorCircuitId ():string {
+		return this._predecessor.circuitId;
+	}
+
+	public sendFileMessage (payload:Buffer):void {
+		if (!this._isTornDown) {
+			var fileTransferMsg:Buffer = this._messageCenter.wrapFileTransferMessage(payload);
+			this._digestBuffer(fileTransferMsg, true);
+		}
+	}
 
 	/**
 	 * Clears the timeout of a cell extension (if present)
@@ -370,6 +388,7 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 
 		this._messageCenter.removeListener('ENCRYPTED_SPITOUT_' + this._predecessor.circuitId, this._spitoutListener);
 		this._messageCenter.removeListener('ADDITIVE_SHARING_' + this._predecessor.circuitId, this._extensionListener);
+		this._messageCenter.removeListener('FILE_TRANSFER_' + this._predecessor.circuitId, this._fileTransferListener);
 
 		this._spitoutListener = null;
 		this._extensionListener = null;
@@ -428,9 +447,22 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 			}
 		};
 
+		this._fileTransferListener = (from:HydraNode, msg:ReadableHydraMessageInterface, decrypted:boolean) => {
+			if (from === this._predecessor) {
+				if (decrypted) {
+					this.emit('fileTransferMessage', this._predecessor.circuitId, msg.getPayload());
+				}
+				else {
+					this._teardown(true, true);
+				}
+			}
+
+		}
+
 		this._connectionManager.on('circuitTermination', this._terminationListener);
 		this._messageCenter.on('ENCRYPTED_SPITOUT_' + this._predecessor.circuitId, this._spitoutListener);
 		this._messageCenter.on('ADDITIVE_SHARING_' + this._predecessor.circuitId, this._extensionListener);
+		this._messageCenter.on('FILE_TRANSFER_' + this._predecessor.circuitId, this._fileTransferListener);
 	}
 
 	/**

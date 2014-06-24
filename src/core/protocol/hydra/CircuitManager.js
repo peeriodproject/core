@@ -33,6 +33,12 @@ var CircuitManager = (function (_super) {
         */
         this._circuitsUnderConstruction = [];
         /**
+        * Stores constructed circuits by their circuit Id.
+        *
+        * @member {Object} core.protocol.hydra.CircuitManager~_constructedCircuitsByCircuitId
+        */
+        this._constructedCircuitsByCircuitId = {};
+        /**
         * The optimal number of production-ready circuits the CircuitManager should reach and maintain.
         * Gets populated by the config.
         *
@@ -81,6 +87,20 @@ var CircuitManager = (function (_super) {
     */
     CircuitManager.prototype.kickOff = function () {
         this._checkAndConstructCircuit();
+    };
+
+    CircuitManager.prototype.pipeFileTransferMessageThroughCircuit = function (circuitId, payload) {
+        var circuit = this._constructedCircuitsByCircuitId[circuitId];
+
+        if (circuit) {
+            circuit.sendFileMessage(payload);
+        }
+    };
+
+    CircuitManager.prototype.pipeFileTransferMessageThroughAllCircuits = function (payload) {
+        for (var i = 0, l = this._productionReadyCircuits.length; i < l; i++) {
+            this._productionReadyCircuits[i].sendFileMessage(payload);
+        }
     };
 
     /**
@@ -169,14 +189,20 @@ var CircuitManager = (function (_super) {
     * @param {core.protocol.hydra.HydraCircuitInterface} circuit The constructed circuit.
     */
     CircuitManager.prototype._onCircuitConstructed = function (circuit) {
+        var _this = this;
         this._iterateOverListAndRemoveCircuit(this._circuitsUnderConstruction, circuit);
         this._productionReadyCircuits.push(circuit);
+        this._constructedCircuitsByCircuitId[circuit.getCircuitId()] = circuit;
+
+        circuit.on('fileTransferMessage', function (circuitId, payload) {
+            _this.emit('circuitReceivedTransferMessage', circuitId, payload);
+        });
+
+        this._emitCircuitCount();
 
         if (this._productionReadyCircuits.length === this._desiredNumberOfCircuits) {
             this.emit('desiredCircuitAmountReached');
         }
-
-        this._emitCircuitCount();
     };
 
     /**
@@ -188,8 +214,12 @@ var CircuitManager = (function (_super) {
     * @param {core.protocol.hydra.HydraCircuitInterface} circuit The circuit that has been torn down.
     */
     CircuitManager.prototype._onCircuitTeardown = function (circuit) {
+        circuit.removeAllListeners('fileTransferMessage');
+
         this._iterateOverListAndRemoveCircuit(this._circuitsUnderConstruction, circuit);
         this._iterateOverListAndRemoveCircuit(this._productionReadyCircuits, circuit);
+
+        delete this._constructedCircuitsByCircuitId[circuit.getCircuitId()];
 
         this._emitCircuitCount();
 

@@ -70,12 +70,25 @@ interface HydraMessageCenterInterface extends NodeJS.EventEmitter {
 	 * Constructs a CELL_CREATED_REJECTED messahe with the given params and sends it to the given hydra node.
 	 * The hydra node SHOULD already have a socket identifier assigned and MUST have a circuit id assigned.
 	 *
+	 * @method core.protocol.hydra.HydraMessageCenterInterface#sendCellCreatedRejectedMessage
+	 *
 	 * @param {core.protocol.hydra.HydraNode} to The node to send the message to
 	 * @param {string} uuid The UUID of the additive sharing scheme assigned to this CREATE_CELL_ADDITIVE request.
 	 * @param {Buffer} secretHash Optional. SHA-1 hash of the shared secret. This must only be present when accepting the request.
-	 * @parma {Buffer} dhPayload Optional. The other half of the DH key exchange. This must only be present when accepting the request.
+	 * @param {Buffer} dhPayload Optional. The other half of the DH key exchange. This must only be present when accepting the request.
 	 */
 	sendCellCreatedRejectedMessage (to:HydraNode, uuid:string, secretHash?:Buffer, dhPayload?:Buffer):void;
+
+	/**
+	 * Sends an ENCRYPTED_SPITOUT message to the first ndoe of a layered encryption/decryption handler.
+	 * The payload will be wrapped in a FILE_TRANSFER message and is encrypted onion-style.
+	 *
+	 * @method core.protocol.hydra.HydraMessageCenterInterface#spitoutFileTransferMessage
+	 *
+	 * @param {core.protocol.hydra.LayeredEncDecHandler} encDecHandler The layered ecnryption/decryption handler of the circuit.
+	 *
+	 */
+	spitoutFileTransferMessage (encDecHandler:LayeredEncDecHandlerInterface, payload:Buffer):void;
 
 	/**
 	 * Sends a ENCRYPTED_SPITOUT message to the first node of a layered encryption/decryption handler.
@@ -101,6 +114,16 @@ interface HydraMessageCenterInterface extends NodeJS.EventEmitter {
 	 * @returns {core.protocol.hydra.ReadableCreateCellAdditiveMessageInterface}
 	 */
 	unwrapAdditiveSharingPayload (message:ReadableAdditiveSharingMessageInterface):ReadableCreateCellAdditiveMessageInterface;
+
+	/**
+	 * Wraps a payload in a FILE_TRANSFER message.
+	 *
+	 * @method core.protocol.hydra.HydraMessageCenterInterface#wrapFileTransferMessage
+	 *
+	 * @param {Buffer} payload The payload of the intended FILE_TRANSFER message
+	 * @return {Buffer}
+	 */
+	wrapFileTransferMessage (payload:Buffer):Buffer;
 }
 
 export = HydraMessageCenterInterface;

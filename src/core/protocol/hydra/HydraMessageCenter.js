@@ -139,6 +139,19 @@ var HydraMessageCenter = (function (_super) {
         }
     };
 
+    HydraMessageCenter.prototype.spitoutFileTransferMessage = function (encDecHandler, payload) {
+        var _this = this;
+        var msg = this._writableHydraMessageFactory.constructMessage('FILE_TRANSFER', payload, payload.length);
+
+        encDecHandler.encrypt(msg, null, function (err, encMessage) {
+            var nodes = encDecHandler.getNodes();
+
+            if (!err && encMessage) {
+                _this._connectionManager.pipeCircuitMessageTo(nodes[0], 'ENCRYPTED_SPITOUT', encMessage);
+            }
+        });
+    };
+
     HydraMessageCenter.prototype.spitoutRelayCreateCellMessage = function (encDecHandler, targetIp, targetPort, uuid, additivePayload) {
         var _this = this;
         var payload = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
@@ -165,6 +178,10 @@ var HydraMessageCenter = (function (_super) {
         }
 
         return msg;
+    };
+
+    HydraMessageCenter.prototype.wrapFileTransferMessage = function (payload) {
+        return this._writableHydraMessageFactory.constructMessage('FILE_TRANSFER', payload);
     };
 
     /**
@@ -236,6 +253,8 @@ var HydraMessageCenter = (function (_super) {
             this._emitMessage(message, circuitNode, this._readableCellCreatedRejectedFactory, circuitId, decrypted);
         } else if (message.getMessageType() === 'ADDITIVE_SHARING') {
             this._emitMessage(message, circuitNode, this._readableAdditiveSharingFactory, circuitId, decrypted);
+        } else if (message.getMessageType() === 'FILE_TRANSFER') {
+            this._emitMessage(message, circuitNode, null, circuitId, decrypted);
         } else if (message.getMessageType() === 'ENCRYPTED_SPITOUT' || message.getMessageType() === 'ENCRYPTED_DIGEST') {
             this._emitMessage(message, circuitNode, null, circuitId, decrypted);
         }

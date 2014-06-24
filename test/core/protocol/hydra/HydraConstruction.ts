@@ -85,6 +85,28 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @curre
 
 	});
 
+	it('should pipe a FILE_TRANSFER message through and back the circuits', function (done) {
+		var count = 0;
+		var checkAndDone = function () {
+			if (++count === 5) done();
+		}
+
+		for (var i=0; i<5; i++) {
+			(function (node) {
+				node.cellManager.on('cellReceivedTransferMessage', function (circuitId, payload) {
+					node.cellManager.pipeFileTransferMessage(circuitId, payload);
+				});
+				node.circuitManager.on('circuitReceivedTransferMessage', function (circuitId, payload) {
+					if (payload.toString() === 'foobar') {
+						checkAndDone();
+					}
+				});
+
+				node.circuitManager.pipeFileTransferMessageThroughAllCircuits(new Buffer('foobar'));
+			})(nodes[i]);
+		}
+	});
+
 
 	var createNode = function () {
 		ipCount++;
@@ -188,7 +210,8 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @curre
 			ip: ip,
 			port: 80,
 			protocolConnectionManager: protocolConnectionManager,
-			circuitManager: circuitManager
+			circuitManager: circuitManager,
+			cellManager: cellManager
 		})
 	};
 
