@@ -36,7 +36,7 @@ var Aes128GcmLayeredEncDecHandlerFactory = require('../../../../src/core/protoco
 var Aes128GcmReadableDecryptedMessageFactory = require('../../../../src/core/protocol/hydra/messages/Aes128GcmReadableDecryptedMessageFactory');
 var Aes128GcmWritableMessageFactory = require('../../../../src/core/protocol/hydra/messages/Aes128GcmWritableMessageFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', function () {
     var sandbox = null;
     var config = null;
     var readableHydraMessageFactory = new ReadableHydraMessageFactory();
