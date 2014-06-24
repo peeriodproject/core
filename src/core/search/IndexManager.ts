@@ -143,13 +143,13 @@ class IndexManager implements IndexManagerInterface {
 		this.open();
 	}
 
-	addToIndex (pathToAdd:string, stats:fs.Stats, callback?:(err:Error) => any):void {
+	public addToIndex (pathToAdd:string, stats:fs.Stats, callback?:(err:Error) => any):void {
 		if (!this._pendingPathsToIndex[pathToAdd]) {
 			this._pendingPathsToIndex[pathToAdd] = this._createPendingListObject(pathToAdd, stats, callback);
 		}
 	}
 
-	close (callback?:(err:Error) => any):void {
+	public close (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
 
@@ -191,22 +191,22 @@ class IndexManager implements IndexManagerInterface {
 
 	}
 
-	forceIndex (callback?:(err:Error) => any):void {
+	public forceIndex (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
 
 		this._processPendingPathsToIndex();
 	}
 
-	isOpen (callback:(err:Error, isOpen:boolean) => any):void {
+	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
-	isPaused (callback:(isPaused:boolean) => any):void {
+	public isPaused (callback:(isPaused:boolean) => any):void {
 		return process.nextTick(callback.bind(null, !this._isIndexing));
 	}
 
-	open (callback?:(err:Error) => any):void {
+	public open (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
 
@@ -246,7 +246,7 @@ class IndexManager implements IndexManagerInterface {
 		});
 	}
 
-	pause (callback?:(err:Error) => any):void {
+	public pause (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
 
@@ -258,7 +258,7 @@ class IndexManager implements IndexManagerInterface {
 		return process.nextTick(internalCallback.bind(null, null));
 	}
 
-	resume (callback?:(err:Error) => any):void {
+	public resume (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
 
