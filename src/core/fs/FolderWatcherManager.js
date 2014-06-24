@@ -28,6 +28,12 @@ var FolderWatcherManager = (function () {
         */
         this._appQuitHandler = null;
         /**
+        * Returns weather the FolderWatcherManager is already closing or not
+        *
+        * @member {core.utils.AppQuitHandler} core ~_isClosing
+        */
+        this._isClosing = false;
+        /**
         * The internally used config instance
         *
         * @member {core.config.ConfigInterface} core.fs.FolderWatcherManager~_config
@@ -177,19 +183,25 @@ var FolderWatcherManager = (function () {
         var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
 
-        if (!this._isOpen) {
+        if (!this._isOpen || this._isClosing) {
             return process.nextTick(internalCallback.bind(null, null));
         }
 
-        this._eventEmitter.removeAllListeners();
-        this._eventEmitter = null;
-
-        for (var pathToWatch in this._watchers) {
-            this._watchers[pathToWatch].close();
+        if (this._eventEmitter) {
+            this._eventEmitter.removeAllListeners();
+            this._eventEmitter = null;
         }
 
+        if (this._watchers) {
+            for (var pathToWatch in this._watchers) {
+                this._watchers[pathToWatch].close();
+            }
+        }
+
+        this._isClosing = true;
         this._stateHandler.save(this._getState(), function (err) {
             _this._isOpen = false;
+            _this._isClosing = false;
             _this._watchers = null;
 
             return process.nextTick(internalCallback.bind(null, err));
