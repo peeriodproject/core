@@ -138,7 +138,7 @@ var SearchClient = (function () {
         var internalCallback = callback || function () {
         };
 
-        this._createIndex(function (err) {
+        this.createIndex(this._indexName, function (err) {
             var map = null;
             if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
                 // wrap mapping in type root
@@ -295,7 +295,7 @@ var SearchClient = (function () {
                     console.error(err);
                     internalCallback(err);
                 } else {
-                    _this._createIndex(function (err) {
+                    _this.createIndex(_this._indexName, function (err) {
                         if (err) {
                             console.error(err);
                         } else {
@@ -314,6 +314,28 @@ var SearchClient = (function () {
         }));
 
         this._searchStore = this._searchStoreFactory.create(this._config, this._appQuitHandler, searchStoreOptions);
+    };
+
+    /**
+    * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
+    *
+    * @method core.search.SearchClient#createIndex
+    *
+    * @param {string} name
+    * @param {Function} callback
+    */
+    SearchClient.prototype.createIndex = function (indexName, callback) {
+        var _this = this;
+        this._client.indices.create({
+            index: indexName
+        }, function (err, response, status) {
+            // everything went fine or index already exists
+            if (_this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
+                callback(null);
+            } else {
+                callback(err);
+            }
+        });
     };
 
     SearchClient.prototype.typeExists = function (type, callback) {
@@ -349,28 +371,6 @@ var SearchClient = (function () {
                 callback(err, response['_id']);
             } else {
                 callback(err, null);
-            }
-        });
-    };
-
-    /**
-    * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
-    *
-    * @method core.search.SearchClient~_createIndex
-    *
-    * @param {string} name
-    * @param {Function} callback
-    */
-    SearchClient.prototype._createIndex = function (callback) {
-        var _this = this;
-        this._client.indices.create({
-            index: this._indexName
-        }, function (err, response, status) {
-            // everything went fine or index already exists
-            if (_this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
-                callback(null);
-            } else {
-                callback(err);
             }
         });
     };
