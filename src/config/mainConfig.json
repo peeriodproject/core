@@ -92,7 +92,8 @@
         "indexManager"     : {
             "indexRunnerDelayInMilliSeconds": 10000,
             "indexRunnersInParallel"        : 3
-        }
+        },
+        "queryLifetimeInSeconds": 60
     },
     "fs"      : {
         "folderWatcher": {
