@@ -47,6 +47,7 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> HttpNodeSeeker', function () 
 		}]
 	};
 
+	this.timeout(0);
 
 	before(function (done) {
 		sandbox = sinon.sandbox.create();

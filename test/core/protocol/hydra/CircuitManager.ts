@@ -3,6 +3,7 @@
 require('should');
 
 import events = require('events');
+import crypto = require('crypto');
 
 import sinon = require('sinon');
 
@@ -44,9 +45,16 @@ describe('CORE --> PROTOCOL --> HYDRA --> CircuitManager', function () {
 
 				circuit.relayNodeAmount = relayNodeAmount;
 				circuit.toEmit = Math.random() < 0.5 ? 'isTornDown' : 'isConstructed';
+				circuit.circuitId = null;
+				circuit.getCircuitId = function () {
+					return circuit.circuitId;
+				}
 
 				circuit.construct = function () {
 					setImmediate(() => {
+						if (this.toEmit === 'isConstructed') {
+							circuit.circuitId = crypto.pseudoRandomBytes(16).toString('hex');
+						}
 						this.emit(this.toEmit);
 					});
 				}
