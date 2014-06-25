@@ -193,7 +193,12 @@ describe('CORE --> PROTOCOL --> HYDRA --> CellManager', function () {
 
 		cellFactory.create = function (initiatorNode:HydraNode) {
 			var cell:any = new events.EventEmitter();
+
+
 			cell.predecessor = initiatorNode;
+			cell.getPredecessorCircuitId = function () {
+				return cell.predecessor.circuitId;
+			}
 
 			return cell;
 		};

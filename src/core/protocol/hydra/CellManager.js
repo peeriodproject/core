@@ -109,7 +109,10 @@ var CellManager = (function (_super) {
 
         if (cell) {
             cell.sendFileMessage(payload);
+            return true;
         }
+
+        return false;
     };
 
     /**
