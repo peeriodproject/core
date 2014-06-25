@@ -186,6 +186,17 @@ class SearchClient implements SearchClientInterface {
 		});
 	}
 
+	public addPercolate (percolateParams:{ index:string; body: { doc: Object; } }, callback?:(err:Error, response:Object) => any):void {
+		var internalCallback = callback || function (err:Error, response:Object) {
+		};
+
+		this._client.percolate(percolateParams, function (err:Error, response:Object, status:number) {
+			err = err || null;
+
+			internalCallback(err, response);
+		});
+	}
+
 	public close (callback?:(err:Error) => any):void {
 		var internalCallback = callback || this._options.onCloseCallback;
 

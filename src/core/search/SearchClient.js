@@ -163,6 +163,17 @@ var SearchClient = (function () {
         });
     };
 
+    SearchClient.prototype.addPercolate = function (percolateParams, callback) {
+        var internalCallback = callback || function (err, response) {
+        };
+
+        this._client.percolate(percolateParams, function (err, response, status) {
+            err = err || null;
+
+            internalCallback(err, response);
+        });
+    };
+
     SearchClient.prototype.close = function (callback) {
         var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;

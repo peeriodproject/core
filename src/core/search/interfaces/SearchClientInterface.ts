@@ -36,6 +36,16 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	addMapping (type:string, mapping:Object, callback?:(err:Error) => any):void;
 
 	/**
+	 * Adds a percolate document to the specified index
+	 *
+	 * @method core.search.SearchClientInterface#addPercolate
+	 *
+	 * @param {Object} percolateParams
+	 * @param {Function} callback
+	 */
+	addPercolate (percolateParams:Object, callback?:(err:Error, response:Object) => any):void;
+
+	/**
 	 * Creates an index with the specified name.
 	 *
 	 * @method core.search.SearchClientInterface#createIndex
