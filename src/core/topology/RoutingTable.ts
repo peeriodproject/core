@@ -316,7 +316,7 @@ class RoutingTable implements RoutingTableInterface {
 		crawlRandomBucket();
 	}
 
-	public getRandomContactNodesFromBucket (bucketIndex:number, amount:number, callback:(err:Error, contactNodes:ContactNodeListInterface) => any):void {
+	public getRandomContactNodesFromBucket (bucketKey:number, amount:number, callback:(err:Error, contactNodes:ContactNodeListInterface) => any):void {
 
 	}
 
