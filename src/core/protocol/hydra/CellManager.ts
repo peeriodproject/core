@@ -43,6 +43,13 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 	private _cellFactory:HydraCellFactoryInterface = null;
 
 	/**
+	 * Stores the maintained cells by their predecessor's circuit id.
+	 *
+	 * @member {Object} core.protocol.hydra.CellManager~_cellsByPredecessorCircuitId
+	 */
+	private _cellsByPredecessorCircuitId:{[circuitId:string]:HydraCellInterface} = {};
+
+	/**
 	 * Stores the connection manager.
 	 *
 	 * @member {core.protocol.hydra.ConnectionManagerInterface} core.protocol.hydra.CellManager~_connectionManager
@@ -113,6 +120,14 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 	 * END TESTING PURPOSES
 	 */
 
+	public pipeFileTransferMessage (predecessorCircuitId:string, payload:Buffer):void {
+		var cell:HydraCellInterface = this._cellsByPredecessorCircuitId[predecessorCircuitId];
+
+		if (cell) {
+			cell.sendFileMessage(payload);
+		}
+	}
+
 	/**
 	 * Accepts a CREATE_CELL_ADDITIVE request.
 	 * Computes the secrets, adds the keys, and finally pipes out the CELL_CREATED_REJECTED message.
@@ -145,9 +160,14 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 		var cell:HydraCellInterface = this._cellFactory.create(initiatorNode);
 
 		this._maintainedCells.push(cell);
+		this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()] = cell;
 
 		cell.once('isTornDown', () => {
 			this._onTornDownCell(cell);
+		});
+
+		cell.on('fileTransferMessage', (circuitId:string, payload:Buffer) => {
+			this.emit('cellReceivedTransferMessage', circuitId, payload);
 		});
 	}
 
@@ -307,6 +327,10 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 	 * @param {core.protocol.hydra.HydraCellInterface} cell The torn-down cell
 	 */
 	private _onTornDownCell (cell:HydraCellInterface):void {
+		cell.removeAllListeners('fileTransferMessage');
+
+		delete this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()];
+
 		for (var i = 0, l = this._maintainedCells.length; i < l; i++) {
 			if (this._maintainedCells[i] === cell) {
 				this._maintainedCells.splice(i, 1);

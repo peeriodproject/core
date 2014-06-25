@@ -36,7 +36,7 @@ var Aes128GcmLayeredEncDecHandlerFactory = require('../../../../src/core/protoco
 var Aes128GcmReadableDecryptedMessageFactory = require('../../../../src/core/protocol/hydra/messages/Aes128GcmReadableDecryptedMessageFactory');
 var Aes128GcmWritableMessageFactory = require('../../../../src/core/protocol/hydra/messages/Aes128GcmWritableMessageFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', function () {
     var sandbox = null;
     var config = null;
     var readableHydraMessageFactory = new ReadableHydraMessageFactory();
@@ -70,6 +70,29 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @curre
             nodes[i].circuitManager.once('desiredCircuitAmountReached', incAndCheck);
 
             nodes[i].circuitManager.kickOff();
+        }
+    });
+
+    it('should pipe a FILE_TRANSFER message through and back the circuits', function (done) {
+        var count = 0;
+        var checkAndDone = function () {
+            if (++count === 5)
+                done();
+        };
+
+        for (var i = 0; i < 5; i++) {
+            (function (node) {
+                node.cellManager.on('cellReceivedTransferMessage', function (circuitId, payload) {
+                    node.cellManager.pipeFileTransferMessage(circuitId, payload);
+                });
+                node.circuitManager.on('circuitReceivedTransferMessage', function (circuitId, payload) {
+                    if (payload.toString() === 'foobar') {
+                        checkAndDone();
+                    }
+                });
+
+                node.circuitManager.pipeFileTransferMessageThroughAllCircuits(new Buffer('foobar'));
+            })(nodes[i]);
         }
     });
 
@@ -174,7 +197,8 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @curre
             ip: ip,
             port: 80,
             protocolConnectionManager: protocolConnectionManager,
-            circuitManager: circuitManager
+            circuitManager: circuitManager,
+            cellManager: cellManager
         });
     };
 

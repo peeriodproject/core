@@ -65,6 +65,12 @@ var HydraCircuit = (function (_super) {
         */
         this._extensionRetryCount = 0;
         /**
+        * Stores the listener on the message center's FILE_TRANSFER message events
+        *
+        * @member {Function} core.protocol.hydra.HydraCircuit~_fileTransferListener
+        */
+        this._fileTransferListener = null;
+        /**
         * Flag indicating whether this circuit is torn down and is thus unusable.
         * Also used for preventing multiple teardowns.
         *
@@ -132,10 +138,6 @@ var HydraCircuit = (function (_super) {
         return this._circuitNodes;
     };
 
-    HydraCircuit.prototype.getCircuitId = function () {
-        return this._circuitId;
-    };
-
     HydraCircuit.prototype.getLayeredEncDec = function () {
         return this._layeredEncDecHandler;
     };
@@ -150,6 +152,16 @@ var HydraCircuit = (function (_super) {
 
             _this._extensionCycle();
         });
+    };
+
+    HydraCircuit.prototype.getCircuitId = function () {
+        return this._circuitId;
+    };
+
+    HydraCircuit.prototype.sendFileMessage = function (payload) {
+        if (this._constructed && !this._isTornDown) {
+            this._messageCenter.spitoutFileTransferMessage(this._layeredEncDecHandler, payload);
+        }
     };
 
     /**
@@ -185,6 +197,7 @@ var HydraCircuit = (function (_super) {
                     if (circuitNodesLength === _this._numOfRelayNodes) {
                         // all done, finalize
                         _this._constructed = true;
+                        _this._setupFileTransferListener();
                         _this.emit('isConstructed');
                     } else {
                         _this._extensionCycle();
@@ -235,7 +248,33 @@ var HydraCircuit = (function (_super) {
         if (this._circuitId) {
             this._connectionManager.removeListener('circuitTermination', this._terminationListener);
             this._messageCenter.removeListener('ENCRYPTED_DIGEST_' + this._circuitId, this._digestListener);
+
+            if (this._fileTransferListener) {
+                this._messageCenter.removeListener('FILE_TRANSFER_' + this._circuitId, this._fileTransferListener);
+                this._fileTransferListener = null;
+            }
         }
+    };
+
+    /**
+    * Sets up the listener on the message center's FILE_TRANSFER event. This is only bound when the construction
+    * of the circuit has been completed and is unbound on tearing down the circuit.
+    *
+    * @method core.protocol.hydra.HydraCircuit~_setupFileTransferListener
+    */
+    HydraCircuit.prototype._setupFileTransferListener = function () {
+        var _this = this;
+        this._fileTransferListener = function (from, msg, decrypted) {
+            if (from === _this._circuitNodes[0]) {
+                if (decrypted) {
+                    _this.emit('fileTransferMessage', _this._circuitId, msg.getPayload());
+                } else {
+                    _this._teardown(true);
+                }
+            }
+        };
+
+        this._messageCenter.on('FILE_TRANSFER_' + this._circuitId, this._fileTransferListener);
     };
 
     /**

@@ -35,6 +35,9 @@
         "pingpong"                    : {
             "maxWaitingListSize": 20
         },
+        "broadast": {
+            "broadcastLifetimeInSeconds": 30
+        },
         "findClosestNodes"            : {
             "cycleExpirationInSeconds" : 2,
             "parallelismDelayInSeconds": 1.5

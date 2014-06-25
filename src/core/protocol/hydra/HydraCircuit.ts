@@ -83,6 +83,13 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 	private _extensionRetryCount:number = 0;
 
 	/**
+	 * Stores the listener on the message center's FILE_TRANSFER message events
+	 *
+	 * @member {Function} core.protocol.hydra.HydraCircuit~_fileTransferListener
+	 */
+	private _fileTransferListener:Function = null;
+
+	/**
 	 * Flag indicating whether this circuit is torn down and is thus unusable.
 	 * Also used for preventing multiple teardowns.
 	 *
@@ -163,10 +170,6 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 		return this._circuitNodes;
 	}
 
-	public getCircuitId ():string {
-		return this._circuitId;
-	}
-
 	public getLayeredEncDec ():LayeredEncDecHandlerInterface {
 		return this._layeredEncDecHandler;
 	}
@@ -181,6 +184,16 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 
 			this._extensionCycle();
 		});
+	}
+
+	public getCircuitId ():string {
+		return this._circuitId;
+	}
+
+	public sendFileMessage (payload:Buffer):void {
+		if (this._constructed && !this._isTornDown) {
+			this._messageCenter.spitoutFileTransferMessage(this._layeredEncDecHandler, payload);
+		}
 	}
 
 	/**
@@ -216,6 +229,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 					if (circuitNodesLength === this._numOfRelayNodes) {
 						// all done, finalize
 						this._constructed = true;
+						this._setupFileTransferListener();
 						this.emit('isConstructed');
 					}
 					else {
@@ -276,7 +290,34 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 		if (this._circuitId) {
 			this._connectionManager.removeListener('circuitTermination', this._terminationListener);
 			this._messageCenter.removeListener('ENCRYPTED_DIGEST_' + this._circuitId, this._digestListener);
+
+			if (this._fileTransferListener) {
+				this._messageCenter.removeListener('FILE_TRANSFER_' + this._circuitId, this._fileTransferListener);
+				this._fileTransferListener = null;
+			}
 		}
+	}
+
+	/**
+	 * Sets up the listener on the message center's FILE_TRANSFER event. This is only bound when the construction
+	 * of the circuit has been completed and is unbound on tearing down the circuit.
+	 *
+	 * @method core.protocol.hydra.HydraCircuit~_setupFileTransferListener
+	 */
+	private _setupFileTransferListener ():void {
+		this._fileTransferListener = (from:HydraNode, msg:ReadableHydraMessageInterface, decrypted:boolean) => {
+			if (from === this._circuitNodes[0]) {
+				if (decrypted) {
+					this.emit('fileTransferMessage', this._circuitId, msg.getPayload());
+				}
+				else {
+					this._teardown(true);
+				}
+			}
+
+		}
+
+		this._messageCenter.on('FILE_TRANSFER_' + this._circuitId, this._fileTransferListener);
 	}
 
 	/**

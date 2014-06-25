@@ -33,6 +33,13 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 	private _circuitsUnderConstruction:HydraCircuitList = [];
 
 	/**
+	 * Stores constructed circuits by their circuit Id.
+	 *
+	 * @member {Object} core.protocol.hydra.CircuitManager~_constructedCircuitsByCircuitId
+	 */
+	private _constructedCircuitsByCircuitId:{[circuitId:string]:HydraCircuitInterface} = {};
+
+	/**
 	 * The optimal number of production-ready circuits the CircuitManager should reach and maintain.
 	 * Gets populated by the config.
 	 *
@@ -90,6 +97,20 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 
 	public kickOff ():void {
 		this._checkAndConstructCircuit();
+	}
+
+	public pipeFileTransferMessageThroughCircuit (circuitId:string, payload:Buffer):void {
+		var circuit:HydraCircuitInterface = this._constructedCircuitsByCircuitId[circuitId];
+
+		if (circuit) {
+			circuit.sendFileMessage(payload);
+		}
+	}
+
+	public pipeFileTransferMessageThroughAllCircuits (payload:Buffer):void {
+		for (var i=0, l=this._productionReadyCircuits.length; i<l; i++) {
+			this._productionReadyCircuits[i].sendFileMessage(payload);
+		}
 	}
 
 	/**
@@ -182,12 +203,17 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 
 		this._iterateOverListAndRemoveCircuit(this._circuitsUnderConstruction, circuit);
 		this._productionReadyCircuits.push(circuit);
+		this._constructedCircuitsByCircuitId[circuit.getCircuitId()] = circuit;
+
+		circuit.on('fileTransferMessage', (circuitId:string, payload:Buffer) => {
+			this.emit('circuitReceivedTransferMessage', circuitId, payload);
+		});
+
+		this._emitCircuitCount();
 
 		if (this._productionReadyCircuits.length === this._desiredNumberOfCircuits) {
 			this.emit('desiredCircuitAmountReached');
 		}
-
-		this._emitCircuitCount();
 	}
 
 	/**
@@ -200,8 +226,12 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 	 */
 	private _onCircuitTeardown (circuit:HydraCircuitInterface):void {
 
+		circuit.removeAllListeners('fileTransferMessage');
+
 		this._iterateOverListAndRemoveCircuit(this._circuitsUnderConstruction, circuit);
 		this._iterateOverListAndRemoveCircuit(this._productionReadyCircuits, circuit);
+
+		delete this._constructedCircuitsByCircuitId[circuit.getCircuitId()];
 
 		this._emitCircuitCount();
 

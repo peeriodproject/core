@@ -282,6 +282,9 @@ var RoutingTable = (function () {
         crawlRandomBucket();
     };
 
+    RoutingTable.prototype.getRandomContactNodesFromBucket = function (bucketIndex, amount, callback) {
+    };
+
     RoutingTable.prototype.isOpen = function (callback) {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };

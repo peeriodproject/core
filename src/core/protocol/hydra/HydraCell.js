@@ -83,6 +83,12 @@ var HydraCell = (function (_super) {
         */
         this._extensionResponseListener = null;
         /**
+        * The event listener on FILE_TRANSFER messages. Gets bound on construction and unbound when the cell is torn down.
+        *
+        * @member {Function} core.protocol.hydra.HydraCell~_fileTransferListener
+        */
+        this._fileTransferListener = null;
+        /**
         * A flag indicating whether the cell has been torn down (and is thus rendered unusable) or not.
         *
         * @member {boolean} core.protocol.hydra.HydraCell~_isTornDown
@@ -156,6 +162,17 @@ var HydraCell = (function (_super) {
     /**
     * END TESTING PURPOSES ONLY
     */
+    HydraCell.prototype.getPredecessorCircuitId = function () {
+        return this._predecessor.circuitId;
+    };
+
+    HydraCell.prototype.sendFileMessage = function (payload) {
+        if (!this._isTornDown) {
+            var fileTransferMsg = this._messageCenter.wrapFileTransferMessage(payload);
+            this._digestBuffer(fileTransferMsg, true);
+        }
+    };
+
     /**
     * Clears the timeout of a cell extension (if present)
     *
@@ -342,6 +359,7 @@ var HydraCell = (function (_super) {
 
         this._messageCenter.removeListener('ENCRYPTED_SPITOUT_' + this._predecessor.circuitId, this._spitoutListener);
         this._messageCenter.removeListener('ADDITIVE_SHARING_' + this._predecessor.circuitId, this._extensionListener);
+        this._messageCenter.removeListener('FILE_TRANSFER_' + this._predecessor.circuitId, this._fileTransferListener);
 
         this._spitoutListener = null;
         this._extensionListener = null;
@@ -400,9 +418,20 @@ var HydraCell = (function (_super) {
             }
         };
 
+        this._fileTransferListener = function (from, msg, decrypted) {
+            if (from === _this._predecessor) {
+                if (decrypted) {
+                    _this.emit('fileTransferMessage', _this._predecessor.circuitId, msg.getPayload());
+                } else {
+                    _this._teardown(true, true);
+                }
+            }
+        };
+
         this._connectionManager.on('circuitTermination', this._terminationListener);
         this._messageCenter.on('ENCRYPTED_SPITOUT_' + this._predecessor.circuitId, this._spitoutListener);
         this._messageCenter.on('ADDITIVE_SHARING_' + this._predecessor.circuitId, this._extensionListener);
+        this._messageCenter.on('FILE_TRANSFER_' + this._predecessor.circuitId, this._fileTransferListener);
     };
 
     /**

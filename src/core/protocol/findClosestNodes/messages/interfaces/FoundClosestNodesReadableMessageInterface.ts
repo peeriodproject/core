@@ -21,14 +21,14 @@ interface FoundClosestNodesReadableMessageInterface {
 	/**
 	 * Discards the payload buffer.
 	 *
-	 * @method {core.protocol.findClosestNodes.messages.FoundClosestNodesReadableMessageInterface#discard}
+	 * @method core.protocol.findClosestNodes.messages.FoundClosestNodesReadableMessageInterface#discard
 	 */
 	discard ():void;
 
 	/**
 	 * Returns the extracted list of close nodes.
 	 *
-	 * @method {core.protocol.findClosestNodes.messages.FoundClosestNodesReadableMessageInterface#getFoundNodeList}
+	 * @method core.protocol.findClosestNodes.messages.FoundClosestNodesReadableMessageInterface#getFoundNodeList
 	 *
 	 * @returns {core.topology.ContactNodeListInterface}
 	 */
@@ -37,7 +37,7 @@ interface FoundClosestNodesReadableMessageInterface {
 	/**
 	 * Returns the extracted original ID that was being searched for.
 	 *
-	 * @method {core.protocol.findClosestNodes.messages.FoundClosestNodesReadableMessageInterface#getSearchedForId}
+	 * @method core.protocol.findClosestNodes.messages.FoundClosestNodesReadableMessageInterface#getSearchedForId
 	 *
 	 * @returns {core.topology.IdInterface}
 	 */

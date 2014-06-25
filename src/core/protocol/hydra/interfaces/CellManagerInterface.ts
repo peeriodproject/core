@@ -6,10 +6,21 @@
  * or accepting it and creating a {@link core.protocol.hydra.HydraCellInterface}
  *
  * @interface
- * @class CellManagerInterface
+ * @class core.protocol.hydra.CellManagerInterface
  * @extends NodeJS.EventEmitter
  */
 interface CellManagerInterface extends NodeJS.EventEmitter {
+
+	/**
+	 * Sends a FILE_TRANSFER message with the given payload as an ENCRYPTED_DIGEST message through the cell
+	 * with the predecessor's circuitId equal to the provided circuit ID.
+	 *
+	 * @method core.protocol.hydra.CellManagerInterface#pipeFileTransferMessage
+	 *
+	 * @param {string} predecessorCircuitId
+	 * @param {Buffer} payload
+	 */
+	pipeFileTransferMessage (predecessorCircuitId:string, payload:Buffer):void;
 
 }
 

@@ -164,6 +164,18 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		}
 	}
 
+	public spitoutFileTransferMessage (encDecHandler:LayeredEncDecHandlerInterface, payload:Buffer):void {
+		var msg = this._writableHydraMessageFactory.constructMessage('FILE_TRANSFER', payload, payload.length);
+
+		encDecHandler.encrypt(msg, null, (err:Error, encMessage:Buffer) => {
+			var nodes:HydraNodeList = encDecHandler.getNodes();
+
+			if (!err && encMessage) {
+				this._connectionManager.pipeCircuitMessageTo(nodes[0], 'ENCRYPTED_SPITOUT', encMessage);
+			}
+		});
+	}
+
 	public spitoutRelayCreateCellMessage (encDecHandler:LayeredEncDecHandlerInterface, targetIp:string, targetPort:number, uuid:string, additivePayload:Buffer):void {
 		var payload:Buffer = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
 
@@ -191,6 +203,10 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		}
 
 		return msg;
+	}
+
+	public wrapFileTransferMessage (payload:Buffer):Buffer {
+		return this._writableHydraMessageFactory.constructMessage('FILE_TRANSFER', payload);
 	}
 
 	/**
@@ -266,6 +282,9 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		}
 		else if (message.getMessageType() === 'ADDITIVE_SHARING') {
 			this._emitMessage(message, circuitNode, this._readableAdditiveSharingFactory, circuitId, decrypted);
+		}
+		else if (message.getMessageType() === 'FILE_TRANSFER') {
+			this._emitMessage(message, circuitNode, null, circuitId, decrypted);
 		}
 		else if (message.getMessageType() === 'ENCRYPTED_SPITOUT' || message.getMessageType() === 'ENCRYPTED_DIGEST') {
 			this._emitMessage(message, circuitNode, null, circuitId, decrypted);
