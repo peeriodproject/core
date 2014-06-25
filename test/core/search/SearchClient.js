@@ -68,7 +68,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
         searchClient.close(function () {
             searchClient = null;
             try  {
-                //testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+                testUtils.deleteFolderRecursive(searchStoreLogsFolder);
                 testUtils.deleteFolderRecursive(searchStoreDataFolder);
             } catch (e) {
                 console.log(e);
