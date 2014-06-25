@@ -13,7 +13,7 @@ var SearchItem = require('../../../src/core/search/SearchItem');
 var SearchItemFactory = require('../../../src/core/search/SearchItemFactory');
 var SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
-describe('CORE --> SEARCH --> SearchClient @_joern', function () {
+describe('CORE --> SEARCH --> SearchClient', function () {
     var sandbox;
     var config;
     var appQuitHandlerStub;
@@ -68,7 +68,7 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
         searchClient.close(function () {
             searchClient = null;
             try  {
-                testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+                //testUtils.deleteFolderRecursive(searchStoreLogsFolder);
                 testUtils.deleteFolderRecursive(searchStoreDataFolder);
             } catch (e) {
                 console.log(e);
@@ -298,46 +298,33 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
         });
     });
 
-    it('should correctly create an index with the specified name and handle "already exists" errors gracefully', function (done) {
-        searchClient.createIndex('foobar', function (err) {
-            (err === null).should.be.true;
-
-            searchClient.createIndex('foobar', function (err) {
-                (err === null).should.be.true;
-
-                done();
-            });
-        });
-    });
-
-    it('should correctly create a percolate index and add an item to the index @joern', function (done) {
-        searchClient.createIndex({
-            index: 'myindex',
-            type: '.percolator',
-            id: 'searchQueryId',
-            body: {
-                // This query will be run against documents sent to percolate
-                query: {
-                    match: {
-                        message: "bonsai tree"
-                    }
+    it('should correctly create a percolate index and add an item to the index', function (done) {
+        var queryBody = {
+            // This query will be run against documents sent to percolate
+            query: {
+                match: {
+                    message: "bonsai tree"
                 }
             }
-        }, function (err) {
-            console.log(err);
+        };
 
-            searchClient.addPercolate({
-                index: 'myindex',
-                type: 'response',
-                body: {
-                    doc: {
-                        message: 'A new bonsai tree in the office'
-                    }
-                }
-            }, function (err, response) {
-                console.log(response);
+        searchClient.createOutgoingQuery('myindex', 'searchQueryId', queryBody, function (err) {
+            console.log(err);
+            (err === null).should.be.true;
+
+            searchClient.addIncomingResponse('myindex', 'searchQueryId', { message: 'A new bonsai tree in the office' }, function (err, response) {
                 console.log(err);
                 (err === null).should.be.true;
+
+                response.should.containDeep({
+                    total: 1,
+                    matches: [
+                        {
+                            _index: 'myindex',
+                            _id: 'searchQueryId'
+                        }
+                    ]
+                });
 
                 done();
             });

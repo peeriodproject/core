@@ -10,9 +10,8 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @class core.search.SearchClient
 * @implements core.search.SearchClientInterface
 *
-* @see https://www.npmjs.org/package/base64-stream
-*
 * @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {core.search.SearchStoreFactory} searchStoreFactory
 * @param {core.search.SearchClientOptions} options
 */
@@ -103,6 +102,25 @@ var SearchClient = (function () {
 
         this.open(this._options.onOpenCallback);
     }
+    SearchClient.prototype.addIncomingResponse = function (indexName, type, responseObject, callback) {
+        var internalCallback = callback || function (err, response) {
+        };
+
+        this._client.percolate({
+            index: indexName.toLowerCase(),
+            type: 'response' + type.toLowerCase(),
+            body: {
+                doc: responseObject
+            }
+        }, function (err, response, status) {
+            err = err || null;
+
+            console.log(response);
+
+            internalCallback(err, response);
+        });
+    };
+
     SearchClient.prototype.addItem = function (objectToIndex, callback) {
         var pluginIdentifiers = Object.keys(objectToIndex);
         var amount = pluginIdentifiers.length;
@@ -138,7 +156,7 @@ var SearchClient = (function () {
         var internalCallback = callback || function () {
         };
 
-        this._createIndex(function (err) {
+        this._createIndex(this._indexName, function (err) {
             var map = null;
             if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
                 // wrap mapping in type root
@@ -163,17 +181,6 @@ var SearchClient = (function () {
         });
     };
 
-    SearchClient.prototype.addPercolate = function (percolateParams, callback) {
-        var internalCallback = callback || function (err, response) {
-        };
-
-        this._client.percolate(percolateParams, function (err, response, status) {
-            err = err || null;
-
-            internalCallback(err, response);
-        });
-    };
-
     SearchClient.prototype.close = function (callback) {
         var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
@@ -187,6 +194,28 @@ var SearchClient = (function () {
             _this._client = null;
 
             internalCallback(err);
+        });
+    };
+
+    SearchClient.prototype.createOutgoingQuery = function (indexName, id, queryBody, callback) {
+        var _this = this;
+        var internalCallback = callback || function (err) {
+        };
+
+        this._createIndex(indexName, function (err) {
+            if (err) {
+                return internalCallback(err);
+            }
+
+            _this._client.index({
+                index: indexName.toLowerCase(),
+                type: '.percolator',
+                id: id,
+                body: queryBody
+            }, function (err, response, status) {
+                err = err || null;
+                return internalCallback(err);
+            });
         });
     };
 
@@ -306,7 +335,7 @@ var SearchClient = (function () {
                     console.error(err);
                     internalCallback(err);
                 } else {
-                    _this._createIndex(function (err) {
+                    _this._createIndex(_this._indexName, function (err) {
                         if (err) {
                             console.error(err);
                         } else {
@@ -369,13 +398,13 @@ var SearchClient = (function () {
     *
     * @method core.search.SearchClient~_createIndex
     *
-    * @param {string} name
+    * @param {string} indexName
     * @param {Function} callback
     */
-    SearchClient.prototype._createIndex = function (callback) {
+    SearchClient.prototype._createIndex = function (indexName, callback) {
         var _this = this;
         this._client.indices.create({
-            index: this._indexName
+            index: indexName
         }, function (err, response, status) {
             // everything went fine or index already exists
             if (_this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
