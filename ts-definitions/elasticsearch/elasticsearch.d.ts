@@ -5,7 +5,7 @@
 declare module "elasticsearch" {
 
 	interface Callback {
-		(err:Error, response, status:number): any;
+		(err:Error, response:any, status:number): any;
 	}
 
 	interface getParams {
@@ -23,7 +23,7 @@ declare module "elasticsearch" {
 
 	interface ClientInterface {
 		exists (params:{
-			index: string;
+			index:string;
 			type:string;
 			id:string;
 		}, callback:(err:Error, exists:boolean) => any):void;
@@ -37,7 +37,12 @@ declare module "elasticsearch" {
 		index (params:{
 			index:string;
 			type:string;
-			body:Object
+			body:Object;
+		}, callback:Callback):void;
+
+		percolate (params:{
+			index:string;
+			body:Object;
 		}, callback:Callback):void;
 
 		ping (params, callback:Callback):void;
