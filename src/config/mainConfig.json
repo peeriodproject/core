@@ -97,6 +97,9 @@
             "indexRunnerDelayInMilliSeconds": 10000,
             "indexRunnersInParallel"        : 3
         },
+        "searchRequestManager": {
+            "queryLifetimeIntervalInMilliSeconds": 1000
+        },
         "queryLifetimeInSeconds": 60
     },
     "fs"      : {
