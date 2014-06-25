@@ -117,7 +117,7 @@ var IndexManager = (function () {
             });
         }
 
-        this.open();
+        this.open(this._options.onOpenCallback);
     }
     IndexManager.prototype.addToIndex = function (pathToAdd, stats, callback) {
         if (!this._pendingPathsToIndex[pathToAdd]) {
@@ -127,8 +127,7 @@ var IndexManager = (function () {
 
     IndexManager.prototype.close = function (callback) {
         var _this = this;
-        var internalCallback = callback || function (err) {
-        };
+        var internalCallback = callback || this._options.onCloseCallback;
 
         if (!this._isOpen) {
             this.pause();
@@ -183,8 +182,7 @@ var IndexManager = (function () {
 
     IndexManager.prototype.open = function (callback) {
         var _this = this;
-        var internalCallback = callback || function (err) {
-        };
+        var internalCallback = callback || this._options.onOpenCallback;
 
         if (this._isOpen) {
             this.resume();

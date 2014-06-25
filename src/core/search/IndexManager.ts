@@ -140,7 +140,7 @@ class IndexManager implements IndexManagerInterface {
 			});
 		}
 
-		this.open();
+		this.open(this._options.onOpenCallback);
 	}
 
 	public addToIndex (pathToAdd:string, stats:fs.Stats, callback?:(err:Error) => any):void {
@@ -150,8 +150,7 @@ class IndexManager implements IndexManagerInterface {
 	}
 
 	public close (callback?:(err:Error) => any):void {
-		var internalCallback = callback || function (err:Error) {
-		};
+		var internalCallback = callback || this._options.onCloseCallback;
 
 		if (!this._isOpen) {
 			this.pause();
@@ -207,8 +206,7 @@ class IndexManager implements IndexManagerInterface {
 	}
 
 	public open (callback?:(err:Error) => any):void {
-		var internalCallback = callback || function (err:Error) {
-		};
+		var internalCallback = callback || this._options.onOpenCallback;
 
 		if (this._isOpen) {
 			this.resume();
