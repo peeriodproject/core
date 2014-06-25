@@ -92,7 +92,7 @@ var BroadcastManager = (function (_super) {
         this._numberOfBuckets = topologyConfig.get('topology.bitLength');
         this._alpha = topologyConfig.get('topology.alpha');
         this._myNode = myNode;
-        this._broadcastLifetimeInMs = protocolConfig.get('protocol.broadcast.broadcastLifetimeInSeconds');
+        this._broadcastLifetimeInMs = protocolConfig.get('protocol.broadcast.broadcastLifetimeInSeconds') * 1000;
         this._proxyManager = proxyManager;
         this._protocolConnectionManager = protocolConnectionManager;
         this._routingTable = routingTable;
@@ -105,6 +105,16 @@ var BroadcastManager = (function (_super) {
             }
         });
     }
+    /**
+    * BEGIN TESTING PURPOSES
+    */
+    BroadcastManager.prototype.getKnownBroadcastIds = function () {
+        return this._knownBroadcastIds;
+    };
+
+    /**
+    * END TESTING PURPOSES
+    */
     BroadcastManager.prototype.initBroadcast = function (payload) {
         var _this = this;
         var broadcastId = crypto.pseudoRandomBytes(8).toString('hex');
@@ -135,7 +145,7 @@ var BroadcastManager = (function (_super) {
             var timeElapsed = Date.now() - message.getTimestamp();
             var broadcastId = message.getBroadcastId();
 
-            if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) > -1) {
+            if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1) {
                 this.emit('receivedBroadcast', message.getPayload());
 
                 var differsInBit = msg.getSender().getId().differsInHighestBit(this._myNode.getId());

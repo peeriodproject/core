@@ -108,7 +108,7 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 		this._numberOfBuckets = topologyConfig.get('topology.bitLength');
 		this._alpha = topologyConfig.get('topology.alpha');
 		this._myNode = myNode;
-		this._broadcastLifetimeInMs = protocolConfig.get('protocol.broadcast.broadcastLifetimeInSeconds');
+		this._broadcastLifetimeInMs = protocolConfig.get('protocol.broadcast.broadcastLifetimeInSeconds') * 1000;
 		this._proxyManager = proxyManager;
 		this._protocolConnectionManager = protocolConnectionManager;
 		this._routingTable = routingTable;
@@ -121,6 +121,18 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 			}
 		});
 	}
+
+	/**
+	 * BEGIN TESTING PURPOSES
+	 */
+
+	public getKnownBroadcastIds ():Array<string> {
+		return this._knownBroadcastIds;
+	}
+
+	/**
+	 * END TESTING PURPOSES
+	 */
 
 	public initBroadcast (payload:Buffer):void {
 		var broadcastId:string = crypto.pseudoRandomBytes(8).toString('hex');
@@ -150,7 +162,7 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 			var timeElapsed:number = Date.now() - message.getTimestamp();
 			var broadcastId:string = message.getBroadcastId();
 
-			if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) > -1) {
+			if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1) {
 
 				this.emit('receivedBroadcast', message.getPayload());
 
