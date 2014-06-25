@@ -303,7 +303,7 @@ class SearchClient implements SearchClientInterface {
 			}
 
 			this._client = elasticsearch.Client({
-				apiVersion: this._config.get('search.apiVersion', '1.1'),
+				apiVersion: this._config.get('search.apiVersion'),
 				host      : this._config.get('search.host') + ':' + this._config.get('search.port'),
 				log       : {
 					type : 'file',
