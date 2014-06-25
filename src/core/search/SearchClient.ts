@@ -159,7 +159,7 @@ class SearchClient implements SearchClientInterface {
 		var internalCallback:Function = callback || function () {
 		};
 
-		this.createIndex(this._indexName, (err:Error) => {
+		this._createIndex((err:Error) => {
 			var map = null;
 			if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
 				// wrap mapping in type root
@@ -329,7 +329,7 @@ class SearchClient implements SearchClientInterface {
 					internalCallback(err);
 				}
 				else {
-					this.createIndex(this._indexName, (err:Error) => {
+					this._createIndex((err:Error) => {
 						if (err) {
 							console.error(err);
 						}
@@ -349,28 +349,6 @@ class SearchClient implements SearchClientInterface {
 		}));
 
 		this._searchStore = this._searchStoreFactory.create(this._config, this._appQuitHandler, searchStoreOptions);
-	}
-
-	/**
-	 * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
-	 *
-	 * @method core.search.SearchClient#createIndex
-	 *
-	 * @param {string} name
-	 * @param {Function} callback
-	 */
-	public createIndex (indexName:string, callback:(err:Error) => any):void {
-		this._client.indices.create({
-			index: indexName
-		}, (err, response, status) => {
-			// everything went fine or index already exists
-			if (this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
-				callback(null);
-			}
-			else {
-				callback(err);
-			}
-		});
 	}
 
 	public typeExists (type:string, callback:(exists:boolean) => any):void {
@@ -408,6 +386,28 @@ class SearchClient implements SearchClientInterface {
 			}
 			else {
 				callback(err, null);
+			}
+		});
+	}
+
+	/**
+	 * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
+	 *
+	 * @method core.search.SearchClient~_createIndex
+	 *
+	 * @param {string} name
+	 * @param {Function} callback
+	 */
+	private _createIndex (callback:(err:Error) => any):void {
+		this._client.indices.create({
+			index: this._indexName
+		}, (err, response, status) => {
+			// everything went fine or index already exists
+			if (this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
+				callback(null);
+			}
+			else {
+				callback(err);
 			}
 		});
 	}

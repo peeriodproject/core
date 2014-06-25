@@ -46,16 +46,6 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	addPercolate (percolateParams:Object, callback?:(err:Error, response:Object) => any):void;
 
 	/**
-	 * Creates an index with the specified name.
-	 *
-	 * @method core.search.SearchClientInterface#createIndex
-	 *
-	 * @param {string} indexName
-	 * @param {Function}callback
-	 */
-	createIndex (indexName:string, callback:(err:Error) => any):void;
-
-	/**
 	 * Deletes the index which is managed by the SearchClient instance.
 	 *
 	 * @method core.search.SearchClientInterface#deleteIndex
