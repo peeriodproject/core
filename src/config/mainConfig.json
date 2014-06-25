@@ -35,7 +35,7 @@
         "pingpong"                    : {
             "maxWaitingListSize": 20
         },
-        "broadast": {
+        "broadast"                    : {
             "broadcastLifetimeInSeconds": 30
         },
         "findClosestNodes"            : {
@@ -50,25 +50,25 @@
             "republishInSeconds"      : 3600
         }
     },
-    "hydra": {
-        "desiredNumberOfCircuits": 4,
-        "maximumNumberOfMaintainedCells": 3,
-        "minimumNumberOfRelayNodes": 3,
-        "maximumNumberOfRelayNodes": 5,
-        "additiveSharingNodeAmount": 4,
+    "hydra"   : {
+        "desiredNumberOfCircuits"            : 4,
+        "maximumNumberOfMaintainedCells"     : 3,
+        "minimumNumberOfRelayNodes"          : 3,
+        "maximumNumberOfRelayNodes"          : 5,
+        "additiveSharingNodeAmount"          : 4,
         "waitForAdditiveBatchFinishInSeconds": 3,
-        "nodePicker": {
-            "allowIdenticalIps": false,
-            "roundThreshold": 2,
+        "nodePicker"                         : {
+            "allowIdenticalIps"   : false,
+            "roundThreshold"      : 2,
             "waitingTimeInSeconds": 3,
-            "errorThreshold": 5
+            "errorThreshold"      : 5
         },
-        "circuit": {
+        "circuit"                            : {
             "extensionReactionTimeBaseInSeconds": 3,
-            "extensionReactionTimeFactor": 1.2,
-            "maximumExtensionRetries": 3
+            "extensionReactionTimeFactor"       : 1.2,
+            "maximumExtensionRetries"           : 3
         },
-        "cell": {
+        "cell"                               : {
             "extensionReactionInSeconds": 3
         }
     },
@@ -86,13 +86,13 @@
         "dataPath": "appDataFolder"
     },
     "search"  : {
-        "host"             : "localhost",
-        "port"             : 9200,
-        "binaryPath"       : "core/search/elasticsearch",
-        "databasePath"     : "db/searchStore",
-        "searchStoreConfig": "./config/searchStore.json",
-        "pidFilename"      : "elasticsearch-pid",
-        "indexManager"     : {
+        "host"                  : "localhost",
+        "port"                  : 9200,
+        "binaryPath"            : "core/search/elasticsearch",
+        "databasePath"          : "db/searchStore",
+        "searchStoreConfig"     : "./config/searchStore.json",
+        "pidFilename"           : "elasticsearch-pid",
+        "indexManager"          : {
             "indexRunnerDelayInMilliSeconds": 10000,
             "indexRunnersInParallel"        : 3
         },
@@ -109,12 +109,12 @@
     "ui"      : {
         "UiManager": {
             "staticServer": {
-                "port": 7474,
+                "port"      : 7474,
                 "publicPath": "public"
             },
             "socketServer": {
-                "parser": "JSON",
-                "port": 8080,
+                "parser"     : "JSON",
+                "port"       : 8080,
                 "transformer": "websockets"
             }
         }
