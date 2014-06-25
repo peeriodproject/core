@@ -115,8 +115,6 @@ var SearchClient = (function () {
         }, function (err, response, status) {
             err = err || null;
 
-            console.log(response);
-
             internalCallback(err, response);
         });
     };

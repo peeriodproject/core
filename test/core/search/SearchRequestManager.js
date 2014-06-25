@@ -9,7 +9,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var SearchClient = require('../../../src/core/search/SearchClient');
 var SearchRequestManager = require('../../../src/core/search/SearchRequestManager');
 
-describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
+describe('CORE --> SEARCH --> SearchRequestManager', function () {
     var sandbox;
     var configStub;
     var appQuitHandlerStub;

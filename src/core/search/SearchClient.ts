@@ -136,8 +136,6 @@ class SearchClient implements SearchClientInterface {
 		}, function (err:Error, response:Object, status:number) {
 			err = err || null;
 
-			console.log(response);
-
 			internalCallback(err, response);
 		});
 	}
