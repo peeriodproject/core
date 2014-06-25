@@ -24,8 +24,9 @@ interface CircuitManagerInterface extends NodeJS.EventEmitter {
 	 *
 	 * @param {string} circuitId
 	 * @param {Buffer} payload
+	 * @returns {boolean} `true` If the circuit existed, `false` if it did not exist.
 	 */
-	pipeFileTransferMessageThroughCircuit (circuitId:string, payload:Buffer):void;
+	pipeFileTransferMessageThroughCircuit (circuitId:string, payload:Buffer):boolean;
 
 	/**
 	 * Sends a FILE_TRANSFER message with the given payload through all current constructed and production-ready circuits.
@@ -33,8 +34,19 @@ interface CircuitManagerInterface extends NodeJS.EventEmitter {
 	 * @method core.protocol.hydra.CircuitManager#pipeFileTransferMessageThroughAllCircuits
 	 *
 	 * @param {Buffer} payload
+	 * @returns {boolean} `true` if it there were circuits, `false` if there are no circuits.
 	 */
-	pipeFileTransferMessageThroughAllCircuits (payload:Buffer):void;
+	pipeFileTransferMessageThroughAllCircuits (payload:Buffer):boolean;
+
+	/**
+	 * Sends a FILE_TRANSFER message with the given payload through a random constructed and production-ready circuits.
+	 *
+	 * @method core.protocol.hydra.CircuitManager#pipeFileTransferMessageThroughRandomCircuit
+	 *
+	 * @param {Buffer} payload
+	 * @returns {boolean} `true` if it there were circuits, `false` if there are no circuits.
+	 */
+	pipeFileTransferMessageThroughRandomCircuit (payload:Buffer):boolean;
 }
 
 export = CircuitManagerInterface;

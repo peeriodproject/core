@@ -120,12 +120,15 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 	 * END TESTING PURPOSES
 	 */
 
-	public pipeFileTransferMessage (predecessorCircuitId:string, payload:Buffer):void {
+	public pipeFileTransferMessage (predecessorCircuitId:string, payload:Buffer):boolean {
 		var cell:HydraCellInterface = this._cellsByPredecessorCircuitId[predecessorCircuitId];
 
 		if (cell) {
 			cell.sendFileMessage(payload);
+			return true;
 		}
+
+		return false;
 	}
 
 	/**

@@ -94,13 +94,36 @@ var CircuitManager = (function (_super) {
 
         if (circuit) {
             circuit.sendFileMessage(payload);
+            return true;
         }
+
+        return false;
     };
 
     CircuitManager.prototype.pipeFileTransferMessageThroughAllCircuits = function (payload) {
-        for (var i = 0, l = this._productionReadyCircuits.length; i < l; i++) {
+        var circuitLength = this._productionReadyCircuits.length;
+
+        if (!circuitLength) {
+            return false;
+        }
+
+        for (var i = 0; i < circuitLength; i++) {
             this._productionReadyCircuits[i].sendFileMessage(payload);
         }
+        return true;
+    };
+
+    CircuitManager.prototype.pipeFileTransferMessageThroughRandomCircuit = function (payload) {
+        var circuitLength = this._productionReadyCircuits.length;
+
+        if (!circuitLength) {
+            return false;
+        }
+
+        var i = Math.floor(Math.random() * circuitLength);
+        this._productionReadyCircuits[i].sendFileMessage(payload);
+
+        return true;
     };
 
     /**

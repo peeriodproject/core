@@ -99,18 +99,42 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 		this._checkAndConstructCircuit();
 	}
 
-	public pipeFileTransferMessageThroughCircuit (circuitId:string, payload:Buffer):void {
+	public pipeFileTransferMessageThroughCircuit (circuitId:string, payload:Buffer):boolean {
 		var circuit:HydraCircuitInterface = this._constructedCircuitsByCircuitId[circuitId];
 
 		if (circuit) {
 			circuit.sendFileMessage(payload);
+			return true;
+
 		}
+
+		return false;
 	}
 
-	public pipeFileTransferMessageThroughAllCircuits (payload:Buffer):void {
-		for (var i=0, l=this._productionReadyCircuits.length; i<l; i++) {
+	public pipeFileTransferMessageThroughAllCircuits (payload:Buffer):boolean {
+		var circuitLength:number = this._productionReadyCircuits.length;
+
+		if (!circuitLength) {
+			return false;
+		}
+
+		for (var i=0; i<circuitLength; i++) {
 			this._productionReadyCircuits[i].sendFileMessage(payload);
 		}
+		return true;
+	}
+
+	public pipeFileTransferMessageThroughRandomCircuit (payload:Buffer):boolean {
+		var circuitLength:number = this._productionReadyCircuits.length;
+
+		if (!circuitLength) {
+			return false;
+		}
+
+		var i:number = Math.floor(Math.random() * circuitLength);
+		this._productionReadyCircuits[i].sendFileMessage(payload);
+
+		return true;
 	}
 
 	/**

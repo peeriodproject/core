@@ -19,8 +19,9 @@ interface CellManagerInterface extends NodeJS.EventEmitter {
 	 *
 	 * @param {string} predecessorCircuitId
 	 * @param {Buffer} payload
+	 * @returns {boolean} `true` if the cell existed, `false` if not.
 	 */
-	pipeFileTransferMessage (predecessorCircuitId:string, payload:Buffer):void;
+	pipeFileTransferMessage (predecessorCircuitId:string, payload:Buffer):boolean;
 
 }
 
