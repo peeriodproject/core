@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/broadcast/BroadcastManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/broadcast/BroadcastManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">69.70</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">213</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">36.66</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.28</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var events = require(&#039;events&#039;);
+var crypto = require(&#039;crypto&#039;);
+
+/**
+* BroadcastManagerInterface implementation.
+*
+* @class core.protocol.broadcast.BroadcastManager
+* @extends events.EventEmitter
+* @implements BroadcastManagerInterface
+*
+* @param {core.config.ConfigInterface} topologyConfig Configuration for alpha and bit length.
+* @param {core.config.ConfigInterface} protocolConfig Configuration for broadcast
+* @param {core.topology.MyNodeInterface} myNode My node instance.
+* @param {core.protocol.ProtocolConnectionManagerInterface} protocolConnectionManager Working protocol connection manager instance.
+* @param {core.protocol.ProxyManagerInterface} proxyManager Working proxy manager instance to listen on the &#039;message&#039; event.
+* @param {core.topology.RoutingTableInterface} routingTable Routing table.
+* @param {core.protocol.broadcast.BroadcastReadableMessageFactoryInterface} readableBroadcastMessageFactory Factory for reading broadcast messages.
+* @param {core.protocol.broadcast.BroadcastWritableMessageFactoryInterface} writableBroadcastMessageFactory Factory for writing broadcast messages.
+*/
+var BroadcastManager = (function (_super) {
+    __extends(BroadcastManager, _super);
+    function BroadcastManager(topologyConfig, protocolConfig, myNode, protocolConnectionManager, proxyManager, routingTable, readableBroadcastMessageFactory, writableBroadcastMessageFactory) {
+        var _this = this;
+        _super.call(this);
+        /**
+        * The number of nodes to choose from each bucket when broadcasting.
+        *
+        * @member {number} core.protocol.broadcast.BroadcastManager~_alpha
+        */
+        this._alpha = 0;
+        /**
+        * Number of milliseconds a broadcast is valid, i.e. will be propagated on.
+        *
+        * @member {number} core.protocol.broadcast.BroadcastManager~_broadcastLifetimeInMs
+        */
+        this._broadcastLifetimeInMs = 0;
+        /**
+        * Stores the IDs of broadcasts already received (and thus need not be sent on)
+        *
+        * @member {Array&lt;string&gt;} core.protocol.broadcast.BroadcastManager~_knownBroadcastIds
+        */
+        this._knownBroadcastIds = [];
+        /**
+        * My node.
+        *
+        * @member {core.topology.MyNodeInterface} core.protocol.broadcast.BroadcastManager~_myNode
+        */
+        this._myNode = null;
+        /**
+        * The total number of buckets in the routing table.
+        *
+        * @member {number} core.protocol.broadcast.BroadcastManager~_numberOfBuckets
+        */
+        this._numberOfBuckets = 0;
+        /**
+        * Protocol connection manager instance.
+        *
+        * @member {core.protocol.ProtocolConnectionManagerInterface} core.protocol.broadcast.BroadcastManager~_protocolConnectionManager
+        */
+        this._protocolConnectionManager = null;
+        /**
+        * Proxy manager instance.
+        *
+        * @member {core.protocol.ProxyManagerInterface} core.protocol.broadcast.BroadcastManager~_proxyManager
+        */
+        this._proxyManager = null;
+        /**
+        * Factory for reading broadcast messages.
+        *
+        * @member {core.protocol.broadcast.BroadcastReadableMessageFactoryInterface} core.protocol.broadcast.BroadcastManager~_readableBroadcastMessageFactory
+        */
+        this._readableBroadcastMessageFactory = null;
+        /**
+        * Routing table instance.
+        *
+        * @member {core.topology.RoutingTableInterface} core.protocol.broadcast.BroadcastManager~_routingTable
+        */
+        this._routingTable = null;
+        /**
+        * Factory for writing broadcast messages.
+        *
+        * @member {core.protocol.broadcast.BroadcastWritableMessageFactoryInterface} core.protocol.broadcast.BroadcastManager~_writableBroadcastMessageFactory
+        */
+        this._writableBroadcastMessageFactory = null;
+
+        this._numberOfBuckets = topologyConfig.get(&#039;topology.bitLength&#039;);
+        this._alpha = topologyConfig.get(&#039;topology.alpha&#039;);
+        this._myNode = myNode;
+        this._broadcastLifetimeInMs = protocolConfig.get(&#039;protocol.broadcast.broadcastLifetimeInSeconds&#039;) * 1000;
+        this._proxyManager = proxyManager;
+        this._protocolConnectionManager = protocolConnectionManager;
+        this._routingTable = routingTable;
+        this._readableBroadcastMessageFactory = readableBroadcastMessageFactory;
+        this._writableBroadcastMessageFactory = writableBroadcastMessageFactory;
+
+        this._proxyManager.on(&#039;message&#039;, function (message) {
+            if (message.getMessageType() === &#039;BROADCAST&#039;) {
+                _this._onBroadcastMessage(message);
+            }
+        });
+    }
+    /**
+    * BEGIN TESTING PURPOSES
+    */
+    BroadcastManager.prototype.getKnownBroadcastIds = function () {
+        return this._knownBroadcastIds;
+    };
+
+    /**
+    * END TESTING PURPOSES
+    */
+    BroadcastManager.prototype.initBroadcast = function (payload) {
+        var _this = this;
+        var broadcastId = crypto.pseudoRandomBytes(8).toString(&#039;hex&#039;);
+        var broadcastMsg = this._writableBroadcastMessageFactory.constructPayload(broadcastId, payload);
+
+        this._knownBroadcastIds.push(broadcastId);
+
+        global.setTimeout(function () {
+            _this._removeFromKnownBroadcasts(broadcastId);
+        }, this._broadcastLifetimeInMs);
+
+        this._propagateMessageThroughBuckets(broadcastMsg, this._numberOfBuckets - 1);
+    };
+
+    /**
+    * Function that gets called when a new broadcast message comes in.
+    * See {@link core.protocol.broadcast.BroadcastManagerInterface} for detailed information on the decision on proceedings.
+    *
+    * @method core.protocol.broadcast.BroadcastManager~_onBroadcastMessage
+    *
+    * @param {core.protocol.messages.ReadableMessageInterface} msg The received message with the BROADCAST message as payload.
+    */
+    BroadcastManager.prototype._onBroadcastMessage = function (msg) {
+        var _this = this;
+        var message = this._readableBroadcastMessageFactory.create(msg.getPayload());
+
+        if (message) {
+            var timeElapsed = Date.now() - message.getTimestamp();
+            var broadcastId = message.getBroadcastId();
+
+            if (timeElapsed &lt; this._broadcastLifetimeInMs &amp;&amp; this._knownBroadcastIds.indexOf(broadcastId) === -1) {
+                this.emit(&#039;receivedBroadcast&#039;, message.getPayload());
+
+                var differsInBit = msg.getSender().getId().differsInHighestBit(this._myNode.getId());
+
+                this._knownBroadcastIds.push(broadcastId);
+
+                global.setTimeout(function () {
+                    _this._removeFromKnownBroadcasts(broadcastId);
+                }, this._broadcastLifetimeInMs - timeElapsed);
+
+                this._propagateMessageThroughBuckets(msg.getPayload(), differsInBit - 1);
+            }
+        }
+    };
+
+    /**
+    * Sends a BROADCAST message to alpha random nodes from each bucket with an index less or equal than the index provided.
+    *
+    * @method core.protocol.broadcast.BroadcastManager~_propagateMessageThroughBuckets
+    *
+    * @param {Buffer} message The payload of the whole BROADCAST message
+    * @param {number} bucketStart The bucket index to start decrementing from.
+    */
+    BroadcastManager.prototype._propagateMessageThroughBuckets = function (message, bucketStart) {
+        var _this = this;
+        for (var i = bucketStart; i &gt;= 0; i--) {
+            this._routingTable.getRandomContactNodesFromBucket(i, this._alpha, function (err, contactNodes) {
+                if (!err &amp;&amp; contactNodes.length) {
+                    _this._sendMessageToNodes(message, contactNodes);
+                }
+            });
+        }
+    };
+
+    /**
+    * Removes the given broadcast ID from the know broadcast list (if present)
+    *
+    * @method core.protocol.broadcast.BroadcastManager~_removeFromKnownBroadcasts
+    *
+    * @param {string} broadcastId The broadcast ID to remove.
+    */
+    BroadcastManager.prototype._removeFromKnownBroadcasts = function (broadcastId) {
+        var index = this._knownBroadcastIds.indexOf(broadcastId);
+        if (index &gt; -1) {
+            this._knownBroadcastIds.splice(index, 1);
+        }
+    };
+
+    /**
+    * Sends a BROADCAST message to the provided nodes.
+    *
+    * @method core.protocol.broadcast.BroadcastManager~_sendMessageToNodes
+    *
+    * @param {Buffer} message The payload of the whole BROADCAST message to send
+    * @param {core.topology.ContactNodeListInterface} nodes The nodes to send the message to.
+    */
+    BroadcastManager.prototype._sendMessageToNodes = function (message, nodes) {
+        for (var i = 0, l = nodes.length; i &lt; l; i++) {
+            this._protocolConnectionManager.writeMessageTo(nodes[i], &#039;BROADCAST&#039;, message);
+        }
+    };
+    return BroadcastManager;
+})(events.EventEmitter);
+
+module.exports = BroadcastManager;
+//# sourceMappingURL=BroadcastManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

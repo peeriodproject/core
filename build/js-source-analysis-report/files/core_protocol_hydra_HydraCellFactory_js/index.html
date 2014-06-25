@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">76.01</p>
+      <p class="stat">74.03</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">43</p>
+      <p class="stat">48</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">9.28</p>
+      <p class="stat">9.86</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.14</p>
+      <p class="stat">0.17</p>
     </div>
   </div>
 </div>
@@ -104,7 +104,11 @@
 * @param {core.protocol.hydra.WritableEncryptedMessageFactoryInterface} encryptionFactory
 */
 var HydraCellFactory = (function () {
-    function HydraCellFactory(connectionManager, messageCenter, decryptionFactory, encryptionFactory) {
+    function HydraCellFactory(hydraConfig, connectionManager, messageCenter, decryptionFactory, encryptionFactory) {
+        /**
+        * @member {core.config.ConfigInterface} core.protocol.hydra.HydraCellFactory~_config
+        */
+        this._config = null;
         /**
         * @member {core.protocol.hydra.ConnectionManagerInterface} core.protocol.hydra.HydraCellFactory~_connectionManager
         */
@@ -121,13 +125,14 @@ var HydraCellFactory = (function () {
         * @member {core.protocol.hydra.HydraMessageCenterInterface} core.protocol.hydra.HydraCellFactory~_messageCenter
         */
         this._messageCenter = null;
+        this._config = hydraConfig;
         this._connectionManager = connectionManager;
         this._messageCenter = messageCenter;
         this._decryptionFactory = decryptionFactory;
         this._encryptionFactory = encryptionFactory;
     }
     HydraCellFactory.prototype.create = function (predecessorNode) {
-        return new HydraCell(predecessorNode, this._connectionManager, this._messageCenter, this._decryptionFactory, this._encryptionFactory);
+        return new HydraCell(predecessorNode, this._config, this._connectionManager, this._messageCenter, this._decryptionFactory, this._encryptionFactory);
     };
     return HydraCellFactory;
 })();

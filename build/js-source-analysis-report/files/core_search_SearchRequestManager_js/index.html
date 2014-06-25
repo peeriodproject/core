@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/search/SearchRequestManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/search/SearchRequestManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">72.85</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">260</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">44.45</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.95</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var crypto = require(&#039;crypto&#039;);
+var events = require(&#039;events&#039;);
+
+var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
+
+/**
+* @class core.search.SearchRequestManager
+* @extends core.search.SearchRequestManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
+* @param {string} indexName The name where outgoing queries and incoming responses will be stored.
+* @param {core.search.SearchClientInterface} searchClient
+* @param {core.utils.ClosableAsyncOptions} options
+*/
+var SearchRequestManager = (function () {
+    function SearchRequestManager(config, appQuitHandler, indexName, searchClient, options) {
+        if (typeof options === &quot;undefined&quot;) { options = {}; }
+        var _this = this;
+        /**
+        * @member {core.config.ConfigInterface} core.search.SearchRequestManager~_config
+        */
+        this._config = null;
+        /**
+        *
+        * @member {core.config.ConfigInterface} core.search.SearchRequestManager~_eventEmitter
+        */
+        this._eventEmitter = null;
+        /**
+        * @member {string} core.search.SearchRequestManager~_indexName
+        */
+        this._indexName = &#039;&#039;;
+        /**
+        * @member {boolean} core.search.SearchRequestManager~_isOpen
+        */
+        this._isOpen = false;
+        /**
+        * @member {core.utils.ClosableAsyncOptions} core.search.SearchRequestManager~_options
+        */
+        this._options = {};
+        /**
+        * @member {Object} core.search.SearchRequestManager~_runningQueries
+        */
+        this._runningQueries = {};
+        /**
+        *
+        * @member {} core.search.SearchRequestManager~_runningQueriesLifetime
+        */
+        this._runningQueriesLifetime = [];
+        /**
+        *
+        * @member {Object} core.search.SearchRequestManager~_runningQueriesLifetimeTimeout
+        */
+        this._runningQueriesLifetimeTimeout = -1;
+        /**
+        * @member {core.search.SearchClientInterface} core.search.SearchRequestManager~_searchClient
+        */
+        this._searchClient = null;
+        var defaults = {
+            onOpenCallback: function () {
+            },
+            onCloseCallback: function () {
+            },
+            closeOnProcessExit: true
+        };
+
+        this._config = config;
+        this._indexName = indexName.toLowerCase();
+        this._searchClient = searchClient;
+        this._options = ObjectUtils.extend(defaults, options);
+
+        this._eventEmitter = new events.EventEmitter();
+
+        if (this._options.closeOnProcessExit) {
+            appQuitHandler.add(function (done) {
+                _this.close(done);
+            });
+        }
+
+        this.open(this._options.onOpenCallback);
+    }
+    SearchRequestManager.prototype.addQuery = function (queryBody, callback) {
+        var _this = this;
+        var internalCallback = callback || function (err) {
+        };
+
+        this._createAndStoreQueryId(function (id) {
+            _this._searchClient.createOutgoingQuery(_this._indexName, id, queryBody, function (err) {
+                if (err) {
+                    id = null;
+                }
+
+                return internalCallback(err, id);
+            });
+        });
+    };
+
+    SearchRequestManager.prototype.addResponse = function (queryId, responseBody, callback) {
+        var _this = this;
+        var internalCallback = callback || function (err) {
+        };
+
+        this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, function (err, response) {
+            var matches;
+            if (err) {
+                console.error(err);
+                return internalCallback(err);
+            }
+
+            if (response &amp;&amp; response[&#039;matches&#039;] &amp;&amp; response[&#039;matches&#039;].length) {
+                response[&#039;matches&#039;].forEach(function (match) {
+                    var queryId = match[&#039;_id&#039;];
+
+                    if (queryId) {
+                        _this._triggerResultsChanged(queryId);
+                    }
+                });
+            }
+
+            return internalCallback(null);
+        });
+    };
+
+    SearchRequestManager.prototype.close = function (callback) {
+        var _this = this;
+        var internalCallback = callback || this._options.onCloseCallback;
+
+        if (!this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+
+        this._searchClient.close(function (err) {
+            _this._runningQueries = null;
+            _this._runningQueriesLifetime = null;
+
+            //this._eventEmitter.emit(&#039;close&#039;);
+            _this._eventEmitter.removeAllListeners();
+            _this._eventEmitter = null;
+
+            _this._stopRunningQueriesLifetime();
+
+            _this._isOpen = false;
+
+            return internalCallback(err);
+        });
+    };
+
+    SearchRequestManager.prototype.isOpen = function (callback) {
+        return process.nextTick(callback.bind(null, null, this._isOpen));
+    };
+
+    SearchRequestManager.prototype.open = function (callback) {
+        var _this = this;
+        var internalCallback = callback || this._options.onOpenCallback;
+        var done = 0;
+        var triggerCallback = function (err) {
+            if (!_this._eventEmitter) {
+                _this._eventEmitter = new events.EventEmitter();
+            }
+
+            _this._startRunningQueriesLifetime();
+
+            _this._isOpen = true;
+
+            return internalCallback(err);
+        };
+
+        if (this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+
+        this._runningQueries = {};
+        this._runningQueriesLifetime = [];
+
+        this._searchClient.open(function (err) {
+            return triggerCallback(err);
+        });
+    };
+
+    SearchRequestManager.prototype.onQueryResultsChanged = function (callback) {
+        this._eventEmitter.addListener(&#039;resultsChanged&#039;, callback);
+    };
+
+    SearchRequestManager.prototype.onQueryTimeout = function (callback) {
+        this._eventEmitter.addListener(&#039;queryTimeout&#039;, callback);
+    };
+
+    SearchRequestManager.prototype._createAndStoreQueryId = function (callback) {
+        var _this = this;
+        crypto.randomBytes(64, function (ex, buf) {
+            var id = buf.toString(&#039;hex&#039;);
+            var lifetime = _this._config.get(&#039;search.queryLifetimeInSeconds&#039;) * 1000;
+            var expiryTimestamp = new Date().getTime() + lifetime;
+
+            _this._runningQueries[expiryTimestamp] = {
+                id: id,
+                count: 0
+            };
+            _this._runningQueriesLifetime.push(expiryTimestamp);
+
+            //console.log(&#039;Have %d bytes of random data: %s, %s&#039;, buf.length, buf, id);
+            return callback(id);
+        });
+    };
+
+    SearchRequestManager.prototype._removeOldQueries = function (lifetime) {
+        var _this = this;
+        var now = new Date().getTime();
+        var newQueries = [];
+        var newRunningQueries = {};
+        var currentQueries = this._runningQueriesLifetime;
+
+        currentQueries.forEach(function (lifetime) {
+            if (lifetime &gt; now) {
+                newQueries.push(lifetime);
+                newRunningQueries[lifetime] = _this._runningQueries[lifetime];
+            } else {
+                _this._triggerQueryTimeout(_this._runningQueries[lifetime].id);
+            }
+        });
+
+        this._runningQueriesLifetime = newQueries;
+        this._runningQueries = newRunningQueries;
+    };
+
+    SearchRequestManager.prototype._startRunningQueriesLifetime = function () {
+        var _this = this;
+        var lifetime = this._config.get(&#039;search.queryLifetimeInSeconds&#039;) * 1000;
+
+        this._runningQueriesLifetimeTimeout = global.setTimeout(function () {
+            _this._removeOldQueries(lifetime);
+            _this._startRunningQueriesLifetime();
+        }, this._config.get(&#039;search.searchRequestManager.queryLifetimeIntervalInMilliSeconds&#039;));
+    };
+
+    SearchRequestManager.prototype._stopRunningQueriesLifetime = function () {
+        if (this._runningQueriesLifetimeTimeout) {
+            global.clearTimeout(this._runningQueriesLifetimeTimeout);
+            this._runningQueriesLifetimeTimeout = null;
+        }
+    };
+
+    SearchRequestManager.prototype._triggerQueryTimeout = function (queryId) {
+        if (this._isOpen) {
+            this._eventEmitter.emit(&#039;queryTimeout&#039;, queryId);
+        }
+    };
+
+    /**
+    *
+    */
+    SearchRequestManager.prototype._triggerResultsChanged = function (queryId) {
+        if (this._isOpen) {
+            this._eventEmitter.emit(&#039;resultsChanged&#039;, queryId);
+        }
+    };
+    return SearchRequestManager;
+})();
+
+module.exports = SearchRequestManager;
+//# sourceMappingURL=SearchRequestManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.32</p>
+      <p class="stat">68.34</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">318</p>
+      <p class="stat">343</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">43.90</p>
+      <p class="stat">44.40</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.92</p>
+      <p class="stat">2.13</p>
     </div>
   </div>
 </div>
@@ -131,6 +131,12 @@ var CellManager = (function (_super) {
         */
         this._cellFactory = null;
         /**
+        * Stores the maintained cells by their predecessor&#039;s circuit id.
+        *
+        * @member {Object} core.protocol.hydra.CellManager~_cellsByPredecessorCircuitId
+        */
+        this._cellsByPredecessorCircuitId = {};
+        /**
         * Stores the connection manager.
         *
         * @member {core.protocol.hydra.ConnectionManagerInterface} core.protocol.hydra.CellManager~_connectionManager
@@ -190,6 +196,17 @@ var CellManager = (function (_super) {
     /**
     * END TESTING PURPOSES
     */
+    CellManager.prototype.pipeFileTransferMessage = function (predecessorCircuitId, payload) {
+        var cell = this._cellsByPredecessorCircuitId[predecessorCircuitId];
+
+        if (cell) {
+            cell.sendFileMessage(payload);
+            return true;
+        }
+
+        return false;
+    };
+
     /**
     * Accepts a CREATE_CELL_ADDITIVE request.
     * Computes the secrets, adds the keys, and finally pipes out the CELL_CREATED_REJECTED message.
@@ -218,15 +235,19 @@ var CellManager = (function (_super) {
         initiatorNode.incomingKey = incomingKey;
         initiatorNode.outgoingKey = outgoingKey;
 
-        // @todo here we have to create the HydraCell (in the HydraCell, hook the termination listener AT ONCE)
         this._messageCenter.sendCellCreatedRejectedMessage(initiatorNode, pending.uuid, sha1, dhPublicKey);
 
         var cell = this._cellFactory.create(initiatorNode);
 
         this._maintainedCells.push(cell);
+        this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()] = cell;
 
         cell.once(&#039;isTornDown&#039;, function () {
             _this._onTornDownCell(cell);
+        });
+
+        cell.on(&#039;fileTransferMessage&#039;, function (circuitId, payload) {
+            _this.emit(&#039;cellReceivedTransferMessage&#039;, circuitId, payload);
         });
     };
 
@@ -385,6 +406,10 @@ var CellManager = (function (_super) {
     * @param {core.protocol.hydra.HydraCellInterface} cell The torn-down cell
     */
     CellManager.prototype._onTornDownCell = function (cell) {
+        cell.removeAllListeners(&#039;fileTransferMessage&#039;);
+
+        delete this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()];
+
         for (var i = 0, l = this._maintainedCells.length; i &lt; l; i++) {
             if (this._maintainedCells[i] === cell) {
                 this._maintainedCells.splice(i, 1);
