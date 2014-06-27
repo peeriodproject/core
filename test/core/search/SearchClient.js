@@ -68,7 +68,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
         searchClient.close(function () {
             searchClient = null;
             try  {
-                testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+                //testUtils.deleteFolderRecursive(searchStoreLogsFolder);
                 testUtils.deleteFolderRecursive(searchStoreDataFolder);
             } catch (e) {
                 console.log(e);
@@ -309,11 +309,9 @@ describe('CORE --> SEARCH --> SearchClient', function () {
         };
 
         searchClient.createOutgoingQuery('myindex', 'searchQueryId', queryBody, function (err) {
-            console.log(err);
             (err === null).should.be.true;
 
             searchClient.addIncomingResponse('myindex', 'searchQueryId', { message: 'A new bonsai tree in the office' }, function (err, response) {
-                console.log(err);
                 (err === null).should.be.true;
 
                 response.should.containDeep({
@@ -328,6 +326,14 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 
                 done();
             });
+        });
+    });
+
+    it('should correctly remove a outgoing query and all corresponding responses from the database', function (done) {
+        searchClient.deleteOutgoingQuery('myotherindex', 'searchQueryId', function (err) {
+            (err === null).should.be.true;
+
+            done();
         });
     });
 });

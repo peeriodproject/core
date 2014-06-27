@@ -129,7 +129,7 @@ class SearchClient implements SearchClientInterface {
 
 		this._client.percolate({
 			index: indexName.toLowerCase(),
-			type: 'response' + type.toLowerCase(),
+			type: 'response-' + type.toLowerCase(),
 			body: {
 				doc: responseObject
 			}
@@ -287,15 +287,36 @@ class SearchClient implements SearchClientInterface {
 				index: indexName,
 				type: '.percolator',
 				id: queryId
-			}, function (err:Error, response, status) {
+			}, (err:Error, response, status) => {
+				if (this._isValidResponse(err, status, 'IndexMissingException') || this._isValidResponse(err, status, 'Not Found')) {
+					err = null;
+				}
+
+				queryDeleted = true;
+
 				return checkCallback(err);
 			});
 
-			// delete all responses
-			this._client.delete({
+			// delete all responses for the queryId
+			this._client.deleteByQuery({
 				index: indexName,
-				type : 'response' + queryId.toLowerCase()
-			}, function (err:Error, response, status) {
+				type : 'response-' + queryId.toLowerCase(),
+				body: {
+					query: {
+						bool: {
+							must: [{
+								match_all: {}
+							}]
+						}
+					}
+				}
+			}, (err:Error, response, status) => {
+				if (this._isValidResponse(err, status, 'IndexMissingException')) {
+					err = null;
+				}
+
+				responsesDeleted = true;
+
 				return checkCallback(err);
 			});
 		}
@@ -312,12 +333,11 @@ class SearchClient implements SearchClientInterface {
 		}, (err:Error, response:Object, status:number) => {
 			err = err || null;
 
-			if (this._isValidResponse(err, status, 'IndexMissingException')) {
-				callback(null, this._createSearchItemFromResponse(response));
+			if (!this._isValidResponse(err, status, 'IndexMissingException')) {
+				return callback(err, null);
 			}
-			else {
-				callback(err, null);
-			}
+
+			return callback(null, this._createSearchItemFromResponse(response));
 		});
 	}
 

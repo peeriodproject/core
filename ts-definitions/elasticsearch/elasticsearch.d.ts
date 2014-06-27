@@ -23,9 +23,15 @@ declare module "elasticsearch" {
 
 	interface ClientInterface {
 		delete (params:{
-			index: string;
+			index:string;
+			type:string;
+			id:any;
+		}, callback:Callback);
+
+		deleteByQuery(params:{
+			index:string;
 			type?:string;
-			id?:any;
+			body: Object;
 		}, callback:Callback);
 
 		exists (params:{

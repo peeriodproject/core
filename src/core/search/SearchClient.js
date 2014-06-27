@@ -108,7 +108,7 @@ var SearchClient = (function () {
 
         this._client.percolate({
             index: indexName.toLowerCase(),
-            type: 'response' + type.toLowerCase(),
+            type: 'response-' + type.toLowerCase(),
             body: {
                 doc: responseObject
             }
@@ -238,6 +238,7 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.deleteOutgoingQuery = function (indexName, queryId, callback) {
+        var _this = this;
         var internalCallback = callback || function (err) {
         };
         var queryDeleted = false;
@@ -265,14 +266,35 @@ var SearchClient = (function () {
                 type: '.percolator',
                 id: queryId
             }, function (err, response, status) {
+                if (_this._isValidResponse(err, status, 'IndexMissingException') || _this._isValidResponse(err, status, 'Not Found')) {
+                    err = null;
+                }
+
+                queryDeleted = true;
+
                 return checkCallback(err);
             });
 
-            // delete all responses
-            this._client.delete({
+            // delete all responses for the queryId
+            this._client.deleteByQuery({
                 index: indexName,
-                type: 'response' + queryId.toLowerCase()
+                type: 'response-' + queryId.toLowerCase(),
+                body: {
+                    query: {
+                        bool: {
+                            must: [{
+                                    match_all: {}
+                                }]
+                        }
+                    }
+                }
             }, function (err, response, status) {
+                if (_this._isValidResponse(err, status, 'IndexMissingException')) {
+                    err = null;
+                }
+
+                responsesDeleted = true;
+
                 return checkCallback(err);
             });
         } else {
@@ -289,11 +311,11 @@ var SearchClient = (function () {
         }, function (err, response, status) {
             err = err || null;
 
-            if (_this._isValidResponse(err, status, 'IndexMissingException')) {
-                callback(null, _this._createSearchItemFromResponse(response));
-            } else {
-                callback(err, null);
+            if (!_this._isValidResponse(err, status, 'IndexMissingException')) {
+                return callback(err, null);
             }
+
+            return callback(null, _this._createSearchItemFromResponse(response));
         });
     };
 
