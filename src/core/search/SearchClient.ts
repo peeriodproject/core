@@ -259,6 +259,51 @@ class SearchClient implements SearchClientInterface {
 		}
 	}
 
+	public deleteOutgoingQuery (indexName:string, queryId:string, callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {
+		};
+		var queryDeleted:boolean = false;
+		var responsesDeleted:boolean = false;
+
+		var checkCallback:Function = function (err:Error) {
+			if (err) {
+				queryDeleted = false;
+				responsesDeleted = false;
+
+				console.error(err);
+
+				return internalCallback(err);
+			}
+			else if (queryDeleted && responsesDeleted) {
+				return internalCallback(null);
+			}
+		};
+
+		indexName = indexName.toLowerCase();
+
+		if (this._isOpen && this._client) {
+			// delete query
+			this._client.delete({
+				index: indexName,
+				type: '.percolator',
+				id: queryId
+			}, function (err:Error, response, status) {
+				return checkCallback(err);
+			});
+
+			// delete all responses
+			this._client.delete({
+				index: indexName,
+				type : 'response' + queryId.toLowerCase()
+			}, function (err:Error, response, status) {
+				return checkCallback(err);
+			});
+		}
+		else {
+			return process.nextTick(internalCallback.bind(null, null));
+		}
+	}
+
 	public getItemById (id:string, callback:(err:Error, item:SearchItemInterface) => any):void {
 		this._client.get({
 			index: this._indexName,

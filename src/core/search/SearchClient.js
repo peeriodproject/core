@@ -237,6 +237,49 @@ var SearchClient = (function () {
         }
     };
 
+    SearchClient.prototype.deleteOutgoingQuery = function (indexName, queryId, callback) {
+        var internalCallback = callback || function (err) {
+        };
+        var queryDeleted = false;
+        var responsesDeleted = false;
+
+        var checkCallback = function (err) {
+            if (err) {
+                queryDeleted = false;
+                responsesDeleted = false;
+
+                console.error(err);
+
+                return internalCallback(err);
+            } else if (queryDeleted && responsesDeleted) {
+                return internalCallback(null);
+            }
+        };
+
+        indexName = indexName.toLowerCase();
+
+        if (this._isOpen && this._client) {
+            // delete query
+            this._client.delete({
+                index: indexName,
+                type: '.percolator',
+                id: queryId
+            }, function (err, response, status) {
+                return checkCallback(err);
+            });
+
+            // delete all responses
+            this._client.delete({
+                index: indexName,
+                type: 'response' + queryId.toLowerCase()
+            }, function (err, response, status) {
+                return checkCallback(err);
+            });
+        } else {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+    };
+
     SearchClient.prototype.getItemById = function (id, callback) {
         var _this = this;
         this._client.get({

@@ -58,7 +58,7 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 * @param {Object} queryBody
 	 * @param {Function} callback
 	 */
-	createOutgoingQuery (indexName:string, id:string, queryBody:Object, callback?:(err:Error) => any):void;
+	createOutgoingQuery (indexName:string, queryId:string, queryBody:Object, callback?:(err:Error) => any):void;
 
 	/**
 	 * Deletes the index which is managed by the SearchClient instance.
@@ -68,6 +68,15 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 * @param {Function} callback
 	 */
 	deleteIndex (callback?:(err:Error) => any):void;
+
+	/**
+	 * Removes a query and all corresponding responses from the database.
+	 *
+	 * @param {string} indexName
+	 * @param {string} queryId
+	 * @param callback
+	 */
+	deleteOutgoingQuery (indexName:string, queryId:string, callback?:(err:Error) => any):void
 
 	/**
 	 * Returns if an item type (plugin identifier) exitsts in the search index.

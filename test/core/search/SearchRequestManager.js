@@ -9,7 +9,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var SearchClient = require('../../../src/core/search/SearchClient');
 var SearchRequestManager = require('../../../src/core/search/SearchRequestManager');
 
-describe('CORE --> SEARCH --> SearchRequestManager', function () {
+describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
     var sandbox;
     var configStub;
     var appQuitHandlerStub;
@@ -59,6 +59,9 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
                         { _index: arguments[0], _id: arguments[1] }
                     ]
                 }));
+            },
+            deleteOutgoingQuery: function () {
+                return process.nextTick(arguments[2].bind(null, null));
             }
         });
     });
@@ -116,6 +119,11 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
                     searchClientStub.createOutgoingQuery.getCall(0).args[1].should.equal(queryId);
                     searchClientStub.createOutgoingQuery.getCall(0).args[2].should.containDeep({ foo: true });
 
+                    // queryId & expiryTimestamp check
+                    searchClientStub.createOutgoingQuery.getCall(0).args[2].should.containDeep({ queryId: queryId });
+                    searchClientStub.createOutgoingQuery.getCall(0).args[2].expiryTimestamp.should.be.an.instanceof(Number);
+                    searchClientStub.createOutgoingQuery.getCall(0).args[2].expiryTimestamp.should.be.greaterThan(-1);
+
                     closeAndDone(manager, done);
                 });
             }
@@ -139,7 +147,7 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
         });
     });
 
-    it('should correctly call a "onQueryTimeout" listener after the lifetime of a query expired', function (done) {
+    it('should correctly call a "onQueryTimeout" listener after the lifetime of a query expired @prio', function (done) {
         this.timeout(5000);
 
         var theQueryId = '';
@@ -159,7 +167,38 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
         });
     });
 
-    it('should correctly call  a "resultsChanged" listener after a new result was added to the database and matched a running query', function (done) {
+    it('should correctly call a "resultsChanged" listener after a new result was added to the database and matched a running query', function (done) {
+        var theQueryId = '';
+        var timeoutSpy = sandbox.spy();
+
+        var manager = new SearchRequestManager(configStub, appQuitHandlerStub, 'searchqueries', searchClientStub, {
+            onOpenCallback: function () {
+                manager.addQuery({ foo: true }, function (err, queryId) {
+                    theQueryId = queryId;
+
+                    manager.addResponse(queryId, { response: true }, function (err) {
+                        (err === null).should.be.true;
+                    });
+                });
+            }
+        });
+
+        manager.onQueryTimeout(timeoutSpy);
+
+        manager.onQueryResultsChanged(function (queryId) {
+            return process.nextTick(function () {
+                queryId.should.equal(theQueryId);
+
+                timeoutSpy.called.should.be.false;
+
+                closeAndDone(manager, done);
+            });
+        });
+    });
+
+    it('should correctly call a "queryEnd" listener instead of "onQueryTimeout" after a new result matched the query', function (done) {
+        this.timeout(5000);
+
         var theQueryId = '';
 
         var manager = new SearchRequestManager(configStub, appQuitHandlerStub, 'searchqueries', searchClientStub, {
@@ -174,8 +213,32 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
             }
         });
 
-        manager.onQueryResultsChanged(function (queryId) {
+        manager.onQueryEnd(function (queryId) {
             queryId.should.equal(theQueryId);
+
+            closeAndDone(manager, done);
+        });
+    });
+
+    it('should correctly remove a query from the database and call "onQueryRemoved" afterwards', function (done) {
+        var theQueryId = '';
+
+        var manager = new SearchRequestManager(configStub, appQuitHandlerStub, 'searchqueries', searchClientStub, {
+            onOpenCallback: function () {
+                manager.addQuery({ foo: true }, function (err, queryId) {
+                    theQueryId = queryId;
+
+                    manager.removeQuery(queryId);
+                });
+            }
+        });
+
+        manager.onQueryRemoved(function (queryId) {
+            queryId.should.equal(theQueryId);
+
+            searchClientStub.deleteOutgoingQuery.calledOnce.should.be.true;
+            searchClientStub.deleteOutgoingQuery.getCall(0).args[0].should.equal('searchqueries');
+            searchClientStub.deleteOutgoingQuery.getCall(0).args[1].should.equal(theQueryId);
 
             closeAndDone(manager, done);
         });

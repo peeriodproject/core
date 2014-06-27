@@ -25,6 +25,15 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	addResponse (queryId:string, responseBody:Object, callback?:(err:Error) => any):void;
 
 	/**
+	 * Adds a listener to the internal event emitter that triggers whenever a query ends after a specified timeframe and
+	 * after it got some results back. This event follows at least one `resultsChanged` event.	 *
+	 *
+	 * @member core.search.SearchRequestManagerInterface#onQueryEnd
+	 *
+	 * @param callback The first argument will be the `queryId` that ended.
+	 */
+	onQueryEnd (callback:Function):void;
+	/**
 	 * Adds a listener to the internal event emitter that gets called whenever a new response matches a running query.
 	 *
 	 * @member core.search.SearchRequestManagerInterface#onResultsChanged
@@ -34,6 +43,12 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	onQueryResultsChanged (callback:Function):void;
 
 	/**
+	 *
+	 * @param callback
+	 */
+	onQueryRemoved (callback:Function):void;
+
+	/**
 	 * Adds a listener to the internal event emitter that triggers the function whenever a query timed out.
 	 *
 	 * @member core.search.SearchRequestManagerInterface#onQueryTimeout
@@ -41,6 +56,16 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	 * @param {Function} callback The listener function. The first argument will be the `queryId` of the timed out query.
 	 */
 	onQueryTimeout (callback:Function):void;
+
+	/**
+	 * Removes the query an all responses from the database.
+	 *
+	 * @member core.search.SearchRequestManagerInterface#removeQuery
+	 *
+	 * @param {string} queryId
+	 * @param {Function} callback
+	 */
+	removeQuery (queryId:string, callback?:(err:Error) => any):void;
 
 }
 
