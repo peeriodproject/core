@@ -22,6 +22,12 @@ declare module "elasticsearch" {
 	}
 
 	interface ClientInterface {
+		delete (params:{
+			index: string;
+			type?:string;
+			id?:any;
+		}, callback:Callback);
+
 		exists (params:{
 			index:string;
 			type:string;
