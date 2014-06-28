@@ -6,7 +6,7 @@ var PluginManager = require('../../../../src/core/plugin/PluginManager');
 var PluginRunner = require('../../../../src/core/plugin/PluginRunner');
 var UiPluginManagerComponent = require('../../../../src/core/ui/plugin/UiPluginManagerComponent');
 
-describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent @joern', function () {
+describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent @_joern', function () {
     var sandbox;
     var component;
     var eventListeners;

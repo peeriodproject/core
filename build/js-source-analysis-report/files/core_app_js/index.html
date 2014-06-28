@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">65.09</p>
+      <p class="stat">67.11</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">189</p>
+      <p class="stat">202</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">20.28</p>
+      <p class="stat">20.98</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.97</p>
+      <p class="stat">2.16</p>
     </div>
   </div>
 </div>
@@ -133,6 +133,8 @@ var FolderWatcherFactory = require(&#039;./fs/FolderWatcherFactory&#039;);
 var FolderWatcherManager = require(&#039;./fs/FolderWatcherManager&#039;);
 var PathValidator = require(&#039;./fs/PathValidator&#039;);
 
+var IndexManager = require(&#039;./search/IndexManager&#039;);
+
 // ui imports
 var UiFolderWatcherManagerComponent = require(&#039;./ui/folder/UiFolderWatcherManagerComponent&#039;);
 var UiFolderDropzoneComponent = require(&#039;./ui/folder/UiFolderDropzoneComponent&#039;);
@@ -146,12 +148,19 @@ var App = {
         this._uiComponents.push(component);
     },
     start: function (gui, nwApp, dataPath, win) {
+        var _this = this;
+        win.showDevTools();
+
         this.appQuitHandler = new AppQuitHandler(nwApp);
 
         //this.startTopology(dataPath, win);
-        this.startIndexer(dataPath, win);
+        this.startSearchClient(function (searchConfig, searchClient) {
+            console.log(&#039;starting indexer&#039;);
+            _this.startIndexer(searchConfig, searchClient);
 
-        this.startUi(gui);
+            _this.startUi(gui);
+            console.log(&#039;rockn roll!&#039;);
+        });
     },
     quit: function () {
         console.log(&#039;quitting...&#039;);
@@ -159,19 +168,9 @@ var App = {
             this.appQuitHandler.quit();
         }.bind(this));
     },
-    startIndexer: function (dataPath, win) {
-        win.showDevTools();
-
-        //var testFolderPath:string = path.resolve(__dirname, &#039;../../utils/TestFolder&#039;);
-        //var externalFolderPath:string = path.resolve(&#039;/Volumes/External/path/Folder&#039;);
+    startIndexer: function (searchConfig, searchClient) {
         var fsConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;fs&#039;]);
-        var appConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;]);
-        var searchConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;search&#039;]);
         var pluginConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;plugin&#039;]);
-
-        var searchStoreFactory = new SearchStoreFactory();
-        var searchItemFactory = new SearchItemFactory();
-        var searchClient = new SearchClient(searchConfig, this.appQuitHandler, &#039;mainIndex&#039;, searchStoreFactory, searchItemFactory);
 
         var pluginFinder = new PluginFinder(pluginConfig);
         var pluginValidator = new PluginValidator();
@@ -186,16 +185,29 @@ var App = {
         var folderWatcherFactory = new FolderWatcherFactory();
 
         var folderWatcherManager = new FolderWatcherManager(fsConfig, this.appQuitHandler, stateHandlerFactory, folderWatcherFactory);
+
         var pathValidator = new PathValidator();
 
-        // ui components
+        var indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
+
+        // register ui components
         // ----------------------
         this.addUiComponent(new UiFolderWatcherManagerComponent(folderWatcherManager));
         this.addUiComponent(new UiPluginManagerComponent(pluginManager));
-        //var indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
-        // -----------------------
-        //folderWatcherManager.addFolderWatcher(testFolderPath);
-        //folderWatcherManager.addFolderWatcher(externalFolderPath);
+    },
+    startSearchClient: function (callback) {
+        //var testFolderPath:string = path.resolve(__dirname, &#039;../../utils/TestFolder&#039;);
+        //var externalFolderPath:string = path.resolve(&#039;/Volumes/External/path/Folder&#039;);
+        var appConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;]);
+        var searchConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;search&#039;]);
+
+        var searchStoreFactory = new SearchStoreFactory();
+        var searchItemFactory = new SearchItemFactory();
+        var searchClient = new SearchClient(searchConfig, this.appQuitHandler, &#039;mainIndex&#039;, searchStoreFactory, searchItemFactory, {
+            onOpenCallback: function () {
+                callback(searchConfig, searchClient);
+            }
+        });
     },
     startUi: function (gui) {
         var uiConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;ui&#039;]);
@@ -209,6 +221,7 @@ var App = {
         var netConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;net&#039;]);
         var protocolConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;protocol&#039;]);
         var topologyConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;topology&#039;]);
+        var hydraConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;hydra&#039;]);
         var tcpSocketHandlerFactory = new TCPSocketHandlerFactory();
         var jsonWebIp = new JSONWebIp();
         var nodeAddressFactory = new ContactNodeAddressFactory();
@@ -270,7 +283,7 @@ var App = {
                 contactNodeFactory = new ContactNodeFactory();
                 routingTable = new RoutingTable(topologyConfig, _this.appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory);
 
-                protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable);
+                protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable);
 
                 protocolGateway.start();
             });

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">74.71</p>
+      <p class="stat">72.71</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">188</p>
+      <p class="stat">254</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">34.48</p>
+      <p class="stat">45.10</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.88</p>
+      <p class="stat">1.36</p>
     </div>
   </div>
 </div>
@@ -125,6 +125,12 @@ var CircuitManager = (function (_super) {
         */
         this._circuitsUnderConstruction = [];
         /**
+        * Stores constructed circuits by their circuit Id.
+        *
+        * @member {Object} core.protocol.hydra.CircuitManager~_constructedCircuitsByCircuitId
+        */
+        this._constructedCircuitsByCircuitId = {};
+        /**
         * The optimal number of production-ready circuits the CircuitManager should reach and maintain.
         * Gets populated by the config.
         *
@@ -175,6 +181,43 @@ var CircuitManager = (function (_super) {
         this._checkAndConstructCircuit();
     };
 
+    CircuitManager.prototype.pipeFileTransferMessageThroughCircuit = function (circuitId, payload) {
+        var circuit = this._constructedCircuitsByCircuitId[circuitId];
+
+        if (circuit) {
+            circuit.sendFileMessage(payload);
+            return true;
+        }
+
+        return false;
+    };
+
+    CircuitManager.prototype.pipeFileTransferMessageThroughAllCircuits = function (payload) {
+        var circuitLength = this._productionReadyCircuits.length;
+
+        if (!circuitLength) {
+            return false;
+        }
+
+        for (var i = 0; i &lt; circuitLength; i++) {
+            this._productionReadyCircuits[i].sendFileMessage(payload);
+        }
+        return true;
+    };
+
+    CircuitManager.prototype.pipeFileTransferMessageThroughRandomCircuit = function (payload) {
+        var circuitLength = this._productionReadyCircuits.length;
+
+        if (!circuitLength) {
+            return false;
+        }
+
+        var i = Math.floor(Math.random() * circuitLength);
+        this._productionReadyCircuits[i].sendFileMessage(payload);
+
+        return true;
+    };
+
     /**
     * Returns `true` if another circuit must be constructed.
     *
@@ -215,6 +258,15 @@ var CircuitManager = (function (_super) {
     };
 
     /**
+    * Emits the current amount of production ready circuits.
+    *
+    * @method core.protocol.hydra.CircuitManager~_emitCircuitCount
+    */
+    CircuitManager.prototype._emitCircuitCount = function () {
+        this.emit(&#039;circuitCount&#039;, this._productionReadyCircuits.length);
+    };
+
+    /**
     * Generates a number between the minimum and maximum number of relay nodes a circuit can have (including edges).
     *
     * @method core.protocol.hydra.HydraCircuitManager~_generateRelayNodeAmount
@@ -252,8 +304,16 @@ var CircuitManager = (function (_super) {
     * @param {core.protocol.hydra.HydraCircuitInterface} circuit The constructed circuit.
     */
     CircuitManager.prototype._onCircuitConstructed = function (circuit) {
+        var _this = this;
         this._iterateOverListAndRemoveCircuit(this._circuitsUnderConstruction, circuit);
         this._productionReadyCircuits.push(circuit);
+        this._constructedCircuitsByCircuitId[circuit.getCircuitId()] = circuit;
+
+        circuit.on(&#039;fileTransferMessage&#039;, function (circuitId, payload) {
+            _this.emit(&#039;circuitReceivedTransferMessage&#039;, circuitId, payload);
+        });
+
+        this._emitCircuitCount();
 
         if (this._productionReadyCircuits.length === this._desiredNumberOfCircuits) {
             this.emit(&#039;desiredCircuitAmountReached&#039;);
@@ -269,8 +329,14 @@ var CircuitManager = (function (_super) {
     * @param {core.protocol.hydra.HydraCircuitInterface} circuit The circuit that has been torn down.
     */
     CircuitManager.prototype._onCircuitTeardown = function (circuit) {
+        circuit.removeAllListeners(&#039;fileTransferMessage&#039;);
+
         this._iterateOverListAndRemoveCircuit(this._circuitsUnderConstruction, circuit);
         this._iterateOverListAndRemoveCircuit(this._productionReadyCircuits, circuit);
+
+        delete this._constructedCircuitsByCircuitId[circuit.getCircuitId()];
+
+        this._emitCircuitCount();
 
         this._checkAndConstructCircuit();
     };

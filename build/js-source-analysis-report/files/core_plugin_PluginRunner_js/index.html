@@ -124,8 +124,8 @@ var PluginRunner = (function () {
         var nodeBinaryPath = path.join(__dirname, &#039;../../bin/&#039;, this._config.get(&#039;plugin.binaryPath&#039;));
 
         this._sandbox = new SandCastle({
-            memoryLimitMB: 100,
-            timeout: 2000,
+            memoryLimitMB: 1024,
+            timeout: 30000,
             useStrictMode: true,
             api: this._getPluginApiPath(),
             spawnExecPath: nodeBinaryPath

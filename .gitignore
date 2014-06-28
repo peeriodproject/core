@@ -35,3 +35,4 @@ node_modules
 *.pyc
 
 /src/public/primus.io.js
+/src/bin/core/search/elasticsearch/logs/

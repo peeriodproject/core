@@ -15,6 +15,18 @@ import SearchItemInterface = require('./SearchItemInterface');
 interface SearchClientInterface extends ClosableAsyncInterface {
 
 	/**
+	 * Adds a incoming response to the specified index
+	 *
+	 * @method core.search.SearchClientInterface#addIncomingResponse
+	 *
+	 * @param {string} indexName The index to perculate the object into.
+	 * @param {string} type The type of the response object
+	 * @param {Object} responseObject The object to store
+	 * @param {Function} callback
+	 */
+	addIncomingResponse (indexName:string, type:string, responseObject:Object, callback?:(err:Error, response:Object) => any):void;
+
+	/**
 	 * Adds the specified object to the search index.
 	 *
 	 * @method core.search.SearchClientInterface#addItem
@@ -35,15 +47,18 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 */
 	addMapping (type:string, mapping:Object, callback?:(err:Error) => any):void;
 
+
 	/**
-	 * Creates an index with the specified name.
+	 * Stores the query and prepares an index where incoming results will be stored.
 	 *
-	 * @method core.search.SearchClientInterface#createIndex
+	 * @method core.search.SearchClientInterface#createOutgoingQuery
 	 *
 	 * @param {string} indexName
-	 * @param {Function}callback
+	 * @param {string} queryId
+	 * @param {Object} queryBody
+	 * @param {Function} callback
 	 */
-	createIndex (indexName:string, callback:(err:Error) => any):void;
+	createOutgoingQuery (indexName:string, queryId:string, queryBody:Object, callback?:(err:Error) => any):void;
 
 	/**
 	 * Deletes the index which is managed by the SearchClient instance.
@@ -53,6 +68,15 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 * @param {Function} callback
 	 */
 	deleteIndex (callback?:(err:Error) => any):void;
+
+	/**
+	 * Removes a query and all corresponding responses from the database.
+	 *
+	 * @param {string} indexName
+	 * @param {string} queryId
+	 * @param callback
+	 */
+	deleteOutgoingQuery (indexName:string, queryId:string, callback?:(err:Error) => any):void
 
 	/**
 	 * Returns if an item type (plugin identifier) exitsts in the search index.

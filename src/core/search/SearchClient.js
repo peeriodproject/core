@@ -10,9 +10,8 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @class core.search.SearchClient
 * @implements core.search.SearchClientInterface
 *
-* @see https://www.npmjs.org/package/base64-stream
-*
 * @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {core.search.SearchStoreFactory} searchStoreFactory
 * @param {core.search.SearchClientOptions} options
 */
@@ -103,6 +102,23 @@ var SearchClient = (function () {
 
         this.open(this._options.onOpenCallback);
     }
+    SearchClient.prototype.addIncomingResponse = function (indexName, type, responseObject, callback) {
+        var internalCallback = callback || function (err, response) {
+        };
+
+        this._client.percolate({
+            index: indexName.toLowerCase(),
+            type: 'response' + type.toLowerCase(),
+            body: {
+                doc: responseObject
+            }
+        }, function (err, response, status) {
+            err = err || null;
+
+            internalCallback(err, response);
+        });
+    };
+
     SearchClient.prototype.addItem = function (objectToIndex, callback) {
         var pluginIdentifiers = Object.keys(objectToIndex);
         var amount = pluginIdentifiers.length;
@@ -138,7 +154,7 @@ var SearchClient = (function () {
         var internalCallback = callback || function () {
         };
 
-        this.createIndex(this._indexName, function (err) {
+        this._createIndex(this._indexName, function (err) {
             var map = null;
             if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
                 // wrap mapping in type root
@@ -179,6 +195,28 @@ var SearchClient = (function () {
         });
     };
 
+    SearchClient.prototype.createOutgoingQuery = function (indexName, id, queryBody, callback) {
+        var _this = this;
+        var internalCallback = callback || function (err) {
+        };
+
+        this._createIndex(indexName, function (err) {
+            if (err) {
+                return internalCallback(err);
+            }
+
+            _this._client.index({
+                index: indexName.toLowerCase(),
+                type: '.percolator',
+                id: id,
+                body: queryBody
+            }, function (err, response, status) {
+                err = err || null;
+                return internalCallback(err);
+            });
+        });
+    };
+
     SearchClient.prototype.deleteIndex = function (callback) {
         var _this = this;
         var internalCallback = callback || function (err) {
@@ -193,6 +231,49 @@ var SearchClient = (function () {
                 } else {
                     internalCallback(err);
                 }
+            });
+        } else {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+    };
+
+    SearchClient.prototype.deleteOutgoingQuery = function (indexName, queryId, callback) {
+        var internalCallback = callback || function (err) {
+        };
+        var queryDeleted = false;
+        var responsesDeleted = false;
+
+        var checkCallback = function (err) {
+            if (err) {
+                queryDeleted = false;
+                responsesDeleted = false;
+
+                console.error(err);
+
+                return internalCallback(err);
+            } else if (queryDeleted && responsesDeleted) {
+                return internalCallback(null);
+            }
+        };
+
+        indexName = indexName.toLowerCase();
+
+        if (this._isOpen && this._client) {
+            // delete query
+            this._client.delete({
+                index: indexName,
+                type: '.percolator',
+                id: queryId
+            }, function (err, response, status) {
+                return checkCallback(err);
+            });
+
+            // delete all responses
+            this._client.delete({
+                index: indexName,
+                type: 'response' + queryId.toLowerCase()
+            }, function (err, response, status) {
+                return checkCallback(err);
             });
         } else {
             return process.nextTick(internalCallback.bind(null, null));
@@ -281,7 +362,7 @@ var SearchClient = (function () {
             }
 
             _this._client = elasticsearch.Client({
-                apiVersion: _this._config.get('search.apiVersion', '1.1'),
+                apiVersion: _this._config.get('search.apiVersion'),
                 host: _this._config.get('search.host') + ':' + _this._config.get('search.port'),
                 log: {
                     type: 'file',
@@ -295,7 +376,7 @@ var SearchClient = (function () {
                     console.error(err);
                     internalCallback(err);
                 } else {
-                    _this.createIndex(_this._indexName, function (err) {
+                    _this._createIndex(_this._indexName, function (err) {
                         if (err) {
                             console.error(err);
                         } else {
@@ -314,28 +395,6 @@ var SearchClient = (function () {
         }));
 
         this._searchStore = this._searchStoreFactory.create(this._config, this._appQuitHandler, searchStoreOptions);
-    };
-
-    /**
-    * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
-    *
-    * @method core.search.SearchClient#createIndex
-    *
-    * @param {string} name
-    * @param {Function} callback
-    */
-    SearchClient.prototype.createIndex = function (indexName, callback) {
-        var _this = this;
-        this._client.indices.create({
-            index: indexName
-        }, function (err, response, status) {
-            // everything went fine or index already exists
-            if (_this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
-                callback(null);
-            } else {
-                callback(err);
-            }
-        });
     };
 
     SearchClient.prototype.typeExists = function (type, callback) {
@@ -371,6 +430,28 @@ var SearchClient = (function () {
                 callback(err, response['_id']);
             } else {
                 callback(err, null);
+            }
+        });
+    };
+
+    /**
+    * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
+    *
+    * @method core.search.SearchClient~_createIndex
+    *
+    * @param {string} indexName
+    * @param {Function} callback
+    */
+    SearchClient.prototype._createIndex = function (indexName, callback) {
+        var _this = this;
+        this._client.indices.create({
+            index: indexName
+        }, function (err, response, status) {
+            // everything went fine or index already exists
+            if (_this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
+                callback(null);
+            } else {
+                callback(err);
             }
         });
     };

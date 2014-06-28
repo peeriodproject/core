@@ -24,9 +24,8 @@ import ObjectUtils = require('../utils/ObjectUtils');
  * @class core.search.SearchClient
  * @implements core.search.SearchClientInterface
  *
- * @see https://www.npmjs.org/package/base64-stream
- *
  * @param {core.config.ConfigInterface} config
+ * @param {core.utils.AppQuitHandlerInterface} appQuitHandler
  * @param {core.search.SearchStoreFactory} searchStoreFactory
  * @param {core.search.SearchClientOptions} options
  */
@@ -124,6 +123,23 @@ class SearchClient implements SearchClientInterface {
 		this.open(this._options.onOpenCallback);
 	}
 
+	public addIncomingResponse (indexName:string, type:string, responseObject:Object, callback?:(err:Error, response:Object) => any):void {
+		var internalCallback = callback || function (err:Error, response:Object) {
+		};
+
+		this._client.percolate({
+			index: indexName.toLowerCase(),
+			type: 'response' + type.toLowerCase(),
+			body: {
+				doc: responseObject
+			}
+		}, function (err:Error, response:Object, status:number) {
+			err = err || null;
+
+			internalCallback(err, response);
+		});
+	}
+
 	public addItem (objectToIndex:Object, callback?:(err:Error, ids:SearchItemIdListInterface) => any):void {
 		var pluginIdentifiers:Array<string> = Object.keys(objectToIndex);
 		var amount:number = pluginIdentifiers.length;
@@ -159,7 +175,7 @@ class SearchClient implements SearchClientInterface {
 		var internalCallback:Function = callback || function () {
 		};
 
-		this.createIndex(this._indexName, (err:Error) => {
+		this._createIndex(this._indexName, (err:Error) => {
 			var map = null;
 			if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
 				// wrap mapping in type root
@@ -201,6 +217,27 @@ class SearchClient implements SearchClientInterface {
 		});
 	}
 
+	public createOutgoingQuery (indexName:string, id:string, queryBody:Object, callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {
+		};
+
+		this._createIndex(indexName, (err:Error) => {
+			if (err) {
+				return internalCallback(err);
+			}
+
+			this._client.index({
+				index: indexName.toLowerCase(),
+				type : '.percolator',
+				id   : id,
+				body : queryBody
+			}, function (err:Error, response:Object, status:number) {
+				err = err || null;
+				return internalCallback(err);
+			});
+		});
+	}
+
 	public deleteIndex (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
@@ -222,11 +259,56 @@ class SearchClient implements SearchClientInterface {
 		}
 	}
 
+	public deleteOutgoingQuery (indexName:string, queryId:string, callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {
+		};
+		var queryDeleted:boolean = false;
+		var responsesDeleted:boolean = false;
+
+		var checkCallback:Function = function (err:Error) {
+			if (err) {
+				queryDeleted = false;
+				responsesDeleted = false;
+
+				console.error(err);
+
+				return internalCallback(err);
+			}
+			else if (queryDeleted && responsesDeleted) {
+				return internalCallback(null);
+			}
+		};
+
+		indexName = indexName.toLowerCase();
+
+		if (this._isOpen && this._client) {
+			// delete query
+			this._client.delete({
+				index: indexName,
+				type: '.percolator',
+				id: queryId
+			}, function (err:Error, response, status) {
+				return checkCallback(err);
+			});
+
+			// delete all responses
+			this._client.delete({
+				index: indexName,
+				type : 'response' + queryId.toLowerCase()
+			}, function (err:Error, response, status) {
+				return checkCallback(err);
+			});
+		}
+		else {
+			return process.nextTick(internalCallback.bind(null, null));
+		}
+	}
+
 	public getItemById (id:string, callback:(err:Error, item:SearchItemInterface) => any):void {
 		this._client.get({
 			index: this._indexName,
-			type: '_all',
-			id: id
+			type : '_all',
+			id   : id
 		}, (err:Error, response:Object, status:number) => {
 			err = err || null;
 
@@ -250,7 +332,7 @@ class SearchClient implements SearchClientInterface {
 
 		this._client.search({
 			index: this._indexName,
-			body: searchQuery
+			body : searchQuery
 		}, (err:Error, response:Object, status:number) => {
 			err = err || null;
 
@@ -283,8 +365,8 @@ class SearchClient implements SearchClientInterface {
 	public itemExistsById (id:string, callback:(exists:boolean) => void):void {
 		this._client.exists({
 			index: this._indexName,
-			type: '_all',
-			id: id
+			type : '_all',
+			id   : id
 		}, function (err, exists) {
 			return callback(exists === true);
 		});
@@ -303,7 +385,7 @@ class SearchClient implements SearchClientInterface {
 			}
 
 			this._client = elasticsearch.Client({
-				apiVersion: this._config.get('search.apiVersion', '1.1'),
+				apiVersion: this._config.get('search.apiVersion'),
 				host      : this._config.get('search.host') + ':' + this._config.get('search.port'),
 				log       : {
 					type : 'file',
@@ -318,7 +400,7 @@ class SearchClient implements SearchClientInterface {
 					internalCallback(err);
 				}
 				else {
-					this.createIndex(this._indexName, (err:Error) => {
+					this._createIndex(this._indexName, (err:Error) => {
 						if (err) {
 							console.error(err);
 						}
@@ -338,28 +420,6 @@ class SearchClient implements SearchClientInterface {
 		}));
 
 		this._searchStore = this._searchStoreFactory.create(this._config, this._appQuitHandler, searchStoreOptions);
-	}
-
-	/**
-	 * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
-	 *
-	 * @method core.search.SearchClient#createIndex
-	 *
-	 * @param {string} name
-	 * @param {Function} callback
-	 */
-	public createIndex (indexName:string, callback:(err:Error) => any):void {
-		this._client.indices.create({
-			index: indexName
-		}, (err, response, status) => {
-			// everything went fine or index already exists
-			if (this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
-				callback(null);
-			}
-			else {
-				callback(err);
-			}
-		});
 	}
 
 	public typeExists (type:string, callback:(exists:boolean) => any):void {
@@ -397,6 +457,28 @@ class SearchClient implements SearchClientInterface {
 			}
 			else {
 				callback(err, null);
+			}
+		});
+	}
+
+	/**
+	 * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
+	 *
+	 * @method core.search.SearchClient~_createIndex
+	 *
+	 * @param {string} indexName
+	 * @param {Function} callback
+	 */
+	private _createIndex (indexName:string, callback:(err:Error) => any):void {
+		this._client.indices.create({
+			index: indexName
+		}, (err, response, status) => {
+			// everything went fine or index already exists
+			if (this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
+				callback(null);
+			}
+			else {
+				callback(err);
 			}
 		});
 	}
@@ -460,7 +542,7 @@ class SearchClient implements SearchClientInterface {
 	 * @param {string} errorNameToIgnore
 	 * @returns {boolean}
 	 */
-	private _isValidResponse(err:Error, status:number, errorNameToIgnore:string):boolean {
+	private _isValidResponse (err:Error, status:number, errorNameToIgnore:string):boolean {
 		return ((status >= 200 && status < 300) || (status >= 400 && err && err.message.indexOf(errorNameToIgnore) === 0)) ? true : false;
 	}
 

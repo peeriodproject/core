@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.84</p>
+      <p class="stat">71.15</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">446</p>
+      <p class="stat">521</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">62.25</p>
+      <p class="stat">69.83</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.33</p>
+      <p class="stat">4.05</p>
     </div>
   </div>
 </div>
@@ -102,9 +102,8 @@ var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
 * @class core.search.SearchClient
 * @implements core.search.SearchClientInterface
 *
-* @see https://www.npmjs.org/package/base64-stream
-*
 * @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {core.search.SearchStoreFactory} searchStoreFactory
 * @param {core.search.SearchClientOptions} options
 */
@@ -195,6 +194,23 @@ var SearchClient = (function () {
 
         this.open(this._options.onOpenCallback);
     }
+    SearchClient.prototype.addIncomingResponse = function (indexName, type, responseObject, callback) {
+        var internalCallback = callback || function (err, response) {
+        };
+
+        this._client.percolate({
+            index: indexName.toLowerCase(),
+            type: &#039;response&#039; + type.toLowerCase(),
+            body: {
+                doc: responseObject
+            }
+        }, function (err, response, status) {
+            err = err || null;
+
+            internalCallback(err, response);
+        });
+    };
+
     SearchClient.prototype.addItem = function (objectToIndex, callback) {
         var pluginIdentifiers = Object.keys(objectToIndex);
         var amount = pluginIdentifiers.length;
@@ -230,12 +246,12 @@ var SearchClient = (function () {
         var internalCallback = callback || function () {
         };
 
-        this._createIndex(function (err) {
+        this._createIndex(this._indexName, function (err) {
             var map = null;
             if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
                 // wrap mapping in type root
                 map = {};
-                map[type] = mapping;
+                map[type.toLowerCase()] = mapping;
             } else {
                 map = mapping;
             }
@@ -271,6 +287,28 @@ var SearchClient = (function () {
         });
     };
 
+    SearchClient.prototype.createOutgoingQuery = function (indexName, id, queryBody, callback) {
+        var _this = this;
+        var internalCallback = callback || function (err) {
+        };
+
+        this._createIndex(indexName, function (err) {
+            if (err) {
+                return internalCallback(err);
+            }
+
+            _this._client.index({
+                index: indexName.toLowerCase(),
+                type: &#039;.percolator&#039;,
+                id: id,
+                body: queryBody
+            }, function (err, response, status) {
+                err = err || null;
+                return internalCallback(err);
+            });
+        });
+    };
+
     SearchClient.prototype.deleteIndex = function (callback) {
         var _this = this;
         var internalCallback = callback || function (err) {
@@ -291,8 +329,47 @@ var SearchClient = (function () {
         }
     };
 
-    SearchClient.prototype.getItem = function (query, callback) {
-        return process.nextTick(callback.bind(null, null, null));
+    SearchClient.prototype.deleteOutgoingQuery = function (indexName, queryId, callback) {
+        var internalCallback = callback || function (err) {
+        };
+        var queryDeleted = false;
+        var responsesDeleted = false;
+
+        var checkCallback = function (err) {
+            if (err) {
+                queryDeleted = false;
+                responsesDeleted = false;
+
+                console.error(err);
+
+                return internalCallback(err);
+            } else if (queryDeleted &amp;&amp; responsesDeleted) {
+                return internalCallback(null);
+            }
+        };
+
+        indexName = indexName.toLowerCase();
+
+        if (this._isOpen &amp;&amp; this._client) {
+            // delete query
+            this._client.delete({
+                index: indexName,
+                type: &#039;.percolator&#039;,
+                id: queryId
+            }, function (err, response, status) {
+                return checkCallback(err);
+            });
+
+            // delete all responses
+            this._client.delete({
+                index: indexName,
+                type: &#039;response&#039; + queryId.toLowerCase()
+            }, function (err, response, status) {
+                return checkCallback(err);
+            });
+        } else {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
     };
 
     SearchClient.prototype.getItemById = function (id, callback) {
@@ -342,15 +419,13 @@ var SearchClient = (function () {
         });
     };
 
-    /*public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) =&gt; any):void {
-    // todo iplementation
-    return process.nextTick(callback.bind(null, null, null));
-    }*/
     SearchClient.prototype.isOpen = function (callback) {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
     SearchClient.prototype.itemExists = function (pathToIndex, callback) {
+        console.log(&#039;todo SearchClient#itemExists&#039;);
+
         // todo iplementation
         return process.nextTick(callback.bind(null, null, null));
     };
@@ -379,7 +454,7 @@ var SearchClient = (function () {
             }
 
             _this._client = elasticsearch.Client({
-                apiVersion: _this._config.get(&#039;search.apiVersion&#039;, &#039;1.1&#039;),
+                apiVersion: _this._config.get(&#039;search.apiVersion&#039;),
                 host: _this._config.get(&#039;search.host&#039;) + &#039;:&#039; + _this._config.get(&#039;search.port&#039;),
                 log: {
                     type: &#039;file&#039;,
@@ -393,7 +468,7 @@ var SearchClient = (function () {
                     console.error(err);
                     internalCallback(err);
                 } else {
-                    _this._createIndex(function (err) {
+                    _this._createIndex(_this._indexName, function (err) {
                         if (err) {
                             console.error(err);
                         } else {
@@ -456,13 +531,13 @@ var SearchClient = (function () {
     *
     * @method core.search.SearchClient~_createIndex
     *
-    * @param {string} name
+    * @param {string} indexName
     * @param {Function} callback
     */
-    SearchClient.prototype._createIndex = function (callback) {
+    SearchClient.prototype._createIndex = function (indexName, callback) {
         var _this = this;
         this._client.indices.create({
-            index: this._indexName
+            index: indexName
         }, function (err, response, status) {
             // everything went fine or index already exists
             if (_this._isValidResponse(err, status, &#039;IndexAlreadyExistsException&#039;)) {

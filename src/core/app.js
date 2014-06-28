@@ -41,6 +41,8 @@ var FolderWatcherFactory = require('./fs/FolderWatcherFactory');
 var FolderWatcherManager = require('./fs/FolderWatcherManager');
 var PathValidator = require('./fs/PathValidator');
 
+var IndexManager = require('./search/IndexManager');
+
 // ui imports
 var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
@@ -54,12 +56,19 @@ var App = {
         this._uiComponents.push(component);
     },
     start: function (gui, nwApp, dataPath, win) {
+        var _this = this;
+        win.showDevTools();
+
         this.appQuitHandler = new AppQuitHandler(nwApp);
 
         //this.startTopology(dataPath, win);
-        this.startIndexer(dataPath, win);
+        this.startSearchClient(function (searchConfig, searchClient) {
+            console.log('starting indexer');
+            _this.startIndexer(searchConfig, searchClient);
 
-        this.startUi(gui);
+            _this.startUi(gui);
+            console.log('rockn roll!');
+        });
     },
     quit: function () {
         console.log('quitting...');
@@ -67,19 +76,9 @@ var App = {
             this.appQuitHandler.quit();
         }.bind(this));
     },
-    startIndexer: function (dataPath, win) {
-        win.showDevTools();
-
-        //var testFolderPath:string = path.resolve(__dirname, '../../utils/TestFolder');
-        //var externalFolderPath:string = path.resolve('/Volumes/External/path/Folder');
+    startIndexer: function (searchConfig, searchClient) {
         var fsConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'fs']);
-        var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
-        var searchConfig = new JSONConfig('../../config/mainConfig.json', ['search']);
         var pluginConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'plugin']);
-
-        var searchStoreFactory = new SearchStoreFactory();
-        var searchItemFactory = new SearchItemFactory();
-        var searchClient = new SearchClient(searchConfig, this.appQuitHandler, 'mainIndex', searchStoreFactory, searchItemFactory);
 
         var pluginFinder = new PluginFinder(pluginConfig);
         var pluginValidator = new PluginValidator();
@@ -94,16 +93,29 @@ var App = {
         var folderWatcherFactory = new FolderWatcherFactory();
 
         var folderWatcherManager = new FolderWatcherManager(fsConfig, this.appQuitHandler, stateHandlerFactory, folderWatcherFactory);
+
         var pathValidator = new PathValidator();
 
-        // ui components
+        var indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
+
+        // register ui components
         // ----------------------
         this.addUiComponent(new UiFolderWatcherManagerComponent(folderWatcherManager));
         this.addUiComponent(new UiPluginManagerComponent(pluginManager));
-        //var indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
-        // -----------------------
-        //folderWatcherManager.addFolderWatcher(testFolderPath);
-        //folderWatcherManager.addFolderWatcher(externalFolderPath);
+    },
+    startSearchClient: function (callback) {
+        //var testFolderPath:string = path.resolve(__dirname, '../../utils/TestFolder');
+        //var externalFolderPath:string = path.resolve('/Volumes/External/path/Folder');
+        var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
+        var searchConfig = new JSONConfig('../../config/mainConfig.json', ['search']);
+
+        var searchStoreFactory = new SearchStoreFactory();
+        var searchItemFactory = new SearchItemFactory();
+        var searchClient = new SearchClient(searchConfig, this.appQuitHandler, 'mainIndex', searchStoreFactory, searchItemFactory, {
+            onOpenCallback: function () {
+                callback(searchConfig, searchClient);
+            }
+        });
     },
     startUi: function (gui) {
         var uiConfig = new JSONConfig('../../config/mainConfig.json', ['ui']);

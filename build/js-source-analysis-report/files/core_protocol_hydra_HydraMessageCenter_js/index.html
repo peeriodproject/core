@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">67.95</p>
+      <p class="stat">68.22</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">259</p>
+      <p class="stat">306</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">40.38</p>
+      <p class="stat">47.48</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.65</p>
+      <p class="stat">2.11</p>
     </div>
   </div>
 </div>
@@ -172,13 +172,29 @@ var HydraMessageCenter = (function (_super) {
         var msg = null;
 
         try  {
-            msg = this._readableHydraMessageFactory.create(payload);
+            msg = this._readableHydraMessageFactory.create(payload, true);
         } catch (e) {
         }
 
         if (msg) {
             this._onCircuitMessage(msg, from, true);
         }
+    };
+
+    HydraMessageCenter.prototype.getFullBufferOfMessage = function (type, msg) {
+        var buffer = null;
+        var middleMessage = null;
+
+        try  {
+            if (type === &#039;CELL_CREATED_REJECTED&#039;) {
+                middleMessage = this._writableCellCreatedRejectedFactory.constructMessage(msg.getUUID(), msg.getSecretHash(), msg.getDHPayload());
+            }
+
+            buffer = this._writableHydraMessageFactory.constructMessage(type, middleMessage);
+        } catch (e) {
+        }
+
+        return buffer;
     };
 
     HydraMessageCenter.prototype.sendAdditiveSharingMessage = function (to, targetIp, targetPort, uuid, additivePayload) {
@@ -215,6 +231,19 @@ var HydraMessageCenter = (function (_super) {
         }
     };
 
+    HydraMessageCenter.prototype.spitoutFileTransferMessage = function (encDecHandler, payload) {
+        var _this = this;
+        var msg = this._writableHydraMessageFactory.constructMessage(&#039;FILE_TRANSFER&#039;, payload, payload.length);
+
+        encDecHandler.encrypt(msg, null, function (err, encMessage) {
+            var nodes = encDecHandler.getNodes();
+
+            if (!err &amp;&amp; encMessage) {
+                _this._connectionManager.pipeCircuitMessageTo(nodes[0], &#039;ENCRYPTED_SPITOUT&#039;, encMessage);
+            }
+        });
+    };
+
     HydraMessageCenter.prototype.spitoutRelayCreateCellMessage = function (encDecHandler, targetIp, targetPort, uuid, additivePayload) {
         var _this = this;
         var payload = this._getAdditiveSharingMessagePayload(targetIp, targetPort, uuid, additivePayload);
@@ -230,6 +259,21 @@ var HydraMessageCenter = (function (_super) {
                 }
             });
         }
+    };
+
+    HydraMessageCenter.prototype.unwrapAdditiveSharingPayload = function (message) {
+        var msg = null;
+
+        try  {
+            msg = this._readableCreateCellAdditiveFactory.create(message.getPayload());
+        } catch (e) {
+        }
+
+        return msg;
+    };
+
+    HydraMessageCenter.prototype.wrapFileTransferMessage = function (payload) {
+        return this._writableHydraMessageFactory.constructMessage(&#039;FILE_TRANSFER&#039;, payload);
     };
 
     /**
@@ -251,6 +295,7 @@ var HydraMessageCenter = (function (_super) {
             try  {
                 msg = msgFactory.create(message.getPayload());
             } catch (e) {
+                throw e;
             }
         } else {
             msg = message;
@@ -300,6 +345,8 @@ var HydraMessageCenter = (function (_super) {
             this._emitMessage(message, circuitNode, this._readableCellCreatedRejectedFactory, circuitId, decrypted);
         } else if (message.getMessageType() === &#039;ADDITIVE_SHARING&#039;) {
             this._emitMessage(message, circuitNode, this._readableAdditiveSharingFactory, circuitId, decrypted);
+        } else if (message.getMessageType() === &#039;FILE_TRANSFER&#039;) {
+            this._emitMessage(message, circuitNode, null, circuitId, decrypted);
         } else if (message.getMessageType() === &#039;ENCRYPTED_SPITOUT&#039; || message.getMessageType() === &#039;ENCRYPTED_DIGEST&#039;) {
             this._emitMessage(message, circuitNode, null, circuitId, decrypted);
         }
