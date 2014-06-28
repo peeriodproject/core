@@ -318,6 +318,9 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		else if (message.getMessageType() === 'CREATE_CELL_ADDITIVE') {
 			this._emitMessage(message, identifier, this._readableCreateCellAdditiveFactory);
 		}
+		else if (message.getMessageType() === 'FILE_TRANSFER') {
+			this.emit('regularFileTransferMsg', identifier, message.getPayload());
+		}
 	}
 
 	/**

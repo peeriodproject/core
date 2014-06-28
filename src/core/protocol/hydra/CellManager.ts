@@ -131,6 +131,14 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 		return false;
 	}
 
+	public teardownCell (predecessorCircuitId:string):void {
+		var cell:HydraCellInterface = this._cellsByPredecessorCircuitId[predecessorCircuitId];
+
+		if (cell) {
+			cell.teardown();
+		}
+	}
+
 	/**
 	 * Accepts a CREATE_CELL_ADDITIVE request.
 	 * Computes the secrets, adds the keys, and finally pipes out the CELL_CREATED_REJECTED message.

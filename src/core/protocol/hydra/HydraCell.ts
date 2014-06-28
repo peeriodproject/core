@@ -200,6 +200,10 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 		}
 	}
 
+	public teardown ():void {
+		this._teardown(true, true);
+	}
+
 	/**
 	 * Clears the timeout of a cell extension (if present)
 	 *

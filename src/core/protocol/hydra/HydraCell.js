@@ -173,6 +173,10 @@ var HydraCell = (function (_super) {
         }
     };
 
+    HydraCell.prototype.teardown = function () {
+        this._teardown(true, true);
+    };
+
     /**
     * Clears the timeout of a cell extension (if present)
     *
