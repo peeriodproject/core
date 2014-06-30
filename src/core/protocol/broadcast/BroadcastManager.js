@@ -41,6 +41,12 @@ var BroadcastManager = (function (_super) {
         */
         this._broadcastLifetimeInMs = 0;
         /**
+        * Stores the IDs of broadcasts which will be ignored in every case. This list is never emptied.
+        *
+        * @member {Array<string>} core.protocol.broadcast.BroadcastManager~_ignoreBroadcastIds
+        */
+        this._ignoreBroadcastIds = [];
+        /**
         * Stores the IDs of broadcasts already received (and thus need not be sent on)
         *
         * @member {Array<string>} core.protocol.broadcast.BroadcastManager~_knownBroadcastIds
@@ -115,9 +121,13 @@ var BroadcastManager = (function (_super) {
     /**
     * END TESTING PURPOSES
     */
-    BroadcastManager.prototype.initBroadcast = function (payload) {
+    BroadcastManager.prototype.ignoreBroadcastId = function (broadcastId) {
+        this._ignoreBroadcastIds.push(broadcastId);
+    };
+
+    BroadcastManager.prototype.initBroadcast = function (payload, broadcastId) {
         var _this = this;
-        var broadcastId = crypto.pseudoRandomBytes(8).toString('hex');
+        var broadcastId = broadcastId || crypto.pseudoRandomBytes(8).toString('hex');
         var broadcastMsg = this._writableBroadcastMessageFactory.constructPayload(broadcastId, payload);
 
         this._knownBroadcastIds.push(broadcastId);
@@ -145,7 +155,7 @@ var BroadcastManager = (function (_super) {
             var timeElapsed = Date.now() - message.getTimestamp();
             var broadcastId = message.getBroadcastId();
 
-            if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1) {
+            if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1 && this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
                 this.emit('receivedBroadcast', message.getPayload());
 
                 var differsInBit = msg.getSender().getId().differsInHighestBit(this._myNode.getId());

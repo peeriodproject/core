@@ -100,7 +100,8 @@ var CircuitManager = (function (_super) {
         return false;
     };
 
-    CircuitManager.prototype.pipeFileTransferMessageThroughAllCircuits = function (payload) {
+    CircuitManager.prototype.pipeFileTransferMessageThroughAllCircuits = function (payload, randomExitNode) {
+        if (typeof randomExitNode === "undefined") { randomExitNode = false; }
         var circuitLength = this._productionReadyCircuits.length;
 
         if (!circuitLength) {
@@ -108,7 +109,15 @@ var CircuitManager = (function (_super) {
         }
 
         for (var i = 0; i < circuitLength; i++) {
-            this._productionReadyCircuits[i].sendFileMessage(payload);
+            var randNode = null;
+            var circuit = this._productionReadyCircuits[i];
+
+            if (randomExitNode) {
+                var circuitNodes = circuit.getCircuitNodes();
+                randNode = circuitNodes[Math.floor(Math.random() * circuitNodes.length)];
+            }
+
+            circuit.sendFileMessage(payload, randNode);
         }
         return true;
     };

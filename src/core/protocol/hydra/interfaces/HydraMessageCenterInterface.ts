@@ -86,9 +86,9 @@ interface HydraMessageCenterInterface extends NodeJS.EventEmitter {
 	 * @method core.protocol.hydra.HydraMessageCenterInterface#spitoutFileTransferMessage
 	 *
 	 * @param {core.protocol.hydra.LayeredEncDecHandler} encDecHandler The layered ecnryption/decryption handler of the circuit.
-	 *
+	 * @param {core.portocol.hydra.HydraNode} earyExit Optional early exit of the layered encryption.
 	 */
-	spitoutFileTransferMessage (encDecHandler:LayeredEncDecHandlerInterface, payload:Buffer):void;
+	spitoutFileTransferMessage (encDecHandler:LayeredEncDecHandlerInterface, payload:Buffer, earlyExit?:HydraNode):void;
 
 	/**
 	 * Sends a ENCRYPTED_SPITOUT message to the first node of a layered encryption/decryption handler.

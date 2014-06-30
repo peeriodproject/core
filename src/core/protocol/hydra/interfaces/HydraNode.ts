@@ -17,6 +17,12 @@ interface HydraNode {
 	socketIdentifier?:string;
 
 	/**
+	 * Identifier shared between the circuit initiator and any relay node, used for knowing which circuit to pipe
+	 * a message through which was fed to the node from external nodes.
+	 */
+	feedingIdentifier?:string;
+
+	/**
 	 * 'Incoming' symmetric key. This is optional, because as a node within a circuit,
 	 * the encryption must be handled differently, as the node actually only shares keys with the initiator.
 	 */

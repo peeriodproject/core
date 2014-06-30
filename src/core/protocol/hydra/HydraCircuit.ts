@@ -166,10 +166,6 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 	 * BEGIN TESTING PURPOSES
 	 */
 
-	public getCircuitNodes ():HydraNodeList {
-		return this._circuitNodes;
-	}
-
 	public getLayeredEncDec ():LayeredEncDecHandlerInterface {
 		return this._layeredEncDecHandler;
 	}
@@ -190,9 +186,13 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 		return this._circuitId;
 	}
 
-	public sendFileMessage (payload:Buffer):void {
+	public getCircuitNodes ():HydraNodeList {
+		return this._circuitNodes;
+	}
+
+	public sendFileMessage (payload:Buffer, earlyExit?:HydraNode):void {
 		if (this._constructed && !this._isTornDown) {
-			this._messageCenter.spitoutFileTransferMessage(this._layeredEncDecHandler, payload);
+			this._messageCenter.spitoutFileTransferMessage(this._layeredEncDecHandler, payload, earlyExit);
 		}
 	}
 

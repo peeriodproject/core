@@ -22,13 +22,24 @@
 interface BroadcastManagerInterface extends NodeJS.EventEmitter {
 
 	/**
+	 * Adds a broadcast ID to the ignore list. Broadcasts received with this ID will not be propagated.
+	 * The ignore list is not emptied during the lifetime of the app.
+	 *
+	 * @method core.protocol.broadcast.BroadcastManagerInterface#ignoreBroadcastId
+	 *
+	 * @param {string} broadcastId The broadcast ID to ignore.
+	 */
+	ignoreBroadcastId (broadcastId:string):void;
+
+	/**
 	 * Initializes a broadcast in the above described manner.
 	 *
 	 * @method core.protocol.broadcast.BroadcastManagerInterface#initBroadcast
 	 *
-	 * @param payload
+	 * @param {Buffer} payload
+	 * @param {string} broadcastId Optional pre-defined broadcastId. If this is specified, no ID will be generated.
 	 */
-	initBroadcast (payload:Buffer):void;
+	initBroadcast (payload:Buffer, broadcastId?:string):void;
 }
 
 export = BroadcastManagerInterface;

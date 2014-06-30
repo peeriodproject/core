@@ -198,7 +198,11 @@ describe('CORE --> PROTOCOL --> HYDRA --> CellManager', function () {
 			cell.predecessor = initiatorNode;
 			cell.getPredecessorCircuitId = function () {
 				return cell.predecessor.circuitId;
+			};
+			cell.getFeedingIdentifier = function () {
+				return cell.predecessor.feedingIdentifier;
 			}
+
 
 			return cell;
 		};

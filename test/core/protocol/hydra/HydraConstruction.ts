@@ -43,7 +43,7 @@ import Aes128GcmLayeredEncDecHandlerFactory = require('../../../../src/core/prot
 import Aes128GcmReadableDecryptedMessageFactory = require('../../../../src/core/protocol/hydra/messages/Aes128GcmReadableDecryptedMessageFactory');
 import Aes128GcmWritableMessageFactory = require('../../../../src/core/protocol/hydra/messages/Aes128GcmWritableMessageFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @current', function () {
 
 	var sandbox:SinonSandbox = null;
 	var config:any = null;
@@ -87,22 +87,52 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', func
 
 	it('should pipe a FILE_TRANSFER message through and back the circuits', function (done) {
 		var count = 0;
+
 		var checkAndDone = function () {
 			if (++count === 5) done();
 		}
 
 		for (var i=0; i<5; i++) {
 			(function (node) {
+
 				node.cellManager.on('cellReceivedTransferMessage', function (circuitId, payload) {
 					node.cellManager.pipeFileTransferMessage(circuitId, payload);
 				});
-				node.circuitManager.on('circuitReceivedTransferMessage', function (circuitId, payload) {
+
+				node.circuitManager.once('circuitReceivedTransferMessage', function (circuitId, payload) {
 					if (payload.toString() === 'foobar') {
 						checkAndDone();
 					}
 				});
 
 				node.circuitManager.pipeFileTransferMessageThroughAllCircuits(new Buffer('foobar'));
+			})(nodes[i]);
+		}
+	});
+
+	it('should pipe a FILE_TRANSFER message through and back the circuits (with random exit node)', function (done) {
+		var count = 0;
+
+		var checkAndDone = function () {
+			if (++count === 5) done();
+		}
+
+		for (var i=0; i<5; i++) {
+			(function (node) {
+
+				node.cellManager.removeAllListeners('cellReceivedTransferMessage');
+
+				node.cellManager.on('cellReceivedTransferMessage', function (circuitId, payload) {
+					node.cellManager.pipeFileTransferMessage(circuitId, payload);
+				});
+
+				node.circuitManager.once('circuitReceivedTransferMessage', function (circuitId, payload) {
+					if (payload.toString() === 'foobar') {
+						checkAndDone();
+					}
+				});
+
+				node.circuitManager.pipeFileTransferMessageThroughAllCircuits(new Buffer('foobar'), true);
 			})(nodes[i]);
 		}
 	});

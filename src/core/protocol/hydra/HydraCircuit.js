@@ -134,10 +134,6 @@ var HydraCircuit = (function (_super) {
     /**
     * BEGIN TESTING PURPOSES
     */
-    HydraCircuit.prototype.getCircuitNodes = function () {
-        return this._circuitNodes;
-    };
-
     HydraCircuit.prototype.getLayeredEncDec = function () {
         return this._layeredEncDecHandler;
     };
@@ -158,9 +154,13 @@ var HydraCircuit = (function (_super) {
         return this._circuitId;
     };
 
-    HydraCircuit.prototype.sendFileMessage = function (payload) {
+    HydraCircuit.prototype.getCircuitNodes = function () {
+        return this._circuitNodes;
+    };
+
+    HydraCircuit.prototype.sendFileMessage = function (payload, earlyExit) {
         if (this._constructed && !this._isTornDown) {
-            this._messageCenter.spitoutFileTransferMessage(this._layeredEncDecHandler, payload);
+            this._messageCenter.spitoutFileTransferMessage(this._layeredEncDecHandler, payload, earlyExit);
         }
     };
 

@@ -334,9 +334,10 @@ class CircuitExtender implements CircuitExtenderInterface {
 					if (sha1.digest('hex') === message.getSecretHash().toString('hex')) {
 
 						var hkdf:HKDF = new HKDF('sha256', secret);
-						var keysConcat:Buffer = hkdf.derive(32, new Buffer(message.getUUID(), 'hex'));
+						var keysConcat:Buffer = hkdf.derive(48, new Buffer(message.getUUID(), 'hex'));
 						var outgoingKey:Buffer = keysConcat.slice(0, 16);
-						var incomingKey:Buffer = keysConcat.slice(16);
+						var incomingKey:Buffer = keysConcat.slice(16, 32);
+						var feedingIdentifier:string = keysConcat.slice(32).toString('hex');
 
 						var newNode:HydraNode = this._nodes.length ? {
 							ip         : this._currentNodeToExtendWith.ip,
@@ -345,6 +346,7 @@ class CircuitExtender implements CircuitExtenderInterface {
 
 						newNode.incomingKey = incomingKey;
 						newNode.outgoingKey = outgoingKey;
+						newNode.feedingIdentifier = feedingIdentifier;
 
 						this._encDecHandler.addNode(newNode);
 

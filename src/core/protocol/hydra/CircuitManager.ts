@@ -5,6 +5,8 @@ import ConfigInterface = require('../../config/interfaces/ConfigInterface');
 import HydraCircuitFactoryInterface = require('./interfaces/HydraCircuitFactoryInterface');
 import HydraCircuitInterface = require('./interfaces/HydraCircuitInterface');
 import HydraCircuitList = require('./interfaces/HydraCircuitList');
+import HydraNode = require('./interfaces/HydraNode');
+import HydraNodeList = require('./interfaces/HydraNodeList');
 
 /**
  * CircuitManagerInterface implementation
@@ -111,7 +113,7 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 		return false;
 	}
 
-	public pipeFileTransferMessageThroughAllCircuits (payload:Buffer):boolean {
+	public pipeFileTransferMessageThroughAllCircuits (payload:Buffer, randomExitNode:boolean = false):boolean {
 		var circuitLength:number = this._productionReadyCircuits.length;
 
 		if (!circuitLength) {
@@ -119,7 +121,15 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 		}
 
 		for (var i=0; i<circuitLength; i++) {
-			this._productionReadyCircuits[i].sendFileMessage(payload);
+			var randNode:HydraNode = null;
+			var circuit:HydraCircuitInterface = this._productionReadyCircuits[i];
+
+			if (randomExitNode) {
+				var circuitNodes:HydraNodeList = circuit.getCircuitNodes();
+				randNode = circuitNodes[Math.floor(Math.random() * circuitNodes.length)];
+			}
+
+			circuit.sendFileMessage(payload, randNode);
 		}
 		return true;
 	}

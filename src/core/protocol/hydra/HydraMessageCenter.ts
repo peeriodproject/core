@@ -164,10 +164,10 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 		}
 	}
 
-	public spitoutFileTransferMessage (encDecHandler:LayeredEncDecHandlerInterface, payload:Buffer):void {
+	public spitoutFileTransferMessage (encDecHandler:LayeredEncDecHandlerInterface, payload:Buffer, earlyExit?:HydraNode):void {
 		var msg = this._writableHydraMessageFactory.constructMessage('FILE_TRANSFER', payload, payload.length);
 
-		encDecHandler.encrypt(msg, null, (err:Error, encMessage:Buffer) => {
+		encDecHandler.encrypt(msg, earlyExit, (err:Error, encMessage:Buffer) => {
 			var nodes:HydraNodeList = encDecHandler.getNodes();
 
 			if (!err && encMessage) {
