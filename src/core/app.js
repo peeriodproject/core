@@ -129,6 +129,7 @@ var App = {
         var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
         var protocolConfig = new JSONConfig('../../config/mainConfig.json', ['protocol']);
         var topologyConfig = new JSONConfig('../../config/mainConfig.json', ['topology']);
+        var hydraConfig = new JSONConfig('../../config/mainConfig.json', ['hydra']);
         var tcpSocketHandlerFactory = new TCPSocketHandlerFactory();
         var jsonWebIp = new JSONWebIp();
         var nodeAddressFactory = new ContactNodeAddressFactory();
@@ -190,7 +191,7 @@ var App = {
                 contactNodeFactory = new ContactNodeFactory();
                 routingTable = new RoutingTable(topologyConfig, _this.appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory);
 
-                protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable);
+                protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable);
 
                 protocolGateway.start();
             });
