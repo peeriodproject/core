@@ -15,7 +15,7 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastWritableMessageFactory', 
         (Date.now() - msg.getTimestamp()).should.be.below(50);
     });
 
-    it('should throw an error when the bracast ID has a bad length', function () {
+    it('should throw an error when the broadcast ID has a bad length', function () {
         var factory = new BroadcastWritableMessageFactory();
 
         (function () {
