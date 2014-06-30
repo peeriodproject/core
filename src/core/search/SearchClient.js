@@ -102,9 +102,15 @@ var SearchClient = (function () {
 
         this.open(this._options.onOpenCallback);
     }
-    SearchClient.prototype.addIncomingResponse = function (indexName, type, responseObject, callback) {
+    SearchClient.prototype.addIncomingResponse = function (indexName, type, responseBody, responseMeta, callback) {
         var internalCallback = callback || function (err, response) {
         };
+
+        var responseObject = ObjectUtils.extend(responseBody, {
+            meta: responseMeta
+        });
+
+        console.log(JSON.stringify(responseObject));
 
         this._client.percolate({
             index: indexName.toLowerCase(),
@@ -154,7 +160,7 @@ var SearchClient = (function () {
         var internalCallback = callback || function () {
         };
 
-        this._createIndex(this._indexName, function (err) {
+        this._createIndex(this._indexName, null, function (err) {
             var map = null;
             if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
                 // wrap mapping in type root
@@ -211,32 +217,28 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.createOutgoingQueryIndex = function (indexName, callback) {
-        var _this = this;
         var internalCallback = callback || function (err) {
         };
 
-        this._createIndex(indexName.toLowerCase(), function (err) {
+        var mapping = {
+            _default_: {
+                meta: {
+                    type: 'object',
+                    index: 'no'
+                }
+            }
+        };
+
+        indexName = indexName.toLowerCase();
+
+        this._createIndex(indexName, mapping, function (err) {
+            console.log(err);
+
             if (err) {
                 return internalCallback(err);
             }
 
-            _this._client.indices.putMapping({
-                index: indexName,
-                body: {
-                    mappings: {
-                        _default_: {
-                            meta: {
-                                type: 'object',
-                                index: 'no'
-                            }
-                        }
-                    }
-                }
-            }, function (err, response, status) {
-                err = err || null;
-
-                return internalCallback(err);
-            });
+            return internalCallback(err);
         });
     };
 
@@ -289,6 +291,8 @@ var SearchClient = (function () {
                 type: '.percolator',
                 id: queryId
             }, function (err, response, status) {
+                console.log(err);
+
                 if (_this._isValidResponse(err, status, 'IndexMissingException') || _this._isValidResponse(err, status, 'Not Found')) {
                     err = null;
                 }
@@ -314,6 +318,8 @@ var SearchClient = (function () {
                     }
                 }
             }, function (err, response, status) {
+                console.log(err);
+
                 if (_this._isValidResponse(err, status, 'IndexMissingException')) {
                     err = null;
                 }
@@ -423,7 +429,7 @@ var SearchClient = (function () {
                     console.error(err);
                     internalCallback(err);
                 } else {
-                    _this._createIndex(_this._indexName, function (err) {
+                    _this._createIndex(_this._indexName, null, function (err) {
                         if (err) {
                             console.error(err);
                         } else {
@@ -487,13 +493,26 @@ var SearchClient = (function () {
     * @method core.search.SearchClient~_createIndex
     *
     * @param {string} indexName
+    * @param {Object|Null} mapping The optional mapping to stick to the index.
     * @param {Function} callback
     */
-    SearchClient.prototype._createIndex = function (indexName, callback) {
+    SearchClient.prototype._createIndex = function (indexName, mapping, callback) {
         var _this = this;
-        this._client.indices.create({
+        var params = {
             index: indexName
-        }, function (err, response, status) {
+        };
+
+        if (mapping) {
+            params = ObjectUtils.extend(params, {
+                body: {
+                    mappings: mapping
+                }
+            });
+        }
+
+        console.log('creating index with:', JSON.stringify(params));
+
+        this._client.indices.create(params, function (err, response, status) {
             // everything went fine or index already exists
             if (_this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
                 callback(null);

@@ -77,7 +77,7 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 		searchClient.close(function () {
 			searchClient = null;
 			try {
-				testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+				//testUtils.deleteFolderRecursive(searchStoreLogsFolder);
 				testUtils.deleteFolderRecursive(searchStoreDataFolder);
 			}
 			catch (e) {
@@ -310,6 +310,14 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 		});
 	});
 
+	it ('should correctly create an index with not indexed meta fields in the mapping', function (done) {
+		searchClient.createOutgoingQueryIndex('indexname', function (err) {
+			(err === null).should.be.true;
+
+			done();
+		});
+	});
+
 	it('should correctly create a percolate index and add an item to the index', function (done) {
 		var queryBody = {
 			// This query will be run against documents sent to percolate
@@ -321,9 +329,13 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 		};
 
 		searchClient.createOutgoingQuery('myindex', 'searchQueryId', queryBody, function (err) {
+			console.log(err);
 			(err === null).should.be.true;
 
-			searchClient.addIncomingResponse('myindex', 'searchQueryId', { message: 'A new bonsai tree in the office' }, function (err, response) {
+			searchClient.addIncomingResponse('myindex', 'searchQueryId', { message: 'A new bonsai tree in the office' }, { metadata: true }, function (err, response) {
+				console.log(err);
+				console.log(response);
+
 				(err === null).should.be.true;
 
 				response.should.containDeep({
@@ -343,6 +355,7 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 
 	it ('should correctly remove a outgoing query and all corresponding responses from the database', function (done) {
 		searchClient.deleteOutgoingQuery('myotherindex', 'searchQueryId', function (err) {
+			console.log(err);
 			(err === null).should.be.true;
 
 			done();

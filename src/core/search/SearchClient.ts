@@ -123,15 +123,21 @@ class SearchClient implements SearchClientInterface {
 		this.open(this._options.onOpenCallback);
 	}
 
-	public addIncomingResponse (indexName:string, type:string, responseObject:Object, callback?:(err:Error, response:Object) => any):void {
+	public addIncomingResponse (indexName:string, type:string, responseBody:Object, responseMeta:Object, callback?:(err:Error, response:Object) => any):void {
 		var internalCallback = callback || function (err:Error, response:Object) {
 		};
+
+		var responseObject = ObjectUtils.extend(responseBody, {
+			meta: responseMeta
+		});
+
+		console.log(JSON.stringify(responseObject));
 
 		this._client.percolate({
 			index: indexName.toLowerCase(),
 			type : 'response-' + type.toLowerCase(),
 			body : {
-				doc: responseObject // todo add meta data ObjectUtils.extend(queryBody, queryMetas)
+				doc: responseObject
 			}
 		}, function (err:Error, response:Object, status:number) {
 			err = err || null;
@@ -175,7 +181,7 @@ class SearchClient implements SearchClientInterface {
 		var internalCallback:Function = callback || function () {
 		};
 
-		this._createIndex(this._indexName, (err:Error) => {
+		this._createIndex(this._indexName, null, (err:Error) => {
 			var map = null;
 			if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
 				// wrap mapping in type root
@@ -236,28 +242,25 @@ class SearchClient implements SearchClientInterface {
 		var internalCallback = callback || function (err:Error) {
 		};
 
-		this._createIndex(indexName.toLowerCase(), (err:Error) => {
+		var mapping = {
+			_default_: {
+				meta: {
+					type: 'object',
+					index: 'no'
+				}
+			}
+		};
+
+		indexName = indexName.toLowerCase();
+
+		this._createIndex(indexName, mapping, (err:Error) => {
+			console.log(err);
+
 			if (err) {
 				return internalCallback(err);
 			}
 
-			this._client.indices.putMapping({
-				index: indexName,
-				body : {
-					mappings: {
-						_default_: {
-							meta: {
-								type: 'object',
-								index: 'no'
-							}
-						}
-					}
-				}
-			}, function (err, response, status) {
-				err = err || null;
-
-				return internalCallback(err);
-			});
+			return internalCallback(err);
 		});
 	}
 
@@ -311,6 +314,8 @@ class SearchClient implements SearchClientInterface {
 				type : '.percolator',
 				id   : queryId
 			}, (err:Error, response, status) => {
+				console.log(err);
+
 				if (this._isValidResponse(err, status, 'IndexMissingException') || this._isValidResponse(err, status, 'Not Found')) {
 					err = null;
 				}
@@ -336,6 +341,8 @@ class SearchClient implements SearchClientInterface {
 					}
 				}
 			}, (err:Error, response, status) => {
+				console.log(err);
+
 				if (this._isValidResponse(err, status, 'IndexMissingException')) {
 					err = null;
 				}
@@ -445,7 +452,7 @@ class SearchClient implements SearchClientInterface {
 					internalCallback(err);
 				}
 				else {
-					this._createIndex(this._indexName, (err:Error) => {
+					this._createIndex(this._indexName, null, (err:Error) => {
 						if (err) {
 							console.error(err);
 						}
@@ -512,12 +519,25 @@ class SearchClient implements SearchClientInterface {
 	 * @method core.search.SearchClient~_createIndex
 	 *
 	 * @param {string} indexName
+	 * @param {Object|Null} mapping The optional mapping to stick to the index.
 	 * @param {Function} callback
 	 */
-	private _createIndex (indexName:string, callback:(err:Error) => any):void {
-		this._client.indices.create({
+	private _createIndex (indexName:string, mapping:Object, callback:(err:Error) => any):void {
+		var params:Object = {
 			index: indexName
-		}, (err, response, status) => {
+		};
+
+		if (mapping) {
+			params = ObjectUtils.extend(params, {
+				body: {
+					mappings: mapping
+				}
+			});
+		}
+
+		console.log('creating index with:', JSON.stringify(params));
+
+		this._client.indices.create(params, (err, response, status) => {
 			// everything went fine or index already exists
 			if (this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
 				callback(null);
