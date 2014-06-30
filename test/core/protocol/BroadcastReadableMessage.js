@@ -7,7 +7,7 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastReadableMessage', functio
     it('should correctly deformat the message', function () {
         var expectedTimestamp = Date.now();
         var expectedPayload = new Buffer('muschimuschi');
-        var id = new Buffer(8);
+        var id = new Buffer(16);
 
         var timestampBuffer = new Buffer(8);
         timestampBuffer.writeUInt32BE(Math.floor(expectedTimestamp / 1000), 0);
@@ -24,11 +24,11 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastReadableMessage', functio
 
     it('should throw an error when the message is too short or when the broadcast payload is empty', function () {
         (function () {
-            new BroadcastReadableMessage(new Buffer(15));
+            new BroadcastReadableMessage(new Buffer(23));
         }).should.throw();
 
         (function () {
-            new BroadcastReadableMessage(new Buffer(16));
+            new BroadcastReadableMessage(new Buffer(24));
         }).should.throw();
     });
 });

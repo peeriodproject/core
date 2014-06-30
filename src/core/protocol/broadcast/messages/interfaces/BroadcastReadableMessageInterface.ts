@@ -4,7 +4,7 @@
  * A BroadcastReadableMessage represents a BROADCAST protocol message.
  * It constitutes itself in the following way:
  *
- * 1.) 8 Bytes for a broadcast ID, referencing the broadcast cycle of the payload.
+ * 1.) 16 Bytes for a broadcast ID, referencing the broadcast cycle of the payload.
  * 2.) 8 Bytes for the timestamp indicating when the broadcast has been initiated. Initiations older than a given time MUST NOT
  * be broadcast any further
  * 3.) The actual broadcast payload
@@ -15,7 +15,7 @@
 interface BroadcastReadableMessageInterface {
 
 	/**
-	 * Returns the 8 byte broadcast ID as hex string.
+	 * Returns the 16 byte broadcast ID as hex string.
 	 *
 	 * @method core.protocol.broadcast.BroadcastReadableMessageInterface#getBroadcastId
 	 *

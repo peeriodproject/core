@@ -7,16 +7,16 @@ class BroadcastReadableMessage implements BroadcastReadableMessageInterface {
 	private _timestamp:number = null;
 
 	public constructor (buffer:Buffer) {
-		if (buffer.length < 16) {
+		if (buffer.length < 24) {
 			throw new Error('BroadcastReadableMessage: Message too short.');
 		}
 
-		this._broadcastId = buffer.slice(0, 8).toString('hex');
+		this._broadcastId = buffer.slice(0, 16).toString('hex');
 
-		var timestampBuffer = buffer.slice(8, 16);
+		var timestampBuffer = buffer.slice(16, 24);
 		this._timestamp = timestampBuffer.slice(0, 4).readUInt32BE(0) * 1000 + timestampBuffer.slice(4).readUInt32BE(0);
 
-		this._payload = buffer.slice(16);
+		this._payload = buffer.slice(24);
 
 		if (this._payload.length === 0) {
 			throw new Error('BroadcastReadableMessage: Empty payload.');

@@ -10,9 +10,9 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastWritableMessageFactory', 
 	it('should correctly format the broadcast message', function () {
 		var factory = new BroadcastWritableMessageFactory();
 
-		var msg = new BroadcastReadableMessage(factory.constructPayload('cafebabecafebabe', new Buffer('foobar')));
+		var msg = new BroadcastReadableMessage(factory.constructPayload('cafebabecafebabecafebabecafebabe', new Buffer('foobar')));
 
-		msg.getBroadcastId().should.equal('cafebabecafebabe');
+		msg.getBroadcastId().should.equal('cafebabecafebabecafebabecafebabe');
 		msg.getPayload().toString().should.equal('foobar');
 		(Date.now() - msg.getTimestamp()).should.be.below(50);
 	});
