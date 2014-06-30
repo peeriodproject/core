@@ -61,6 +61,17 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	createOutgoingQuery (indexName:string, queryId:string, queryBody:Object, callback?:(err:Error) => any):void;
 
 	/**
+	 * Prepares the index which will be used as the datastore for outgoing queries and corresponding results.
+	 *
+	 * @method core.search.SearchClientInterface#createOutgoingQueryIndex
+	 *
+	 * @param {string} indexName The name of the index
+	 * @param {Object} mapping The mapping of the index. The mapping should set additional metadata to `index:no`
+	 * @param {Function} callback
+	 */
+	createOutgoingQueryIndex (indexName:string, callback?:(err:Error) => any):void
+
+	/**
 	 * Deletes the index which is managed by the SearchClient instance.
 	 *
 	 * @method core.search.SearchClientInterface#deleteIndex

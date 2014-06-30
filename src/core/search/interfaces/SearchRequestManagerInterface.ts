@@ -16,6 +16,8 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	addQuery (queryBody:Object, callback?:(err:Error, queryId:string) => any):void;
 
 	/**
+	 * Adds a response to the specified `queryId`
+	 *
 	 * @member core.search.SearchRequestManagerInterface#addResponse
 	 *
 	 * @param {string} queryId
@@ -23,6 +25,15 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	 * @param {Function} callback
 	 */
 	addResponse (queryId:string, responseBody:Object, callback?:(err:Error) => any):void;
+
+	/**
+	 * Adds a listener to the internal event emitter that triggers whenever a new query is registered.
+	 *
+	 * @member core.search.SearchRequestManagerInterface#onQueryAdd
+	 *
+	 * @param callback The first argument will be the `queryId` that was added.
+	 */
+	onQueryAdd (callback:Function):void;
 
 	/**
 	 * Adds a listener to the internal event emitter that triggers whenever a query ends after a specified timeframe and
@@ -33,6 +44,7 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	 * @param callback The first argument will be the `queryId` that ended.
 	 */
 	onQueryEnd (callback:Function):void;
+
 	/**
 	 * Adds a listener to the internal event emitter that gets called whenever a new response matches a running query.
 	 *
