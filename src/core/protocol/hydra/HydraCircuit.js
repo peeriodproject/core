@@ -134,10 +134,6 @@ var HydraCircuit = (function (_super) {
     /**
     * BEGIN TESTING PURPOSES
     */
-    HydraCircuit.prototype.getCircuitNodes = function () {
-        return this._circuitNodes;
-    };
-
     HydraCircuit.prototype.getLayeredEncDec = function () {
         return this._layeredEncDecHandler;
     };
@@ -156,6 +152,10 @@ var HydraCircuit = (function (_super) {
 
     HydraCircuit.prototype.getCircuitId = function () {
         return this._circuitId;
+    };
+
+    HydraCircuit.prototype.getCircuitNodes = function () {
+        return this._circuitNodes;
     };
 
     HydraCircuit.prototype.sendFileMessage = function (payload, earlyExit) {

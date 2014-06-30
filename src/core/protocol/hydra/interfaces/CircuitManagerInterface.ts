@@ -34,9 +34,10 @@ interface CircuitManagerInterface extends NodeJS.EventEmitter {
 	 * @method core.protocol.hydra.CircuitManager#pipeFileTransferMessageThroughAllCircuits
 	 *
 	 * @param {Buffer} payload
+	 * @param {boolean} randomExitNode Default to false. If this is true, from each circuit a random exit node for the message is chosen.
 	 * @returns {boolean} `true` if it there were circuits, `false` if there are no circuits.
 	 */
-	pipeFileTransferMessageThroughAllCircuits (payload:Buffer):boolean;
+	pipeFileTransferMessageThroughAllCircuits (payload:Buffer, randomExitNode?:boolean):boolean;
 
 	/**
 	 * Sends a FILE_TRANSFER message with the given payload through a random constructed and production-ready circuits.
