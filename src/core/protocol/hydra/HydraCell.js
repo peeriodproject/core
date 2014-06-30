@@ -162,6 +162,10 @@ var HydraCell = (function (_super) {
     /**
     * END TESTING PURPOSES ONLY
     */
+    HydraCell.prototype.getFeedingIdentifier = function () {
+        return this._predecessor.feedingIdentifier;
+    };
+
     HydraCell.prototype.getPredecessorCircuitId = function () {
         return this._predecessor.circuitId;
     };

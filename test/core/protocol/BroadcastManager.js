@@ -151,6 +151,21 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
         }, 10);
     });
 
+    it('should do nothing when the broadcast is ignored', function (done) {
+        broadcastManager.once('receivedBroadcast', function () {
+            throw new Error('Should not emit receivedBroadcast');
+        });
+
+        broadcastManager.ignoreBroadcastId('broadcastId1_ignore');
+
+        emitMessage('01101011', 'broadcastId1_ignore', Date.now());
+
+        setTimeout(function () {
+            broadcastManager.removeAllListeners('receivedBroadcast');
+            done();
+        }, 10);
+    });
+
     it('should do nothing when the broadcast is too old', function (done) {
         broadcastManager.once('receivedBroadcast', function () {
             throw new Error('Should not emit receivedBroadcast');

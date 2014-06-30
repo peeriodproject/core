@@ -189,6 +189,10 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 	 * END TESTING PURPOSES ONLY
 	 */
 
+	public getFeedingIdentifier ():string {
+		return this._predecessor.feedingIdentifier;
+	}
+
 	public getPredecessorCircuitId ():string {
 		return this._predecessor.circuitId;
 	}

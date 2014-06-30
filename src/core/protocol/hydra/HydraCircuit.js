@@ -158,9 +158,9 @@ var HydraCircuit = (function (_super) {
         return this._circuitId;
     };
 
-    HydraCircuit.prototype.sendFileMessage = function (payload) {
+    HydraCircuit.prototype.sendFileMessage = function (payload, earlyExit) {
         if (this._constructed && !this._isTornDown) {
-            this._messageCenter.spitoutFileTransferMessage(this._layeredEncDecHandler, payload);
+            this._messageCenter.spitoutFileTransferMessage(this._layeredEncDecHandler, payload, earlyExit);
         }
     };
 

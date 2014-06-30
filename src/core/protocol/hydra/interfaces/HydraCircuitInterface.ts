@@ -1,5 +1,7 @@
 /// <reference path='../../../../../ts-definitions/node/node.d.ts' />
 
+import HydraNode = require('./HydraNode');
+
 /**
  * The HydraCircuit represents one Onion Routing circuit. When constructed, it tries to extend itself up to the desired
  * number of hops.
@@ -40,8 +42,9 @@ interface HydraCircuitInterface extends NodeJS.EventEmitter {
 	 * @method core.protocol.hydra.HydraCircuitInterface#sendFileMessage
 	 *
 	 * @param {Buffer} payload Payload of the FILE_TRANSFER message to send.
+	 * @param {core.protocol.hydra.HydraNode} earlyExit Optional. Early exit node in this circuit.
 	 */
-	sendFileMessage (payload:Buffer):void;
+	sendFileMessage (payload:Buffer, earlyExit?:HydraNode):void;
 
 	/**
 	 * Forcefully tears down the circuit

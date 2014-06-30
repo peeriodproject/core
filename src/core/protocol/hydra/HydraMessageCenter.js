@@ -139,11 +139,11 @@ var HydraMessageCenter = (function (_super) {
         }
     };
 
-    HydraMessageCenter.prototype.spitoutFileTransferMessage = function (encDecHandler, payload) {
+    HydraMessageCenter.prototype.spitoutFileTransferMessage = function (encDecHandler, payload, earlyExit) {
         var _this = this;
         var msg = this._writableHydraMessageFactory.constructMessage('FILE_TRANSFER', payload, payload.length);
 
-        encDecHandler.encrypt(msg, null, function (err, encMessage) {
+        encDecHandler.encrypt(msg, earlyExit, function (err, encMessage) {
             var nodes = encDecHandler.getNodes();
 
             if (!err && encMessage) {

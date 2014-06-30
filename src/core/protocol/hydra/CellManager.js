@@ -39,6 +39,12 @@ var CellManager = (function (_super) {
         */
         this._cellFactory = null;
         /**
+        * Stores the maintained cells by the feeding identifier shared with the initiator node of the circuit.
+        *
+        * @member {Object} core.protocol.hydra.CellManager~_cellsByFeedingIdentifier
+        */
+        this._cellsByFeedingIdentifier = {};
+        /**
         * Stores the maintained cells by their predecessor's circuit id.
         *
         * @member {Object} core.protocol.hydra.CellManager~_cellsByPredecessorCircuitId
@@ -128,7 +134,6 @@ var CellManager = (function (_super) {
     * Computes the secrets, adds the keys, and finally pipes out the CELL_CREATED_REJECTED message.
     * Creates a hydra cell and hooks the 'isTornDown' event to it.
     *
-    * Note to myself: It is absolutely crucial that the termination listener is hook to the cell in its constructor (or subsequent calls)
     *
     * @method core.protocol.hydra.CellManager~_acceptCreateCellRequest
     *
@@ -141,15 +146,17 @@ var CellManager = (function (_super) {
         var secret = diffie.computeSecret(AdditiveSharingScheme.getCleartext(pending.additivePayloads, 256));
         var sha1 = crypto.createHash('sha1').update(secret).digest();
         var hkdf = new HKDF('sha256', secret);
-        var keysConcat = hkdf.derive(32, new Buffer(pending.uuid, 'hex'));
+        var keysConcat = hkdf.derive(48, new Buffer(pending.uuid, 'hex'));
 
         // this must be the opposite side, so switch keys
         var incomingKey = keysConcat.slice(0, 16);
-        var outgoingKey = keysConcat.slice(16);
+        var outgoingKey = keysConcat.slice(16, 32);
+        var feedingIdentifier = keysConcat.slice(32).toString('hex');
 
         var initiatorNode = pending.initiator;
         initiatorNode.incomingKey = incomingKey;
         initiatorNode.outgoingKey = outgoingKey;
+        initiatorNode.feedingIdentifier = feedingIdentifier;
 
         this._messageCenter.sendCellCreatedRejectedMessage(initiatorNode, pending.uuid, sha1, dhPublicKey);
 
@@ -157,6 +164,7 @@ var CellManager = (function (_super) {
 
         this._maintainedCells.push(cell);
         this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()] = cell;
+        this._cellsByFeedingIdentifier[feedingIdentifier] = cell;
 
         cell.once('isTornDown', function () {
             _this._onTornDownCell(cell);
@@ -325,6 +333,7 @@ var CellManager = (function (_super) {
         cell.removeAllListeners('fileTransferMessage');
 
         delete this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()];
+        delete this._cellsByFeedingIdentifier[cell.getFeedingIdentifier()];
 
         for (var i = 0, l = this._maintainedCells.length; i < l; i++) {
             if (this._maintainedCells[i] === cell) {

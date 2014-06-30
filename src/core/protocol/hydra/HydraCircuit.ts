@@ -190,9 +190,9 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 		return this._circuitId;
 	}
 
-	public sendFileMessage (payload:Buffer):void {
+	public sendFileMessage (payload:Buffer, earlyExit?:HydraNode):void {
 		if (this._constructed && !this._isTornDown) {
-			this._messageCenter.spitoutFileTransferMessage(this._layeredEncDecHandler, payload);
+			this._messageCenter.spitoutFileTransferMessage(this._layeredEncDecHandler, payload, earlyExit);
 		}
 	}
 

@@ -47,6 +47,13 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 	private _broadcastLifetimeInMs:number = 0;
 
 	/**
+	 * Stores the IDs of broadcasts which will be ignored in every case. This list is never emptied.
+	 *
+	 * @member {Array<string>} core.protocol.broadcast.BroadcastManager~_ignoreBroadcastIds
+	 */
+	private _ignoreBroadcastIds:Array<string> = [];
+
+	/**
 	 * Stores the IDs of broadcasts already received (and thus need not be sent on)
 	 *
 	 * @member {Array<string>} core.protocol.broadcast.BroadcastManager~_knownBroadcastIds
@@ -134,8 +141,12 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 	 * END TESTING PURPOSES
 	 */
 
-	public initBroadcast (payload:Buffer):void {
-		var broadcastId:string = crypto.pseudoRandomBytes(8).toString('hex');
+	public ignoreBroadcastId (broadcastId:string):void {
+		this._ignoreBroadcastIds.push(broadcastId);
+	}
+
+	public initBroadcast (payload:Buffer, broadcastId?:string):void {
+		var broadcastId = broadcastId || crypto.pseudoRandomBytes(8).toString('hex');
 		var broadcastMsg:Buffer = this._writableBroadcastMessageFactory.constructPayload(broadcastId, payload);
 
 		this._knownBroadcastIds.push(broadcastId);
@@ -162,7 +173,7 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 			var timeElapsed:number = Date.now() - message.getTimestamp();
 			var broadcastId:string = message.getBroadcastId();
 
-			if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1) {
+			if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1 && this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
 
 				this.emit('receivedBroadcast', message.getPayload());
 

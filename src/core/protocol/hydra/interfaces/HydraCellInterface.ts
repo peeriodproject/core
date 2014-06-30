@@ -9,6 +9,15 @@
 interface HydraCellInterface extends NodeJS.EventEmitter {
 
 	/**
+	 * Returns the feeding identifier shared with the initiator node of the circuit.
+	 *
+	 * @member core.protocol.hydra.HydraCellInterface#getFeedingIdentifier
+	 *
+	 * @returns {string}
+	 */
+	getFeedingIdentifier ():string;
+
+	/**
 	 * Returns the circuit ID shared with the predecessor node.
 	 *
 	 * @member core.protocol.hydra.HydraCellInterface#getPredecessorCircuitId

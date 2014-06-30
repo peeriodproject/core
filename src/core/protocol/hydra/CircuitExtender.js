@@ -300,9 +300,10 @@ var CircuitExtender = (function () {
 
                     if (sha1.digest('hex') === message.getSecretHash().toString('hex')) {
                         var hkdf = new HKDF('sha256', secret);
-                        var keysConcat = hkdf.derive(32, new Buffer(message.getUUID(), 'hex'));
+                        var keysConcat = hkdf.derive(48, new Buffer(message.getUUID(), 'hex'));
                         var outgoingKey = keysConcat.slice(0, 16);
-                        var incomingKey = keysConcat.slice(16);
+                        var incomingKey = keysConcat.slice(16, 32);
+                        var feedingIdentifier = keysConcat.slice(32).toString('hex');
 
                         var newNode = this._nodes.length ? {
                             ip: this._currentNodeToExtendWith.ip,
@@ -311,6 +312,7 @@ var CircuitExtender = (function () {
 
                         newNode.incomingKey = incomingKey;
                         newNode.outgoingKey = outgoingKey;
+                        newNode.feedingIdentifier = feedingIdentifier;
 
                         this._encDecHandler.addNode(newNode);
 
