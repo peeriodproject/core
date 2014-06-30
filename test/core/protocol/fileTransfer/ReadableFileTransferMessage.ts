@@ -12,7 +12,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> ReadableFileTransferMessage', 
 		var msg = new ReadableFileTransferMessage(buf);
 
 		msg.getPayload().toString().should.equal('foobar');
-		msg.getMessageType().should.equal('TRANSFER_QUERY');
+		msg.getMessageType().should.equal('QUERY_BROADCAST');
 		msg.getTransferId().should.equal('cafebabecafebabecafebabecafebabe');
 	});
 

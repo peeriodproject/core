@@ -9,7 +9,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> WritableFileTransferMessageFac
     it('should correctly format the message', function () {
         var expected = Buffer.concat([new Buffer('cafebabecafebabecafebabecafebabe', 'hex'), new Buffer([0x01]), new Buffer('foobar')]);
 
-        var actual = factory.constructMessage('cafebabecafebabecafebabecafebabe', 'TRANSFER_QUERY', new Buffer('foobar'));
+        var actual = factory.constructMessage('cafebabecafebabecafebabecafebabe', 'QUERY_BROADCAST', new Buffer('foobar'));
 
         actual.length.should.equal(expected.length);
 
@@ -20,7 +20,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> WritableFileTransferMessageFac
 
     it('should throw the errors', function () {
         (function () {
-            factory.constructMessage('cafebabe', 'TRANSFER_QUERY', new Buffer('foobar'));
+            factory.constructMessage('cafebabe', 'QUERY_BROADCAST', new Buffer('foobar'));
         }).should.throw();
 
         (function () {
