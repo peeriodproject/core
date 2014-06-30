@@ -42,6 +42,13 @@ interface HydraCircuitInterface extends NodeJS.EventEmitter {
 	 * @param {Buffer} payload Payload of the FILE_TRANSFER message to send.
 	 */
 	sendFileMessage (payload:Buffer):void;
+
+	/**
+	 * Forcefully tears down the circuit
+	 *
+	 * @method core.protocol.hydra.HydraCircuitInterface#teardown
+	 */
+	teardown ():void;
 }
 
 export = HydraCircuitInterface;

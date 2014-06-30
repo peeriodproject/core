@@ -25,6 +25,13 @@ interface HydraCellInterface extends NodeJS.EventEmitter {
 	 * @param {Buffer} payload The payload of the FILE_TRANSFER message
 	 */
 	sendFileMessage (payload:Buffer):void;
+
+	/**
+	 * Forcefully tears down the cell by closing the connection to predecessor and successor.
+	 *
+	 * @method core.protocol.hydra.HydraCellInterface#teardown
+	 */
+	teardown ():void;
 }
 
 export = HydraCellInterface;

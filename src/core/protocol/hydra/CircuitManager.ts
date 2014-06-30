@@ -137,6 +137,14 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 		return true;
 	}
 
+	public teardownCircuit (circuitId:string):void {
+		var circuit:HydraCircuitInterface = this._constructedCircuitsByCircuitId[circuitId];
+
+		if (circuit) {
+			circuit.teardown();
+		}
+	}
+
 	/**
 	 * Returns `true` if another circuit must be constructed.
 	 *

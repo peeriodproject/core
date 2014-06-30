@@ -126,6 +126,14 @@ var CircuitManager = (function (_super) {
         return true;
     };
 
+    CircuitManager.prototype.teardownCircuit = function (circuitId) {
+        var circuit = this._constructedCircuitsByCircuitId[circuitId];
+
+        if (circuit) {
+            circuit.teardown();
+        }
+    };
+
     /**
     * Returns `true` if another circuit must be constructed.
     *

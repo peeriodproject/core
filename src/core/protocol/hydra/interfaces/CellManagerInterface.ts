@@ -23,6 +23,14 @@ interface CellManagerInterface extends NodeJS.EventEmitter {
 	 */
 	pipeFileTransferMessage (predecessorCircuitId:string, payload:Buffer):boolean;
 
+	/**
+	 * Forcefully tears down a cell by the provided predecessorCircuitId.
+	 *
+	 * @method core.protocol.hydra.CellManagerInterface#teardownCell
+	 *
+	 * @param {string} predecessorCircuitId The predecessorCircuitId of the cell to tear down.
+	 */
+	teardownCell (predecessorCircuitId:string):void;
 }
 
 export = CellManagerInterface;

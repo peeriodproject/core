@@ -196,6 +196,10 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 		}
 	}
 
+	public teardown ():void {
+		this._teardown(true);
+	}
+
 	/**
 	 * Extends the circuit by one node (at least tries so) and handles the response appropriately
 	 * (error => teardown, rejection => try again if retries left, else teardown, success => extend further or finalize)

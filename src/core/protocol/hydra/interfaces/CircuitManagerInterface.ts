@@ -47,6 +47,15 @@ interface CircuitManagerInterface extends NodeJS.EventEmitter {
 	 * @returns {boolean} `true` if it there were circuits, `false` if there are no circuits.
 	 */
 	pipeFileTransferMessageThroughRandomCircuit (payload:Buffer):boolean;
+
+	/**
+	 * Tears down a circuit with the provided circuitId, if constructed and present.
+	 *
+	 * @method core.protocol.hydra.CircuitManager#teardownCircuit
+	 *
+	 * @param {string} circuitId The ID of the circuit to tear down.
+	 */
+	teardownCircuit (circuitId:string):void;
 }
 
 export = CircuitManagerInterface;

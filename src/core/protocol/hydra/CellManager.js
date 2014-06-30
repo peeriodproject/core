@@ -115,6 +115,14 @@ var CellManager = (function (_super) {
         return false;
     };
 
+    CellManager.prototype.teardownCell = function (predecessorCircuitId) {
+        var cell = this._cellsByPredecessorCircuitId[predecessorCircuitId];
+
+        if (cell) {
+            cell.teardown();
+        }
+    };
+
     /**
     * Accepts a CREATE_CELL_ADDITIVE request.
     * Computes the secrets, adds the keys, and finally pipes out the CELL_CREATED_REJECTED message.
