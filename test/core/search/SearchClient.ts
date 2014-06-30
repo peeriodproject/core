@@ -37,10 +37,7 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 		sandbox = sinon.sandbox.create();
 		config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
 			get: function (key):any {
-				if (key === 'search.apiVersion') {
-					return '1.2';
-				}
-				else if (key === 'search.host') {
+				if (key === 'search.host') {
 					return 'localhost';
 				}
 				else if (key === 'search.port') {

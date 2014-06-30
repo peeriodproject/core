@@ -91,7 +91,6 @@
         "binaryPath"       : "core/search/elasticsearch",
         "databasePath"     : "db/searchStore",
         "searchStoreConfig": "./config/searchStore.json",
-        "apiVersion"       : "1.2",
         "pidFilename"      : "elasticsearch-pid",
         "indexManager"     : {
             "indexRunnerDelayInMilliSeconds": 10000,

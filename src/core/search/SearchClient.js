@@ -409,7 +409,7 @@ var SearchClient = (function () {
             }
 
             _this._client = elasticsearch.Client({
-                apiVersion: _this._config.get('search.apiVersion'),
+                apiVersion: _this._config.get('search.apiVersion', '1.1'),
                 host: _this._config.get('search.host') + ':' + _this._config.get('search.port'),
                 log: {
                     type: 'file',

@@ -8,7 +8,7 @@ for %%I in ("%SCRIPT_DIR%..") do set ES_HOME=%%~dpfI
 
 rem Detect JVM version to figure out appropriate executable to use
 if not exist "%JAVA_HOME%\bin\java.exe" (
-echo JAVA_HOME points to an invalid Java installation (no java.exe found in "%JAVA_HOME%"^). Exiting...
+echo JAVA_HOME points to an invalid Java installation (no java.exe found in "%JAVA_HOME%"^). Existing...
 goto:eof
 )
 "%JAVA_HOME%\bin\java" -version 2>&1 | find "64-Bit" >nul:
@@ -29,7 +29,7 @@ if EXIST "%EXECUTABLE%" goto okExe
 echo elasticsearch-service-(x86|x64).exe was not found...
 
 :okExe
-set ES_VERSION=1.2.1
+set ES_VERSION=1.1.1
 
 if "%LOG_DIR%" == "" set LOG_DIR=%ES_HOME%\logs
 
