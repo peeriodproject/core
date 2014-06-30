@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.34</p>
+      <p class="stat">68.05</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">343</p>
+      <p class="stat">360</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">44.40</p>
+      <p class="stat">45.02</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.13</p>
+      <p class="stat">2.30</p>
     </div>
   </div>
 </div>
@@ -130,6 +130,12 @@ var CellManager = (function (_super) {
         * @member {core.protocol.hydra.HydraCellFactoryInterface} core.protocol.hydra.CellManager~_cellFactory
         */
         this._cellFactory = null;
+        /**
+        * Stores the maintained cells by the feeding identifier shared with the initiator node of the circuit.
+        *
+        * @member {Object} core.protocol.hydra.CellManager~_cellsByFeedingIdentifier
+        */
+        this._cellsByFeedingIdentifier = {};
         /**
         * Stores the maintained cells by their predecessor&#039;s circuit id.
         *
@@ -207,12 +213,19 @@ var CellManager = (function (_super) {
         return false;
     };
 
+    CellManager.prototype.teardownCell = function (predecessorCircuitId) {
+        var cell = this._cellsByPredecessorCircuitId[predecessorCircuitId];
+
+        if (cell) {
+            cell.teardown();
+        }
+    };
+
     /**
     * Accepts a CREATE_CELL_ADDITIVE request.
     * Computes the secrets, adds the keys, and finally pipes out the CELL_CREATED_REJECTED message.
     * Creates a hydra cell and hooks the &#039;isTornDown&#039; event to it.
     *
-    * Note to myself: It is absolutely crucial that the termination listener is hook to the cell in its constructor (or subsequent calls)
     *
     * @method core.protocol.hydra.CellManager~_acceptCreateCellRequest
     *
@@ -225,15 +238,17 @@ var CellManager = (function (_super) {
         var secret = diffie.computeSecret(AdditiveSharingScheme.getCleartext(pending.additivePayloads, 256));
         var sha1 = crypto.createHash(&#039;sha1&#039;).update(secret).digest();
         var hkdf = new HKDF(&#039;sha256&#039;, secret);
-        var keysConcat = hkdf.derive(32, new Buffer(pending.uuid, &#039;hex&#039;));
+        var keysConcat = hkdf.derive(48, new Buffer(pending.uuid, &#039;hex&#039;));
 
         // this must be the opposite side, so switch keys
         var incomingKey = keysConcat.slice(0, 16);
-        var outgoingKey = keysConcat.slice(16);
+        var outgoingKey = keysConcat.slice(16, 32);
+        var feedingIdentifier = keysConcat.slice(32).toString(&#039;hex&#039;);
 
         var initiatorNode = pending.initiator;
         initiatorNode.incomingKey = incomingKey;
         initiatorNode.outgoingKey = outgoingKey;
+        initiatorNode.feedingIdentifier = feedingIdentifier;
 
         this._messageCenter.sendCellCreatedRejectedMessage(initiatorNode, pending.uuid, sha1, dhPublicKey);
 
@@ -241,6 +256,7 @@ var CellManager = (function (_super) {
 
         this._maintainedCells.push(cell);
         this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()] = cell;
+        this._cellsByFeedingIdentifier[feedingIdentifier] = cell;
 
         cell.once(&#039;isTornDown&#039;, function () {
             _this._onTornDownCell(cell);
@@ -409,6 +425,7 @@ var CellManager = (function (_super) {
         cell.removeAllListeners(&#039;fileTransferMessage&#039;);
 
         delete this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()];
+        delete this._cellsByFeedingIdentifier[cell.getFeedingIdentifier()];
 
         for (var i = 0, l = this._maintainedCells.length; i &lt; l; i++) {
             if (this._maintainedCells[i] === cell) {

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">69.70</p>
+      <p class="stat">69.91</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">213</p>
+      <p class="stat">223</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">36.66</p>
+      <p class="stat">38.14</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.28</p>
+      <p class="stat">1.37</p>
     </div>
   </div>
 </div>
@@ -132,6 +132,12 @@ var BroadcastManager = (function (_super) {
         * @member {number} core.protocol.broadcast.BroadcastManager~_broadcastLifetimeInMs
         */
         this._broadcastLifetimeInMs = 0;
+        /**
+        * Stores the IDs of broadcasts which will be ignored in every case. This list is never emptied.
+        *
+        * @member {Array&lt;string&gt;} core.protocol.broadcast.BroadcastManager~_ignoreBroadcastIds
+        */
+        this._ignoreBroadcastIds = [];
         /**
         * Stores the IDs of broadcasts already received (and thus need not be sent on)
         *
@@ -207,9 +213,13 @@ var BroadcastManager = (function (_super) {
     /**
     * END TESTING PURPOSES
     */
-    BroadcastManager.prototype.initBroadcast = function (payload) {
+    BroadcastManager.prototype.ignoreBroadcastId = function (broadcastId) {
+        this._ignoreBroadcastIds.push(broadcastId);
+    };
+
+    BroadcastManager.prototype.initBroadcast = function (payload, broadcastId) {
         var _this = this;
-        var broadcastId = crypto.pseudoRandomBytes(8).toString(&#039;hex&#039;);
+        var broadcastId = broadcastId || crypto.pseudoRandomBytes(8).toString(&#039;hex&#039;);
         var broadcastMsg = this._writableBroadcastMessageFactory.constructPayload(broadcastId, payload);
 
         this._knownBroadcastIds.push(broadcastId);
@@ -237,7 +247,7 @@ var BroadcastManager = (function (_super) {
             var timeElapsed = Date.now() - message.getTimestamp();
             var broadcastId = message.getBroadcastId();
 
-            if (timeElapsed &lt; this._broadcastLifetimeInMs &amp;&amp; this._knownBroadcastIds.indexOf(broadcastId) === -1) {
+            if (timeElapsed &lt; this._broadcastLifetimeInMs &amp;&amp; this._knownBroadcastIds.indexOf(broadcastId) === -1 &amp;&amp; this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
                 this.emit(&#039;receivedBroadcast&#039;, message.getPayload());
 
                 var differsInBit = msg.getSender().getId().differsInHighestBit(this._myNode.getId());

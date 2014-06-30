@@ -124,12 +124,12 @@ var SearchRequestManager = (function () {
         });
     };
 
-    SearchRequestManager.prototype.addResponse = function (queryId, responseBody, callback) {
+    SearchRequestManager.prototype.addResponse = function (queryId, responseBody, responseMeta, callback) {
         var _this = this;
         var internalCallback = callback || function (err) {
         };
 
-        this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, function (err, response) {
+        this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, responseMeta, function (err, response) {
             var matches;
             if (err) {
                 console.error(err);

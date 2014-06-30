@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">71.15</p>
+      <p class="stat">70.24</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">521</p>
+      <p class="stat">587</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">69.83</p>
+      <p class="stat">70.07</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">4.05</p>
+      <p class="stat">4.58</p>
     </div>
   </div>
 </div>
@@ -194,13 +194,19 @@ var SearchClient = (function () {
 
         this.open(this._options.onOpenCallback);
     }
-    SearchClient.prototype.addIncomingResponse = function (indexName, type, responseObject, callback) {
+    SearchClient.prototype.addIncomingResponse = function (indexName, type, responseBody, responseMeta, callback) {
         var internalCallback = callback || function (err, response) {
         };
 
+        var responseObject = ObjectUtils.extend(responseBody, {
+            meta: responseMeta
+        });
+
+        console.log(JSON.stringify(responseObject));
+
         this._client.percolate({
             index: indexName.toLowerCase(),
-            type: &#039;response&#039; + type.toLowerCase(),
+            type: &#039;response-&#039; + type.toLowerCase(),
             body: {
                 doc: responseObject
             }
@@ -246,7 +252,7 @@ var SearchClient = (function () {
         var internalCallback = callback || function () {
         };
 
-        this._createIndex(this._indexName, function (err) {
+        this._createIndex(this._indexName, null, function (err) {
             var map = null;
             if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
                 // wrap mapping in type root
@@ -288,24 +294,43 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.createOutgoingQuery = function (indexName, id, queryBody, callback) {
-        var _this = this;
         var internalCallback = callback || function (err) {
         };
 
-        this._createIndex(indexName, function (err) {
+        this._client.index({
+            index: indexName.toLowerCase(),
+            type: &#039;.percolator&#039;,
+            id: id,
+            body: queryBody
+        }, function (err, response, status) {
+            err = err || null;
+            return internalCallback(err);
+        });
+    };
+
+    SearchClient.prototype.createOutgoingQueryIndex = function (indexName, callback) {
+        var internalCallback = callback || function (err) {
+        };
+
+        var mapping = {
+            _default_: {
+                meta: {
+                    type: &#039;object&#039;,
+                    index: &#039;no&#039;
+                }
+            }
+        };
+
+        indexName = indexName.toLowerCase();
+
+        this._createIndex(indexName, mapping, function (err) {
+            console.log(err);
+
             if (err) {
                 return internalCallback(err);
             }
 
-            _this._client.index({
-                index: indexName.toLowerCase(),
-                type: &#039;.percolator&#039;,
-                id: id,
-                body: queryBody
-            }, function (err, response, status) {
-                err = err || null;
-                return internalCallback(err);
-            });
+            return internalCallback(err);
         });
     };
 
@@ -330,6 +355,7 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.deleteOutgoingQuery = function (indexName, queryId, callback) {
+        var _this = this;
         var internalCallback = callback || function (err) {
         };
         var queryDeleted = false;
@@ -357,14 +383,41 @@ var SearchClient = (function () {
                 type: &#039;.percolator&#039;,
                 id: queryId
             }, function (err, response, status) {
+                console.log(err);
+
+                if (_this._isValidResponse(err, status, &#039;IndexMissingException&#039;) || _this._isValidResponse(err, status, &#039;Not Found&#039;)) {
+                    err = null;
+                }
+
+                queryDeleted = true;
+
                 return checkCallback(err);
             });
 
-            // delete all responses
-            this._client.delete({
+            // delete all responses for the queryId
+            this._client.deleteByQuery({
                 index: indexName,
-                type: &#039;response&#039; + queryId.toLowerCase()
+                type: &#039;response-&#039; + queryId.toLowerCase(),
+                body: {
+                    query: {
+                        bool: {
+                            must: [
+                                {
+                                    match_all: {}
+                                }
+                            ]
+                        }
+                    }
+                }
             }, function (err, response, status) {
+                console.log(err);
+
+                if (_this._isValidResponse(err, status, &#039;IndexMissingException&#039;)) {
+                    err = null;
+                }
+
+                responsesDeleted = true;
+
                 return checkCallback(err);
             });
         } else {
@@ -381,11 +434,11 @@ var SearchClient = (function () {
         }, function (err, response, status) {
             err = err || null;
 
-            if (_this._isValidResponse(err, status, &#039;IndexMissingException&#039;)) {
-                callback(null, _this._createSearchItemFromResponse(response));
-            } else {
-                callback(err, null);
+            if (!_this._isValidResponse(err, status, &#039;IndexMissingException&#039;)) {
+                return callback(err, null);
             }
+
+            return callback(null, _this._createSearchItemFromResponse(response));
         });
     };
 
@@ -454,7 +507,7 @@ var SearchClient = (function () {
             }
 
             _this._client = elasticsearch.Client({
-                apiVersion: _this._config.get(&#039;search.apiVersion&#039;),
+                apiVersion: _this._config.get(&#039;search.apiVersion&#039;, &#039;1.1&#039;),
                 host: _this._config.get(&#039;search.host&#039;) + &#039;:&#039; + _this._config.get(&#039;search.port&#039;),
                 log: {
                     type: &#039;file&#039;,
@@ -468,7 +521,7 @@ var SearchClient = (function () {
                     console.error(err);
                     internalCallback(err);
                 } else {
-                    _this._createIndex(_this._indexName, function (err) {
+                    _this._createIndex(_this._indexName, null, function (err) {
                         if (err) {
                             console.error(err);
                         } else {
@@ -532,13 +585,26 @@ var SearchClient = (function () {
     * @method core.search.SearchClient~_createIndex
     *
     * @param {string} indexName
+    * @param {Object|Null} mapping The optional mapping to stick to the index.
     * @param {Function} callback
     */
-    SearchClient.prototype._createIndex = function (indexName, callback) {
+    SearchClient.prototype._createIndex = function (indexName, mapping, callback) {
         var _this = this;
-        this._client.indices.create({
+        var params = {
             index: indexName
-        }, function (err, response, status) {
+        };
+
+        if (mapping) {
+            params = ObjectUtils.extend(params, {
+                body: {
+                    mappings: mapping
+                }
+            });
+        }
+
+        console.log(&#039;creating index with:&#039;, JSON.stringify(params));
+
+        this._client.indices.create(params, function (err, response, status) {
             // everything went fine or index already exists
             if (_this._isValidResponse(err, status, &#039;IndexAlreadyExistsException&#039;)) {
                 callback(null);

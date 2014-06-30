@@ -139,11 +139,11 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		});
 	}
 
-	public addResponse (queryId:string, responseBody:Object, callback?:(err:Error) => any):void {
+	public addResponse (queryId:string, responseBody:Object, responseMeta:Object, callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
 
-		this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, (err:Error, response:Object) => {
+		this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, responseMeta, (err:Error, response:Object) => {
 			var matches
 			if (err) {
 				console.error(err);

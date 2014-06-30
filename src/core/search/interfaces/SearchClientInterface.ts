@@ -21,10 +21,11 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 *
 	 * @param {string} indexName The index to perculate the object into.
 	 * @param {string} type The type of the response object
-	 * @param {Object} responseObject The object to store
+	 * @param {Object} responseBody The response body to store
+	 * * @param {Object} responseMeta The response meta data to store
 	 * @param {Function} callback
 	 */
-	addIncomingResponse (indexName:string, type:string, responseObject:Object, callback?:(err:Error, response:Object) => any):void;
+	addIncomingResponse (indexName:string, type:string, responseBody:Object, responseMeta:Object, callback?:(err:Error, response:Object) => any):void;
 
 	/**
 	 * Adds the specified object to the search index.

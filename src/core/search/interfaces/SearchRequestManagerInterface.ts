@@ -22,9 +22,10 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	 *
 	 * @param {string} queryId
 	 * @param {Object} responseBody
+	 * @param {Object} responseMeta
 	 * @param {Function} callback
 	 */
-	addResponse (queryId:string, responseBody:Object, callback?:(err:Error) => any):void;
+	addResponse (queryId:string, responseBody:Object, responseMeta:Object, callback?:(err:Error) => any):void;
 
 	/**
 	 * Adds a listener to the internal event emitter that triggers whenever a new query is registered.

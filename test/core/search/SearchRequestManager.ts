@@ -66,7 +66,7 @@ describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
 			},
 
 			addIncomingResponse: function () {
-				return process.nextTick(arguments[3].bind(null, null, {
+				return process.nextTick(arguments[4].bind(null, null, {
 					total: 1,
 					matches: [
 						{ _index: arguments[0], _id: arguments[1] }
@@ -160,7 +160,7 @@ describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
 		var manager = new SearchRequestManager(configStub, appQuitHandlerStub, 'searchqueries', searchClientStub, {
 			onOpenCallback: function () {
 
-				manager.addResponse('searchQueryId', { response: true }, function (err) {
+				manager.addResponse('searchQueryId', { response: true }, { metadata: true }, function (err) {
 					(err === null).should.be.true;
 
 					searchClientStub.addIncomingResponse.calledOnce.should.be.true;
@@ -221,7 +221,7 @@ describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
 				manager.addQuery({ foo: true }, function (err, queryId) {
 					theQueryId = queryId;
 
-					manager.addResponse(queryId, { response: true }, function (err) {
+					manager.addResponse(queryId, { response: true }, { metadata: true }, function (err) {
 						(err === null).should.be.true;
 					});
 				});
@@ -231,7 +231,6 @@ describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
 		manager.onQueryTimeout(timeoutSpy);
 
 		manager.onQueryResultsChanged(function (queryId) {
-
 			return process.nextTick(function () {
 				queryId.should.equal(theQueryId);
 
