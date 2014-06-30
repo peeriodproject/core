@@ -1,6 +1,6 @@
 var sheet = {
 	messageTypes: {
-		"TRANSFER_QUERY": 0x01
+		"QUERY_BROADCAST": 0x01
 	}
 };
 

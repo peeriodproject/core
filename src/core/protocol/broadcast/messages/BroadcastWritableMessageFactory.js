@@ -5,8 +5,8 @@ var BroadcastWritableMessageFactory = (function () {
         var payloadLength = payloadLength || payload.length;
         var broadcastIdBuffer = new Buffer(broadcastId, 'hex');
 
-        if (broadcastIdBuffer.length !== 8) {
-            throw new Error('BroadcastWritableMessageFactory: BroadcastID must be 8 byte long!');
+        if (broadcastIdBuffer.length !== 16) {
+            throw new Error('BroadcastWritableMessageFactory: BroadcastID must be 16 byte long!');
         }
 
         var timestampBuffer = new Buffer(8);
@@ -15,7 +15,7 @@ var BroadcastWritableMessageFactory = (function () {
         timestampBuffer.writeUInt32BE(Math.floor(timestamp / 1000), 0);
         timestampBuffer.writeUInt32BE(timestamp % 1000, 4);
 
-        return Buffer.concat([broadcastIdBuffer, timestampBuffer, payload], payloadLength + 16);
+        return Buffer.concat([broadcastIdBuffer, timestampBuffer, payload], payloadLength + 24);
     };
     return BroadcastWritableMessageFactory;
 })();
