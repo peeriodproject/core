@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">66.56</p>
+      <p class="stat">66.26</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">352</p>
+      <p class="stat">354</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">49.82</p>
+      <p class="stat">49.98</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.12</p>
+      <p class="stat">2.17</p>
     </div>
   </div>
 </div>
@@ -392,9 +392,10 @@ var CircuitExtender = (function () {
 
                     if (sha1.digest(&#039;hex&#039;) === message.getSecretHash().toString(&#039;hex&#039;)) {
                         var hkdf = new HKDF(&#039;sha256&#039;, secret);
-                        var keysConcat = hkdf.derive(32, new Buffer(message.getUUID(), &#039;hex&#039;));
+                        var keysConcat = hkdf.derive(48, new Buffer(message.getUUID(), &#039;hex&#039;));
                         var outgoingKey = keysConcat.slice(0, 16);
-                        var incomingKey = keysConcat.slice(16);
+                        var incomingKey = keysConcat.slice(16, 32);
+                        var feedingIdentifier = keysConcat.slice(32).toString(&#039;hex&#039;);
 
                         var newNode = this._nodes.length ? {
                             ip: this._currentNodeToExtendWith.ip,
@@ -403,6 +404,7 @@ var CircuitExtender = (function () {
 
                         newNode.incomingKey = incomingKey;
                         newNode.outgoingKey = outgoingKey;
+                        newNode.feedingIdentifier = feedingIdentifier;
 
                         this._encDecHandler.addNode(newNode);
 

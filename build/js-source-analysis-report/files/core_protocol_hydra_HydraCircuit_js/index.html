@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.30</p>
+      <p class="stat">70.60</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">334</p>
+      <p class="stat">338</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">41.50</p>
+      <p class="stat">41.56</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.87</p>
+      <p class="stat">1.91</p>
     </div>
   </div>
 </div>
@@ -226,10 +226,6 @@ var HydraCircuit = (function (_super) {
     /**
     * BEGIN TESTING PURPOSES
     */
-    HydraCircuit.prototype.getCircuitNodes = function () {
-        return this._circuitNodes;
-    };
-
     HydraCircuit.prototype.getLayeredEncDec = function () {
         return this._layeredEncDecHandler;
     };
@@ -250,10 +246,18 @@ var HydraCircuit = (function (_super) {
         return this._circuitId;
     };
 
-    HydraCircuit.prototype.sendFileMessage = function (payload) {
+    HydraCircuit.prototype.getCircuitNodes = function () {
+        return this._circuitNodes;
+    };
+
+    HydraCircuit.prototype.sendFileMessage = function (payload, earlyExit) {
         if (this._constructed &amp;&amp; !this._isTornDown) {
-            this._messageCenter.spitoutFileTransferMessage(this._layeredEncDecHandler, payload);
+            this._messageCenter.spitoutFileTransferMessage(this._layeredEncDecHandler, payload, earlyExit);
         }
+    };
+
+    HydraCircuit.prototype.teardown = function () {
+        this._teardown(true);
     };
 
     /**

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.06</p>
+      <p class="stat">73.26</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">426</p>
+      <p class="stat">459</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">55.76</p>
+      <p class="stat">56.91</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.55</p>
+      <p class="stat">2.72</p>
     </div>
   </div>
 </div>
@@ -118,6 +118,7 @@ var SearchRequestManager = (function () {
         /**
         * The event emitter instance to trigger events.
         *
+        * @see core.search.SearchRequestManager#onQueryAdd
         * @see core.search.SearchRequestManager#onQueryEnd
         * @see core.search.SearchRequestManager#onQueryRemoved
         * @see core.search.SearchRequestManager#onQueryResultsChanged
@@ -206,17 +207,21 @@ var SearchRequestManager = (function () {
                     id = null;
                 }
 
-                return internalCallback(err, id);
+                internalCallback(err, id);
+
+                if (id) {
+                    _this._triggerQueryAdd(id);
+                }
             });
         });
     };
 
-    SearchRequestManager.prototype.addResponse = function (queryId, responseBody, callback) {
+    SearchRequestManager.prototype.addResponse = function (queryId, responseBody, responseMeta, callback) {
         var _this = this;
         var internalCallback = callback || function (err) {
         };
 
-        this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, function (err, response) {
+        this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, responseMeta, function (err, response) {
             var matches;
             if (err) {
                 console.error(err);
@@ -282,16 +287,26 @@ var SearchRequestManager = (function () {
         this._runningQueryIdMap = {};
 
         this._searchClient.open(function (err) {
-            if (!_this._eventEmitter) {
-                _this._eventEmitter = new events.EventEmitter();
+            if (err) {
+                return internalCallback(err);
             }
 
-            _this._startRunningQueriesLifetime();
+            _this._searchClient.createOutgoingQueryIndex(_this._indexName, function (err) {
+                if (!_this._eventEmitter) {
+                    _this._eventEmitter = new events.EventEmitter();
+                }
 
-            _this._isOpen = true;
+                _this._startRunningQueriesLifetime();
 
-            return internalCallback(err);
+                _this._isOpen = true;
+
+                return internalCallback(err);
+            });
         });
+    };
+
+    SearchRequestManager.prototype.onQueryAdd = function (callback) {
+        this._eventEmitter.addListener(&#039;queryAdd&#039;, callback);
     };
 
     SearchRequestManager.prototype.onQueryEnd = function (callback) {
@@ -324,6 +339,9 @@ var SearchRequestManager = (function () {
     };
 
     /**
+    * Checks weather the query for the given exiryTimestamp got any results yet and triggers a [`queryEnd`]{@link core.search.SearchRequestManager~_triggerQueryEnd} event if the
+    * query got a response. If no results have arrived the query will be deleted from the database and a
+    * [`queryTimeout`]{@link core.search.SearchRequestManager~_triggerQueryTimeout} event will be triggered afterwards.
     *
     * @method core.search.SearchRequestManager~_checkResultsAndTriggerEvent
     *
@@ -444,6 +462,21 @@ var SearchRequestManager = (function () {
         if (this._runningQueriesLifetimeTimeout) {
             global.clearTimeout(this._runningQueriesLifetimeTimeout);
             this._runningQueriesLifetimeTimeout = null;
+        }
+    };
+
+    /**
+    * Triggers the `queryAdd` event to registered listeners if the manager is open.
+    *
+    * @see core.search.SearchRequestManager#onQueryAdd
+    *
+    * @method core.search.SearchRequestManager~_triggerQueryAdd
+    
+    * @param {string} queryId The id of the added search query
+    */
+    SearchRequestManager.prototype._triggerQueryAdd = function (queryId) {
+        if (this._isOpen) {
+            this._eventEmitter.emit(&#039;queryAdd&#039;, queryId);
         }
     };
 
