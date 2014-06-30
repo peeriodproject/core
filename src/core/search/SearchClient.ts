@@ -129,9 +129,9 @@ class SearchClient implements SearchClientInterface {
 
 		this._client.percolate({
 			index: indexName.toLowerCase(),
-			type: 'response-' + type.toLowerCase(),
-			body: {
-				doc: responseObject
+			type : 'response-' + type.toLowerCase(),
+			body : {
+				doc: responseObject // todo add meta data ObjectUtils.extend(queryBody, queryMetas)
 			}
 		}, function (err:Error, response:Object, status:number) {
 			err = err || null;
@@ -221,18 +221,41 @@ class SearchClient implements SearchClientInterface {
 		var internalCallback = callback || function (err:Error) {
 		};
 
-		this._createIndex(indexName, (err:Error) => {
+		this._client.index({
+			index: indexName.toLowerCase(),
+			type : '.percolator',
+			id   : id,
+			body : queryBody // todo add meta data ObjectUtils.extend(queryBody, queryMetas)
+		}, function (err:Error, response:Object, status:number) {
+			err = err || null;
+			return internalCallback(err);
+		});
+	}
+
+	public createOutgoingQueryIndex (indexName:string, callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {
+		};
+
+		this._createIndex(indexName.toLowerCase(), (err:Error) => {
 			if (err) {
 				return internalCallback(err);
 			}
 
-			this._client.index({
-				index: indexName.toLowerCase(),
-				type : '.percolator',
-				id   : id,
-				body : queryBody
-			}, function (err:Error, response:Object, status:number) {
+			this._client.indices.putMapping({
+				index: indexName,
+				body : {
+					mappings: {
+						_default_: {
+							meta: {
+								type: 'object',
+								index: 'no'
+							}
+						}
+					}
+				}
+			}, function (err, response, status) {
 				err = err || null;
+
 				return internalCallback(err);
 			});
 		});
@@ -285,8 +308,8 @@ class SearchClient implements SearchClientInterface {
 			// delete query
 			this._client.delete({
 				index: indexName,
-				type: '.percolator',
-				id: queryId
+				type : '.percolator',
+				id   : queryId
 			}, (err:Error, response, status) => {
 				if (this._isValidResponse(err, status, 'IndexMissingException') || this._isValidResponse(err, status, 'Not Found')) {
 					err = null;
@@ -301,12 +324,14 @@ class SearchClient implements SearchClientInterface {
 			this._client.deleteByQuery({
 				index: indexName,
 				type : 'response-' + queryId.toLowerCase(),
-				body: {
+				body : {
 					query: {
 						bool: {
-							must: [{
-								match_all: {}
-							}]
+							must: [
+								{
+									match_all: {}
+								}
+							]
 						}
 					}
 				}

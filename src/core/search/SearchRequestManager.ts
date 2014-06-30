@@ -31,6 +31,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	/**
 	 * The event emitter instance to trigger events.
 	 *
+	 * @see core.search.SearchRequestManager#onQueryAdd
 	 * @see core.search.SearchRequestManager#onQueryEnd
 	 * @see core.search.SearchRequestManager#onQueryRemoved
 	 * @see core.search.SearchRequestManager#onQueryResultsChanged
@@ -124,12 +125,16 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 				expiryTimestamp: expiryTimestamp
 			});
 
-			this._searchClient.createOutgoingQuery(this._indexName, id, queryBody, function (err) {
+			this._searchClient.createOutgoingQuery(this._indexName, id, queryBody, (err) => {
 				if (err) {
 					id = null;
 				}
 
-				return internalCallback(err, id);
+				internalCallback(err, id);
+
+				if (id) {
+					this._triggerQueryAdd(id);
+				}
 			});
 		});
 	}
@@ -203,16 +208,26 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		this._runningQueryIdMap = {};
 
 		this._searchClient.open((err) => {
-			if (!this._eventEmitter) {
-				this._eventEmitter = new events.EventEmitter();
+			if (err) {
+				return internalCallback(err);
 			}
 
-			this._startRunningQueriesLifetime();
+			this._searchClient.createOutgoingQueryIndex(this._indexName, (err:Error) => {
+				if (!this._eventEmitter) {
+					this._eventEmitter = new events.EventEmitter();
+				}
 
-			this._isOpen = true;
+				this._startRunningQueriesLifetime();
 
-			return internalCallback(err);
+				this._isOpen = true;
+
+				return internalCallback(err);
+			});
 		});
+	}
+
+	public onQueryAdd (callback:Function):void {
+		this._eventEmitter.addListener('queryAdd', callback);
 	}
 
 	public onQueryEnd (callback:Function):void {
@@ -366,6 +381,21 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		if (this._runningQueriesLifetimeTimeout) {
 			global.clearTimeout(this._runningQueriesLifetimeTimeout);
 			this._runningQueriesLifetimeTimeout = null;
+		}
+	}
+
+	/**
+	 * Triggers the `queryAdd` event to registered listeners if the manager is open.
+	 *
+	 * @see core.search.SearchRequestManager#onQueryAdd
+	 *
+	 * @method core.search.SearchRequestManager~_triggerQueryAdd
+
+	 * @param {string} queryId The id of the added search query
+	 */
+	private _triggerQueryAdd (queryId:string):void {
+		if (this._isOpen) {
+			this._eventEmitter.emit('queryAdd', queryId);
 		}
 	}
 

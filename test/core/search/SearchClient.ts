@@ -18,7 +18,7 @@ import SearchItemFactory = require('../../../src/core/search/SearchItemFactory')
 import SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
 
-describe('CORE --> SEARCH --> SearchClient', function () {
+describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
 	var appQuitHandlerStub:any;
@@ -80,7 +80,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 		searchClient.close(function () {
 			searchClient = null;
 			try {
-				//testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+				testUtils.deleteFolderRecursive(searchStoreLogsFolder);
 				testUtils.deleteFolderRecursive(searchStoreDataFolder);
 			}
 			catch (e) {

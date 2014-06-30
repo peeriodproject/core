@@ -13,7 +13,7 @@ var SearchItem = require('../../../src/core/search/SearchItem');
 var SearchItemFactory = require('../../../src/core/search/SearchItemFactory');
 var SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
-describe('CORE --> SEARCH --> SearchClient', function () {
+describe('CORE --> SEARCH --> SearchClient @_joern', function () {
     var sandbox;
     var config;
     var appQuitHandlerStub;
@@ -68,7 +68,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
         searchClient.close(function () {
             searchClient = null;
             try  {
-                //testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+                testUtils.deleteFolderRecursive(searchStoreLogsFolder);
                 testUtils.deleteFolderRecursive(searchStoreDataFolder);
             } catch (e) {
                 console.log(e);

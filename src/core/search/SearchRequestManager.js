@@ -26,6 +26,7 @@ var SearchRequestManager = (function () {
         /**
         * The event emitter instance to trigger events.
         *
+        * @see core.search.SearchRequestManager#onQueryAdd
         * @see core.search.SearchRequestManager#onQueryEnd
         * @see core.search.SearchRequestManager#onQueryRemoved
         * @see core.search.SearchRequestManager#onQueryResultsChanged
@@ -114,7 +115,11 @@ var SearchRequestManager = (function () {
                     id = null;
                 }
 
-                return internalCallback(err, id);
+                internalCallback(err, id);
+
+                if (id) {
+                    _this._triggerQueryAdd(id);
+                }
             });
         });
     };
@@ -190,16 +195,26 @@ var SearchRequestManager = (function () {
         this._runningQueryIdMap = {};
 
         this._searchClient.open(function (err) {
-            if (!_this._eventEmitter) {
-                _this._eventEmitter = new events.EventEmitter();
+            if (err) {
+                return internalCallback(err);
             }
 
-            _this._startRunningQueriesLifetime();
+            _this._searchClient.createOutgoingQueryIndex(_this._indexName, function (err) {
+                if (!_this._eventEmitter) {
+                    _this._eventEmitter = new events.EventEmitter();
+                }
 
-            _this._isOpen = true;
+                _this._startRunningQueriesLifetime();
 
-            return internalCallback(err);
+                _this._isOpen = true;
+
+                return internalCallback(err);
+            });
         });
+    };
+
+    SearchRequestManager.prototype.onQueryAdd = function (callback) {
+        this._eventEmitter.addListener('queryAdd', callback);
     };
 
     SearchRequestManager.prototype.onQueryEnd = function (callback) {
@@ -355,6 +370,21 @@ var SearchRequestManager = (function () {
         if (this._runningQueriesLifetimeTimeout) {
             global.clearTimeout(this._runningQueriesLifetimeTimeout);
             this._runningQueriesLifetimeTimeout = null;
+        }
+    };
+
+    /**
+    * Triggers the `queryAdd` event to registered listeners if the manager is open.
+    *
+    * @see core.search.SearchRequestManager#onQueryAdd
+    *
+    * @method core.search.SearchRequestManager~_triggerQueryAdd
+    
+    * @param {string} queryId The id of the added search query
+    */
+    SearchRequestManager.prototype._triggerQueryAdd = function (queryId) {
+        if (this._isOpen) {
+            this._eventEmitter.emit('queryAdd', queryId);
         }
     };
 

@@ -52,6 +52,9 @@ describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
             createOutgoingQuery: function () {
                 return process.nextTick(arguments[3].bind(null, null));
             },
+            createOutgoingQueryIndex: function () {
+                return process.nextTick(arguments[1].bind(null, null));
+            },
             addIncomingResponse: function () {
                 return process.nextTick(arguments[3].bind(null, null, {
                     total: 1,
@@ -107,6 +110,17 @@ describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
         });
     });
 
+    it('should correctly create the query index oin open', function (done) {
+        var manager = new SearchRequestManager(configStub, appQuitHandlerStub, 'searchqueries', searchClientStub, {
+            onOpenCallback: function () {
+                searchClientStub.createOutgoingQueryIndex.calledOnce.should.be.true;
+                searchClientStub.createOutgoingQueryIndex.getCall(0).args[0].should.equal('searchqueries');
+
+                closeAndDone(manager, done);
+            }
+        });
+    });
+
     it('should correctly add a outgoing search query to the database', function (done) {
         var manager = new SearchRequestManager(configStub, appQuitHandlerStub, 'searchqueries', searchClientStub, {
             onOpenCallback: function () {
@@ -147,7 +161,25 @@ describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
         });
     });
 
-    it('should correctly call a "onQueryTimeout" listener after the lifetime of a query expired @prio', function (done) {
+    it('should correctly call a "onQueryAdd" listener after a new query was added', function (done) {
+        var theQueryId = '';
+
+        var manager = new SearchRequestManager(configStub, appQuitHandlerStub, 'searchqueries', searchClientStub, {
+            onOpenCallback: function () {
+                manager.addQuery({ foo: true }, function (err, queryId) {
+                    theQueryId = queryId;
+                });
+            }
+        });
+
+        manager.onQueryAdd(function (queryId) {
+            queryId.should.equal(theQueryId);
+
+            closeAndDone(manager, done);
+        });
+    });
+
+    it('should correctly call a "onQueryTimeout" listener after the lifetime of a query expired', function (done) {
         this.timeout(5000);
 
         var theQueryId = '';
