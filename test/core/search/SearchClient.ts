@@ -18,7 +18,7 @@ import SearchItemFactory = require('../../../src/core/search/SearchItemFactory')
 import SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
 
-describe('CORE --> SEARCH --> SearchClient @_joern', function () {
+describe('CORE --> SEARCH --> SearchClient', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
 	var appQuitHandlerStub:any;
@@ -359,6 +359,49 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 			(err === null).should.be.true;
 
 			done();
+		});
+	});
+
+	it('should correctly match the results for the given query', function (done) {
+		var dataToIndex:Object = {
+			pluginidentifier: {
+				itemHash : 'fileHash',
+				itemPath : '../path/file.txt',
+				itemStats: {
+					stats: true
+				},
+				foo      : 'bar io'
+			}
+		};
+
+		searchClient.addItem(dataToIndex, function (err:Error, ids:SearchItemIdListInterface) {
+			searchClient.search({
+				query: {
+					match: {
+						"pluginidentifier.foo": "bar"
+					}
+				}
+			}, function (err, results) {
+				(err === null).should.be.true;
+
+				results.should.containDeep({
+					total: 1,
+					hits: [{
+						_index: 'mainindex',
+						_type: 'pluginidentifier',
+						_source: {
+							itemHash: "fileHash",
+							itemPath: "../path/file.txt",
+							itemStats: {
+								stats: true
+							},
+							foo: "bar io"
+						}
+					}]
+				});
+
+				done();
+			});
 		});
 	});
 
