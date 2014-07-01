@@ -386,21 +386,19 @@ class SearchClient implements SearchClientInterface {
 			index: this._indexName,
 			body : searchQuery
 		}, (err:Error, response:Object, status:number) => {
+			var hits:Object = response && response['hits'] ? response['hits'] : {};
+
 			err = err || null;
 
-			var hits:Object = response['hits'];
+			if (!this._isValidResponse(err, status, 'IndexMissingException')) {
+				return callback(err, null);
+			}
 
-			if (this._isValidResponse(err, status, 'IndexMissingException')) {
-				if (hits && hits['total']) {
-					callback(null, this._createSearchItemFromHits(hits['hits']));
-				}
-				else {
-					callback(null, null);
-				}
+			if (hits && hits['total']) {
+				return callback(null, this._createSearchItemFromHits(hits['hits']));
 			}
-			else {
-				callback(err, null);
-			}
+
+			return callback(null, null);
 		});
 	}
 
@@ -449,19 +447,18 @@ class SearchClient implements SearchClientInterface {
 			this._waitForDatabaseServer((err:Error) => {
 				if (err) {
 					console.error(err);
-					internalCallback(err);
+					return internalCallback(err);
 				}
-				else {
-					this._createIndex(this._indexName, null, (err:Error) => {
-						if (err) {
-							console.error(err);
-						}
-						else {
-							this._isOpen = true;
-							internalCallback(null);
-						}
-					});
-				}
+
+				this._createIndex(this._indexName, null, (err:Error) => {
+					err = err || null;
+
+					if (!err) {
+						this._isOpen = true;
+					}
+
+					return internalCallback(null);
+				});
 			});
 		};
 
@@ -597,7 +594,7 @@ class SearchClient implements SearchClientInterface {
 	}
 
 	/**
-	 * Returns `true` if given response objects matches with the http status code ( >= 200 < 300) or the error matches the specified error name.
+	 * Returns `true` if the given response objects matches with the http status code ( >= 200 < 300) or the error matches the specified error name.
 	 * This method is used to gracefully ignore expected errors such as `not found` or `already exists`.
 	 *
 	 * @method core.search.SearchClient~_isValidResponse

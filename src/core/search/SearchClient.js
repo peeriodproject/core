@@ -364,19 +364,19 @@ var SearchClient = (function () {
             index: this._indexName,
             body: searchQuery
         }, function (err, response, status) {
+            var hits = response && response['hits'] ? response['hits'] : {};
+
             err = err || null;
 
-            var hits = response['hits'];
-
-            if (_this._isValidResponse(err, status, 'IndexMissingException')) {
-                if (hits && hits['total']) {
-                    callback(null, _this._createSearchItemFromHits(hits['hits']));
-                } else {
-                    callback(null, null);
-                }
-            } else {
-                callback(err, null);
+            if (!_this._isValidResponse(err, status, 'IndexMissingException')) {
+                return callback(err, null);
             }
+
+            if (hits && hits['total']) {
+                return callback(null, _this._createSearchItemFromHits(hits['hits']));
+            }
+
+            return callback(null, null);
         });
     };
 
@@ -427,17 +427,18 @@ var SearchClient = (function () {
             _this._waitForDatabaseServer(function (err) {
                 if (err) {
                     console.error(err);
-                    internalCallback(err);
-                } else {
-                    _this._createIndex(_this._indexName, null, function (err) {
-                        if (err) {
-                            console.error(err);
-                        } else {
-                            _this._isOpen = true;
-                            internalCallback(null);
-                        }
-                    });
+                    return internalCallback(err);
                 }
+
+                _this._createIndex(_this._indexName, null, function (err) {
+                    err = err || null;
+
+                    if (!err) {
+                        _this._isOpen = true;
+                    }
+
+                    return internalCallback(null);
+                });
             });
         };
 
@@ -570,7 +571,7 @@ var SearchClient = (function () {
     };
 
     /**
-    * Returns `true` if given response objects matches with the http status code ( >= 200 < 300) or the error matches the specified error name.
+    * Returns `true` if the given response objects matches with the http status code ( >= 200 < 300) or the error matches the specified error name.
     * This method is used to gracefully ignore expected errors such as `not found` or `already exists`.
     *
     * @method core.search.SearchClient~_isValidResponse
