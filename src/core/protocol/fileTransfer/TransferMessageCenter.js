@@ -25,6 +25,14 @@ var TransferMessageCenter = (function (_super) {
 
         this._setupListeners();
     }
+    TransferMessageCenter.prototype.wrapTransferMessage = function (messageType, transferId, payload) {
+        try  {
+            return this._writableFileTransferMessageFactory.constructMessage(transferId, messageType, payload);
+        } catch (e) {
+            return null;
+        }
+    };
+
     TransferMessageCenter.prototype._setupListeners = function () {
         var _this = this;
         this._circuitManager.on('circuitReceivedTransferMessage', function (circuitId, payload) {

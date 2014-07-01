@@ -19,6 +19,10 @@ var ReadableFileTransferMessage = (function () {
         */
         this._payload = null;
         /**
+        * @member {Buffer} core.protocol.fileTransfer.ReadableFileTransferMessage~_rawBuffer
+        */
+        this._rawBuffer = null;
+        /**
         * @member {string} core.protocol.fileTransfer.ReadableFileTransferMessage~_transferId
         */
         this._transferId = null;
@@ -44,7 +48,13 @@ var ReadableFileTransferMessage = (function () {
         }
 
         this._payload = buffer.slice(17);
+
+        this._rawBuffer = buffer;
     }
+    ReadableFileTransferMessage.prototype.getRawBuffer = function () {
+        return this._rawBuffer;
+    };
+
     ReadableFileTransferMessage.prototype.getMessageType = function () {
         return this._messageType;
     };

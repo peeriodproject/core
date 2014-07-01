@@ -22,6 +22,11 @@ class ReadableFileTransferMessage implements ReadableFileTransferMessageInterfac
 	private _payload:Buffer = null;
 
 	/**
+	 * @member {Buffer} core.protocol.fileTransfer.ReadableFileTransferMessage~_rawBuffer
+	 */
+	private _rawBuffer:Buffer = null;
+
+	/**
 	 * @member {string} core.protocol.fileTransfer.ReadableFileTransferMessage~_transferId
 	 */
 	private _transferId:string = null;
@@ -49,6 +54,12 @@ class ReadableFileTransferMessage implements ReadableFileTransferMessageInterfac
 		}
 
 		this._payload = buffer.slice(17);
+
+		this._rawBuffer = buffer;
+	}
+
+	public getRawBuffer ():Buffer {
+		return this._rawBuffer;
 	}
 
 	public getMessageType ():string {

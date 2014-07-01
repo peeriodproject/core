@@ -30,6 +30,16 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 		this._setupListeners();
 	}
 
+	public wrapTransferMessage (messageType:string, transferId:string, payload:Buffer):Buffer {
+		// @todo Test TransferMessageCenter#wrapTransferMessage
+		try {
+			return this._writableFileTransferMessageFactory.constructMessage(transferId, messageType, payload);
+		}
+		catch (e) {
+			return null;
+		}
+	}
+
 	private _setupListeners ():void {
 		this._circuitManager.on('circuitReceivedTransferMessage', (circuitId:string, payload:Buffer) => {
 			var msg:ReadableFileTransferMessageInterface = this._readableFileTransferMessageFactory.create(payload);

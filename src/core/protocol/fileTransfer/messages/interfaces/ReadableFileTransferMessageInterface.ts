@@ -11,6 +11,15 @@
 interface ReadableFileTransferMessageInterface {
 
 	/**
+	 * Returns the complete raw byte buffer all the attributes are read from.
+	 *
+	 * @method core.protocol.fileTransfer.ReadableFileTransferMessageInterface#getRawBuffer
+	 *
+	 * @returns {Buffer}
+	 */
+	getRawBuffer ():Buffer;
+
+	/**
 	 * Returns the human readable message type indicated by the byte folllowing the transfer id.
 	 *
 	 * @method core.protocol.fileTransfer.ReadableFileTransferMessageInterface#getMessageType
