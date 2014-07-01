@@ -8,7 +8,7 @@ var mime = require('mime');
 var ObjectUtils = require('../utils/ObjectUtils');
 
 /**
-* todo implement StateHandler!
+* PluginManagerInterface implementation
 *
 * @class core.plugin.PluginManager
 * @implements PluginManagerInterface
@@ -33,6 +33,8 @@ var PluginManager = (function () {
         *
         * - pluginAdded
         * - pluginRemoved
+        *
+        * @member {events.EventEmitter} core.plugin.PluginManager~_eventEmitter
         */
         this._eventEmitter = null;
         /**
@@ -42,7 +44,9 @@ var PluginManager = (function () {
         */
         this._isOpen = false;
         /**
+        * todo specify object type in docs
         *
+        * @member {Object} core.plugin.PluginManager~_mimeTypeMap
         */
         this._mimeTypeMap = {};
         /**
@@ -326,7 +330,10 @@ var PluginManager = (function () {
     * The PluginManager is going to activate the plugin. But before we're going to run thirdparty code within
     * the app we validate the plugin using a {@link core.plugin.PluginValidatorInterface}.
     *
-    * todo deactivate plugin
+    * @member {core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_activatePlugin
+    *
+    * @param {core.plugin.PluginStateObjectInterface} pluginState
+    * @param {Function} callback
     */
     PluginManager.prototype._activatePlugin = function (pluginState, callback) {
         var _this = this;
@@ -398,6 +405,8 @@ var PluginManager = (function () {
     * todo define pluginState
     *
     * @method core.plugin.PluginManager~_loadPluginState
+    *
+    * @param {Function} callback
     */
     PluginManager.prototype._loadPluginState = function (callback) {
         //console.log('loading the plugin state from the preferences!');
@@ -436,7 +445,9 @@ var PluginManager = (function () {
     *
     * todo define pluginState
     *
-    * @method core.plugin.PluginManagerInterface#savePluginState
+    * @method core.plugin.PluginManagerInterface~_savePluginState
+    *
+    * @param {Function} callback
     */
     PluginManager.prototype._savePluginState = function (callback) {
         var state = {
@@ -448,6 +459,14 @@ var PluginManager = (function () {
         });
     };
 
+    /**
+    * Loads additional data for the specified path that are required for a plugin that uses `Apache Tika`.
+    *
+    * @method core.plugin.PluginManagerInterface~_loadApacheTikaGlobals
+    *
+    * @param {string} itemPath
+    * @param {Function} callback
+    */
     PluginManager.prototype._loadApacheTikaGlobals = function (itemPath, callback) {
         var tikaGlobals = {};
 
@@ -468,6 +487,15 @@ var PluginManager = (function () {
         //callback(null, tikaGlobals);
     };
 
+    /**
+    * Loads the default globals used by every plugin type.
+    *
+    * @method core.plugin.PluginManagerInterface~_loadGlobals
+    *
+    * @param {string} itemPath
+    * @param {string} fileHash
+    * @param {Function} callback
+    */
     PluginManager.prototype._loadGlobals = function (itemPath, fileHash, callback) {
         var globals = {
             fileBuffer: null,

@@ -3,11 +3,7 @@ var crypto = require('crypto');
 
 /**
 *
-* This is a node.js implementation of the
-*
-* HMAC-based Extract-and-Expand Key Derivation Function (HKDF)
-*
-* RFC-5869 ({@link http://tools.ietf.org/html/rfc5869})
+* This is a node.js implementation of the [HMAC-based Extract-and-Expand Key Derivation Function (HKDF) RFC-5869](http://tools.ietf.org/html/rfc5869)
 *
 * This class merely uses Buffers. See tests for test vectors of the RFC.
 *

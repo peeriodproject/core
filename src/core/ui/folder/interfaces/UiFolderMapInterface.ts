@@ -2,7 +2,7 @@ import UiFolderInterface = require('./UiFolderInterface');
 
 /**
  * @interface
- * @class core.ui.folder.UiFolderMaoInterface
+ * @class core.ui.folder.UiFolderMapInterface
  */
 interface UiFolderMapInterface {
 	[path:string]:UiFolderInterface;

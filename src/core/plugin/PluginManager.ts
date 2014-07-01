@@ -26,7 +26,7 @@ import PluginValidatorInterface = require('./interfaces/PluginValidatorInterface
 import ObjectUtils = require('../utils/ObjectUtils');
 
 /**
- * todo implement StateHandler!
+ * PluginManagerInterface implementation
  *
  * @class core.plugin.PluginManager
  * @implements PluginManagerInterface
@@ -51,6 +51,8 @@ class PluginManager implements PluginManagerInterface {
 	 *
 	 * - pluginAdded
 	 * - pluginRemoved
+	 *
+	 * @member {events.EventEmitter} core.plugin.PluginManager~_eventEmitter
 	 */
 	private _eventEmitter:events.EventEmitter = null;
 
@@ -62,7 +64,9 @@ class PluginManager implements PluginManagerInterface {
 	private _isOpen:boolean = false;
 
 	/**
+	 * todo specify object type in docs
 	 *
+	 * @member {Object} core.plugin.PluginManager~_mimeTypeMap
 	 */
 	private _mimeTypeMap:{ [mimeType:string]:Array<string>; } = {};
 
@@ -363,7 +367,10 @@ class PluginManager implements PluginManagerInterface {
 	 * The PluginManager is going to activate the plugin. But before we're going to run thirdparty code within
 	 * the app we validate the plugin using a {@link core.plugin.PluginValidatorInterface}.
 	 *
-	 * todo deactivate plugin
+	 * @member {core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_activatePlugin
+	 *
+	 * @param {core.plugin.PluginStateObjectInterface} pluginState
+	 * @param {Function} callback
 	 */
 	private _activatePlugin (pluginState:PluginStateObjectInterface, callback:(err:Error) => void):void {
 		var internalCallback = callback || function (err:Error) {
@@ -437,6 +444,8 @@ class PluginManager implements PluginManagerInterface {
 	 * todo define pluginState
 	 *
 	 * @method core.plugin.PluginManager~_loadPluginState
+	 *
+	 * @param {Function} callback
 	 */
 	private _loadPluginState (callback:(err:Error, pluginState:any) => void):void {
 		//console.log('loading the plugin state from the preferences!');
@@ -457,19 +466,19 @@ class PluginManager implements PluginManagerInterface {
 
 			/*if (err) {
 
-				console.log(err);
-				if (err.code === 'ENOENT') {
+			 console.log(err);
+			 if (err.code === 'ENOENT') {
 
-				}
-			}
-			else {
-				if (data.hasOwnProperty('plugins')) {
-					callback(null, data['plugins']);
-				}
-				else {
-					callback(null, null);
-				}
-			}*/
+			 }
+			 }
+			 else {
+			 if (data.hasOwnProperty('plugins')) {
+			 callback(null, data['plugins']);
+			 }
+			 else {
+			 callback(null, null);
+			 }
+			 }*/
 		});
 	}
 
@@ -478,7 +487,9 @@ class PluginManager implements PluginManagerInterface {
 	 *
 	 * todo define pluginState
 	 *
-	 * @method core.plugin.PluginManagerInterface#savePluginState
+	 * @method core.plugin.PluginManagerInterface~_savePluginState
+	 *
+	 * @param {Function} callback
 	 */
 	private _savePluginState (callback:(err:Error) => void):void {
 		var state = {
@@ -490,6 +501,14 @@ class PluginManager implements PluginManagerInterface {
 		});
 	}
 
+	/**
+	 * Loads additional data for the specified path that are required for a plugin that uses `Apache Tika`.
+	 *
+	 * @method core.plugin.PluginManagerInterface~_loadApacheTikaGlobals
+	 *
+	 * @param {string} itemPath
+	 * @param {Function} callback
+	 */
 	private _loadApacheTikaGlobals (itemPath:string, callback:Function):void {
 		var tikaGlobals = {
 		};
@@ -513,10 +532,19 @@ class PluginManager implements PluginManagerInterface {
 		//callback(null, tikaGlobals);
 	}
 
+	/**
+	 * Loads the default globals used by every plugin type.
+	 *
+	 * @method core.plugin.PluginManagerInterface~_loadGlobals
+	 *
+	 * @param {string} itemPath
+	 * @param {string} fileHash
+	 * @param {Function} callback
+	 */
 	private _loadGlobals (itemPath:string, fileHash:string, callback:(err:Error, globals:Object) => any):void {
 		var globals = {
 			fileBuffer: null,
-			fileHash: fileHash
+			fileHash  : fileHash
 		};
 
 		callback(null, globals);

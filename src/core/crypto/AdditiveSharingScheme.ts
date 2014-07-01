@@ -2,6 +2,8 @@
 
 import crypto = require('crypto');
 
+import BufferListInterface = require('./interfaces/BufferListInterface');
+
 /**
  * This static class helps generating (and decrypting) random shares for an additive sharing scheme.
  *
@@ -14,11 +16,11 @@ class AdditiveSharingScheme {
 	 *
 	 * @method core.crypto.AdditiveSharingScheme.getCleartext
 	 *
-	 * @param {Array<Buffer>} shares The input array of shares
+	 * @param {core.crypto.BufferListInterface} shares The input array of shares
 	 * @param {number} length (optional) Length of the expected output buffer
 	 * @returns {Buffer} The calculated cleartext
 	 */
-	public static getCleartext (shares:Array<Buffer>, length?:number):Buffer {
+	public static getCleartext (shares:BufferListInterface, length?:number):Buffer {
 		length = length ? length : shares[0].length;
 
 		var retBuf:Buffer = new Buffer(length);
@@ -46,10 +48,10 @@ class AdditiveSharingScheme {
 	 * @param {number} length The length of each buffer (number of octets)
 	 * @param {Function} callback Callback which gets called with the array as parameter as soon as all random Buffers have been generated.
 	 */
-	public static getRandomBuffers (amount:number, length:number, callback:(randBuffers:Array<Buffer>) => any):void {
+	public static getRandomBuffers (amount:number, length:number, callback:(randBuffers:BufferListInterface) => any):void {
 
 		var i:number = 0;
-		var ret:Array<Buffer> = [];
+		var ret:BufferListInterface = [];
 		var getRandomBuffer = function () {
 			if (++i <= amount) {
 				crypto.randomBytes(length, function (err, buf) {
@@ -83,9 +85,9 @@ class AdditiveSharingScheme {
 	 * @param {number} length The length of the cleartext / shares
 	 * @param {Function} callback Function which gets called with the resulting array of shares as parameter.
 	 */
-	public static getShares (input:Buffer, numOfShares:number, length:number, callback:(shares:Array<Buffer>) => any):void {
+	public static getShares (input:Buffer, numOfShares:number, length:number, callback:(shares:BufferListInterface) => any):void {
 
-		AdditiveSharingScheme.getRandomBuffers(numOfShares - 1, length, function (sh:Array<Buffer>) {
+		AdditiveSharingScheme.getRandomBuffers(numOfShares - 1, length, function (sh:BufferListInterface) {
 			var lastShare:Buffer = new Buffer(length);
 
 			for (var i = 0; i < length; i++) {
