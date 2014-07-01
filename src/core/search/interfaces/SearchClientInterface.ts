@@ -91,16 +91,6 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	deleteOutgoingQuery (indexName:string, queryId:string, callback?:(err:Error) => any):void
 
 	/**
-	 * Returns if an item type (plugin identifier) exitsts in the search index.
-	 *
-	 * @method core.search.SearchClientInterface#typeExists
-	 *
-	 * @param {string} type
-	 * @param {Function} callback
-	 */
-	typeExists (type:string, callback:(exists:boolean) => any):void
-
-	/**
 	 * Returns the first item which matches the specified id accross all types (plugin identifiers)
 	 *
 	 * @method core.search.SearchClientInterface#getItemById
@@ -123,6 +113,24 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	itemExists (pathToIndex:string, callback:(exists:boolean) => void):void;
 
 	itemExistsById (id:string, callback:(exists:boolean) => void):void;
+
+	/**
+	 * @method core.search.SearchClientInterface#search
+	 *
+	 * @param {Object} queryObject
+	 * @param {Function} callback
+	 */
+	search (queryObject:Object, callback:(err:Error, results:any) => any):void;
+
+	/**
+	 * Returns if an item type (plugin identifier) exitsts in the search index.
+	 *
+	 * @method core.search.SearchClientInterface#typeExists
+	 *
+	 * @param {string} type
+	 * @param {Function} callback
+	 */
+	typeExists (type:string, callback:(exists:boolean) => any):void
 }
 
 export = SearchClientInterface;

@@ -110,8 +110,6 @@ var SearchClient = (function () {
             meta: responseMeta
         });
 
-        console.log(JSON.stringify(responseObject));
-
         this._client.percolate({
             index: indexName.toLowerCase(),
             type: 'response-' + type.toLowerCase(),
@@ -121,7 +119,7 @@ var SearchClient = (function () {
         }, function (err, response, status) {
             err = err || null;
 
-            internalCallback(err, response);
+            return internalCallback(err, response);
         });
     };
 
@@ -140,18 +138,18 @@ var SearchClient = (function () {
             }
         };
 
-        if (pluginIdentifiers.length) {
-            for (var i = 0, l = pluginIdentifiers.length; i < l; i++) {
-                var identifier = pluginIdentifiers[i];
-
-                this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
-                    itemIds.push(id);
-
-                    checkCallback(err);
-                });
-            }
-        } else {
+        if (!pluginIdentifiers.length) {
             return process.nextTick(callback.bind(null, new Error('SearchClient.addItem: No item data specified! Preventing item creation.'), null));
+        }
+
+        for (var i = 0, l = pluginIdentifiers.length; i < l; i++) {
+            var identifier = pluginIdentifiers[i];
+
+            this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
+                itemIds.push(id);
+
+                return checkCallback(err);
+            });
         }
     };
 
@@ -170,18 +168,18 @@ var SearchClient = (function () {
                 map = mapping;
             }
 
-            if (!err && _this._client) {
-                _this._client.indices.putMapping({
-                    index: _this._indexName,
-                    type: type.toLowerCase(),
-                    body: map
-                }, function (err, response, status) {
-                    err = err || null;
-                    internalCallback(err);
-                });
-            } else {
-                internalCallback(err);
+            if (!(!err && _this._client)) {
+                return internalCallback(err);
             }
+
+            _this._client.indices.putMapping({
+                index: _this._indexName,
+                type: type.toLowerCase(),
+                body: map
+            }, function (err, response, status) {
+                err = err || null;
+                internalCallback(err);
+            });
         });
     };
 
@@ -197,7 +195,7 @@ var SearchClient = (function () {
             _this._isOpen = false;
             _this._client = null;
 
-            internalCallback(err);
+            return internalCallback(err);
         });
     };
 
@@ -247,19 +245,19 @@ var SearchClient = (function () {
         var internalCallback = callback || function (err) {
         };
 
-        if (this._isOpen && this._client) {
-            this._client.indices.delete({
-                index: this._indexName
-            }, function (err, response, status) {
-                if (_this._isValidResponse(err, status, 'IndexMissingException')) {
-                    internalCallback(null);
-                } else {
-                    internalCallback(err);
-                }
-            });
-        } else {
+        if (!(this._isOpen && this._client)) {
             return process.nextTick(internalCallback.bind(null, null));
         }
+
+        this._client.indices.delete({
+            index: this._indexName
+        }, function (err, response, status) {
+            if (!_this._isValidResponse(err, status, 'IndexMissingException')) {
+                return internalCallback(err);
+            }
+
+            return internalCallback(null);
+        });
     };
 
     SearchClient.prototype.deleteOutgoingQuery = function (indexName, queryId, callback) {
@@ -282,55 +280,55 @@ var SearchClient = (function () {
             }
         };
 
-        indexName = indexName.toLowerCase();
-
-        if (this._isOpen && this._client) {
-            // delete query
-            this._client.delete({
-                index: indexName,
-                type: '.percolator',
-                id: queryId
-            }, function (err, response, status) {
-                console.log(err);
-
-                if (_this._isValidResponse(err, status, 'IndexMissingException') || _this._isValidResponse(err, status, 'Not Found')) {
-                    err = null;
-                }
-
-                queryDeleted = true;
-
-                return checkCallback(err);
-            });
-
-            // delete all responses for the queryId
-            this._client.deleteByQuery({
-                index: indexName,
-                type: 'response-' + queryId.toLowerCase(),
-                body: {
-                    query: {
-                        bool: {
-                            must: [
-                                {
-                                    match_all: {}
-                                }
-                            ]
-                        }
-                    }
-                }
-            }, function (err, response, status) {
-                console.log(err);
-
-                if (_this._isValidResponse(err, status, 'IndexMissingException')) {
-                    err = null;
-                }
-
-                responsesDeleted = true;
-
-                return checkCallback(err);
-            });
-        } else {
+        if (!(this._isOpen && this._client)) {
             return process.nextTick(internalCallback.bind(null, null));
         }
+
+        indexName = indexName.toLowerCase();
+
+        // delete query
+        this._client.delete({
+            index: indexName,
+            type: '.percolator',
+            id: queryId
+        }, function (err, response, status) {
+            console.log(err);
+
+            if (_this._isValidResponse(err, status, 'IndexMissingException') || _this._isValidResponse(err, status, 'Not Found')) {
+                err = null;
+            }
+
+            queryDeleted = true;
+
+            return checkCallback(err);
+        });
+
+        // delete all responses for the queryId
+        this._client.deleteByQuery({
+            index: indexName,
+            type: 'response-' + queryId.toLowerCase(),
+            body: {
+                query: {
+                    bool: {
+                        must: [
+                            {
+                                match_all: {}
+                            }
+                        ]
+                    }
+                }
+            }
+        }, function (err, response, status) {
+            console.log(err);
+
+            if (_this._isValidResponse(err, status, 'IndexMissingException')) {
+                err = null;
+            }
+
+            responsesDeleted = true;
+
+            return checkCallback(err);
+        });
     };
 
     SearchClient.prototype.getItemById = function (id, callback) {
@@ -372,11 +370,11 @@ var SearchClient = (function () {
                 return callback(err, null);
             }
 
-            if (hits && hits['total']) {
-                return callback(null, _this._createSearchItemFromHits(hits['hits']));
+            if (!(hits && hits['total'])) {
+                return callback(null, null);
             }
 
-            return callback(null, null);
+            return callback(null, _this._createSearchItemFromHits(hits['hits']));
         });
     };
 
@@ -451,16 +449,33 @@ var SearchClient = (function () {
         this._searchStore = this._searchStoreFactory.create(this._config, this._appQuitHandler, searchStoreOptions);
     };
 
+    SearchClient.prototype.search = function (queryObject, callback) {
+        this._client.search({
+            index: this._indexName,
+            body: queryObject
+        }, function (err, response, status) {
+            var hits = response && response['hits'] ? response['hits'] : null;
+
+            err = err || null;
+
+            if (err) {
+                console.log(err);
+            }
+
+            return callback(err, hits);
+        });
+    };
+
     SearchClient.prototype.typeExists = function (type, callback) {
         if (this._client) {
             this._client.indices.existsType({
                 index: this._indexName,
                 type: type
             }, function (err, response, status) {
-                callback(response);
+                return callback(response);
             });
         } else {
-            callback(false);
+            return callback(false);
         }
     };
 
@@ -481,9 +496,9 @@ var SearchClient = (function () {
             body: data
         }, function (err, response, status) {
             if (response && response['created']) {
-                callback(err, response['_id']);
+                return callback(err, response['_id']);
             } else {
-                callback(err, null);
+                return callback(err, null);
             }
         });
     };
@@ -511,14 +526,12 @@ var SearchClient = (function () {
             });
         }
 
-        console.log('creating index with:', JSON.stringify(params));
-
         this._client.indices.create(params, function (err, response, status) {
             // everything went fine or index already exists
             if (_this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
-                callback(null);
+                return callback(null);
             } else {
-                callback(err);
+                return callback(err);
             }
         });
     };
@@ -559,10 +572,10 @@ var SearchClient = (function () {
                             check(++i);
                         }, 500);
                     } else {
-                        callback(new Error('SearchClient~waitForServer: Server is not reachable after 15 seconds'));
+                        return callback(new Error('SearchClient~waitForServer: Server is not reachable after 15 seconds'));
                     }
                 } else {
-                    callback(null);
+                    return callback(null);
                 }
             });
         };

@@ -13,7 +13,7 @@ var SearchItem = require('../../../src/core/search/SearchItem');
 var SearchItemFactory = require('../../../src/core/search/SearchItemFactory');
 var SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
-describe('CORE --> SEARCH --> SearchClient @_joern', function () {
+describe('CORE --> SEARCH --> SearchClient', function () {
     var sandbox;
     var config;
     var appQuitHandlerStub;
@@ -345,6 +345,49 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
             (err === null).should.be.true;
 
             done();
+        });
+    });
+
+    it('should correctly match the results for the given query @joern', function (done) {
+        var dataToIndex = {
+            pluginidentifier: {
+                itemHash: 'fileHash',
+                itemPath: '../path/file.txt',
+                itemStats: {
+                    stats: true
+                },
+                foo: 'bar io'
+            }
+        };
+
+        searchClient.addItem(dataToIndex, function (err, ids) {
+            searchClient.search({
+                query: {
+                    match: {
+                        "pluginidentifier.foo": "bar"
+                    }
+                }
+            }, function (err, results) {
+                (err === null).should.be.true;
+
+                results.should.containDeep({
+                    total: 1,
+                    hits: [{
+                            _index: 'mainindex',
+                            _type: 'pluginidentifier',
+                            _source: {
+                                itemHash: "fileHash",
+                                itemPath: "../path/file.txt",
+                                itemStats: {
+                                    stats: true
+                                },
+                                foo: "bar io"
+                            }
+                        }]
+                });
+
+                done();
+            });
         });
     });
 });

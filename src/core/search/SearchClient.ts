@@ -131,8 +131,6 @@ class SearchClient implements SearchClientInterface {
 			meta: responseMeta
 		});
 
-		console.log(JSON.stringify(responseObject));
-
 		this._client.percolate({
 			index: indexName.toLowerCase(),
 			type : 'response-' + type.toLowerCase(),
@@ -142,7 +140,7 @@ class SearchClient implements SearchClientInterface {
 		}, function (err:Error, response:Object, status:number) {
 			err = err || null;
 
-			internalCallback(err, response);
+			return internalCallback(err, response);
 		});
 	}
 
@@ -161,19 +159,18 @@ class SearchClient implements SearchClientInterface {
 			}
 		};
 
-		if (pluginIdentifiers.length) {
-			for (var i = 0, l = pluginIdentifiers.length; i < l; i++) {
-				var identifier:string = pluginIdentifiers[i];
-
-				this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
-					itemIds.push(id);
-
-					checkCallback(err);
-				});
-			}
-		}
-		else {
+		if (!pluginIdentifiers.length) {
 			return process.nextTick(callback.bind(null, new Error('SearchClient.addItem: No item data specified! Preventing item creation.'), null));
+		}
+
+		for (var i = 0, l = pluginIdentifiers.length; i < l; i++) {
+			var identifier:string = pluginIdentifiers[i];
+
+			this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
+				itemIds.push(id);
+
+				return checkCallback(err);
+			});
 		}
 	}
 
@@ -192,19 +189,18 @@ class SearchClient implements SearchClientInterface {
 				map = mapping;
 			}
 
-			if (!err && this._client) {
-				this._client.indices.putMapping({
-					index: this._indexName,
-					type : type.toLowerCase(),
-					body : map
-				}, function (err, response, status) {
-					err = err || null;
-					internalCallback(err);
-				});
+			if (!(!err && this._client)) {
+				return internalCallback(err);
 			}
-			else {
+
+			this._client.indices.putMapping({
+				index: this._indexName,
+				type : type.toLowerCase(),
+				body : map
+			}, function (err, response, status) {
+				err = err || null;
 				internalCallback(err);
-			}
+			});
 		});
 	}
 
@@ -219,7 +215,7 @@ class SearchClient implements SearchClientInterface {
 			this._isOpen = false;
 			this._client = null;
 
-			internalCallback(err);
+			return internalCallback(err);
 		});
 	}
 
@@ -268,21 +264,19 @@ class SearchClient implements SearchClientInterface {
 		var internalCallback = callback || function (err:Error) {
 		};
 
-		if (this._isOpen && this._client) {
-			this._client.indices.delete({
-				index: this._indexName
-			}, (err:Error, response, status) => {
-				if (this._isValidResponse(err, status, 'IndexMissingException')) {
-					internalCallback(null);
-				}
-				else {
-					internalCallback(err);
-				}
-			});
-		}
-		else {
+		if (!(this._isOpen && this._client)) {
 			return process.nextTick(internalCallback.bind(null, null));
 		}
+
+		this._client.indices.delete({
+			index: this._indexName
+		}, (err:Error, response, status) => {
+			if (!this._isValidResponse(err, status, 'IndexMissingException')) {
+				return internalCallback(err);
+			}
+
+			return internalCallback(null);
+		});
 	}
 
 	public deleteOutgoingQuery (indexName:string, queryId:string, callback?:(err:Error) => any):void {
@@ -305,56 +299,56 @@ class SearchClient implements SearchClientInterface {
 			}
 		};
 
-		indexName = indexName.toLowerCase();
-
-		if (this._isOpen && this._client) {
-			// delete query
-			this._client.delete({
-				index: indexName,
-				type : '.percolator',
-				id   : queryId
-			}, (err:Error, response, status) => {
-				console.log(err);
-
-				if (this._isValidResponse(err, status, 'IndexMissingException') || this._isValidResponse(err, status, 'Not Found')) {
-					err = null;
-				}
-
-				queryDeleted = true;
-
-				return checkCallback(err);
-			});
-
-			// delete all responses for the queryId
-			this._client.deleteByQuery({
-				index: indexName,
-				type : 'response-' + queryId.toLowerCase(),
-				body : {
-					query: {
-						bool: {
-							must: [
-								{
-									match_all: {}
-								}
-							]
-						}
-					}
-				}
-			}, (err:Error, response, status) => {
-				console.log(err);
-
-				if (this._isValidResponse(err, status, 'IndexMissingException')) {
-					err = null;
-				}
-
-				responsesDeleted = true;
-
-				return checkCallback(err);
-			});
-		}
-		else {
+		if (!(this._isOpen && this._client)) {
 			return process.nextTick(internalCallback.bind(null, null));
 		}
+
+		indexName = indexName.toLowerCase();
+
+		// delete query
+		this._client.delete({
+			index: indexName,
+			type : '.percolator',
+			id   : queryId
+		}, (err:Error, response, status) => {
+			console.log(err);
+
+			if (this._isValidResponse(err, status, 'IndexMissingException') || this._isValidResponse(err, status, 'Not Found')) {
+				err = null;
+			}
+
+			queryDeleted = true;
+
+			return checkCallback(err);
+		});
+
+		// delete all responses for the queryId
+		this._client.deleteByQuery({
+			index: indexName,
+			type : 'response-' + queryId.toLowerCase(),
+			body : {
+				query: {
+					bool: {
+						must: [
+							{
+								match_all: {}
+							}
+						]
+					}
+				}
+			}
+		}, (err:Error, response, status) => {
+			console.log(err);
+
+			if (this._isValidResponse(err, status, 'IndexMissingException')) {
+				err = null;
+			}
+
+			responsesDeleted = true;
+
+			return checkCallback(err);
+		});
+
 	}
 
 	public getItemById (id:string, callback:(err:Error, item:SearchItemInterface) => any):void {
@@ -394,11 +388,11 @@ class SearchClient implements SearchClientInterface {
 				return callback(err, null);
 			}
 
-			if (hits && hits['total']) {
-				return callback(null, this._createSearchItemFromHits(hits['hits']));
+			if (!(hits && hits['total'])) {
+				return callback(null, null);
 			}
 
-			return callback(null, null);
+			return callback(null, this._createSearchItemFromHits(hits['hits']));
 		});
 	}
 
@@ -471,17 +465,34 @@ class SearchClient implements SearchClientInterface {
 		this._searchStore = this._searchStoreFactory.create(this._config, this._appQuitHandler, searchStoreOptions);
 	}
 
+	public search (queryObject:Object, callback:(err:Error, results:any) => any):void {
+		this._client.search({
+			index: this._indexName,
+			body: queryObject
+		}, function(err, response, status) {
+			var hits:Object = response && response['hits'] ? response['hits'] : null;
+
+			err = err || null;
+
+			if (err) {
+				console.log(err);
+			}
+
+			return callback(err, hits);
+		});
+	}
+
 	public typeExists (type:string, callback:(exists:boolean) => any):void {
 		if (this._client) {
 			this._client.indices.existsType({
 				index: this._indexName,
 				type : type
 			}, function (err, response, status) {
-				callback(response);
+				return callback(response);
 			});
 		}
 		else {
-			callback(false);
+			return callback(false);
 		}
 	}
 
@@ -502,10 +513,10 @@ class SearchClient implements SearchClientInterface {
 			body   : data
 		}, function (err:Error, response, status) {
 			if (response && response['created']) {
-				callback(err, response['_id']);
+				return callback(err, response['_id']);
 			}
 			else {
-				callback(err, null);
+				return callback(err, null);
 			}
 		});
 	}
@@ -532,15 +543,13 @@ class SearchClient implements SearchClientInterface {
 			});
 		}
 
-		console.log('creating index with:', JSON.stringify(params));
-
 		this._client.indices.create(params, (err, response, status) => {
 			// everything went fine or index already exists
 			if (this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
-				callback(null);
+				return callback(null);
 			}
 			else {
-				callback(err);
+				return callback(err);
 			}
 		});
 	}
@@ -581,11 +590,11 @@ class SearchClient implements SearchClientInterface {
 						}, 500);
 					}
 					else {
-						callback(new Error('SearchClient~waitForServer: Server is not reachable after 15 seconds'));
+						return callback(new Error('SearchClient~waitForServer: Server is not reachable after 15 seconds'));
 					}
 				}
 				else {
-					callback(null);
+					return callback(null);
 				}
 			});
 		};
