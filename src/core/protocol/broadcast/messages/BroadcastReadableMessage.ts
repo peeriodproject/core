@@ -1,5 +1,9 @@
 import BroadcastReadableMessageInterface = require('./interfaces/BroadcastReadableMessageInterface');
 
+/**
+ * @class core.protocol.broadcast.BroadcastReadableMessage
+ * @implements core.protocol.broadcast.BroadcastReadableMessageInterface
+ */
 class BroadcastReadableMessage implements BroadcastReadableMessageInterface {
 
 	private _broadcastId:string = null;

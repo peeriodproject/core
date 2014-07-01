@@ -64,7 +64,7 @@ var PingPongNodeUpdateHandler = (function (_super) {
         /**
         * The array holding the waiting lists for the buckets.
         *
-        * @member {Array<core.protocol.ping.PongWaitingList} core.protocol.ping.PingPongNodeUpdateHandler~_waitingLists
+        * @member {core.protocol.ping.PongWaitingListList} core.protocol.ping.PingPongNodeUpdateHandler~_waitingLists
         */
         this._waitingLists = [];
 

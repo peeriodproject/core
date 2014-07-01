@@ -1,5 +1,9 @@
 import BroadcastWritableMessageFactoryInterface = require('./interfaces/BroadcastWritableMessageFactoryInterface');
 
+/**
+ * @class core.protocol.broadcast.BroadcastWritableMessageFactory
+ * @implements core.protocol.broadcast.BroadcastWritableMessageFactoryInterface
+ */
 class BroadcastWritableMessageFactory implements BroadcastWritableMessageFactoryInterface {
 
 	public constructPayload (broadcastId:string, payload:Buffer, payloadLength?:number):Buffer {

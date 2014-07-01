@@ -2,7 +2,7 @@
 
 /**
  * @interface
- * @class core.crypto.BufferListInterface
+ * @class core.utils.BufferListInterface
  */
 interface BufferListInterface extends Array<Buffer> {
 }
