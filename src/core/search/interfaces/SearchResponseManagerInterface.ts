@@ -1,3 +1,5 @@
+/// <reference path='../../../../ts-definitions/node/node.d.ts' />
+
 import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
 
 /**
@@ -11,24 +13,24 @@ import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInt
 interface SearchResponseManagerInterface extends ClosableAsyncInterface {
 
 	/**
-	 * Registers a listener function that gets called whenever a new result for an incoming query was found
+	 * Registers a listener function that gets called whenever a new result (set) for an incoming query was found
 	 *
 	 * @member core.search.SearchResponseManagerInterface#onResultsFound
 	 *
-	 * @param callback The listener that gets called with an array of results as the first argument
+	 * @param callback The listener that gets called with the `queryId` an the results set as arguments
 	 */
-	onResultsFound (callback:(results:Array<Object>) => any):void;
+	onResultsFound (callback:(queryId:string, results:Object) => any):void;
 
 	/**
 	 * Validates the given search query by quering the local database.
 	 *
-	 * @member core.search.SearchResponseManagerInterface#valiateQueryAndTriggerResults
+	 * @member core.search.SearchResponseManagerInterface#validateQueryAndTriggerResults
 	 *
 	 * @param {string} queryId todo check if we need the id here!
-	 * @param {Object} query
+	 * @param {Buffer} queryBuffer
 	 * @param {Object} callback The callback triggers after the query respond with a possible error as first argument
 	 */
-	valiateQueryAndTriggerResults (queryId:string, query:Object, callback:(err:Error) => any):void;
+	validateQueryAndTriggerResults (queryId:string, queryBuffer:Buffer, callback?:(err:Error) => any):void;
 }
 
 export = SearchResponseManagerInterface;
