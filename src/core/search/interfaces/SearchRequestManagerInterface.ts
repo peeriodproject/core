@@ -19,7 +19,6 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	/**
 	 * Adds a response to the specified `queryId`
 	 *
-	 * todo add an
 	 * @member core.search.SearchRequestManagerInterface#addResponse
 	 *
 	 * @param {string} queryId
