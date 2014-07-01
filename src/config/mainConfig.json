@@ -50,6 +50,11 @@
             "republishInSeconds"      : 3600
         }
     },
+    "fileTransfer": {
+        "query": {
+            "broadcastValidityInSeconds": 30
+        }
+    },
     "hydra": {
         "desiredNumberOfCircuits": 4,
         "maximumNumberOfMaintainedCells": 3,
