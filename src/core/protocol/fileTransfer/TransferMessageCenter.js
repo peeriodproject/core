@@ -13,13 +13,15 @@ var events = require('events');
 */
 var TransferMessageCenter = (function (_super) {
     __extends(TransferMessageCenter, _super);
-    function TransferMessageCenter(circuitManager, cellManager, hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory) {
+    function TransferMessageCenter(circuitManager, cellManager, hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseFactory, writableQueryResponseFactory) {
         _super.call(this);
         this._circuitManager = null;
         this._cellManager = null;
         this._hydraMessageCenter = null;
         this._readableFileTransferMessageFactory = null;
         this._writableFileTransferMessageFactory = null;
+        this._readableQueryResponseMessageFactory = null;
+        this._writableQueryResponseMessageFactory = null;
 
         this._circuitManager = circuitManager;
         this._cellManager = cellManager;
@@ -27,6 +29,8 @@ var TransferMessageCenter = (function (_super) {
 
         this._readableFileTransferMessageFactory = readableFileTransferMessageFactory;
         this._writableFileTransferMessageFactory = writableFileTransferMessageFactory;
+        this._readableQueryResponseMessageFactory = readableQueryResponseFactory;
+        this._writableQueryResponseMessageFactory = writableQueryResponseFactory;
 
         this._setupListeners();
     }
@@ -70,6 +74,15 @@ var TransferMessageCenter = (function (_super) {
     };
 
     TransferMessageCenter.prototype._onCircuitTransferMessage = function (circuitId, msg) {
+        var messageType = msg.getMessageType();
+
+        if (messageType === 'QUERY_RESPONSE') {
+            var queryResponseMessage = this._readableQueryResponseMessageFactory.create(msg.getPayload());
+
+            if (queryResponseMessage) {
+                this.emit('QUERY_RESPONSE_' + msg.getTransferId(), queryResponseMessage);
+            }
+        }
     };
 
     TransferMessageCenter.prototype._onCellTransferMessage = function (predecessorCircuitId, msg) {

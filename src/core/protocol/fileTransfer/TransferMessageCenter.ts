@@ -4,6 +4,9 @@ import TransferMessageCenterInterface = require('./interfaces/TransferMessageCen
 import ReadableFileTransferMessageInterface = require('./messages/interfaces/ReadableFileTransferMessageInterface');
 import ReadableFileTransferMessageFactoryInterface = require('./messages/interfaces/ReadableFileTransferMessageFactoryInterface');
 import WritableFileTransferMessageFactoryInterface = require('./messages/interfaces/WritableFileTransferMessageFactoryInterface');
+import ReadableQueryResponseMessageFactoryInterface = require('./messages/interfaces/ReadableQueryResponseMessageFactoryInterface');
+import ReadableQueryResponseMessageInterface = require('./messages/interfaces/ReadableQueryResponseMessageInterface');
+import WritableQueryResponseMessageFactoryInterface = require('./messages/interfaces/WritableQueryResponseMessageFactoryInterface');
 import CircuitManagerInterface = require('../hydra/interfaces/CircuitManagerInterface');
 import CellManagerInterface = require('../hydra/interfaces/CellManagerInterface');
 import HydraMessageCenterInterface = require('../hydra/interfaces/HydraMessageCenterInterface');
@@ -20,9 +23,11 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 	private _hydraMessageCenter:HydraMessageCenterInterface = null;
 	private _readableFileTransferMessageFactory:ReadableFileTransferMessageFactoryInterface = null;
 	private _writableFileTransferMessageFactory:WritableFileTransferMessageFactoryInterface = null;
+	private _readableQueryResponseMessageFactory:ReadableQueryResponseMessageFactoryInterface = null;
+	private _writableQueryResponseMessageFactory:WritableQueryResponseMessageFactoryInterface = null;
 
 
-	public constructor (circuitManager:CircuitManagerInterface, cellManager:CellManagerInterface, hydraMessageCenter:HydraMessageCenterInterface, readableFileTransferMessageFactory:ReadableFileTransferMessageFactoryInterface, writableFileTransferMessageFactory:WritableFileTransferMessageFactoryInterface) {
+	public constructor (circuitManager:CircuitManagerInterface, cellManager:CellManagerInterface, hydraMessageCenter:HydraMessageCenterInterface, readableFileTransferMessageFactory:ReadableFileTransferMessageFactoryInterface, writableFileTransferMessageFactory:WritableFileTransferMessageFactoryInterface, readableQueryResponseFactory:ReadableQueryResponseMessageFactoryInterface, writableQueryResponseFactory:WritableQueryResponseMessageFactoryInterface) {
 		super();
 
 		this._circuitManager = circuitManager;
@@ -31,12 +36,14 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 
 		this._readableFileTransferMessageFactory = readableFileTransferMessageFactory;
 		this._writableFileTransferMessageFactory = writableFileTransferMessageFactory;
+		this._readableQueryResponseMessageFactory = readableQueryResponseFactory;
+		this._writableQueryResponseMessageFactory = writableQueryResponseFactory;
 
 		this._setupListeners();
 	}
 
 	public wrapTransferMessage (messageType:string, transferId:string, payload:Buffer):Buffer {
-		// @todo Test TransferMessageCenter#wrapTransferMessage
+
 		try {
 			return this._writableFileTransferMessageFactory.constructMessage(transferId, messageType, payload);
 		}
@@ -78,7 +85,15 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 	}
 
 	private _onCircuitTransferMessage (circuitId:string, msg:ReadableFileTransferMessageInterface):void {
+		var messageType:string = msg.getMessageType();
 
+		if (messageType === 'QUERY_RESPONSE') {
+			var queryResponseMessage:ReadableQueryResponseMessageInterface = this._readableQueryResponseMessageFactory.create(msg.getPayload());
+
+			if (queryResponseMessage) {
+				this.emit('QUERY_RESPONSE_' + msg.getTransferId(), queryResponseMessage);
+			}
+		}
 	}
 
 	private _onCellTransferMessage (predecessorCircuitId:string, msg:ReadableFileTransferMessageInterface):void {
