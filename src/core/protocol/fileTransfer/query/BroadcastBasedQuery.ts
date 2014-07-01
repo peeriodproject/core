@@ -3,21 +3,88 @@ import crypto = require('crypto');
 
 import QueryInterface = require('./interfaces/QueryInterface');
 import TransferMessageCenterInterface = require('../interfaces/TransferMessageCenterInterface');
+import ReadableQueryResponseMessageInterface = require('../messages/interfaces/ReadableQueryResponseMessageInterface');
 import CircuitManagerInterface = require('../../hydra/interfaces/CircuitManagerInterface');
 import BroadcastManagerInterface = require('../../broadcast/interfaces/BroadcastManagerInterface');
 
+/**
+ * QueryInterface implementation based on broadcast.
+ * Lets the broadcast manager ignore the generated query identifier.
+ *
+ * @class core.protocol.fileTransfer.BroadcastBasedQuery
+ * @extends events.EventEmitter
+ * @implements core.protocol.fileTransfer.QueryInterface
+ *
+ * @param {Buffer} searchObjectAsBuffer The object to search for in its byte buffer representation.
+ * @param {core.protocol.fileTransfer.TransferMessageCenterInterface} A working transfer message center instance.
+ * @param {core.protocol.hydra.CircuitManagerInterface} The hydra circuit manager used to pipe the messages through.
+ * @oaram {core.protocol.broadcast.BroadcastManagerInterface} A working protocol broadcast manager instance.
+ * @param {number} validityNumOfMs The number of milliseconds a query should live and wait for responses before being aborted.
+ */
 class BroadcastBasedQuery extends events.EventEmitter implements QueryInterface {
 
-	private _queryId:string = null;
-	private _searchObjectAsBuffer:Buffer = null;
-	private _transferMessageCenter:TransferMessageCenterInterface = null;
-	private _circuitManager:CircuitManagerInterface = null;
+	/**
+	 * Stores the broadcast manager instance.
+	 *
+	 * @member {core.protocol.broadcast.BroadcastManagerInterface} core.protocol.fileTransfer.BroadcastBasedQuery~_broadcastManager
+	 */
 	private _broadcastManager:BroadcastManagerInterface = null;
+
+	/**
+	 * Stores the hydra circuit manager instance.
+	 *
+	 * @member {core.protocol.hydra.CircuitManagerInterface} core.protocol.fileTransfer.BroadcastBasedQuery~_circuitManager
+	 */
+	private _circuitManager:CircuitManagerInterface = null;
+
+	/**
+	 * Flag indicating whether this query has already been ended.
+	 *
+	 * @member {boolean} core.protocol.fileTransfer.BroadcastBasedQuery~_isEnded
+	 */
+	private _isEnded:boolean = false;
+
+	/**
+	 * The 16 byte long query identifier.
+	 *
+	 * @member {string} core.protocol.fileTransfer.BroadcastBasedQuery~_queryId
+	 */
+	private _queryId:string = null;
+
+	/**
+	 * Stores the listener function on the QUERY_RESPONSE event hooked to the transfer message center.
+	 *
+	 * @member {Function} core.protocol.fileTransfer.BroadcastBasedQuery~_responseListener
+	 */
+	private _responseListener:Function = null;
+
+	/**
+	 * The object searched for.
+	 *
+	 * @member {Buffer} core.protocol.fileTransfer.BroadcastBasedQuery~_searchObjectAsBuffer
+	 */
+	private _searchObjectAsBuffer:Buffer = null;
+
+	/**
+	 * Stores the transfer message center instance.
+	 *
+	 * @member {core.protocol.fileTransfer.TransferMessageCenterInterface} core.protocol.fileTransfer.BroadcastBasedQuery~_transferMessageCenter
+	 */
+	private _transferMessageCenter:TransferMessageCenterInterface = null;
+
+	/**
+	 * The number of milliseconds the query is valid and waits for responses.
+	 *
+	 * @member {number} core.protocol.fileTransfer.BroadcastBasedQuery~_validityNumOfMs
+	 */
 	private _validityNumOfMs:number = 0;
 
+	/**
+	 * Stores the timeout issued when the query has been sent through the circuits.
+	 *
+	 * @member {number|NodeJS.Timer} core.protocol.fileTransfer.BroadcastBasedQuery~_validityTimeout
+	 */
 	private _validityTimeout:number = 0;
-	private _responseListener:Function = null;
-	private _isEnded:boolean = false;
 
 	public constructor (searchObjectAsBuffer:Buffer, transferMessageCenter:TransferMessageCenterInterface, circuitManager:CircuitManagerInterface, broadcastManager:BroadcastManagerInterface, validityNumOfMs:number) {
 		super();
@@ -68,8 +135,8 @@ class BroadcastBasedQuery extends events.EventEmitter implements QueryInterface 
 				this.abort('COMPL');
 			}, this._validityNumOfMs);
 
-			this._responseListener = () => {
-				// @todo the correct response listener with the right message type and arguments, and emit the result
+			this._responseListener = (message:ReadableQueryResponseMessageInterface) => {
+				this.emit('result', message.getFeedingNodes(), message.getResponseBuffer());
 			}
 
 			this._transferMessageCenter.on('QUERY_RESPONSE_' + this._queryId, this._responseListener);
