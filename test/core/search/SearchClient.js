@@ -348,7 +348,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
         });
     });
 
-    it('should correctly match the results for the given query @joern', function (done) {
+    it('should correctly match the results for the given query', function (done) {
         var dataToIndex = {
             pluginidentifier: {
                 itemHash: 'fileHash',

@@ -19,7 +19,7 @@ interface SearchResponseManagerInterface extends ClosableAsyncInterface {
 	 *
 	 * @param callback The listener that gets called with the `queryId` an the results set as arguments
 	 */
-	onResultsFound (callback:(queryId:string, results:Object) => any):void;
+	onResultsFound (callback:(queryId:string, results:Buffer) => any):void;
 
 	/**
 	 * Validates the given search query by quering the local database.

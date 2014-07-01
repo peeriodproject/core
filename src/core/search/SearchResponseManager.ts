@@ -91,7 +91,7 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
-	public onResultsFound (callback:(queryId:string, results:Object) => any):void {
+	public onResultsFound (callback:(queryId:string, results:Buffer) => any):void {
 		this._eventEmitter.addListener('resultsFound', callback);
 	}
 

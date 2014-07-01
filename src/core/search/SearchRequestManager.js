@@ -124,7 +124,7 @@ var SearchRequestManager = (function () {
         });
     };
 
-    SearchRequestManager.prototype.addResponse = function (queryId, responseBodies, responseMeta, callback) {
+    SearchRequestManager.prototype.addResponse = function (queryId, responseBody, responseMeta, callback) {
         var internalCallback = callback || function (err) {
         };
         var returned = 0;
@@ -140,18 +140,14 @@ var SearchRequestManager = (function () {
         };
 
         try  {
-            response = JSON.parse(responseBodies.toString());
+            response = JSON.parse(responseBody.toString());
         } catch (e) {
             return internalCallback(e);
         }
 
-        console.log('parsed response', response);
-
         if (!(response && response.hits && response.hits.length)) {
             return internalCallback(null);
         }
-
-        console.log('got hits!');
 
         for (var i = 0, l = response.hits.length; i < l; i++) {
             this._addResponse(queryId, response.hits[i], responseMeta, function (err) {

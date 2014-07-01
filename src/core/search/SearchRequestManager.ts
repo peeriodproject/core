@@ -140,7 +140,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		});
 	}
 
-	public addResponse (queryId:string, responseBodies:BufferListInterface, responseMeta:Object, callback?:(err:Error) => any):void {
+	public addResponse (queryId:string, responseBody:Buffer, responseMeta:Object, callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
 		var returned:number = 0;
@@ -155,19 +155,15 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		};
 
 		try {
-			response = JSON.parse(responseBodies.toString());
+			response = JSON.parse(responseBody.toString());
 		}
 		catch (e) {
 			return internalCallback(e);
 		}
 
-		console.log('parsed response', response);
-
 		if (!(response && response.hits && response.hits.length)) {
 			return internalCallback(null);
 		}
-
-		console.log('got hits!');
 
 		for (var i = 0, l = response.hits.length; i < l; i++) {
 			this._addResponse(queryId, response.hits[i], responseMeta, function (err) {
