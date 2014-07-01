@@ -8,6 +8,11 @@ import CircuitManagerInterface = require('../hydra/interfaces/CircuitManagerInte
 import CellManagerInterface = require('../hydra/interfaces/CellManagerInterface');
 import HydraMessageCenterInterface = require('../hydra/interfaces/HydraMessageCenterInterface');
 
+/**
+ * @class core.protocol.fileTransfer.TransferMessageCenter
+ * @extends events.EventEmitter
+ * @implements core.protocol.fileTransfer.TransferMessageCenterInterface
+ */
 class TransferMessageCenter extends events.EventEmitter implements TransferMessageCenterInterface {
 
 	private _circuitManager:CircuitManagerInterface = null;

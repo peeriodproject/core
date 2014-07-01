@@ -1,3 +1,7 @@
+/**
+* @class core.protocol.broadcast.BroadcastWritableMessageFactory
+* @implements core.protocol.broadcast.BroadcastWritableMessageFactoryInterface
+*/
 var BroadcastWritableMessageFactory = (function () {
     function BroadcastWritableMessageFactory() {
     }

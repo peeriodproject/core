@@ -2,7 +2,7 @@
 
 import crypto = require('crypto');
 
-import BufferListInterface = require('./interfaces/BufferListInterface');
+import BufferListInterface = require('./../utils/interfaces/BufferListInterface');
 
 /**
  * This static class helps generating (and decrypting) random shares for an additive sharing scheme.

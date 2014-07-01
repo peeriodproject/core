@@ -1,7 +1,9 @@
 import events = require('events');
 
+import BufferListMapInterface = require('../../utils/interfaces/BufferListMapInterface');
 import HydraNode = require('./interfaces/HydraNode');
 import HydraNodeList = require('./interfaces/HydraNodeList');
+import HydraNodeMap = require('./interfaces/HydraNodeMap');
 
 import ProtocolConnectionManagerInterface = require('../net/interfaces/ProtocolConnectionManagerInterface');
 import WritableHydraMessageFactoryInterface = require('./messages/interfaces/WritableHydraMessageFactoryInterface');
@@ -26,16 +28,16 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 	/**
 	 * The list of circuit nodes assigned to specific sockets.
 	 *
-	 * @member {{[identifier:string]:HydraNode}} core.protocol.hydra.ConnectionManager~_circuitNodes
+	 * @member {core.protocol.hydra.HydraNodeMap} core.protocol.hydra.ConnectionManager~_circuitNodes
 	 */
-	private _circuitNodes:{[identifier:string]:HydraNode} = {};
+	private _circuitNodes:HydraNodeMap = {};
 
 	/**
 	 * Pipeline for messages. Messages aggregate here until one socket has been established.
 	 *
-	 * @member {{[circuitId:string]:Array<Buffer>}} core.protocol.hydra.ConnectionManager~_circuitPipeline
+	 * @member {core.utils.BufferListMapInterface} core.protocol.hydra.ConnectionManager~_circuitPipeline
 	 */
-	private _circuitPipeline:{[circuitId:string]:Array<Buffer>} = {};
+	private _circuitPipeline:BufferListMapInterface = {};
 
 	/**
 	 * @member {core.protocol.hydra.ReadableHydraMessageFactoryInterface} core.protocol.hydra.ConnectionManager~_readableFactory
@@ -66,7 +68,7 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 	 * BEGIN TESTING PURPOSES ONLY
 	 */
 
-	public getCircuitNodes ():{[identifier:string]:HydraNode} {
+	public getCircuitNodes ():HydraNodeMap {
 		return this._circuitNodes;
 	}
 

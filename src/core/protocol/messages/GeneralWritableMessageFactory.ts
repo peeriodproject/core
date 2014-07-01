@@ -1,3 +1,4 @@
+import BufferListInterface = require('../../utils/interfaces/BufferListInterface');
 import GeneralWritableMessageFactoryInterface = require('./interfaces/GeneralWritableMessageFactoryInterface');
 import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInterface');
 import MyNodeInterface = require('../../topology/interfaces/MyNodeInterface');
@@ -24,16 +25,16 @@ class GeneralWritableMessageFactory implements GeneralWritableMessageFactoryInte
 	/**
 	 * The address block as byte representation of the current sender.
 	 *
-	 * @type {Buffer} core.protocol.messages.GeneralWritableMessageFactory~_currentAddressBlockBuffer
+	 * @member {Buffer} core.protocol.messages.GeneralWritableMessageFactory~_currentAddressBlockBuffer
 	 */
 	private _currentAddressBlockBuffer:Buffer = null;
 
 	/**
 	 * Keeps track of the single address block buffers needed to construct the address block
 	 *
-	 * @type {Array<Buffer>} core.protocol.messages.GeneralWritableMessageFactory~_currentAddressBlockByteList
+	 * @member {core.utils.BufferListInterface} core.protocol.messages.GeneralWritableMessageFactory~_currentAddressBlockByteList
 	 */
-	private _currentAddressBlockByteList:Array<Buffer> = null;
+	private _currentAddressBlockByteList:BufferListInterface = null;
 
 	/**
 	 * Keeps track of the address block length of the current sender.
@@ -104,7 +105,7 @@ class GeneralWritableMessageFactory implements GeneralWritableMessageFactoryInte
 
 	public hydraConstructMessage (payload:Buffer, payloadLength?:number):Buffer {
 		var bufferLength:number = (payloadLength === undefined) ? payload.length : payloadLength;
-		var bufferList:Array<Buffer> = [];
+		var bufferList:BufferListInterface = [];
 
 		// add the beginning bytes
 		bufferList.push(new Buffer(MessageByteCheatsheet.messageBegin));
@@ -132,7 +133,7 @@ class GeneralWritableMessageFactory implements GeneralWritableMessageFactoryInte
 		}
 
 		var bufferLength:number = (payloadLength === undefined) ? payload.length : payloadLength;
-		var bufferList:Array<Buffer> = [];
+		var bufferList:BufferListInterface = [];
 
 		// add the beginning bytes
 		bufferList.push(new Buffer(MessageByteCheatsheet.messageBegin));

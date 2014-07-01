@@ -1,3 +1,7 @@
+/**
+* @class core.protocol.broadcast.BroadcastReadableMessage
+* @implements core.protocol.broadcast.BroadcastReadableMessageInterface
+*/
 var BroadcastReadableMessage = (function () {
     function BroadcastReadableMessage(buffer) {
         this._broadcastId = null;

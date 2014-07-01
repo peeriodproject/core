@@ -6,6 +6,11 @@ var __extends = this.__extends || function (d, b) {
 };
 var events = require('events');
 
+/**
+* @class core.protocol.fileTransfer.TransferMessageCenter
+* @extends events.EventEmitter
+* @implements core.protocol.fileTransfer.TransferMessageCenterInterface
+*/
 var TransferMessageCenter = (function (_super) {
     __extends(TransferMessageCenter, _super);
     function TransferMessageCenter(circuitManager, cellManager, hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory) {
