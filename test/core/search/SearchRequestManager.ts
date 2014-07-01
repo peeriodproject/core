@@ -12,7 +12,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchClient = require('../../../src/core/search/SearchClient');
 import SearchRequestManager = require('../../../src/core/search/SearchRequestManager');
 
-describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
+describe('CORE --> SEARCH --> SearchRequestManager', function () {
 	var sandbox:SinonSandbox;
 	var configStub:any;
 	var appQuitHandlerStub:any;
@@ -122,7 +122,7 @@ describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
 		});
 	});
 
-	it('should correctly create the query index oin open', function (done) {
+	it('should correctly create the query index on open', function (done) {
 		var manager = new SearchRequestManager(configStub, appQuitHandlerStub, 'searchqueries', searchClientStub, {
 			onOpenCallback: function () {
 				searchClientStub.createOutgoingQueryIndex.calledOnce.should.be.true;
