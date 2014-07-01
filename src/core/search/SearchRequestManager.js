@@ -124,35 +124,40 @@ var SearchRequestManager = (function () {
         });
     };
 
-    SearchRequestManager.prototype.addResponse = function (queryId, responseBody, responseMeta, callback) {
-        var _this = this;
+    SearchRequestManager.prototype.addResponse = function (queryId, responseBodies, responseMeta, callback) {
         var internalCallback = callback || function (err) {
         };
+        var returned = 0;
+        var response = null;
+        var checkAndTriggerCallback = function (err) {
+            returned++;
 
-        this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, responseMeta, function (err, response) {
-            var matches;
-            if (err) {
-                console.error(err);
+            if (returned === response.hits.length || err) {
+                returned = -1;
                 return internalCallback(err);
             }
+            ;
+        };
 
-            if (response && response['matches'] && response['matches'].length) {
-                response['matches'].forEach(function (match) {
-                    var queryId = match['_id'];
-                    var expiryTimestamp = _this._runningQueryIdMap[queryId];
+        try  {
+            response = JSON.parse(responseBodies.toString());
+        } catch (e) {
+            return internalCallback(e);
+        }
 
-                    if (expiryTimestamp) {
-                        _this._runningQueryIds[expiryTimestamp].count++;
-                    }
+        console.log('parsed response', response);
 
-                    if (queryId) {
-                        _this._triggerResultsChanged(queryId);
-                    }
-                });
-            }
-
+        if (!(response && response.hits && response.hits.length)) {
             return internalCallback(null);
-        });
+        }
+
+        console.log('got hits!');
+
+        for (var i = 0, l = response.hits.length; i < l; i++) {
+            this._addResponse(queryId, response.hits[i], responseMeta, function (err) {
+                return checkAndTriggerCallback(err);
+            });
+        }
     };
 
     SearchRequestManager.prototype.close = function (callback) {
@@ -243,6 +248,33 @@ var SearchRequestManager = (function () {
 
             //this._checkResultsAndTriggerEvent(this._runningQueryIdMap[queryId]);
             return internalCallback(err);
+        });
+    };
+
+    SearchRequestManager.prototype._addResponse = function (queryId, responseBody, responseMeta, callback) {
+        var _this = this;
+        this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, responseMeta, function (err, response) {
+            if (err) {
+                console.error(err);
+                return callback(err);
+            }
+
+            if (response && response['matches'] && response['matches'].length) {
+                response['matches'].forEach(function (match) {
+                    var queryId = match['_id'];
+                    var expiryTimestamp = _this._runningQueryIdMap[queryId];
+
+                    if (expiryTimestamp) {
+                        _this._runningQueryIds[expiryTimestamp].count++;
+                    }
+
+                    if (queryId) {
+                        _this._triggerResultsChanged(queryId);
+                    }
+                });
+            }
+
+            return callback(null);
         });
     };
 

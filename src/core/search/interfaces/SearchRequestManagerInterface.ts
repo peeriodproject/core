@@ -1,3 +1,4 @@
+import BufferListInterface = require('../../utils/interfaces/BufferListInterface');
 import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInterface');
 
 /**
@@ -18,14 +19,15 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	/**
 	 * Adds a response to the specified `queryId`
 	 *
+	 * todo add an
 	 * @member core.search.SearchRequestManagerInterface#addResponse
 	 *
 	 * @param {string} queryId
-	 * @param {Object} responseBody
+	 * @param {core.utils.BufferListInterface} responseBodies
 	 * @param {Object} responseMeta
 	 * @param {Function} callback
 	 */
-	addResponse (queryId:string, responseBody:Object, responseMeta:Object, callback?:(err:Error) => any):void;
+	addResponse (queryId:string, responseBodies:BufferListInterface, responseMeta:Object, callback?:(err:Error) => any):void;
 
 	/**
 	 * Adds a listener to the internal event emitter that triggers whenever a new query is registered.

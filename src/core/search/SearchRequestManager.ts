@@ -2,6 +2,7 @@ import crypto = require('crypto');
 import events = require('events');
 
 import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
+import BufferListInterface = require('../utils/interfaces/BufferListInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions');
 import SearchClientInterface = require('./interfaces/SearchClientInterface');
@@ -139,34 +140,40 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		});
 	}
 
-	public addResponse (queryId:string, responseBody:Object, responseMeta:Object, callback?:(err:Error) => any):void {
+	public addResponse (queryId:string, responseBodies:BufferListInterface, responseMeta:Object, callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
+		var returned:number = 0;
+		var response:any = null;
+		var checkAndTriggerCallback:Function = function (err) {
+			returned++;
 
-		this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, responseMeta, (err:Error, response:Object) => {
-			var matches
-			if (err) {
-				console.error(err);
+			if (returned === response.hits.length || err) {
+				returned = -1;
 				return internalCallback(err);
-			}
+			};
+		};
 
-			if (response && response['matches'] && response['matches'].length) {
-				response['matches'].forEach((match) => {
-					var queryId = match['_id'];
-					var expiryTimestamp:number = this._runningQueryIdMap[queryId];
+		try {
+			response = JSON.parse(responseBodies.toString());
+		}
+		catch (e) {
+			return internalCallback(e);
+		}
 
-					if (expiryTimestamp) {
-						this._runningQueryIds[expiryTimestamp].count++;
-					}
+		console.log('parsed response', response);
 
-					if (queryId) {
-						this._triggerResultsChanged(queryId);
-					}
-				})
-			}
-
+		if (!(response && response.hits && response.hits.length)) {
 			return internalCallback(null);
-		});
+		}
+
+		console.log('got hits!');
+
+		for (var i = 0, l = response.hits.length; i < l; i++) {
+			this._addResponse(queryId, response.hits[i], responseMeta, function (err) {
+				return checkAndTriggerCallback(err);
+			});
+		}
 	}
 
 	public close (callback?:(err:Error) => any):void {
@@ -255,6 +262,32 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 			//this._checkResultsAndTriggerEvent(this._runningQueryIdMap[queryId]);
 
 			return internalCallback(err);
+		});
+	}
+
+	private _addResponse (queryId:string, responseBody:Object, responseMeta:Object, callback:(err:Error) => any):void {
+		this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, responseMeta, (err:Error, response:Object) => {
+			if (err) {
+				console.error(err);
+				return callback(err);
+			}
+
+			if (response && response['matches'] && response['matches'].length) {
+				response['matches'].forEach((match) => {
+					var queryId = match['_id'];
+					var expiryTimestamp:number = this._runningQueryIdMap[queryId];
+
+					if (expiryTimestamp) {
+						this._runningQueryIds[expiryTimestamp].count++;
+					}
+
+					if (queryId) {
+						this._triggerResultsChanged(queryId);
+					}
+				})
+			}
+
+			return callback(null);
 		});
 	}
 

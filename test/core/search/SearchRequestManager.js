@@ -145,15 +145,30 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
     });
 
     it('should correctly add a incoming response to the database', function (done) {
+        var responseList = {
+            total: 1,
+            hits: [{
+                    _id: 'fileHash',
+                    _type: 'pluginidentifier',
+                    _source: {
+                        itemHash: "fileHash",
+                        itemStats: {
+                            stats: true
+                        },
+                        foo: "bar io"
+                    }
+                }]
+        };
+
         var manager = new SearchRequestManager(configStub, appQuitHandlerStub, 'searchqueries', searchClientStub, {
             onOpenCallback: function () {
-                manager.addResponse('searchQueryId', { response: true }, { metadata: true }, function (err) {
+                manager.addResponse('searchQueryId', new Buffer(JSON.stringify(responseList)), { metadata: true }, function (err) {
                     (err === null).should.be.true;
 
                     searchClientStub.addIncomingResponse.calledOnce.should.be.true;
                     searchClientStub.addIncomingResponse.getCall(0).args[0].should.equal('searchqueries');
                     searchClientStub.addIncomingResponse.getCall(0).args[1].should.equal('searchQueryId');
-                    searchClientStub.addIncomingResponse.getCall(0).args[2].should.containDeep({ response: true });
+                    searchClientStub.addIncomingResponse.getCall(0).args[2].should.containDeep(responseList.hits[0]);
 
                     closeAndDone(manager, done);
                 });
@@ -202,13 +217,27 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
     it('should correctly call a "resultsChanged" listener after a new result was added to the database and matched a running query', function (done) {
         var theQueryId = '';
         var timeoutSpy = sandbox.spy();
+        var responseList = {
+            total: 1,
+            hits: [{
+                    _id: 'fileHash',
+                    _type: 'pluginidentifier',
+                    _source: {
+                        itemHash: "fileHash",
+                        itemStats: {
+                            stats: true
+                        },
+                        foo: "bar io"
+                    }
+                }]
+        };
 
         var manager = new SearchRequestManager(configStub, appQuitHandlerStub, 'searchqueries', searchClientStub, {
             onOpenCallback: function () {
                 manager.addQuery({ foo: true }, function (err, queryId) {
                     theQueryId = queryId;
 
-                    manager.addResponse(queryId, { response: true }, { metadata: true }, function (err) {
+                    manager.addResponse(queryId, new Buffer(JSON.stringify(responseList)), { metadata: true }, function (err) {
                         (err === null).should.be.true;
                     });
                 });
@@ -232,13 +261,27 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
         this.timeout(5000);
 
         var theQueryId = '';
+        var responseList = {
+            total: 1,
+            hits: [{
+                    _id: 'fileHash',
+                    _type: 'pluginidentifier',
+                    _source: {
+                        itemHash: "fileHash",
+                        itemStats: {
+                            stats: true
+                        },
+                        foo: "bar io"
+                    }
+                }]
+        };
 
         var manager = new SearchRequestManager(configStub, appQuitHandlerStub, 'searchqueries', searchClientStub, {
             onOpenCallback: function () {
                 manager.addQuery({ foo: true }, function (err, queryId) {
                     theQueryId = queryId;
 
-                    manager.addResponse(queryId, { response: true }, function (err) {
+                    manager.addResponse(queryId, new Buffer(JSON.stringify(responseList)), function (err) {
                         (err === null).should.be.true;
                     });
                 });
