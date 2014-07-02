@@ -116,13 +116,13 @@ var ConnectionManager = (function (_super) {
         /**
         * The list of circuit nodes assigned to specific sockets.
         *
-        * @member {{[identifier:string]:HydraNode}} core.protocol.hydra.ConnectionManager~_circuitNodes
+        * @member {core.protocol.hydra.HydraNodeMap} core.protocol.hydra.ConnectionManager~_circuitNodes
         */
         this._circuitNodes = {};
         /**
         * Pipeline for messages. Messages aggregate here until one socket has been established.
         *
-        * @member {{[circuitId:string]:Array&lt;Buffer&gt;}} core.protocol.hydra.ConnectionManager~_circuitPipeline
+        * @member {core.utils.BufferListMapInterface} core.protocol.hydra.ConnectionManager~_circuitPipeline
         */
         this._circuitPipeline = {};
         /**

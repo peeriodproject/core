@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">69.91</p>
+      <p class="stat">69.82</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">223</p>
+      <p class="stat">225</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">38.14</p>
+      <p class="stat">39.31</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.37</p>
+      <p class="stat">1.40</p>
     </div>
   </div>
 </div>
@@ -198,7 +198,7 @@ var BroadcastManager = (function (_super) {
         this._writableBroadcastMessageFactory = writableBroadcastMessageFactory;
 
         this._proxyManager.on(&#039;message&#039;, function (message) {
-            if (message.getMessageType() === &#039;BROADCAST&#039;) {
+            if (message.getMessageType().indexOf(&#039;BROADCAST&#039;) === 0) {
                 _this._onBroadcastMessage(message);
             }
         });
@@ -217,7 +217,7 @@ var BroadcastManager = (function (_super) {
         this._ignoreBroadcastIds.push(broadcastId);
     };
 
-    BroadcastManager.prototype.initBroadcast = function (payload, broadcastId) {
+    BroadcastManager.prototype.initBroadcast = function (messageType, payload, broadcastId) {
         var _this = this;
         var broadcastId = broadcastId || crypto.pseudoRandomBytes(8).toString(&#039;hex&#039;);
         var broadcastMsg = this._writableBroadcastMessageFactory.constructPayload(broadcastId, payload);
@@ -228,7 +228,7 @@ var BroadcastManager = (function (_super) {
             _this._removeFromKnownBroadcasts(broadcastId);
         }, this._broadcastLifetimeInMs);
 
-        this._propagateMessageThroughBuckets(broadcastMsg, this._numberOfBuckets - 1);
+        this._propagateMessageThroughBuckets(messageType, broadcastMsg, this._numberOfBuckets - 1);
     };
 
     /**
@@ -248,7 +248,7 @@ var BroadcastManager = (function (_super) {
             var broadcastId = message.getBroadcastId();
 
             if (timeElapsed &lt; this._broadcastLifetimeInMs &amp;&amp; this._knownBroadcastIds.indexOf(broadcastId) === -1 &amp;&amp; this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
-                this.emit(&#039;receivedBroadcast&#039;, message.getPayload());
+                this.emit(msg.getMessageType(), message.getPayload());
 
                 var differsInBit = msg.getSender().getId().differsInHighestBit(this._myNode.getId());
 
@@ -258,7 +258,7 @@ var BroadcastManager = (function (_super) {
                     _this._removeFromKnownBroadcasts(broadcastId);
                 }, this._broadcastLifetimeInMs - timeElapsed);
 
-                this._propagateMessageThroughBuckets(msg.getPayload(), differsInBit - 1);
+                this._propagateMessageThroughBuckets(msg.getMessageType(), msg.getPayload(), differsInBit - 1);
             }
         }
     };
@@ -268,15 +268,16 @@ var BroadcastManager = (function (_super) {
     *
     * @method core.protocol.broadcast.BroadcastManager~_propagateMessageThroughBuckets
     *
+    * @param {string} messageType the broadcast message type
     * @param {Buffer} message The payload of the whole BROADCAST message
     * @param {number} bucketStart The bucket index to start decrementing from.
     */
-    BroadcastManager.prototype._propagateMessageThroughBuckets = function (message, bucketStart) {
+    BroadcastManager.prototype._propagateMessageThroughBuckets = function (messageType, message, bucketStart) {
         var _this = this;
         for (var i = bucketStart; i &gt;= 0; i--) {
             this._routingTable.getRandomContactNodesFromBucket(i, this._alpha, function (err, contactNodes) {
                 if (!err &amp;&amp; contactNodes.length) {
-                    _this._sendMessageToNodes(message, contactNodes);
+                    _this._sendMessageToNodes(messageType, message, contactNodes);
                 }
             });
         }
@@ -301,12 +302,13 @@ var BroadcastManager = (function (_super) {
     *
     * @method core.protocol.broadcast.BroadcastManager~_sendMessageToNodes
     *
+    * @param {string} messageType The broadcast message type.
     * @param {Buffer} message The payload of the whole BROADCAST message to send
     * @param {core.topology.ContactNodeListInterface} nodes The nodes to send the message to.
     */
-    BroadcastManager.prototype._sendMessageToNodes = function (message, nodes) {
+    BroadcastManager.prototype._sendMessageToNodes = function (messageType, message, nodes) {
         for (var i = 0, l = nodes.length; i &lt; l; i++) {
-            this._protocolConnectionManager.writeMessageTo(nodes[i], &#039;BROADCAST&#039;, message);
+            this._protocolConnectionManager.writeMessageTo(nodes[i], messageType, message);
         }
     };
     return BroadcastManager;

@@ -90,21 +90,25 @@
 
 <div class="container">
   <div class="row">
-    <textarea id="file-source" class="col-md-12">var BroadcastReadableMessage = (function () {
+    <textarea id="file-source" class="col-md-12">/**
+* @class core.protocol.broadcast.BroadcastReadableMessage
+* @implements core.protocol.broadcast.BroadcastReadableMessageInterface
+*/
+var BroadcastReadableMessage = (function () {
     function BroadcastReadableMessage(buffer) {
         this._broadcastId = null;
         this._payload = null;
         this._timestamp = null;
-        if (buffer.length &lt; 16) {
+        if (buffer.length &lt; 24) {
             throw new Error(&#039;BroadcastReadableMessage: Message too short.&#039;);
         }
 
-        this._broadcastId = buffer.slice(0, 8).toString(&#039;hex&#039;);
+        this._broadcastId = buffer.slice(0, 16).toString(&#039;hex&#039;);
 
-        var timestampBuffer = buffer.slice(8, 16);
+        var timestampBuffer = buffer.slice(16, 24);
         this._timestamp = timestampBuffer.slice(0, 4).readUInt32BE(0) * 1000 + timestampBuffer.slice(4).readUInt32BE(0);
 
-        this._payload = buffer.slice(16);
+        this._payload = buffer.slice(24);
 
         if (this._payload.length === 0) {
             throw new Error(&#039;BroadcastReadableMessage: Empty payload.&#039;);

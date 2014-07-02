@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/fileTransfer/query/QueryManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/fileTransfer/query/QueryManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">72.96</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">178</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">26.71</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.86</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var events = require(&#039;events&#039;);
+
+/**
+* QueryManagerInterface implementation.
+*
+* @class core.protocol.fileTransfer.QueryManager
+* @extends events.EventEmitter
+* @implemens core.protocol.fileTransfer.QueryManagerInterface
+*
+* @param {core.config.ConfigInterface} transferConfig Configuration object.
+* @param {core.protocol.fileTransfer.QueryFactoryInterface} queryFactory A factory for creating query instances (hash-based or broadcast-based)
+* @param {core.protocol.hydra.CircuitManagerInterface} circuitManager A working circuit manager instance for keeping track of the circuit amount.
+* @param {core.search.SearchMessageBridgeInterface} searchBridge The bridge between the search manager and the network.
+*/
+var QueryManager = (function (_super) {
+    __extends(QueryManager, _super);
+    function QueryManager(transferConfig, queryFactory, circuitManager, searchBridge) {
+        _super.call(this);
+        /**
+        * Stores the circuit manager instance.
+        *
+        * @member {core.protocol.hydra.CircuitManagerInterface} core.protocol.fileTransfer.QueryManager~_circuitManager
+        */
+        this._circuitManager = null;
+        /**
+        * Keeps track of the current amount of production-ready circuits used to provide anonymity.
+        *
+        * @member {number} core.protocol.fileTransfer.QueryManager~_currentNumOfReadyCircuits
+        */
+        this._currentNumOfReadyCircuits = 0;
+        /**
+        * Maps the current queries to the query identifiers received from the bridge.
+        *
+        * @member {core.protocol.fileTransfer.QueryMap} core.protocol.fileTransfer.QueryManager~_currentQueries
+        */
+        this._currentQueries = {};
+        /**
+        * The maximum number of parallel queries, populated by config.
+        *
+        * @member {number} core.protocol.fileTransfer.QueryManager~_maxNumOfParallelQueries
+        */
+        this._maxNumOfParallelQueries = 0;
+        /**
+        * The minimum number of established circuits before a query can be issued, populated by config.
+        *
+        * @member {number} core.protocol.fileTransfer.QueryManager~_minNumOfReadyCircuits
+        */
+        this._minNumOfReadyCircuits = 0;
+        /**
+        * Stores the query factory.
+        *
+        * @member {core.protocol.fileTransfer.QueryFactoryInterface} core.protocol.fileTransfer.QueryManager~_queryFactory
+        */
+        this._queryFactory = null;
+        /**
+        * Stores the bridge between the search manager and the network.
+        *
+        * @member {core.search.SearchMessageBridgeInterface} core.protocol.fileTransfer.QueryManager~_searchBridge
+        */
+        this._searchBridge = null;
+
+        this._queryFactory = queryFactory;
+        this._circuitManager = circuitManager;
+        this._searchBridge = searchBridge;
+        this._maxNumOfParallelQueries = transferConfig.get(&#039;fileTransfer.query.maximumNumberOfParallelQueries&#039;);
+        this._minNumOfReadyCircuits = transferConfig.get(&#039;fileTransfer.query.minimumNumberOfReadyCircuits&#039;);
+        this._currentNumOfReadyCircuits = this._circuitManager.getReadyCircuits().length;
+
+        this._setupListeners();
+    }
+    /**
+    * BEGIN TESTING PURPOSES
+    */
+    QueryManager.prototype.getQueries = function () {
+        return this._currentQueries;
+    };
+
+    /**
+    * END TESTING PURPOSES
+    */
+    /**
+    * Checks if a query is possible or not, and if not, returns the reason as string.
+    *
+    * MAX_EXCEED: The maximum number of parallel queries is exhausted.
+    * NO_ANON: There aren&#039;t enough established production-ready circuits to provide anonymity.
+    *
+    * If a query is possible, `null` is returned. This function gets called each time before a new query is issued.
+    *
+    * @method core.protocol.fileTransfer.QueryManager~_cannotQuery
+    *
+    * @returns {string} The reason for not being able to query, or `null` if querying is possible.
+    */
+    QueryManager.prototype._cannotQuery = function () {
+        var ret = null;
+
+        if (Object.keys(this._currentQueries).length &gt;= this._maxNumOfParallelQueries) {
+            return &#039;MAX_EXCEED&#039;;
+        } else if (this._currentNumOfReadyCircuits &lt; this._minNumOfReadyCircuits) {
+            return &#039;NO_ANON&#039;;
+        }
+
+        return ret;
+    };
+
+    /**
+    * Initializes a new query instance by adding it to the list of current queries and hooking the appropriate
+    * listeners to it.
+    * At last kicks off the query.
+    *
+    * @method core.protocol.fileTransfer.QueryManager~_initializeQuery
+    *
+    * @param {string} queryIdentifier The query identifier received from the bridge.
+    * @param {core.protocol.fileTransfer.QueryInterface} query The query instance to intialize.
+    */
+    QueryManager.prototype._initializeQuery = function (queryIdentifier, query) {
+        var _this = this;
+        this._currentQueries[queryIdentifier] = query;
+
+        query.once(&#039;end&#039;, function (reason) {
+            if (_this._currentQueries[queryIdentifier]) {
+                delete _this._currentQueries[queryIdentifier];
+
+                query.removeAllListeners(&#039;result&#039;);
+                _this._searchBridge.emit(&#039;end&#039;, queryIdentifier, reason);
+            }
+        });
+
+        query.on(&#039;result&#039;, function (metadata, resultBuffer) {
+            _this._searchBridge.emit(&#039;result&#039;, queryIdentifier, resultBuffer, metadata);
+        });
+
+        query.kickOff();
+    };
+
+    /**
+    * Sets up the listeners on the circuit manager (getting the amount of circuits) and the bridge (new queries / manually
+    * aborted queries).
+    *
+    * @method core.protocol.fileTransfer.QueryManager~_setupListeners
+    */
+    QueryManager.prototype._setupListeners = function () {
+        var _this = this;
+        this._circuitManager.on(&#039;circuitCount&#039;, function (count) {
+            _this._currentNumOfReadyCircuits = count;
+        });
+
+        this._searchBridge.on(&#039;newBroadcastQuery&#039;, function (queryIdentifier, searchObject) {
+            var reason = _this._cannotQuery();
+
+            if (!reason) {
+                var query = _this._queryFactory.constructBroadcastBasedQuery(searchObject);
+
+                _this._initializeQuery(queryIdentifier, query);
+            } else {
+                setImmediate(function () {
+                    _this._searchBridge.emit(&#039;end&#039;, queryIdentifier, reason);
+                });
+            }
+        });
+
+        this._searchBridge.on(&#039;abort&#039;, function (queryIdentifier) {
+            var query = _this._currentQueries[queryIdentifier];
+
+            if (query) {
+                query.abort(&#039;MANUAL&#039;);
+            }
+        });
+    };
+    return QueryManager;
+})(events.EventEmitter);
+
+module.exports = QueryManager;
+//# sourceMappingURL=QueryManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>
