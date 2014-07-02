@@ -75,6 +75,16 @@ var QueryManager = (function (_super) {
         this._setupListeners();
     }
     /**
+    * BEGIN TESTING PURPOSES
+    */
+    QueryManager.prototype.getQueries = function () {
+        return this._currentQueries;
+    };
+
+    /**
+    * END TESTING PURPOSES
+    */
+    /**
     * Checks if a query is possible or not, and if not, returns the reason as string.
     *
     * MAX_EXCEED: The maximum number of parallel queries is exhausted.
@@ -117,12 +127,12 @@ var QueryManager = (function (_super) {
                 delete _this._currentQueries[queryIdentifier];
 
                 query.removeAllListeners('result');
-                _this.emit('end', queryIdentifier, reason);
+                _this._searchBridge.emit('end', queryIdentifier, reason);
             }
         });
 
         query.on('result', function (metadata, resultBuffer) {
-            _this.emit('result', queryIdentifier, resultBuffer, metadata);
+            _this._searchBridge.emit('result', queryIdentifier, resultBuffer, metadata);
         });
 
         query.kickOff();
@@ -149,7 +159,7 @@ var QueryManager = (function (_super) {
                 _this._initializeQuery(queryIdentifier, query);
             } else {
                 setImmediate(function () {
-                    _this.emit('end', queryIdentifier, reason);
+                    _this._searchBridge.emit('end', queryIdentifier, reason);
                 });
             }
         });

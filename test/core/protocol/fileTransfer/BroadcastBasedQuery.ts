@@ -14,7 +14,7 @@ import CircuitManager = require('../../../../src/core/protocol/hydra/CircuitMana
 import BroadcastManager = require('../../../../src/core/protocol/broadcast/BroadcastManager');
 import ReadableQueryResponseMessage = require('../../../../src/core/protocol/fileTransfer/messages/ReadableQueryResponseMessage');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery', function () {
 
 	var sandbox:SinonSandbox = null;
 

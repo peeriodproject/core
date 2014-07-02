@@ -13,7 +13,7 @@ var CircuitManager = require('../../../../src/core/protocol/hydra/CircuitManager
 var BroadcastManager = require('../../../../src/core/protocol/broadcast/BroadcastManager');
 var ReadableQueryResponseMessage = require('../../../../src/core/protocol/fileTransfer/messages/ReadableQueryResponseMessage');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery', function () {
     var sandbox = null;
 
     var transferMessageCenter = null;

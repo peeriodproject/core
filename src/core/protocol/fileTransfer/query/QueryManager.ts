@@ -85,6 +85,18 @@ class QueryManager extends events.EventEmitter implements QueryManagerInterface 
 	}
 
 	/**
+	 * BEGIN TESTING PURPOSES
+	 */
+
+	public getQueries ():QueryMap {
+		return this._currentQueries;
+	}
+
+	/**
+	 * END TESTING PURPOSES
+	 */
+
+	/**
 	 * Checks if a query is possible or not, and if not, returns the reason as string.
 	 *
 	 * MAX_EXCEED: The maximum number of parallel queries is exhausted.
@@ -127,12 +139,12 @@ class QueryManager extends events.EventEmitter implements QueryManagerInterface 
 				delete this._currentQueries[queryIdentifier];
 
 				query.removeAllListeners('result');
-				this.emit('end', queryIdentifier, reason);
+				this._searchBridge.emit('end', queryIdentifier, reason);
 			}
 		});
 
 		query.on('result', (metadata:any, resultBuffer:Buffer) => {
-			this.emit('result', queryIdentifier, resultBuffer, metadata);
+			this._searchBridge.emit('result', queryIdentifier, resultBuffer, metadata);
 		});
 
 		query.kickOff();
@@ -159,7 +171,7 @@ class QueryManager extends events.EventEmitter implements QueryManagerInterface 
 			}
 			else {
 				setImmediate(() => {
-					this.emit('end', queryIdentifier, reason);
+					this._searchBridge.emit('end', queryIdentifier, reason);
 				});
 			}
 		});
