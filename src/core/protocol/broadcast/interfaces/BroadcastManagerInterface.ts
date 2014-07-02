@@ -36,10 +36,11 @@ interface BroadcastManagerInterface extends NodeJS.EventEmitter {
 	 *
 	 * @method core.protocol.broadcast.BroadcastManagerInterface#initBroadcast
 	 *
+	 * @param {string} The broadcast message type
 	 * @param {Buffer} payload
 	 * @param {string} broadcastId Optional pre-defined broadcastId. If this is specified, no ID will be generated.
 	 */
-	initBroadcast (payload:Buffer, broadcastId?:string):void;
+	initBroadcast (messageType:string, payload:Buffer, broadcastId?:string):void;
 }
 
 export = BroadcastManagerInterface;

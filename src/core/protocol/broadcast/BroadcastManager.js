@@ -106,7 +106,7 @@ var BroadcastManager = (function (_super) {
         this._writableBroadcastMessageFactory = writableBroadcastMessageFactory;
 
         this._proxyManager.on('message', function (message) {
-            if (message.getMessageType() === 'BROADCAST') {
+            if (message.getMessageType().indexOf('BROADCAST') === 0) {
                 _this._onBroadcastMessage(message);
             }
         });
@@ -125,7 +125,7 @@ var BroadcastManager = (function (_super) {
         this._ignoreBroadcastIds.push(broadcastId);
     };
 
-    BroadcastManager.prototype.initBroadcast = function (payload, broadcastId) {
+    BroadcastManager.prototype.initBroadcast = function (messageType, payload, broadcastId) {
         var _this = this;
         var broadcastId = broadcastId || crypto.pseudoRandomBytes(8).toString('hex');
         var broadcastMsg = this._writableBroadcastMessageFactory.constructPayload(broadcastId, payload);
@@ -136,7 +136,7 @@ var BroadcastManager = (function (_super) {
             _this._removeFromKnownBroadcasts(broadcastId);
         }, this._broadcastLifetimeInMs);
 
-        this._propagateMessageThroughBuckets(broadcastMsg, this._numberOfBuckets - 1);
+        this._propagateMessageThroughBuckets(messageType, broadcastMsg, this._numberOfBuckets - 1);
     };
 
     /**
@@ -156,7 +156,7 @@ var BroadcastManager = (function (_super) {
             var broadcastId = message.getBroadcastId();
 
             if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1 && this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
-                this.emit('receivedBroadcast', message.getPayload());
+                this.emit(msg.getMessageType(), message.getPayload());
 
                 var differsInBit = msg.getSender().getId().differsInHighestBit(this._myNode.getId());
 
@@ -166,7 +166,7 @@ var BroadcastManager = (function (_super) {
                     _this._removeFromKnownBroadcasts(broadcastId);
                 }, this._broadcastLifetimeInMs - timeElapsed);
 
-                this._propagateMessageThroughBuckets(msg.getPayload(), differsInBit - 1);
+                this._propagateMessageThroughBuckets(msg.getMessageType(), msg.getPayload(), differsInBit - 1);
             }
         }
     };
@@ -176,15 +176,16 @@ var BroadcastManager = (function (_super) {
     *
     * @method core.protocol.broadcast.BroadcastManager~_propagateMessageThroughBuckets
     *
+    * @param {string} messageType the broadcast message type
     * @param {Buffer} message The payload of the whole BROADCAST message
     * @param {number} bucketStart The bucket index to start decrementing from.
     */
-    BroadcastManager.prototype._propagateMessageThroughBuckets = function (message, bucketStart) {
+    BroadcastManager.prototype._propagateMessageThroughBuckets = function (messageType, message, bucketStart) {
         var _this = this;
         for (var i = bucketStart; i >= 0; i--) {
             this._routingTable.getRandomContactNodesFromBucket(i, this._alpha, function (err, contactNodes) {
                 if (!err && contactNodes.length) {
-                    _this._sendMessageToNodes(message, contactNodes);
+                    _this._sendMessageToNodes(messageType, message, contactNodes);
                 }
             });
         }
@@ -209,12 +210,13 @@ var BroadcastManager = (function (_super) {
     *
     * @method core.protocol.broadcast.BroadcastManager~_sendMessageToNodes
     *
+    * @param {string} messageType The broadcast message type.
     * @param {Buffer} message The payload of the whole BROADCAST message to send
     * @param {core.topology.ContactNodeListInterface} nodes The nodes to send the message to.
     */
-    BroadcastManager.prototype._sendMessageToNodes = function (message, nodes) {
+    BroadcastManager.prototype._sendMessageToNodes = function (messageType, message, nodes) {
         for (var i = 0, l = nodes.length; i < l; i++) {
-            this._protocolConnectionManager.writeMessageTo(nodes[i], 'BROADCAST', message);
+            this._protocolConnectionManager.writeMessageTo(nodes[i], messageType, message);
         }
     };
     return BroadcastManager;
