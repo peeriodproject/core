@@ -19,17 +19,6 @@ var SearchMessageBridge = (function (_super) {
         _super.call(this);
         /**
         *
-        * @member {zlib.Gzip} core.search.SearchMessageBridge~_compressor
-        */
-        /*private _compressor:zlib.DeflateRaw = null;
-        
-        /**
-        *
-        * @member {zlib.Gzip} core.search.SearchMessageBridge~_decompressor
-        * /
-        private _decompressor:zlib.InflateRaw = null;*/
-        /**
-        *
         * @member {core.search.SearchRequestManagerInterface} core.search.SearchMessageBridge~_searchRequestManager
         */
         this._searchRequestManager = null;
@@ -48,11 +37,27 @@ var SearchMessageBridge = (function (_super) {
         this._setupIncomingQuery();
         this._setupOutgoingResults();
     }
+    /**
+    * Compresses the given buffer using {@link http://nodejs.org/api/zlib.html#zlib_class_zlib_deflateraw} before calling the callback.
+    *
+    * @method core.search.SearchMessageBridge~_compressBuffer
+    *
+    * @param {Buffer} buffer The buffer that should be compressed
+    * @param {Function} callback The callback with a possible error and the compressed buffer as arguments, that gets called after the buffer compression.
+    */
     SearchMessageBridge.prototype._compressBuffer = function (buffer, callback) {
         zlib.deflateRaw(buffer, callback);
         //return process.nextTick(callback.bind(null, null, lz4.encode(buffer)));
     };
 
+    /**
+    * Decompressed the given buffer using {@link http://nodejs.org/api/zlib.html#zlib_class_zlib_inflateraw} before calling the callback.
+    *
+    * @method core.search.SearchMessageBridge~_decompressBuffer
+    *
+    * @param {Buffer} buffer The buffer that should be decompressed
+    * @param {Function} callback The callback with a possible error and the decompressed buffer as arguments, that gets called after the buffer decompression.
+    */
     SearchMessageBridge.prototype._decompressBuffer = function (buffer, callback) {
         zlib.inflateRaw(buffer, callback);
         //return process.nextTick(callback.bind(null, null, lz4.decode(buffer)));

@@ -11,7 +11,7 @@ import AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 import SearchClient = require('../../../src/core/search/SearchClient');
 import SearchRequestManager = require('../../../src/core/search/SearchRequestManager');
 
-describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
+describe('CORE --> SEARCH --> SearchRequestManager', function () {
 	var sandbox:SinonSandbox;
 	var appQuitHandlerStub:any;
 	var searchClientStub:any;
@@ -159,11 +159,7 @@ describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
 
 				manager.addQuery({ foo: true }, function (err, queryId) {
 					manager.addResponse(queryId, new Buffer(JSON.stringify(responseList)), { metadata: true }, function (err) {
-						console.log(err);
-
 						(err === null).should.be.true;
-
-						console.log(searchClientStub.addIncomingResponse.callCount);
 
 						searchClientStub.addIncomingResponse.calledOnce.should.be.true;
 						searchClientStub.addIncomingResponse.getCall(0).args[0].should.equal('searchqueries');
