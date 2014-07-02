@@ -123,7 +123,7 @@ var BroadcastBasedQuery = (function (_super) {
 
             this._validityTimeout = global.setTimeout(function () {
                 _this._validityTimeout = 0;
-                _this.abort('COMPL');
+                _this.abort('COMPLETE');
             }, this._validityNumOfMs);
 
             this._responseListener = function (message) {
@@ -132,7 +132,7 @@ var BroadcastBasedQuery = (function (_super) {
 
             this._transferMessageCenter.on('QUERY_RESPONSE_' + this._queryId, this._responseListener);
         } else {
-            this.abort('NOANON');
+            this.abort('NO_ANON');
         }
     };
     return BroadcastBasedQuery;

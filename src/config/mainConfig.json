@@ -52,7 +52,9 @@
     },
     "fileTransfer": {
         "query": {
-            "broadcastValidityInSeconds": 30
+            "broadcastValidityInSeconds": 30,
+            "minimNumberOfReadyCircuits": 1,
+            "maximumNumberOfParallelQueries": 10
         }
     },
     "hydra": {

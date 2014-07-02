@@ -20,7 +20,7 @@ var BroadcastReadableMessageFactory = require('../../../src/core/protocol/broadc
 var BroadcastReadableMessage = require('../../../src/core/protocol/broadcast/messages/BroadcastReadableMessage');
 var BroadcastWritableMessageFactory = require('../../../src/core/protocol/broadcast/messages/BroadcastWritableMessageFactory');
 
-describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
+describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager @current', function () {
     var sandbox = null;
 
     var myId = '01010101';
@@ -50,7 +50,7 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
 
         var msg = testUtils.stubPublicApi(sandbox, ReadableMessage, {
             getMessageType: function () {
-                return 'BROADCAST';
+                return 'BROADCAST_QUERY';
             },
             getPayload: function () {
                 return new Buffer('foobar');
@@ -106,7 +106,7 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
     });
 
     it('should correctly intialize a broadcast', function (done) {
-        broadcastManager.initBroadcast(new Buffer('muschi'));
+        broadcastManager.initBroadcast('BROADCAST_QUERY', new Buffer('muschi'));
         broadcastManager.getKnownBroadcastIds().length.should.equal(1);
 
         setImmediate(function () {
@@ -126,7 +126,7 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
     });
 
     it('should propagate on a broadcast message', function (done) {
-        broadcastManager.once('receivedBroadcast', function () {
+        broadcastManager.once('BROADCAST_QUERY', function () {
             setImmediate(function () {
                 writtenMessage.toString().should.equal('foobar');
                 checkIfSentToAllNodesFromIndex(3).should.be.true;
@@ -139,21 +139,21 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
     });
 
     it('should do nothing when the broadcast is known', function (done) {
-        broadcastManager.once('receivedBroadcast', function () {
-            throw new Error('Should not emit receivedBroadcast');
+        broadcastManager.once('BROADCAST_QUERY', function () {
+            throw new Error('Should not emit BROADCAST_QUERY');
         });
 
         emitMessage('01101011', 'broadcastId1', Date.now());
 
         setTimeout(function () {
-            broadcastManager.removeAllListeners('receivedBroadcast');
+            broadcastManager.removeAllListeners('BROADCAST_QUERY');
             done();
         }, 10);
     });
 
     it('should do nothing when the broadcast is ignored', function (done) {
-        broadcastManager.once('receivedBroadcast', function () {
-            throw new Error('Should not emit receivedBroadcast');
+        broadcastManager.once('BROADCAST_QUERY', function () {
+            throw new Error('Should not emit BROADCAST_QUERY');
         });
 
         broadcastManager.ignoreBroadcastId('broadcastId1_ignore');
@@ -161,26 +161,26 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
         emitMessage('01101011', 'broadcastId1_ignore', Date.now());
 
         setTimeout(function () {
-            broadcastManager.removeAllListeners('receivedBroadcast');
+            broadcastManager.removeAllListeners('BROADCAST_QUERY');
             done();
         }, 10);
     });
 
     it('should do nothing when the broadcast is too old', function (done) {
-        broadcastManager.once('receivedBroadcast', function () {
-            throw new Error('Should not emit receivedBroadcast');
+        broadcastManager.once('BROADCAST_QUERY', function () {
+            throw new Error('Should not emit BROADCAST_QUERY');
         });
 
         emitMessage('01101011', 'broadcastId2', Date.now() - 1000);
 
         setTimeout(function () {
-            broadcastManager.removeAllListeners('receivedBroadcast');
+            broadcastManager.removeAllListeners('BROADCAST_QUERY');
             done();
         }, 10);
     });
 
     it('should add the broadcast with a modified timestamp', function (done) {
-        broadcastManager.once('receivedBroadcast', function () {
+        broadcastManager.once('BROADCAST_QUERY', function () {
             setImmediate(function () {
                 broadcastManager.getKnownBroadcastIds()[1].should.equal('broadcastId2');
                 checkIfSentToAllNodesFromIndex(6).should.be.true;

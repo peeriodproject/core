@@ -123,7 +123,7 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 		this._writableBroadcastMessageFactory = writableBroadcastMessageFactory;
 
 		this._proxyManager.on('message', (message:ReadableMessageInterface) => {
-			if (message.getMessageType() === 'BROADCAST') {
+			if (message.getMessageType().indexOf('BROADCAST') === 0) {
 				this._onBroadcastMessage(message);
 			}
 		});
@@ -145,7 +145,7 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 		this._ignoreBroadcastIds.push(broadcastId);
 	}
 
-	public initBroadcast (payload:Buffer, broadcastId?:string):void {
+	public initBroadcast (messageType:string, payload:Buffer, broadcastId?:string):void {
 		var broadcastId = broadcastId || crypto.pseudoRandomBytes(8).toString('hex');
 		var broadcastMsg:Buffer = this._writableBroadcastMessageFactory.constructPayload(broadcastId, payload);
 
@@ -155,7 +155,7 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 			this._removeFromKnownBroadcasts(broadcastId);
 		}, this._broadcastLifetimeInMs);
 
-		this._propagateMessageThroughBuckets(broadcastMsg, this._numberOfBuckets - 1);
+		this._propagateMessageThroughBuckets(messageType, broadcastMsg, this._numberOfBuckets - 1);
 	}
 
 	/**
@@ -175,7 +175,7 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 
 			if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1 && this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
 
-				this.emit('receivedBroadcast', message.getPayload());
+				this.emit(msg.getMessageType(), message.getPayload());
 
 				var differsInBit:number = msg.getSender().getId().differsInHighestBit(this._myNode.getId());
 
@@ -185,7 +185,7 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 					this._removeFromKnownBroadcasts(broadcastId);
 				}, this._broadcastLifetimeInMs - timeElapsed);
 
-				this._propagateMessageThroughBuckets(msg.getPayload(), differsInBit - 1);
+				this._propagateMessageThroughBuckets(msg.getMessageType(), msg.getPayload(), differsInBit - 1);
 			}
 
 		}
@@ -196,14 +196,15 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 	 *
 	 * @method core.protocol.broadcast.BroadcastManager~_propagateMessageThroughBuckets
 	 *
+	 * @param {string} messageType the broadcast message type
 	 * @param {Buffer} message The payload of the whole BROADCAST message
 	 * @param {number} bucketStart The bucket index to start decrementing from.
 	 */
-	private _propagateMessageThroughBuckets (message:Buffer, bucketStart:number):void {
+	private _propagateMessageThroughBuckets (messageType:string, message:Buffer, bucketStart:number):void {
 		for (var i = bucketStart; i >= 0; i--) {
 			this._routingTable.getRandomContactNodesFromBucket(i, this._alpha, (err:Error, contactNodes:ContactNodeListInterface) => {
 				if (!err && contactNodes.length) {
-					this._sendMessageToNodes(message, contactNodes);
+					this._sendMessageToNodes(messageType, message, contactNodes);
 				}
 			});
 		}
@@ -228,12 +229,13 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 	 *
 	 * @method core.protocol.broadcast.BroadcastManager~_sendMessageToNodes
 	 *
+	 * @param {string} messageType The broadcast message type.
 	 * @param {Buffer} message The payload of the whole BROADCAST message to send
 	 * @param {core.topology.ContactNodeListInterface} nodes The nodes to send the message to.
 	 */
-	private _sendMessageToNodes (message:Buffer, nodes:ContactNodeListInterface):void {
+	private _sendMessageToNodes (messageType:string, message:Buffer, nodes:ContactNodeListInterface):void {
 		for (var i = 0, l = nodes.length; i < l; i++) {
-			this._protocolConnectionManager.writeMessageTo(nodes[i], 'BROADCAST', message);
+			this._protocolConnectionManager.writeMessageTo(nodes[i], messageType, message);
 		}
 	}
 

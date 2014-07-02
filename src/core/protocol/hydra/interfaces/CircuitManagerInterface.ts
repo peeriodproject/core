@@ -1,5 +1,7 @@
 /// <reference path='../../../../../ts-definitions/node/node.d.ts' />
 
+import HydraCircuitList = require('./HydraCircuitList');
+
 /**
  * The CircuitManager keeps track of the Hydra circuits, constructs them and always tries to maintain an optimal desired
  * number of fully constructed, production ready circuits.
@@ -9,6 +11,15 @@
  * @class core.protocol.hydra.CircuitManagerInterface
  */
 interface CircuitManagerInterface extends NodeJS.EventEmitter {
+
+	/**
+	 * Returns all production-ready, built up circuits.
+	 *
+	 * @method core.protocol.hydra.CircuitManagerInterface#getReadyCircuits
+	 *
+	 * @returns {core.protocol.hydra.HydraCircuitList}
+	 */
+	getReadyCircuits ():HydraCircuitList;
 
 	/**
 	 * Starts the construction and watching of hydra circuits.

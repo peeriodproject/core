@@ -14,7 +14,7 @@ import CircuitManager = require('../../../../src/core/protocol/hydra/CircuitMana
 import BroadcastManager = require('../../../../src/core/protocol/broadcast/BroadcastManager');
 import ReadableQueryResponseMessage = require('../../../../src/core/protocol/fileTransfer/messages/ReadableQueryResponseMessage');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery', function () {
 
 	var sandbox:SinonSandbox = null;
 
@@ -63,7 +63,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery @current',
 	it('should timeout end the query', function (done) {
 		query.once('end', function (code) {
 			transferMessageCenter.listeners('QUERY_RESPONSE_' + query.getQueryId()).length.should.equal(0);
-			code.should.equal('COMPL');
+			code.should.equal('COMPLETE');
 			done();
 		});
 	});
@@ -85,7 +85,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery @current',
 	it('should abort the query when anonymity cannot be guaranteed', function (done) {
 		query = new BroadcastBasedQuery(new Buffer('foobar'), transferMessageCenter, circuitManager, broadcastManager, 500);
 		query.once('end', function (code) {
-			code.should.equal('NOANON');
+			code.should.equal('NO_ANON');
 			done();
 		});
 
