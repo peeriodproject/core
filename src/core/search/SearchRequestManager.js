@@ -14,15 +14,9 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @param {core.utils.ClosableAsyncOptions} options
 */
 var SearchRequestManager = (function () {
-    function SearchRequestManager(config, appQuitHandler, indexName, searchClient, options) {
+    function SearchRequestManager(appQuitHandler, indexName, searchClient, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
-        /**
-        * The internally used config instance
-        *
-        * @member {core.config.ConfigInterface} core.search.SearchRequestManager~_config
-        */
-        this._config = null;
         /**
         * The event emitter instance to trigger events.
         *
@@ -30,7 +24,7 @@ var SearchRequestManager = (function () {
         * @see core.search.SearchRequestManager#onQueryEnd
         * @see core.search.SearchRequestManager#onQueryRemoved
         * @see core.search.SearchRequestManager#onQueryResultsChanged
-        * @see core.search.SearchRequestManager#onQueryTimeout
+        * @see core.search.SearchRequestManager#onQueryCanceled
         *
         * @member {core.config.ConfigInterface} core.search.SearchRequestManager~_eventEmitter
         */
@@ -52,23 +46,12 @@ var SearchRequestManager = (function () {
         */
         this._options = {};
         /**
-        * A map of currently running search queries. The identifier is the expiry date of the stored query Object { id:string, count:number }
+        * A map of currently running search queries. The identifier is the `queryId and the value is the amount of results
+        * that already arrived.
         *
         * @member {Object} core.search.SearchRequestManager~_runningQueries
         */
         this._runningQueryIds = {};
-        /**
-        * Reverse queryId lookup shortcut. The queryId is used as identifier, the expiry date is the value
-        *
-        * @member {Object} core.search.SearchRequestManager~_runningQueryIdMap
-        */
-        this._runningQueryIdMap = {};
-        /**
-        * The pointer to the interval that cleans up expired queries
-        *
-        * @member {Object} core.search.SearchRequestManager~_runningQueriesLifetimeTimeout
-        */
-        this._runningQueriesLifetimeTimeout = -1;
         /**
         * The internally used search client to store and load queries and results from the database
         *
@@ -83,7 +66,6 @@ var SearchRequestManager = (function () {
             closeOnProcessExit: true
         };
 
-        this._config = config;
         this._indexName = indexName.toLowerCase();
         this._searchClient = searchClient;
         this._options = ObjectUtils.extend(defaults, options);
@@ -103,22 +85,21 @@ var SearchRequestManager = (function () {
         var internalCallback = callback || function (err) {
         };
 
-        this._createAndStoreQueryId(function (id, expiryTimestamp) {
-            // add queryId and expiryTimestamp to the query object
-            queryBody = ObjectUtils.extend(queryBody, {
-                queryId: id,
-                expiryTimestamp: expiryTimestamp
+        this._createAndStoreQueryId(function (queryId) {
+            // add queryId to the query object
+            var extendedQueryBody = ObjectUtils.extend(queryBody, {
+                queryId: queryId
             });
 
-            _this._searchClient.createOutgoingQuery(_this._indexName, id, queryBody, function (err) {
+            _this._searchClient.createOutgoingQuery(_this._indexName, queryId, extendedQueryBody, function (err) {
                 if (err) {
-                    id = null;
+                    queryId = null;
                 }
 
-                internalCallback(err, id);
+                internalCallback(err, queryId);
 
-                if (id) {
-                    _this._triggerQueryAdd(id);
+                if (queryId) {
+                    _this._triggerQueryAdd(queryId, queryBody);
                 }
             });
         });
@@ -166,13 +147,10 @@ var SearchRequestManager = (function () {
 
         this._searchClient.close(function (err) {
             _this._runningQueryIds = null;
-            _this._runningQueryIdMap = null;
 
             //this._eventEmitter.emit('close');
             _this._eventEmitter.removeAllListeners();
             _this._eventEmitter = null;
-
-            _this._stopRunningQueriesLifetime();
 
             _this._isOpen = false;
 
@@ -193,7 +171,6 @@ var SearchRequestManager = (function () {
         }
 
         this._runningQueryIds = {};
-        this._runningQueryIdMap = {};
 
         this._searchClient.open(function (err) {
             if (err) {
@@ -204,8 +181,6 @@ var SearchRequestManager = (function () {
                 if (!_this._eventEmitter) {
                     _this._eventEmitter = new events.EventEmitter();
                 }
-
-                _this._startRunningQueriesLifetime();
 
                 _this._isOpen = true;
 
@@ -230,8 +205,29 @@ var SearchRequestManager = (function () {
         this._eventEmitter.addListener('resultsChanged', callback);
     };
 
-    SearchRequestManager.prototype.onQueryTimeout = function (callback) {
-        this._eventEmitter.addListener('queryTimeout', callback);
+    SearchRequestManager.prototype.onQueryCanceled = function (callback) {
+        this._eventEmitter.addListener('queryCanceled', callback);
+    };
+
+    SearchRequestManager.prototype.queryEnded = function (queryId, reason) {
+        var _this = this;
+        // not found check
+        if (this._runningQueryIds[queryId] === undefined) {
+            return;
+        }
+
+        // trigger queryEnd event for queries with responses
+        if (this._runningQueryIds[queryId]) {
+            this._triggerQueryEnd(queryId, reason);
+        } else {
+            this._searchClient.deleteOutgoingQuery(this._indexName, queryId, function (err) {
+                if (err) {
+                    console.error(err);
+                }
+
+                return _this._triggerQueryCanceled(queryId, reason);
+            });
+        }
     };
 
     SearchRequestManager.prototype.removeQuery = function (queryId, callback) {
@@ -249,6 +245,10 @@ var SearchRequestManager = (function () {
 
     SearchRequestManager.prototype._addResponse = function (queryId, responseBody, responseMeta, callback) {
         var _this = this;
+        if (this._runningQueryIds[queryId] === undefined) {
+            return process.nextTick(callback.bind(null, null));
+        }
+
         this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, responseMeta, function (err, response) {
             if (err) {
                 console.error(err);
@@ -257,14 +257,8 @@ var SearchRequestManager = (function () {
 
             if (response && response['matches'] && response['matches'].length) {
                 response['matches'].forEach(function (match) {
-                    var queryId = match['_id'];
-                    var expiryTimestamp = _this._runningQueryIdMap[queryId];
-
-                    if (expiryTimestamp) {
-                        _this._runningQueryIds[expiryTimestamp].count++;
-                    }
-
-                    if (queryId) {
+                    if (_this._runningQueryIds[queryId] !== undefined) {
+                        _this._runningQueryIds[queryId]++;
                         _this._triggerResultsChanged(queryId);
                     }
                 });
@@ -275,53 +269,15 @@ var SearchRequestManager = (function () {
     };
 
     /**
-    * Checks weather the query for the given exiryTimestamp got any results yet and triggers a [`queryEnd`]{@link core.search.SearchRequestManager~_triggerQueryEnd} event if the
-    * query got a response. If no results have arrived the query will be deleted from the database and a
-    * [`queryTimeout`]{@link core.search.SearchRequestManager~_triggerQueryTimeout} event will be triggered afterwards.
-    *
-    * @method core.search.SearchRequestManager~_checkResultsAndTriggerEvent
-    *
-    * @param {number} expiryTimestamp
-    */
-    SearchRequestManager.prototype._checkResultsAndTriggerEvent = function (expiryTimestamp) {
-        var _this = this;
-        var queryId;
-
-        if (!this._runningQueryIds[expiryTimestamp]) {
-            return;
-        }
-
-        queryId = this._runningQueryIds[expiryTimestamp].id;
-
-        // trigger queryEnd event for queries with responses
-        if (this._runningQueryIds[expiryTimestamp].count) {
-            this._triggerQueryEnd(queryId);
-        } else {
-            this._searchClient.deleteOutgoingQuery(this._indexName, queryId, function (err) {
-                if (err) {
-                    console.error(err);
-                }
-
-                return _this._triggerQueryTimeout(queryId);
-            });
-        }
-    };
-
-    /**
-    * Removes all related data to the given `queryId` from the internal lists.
+    * Removes all related data to the given `queryId` from the internal list.
     *
     * @method core.search.SearchRequestManager~_cleanupQueryLists
     *
     * @param {string} queryId
     */
     SearchRequestManager.prototype._cleanupQueryLists = function (queryId) {
-        var expiryTimestamp = this._runningQueryIdMap[queryId];
-
-        this._runningQueryIdMap[queryId] = null;
-        delete this._runningQueryIdMap[queryId];
-
-        this._runningQueryIds[expiryTimestamp] = null;
-        delete this._runningQueryIds[expiryTimestamp];
+        this._runningQueryIds[queryId] = null;
+        delete this._runningQueryIds[queryId];
     };
 
     /**
@@ -330,75 +286,17 @@ var SearchRequestManager = (function () {
     *
     * @method core.search.SearchRequestManager~_createAndStoreQueryId
     *
-    * @param callback The callback that will be called after the generation of the data with `queryId` and `expiryTimestamp` as arguments.
+    * @param callback The callback that will be called after the generation of the data with `queryId` as first argument.
     */
     SearchRequestManager.prototype._createAndStoreQueryId = function (callback) {
         var _this = this;
         crypto.randomBytes(16, function (ex, buf) {
             var id = buf.toString('hex');
-            var lifetime = _this._config.get('search.queryLifetimeInSeconds') * 1000;
-            var expiryTimestamp = new Date().getTime() + lifetime;
 
-            _this._runningQueryIds[expiryTimestamp] = {
-                id: id,
-                count: 0
-            };
+            _this._runningQueryIds[id] = 0;
 
-            _this._runningQueryIdMap[id] = expiryTimestamp;
-
-            return callback(id, expiryTimestamp);
+            return callback(id);
         });
-    };
-
-    /**
-    * Iterates over the running queries and cleans up expired queries. It uses {@link core.search.SearchRequestManager~_checkResultsAndTriggerEvent}
-    * to trigger a `queryTimeout` or `queryEnd` event.
-    *
-    * @method core.search.SearchRequestManager~_removeExpiredQueries
-    */
-    SearchRequestManager.prototype._removeExpiredQueries = function () {
-        var _this = this;
-        var now = new Date().getTime();
-        var currentQueries = Object.keys(this._runningQueryIds);
-
-        var newRunningQueryIds = {};
-        currentQueries.forEach(function (expiryTimestamp) {
-            // keep alive queries
-            if (expiryTimestamp > now) {
-                newRunningQueryIds[expiryTimestamp] = _this._runningQueryIds[expiryTimestamp];
-            } else {
-                _this._checkResultsAndTriggerEvent(expiryTimestamp);
-            }
-        });
-
-        this._runningQueryIds = newRunningQueryIds;
-    };
-
-    /**
-    * Starts the the runner that removes expired queries in a specified interval.
-    *
-    * @see core.search.SearchRequestManager~_removeExpiredQueries
-    *
-    * @method core.search.SearchRequestManager~_startRunningQueriesLifetime
-    */
-    SearchRequestManager.prototype._startRunningQueriesLifetime = function () {
-        var _this = this;
-        this._runningQueriesLifetimeTimeout = global.setTimeout(function () {
-            _this._removeExpiredQueries();
-            _this._startRunningQueriesLifetime();
-        }, this._config.get('search.searchRequestManager.queryLifetimeIntervalInMilliSeconds'));
-    };
-
-    /**
-    * Stops the interval that cleans up expired queries.
-    *
-    * @method core.search.SearchRequestManager~_stopRunningQueriesLifetime
-    */
-    SearchRequestManager.prototype._stopRunningQueriesLifetime = function () {
-        if (this._runningQueriesLifetimeTimeout) {
-            global.clearTimeout(this._runningQueriesLifetimeTimeout);
-            this._runningQueriesLifetimeTimeout = null;
-        }
     };
 
     /**
@@ -410,9 +308,9 @@ var SearchRequestManager = (function () {
     
     * @param {string} queryId The id of the added search query
     */
-    SearchRequestManager.prototype._triggerQueryAdd = function (queryId) {
+    SearchRequestManager.prototype._triggerQueryAdd = function (queryId, queryBody) {
         if (this._isOpen) {
-            this._eventEmitter.emit('queryAdd', queryId);
+            this._eventEmitter.emit('queryAdd', queryId, new Buffer(JSON.stringify(queryBody)));
         }
     };
 
@@ -424,10 +322,11 @@ var SearchRequestManager = (function () {
     * @method core.search.SearchRequestManager~_triggerQueryEnd
     *
     * @param {string} queryId The id of the ended search query
+    * @param {string} reason The reason why the query was ended
     */
-    SearchRequestManager.prototype._triggerQueryEnd = function (queryId) {
+    SearchRequestManager.prototype._triggerQueryEnd = function (queryId, reason) {
         if (this._isOpen) {
-            this._eventEmitter.emit('queryEnd', queryId);
+            this._eventEmitter.emit('queryEnd', queryId, reason);
         }
 
         this._cleanupQueryLists(queryId);
@@ -451,17 +350,18 @@ var SearchRequestManager = (function () {
     };
 
     /**
-    * Triggers the `queryTimeout` event to registered listeners if the manager is open.
+    * Triggers the `queryCanceled` event to registered listeners if the manager is open.
     *
-    * @see core.search.SearchRequestManager#onQueryTimeout
+    * @see core.search.SearchRequestManager#onQueryCanceled
     *
-    * @method core.search.SearchRequestManager~_triggerQueryTimeout
+    * @method core.search.SearchRequestManager~_triggerQueryCanceled
     *
     * @param {string} queryId The id of the timed out search query
+    * @param {string} reason The reason why the query was canceled.
     */
-    SearchRequestManager.prototype._triggerQueryTimeout = function (queryId) {
+    SearchRequestManager.prototype._triggerQueryCanceled = function (queryId, reason) {
         if (this._isOpen) {
-            this._eventEmitter.emit('queryTimeout', queryId);
+            this._eventEmitter.emit('queryCanceled', queryId, reason);
         }
 
         this._cleanupQueryLists(queryId);
