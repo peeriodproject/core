@@ -97,6 +97,10 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 	 * END TESTING PURPOSES ONLY
 	 */
 
+	public getReadyCircuits ():HydraCircuitList {
+		return this._productionReadyCircuits;
+	}
+
 	public kickOff ():void {
 		this._checkAndConstructCircuit();
 	}

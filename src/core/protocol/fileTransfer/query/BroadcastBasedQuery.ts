@@ -132,7 +132,7 @@ class BroadcastBasedQuery extends events.EventEmitter implements QueryInterface 
 
 			this._validityTimeout = global.setTimeout(() => {
 				this._validityTimeout = 0;
-				this.abort('COMPL');
+				this.abort('COMPLETE');
 			}, this._validityNumOfMs);
 
 			this._responseListener = (message:ReadableQueryResponseMessageInterface) => {
@@ -142,7 +142,7 @@ class BroadcastBasedQuery extends events.EventEmitter implements QueryInterface 
 			this._transferMessageCenter.on('QUERY_RESPONSE_' + this._queryId, this._responseListener);
 		}
 		else {
-			this.abort('NOANON');
+			this.abort('NO_ANON');
 		}
 	}
 

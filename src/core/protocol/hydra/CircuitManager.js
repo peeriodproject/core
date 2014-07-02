@@ -85,6 +85,10 @@ var CircuitManager = (function (_super) {
     /**
     * END TESTING PURPOSES ONLY
     */
+    CircuitManager.prototype.getReadyCircuits = function () {
+        return this._productionReadyCircuits;
+    };
+
     CircuitManager.prototype.kickOff = function () {
         this._checkAndConstructCircuit();
     };
