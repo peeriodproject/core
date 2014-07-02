@@ -11,7 +11,7 @@ var QueryFactory = require('../../../../src/core/protocol/fileTransfer/query/Que
 var QueryManager = require('../../../../src/core/protocol/fileTransfer/query/QueryManager');
 var ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PROTOCOL --> FILE TRNASFER --> QueryManager', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> QueryManager', function () {
     var sandbox = null;
 
     var queryManager = null;

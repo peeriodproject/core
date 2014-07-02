@@ -15,7 +15,7 @@ import ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 import SearchMessageBridge = require('../../../../src/core/search/SearchMessageBridge');
 
 
-describe('CORE --> PROTOCOL --> FILE TRNASFER --> QueryManager', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> QueryManager', function () {
 
 	var sandbox:SinonSandbox = null;
 
