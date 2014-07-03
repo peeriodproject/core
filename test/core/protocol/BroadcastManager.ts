@@ -22,7 +22,7 @@ import BroadcastReadableMessageFactory = require('../../../src/core/protocol/bro
 import BroadcastReadableMessage = require('../../../src/core/protocol/broadcast/messages/BroadcastReadableMessage');
 import BroadcastWritableMessageFactory = require('../../../src/core/protocol/broadcast/messages/BroadcastWritableMessageFactory');
 
-describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager @current', function () {
+describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
 
 	var sandbox:SinonSandbox = null;
 

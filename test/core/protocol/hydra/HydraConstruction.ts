@@ -43,12 +43,19 @@ import Aes128GcmLayeredEncDecHandlerFactory = require('../../../../src/core/prot
 import Aes128GcmReadableDecryptedMessageFactory = require('../../../../src/core/protocol/hydra/messages/Aes128GcmReadableDecryptedMessageFactory');
 import Aes128GcmWritableMessageFactory = require('../../../../src/core/protocol/hydra/messages/Aes128GcmWritableMessageFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', function () {
+import Middleware = require('../../../../src/core/protocol/fileTransfer/Middleware');
+import WritableFileTransferMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/WritableFileTransferMessageFactory');
+import ReadableFileTransferMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/ReadableFileTransferMessageFactory');
+import TransferMessageCenter = require('../../../../src/core/protocol/fileTransfer/TransferMessageCenter');
+import FeedingNodesMessageBlock = require('../../../../src/core/protocol/fileTransfer/messages/FeedingNodesMessageBlock');
+
+describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @current', function () {
 
 	var sandbox:SinonSandbox = null;
 	var config:any = null;
 	var readableHydraMessageFactory = new ReadableHydraMessageFactory();
 	var layeredEncDecHandlerFactory = new Aes128GcmLayeredEncDecHandlerFactory();
+	var writableFileTransferMessageFactory = new WritableFileTransferMessageFactory();
 
 	var nodes = [];
 
@@ -99,13 +106,14 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', func
 					node.cellManager.pipeFileTransferMessage(circuitId, payload);
 				});
 
-				node.circuitManager.once('circuitReceivedTransferMessage', function (circuitId, payload) {
-					if (payload.toString() === 'foobar') {
+				node.transferMessageCenter.once('testMessage', function (circuitId, payload) {
+
+					if (payload === 'foobar') {
 						checkAndDone();
 					}
 				});
 
-				node.circuitManager.pipeFileTransferMessageThroughAllCircuits(new Buffer('foobar'));
+				node.circuitManager.pipeFileTransferMessageThroughAllCircuits(Buffer.concat([new Buffer(16), new Buffer([0xff]), new Buffer('foobar')]));
 			})(nodes[i]);
 		}
 	});
@@ -114,27 +122,54 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', func
 		var count = 0;
 
 		var checkAndDone = function () {
-			if (++count === 5) done();
+			if (++count === 5) {
+				for (var i=0; i<5; i++) {
+					var node = nodes[i];
+					node.cellManager.removeListener('cellReceivedTransferMessage', node.cellManager.listeners('cellReceivedTransferMessage')[1]);
+				}
+
+				done();
+			}
 		}
 
 		for (var i=0; i<5; i++) {
 			(function (node) {
 
-				node.cellManager.removeAllListeners('cellReceivedTransferMessage');
+				node.cellManager.removeListener('cellReceivedTransferMessage', node.cellManager.listeners('cellReceivedTransferMessage')[1]);
 
 				node.cellManager.on('cellReceivedTransferMessage', function (circuitId, payload) {
 					node.cellManager.pipeFileTransferMessage(circuitId, payload);
 				});
 
-				node.circuitManager.once('circuitReceivedTransferMessage', function (circuitId, payload) {
-					if (payload.toString() === 'foobar') {
+				node.transferMessageCenter.once('testMessage', function (circuitId, payload) {
+					if (payload === 'foobar') {
 						checkAndDone();
 					}
 				});
 
-				node.circuitManager.pipeFileTransferMessageThroughAllCircuits(new Buffer('foobar'), true);
+				node.circuitManager.pipeFileTransferMessageThroughAllCircuits(Buffer.concat([new Buffer(16), new Buffer([0xff]), new Buffer('foobar')]));
 			})(nodes[i]);
 		}
+	});
+
+	it('should correctly feed a node', function (done) {
+		var nodeThatFeeds = nodes[0];
+		var nodeThatGetsFed = nodes[nodes.length -1];
+
+		var circNodes = nodeThatGetsFed.circuitManager.getReadyCircuits()[0].getCircuitNodes();
+		var middlewareNode = circNodes[circNodes.length -1];
+
+		var feedingNodeBlockBuffer = FeedingNodesMessageBlock.constructBlock([middlewareNode]);
+
+		var payload = writableFileTransferMessageFactory.constructMessage(new Buffer(16).toString('hex'), 'TEST_MESSAGE', new Buffer('muschi'));
+
+		nodeThatGetsFed.transferMessageCenter.once('testMessage', function (circuitId, payload) {
+			payload.should.equal('muschi');
+			done();
+		});
+
+		nodeThatFeeds.transferMessageCenter.issueExternalFeedToCircuit(feedingNodeBlockBuffer, payload);
+
 	});
 
 
@@ -235,13 +270,17 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', func
 
 		var cellManager = new CellManager(config, connectionManager, messageCenter, cellFactory);
 
+		var middleware = new Middleware(cellManager, protocolConnectionManager, messageCenter, new WritableFileTransferMessageFactory());
+
+		var transferMessageCenter = new TransferMessageCenter(middleware, circuitManager, cellManager, messageCenter, new ReadableFileTransferMessageFactory(), new WritableFileTransferMessageFactory(), null, null);
 
 		nodes.push({
 			ip: ip,
 			port: 80,
 			protocolConnectionManager: protocolConnectionManager,
 			circuitManager: circuitManager,
-			cellManager: cellManager
+			cellManager: cellManager,
+			transferMessageCenter: transferMessageCenter
 		})
 	};
 

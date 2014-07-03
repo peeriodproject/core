@@ -18,7 +18,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> ReadableFileTransferMessage', 
 
 	it('should throw the errors', function () {
 		(function () {
-			new ReadableFileTransferMessage(Buffer.concat([new Buffer('cafebabecafebabecafebabecafebabe', 'hex'), new Buffer([0xff]), new Buffer('foobar')]));
+			new ReadableFileTransferMessage(Buffer.concat([new Buffer('cafebabecafebabecafebabecafebabe', 'hex'), new Buffer([0xef]), new Buffer('foobar')]));
 		}).should.throw();
 
 		(function () {

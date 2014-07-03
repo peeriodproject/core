@@ -110,6 +110,16 @@ var CellManager = (function (_super) {
     /**
     * END TESTING PURPOSES
     */
+    CellManager.prototype.getCircuitIdByFeedingIdentifier = function (feedingIdentifier) {
+        var cell = this._cellsByFeedingIdentifier[feedingIdentifier];
+
+        if (cell) {
+            return cell.getPredecessorCircuitId();
+        }
+
+        return null;
+    };
+
     CellManager.prototype.pipeFileTransferMessage = function (predecessorCircuitId, payload) {
         var cell = this._cellsByPredecessorCircuitId[predecessorCircuitId];
 
@@ -332,7 +342,9 @@ var CellManager = (function (_super) {
     CellManager.prototype._onTornDownCell = function (cell) {
         cell.removeAllListeners('fileTransferMessage');
 
-        delete this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()];
+        var predecessorCircuitId = cell.getPredecessorCircuitId();
+
+        delete this._cellsByPredecessorCircuitId[predecessorCircuitId];
         delete this._cellsByFeedingIdentifier[cell.getFeedingIdentifier()];
 
         for (var i = 0, l = this._maintainedCells.length; i < l; i++) {
@@ -341,6 +353,8 @@ var CellManager = (function (_super) {
                 break;
             }
         }
+
+        this.emit('tornDownCell', predecessorCircuitId);
     };
 
     /**

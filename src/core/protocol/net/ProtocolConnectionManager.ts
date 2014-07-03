@@ -283,6 +283,14 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		return this._connectionWaitingList;
 	}
 
+	public closeHydraSocket (identifier:string):void {
+		var socket:TCPSocketInterface = this._hydraSockets[identifier];
+
+		if (socket) {
+			socket.end();
+		}
+	}
+
 	public getConfirmedSocketByContactNode (node:ContactNodeInterface):TCPSocketInterface {
 		return this._getConfirmedSocketByIdentifier(this._nodeToIdentifier(node));
 	}
@@ -300,14 +308,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			else {
 				this.emit('message', msg);
 			}
-		}
-	}
-
-	public closeHydraSocket (identifier:string):void {
-		var socket:TCPSocketInterface = this._hydraSockets[identifier];
-
-		if (socket) {
-			socket.end();
 		}
 	}
 
