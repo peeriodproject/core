@@ -283,6 +283,24 @@ var RoutingTable = (function () {
     };
 
     RoutingTable.prototype.getRandomContactNodesFromBucket = function (bucketKey, amount, callback) {
+        //var
+        if (this._isInBucketKeyRange(bucketKey)) {
+            this._getBucket(bucketKey).getAll(function (err, contacts) {
+                var contactLength;
+
+                if (err) {
+                    return callback(err, null);
+                }
+
+                contactLength = contacts.length;
+
+                if (!contactLength || contactLength <= amount) {
+                    return callback(null, contacts);
+                }
+            });
+        } else {
+            return process.nextTick(callback.bind(null, new Error('RoutingTable.getRandomContactNodesFromBucket: The bucket key is out of range.'), null));
+        }
     };
 
     RoutingTable.prototype.isOpen = function (callback) {

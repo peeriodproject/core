@@ -317,7 +317,26 @@ class RoutingTable implements RoutingTableInterface {
 	}
 
 	public getRandomContactNodesFromBucket (bucketKey:number, amount:number, callback:(err:Error, contactNodes:ContactNodeListInterface) => any):void {
+		//var
 
+		if (this._isInBucketKeyRange(bucketKey)) {
+			this._getBucket(bucketKey).getAll((err:Error, contacts:ContactNodeListInterface) => {
+				var contactLength:number;
+
+				if (err) {
+					return callback(err, null);
+				}
+
+				contactLength = contacts.length;
+
+				if (!contactLength || contactLength <= amount) {
+					return callback(null, contacts);
+				}
+			});
+		}
+		else {
+			return process.nextTick(callback.bind(null, new Error('RoutingTable.getRandomContactNodesFromBucket: The bucket key is out of range.'), null));
+		}
 	}
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
