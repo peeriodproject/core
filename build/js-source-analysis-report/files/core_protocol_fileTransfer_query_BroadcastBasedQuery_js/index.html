@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/fileTransfer/query/BroadcastBasedQuery.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/fileTransfer/query/BroadcastBasedQuery.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">69.24</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">141</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">19.69</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.77</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var events = require(&#039;events&#039;);
+var crypto = require(&#039;crypto&#039;);
+
+/**
+* QueryInterface implementation based on broadcast.
+* Lets the broadcast manager ignore the generated query identifier.
+*
+* @class core.protocol.fileTransfer.BroadcastBasedQuery
+* @extends events.EventEmitter
+* @implements core.protocol.fileTransfer.QueryInterface
+*
+* @param {Buffer} searchObjectAsBuffer The object to search for in its byte buffer representation.
+* @param {core.protocol.fileTransfer.TransferMessageCenterInterface} A working transfer message center instance.
+* @param {core.protocol.hydra.CircuitManagerInterface} The hydra circuit manager used to pipe the messages through.
+* @oaram {core.protocol.broadcast.BroadcastManagerInterface} A working protocol broadcast manager instance.
+* @param {number} validityNumOfMs The number of milliseconds a query should live and wait for responses before being aborted.
+*/
+var BroadcastBasedQuery = (function (_super) {
+    __extends(BroadcastBasedQuery, _super);
+    function BroadcastBasedQuery(searchObjectAsBuffer, transferMessageCenter, circuitManager, broadcastManager, validityNumOfMs) {
+        _super.call(this);
+        /**
+        * Stores the broadcast manager instance.
+        *
+        * @member {core.protocol.broadcast.BroadcastManagerInterface} core.protocol.fileTransfer.BroadcastBasedQuery~_broadcastManager
+        */
+        this._broadcastManager = null;
+        /**
+        * Stores the hydra circuit manager instance.
+        *
+        * @member {core.protocol.hydra.CircuitManagerInterface} core.protocol.fileTransfer.BroadcastBasedQuery~_circuitManager
+        */
+        this._circuitManager = null;
+        /**
+        * Flag indicating whether this query has already been ended.
+        *
+        * @member {boolean} core.protocol.fileTransfer.BroadcastBasedQuery~_isEnded
+        */
+        this._isEnded = false;
+        /**
+        * The 16 byte long query identifier.
+        *
+        * @member {string} core.protocol.fileTransfer.BroadcastBasedQuery~_queryId
+        */
+        this._queryId = null;
+        /**
+        * Stores the listener function on the QUERY_RESPONSE event hooked to the transfer message center.
+        *
+        * @member {Function} core.protocol.fileTransfer.BroadcastBasedQuery~_responseListener
+        */
+        this._responseListener = null;
+        /**
+        * The object searched for.
+        *
+        * @member {Buffer} core.protocol.fileTransfer.BroadcastBasedQuery~_searchObjectAsBuffer
+        */
+        this._searchObjectAsBuffer = null;
+        /**
+        * Stores the transfer message center instance.
+        *
+        * @member {core.protocol.fileTransfer.TransferMessageCenterInterface} core.protocol.fileTransfer.BroadcastBasedQuery~_transferMessageCenter
+        */
+        this._transferMessageCenter = null;
+        /**
+        * The number of milliseconds the query is valid and waits for responses.
+        *
+        * @member {number} core.protocol.fileTransfer.BroadcastBasedQuery~_validityNumOfMs
+        */
+        this._validityNumOfMs = 0;
+        /**
+        * Stores the timeout issued when the query has been sent through the circuits.
+        *
+        * @member {number|NodeJS.Timer} core.protocol.fileTransfer.BroadcastBasedQuery~_validityTimeout
+        */
+        this._validityTimeout = 0;
+
+        this._searchObjectAsBuffer = searchObjectAsBuffer;
+        this._transferMessageCenter = transferMessageCenter;
+        this._circuitManager = circuitManager;
+        this._validityNumOfMs = validityNumOfMs;
+        this._broadcastManager = broadcastManager;
+
+        this._queryId = crypto.pseudoRandomBytes(16).toString(&#039;hex&#039;);
+    }
+    BroadcastBasedQuery.prototype.abort = function (abortMessageCode) {
+        if (!this._isEnded) {
+            this._isEnded = true;
+
+            if (this._validityTimeout) {
+                global.clearTimeout(this._validityTimeout);
+                this._validityTimeout = 0;
+            }
+
+            if (this._responseListener) {
+                this._transferMessageCenter.removeListener(&#039;QUERY_RESPONSE_&#039; + this._queryId, this._responseListener);
+            }
+
+            this.emit(&#039;end&#039;, abortMessageCode);
+        }
+    };
+
+    BroadcastBasedQuery.prototype.getQueryId = function () {
+        return this._queryId;
+    };
+
+    BroadcastBasedQuery.prototype.kickOff = function () {
+        var _this = this;
+        var queryBroadcastPayload = this._transferMessageCenter.wrapTransferMessage(&#039;QUERY_BROADCAST&#039;, this._queryId, this._searchObjectAsBuffer);
+        var allOkay = false;
+
+        if (queryBroadcastPayload) {
+            allOkay = this._circuitManager.pipeFileTransferMessageThroughAllCircuits(queryBroadcastPayload, true);
+        }
+
+        if (allOkay) {
+            this._broadcastManager.ignoreBroadcastId(this._queryId);
+
+            this._validityTimeout = global.setTimeout(function () {
+                _this._validityTimeout = 0;
+                _this.abort(&#039;COMPLETE&#039;);
+            }, this._validityNumOfMs);
+
+            this._responseListener = function (message) {
+                _this.emit(&#039;result&#039;, message.getFeedingNodes(), message.getResponseBuffer());
+            };
+
+            this._transferMessageCenter.on(&#039;QUERY_RESPONSE_&#039; + this._queryId, this._responseListener);
+        } else {
+            this.abort(&#039;NO_ANON&#039;);
+        }
+    };
+    return BroadcastBasedQuery;
+})(events.EventEmitter);
+
+module.exports = BroadcastBasedQuery;
+//# sourceMappingURL=BroadcastBasedQuery.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

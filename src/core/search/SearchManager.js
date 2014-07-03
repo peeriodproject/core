@@ -38,12 +38,37 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype.close = function (callback) {
+        var _this = this;
         var internalCallback = callback || function () {
         };
+        var closedPluginManager = false;
+        var closedSearchClient = false;
+        var checkAndClose = function (err) {
+            if (closedPluginManager && closedSearchClient || err) {
+                closedPluginManager = false;
+                closedSearchClient = false;
 
-        console.log('todo SearchManager#close');
+                _this._isOpen = false;
 
-        return process.nextTick(internalCallback.bind(null, null));
+                return internalCallback(err);
+            }
+        };
+
+        if (!this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+
+        this._pluginManager.close(function (err) {
+            closedPluginManager = true;
+
+            return checkAndClose(err);
+        });
+
+        this._searchClient.close(function (err) {
+            closedSearchClient = true;
+
+            return checkAndClose(err);
+        });
     };
 
     SearchManager.prototype.getItem = function (pathToIndex, callback) {
@@ -67,12 +92,37 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype.open = function (callback) {
+        var _this = this;
         var internalCallback = callback || function () {
         };
+        var openedPluginManager = false;
+        var openedSearchClient = false;
+        var checkAndClose = function (err) {
+            if (openedPluginManager && openedSearchClient || err) {
+                openedPluginManager = false;
+                openedSearchClient = false;
 
-        console.log('todo SearchManager#open');
+                _this._isOpen = true;
 
-        return process.nextTick(internalCallback.bind(null, null));
+                return internalCallback(err);
+            }
+        };
+
+        if (this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+
+        this._pluginManager.open(function (err) {
+            openedPluginManager = true;
+
+            return checkAndClose(err);
+        });
+
+        this._searchClient.open(function (err) {
+            openedSearchClient = true;
+
+            return checkAndClose(err);
+        });
     };
 
     SearchManager.prototype._registerPluginManagerEvents = function () {

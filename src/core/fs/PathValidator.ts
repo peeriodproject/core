@@ -79,11 +79,6 @@ class PathValidator implements PathValidatorInterface {
 
 			delete stats.atime;
 
-
-
-			console.log(stringify(stats));
-			console.log(stringify(statsToValidate));
-
 			// @see http://stackoverflow.com/a/1144249
 			var isValid:boolean = stringify(stats) === stringify(statsToValidate);
 

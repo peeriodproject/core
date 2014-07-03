@@ -53,10 +53,34 @@ class SearchManager implements SearchManagerInterface {
 
 	close (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function () {};
+		var closedPluginManager:boolean = false;
+		var closedSearchClient:boolean = false;
+		var checkAndClose = (err) => {
+			if (closedPluginManager && closedSearchClient || err) {
+				closedPluginManager = false;
+				closedSearchClient = false;
 
-		console.log('todo SearchManager#close');
+				this._isOpen = false;
 
-		return process.nextTick(internalCallback.bind(null, null));
+				return internalCallback(err);
+			}
+		};
+
+		if (!this._isOpen) {
+			return process.nextTick(internalCallback.bind(null, null));
+		}
+
+		this._pluginManager.close(function (err) {
+			closedPluginManager = true;
+
+			return checkAndClose(err);
+		});
+
+		this._searchClient.close(function (err) {
+			closedSearchClient = true;
+
+			return checkAndClose(err);
+		});
 	}
 
 	public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
@@ -82,10 +106,34 @@ class SearchManager implements SearchManagerInterface {
 
 	open (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function () {};
+		var openedPluginManager:boolean = false;
+		var openedSearchClient:boolean = false;
+		var checkAndClose = (err) => {
+			if (openedPluginManager && openedSearchClient || err) {
+				openedPluginManager = false;
+				openedSearchClient = false;
 
-		console.log('todo SearchManager#open');
+				this._isOpen = true;
 
-		return process.nextTick(internalCallback.bind(null, null));
+				return internalCallback(err);
+			}
+		};
+
+		if (this._isOpen) {
+			return process.nextTick(internalCallback.bind(null, null));
+		}
+
+		this._pluginManager.open(function (err) {
+			openedPluginManager = true;
+
+			return checkAndClose(err);
+		});
+
+		this._searchClient.open(function (err) {
+			openedSearchClient = true;
+
+			return checkAndClose(err);
+		});
 	}
 
 	private _registerPluginManagerEvents ():void {

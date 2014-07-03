@@ -24,7 +24,7 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	 * @param {string} queryId
 	 * @param {Buffer} responseBody
 	 * @param {Object} responseMeta
-	 * @param {Function} callback
+	 * @param {Function} [callback]
 	 */
 	addResponse (queryId:string, responseBody:Buffer, responseMeta:Object, callback?:(err:Error) => any):void;
 
@@ -33,13 +33,13 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	 *
 	 * @member core.search.SearchRequestManagerInterface#onQueryAdd
 	 *
-	 * @param callback The first argument will be the `queryId` that was added.
+	 * @param callback The arguments will be the `queryId` and the raw `queryBody` that was added.
 	 */
 	onQueryAdd (callback:Function):void;
 
 	/**
-	 * Adds a listener to the internal event emitter that triggers whenever a query ends after a specified timeframe and
-	 * after it got some results back. This event follows at least one `resultsChanged` event.	 *
+	 * Adds a listener to the internal event emitter that triggers whenever a query ends after a specified timeframe expired
+	 * and after it got some results back. This event follows at least one `resultsChanged` event.
 	 *
 	 * @member core.search.SearchRequestManagerInterface#onQueryEnd
 	 *
@@ -63,13 +63,26 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	onQueryRemoved (callback:Function):void;
 
 	/**
-	 * Adds a listener to the internal event emitter that triggers the function whenever a query timed out.
+	 * Adds a listener to the internal event emitter that triggers the function whenever a query was canceled.
 	 *
-	 * @member core.search.SearchRequestManagerInterface#onQueryTimeout
+	 * @member core.search.SearchRequestManagerInterface#onQueryCanceled
 	 *
-	 * @param {Function} callback The listener function. The first argument will be the `queryId` of the timed out query.
+	 * @param {Function} callback The listener function. The first argument will be the `queryId` of the canceled query.
 	 */
-	onQueryTimeout (callback:Function):void;
+	onQueryCanceled (callback:Function):void;
+
+	/**
+	 * The query was canceled, aborted or timed out within the network layer.
+	 * Checks weather the query for the given `queryId` got any results yet and calls the listeners {@link core.search.SearchRequestManagerInterface#onQueryEnd}
+	 * if it got some results. If no results have arrived the query will be deleted from the database and the {@link core.search.SearchRequestManagerInterface#onQueryCancel}
+	 * method will be called afterwards.
+	 *
+	 * @method core.search.SearchRequestManagerInterface#queryEnded
+	 *
+	 * @param {string} queryId
+	 * @param {string} reason
+	 */
+	queryEnded (queryId:string, reason:string):void;
 
 	/**
 	 * Removes the query an all responses from the database.
@@ -77,7 +90,7 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	 * @member core.search.SearchRequestManagerInterface#removeQuery
 	 *
 	 * @param {string} queryId
-	 * @param {Function} callback
+	 * @param {Function} [callback]
 	 */
 	removeQuery (queryId:string, callback?:(err:Error) => any):void;
 

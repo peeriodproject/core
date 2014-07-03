@@ -109,13 +109,13 @@ var GeneralWritableMessageFactory = (function () {
         /**
         * The address block as byte representation of the current sender.
         *
-        * @type {Buffer} core.protocol.messages.GeneralWritableMessageFactory~_currentAddressBlockBuffer
+        * @member {Buffer} core.protocol.messages.GeneralWritableMessageFactory~_currentAddressBlockBuffer
         */
         this._currentAddressBlockBuffer = null;
         /**
         * Keeps track of the single address block buffers needed to construct the address block
         *
-        * @type {Array&lt;Buffer&gt;} core.protocol.messages.GeneralWritableMessageFactory~_currentAddressBlockByteList
+        * @member {core.utils.BufferListInterface} core.protocol.messages.GeneralWritableMessageFactory~_currentAddressBlockByteList
         */
         this._currentAddressBlockByteList = null;
         /**
