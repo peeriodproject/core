@@ -127,6 +127,16 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 	 * END TESTING PURPOSES
 	 */
 
+	public getCircuitIdByFeedingIdentifier (feedingIdentifier:string):string {
+		var cell:HydraCellInterface = this._cellsByFeedingIdentifier[feedingIdentifier];
+
+		if (cell) {
+			return cell.getPredecessorCircuitId();
+		}
+
+		return null;
+	}
+
 	public pipeFileTransferMessage (predecessorCircuitId:string, payload:Buffer):boolean {
 		var cell:HydraCellInterface = this._cellsByPredecessorCircuitId[predecessorCircuitId];
 
@@ -349,7 +359,9 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 	private _onTornDownCell (cell:HydraCellInterface):void {
 		cell.removeAllListeners('fileTransferMessage');
 
-		delete this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()];
+		var predecessorCircuitId:string = cell.getPredecessorCircuitId();
+
+		delete this._cellsByPredecessorCircuitId[predecessorCircuitId];
 		delete this._cellsByFeedingIdentifier[cell.getFeedingIdentifier()];
 
 		for (var i = 0, l = this._maintainedCells.length; i < l; i++) {
@@ -358,6 +370,8 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 				break;
 			}
 		}
+
+		this.emit('tornDownCell', predecessorCircuitId);
 	}
 
 	/**

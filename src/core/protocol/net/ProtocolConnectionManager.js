@@ -247,6 +247,14 @@ var ProtocolConnectionManager = (function (_super) {
         return this._connectionWaitingList;
     };
 
+    ProtocolConnectionManager.prototype.closeHydraSocket = function (identifier) {
+        var socket = this._hydraSockets[identifier];
+
+        if (socket) {
+            socket.end();
+        }
+    };
+
     ProtocolConnectionManager.prototype.getConfirmedSocketByContactNode = function (node) {
         return this._getConfirmedSocketByIdentifier(this._nodeToIdentifier(node));
     };
@@ -263,14 +271,6 @@ var ProtocolConnectionManager = (function (_super) {
             } else {
                 this.emit('message', msg);
             }
-        }
-    };
-
-    ProtocolConnectionManager.prototype.closeHydraSocket = function (identifier) {
-        var socket = this._hydraSockets[identifier];
-
-        if (socket) {
-            socket.end();
         }
     };
 

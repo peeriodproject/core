@@ -28,7 +28,7 @@ class FeedingNodesMessageBlock {
 	 *
 	 * @method core.protocol.fileTransfer.FeedingNodesMessageBlock.constructBlock
 	 *
-	 * @param {core.protocol.hydra.HydraNodeList} The nodes to get an feeding-message-block from.
+	 * @param {core.protocol.hydra.HydraNodeList} The nodes to get a feeding-message-block from.
 	 * @returns {Buffer}
 	 */
 	public static constructBlock (nodeList:HydraNodeList):Buffer {
