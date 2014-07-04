@@ -39,8 +39,37 @@ interface MiddlewareInterface {
 	 */
 	addIncomingSocket (circuitId:string, socketIdentifier:string):void;
 
+	/**
+	 * Issues an instruction to end the TCP hydra socket stored under the provided identifier to the protcol connection manager.
+	 *
+	 * @method core.protocol.fileTransfer.MiddlewareInterface#closeSocketByIdentifier
+	 *
+	 * @param {string} socketIdentifier Identifier of the hydra socket to close.
+	 */
 	closeSocketByIdentifier (socketIdentifier:string):void;
 
+	/**
+	 * This is the main function which opens a TCP connection to one of the given nodes and pipes the payload - wrapped
+	 * in a GOT_FED message which again is wrapped in a FILE_TRANSFER message, though the opened socket.
+	 * The opened socket is assigned to a concatenation of node IP, node port, circuitID through which the instruction came,
+	 * feedingIdentifier of the node.
+	 *
+	 * Which node / socket is used is determined in the following way:
+	 *
+	 * - Check if there is already an open socket to one of the provided nodes, where the concatenations match
+	 * - If yes, use this socket.
+	 * - If no, try to open a connection to a random node. If successful, use the freshly opened socket. If failed, use another
+	 * random node.
+	 *
+	 * The method only does not feed another node, if all given nodes have been exhausted, i.e. all connections fail.
+	 *
+	 * @method core.protocol.fileTransfer.MiddlewareInterface#feedNode
+	 *
+	 * @param {core.protocol.hydra.HydraNodeList} feedingNodes A list of potential nodes to feed.
+	 * @param {string} associatedCircuitId The circuitID of the circuit which the EXTERNAL_FEED message came through.
+	 * @param {Buffer} payloadToFeed The complete payload of the message, which gets wrapped in a GOT_FED message with the used node's
+	 * feedingIdentifier used as transferIdentifier
+	 */
 	feedNode (feedingNodes:HydraNodeList, associatedCircuitId:string, payloadToFeed:Buffer):void;
 }
 
