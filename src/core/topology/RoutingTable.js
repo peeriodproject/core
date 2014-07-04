@@ -283,7 +283,7 @@ var RoutingTable = (function () {
     };
 
     RoutingTable.prototype.getRandomContactNodesFromBucket = function (bucketKey, amount, callback) {
-        //var
+        var _this = this;
         if (this._isInBucketKeyRange(bucketKey)) {
             this._getBucket(bucketKey).getAll(function (err, contacts) {
                 var contactLength;
@@ -296,6 +296,8 @@ var RoutingTable = (function () {
 
                 if (!contactLength || contactLength <= amount) {
                     return callback(null, contacts);
+                } else {
+                    return callback(null, _this._getRandomizedArray(contacts).slice(0, amount));
                 }
             });
         } else {
@@ -428,6 +430,37 @@ var RoutingTable = (function () {
     */
     RoutingTable.prototype._getBucketKey = function (id) {
         return this._id.differsInHighestBit(id);
+    };
+
+    /**
+    * Returns a shuffled copy of the given array.
+    *
+    * @see https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
+    * @see http://sroucheray.org/blog/2009/11/array-sort-should-not-be-used-to-shuffle-an-array/
+    *
+    * @method core.topology.RoutingTable~_getRandomizedArray
+    *
+    * @param {Array} input The array to shuffle
+    * @returns {Array} the shuffled copy of the input array
+    */
+    RoutingTable.prototype._getRandomizedArray = function (input) {
+        var output = input.slice();
+        var i = output.length;
+        var j;
+        var temp;
+
+        if (i === 0) {
+            return;
+        }
+
+        while (--i) {
+            j = Math.floor(Math.random() * (i + 1));
+            temp = output[i];
+            output[i] = output[j];
+            output[j] = temp;
+        }
+
+        return output;
     };
 
     /*

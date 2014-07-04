@@ -317,8 +317,6 @@ class RoutingTable implements RoutingTableInterface {
 	}
 
 	public getRandomContactNodesFromBucket (bucketKey:number, amount:number, callback:(err:Error, contactNodes:ContactNodeListInterface) => any):void {
-		//var
-
 		if (this._isInBucketKeyRange(bucketKey)) {
 			this._getBucket(bucketKey).getAll((err:Error, contacts:ContactNodeListInterface) => {
 				var contactLength:number;
@@ -331,6 +329,9 @@ class RoutingTable implements RoutingTableInterface {
 
 				if (!contactLength || contactLength <= amount) {
 					return callback(null, contacts);
+				}
+				else {
+					return callback(null, this._getRandomizedArray(contacts).slice(0, amount));
 				}
 			});
 		}
@@ -373,9 +374,9 @@ class RoutingTable implements RoutingTableInterface {
 		if (oldBucketKey !== newBucketKey) {
 			logger.error('can not replace nodes in bucket', {
 				oldBucketKey: oldBucketKey,
-				oldId: oldContactNodeId.toBitString(),
+				oldId       : oldContactNodeId.toBitString(),
 				newBucketKey: newBucketKey,
-				newId: newContactNodeId.toBitString()
+				newId       : newContactNodeId.toBitString()
 
 			});
 
@@ -465,6 +466,38 @@ class RoutingTable implements RoutingTableInterface {
 	 */
 	private _getBucketKey (id:IdInterface):number {
 		return this._id.differsInHighestBit(id);
+	}
+
+	/**
+	 * Returns a shuffled copy of the given array.
+	 *
+	 * @see https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
+	 * @see http://sroucheray.org/blog/2009/11/array-sort-should-not-be-used-to-shuffle-an-array/
+	 *
+	 * @method core.topology.RoutingTable~_getRandomizedArray
+	 *
+	 * @param {Array} input The array to shuffle
+	 * @returns {Array} the shuffled copy of the input array
+	 */
+	private _getRandomizedArray (input:Array<any>):Array<any> {
+		var output:Array<any> = input.slice();
+		var i = output.length;
+		var j;
+		var temp;
+
+
+		if (i === 0) {
+			return;
+		}
+
+		while (--i) {
+			j = Math.floor(Math.random() * ( i + 1 ));
+			temp = output[i];
+			output[i] = output[j];
+			output[j] = temp;
+		}
+
+		return output;
 	}
 
 	/*
