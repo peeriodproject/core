@@ -42,7 +42,7 @@ var ReadableFileTransferMessageFactory = require('../../../../src/core/protocol/
 var TransferMessageCenter = require('../../../../src/core/protocol/fileTransfer/TransferMessageCenter');
 var FeedingNodesMessageBlock = require('../../../../src/core/protocol/fileTransfer/messages/FeedingNodesMessageBlock');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', function () {
     var sandbox = null;
     var config = null;
     var readableHydraMessageFactory = new ReadableHydraMessageFactory();

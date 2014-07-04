@@ -39,8 +39,7 @@ var TransferMessageCenter = (function (_super) {
         this._readableQueryResponseMessageFactory = readableQueryResponseFactory;
         this._writableQueryResponseMessageFactory = writableQueryResponseFactory;
 
-        this._buildFeedingNodesBlock();
-
+        //this._buildFeedingNodesBlock();
         this._setupListeners();
     }
     TransferMessageCenter.prototype.issueExternalFeedToCircuit = function (nodesToFeedBlock, payload, circuitId) {
@@ -61,6 +60,7 @@ var TransferMessageCenter = (function (_super) {
         }
     };
 
+    // not sure of to really use this in this way
     TransferMessageCenter.prototype._buildFeedingNodesBlock = function () {
         var nodes = [];
         var circuits = this._circuitManager.getReadyCircuits();

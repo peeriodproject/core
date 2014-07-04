@@ -195,7 +195,7 @@ class Middleware implements MiddlewareInterface {
 
 			if (incomingSockets && incomingSockets.length) {
 				for (var i=0, l=incomingSockets.length; i<l; i++) {
-					this._protocolConnectionManager.closeHydraSocket(circuitId);
+					this._protocolConnectionManager.closeHydraSocket(incomingSockets[i]);
 				}
 
 				delete this._incomingSockets[circuitId];
