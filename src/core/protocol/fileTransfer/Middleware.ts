@@ -72,6 +72,22 @@ class Middleware implements MiddlewareInterface {
 		this._setupListeners();
 	}
 
+	/**
+	 * BEGIN TESTING PURPOSES ONLY
+	 */
+
+	public getOutgoingList ():any {
+		return this._outgoingSockets;
+	}
+
+	public getIncomingList ():any {
+		return this._incomingSockets;
+	}
+
+	/**
+	 * END TESTING PURPOSES ONLY
+	 */
+
 	public addIncomingSocket (circuitId:string, socketIdentifier:string):void {
 		var existing:Array<string> = this._incomingSockets[circuitId];
 
@@ -173,7 +189,9 @@ class Middleware implements MiddlewareInterface {
 
 				this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, (err:Error, identifier:string) => {
 					if (!err && identifier) {
+
 						this._outgoingSockets[this._constructOutgoingKey(node, associatedCircuitId)] = identifier;
+
 						this._feedSocket(identifier, node.feedingIdentifier, payloadToFeed);
 					}
 					else {

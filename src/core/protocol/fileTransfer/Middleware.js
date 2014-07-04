@@ -56,6 +56,20 @@ var Middleware = (function () {
 
         this._setupListeners();
     }
+    /**
+    * BEGIN TESTING PURPOSES ONLY
+    */
+    Middleware.prototype.getOutgoingList = function () {
+        return this._outgoingSockets;
+    };
+
+    Middleware.prototype.getIncomingList = function () {
+        return this._incomingSockets;
+    };
+
+    /**
+    * END TESTING PURPOSES ONLY
+    */
     Middleware.prototype.addIncomingSocket = function (circuitId, socketIdentifier) {
         var existing = this._incomingSockets[circuitId];
 
@@ -156,6 +170,7 @@ var Middleware = (function () {
                 this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
                     if (!err && identifier) {
                         _this._outgoingSockets[_this._constructOutgoingKey(node, associatedCircuitId)] = identifier;
+
                         _this._feedSocket(identifier, node.feedingIdentifier, payloadToFeed);
                     } else {
                         _this._obtainConnectionAndFeed(feedingNodes, associatedCircuitId, payloadToFeed, usedIndices);
