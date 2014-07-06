@@ -16,7 +16,7 @@ import ProtocolConnectionManager = require('../../../../src/core/protocol/net/Pr
 import WritableFileTransferMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/WritableFileTransferMessageFactory');
 import Middleware = require('../../../../src/core/protocol/fileTransfer/Middleware');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware', function () {
 
 	var sandbox:SinonSandbox = null;
 

@@ -12,7 +12,7 @@ var HydraMessageCenter = require('../../../../src/core/protocol/hydra/HydraMessa
 var WritableFileTransferMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/WritableFileTransferMessageFactory');
 var Middleware = require('../../../../src/core/protocol/fileTransfer/Middleware');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware', function () {
     var sandbox = null;
 
     var socketCount = 0;
