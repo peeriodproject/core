@@ -428,7 +428,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 
 		});
 
-		describe('should correctly return `amount` random contact nodes from the specified bucket @joern', function () {
+		describe('should correctly return `amount` random contact nodes from the specified bucket', function () {
 
 			it ('should correctly return all contact nodes if the bucket contains less nodes than specified', function (done) {
 				var routingTable:RoutingTableInterface;
