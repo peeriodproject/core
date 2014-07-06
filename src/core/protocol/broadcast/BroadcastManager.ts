@@ -175,7 +175,7 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 
 			if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1 && this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
 
-				this.emit(msg.getMessageType(), message.getPayload());
+				this.emit(msg.getMessageType(), message.getPayload(), message.getBroadcastId());
 
 				var differsInBit:number = msg.getSender().getId().differsInHighestBit(this._myNode.getId());
 
