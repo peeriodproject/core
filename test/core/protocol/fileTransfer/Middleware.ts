@@ -73,7 +73,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware @current', function
 		];
 
 		connectEmitter.on('obtaining', (port, ip) => {
-			
+
 			if (ip === '1') {
 				connectionResponse(ip, port, true);
 			}
@@ -96,6 +96,105 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware @current', function
 
 	});
 
+	it('should feed an existing socket if possible', function (done) {
+		var nodes = [
+			{
+				ip: '1',
+				port: 80,
+				feedingIdentifier: 'foobar'
+			},
+			{
+				ip: '2',
+				port: 80,
+				feedingIdentifier: 'foobar2'
+			},
+			{
+				ip: '3',
+				port: 80,
+				feedingIdentifier: 'foobar3'
+			},
+			{
+				ip: '4',
+				port: 80,
+				feedingIdentifier: 'foobar4'
+			}
+		];
+
+		var existingSocketIdentifier:string = middleware.getOutgoingList()['circ1_1_80_foobar'];
+
+		connectEmitter.once('msgSent', function (ident, buffer) {
+			ident.should.equal(existingSocketIdentifier);
+			buffer.toString().should.equal('foo');
+			done();
+		});
+
+		middleware.feedNode(nodes, 'circ1', new Buffer('foo'));
+	});
+
+	it('should close & remove the outgoing socket from the list if the underlying circuit is torn down', function () {
+		openSockets.length.should.equal(1);
+
+		cellManagerStub.emit('tornDownCell', 'circ1');
+
+		Object.keys(middleware.getOutgoingList()).length.should.equal(0);
+		openSockets.length.should.equal(0);
+	});
+
+	it('should assign an incoming socket to a specific circuit', function () {
+		openSockets.push('foobar');
+		middleware.addIncomingSocket('circ2', 'foobar');
+
+		middleware.getIncomingList()['circ2'][0].should.equal('foobar');
+	});
+
+	it('should close & remove the incoming socket from the list if the underlygin circuit is torn down', function () {
+		openSockets.length.should.equal(1);
+
+		cellManagerStub.emit('tornDownCell', 'circ2');
+
+		(middleware.getIncomingList()['circ2'] === undefined).should.be.true;
+
+		openSockets.length.should.equal(0);
+	});
+
+	it('should correctly externally close a socket', function () {
+		openSockets.push('foobar1');
+
+		middleware.closeSocketByIdentifier('foobar1');
+
+		openSockets.length.should.equal(0);
+	});
+
+	it('should remove the correct outgoing socket from the list of the underlying socket closes', function (done) {
+		var nodes = [
+			{
+				ip: '4',
+				port: 80,
+				feedingIdentifier: 'foobar4'
+			}
+		];
+
+		connectEmitter.once('obtaining', (port, ip) => {
+			connectionResponse(ip, port, true);
+		});
+
+		connectEmitter.once('msgSent', function (ident, buffer) {
+			ident.should.equal(middleware.getOutgoingList()['circ3_4_80_foobar4']);
+			buffer.toString().should.equal('foo');
+
+			protocolConnectionManagerStub.emit('terminatedConnection', ident);
+
+			setImmediate(function () {
+				(middleware.getOutgoingList()['circ3_4_80_foobar4'] === undefined).should.be.true;
+				done();
+			});
+
+
+		});
+
+		middleware.feedNode(nodes, 'circ3', new Buffer('foo'));
+	});
+
 	before(function () {
 		sandbox = sinon.sandbox.create();
 
@@ -108,6 +207,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware @current', function
 
 				if (success) {
 					ident = 'socket' + ++socketCount;
+					openSockets.push(ident);
 				}
 				else {
 					err = new Error();
