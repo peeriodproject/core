@@ -106,6 +106,10 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 			});
 		});
 
+		this._searchResponseManager.onNoResultsFound((queryId:string) => {
+			this.emit('OUTGOING_RESULTS_EVENT_NAME', queryId, null);
+		});
+
 	}
 
 	private _setupIncomingResults ():void {

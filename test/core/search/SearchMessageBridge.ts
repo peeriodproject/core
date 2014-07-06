@@ -131,4 +131,16 @@ describe('CORE --> SEARCH --> SearchMessageBridge', function () {
 		searchResponseManagerStub.onResultsFound.getCall(0).args[0]('queryId', new Buffer('.................................'));
 	});
 
+	it ('should correctly emit a `OUTGOING_RESULTS_EVENT_NAME` event without results', function (done) {
+		createSearchMesageBridge();
+
+		searchMessageBridge.on('OUTGOING_RESULTS_EVENT_NAME', function (queryId) {
+			queryId.should.equal('queryId');
+
+			done();
+		});
+
+		searchResponseManagerStub.onNoResultsFound.getCall(0).args[0]('queryId');
+	});
+
 });
