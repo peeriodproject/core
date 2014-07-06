@@ -204,7 +204,7 @@ var Middleware = (function () {
                 var key = outgoingSocketsKeys[i];
 
                 if (key.indexOf(circuitId) === 0) {
-                    _this._protocolConnectionManager.closeHydraSocket(key);
+                    _this._protocolConnectionManager.closeHydraSocket(_this._outgoingSockets[key]);
 
                     delete _this._outgoingSockets[key];
                 }

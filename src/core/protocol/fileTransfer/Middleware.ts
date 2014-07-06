@@ -225,7 +225,7 @@ class Middleware implements MiddlewareInterface {
 				var key:string = outgoingSocketsKeys[i];
 
 				if (key.indexOf(circuitId) === 0) {
-					this._protocolConnectionManager.closeHydraSocket(key);
+					this._protocolConnectionManager.closeHydraSocket(this._outgoingSockets[key]);
 
 					delete this._outgoingSockets[key];
 				}
