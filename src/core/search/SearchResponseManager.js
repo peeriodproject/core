@@ -82,6 +82,10 @@ var SearchResponseManager = (function () {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
+    SearchResponseManager.prototype.onNoResultsFound = function (callback) {
+        this._eventEmitter.addListener('noResultsFound', callback);
+    };
+
     SearchResponseManager.prototype.onResultsFound = function (callback) {
         this._eventEmitter.addListener('resultsFound', callback);
     };
@@ -126,9 +130,11 @@ var SearchResponseManager = (function () {
 
                 internalCallback(null);
 
-                if (results['total']) {
+                if (results && results['total']) {
                     // todo add the ability to manipulate results via plugins before the event will be triggered
                     return _this._triggerResultsFound(queryId, results);
+                } else {
+                    return _this._triggerNoResultsFound(queryId);
                 }
             });
         });
@@ -181,6 +187,12 @@ var SearchResponseManager = (function () {
         }
 
         return hits;
+    };
+
+    SearchResponseManager.prototype._triggerNoResultsFound = function (queryId) {
+        if (this._isOpen) {
+            this._eventEmitter.emit('noResultsFound', queryId);
+        }
     };
 
     /**
