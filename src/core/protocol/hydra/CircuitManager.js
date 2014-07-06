@@ -85,6 +85,22 @@ var CircuitManager = (function (_super) {
     /**
     * END TESTING PURPOSES ONLY
     */
+    CircuitManager.prototype.getRandomFeedingNodesBatch = function () {
+        var nodes = [];
+        var circuits = this.getReadyCircuits();
+
+        for (var i = 0, l = circuits.length; i < l; i++) {
+            var circuitNodes = circuits[i].getCircuitNodes();
+            var randomNode = circuitNodes[Math.floor(Math.random() * circuitNodes.length)];
+
+            if (randomNode) {
+                nodes.push(randomNode);
+            }
+        }
+
+        return nodes.length ? nodes : null;
+    };
+
     CircuitManager.prototype.getReadyCircuits = function () {
         return this._productionReadyCircuits;
     };

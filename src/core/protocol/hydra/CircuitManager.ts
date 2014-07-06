@@ -97,6 +97,22 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 	 * END TESTING PURPOSES ONLY
 	 */
 
+	public getRandomFeedingNodesBatch ():HydraNodeList {
+		var nodes:HydraNodeList = [];
+		var circuits:HydraCircuitList = this.getReadyCircuits();
+
+		for (var i=0, l=circuits.length; i<l; i++) {
+			var circuitNodes:HydraNodeList = circuits[i].getCircuitNodes();
+			var randomNode:HydraNode = circuitNodes[Math.floor(Math.random() * circuitNodes.length)];
+
+			if (randomNode) {
+				nodes.push(randomNode);
+			}
+		}
+
+		return nodes.length ? nodes : null;
+	}
+
 	public getReadyCircuits ():HydraCircuitList {
 		return this._productionReadyCircuits;
 	}
