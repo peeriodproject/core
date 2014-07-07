@@ -5,6 +5,9 @@
  * - if a valid response comes back - issues an EXTERNAL_FEED instruction with the results and a random list of feeding nodes
  * from its own circuits.
  *
+ * Furthermore, if the client's node is part of a circuit and gets the instruction to issue a broadcast, the ResponseManager
+ * handles this and responds to the query himself (after an optional timeout).
+ *
  * @interface
  * @class core.protocol.fileTransfer.ResponseManagerInterface
  */
