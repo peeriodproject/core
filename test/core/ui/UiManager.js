@@ -156,5 +156,30 @@ describe('CORE --> UI --> UiManager', function () {
             });
         });
     });
+
+    it('should correctly forward a component update event', function (done) {
+        var componentStub = testUtils.stubPublicApi(sandbox, UiComponent, {
+            getChannelName: function () {
+                return 'chat';
+            },
+            getEventNames: function () {
+                return ['foo'];
+            },
+            getState: function () {
+                return { foo: 'bar' };
+            }
+        });
+
+        createUiManager(configStub, appQuitHandlerStub, [componentStub], function () {
+            // trigger the onUiUpdate listener
+            componentStub.onUiUpdate.getCall(0).args[0]();
+
+            componentStub.getState.callCount.should.equal(1);
+            componentStub.onAfterUiUpdate.callCount.should.equal(1);
+            componentStub.getState.calledBefore(componentStub.onAfterUiUpdate).should.be.true;
+
+            done();
+        });
+    });
 });
 //# sourceMappingURL=UiManager.js.map
