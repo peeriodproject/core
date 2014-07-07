@@ -13,6 +13,15 @@ import ClosableAsyncInterface = require('../../utils/interfaces/ClosableAsyncInt
 interface SearchResponseManagerInterface extends ClosableAsyncInterface {
 
 	/**
+	 * Registers a listener function that gets called whenever an incoming query could not find any results.
+	 *
+	 * @member core.search.SearchResponseManagerInterface#onNoResultsFound
+	 *
+	 * @param callback The listener that gets called with the `queryId` that was dropped.
+	 */
+	onNoResultsFound (callback:(queryId:string) => any):void;
+
+	/**
 	 * Registers a listener function that gets called whenever a new result (set) for an incoming query was found
 	 *
 	 * @member core.search.SearchResponseManagerInterface#onResultsFound

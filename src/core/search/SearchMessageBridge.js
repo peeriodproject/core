@@ -105,6 +105,10 @@ var SearchMessageBridge = (function (_super) {
                 }
             });
         });
+
+        this._searchResponseManager.onNoResultsFound(function (queryId) {
+            _this.emit('OUTGOING_RESULTS_EVENT_NAME', queryId, null);
+        });
     };
 
     SearchMessageBridge.prototype._setupIncomingResults = function () {

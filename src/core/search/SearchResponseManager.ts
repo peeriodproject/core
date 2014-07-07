@@ -91,6 +91,10 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
+	public onNoResultsFound (callback:(queryId:string) => any):void {
+		this._eventEmitter.addListener('noResultsFound', callback);
+	}
+
 	public onResultsFound (callback:(queryId:string, results:Buffer) => any):void {
 		this._eventEmitter.addListener('resultsFound', callback);
 	}
@@ -132,9 +136,12 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 
 				internalCallback(null);
 
-				if (results['total']) {
+				if (results && results['total']) {
 					// todo add the ability to manipulate results via plugins before the event will be triggered
 					return this._triggerResultsFound(queryId, results);
+				}
+				else {
+					return this._triggerNoResultsFound(queryId);
 				}
 			});
 		});
@@ -186,6 +193,12 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 		}
 
 		return hits;
+	}
+
+	private _triggerNoResultsFound (queryId:string):void {
+		if (this._isOpen) {
+			this._eventEmitter.emit('noResultsFound', queryId);
+		}
 	}
 
 	/**

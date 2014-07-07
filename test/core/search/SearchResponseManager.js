@@ -180,5 +180,26 @@ describe('CORE --> SEARCH --> SearchResponseManager', function () {
             closeAndDone(manager, done);
         });
     });
+
+    it('should correctly call listeners registered for the `onNoResultsFound` event', function (done) {
+        searchResults = {
+            total: 0,
+            hits: []
+        };
+
+        var manager = new SearchResponseManager(appQuitHandlerStub, searchClientStub, {
+            onOpenCallback: function () {
+                manager.validateQueryAndTriggerResults('queryId', new Buffer('{"match": {"foo": "bar"}}'), function (err) {
+                    (err === null).should.be.true;
+                });
+            }
+        });
+
+        manager.onNoResultsFound(function (queryId) {
+            queryId.should.equal('queryId');
+
+            closeAndDone(manager, done);
+        });
+    });
 });
 //# sourceMappingURL=SearchResponseManager.js.map
