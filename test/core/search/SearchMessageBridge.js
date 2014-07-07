@@ -87,7 +87,7 @@ describe('CORE --> SEARCH --> SearchMessageBridge', function () {
         searchRequestManagerStub.onQueryRemoved.getCall(0).args[0]('queryId');
     });
 
-    it('should correctly forward a `end` event from the network layer by calling the `queryEnded` method', function (done) {
+    it('should correctly forward an `end` event from the network layer by calling the `queryEnded` method', function (done) {
         searchRequestManagerStub = testUtils.stubPublicApi(sandbox, SearchRequestManager, {
             queryEnded: function (queryId, reason) {
                 queryId.should.equal('queryId');
@@ -102,7 +102,7 @@ describe('CORE --> SEARCH --> SearchMessageBridge', function () {
         searchMessageBridge.emit('end', 'queryId', 'reason');
     });
 
-    it('should correctly listens to `INCOMING_QUERY_EVENT_NAME events, inflates the incoming query and forward it to the SearchResponseManager', function (done) {
+    it('should correctly listen to `matchBroadcastQuery` events, inflate the incoming query and forward it to the SearchResponseManager', function (done) {
         searchResponseManagerStub = testUtils.stubPublicApi(sandbox, SearchResponseManager, {
             validateQueryAndTriggerResults: function (queryId, queryBody) {
                 queryId.should.equal('queryId');
@@ -114,13 +114,13 @@ describe('CORE --> SEARCH --> SearchMessageBridge', function () {
 
         createSearchMesageBridge();
 
-        searchMessageBridge.emit('INCOMING_QUERY_EVENT_NAME', 'queryId', new Buffer('09MjAAA=', 'base64'));
+        searchMessageBridge.emit('matchBroadcastQuery', 'queryId', new Buffer('09MjAAA=', 'base64'));
     });
 
-    it('should correctly deflate the outgoing results and emit a `OUTGOING_RESULTS_EVENT_NAME` event', function (done) {
+    it('should correctly deflate the outgoing results and emit a `broadcastQueryResults` event', function (done) {
         createSearchMesageBridge();
 
-        searchMessageBridge.on('OUTGOING_RESULTS_EVENT_NAME', function (queryId, compressedResults) {
+        searchMessageBridge.on('broadcastQueryResults', function (queryId, compressedResults) {
             queryId.should.equal('queryId');
             compressedResults.toString('base64').should.equal('09MjAAA=');
 
@@ -130,10 +130,10 @@ describe('CORE --> SEARCH --> SearchMessageBridge', function () {
         searchResponseManagerStub.onResultsFound.getCall(0).args[0]('queryId', new Buffer('.................................'));
     });
 
-    it('should correctly emit a `OUTGOING_RESULTS_EVENT_NAME` event without results', function (done) {
+    it('should correctly emit a `broadcastQueryResults` event without results', function (done) {
         createSearchMesageBridge();
 
-        searchMessageBridge.on('OUTGOING_RESULTS_EVENT_NAME', function (queryId) {
+        searchMessageBridge.on('broadcastQueryResults', function (queryId) {
             queryId.should.equal('queryId');
 
             done();

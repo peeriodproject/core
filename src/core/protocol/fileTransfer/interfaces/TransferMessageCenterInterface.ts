@@ -7,6 +7,8 @@
  */
 interface TransferMessageCenterInterface extends NodeJS.EventEmitter {
 
+	issueExternalFeedToCircuit (nodesToFeedBlock:Buffer, payload:Buffer, circuitId?:string):boolean;
+
 	wrapTransferMessage (messageType:string, transferId:string, payload:Buffer):Buffer;
 
 }
