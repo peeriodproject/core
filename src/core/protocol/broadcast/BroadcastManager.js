@@ -156,7 +156,7 @@ var BroadcastManager = (function (_super) {
             var broadcastId = message.getBroadcastId();
 
             if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1 && this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
-                this.emit(msg.getMessageType(), message.getPayload());
+                this.emit(msg.getMessageType(), message.getPayload(), message.getBroadcastId());
 
                 var differsInBit = msg.getSender().getId().differsInHighestBit(this._myNode.getId());
 

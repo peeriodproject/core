@@ -1,6 +1,7 @@
 /// <reference path='../../../../../ts-definitions/node/node.d.ts' />
 
 import HydraCircuitList = require('./HydraCircuitList');
+import HydraNodeList = require('./HydraNodeList');
 
 /**
  * The CircuitManager keeps track of the Hydra circuits, constructs them and always tries to maintain an optimal desired
@@ -11,6 +12,15 @@ import HydraCircuitList = require('./HydraCircuitList');
  * @class core.protocol.hydra.CircuitManagerInterface
  */
 interface CircuitManagerInterface extends NodeJS.EventEmitter {
+
+	/**
+	 * Returns a hydra node list consisting of a random node from each production-ready circuit.
+	 *
+	 * @method core.protocol.hydra.CircuitManagerInterface#getRandomFeedingNodesBatch
+	 *
+	 * @returns {core.protocol.hydra.HydraNodeList}
+	 */
+	getRandomFeedingNodesBatch ():HydraNodeList;
 
 	/**
 	 * Returns all production-ready, built up circuits.

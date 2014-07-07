@@ -49,7 +49,7 @@ import ReadableFileTransferMessageFactory = require('../../../../src/core/protoc
 import TransferMessageCenter = require('../../../../src/core/protocol/fileTransfer/TransferMessageCenter');
 import FeedingNodesMessageBlock = require('../../../../src/core/protocol/fileTransfer/messages/FeedingNodesMessageBlock');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', function () {
 
 	var sandbox:SinonSandbox = null;
 	var config:any = null;

@@ -16,7 +16,7 @@ import HydraCircuitList = require('../../../../src/core/protocol/hydra/interface
 import CircuitManager = require('../../../../src/core/protocol/hydra/CircuitManager');
 import HydraCircuitFactory = require('../../../../src/core/protocol/hydra/HydraCircuitFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> CircuitManager', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> CircuitManager @current', function () {
 
 	var minNodes = 3;
 	var maxNodes = 7;
@@ -128,6 +128,33 @@ describe('CORE --> PROTOCOL --> HYDRA --> CircuitManager', function () {
 
 			done();
 		});
+	});
+
+	it('should return a random batch of feeding nodes', function () {
+
+		(<any> circuitManager).__getReadyCircuits = circuitManager.getReadyCircuits();
+
+		circuitManager.getReadyCircuits = function () {
+			return [
+				testUtils.stubPublicApi(sandbox, HydraCircuit, {
+					getCircuitNodes: function () {
+						return [{checker: 'foo1'}, {checker: 'foo2'}];
+					}
+				}),
+				testUtils.stubPublicApi(sandbox, HydraCircuit, {
+					getCircuitNodes: function () {
+						return [{checker: 'bar1'}, {checker: 'bar2'}];
+					}
+				})
+			];
+		};
+
+		var list:any = circuitManager.getRandomFeedingNodesBatch();
+
+		['foo1', 'foo2'].should.containEql(list[0].checker);
+		['bar1', 'bar2'].should.containEql(list[1].checker);
+
+		circuitManager.getReadyCircuits = (<any> circuitManager).__getReadyCircuits;
 	});
 
 	after(function () {

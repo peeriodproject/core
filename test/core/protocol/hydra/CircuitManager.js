@@ -10,10 +10,12 @@ var testUtils = require('../../../utils/testUtils');
 
 var ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 
+var HydraCircuit = require('../../../../src/core/protocol/hydra/HydraCircuit');
+
 var CircuitManager = require('../../../../src/core/protocol/hydra/CircuitManager');
 var HydraCircuitFactory = require('../../../../src/core/protocol/hydra/HydraCircuitFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> CircuitManager', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> CircuitManager @current', function () {
     var minNodes = 3;
     var maxNodes = 7;
     var desiredNumOfCircs = 4;
@@ -125,6 +127,32 @@ describe('CORE --> PROTOCOL --> HYDRA --> CircuitManager', function () {
 
             done();
         });
+    });
+
+    it('should return a random batch of feeding nodes', function () {
+        circuitManager.__getReadyCircuits = circuitManager.getReadyCircuits();
+
+        circuitManager.getReadyCircuits = function () {
+            return [
+                testUtils.stubPublicApi(sandbox, HydraCircuit, {
+                    getCircuitNodes: function () {
+                        return [{ checker: 'foo1' }, { checker: 'foo2' }];
+                    }
+                }),
+                testUtils.stubPublicApi(sandbox, HydraCircuit, {
+                    getCircuitNodes: function () {
+                        return [{ checker: 'bar1' }, { checker: 'bar2' }];
+                    }
+                })
+            ];
+        };
+
+        var list = circuitManager.getRandomFeedingNodesBatch();
+
+        ['foo1', 'foo2'].should.containEql(list[0].checker);
+        ['bar1', 'bar2'].should.containEql(list[1].checker);
+
+        circuitManager.getReadyCircuits = circuitManager.__getReadyCircuits;
     });
 
     after(function () {
