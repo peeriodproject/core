@@ -5,13 +5,13 @@
 import UiComponentInterface = require('../interfaces/UiComponentInterface');
 import PathListInterface = require('../../fs/interfaces/PathListInterface');
 
+import UiComponent = require('../UiComponent');
+
 /**
  * @class core.ui.UiFolderDropzoneComponent
  * @implements core.ui.UiComponentInterface
  */
-class UiFolderDropzoneComponent implements UiComponentInterface {
-
-	private _connections:Array<any> = [];
+class UiFolderDropzoneComponent extends UiComponent {
 
 	// todo ts-declaration gui.Window
 	private _window:any = null;
@@ -25,24 +25,35 @@ class UiFolderDropzoneComponent implements UiComponentInterface {
 	private _paths:PathListInterface = [];
 
 	constructor(window) {
+		super();
+
 		this._guiWindow = window;
 
 		this._windowDimensions.height = 300;
 		this._windowDimensions.width = 300;
+
+		this._setupEventListeners();
 	}
 
 	public getChannelName ():string {
 		return 'folderdropzone';
 	}
 
+	public getEventNames ():Array<string> {
+		return ['background', 'open', 'close'];
+	}
+
 	public getState():PathListInterface {
 		return this._paths;
 	}
 
-	public onConnection (spark:any):void {
-		this._connections.push(spark);
+	public onAfterUiUpdate ():void {
+		this._paths = null;
+		this._paths = [];
+	}
 
-		spark.on('background', (background:{ background:string; color:string; inverted:string; invertedBackgroundColor:string; }) => {
+	private _setupEventListeners ():void {
+		this.on('background', (background:{ background:string; color:string; inverted:string; invertedBackgroundColor:string; }) => {
 			var localStorage = this._guiWindow.get().window.localStorage;
 
 			localStorage.setItem('background', background.background);
@@ -51,11 +62,12 @@ class UiFolderDropzoneComponent implements UiComponentInterface {
 			localStorage.setItem('invertedBackgroundColor', background.invertedBackgroundColor);
 		});
 
-		spark.on('open', () => {
+		this.on('open', () => {
+			console.log('on open!');
 			this._getWindow().focus();
 		});
 
-		spark.on('close', () => {
+		this.on('close', () => {
 			if (this._window) {
 				this._window.close();
 			}
@@ -100,7 +112,7 @@ class UiFolderDropzoneComponent implements UiComponentInterface {
 
 			this._window.on('drop', (paths:PathListInterface) => {
 				this._paths = paths;
-				this._updateUi();
+				this.updateUi();
 			});
 		}
 
@@ -110,19 +122,6 @@ class UiFolderDropzoneComponent implements UiComponentInterface {
 		this._window.setAlwaysOnTop(true);
 
 		return this._window;
-	}
-
-	private _updateUi () {
-		if (this._connections.length) {
-			var state:Object = this.getState();
-
-			for (var i = 0, l = this._connections.length; i < l; i++) {
-				this._connections[i].send('update', state);
-			}
-
-			this._paths = null;
-			this._paths = [];
-		}
 	}
 
 }

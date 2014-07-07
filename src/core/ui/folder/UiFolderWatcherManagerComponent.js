@@ -1,4 +1,12 @@
 /// <reference path='../../../../ts-definitions/node/node.d.ts' />
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var UiComponent = require('../UiComponent');
+
 /**
 * The UiFolderWatcherManagerComponent acts as a controller between the {@link core.fs.FolderWatcherManager} and the user interface.
 *
@@ -7,12 +15,10 @@
 *
 * @param {core.fs.FolderWatcherManagerInterface} folderWatcherManager
 */
-var UiFolderWatcherManagerComponent = (function () {
+var UiFolderWatcherManagerComponent = (function (_super) {
+    __extends(UiFolderWatcherManagerComponent, _super);
     function UiFolderWatcherManagerComponent(folderWatcherManager) {
-        /**
-        * todo ts-definition
-        */
-        this._connections = [];
+        _super.call(this);
         /**
         * The folder watcher manager instance
         *
@@ -25,13 +31,20 @@ var UiFolderWatcherManagerComponent = (function () {
         * @member {core.ui.folder.UiFolderMapInterface} core.ui.UiFolderWatcherManagerComponent~_folders
         */
         this._folders = {};
+
         this._folderWatcherManager = folderWatcherManager;
 
+        this._setupEventListeners();
         this._setupFolderWatcherEvents();
         this._setupItemEvents();
     }
     UiFolderWatcherManagerComponent.prototype.getChannelName = function () {
         return 'folder';
+    };
+
+    UiFolderWatcherManagerComponent.prototype.getEventNames = function () {
+        return ['addFolder', 'removeFolder', 'syncFolders'];
+        ;
     };
 
     UiFolderWatcherManagerComponent.prototype.getState = function () {
@@ -47,23 +60,6 @@ var UiFolderWatcherManagerComponent = (function () {
         }
 
         return folders;
-    };
-
-    UiFolderWatcherManagerComponent.prototype.onConnection = function (spark) {
-        var _this = this;
-        this._connections.push(spark);
-
-        spark.on('addFolder', function (path) {
-            _this._folderWatcherManager.addFolderWatcher(path);
-        });
-
-        spark.on('removeFolder', function (path) {
-            _this._folderWatcherManager.removeFolderWatcher(path);
-        });
-
-        spark.on('syncFolders', function () {
-            _this._folderWatcherManager.checkFolderWatcherPaths();
-        });
     };
 
     /**
@@ -177,6 +173,21 @@ var UiFolderWatcherManagerComponent = (function () {
         this._folders[folderPath].items--;
     };
 
+    UiFolderWatcherManagerComponent.prototype._setupEventListeners = function () {
+        var _this = this;
+        this.on('addFolder', function (path) {
+            _this._folderWatcherManager.addFolderWatcher(path);
+        });
+
+        this.on('removeFolder', function (path) {
+            _this._folderWatcherManager.removeFolderWatcher(path);
+        });
+
+        this.on('syncFolders', function () {
+            _this._folderWatcherManager.checkFolderWatcherPaths();
+        });
+    };
+
     /**
     * Registers listeners for folder changes on the {@link core.ui.UiFolderWatcherManagerComponent~_folderWatcherManager}
     *
@@ -186,19 +197,22 @@ var UiFolderWatcherManagerComponent = (function () {
         var _this = this;
         this._folderWatcherManager.on('watcher.add', function (path) {
             _this._setStatus(path, 'active');
-            _this._updateUi();
+            _this.updateUi();
         });
+
         this._folderWatcherManager.on('watcher.invalid', function (path) {
             _this._setStatus(path, 'invalid');
-            _this._updateUi();
+            _this.updateUi();
         });
+
         this._folderWatcherManager.on('watcher.remove', function (path) {
             _this._removeFolder(path);
-            _this._updateUi();
+            _this.updateUi();
         });
+
         this._folderWatcherManager.on('watcher.removeInvalid', function (path) {
             _this._removeFolder(path);
-            _this._updateUi();
+            _this.updateUi();
         });
     };
 
@@ -211,12 +225,12 @@ var UiFolderWatcherManagerComponent = (function () {
         var _this = this;
         this._folderWatcherManager.on('add', function (path) {
             _this._addItem(path);
-            _this._updateUi();
+            _this.updateUi();
         });
 
         this._folderWatcherManager.on('unlink', function (path) {
             _this._removeItem(path);
-            _this._updateUi();
+            _this.updateUi();
         });
     };
 
@@ -235,23 +249,8 @@ var UiFolderWatcherManagerComponent = (function () {
             this._folders[path].status = status;
         }
     };
-
-    /**
-    * Sends the updates to all connected clients via `update` message.
-    *
-    * @member core.ui.UiFolderWatcherManagerComponent~_updateUi
-    */
-    UiFolderWatcherManagerComponent.prototype._updateUi = function () {
-        if (this._connections.length) {
-            var state = this.getState();
-
-            for (var i = 0, l = this._connections.length; i < l; i++) {
-                this._connections[i].send('update', state);
-            }
-        }
-    };
     return UiFolderWatcherManagerComponent;
-})();
+})(UiComponent);
 
 module.exports = UiFolderWatcherManagerComponent;
 //# sourceMappingURL=UiFolderWatcherManagerComponent.js.map

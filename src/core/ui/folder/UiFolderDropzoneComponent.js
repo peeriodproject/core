@@ -1,35 +1,54 @@
 /// <reference path='../../../main.d.ts' />
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var UiComponent = require('../UiComponent');
+
 /**
 * @class core.ui.UiFolderDropzoneComponent
 * @implements core.ui.UiComponentInterface
 */
-var UiFolderDropzoneComponent = (function () {
+var UiFolderDropzoneComponent = (function (_super) {
+    __extends(UiFolderDropzoneComponent, _super);
     function UiFolderDropzoneComponent(window) {
-        this._connections = [];
+        _super.call(this);
         // todo ts-declaration gui.Window
         this._window = null;
         this._guiWindow = null;
         this._windowDimensions = {};
         this._windowPosition = {};
         this._paths = [];
+
         this._guiWindow = window;
 
         this._windowDimensions.height = 300;
         this._windowDimensions.width = 300;
+
+        this._setupEventListeners();
     }
     UiFolderDropzoneComponent.prototype.getChannelName = function () {
         return 'folderdropzone';
+    };
+
+    UiFolderDropzoneComponent.prototype.getEventNames = function () {
+        return ['background', 'open', 'close'];
     };
 
     UiFolderDropzoneComponent.prototype.getState = function () {
         return this._paths;
     };
 
-    UiFolderDropzoneComponent.prototype.onConnection = function (spark) {
-        var _this = this;
-        this._connections.push(spark);
+    UiFolderDropzoneComponent.prototype.onAfterUiUpdate = function () {
+        this._paths = null;
+        this._paths = [];
+    };
 
-        spark.on('background', function (background) {
+    UiFolderDropzoneComponent.prototype._setupEventListeners = function () {
+        var _this = this;
+        this.on('background', function (background) {
             var localStorage = _this._guiWindow.get().window.localStorage;
 
             localStorage.setItem('background', background.background);
@@ -38,11 +57,12 @@ var UiFolderDropzoneComponent = (function () {
             localStorage.setItem('invertedBackgroundColor', background.invertedBackgroundColor);
         });
 
-        spark.on('open', function () {
+        this.on('open', function () {
+            console.log('on open!');
             _this._getWindow().focus();
         });
 
-        spark.on('close', function () {
+        this.on('close', function () {
             if (_this._window) {
                 _this._window.close();
             }
@@ -88,7 +108,7 @@ var UiFolderDropzoneComponent = (function () {
 
             this._window.on('drop', function (paths) {
                 _this._paths = paths;
-                _this._updateUi();
+                _this.updateUi();
             });
         }
 
@@ -99,21 +119,8 @@ var UiFolderDropzoneComponent = (function () {
 
         return this._window;
     };
-
-    UiFolderDropzoneComponent.prototype._updateUi = function () {
-        if (this._connections.length) {
-            var state = this.getState();
-
-            for (var i = 0, l = this._connections.length; i < l; i++) {
-                this._connections[i].send('update', state);
-            }
-
-            this._paths = null;
-            this._paths = [];
-        }
-    };
     return UiFolderDropzoneComponent;
-})();
+})(UiComponent);
 
 module.exports = UiFolderDropzoneComponent;
 //# sourceMappingURL=UiFolderDropzoneComponent.js.map

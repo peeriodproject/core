@@ -107,6 +107,8 @@ class UiManager implements UiManagerInterface {
 	 */
 	private _socketServer = null;
 
+	private _sparkCount = 0;
+
 	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, components:UiComponentListInterface, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
 			closeOnProcessExit: true,
@@ -142,13 +144,13 @@ class UiManager implements UiManagerInterface {
 
 		// closing websocket connections
 		/*if (this._connections.length) {
-			for (var i in this._connections) {
-				this._connections[i].end(); // null, { reconnect: true }
-			}
+		 for (var i in this._connections) {
+		 this._connections[i].end(); // null, { reconnect: true }
+		 }
 
-			this._connections = null;
-			this._connections = [];
-		}*/
+		 this._connections = null;
+		 this._connections = [];
+		 }*/
 
 		var channelNames = Object.keys(this._channelsMap);
 
@@ -188,24 +190,10 @@ class UiManager implements UiManagerInterface {
 		}
 	}
 
-	/**
-	 * Returns true if the object is open and therefore writeable.
-	 *
-	 * @method core.utils.ClosableAsyncInterface#isOpen
-	 *
-	 * @param {Function} callback
-	 */
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
-	/**
-	 * (Re)-opens a closed Object and restores the previous state.
-	 *
-	 * @method core.utils.ClosableAsyncInterface#open
-	 *
-	 * @param {Function} callback
-	 */
 	public open (callback?:(err:Error) => any):void {
 		var internalCallback:Function = callback || function () {
 		};
@@ -226,24 +214,47 @@ class UiManager implements UiManagerInterface {
 		});
 	}
 
+	/**
+	 * Iterates over the {@link core.ui.UiManager~_components} list and and calls [sets up]{@link core.ui.UiManager~_setupSocketChannelComponent}
+	 * each component
+	 *
+	 * @method core.ui.UiManager~_setupSocketChannelComponentMap
+	 */
 	private _setupSocketChannelComponentMap ():void {
 		if (this._components.length) {
 			for (var i = 0, l = this._components.length; i < l; i++) {
-				var component:UiComponentInterface = this._components[i];
-				var channelName = component.getChannelName();
-
-				if (this._channelsMap[channelName] || this._channelComponentsMap[channelName]) {
-					throw new Error('UiManager._createChannelComnentMap: Another Component already owns the "' + channelName + '" channel.');
-				}
-				else {
-					// create channel
-					this._channelsMap[channelName] = this._socketServer.channel(channelName);
-
-					// register component to channel
-					this._channelComponentsMap[channelName] = component;
-				}
+				this._setupSocketChannelComponent(this._components[i]);
 			}
 		}
+	}
+
+	/**
+	 * Sets up the channel for the specified component and sends an `update` event with the current [compoent state]{@link core.ui.UiComponentInterface#getState}
+	 * to connectd clients whenever the component updates.
+	 *
+	 * @method core.ui.UiManager~_setupSocketChannelComponent
+	 *
+	 * @param {core.ui.UiComponentInterface} component
+	 */
+	private _setupSocketChannelComponent (component:UiComponentInterface):void {
+		var channelName = component.getChannelName();
+
+		if (this._channelsMap[channelName] || this._channelComponentsMap[channelName]) {
+			throw new Error('UiManager~_setupSocketChannelComponent: Another Component already owns the "' + channelName + '" channel.');
+		}
+
+		// create channel
+		this._channelsMap[channelName] = this._socketServer.channel(channelName);
+
+		// register component to channel
+		this._channelComponentsMap[channelName] = component;
+		this._channelComponentsMap[channelName].onUiUpdate(() => {
+			var state = component.getState();
+
+			this._channelsMap[channelName].send('update', state);
+
+			this._channelComponentsMap[channelName].onAfterUiUpdate();
+		});
 	}
 
 	/**
@@ -255,7 +266,6 @@ class UiManager implements UiManagerInterface {
 	 *
 	 * @param {http.request} request
 	 * @param response
-	 * @private
 	 */
 	private _handleHttpRequest (request:http.ServerRequest, response:http.ServerResponse):void {
 		request.addListener('end', () => {
@@ -265,57 +275,79 @@ class UiManager implements UiManagerInterface {
 		request.resume();
 	}
 
-	private _handleSocketChannel (channelName:string, spark:any) {
+	/**
+	 * Adds the given spark to components that registered for the given channel name.
+	 * It adds a listener for the `getInitialState` event and returns the components state as well as cleanin the spark up
+	 * on disconnection.
+	 *
+	 * @method core.ui.UiManager~_handleSocketChannel
+	 *
+	 * @param {string} channelName
+	 * @param {todo} spark
+	 */
+	private _handleSocketChannel (channelName:string, spark:any):void {
 		var component:UiComponentInterface = this._channelComponentsMap[channelName];
 
-		if (component) {
-			// automagically getInitialState listener
-			spark.on('getInitialState', function (callback) {
-				callback(component.getState());
-			});
-
-			component.onConnection(spark);
+		if (!component) {
+			return;
 		}
 
-		//this._connections.push(spark);
+		// automagically getInitialState listener
+		spark.on('getInitialState', function (callback) {
+			callback(component.getState());
+		});
+
+		spark.on('end', () => {
+			this._sparkCount--;
+
+			console.log('spark ended', this._sparkCount);
+		});
+
+		// register component events
+		var events:Array<string> = component.getEventNames();
+
+		if (events && events.length) {
+			for (var i = 0, l = events.length; i < l; i++) {
+				this._pipeSocketEvent(events[i], component, spark);
+			}
+		}
 	}
 
-	// todo spark ts-definitions
-	/*private _handleSocket (spark:any):void {
-		var channels:Array<string> = Object.keys(this._channelComponentsMap);
+	/**
+	 * Removes the given http socket from the internal lists.
+	 *
+	 * @method core.ui.UiManager~_cleanupHttpSocket
+	 *
+	 * @param {net.Socket} socket
+	 */
+	private _cleanupHttpSocket (socket:net.Socket):void {
+		var index:number = this._httpSockets.indexOf(socket);
 
-		if (channels.length) {
-			for (var i in channels) {
-				var channel:string = channels[i];
-				var channelComponent:UiComponentInterface = this._channelComponentsMap[channel];
-
-				spark.on(channel, function (message, callback) {
-					channelComponent.onMessage(message, callback);
-				});
-			}
-			/*spark.on('chat', function (name, fn) {
-				console.log(name); //-> Bob
-				fn('woot');
-
-				spark.send('What is your name', function (name) {
-					console.log(name); //-> My name is Ann
-				});
-			});* /
+		if (index !== -1) {
+			this._httpSockets.splice(index, 1);
+			console.log('http closed', this._httpSockets.length);
 		}
+	}
 
-		this._connections.push(spark);
-	}*/
+	/**
+	 * Pipes the given event name from the spark to the specified component
+	 *
+	 * @method core.ui.UiManager~_pipeSocketEvent
+	 *
+	 * @param {string} eventName
+	 * @param {core.ui.UiComponentInterface} component
+	 * @param {todo} spark
+	 */
+	private _pipeSocketEvent (eventName:string, component:UiComponentInterface, spark:any):void {
+		spark.on(eventName, function () {
+			var args = arguments || [];
 
-	/*private _bindComponentsToConnection (spark:any):void {
-		if (this._components.length) {
-			for (var i in this._components) {
-				var component:UiComponentInterface = this._components[i];
-				//var channelName:string = component.getChannelName();
+			Array.prototype.unshift.call(args, eventName);
+			console.log(args);
 
-				//spark.on(channelName)
-			}
-		}
-	}*/
+			component.emit.apply(component, args);
+		});
+	}
 
 	/**
 	 * Sets up the websocket server and hooks it into the {@link core.ui.UiManager~_httpServer}
@@ -326,9 +358,9 @@ class UiManager implements UiManagerInterface {
 	 */
 	private _setupSocketServer ():void {
 		this._socketServer = new PrimusIo(this._httpServer, {
-			port: this._config.get('ui.UiManager.socketServer.port'),
+			port       : this._config.get('ui.UiManager.socketServer.port'),
 			transformer: this._config.get('ui.UiManager.socketServer.transformer'),
-			parser: this._config.get('ui.UiManager.socketServer.parser')
+			parser     : this._config.get('ui.UiManager.socketServer.parser')
 		});
 
 		var staticPublicPath:string = this._config.get('ui.UiManager.staticServer.publicPath');
@@ -365,7 +397,13 @@ class UiManager implements UiManagerInterface {
 	 */
 	private _setupSocketChannel (channelName:string):void {
 		this._channelsMap[channelName].on('connection', (connection) => {
+			this._sparkCount++
+			console.log('spark connected', this._sparkCount);
 			this._handleSocketChannel(channelName, connection);
+		});
+
+		this._channelsMap[channelName].on('disconnection', (spark) => {
+			console.log('spark disconnected');
 		});
 	}
 
@@ -392,9 +430,13 @@ class UiManager implements UiManagerInterface {
 
 		this._httpServer.on('connection', (socket:net.Socket) => {
 			this._httpSockets.push(socket);
+			console.log('http connected', this._httpSockets.length);
 			socket.setTimeout(4000);
 			socket.on('close', () => {
-				this._httpSockets.splice(this._httpSockets.indexOf(socket), 1);
+				this._cleanupHttpSocket(socket);
+			});
+			socket.on('end', () => {
+				this._cleanupHttpSocket(socket);
 			});
 		});
 	}
@@ -408,14 +450,15 @@ class UiManager implements UiManagerInterface {
 	 */
 	private _startServers (callback:Function):void {
 		/*this._socketServer.on('connection', (spark) => {
-			this._handleSocket(spark);
-		});*/
+		 this._handleSocket(spark);
+		 });*/
 
 		//console.log(' [*] Listening on 127.0.0.1:9999' );
 		this._httpServer.listen(this._config.get('ui.UiManager.staticServer.port'), 'localhost', 511, function () {
 			callback();
 		});
 	}
+
 }
 
 export = UiManager;
