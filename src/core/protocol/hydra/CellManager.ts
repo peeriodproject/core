@@ -180,7 +180,9 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 		var diffie:crypto.DiffieHellman = crypto.getDiffieHellman('modp14');
 		var dhPublicKey:Buffer = diffie.generateKeys();
 		var secret:Buffer = diffie.computeSecret(AdditiveSharingScheme.getCleartext(pending.additivePayloads, 256));
+
 		var sha1:Buffer = crypto.createHash('sha1').update(secret).digest();
+
 		var hkdf:HKDF = new HKDF('sha256', secret);
 		var keysConcat:Buffer = hkdf.derive(48, new Buffer(pending.uuid, 'hex'));
 

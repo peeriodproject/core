@@ -196,9 +196,8 @@ class CircuitExtender implements CircuitExtenderInterface {
 
 		this._currentUUID = crypto.pseudoRandomBytes(16).toString('hex');
 		this._currentNodeToExtendWith = nodeToExtendWith;
-		this._currentDiffieHellman = crypto.getDiffieHellman('modp14')
 
-		var dhPublicKey:Buffer = this._currentDiffieHellman.generateKeys();
+		var dhPublicKey:Buffer = this._getDiffieHellmanAndReturnPublicKey();
 
 		AdditiveSharingScheme.getShares(dhPublicKey, additiveNodes.length + 1, 256, (shares:Array<Buffer>) => {
 
@@ -234,6 +233,26 @@ class CircuitExtender implements CircuitExtenderInterface {
 	}
 
 	/**
+	 * This hack is a workaround around some pretty weird bug in either node.js or OpenSSL where
+	 * the diffie hellman public key returned is missing one byte sometimes.
+	 *
+	 * @method core.protocol.hydra.CircuitExtender~_getDiffieHellmanAndReturnPublicKey
+	 *
+	 * @returns {Buffer}
+	 */
+	private _getDiffieHellmanAndReturnPublicKey ():Buffer {
+		this._currentDiffieHellman = crypto.getDiffieHellman('modp14');
+		var dhPublicKey:Buffer = this._currentDiffieHellman.generateKeys();
+
+		if (dhPublicKey.length !== 256) {
+			return this._getDiffieHellmanAndReturnPublicKey();
+		}
+		else {
+			return dhPublicKey;
+		}
+	}
+
+	/**
 	 * @method core.protocol.hydra.CircuitExtender~_doCallback
 	 *
 	 * @param {Error} err
@@ -253,6 +272,7 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 * @param {string} errMsg Message for the passed in error.
 	 */
 	private _extensionError (errMsg:string):void {
+		console.log(errMsg);
 		this._removeMessageListener();
 		this._removeTerminationListener();
 
@@ -331,7 +351,9 @@ class CircuitExtender implements CircuitExtenderInterface {
 
 					sha1.update(secret);
 
-					if (sha1.digest('hex') === message.getSecretHash().toString('hex')) {
+					var digest:string = sha1.digest('hex');
+
+					if (digest === message.getSecretHash().toString('hex')) {
 
 						var hkdf:HKDF = new HKDF('sha256', secret);
 						var keysConcat:Buffer = hkdf.derive(48, new Buffer(message.getUUID(), 'hex'));
