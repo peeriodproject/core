@@ -9,12 +9,14 @@ import sinon = require('sinon');
 import testUtils = require('../../../utils/testUtils');
 
 import CircuitManager = require('../../../../src/core/protocol/hydra/CircuitManager');
+import CellManager = require('../../../../src/core/protocol/hydra/CellManager');
 import ResponseManager = require('../../../../src/core/protocol/fileTransfer/query/ResponseManager');
 import BroadcastManager = require('../../../../src/core/protocol/broadcast/BroadcastManager');
 import SearchMessageBridge = require('../../../../src/core/search/SearchMessageBridge');
 import FeedingNodesMessageBlock = require('../../../../src/core/protocol/fileTransfer/messages/FeedingNodesMessageBlock');
 import WritableQueryResponseMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/WritableQueryResponseMessageFactory');
 import TransferMessageCenter = require('../../../../src/core/protocol/fileTransfer/TransferMessageCenter');
+import ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 
 describe('CORE --> PROTOCOL --> FILE TRANSFER --> ResponseManager', function () {
 
@@ -23,12 +25,17 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> ResponseManager', function () 
 	var broadcastManagerStub:any = new events.EventEmitter();
 	var circuitManagerStub:any = null;
 	var writableFactoryStub:any = null;
-	var transferMessageCenterStub:any = null;
+	var transferMessageCenterStub:any = new events.EventEmitter();
+	var cellManagerStub:any = null;
+	var configStub:any = null;
 
 	var responseManager:ResponseManager = null;
 
+	// CHECKERS
 	var issuedFeed:any = {};
 	var block:Buffer = null;
+	var pipedThroughCirc:any = {};
+	var broadcastPayload:Buffer = null;
 
 	var compareBuffers = function (a,b):boolean {
 		if (a.length !== b.length) return false;
@@ -45,7 +52,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> ResponseManager', function () 
 	}
 
 	it('should correctly instantiate the response manager', function () {
-		responseManager = new ResponseManager(transferMessageCenterStub, bridgeStub, broadcastManagerStub, circuitManagerStub, writableFactoryStub);
+		responseManager = new ResponseManager(configStub, cellManagerStub, transferMessageCenterStub, bridgeStub, broadcastManagerStub, circuitManagerStub, writableFactoryStub);
 		responseManager.should.be.instanceof(ResponseManager);
 	});
 
@@ -113,9 +120,40 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> ResponseManager', function () 
 		});
 	});
 
+	it('should correctly issue a broadcast', function () {
+		transferMessageCenterStub.emit('issueBroadcastQuery', 'predecessorCirc', 'broadcastIdYo', new Buffer('muschi'), new Buffer('meine '));
+		broadcastPayload.toString().should.equal('meine muschi');
+	});
+
+	it('should pipe back a result', function (done) {
+		bridgeStub.emit('broadcastQueryResults', 'broadcastIdYo', new Buffer('cafebabe'));
+
+		setTimeout(function () {
+			pipedThroughCirc.circuitId.should.equal('predecessorCirc');
+			pipedThroughCirc.payload.toString().should.equal('cafebabe');
+			done();
+		}, 30);
+	});
 
 	before(function () {
 		sandbox = sinon.sandbox.create();
+
+		configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+			get: function (what) {
+				if (what === 'fileTransfer.response.waitForOwnResponseAsBroadcastInitiatorInSeconds') return 0.01;
+			}
+		});
+
+		cellManagerStub = testUtils.stubPublicApi(sandbox, CellManager, {
+			pipeFileTransferMessage: function (circId, msg) {
+				pipedThroughCirc.circuitId = circId;
+				pipedThroughCirc.payload = msg;
+			}
+		});
+
+		broadcastManagerStub.initBroadcast = function (type, payload) {
+			broadcastPayload = payload;
+		}
 
 		circuitManagerStub = testUtils.stubPublicApi(sandbox, CircuitManager, {
 			getReadyCircuits: function () {
@@ -132,15 +170,13 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> ResponseManager', function () 
 			}
 		});
 
-		transferMessageCenterStub = testUtils.stubPublicApi(sandbox, TransferMessageCenter, {
-			wrapTransferMessage: function (a, b, c) {
-				return c;
-			},
-			issueExternalFeedToCircuit: function (nodesBlock, payload) {
-				issuedFeed.nodesBlock = nodesBlock;
-				issuedFeed.payload = payload;
-			}
-		});
+		transferMessageCenterStub.wrapTransferMessage = function (a, b, c) {
+			return c;
+		};
+		transferMessageCenterStub.issueExternalFeedToCircuit = function (nodesBlock, payload) {
+			issuedFeed.nodesBlock = nodesBlock;
+			issuedFeed.payload = payload;
+		};
 
 	});
 

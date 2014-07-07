@@ -272,7 +272,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', func
 
 		var middleware = new Middleware(cellManager, protocolConnectionManager, messageCenter, new WritableFileTransferMessageFactory());
 
-		var transferMessageCenter = new TransferMessageCenter(middleware, circuitManager, cellManager, messageCenter, new ReadableFileTransferMessageFactory(), new WritableFileTransferMessageFactory(), null, null);
+		var transferMessageCenter = new TransferMessageCenter(protocolConnectionManager, middleware, circuitManager, cellManager, messageCenter, new ReadableFileTransferMessageFactory(), new WritableFileTransferMessageFactory(), null, null);
 
 		nodes.push({
 			ip: ip,

@@ -15,22 +15,22 @@ var FeedingNodesMessageBlock = require('./messages/FeedingNodesMessageBlock');
 */
 var TransferMessageCenter = (function (_super) {
     __extends(TransferMessageCenter, _super);
-    function TransferMessageCenter(middleware, circuitManager, cellManager, hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseFactory, writableQueryResponseFactory) {
+    function TransferMessageCenter(protocolConnectionManager, middleware, circuitManager, cellManager, hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseFactory, writableQueryResponseFactory) {
         _super.call(this);
         this._circuitManager = null;
         this._cellManager = null;
         this._hydraMessageCenter = null;
+        this._protocolConnectionManager = null;
         this._readableFileTransferMessageFactory = null;
         this._writableFileTransferMessageFactory = null;
         this._readableQueryResponseMessageFactory = null;
         this._writableQueryResponseMessageFactory = null;
-        this._feedingNodesBlock = null;
-        this._feedingNodesBlockLength = 0;
         this._middleware = null;
 
         this._circuitManager = circuitManager;
         this._cellManager = cellManager;
         this._hydraMessageCenter = hydraMessageCenter;
+        this._protocolConnectionManager = protocolConnectionManager;
 
         this._middleware = middleware;
 
@@ -42,7 +42,7 @@ var TransferMessageCenter = (function (_super) {
         this._setupListeners();
     }
     TransferMessageCenter.prototype.issueExternalFeedToCircuit = function (nodesToFeedBlock, payload, circuitId) {
-        var wrappedMessage = this.wrapTransferMessage('EXTERNAL_FEED', '00000000000000000000000000000000', Buffer.concat([nodesToFeedBlock, payload], this._feedingNodesBlockLength + payload.length));
+        var wrappedMessage = this.wrapTransferMessage('EXTERNAL_FEED', '00000000000000000000000000000000', Buffer.concat([nodesToFeedBlock, payload]));
 
         if (!(circuitId && this._circuitManager.pipeFileTransferMessageThroughCircuit(circuitId, wrappedMessage))) {
             return this._circuitManager.pipeFileTransferMessageThroughRandomCircuit(wrappedMessage);
@@ -119,6 +119,20 @@ var TransferMessageCenter = (function (_super) {
 
             if (feedingNodesBlock && slice) {
                 this._middleware.feedNode(feedingNodesBlock.nodes, predecessorCircuitId, slice);
+            }
+        } else if (msg.getMessageType() === 'QUERY_BROADCAST') {
+            var searchObject = msg.getPayload();
+            var broadcastId = msg.getTransferId();
+            var feedingIdentifier = this._cellManager.getFeedingIdentifierByCircuitId(predecessorCircuitId);
+            var externalAddress = this._protocolConnectionManager.getRandomExternalIpPortPair();
+
+            if (feedingIdentifier && externalAddress) {
+                externalAddress.feedingIdentifier = feedingIdentifier;
+                var myFeedingBlock = FeedingNodesMessageBlock.constructBlock([externalAddress]);
+
+                this.emit('issueBroadcastQuery', predecessorCircuitId, broadcastId, searchObject, myFeedingBlock);
+            } else {
+                this._cellManager.teardownCell(predecessorCircuitId);
             }
         }
     };

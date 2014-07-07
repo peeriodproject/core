@@ -16,6 +16,7 @@ import HydraNode = require('../hydra/interfaces/HydraNode');
 import HydraCircuitInterface = require('../hydra/interfaces/HydraCircuitInterface');
 import FeedingNodesMessageBlock = require('./messages/FeedingNodesMessageBlock');
 import MiddlewareInterface = require('./interfaces/MiddlewareInterface');
+import ProtocolConnectionManagerInterface = require('../net/interfaces/ProtocolConnectionManagerInterface');
 
 /**
  * @class core.protocol.fileTransfer.TransferMessageCenter
@@ -27,22 +28,21 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 	private _circuitManager:CircuitManagerInterface = null;
 	private _cellManager:CellManagerInterface = null;
 	private _hydraMessageCenter:HydraMessageCenterInterface = null;
+	private _protocolConnectionManager:ProtocolConnectionManagerInterface = null;
 	private _readableFileTransferMessageFactory:ReadableFileTransferMessageFactoryInterface = null;
 	private _writableFileTransferMessageFactory:WritableFileTransferMessageFactoryInterface = null;
 	private _readableQueryResponseMessageFactory:ReadableQueryResponseMessageFactoryInterface = null;
 	private _writableQueryResponseMessageFactory:WritableQueryResponseMessageFactoryInterface = null;
 
-	private _feedingNodesBlock:Buffer = null;
-	private _feedingNodesBlockLength:number = 0;
-
 	private _middleware:MiddlewareInterface = null;
 
-	public constructor (middleware:MiddlewareInterface, circuitManager:CircuitManagerInterface, cellManager:CellManagerInterface, hydraMessageCenter:HydraMessageCenterInterface, readableFileTransferMessageFactory:ReadableFileTransferMessageFactoryInterface, writableFileTransferMessageFactory:WritableFileTransferMessageFactoryInterface, readableQueryResponseFactory:ReadableQueryResponseMessageFactoryInterface, writableQueryResponseFactory:WritableQueryResponseMessageFactoryInterface) {
+	public constructor (protocolConnectionManager:ProtocolConnectionManagerInterface, middleware:MiddlewareInterface, circuitManager:CircuitManagerInterface, cellManager:CellManagerInterface, hydraMessageCenter:HydraMessageCenterInterface, readableFileTransferMessageFactory:ReadableFileTransferMessageFactoryInterface, writableFileTransferMessageFactory:WritableFileTransferMessageFactoryInterface, readableQueryResponseFactory:ReadableQueryResponseMessageFactoryInterface, writableQueryResponseFactory:WritableQueryResponseMessageFactoryInterface) {
 		super();
 
 		this._circuitManager = circuitManager;
 		this._cellManager = cellManager;
 		this._hydraMessageCenter = hydraMessageCenter;
+		this._protocolConnectionManager = protocolConnectionManager;
 
 		this._middleware = middleware;
 
@@ -56,7 +56,7 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 
 	public issueExternalFeedToCircuit (nodesToFeedBlock:Buffer, payload:Buffer, circuitId?:string):boolean {
 
-		var wrappedMessage:Buffer = this.wrapTransferMessage('EXTERNAL_FEED', '00000000000000000000000000000000', Buffer.concat([nodesToFeedBlock, payload], this._feedingNodesBlockLength + payload.length));
+		var wrappedMessage:Buffer = this.wrapTransferMessage('EXTERNAL_FEED', '00000000000000000000000000000000', Buffer.concat([nodesToFeedBlock, payload]));
 
 		if (!(circuitId && this._circuitManager.pipeFileTransferMessageThroughCircuit(circuitId, wrappedMessage))) {
 			return this._circuitManager.pipeFileTransferMessageThroughRandomCircuit(wrappedMessage);
@@ -140,8 +140,23 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 			}
 
 			if (feedingNodesBlock && slice) {
-
 				this._middleware.feedNode(feedingNodesBlock.nodes, predecessorCircuitId, slice);
+			}
+		}
+		else if (msg.getMessageType() === 'QUERY_BROADCAST') {
+			var searchObject:Buffer = msg.getPayload();
+			var broadcastId:string = msg.getTransferId();
+			var feedingIdentifier:string = this._cellManager.getFeedingIdentifierByCircuitId(predecessorCircuitId);
+			var externalAddress:any = this._protocolConnectionManager.getRandomExternalIpPortPair();
+
+			if (feedingIdentifier && externalAddress) {
+				externalAddress.feedingIdentifier = feedingIdentifier;
+				var myFeedingBlock:Buffer = FeedingNodesMessageBlock.constructBlock([externalAddress]);
+
+				this.emit('issueBroadcastQuery', predecessorCircuitId, broadcastId, searchObject, myFeedingBlock);
+			}
+			else {
+				this._cellManager.teardownCell(predecessorCircuitId);
 			}
 		}
 	}

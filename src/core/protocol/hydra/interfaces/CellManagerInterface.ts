@@ -17,10 +17,20 @@ interface CellManagerInterface extends NodeJS.EventEmitter {
 	 *
 	 * @method core.protocol.hydra.CellManagerInterface#getCircuitIdByFeedingIdentifier
 	 *
-	 * @param feedingIdentifier
+	 * @param {string} feedingIdentifier
 	 * @returns {string} The predecessor circuit id of the cell. If no matching cell was found, `null` is returned.
 	 */
 	getCircuitIdByFeedingIdentifier (feedingIdentifier:string):string;
+
+	/**
+	 * Returns the feeding identifier of a cell (if present) that is associated to the provided circuitId.
+	 *
+	 * @method core.protocol.hydra.CellManagerInterface#getFeedingIdentifierByCircuitId
+	 *
+	 * @param {string} circuitId
+	 * @returns {string} The feeding identifier of the cell. If no matching cell was found, `null` is returned.
+	 */
+	getFeedingIdentifierByCircuitId (circuitId:string):string;
 
 	/**
 	 * Sends a FILE_TRANSFER message with the given payload as an ENCRYPTED_DIGEST message through the cell

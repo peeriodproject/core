@@ -8,6 +8,8 @@ import HydraNodeList = require('../../hydra/interfaces/HydraNodeList');
 import ExternalQueryHandlerList = require('./interfaces/ExternalQueryHandlerList');
 import PendingQueryList = require('./interfaces/PendingQueryList');
 import WritableQueryResponseMessageFactoryInterface = require('../messages/interfaces/WritableQueryResponseMessageFactoryInterface');
+import ConfigInterface = require('../../../config/interfaces/ConfigInterface');
+import CellManagerInterface = require('../../hydra/interfaces/CellManagerInterface');
 
 /**
  * ResponseManagerInterface implementation.
@@ -29,6 +31,13 @@ class ResponseManager implements ResponseManagerInterface {
 	 * @member {core.protocol.broadcast.BroadcastManagerInterface} core.protocol.fileTransfer.ResponseManager~_broadcastManager
 	 */
 	private _broadcastManager:BroadcastManagerInterface = null;
+
+	/**
+	 * The hydra cell manager.
+	 *
+	 * @member {core.protocol.hydra.CelLManagerInterface} core.protocol.fileTransfer.ResponseManager~_cellManager
+	 */
+	private _cellManager:CellManagerInterface = null;
 
 	/**
 	 * The hydra circuit manager.
@@ -67,18 +76,29 @@ class ResponseManager implements ResponseManagerInterface {
 	private _transferMessageCenter:TransferMessageCenterInterface = null;
 
 	/**
+	 * If a query comes through a circuit with the intention to initiate a broadcast (as this node is part of a circuit), this
+	 * number indicates the maximum number of milliseconds the node will wait after the broadcast initiation before it pipes its own
+	 * response through the circuit. This is to obfuscate the source of the own response.
+	 *
+	 * @member {core.protocol.fileTransfer.TransferMessageCenterInterface} core.protocol.fileTransfer.ResponseManager~_waitForOwnResponseAsBroadcastInitiatorInMs
+	 */
+	private _waitForOwnResponseAsBroadcastInitiatorInMs:number = null;
+
+	/**
 	 * The factory for QUERY_RESPONSE payloads.
 	 *
 	 * @member {core.protocol.fileTransfer.WritableQueryResponseMessageFactoryInterface} core.protocol.fileTransfer.ResponseManager~_writableQueryResponseFactory
 	 */
 	private _writableQueryResponseFactory:WritableQueryResponseMessageFactoryInterface = null;
 
-	public constructor (transferMessageCenter:TransferMessageCenterInterface, searchBridge:SearchMessageBridgeInterface, broadcastManager:BroadcastManagerInterface, circuitManager:CircuitManagerInterface, writableQueryResponseFactory:WritableQueryResponseMessageFactoryInterface) {
+	public constructor (transferConfig:ConfigInterface, cellManager:CellManagerInterface, transferMessageCenter:TransferMessageCenterInterface, searchBridge:SearchMessageBridgeInterface, broadcastManager:BroadcastManagerInterface, circuitManager:CircuitManagerInterface, writableQueryResponseFactory:WritableQueryResponseMessageFactoryInterface) {
+		this._cellManager = cellManager;
 		this._transferMessageCenter = transferMessageCenter;
 		this._searchBridge = searchBridge;
 		this._broadcastManager = broadcastManager;
 		this._circuitManager = circuitManager;
 		this._writableQueryResponseFactory = writableQueryResponseFactory;
+		this._waitForOwnResponseAsBroadcastInitiatorInMs = transferConfig.get('fileTransfer.response.waitForOwnResponseAsBroadcastInitiatorInSeconds') * 1000;
 
 		this._setupListeners();
 	}
@@ -109,6 +129,12 @@ class ResponseManager implements ResponseManagerInterface {
 	 * If results come through, it is checked if there is an external callback waiting for the result. If yes, call, else
 	 * prepare the QUERY_RESPONSE message with a random batch of feeding nodes and issue an EXTERNAL_FEED request
 	 * through a circuit (if present)
+	 *
+	 * Moreover a listener is set on the transfer message center's 'issueBroadcastQuery' event, which gets emitted when
+	 * a instruction comes through a cell to initialize a broadcast query with the given search object. A broadcast is
+	 * initialized with this node's own external address as feeding nodes block (as of course this node needs to accept and pipe
+	 * back results). The node's OWN results are piped back through the circuit the QUERY_BROADCAST message came through after
+	 * a random timeout, in order to prevent very simple timing based prediction of the results' source.
 	 *
 	 * @method core.protocol.fileTransfer.ResponseManager~_setupListeners
 	 */
@@ -146,15 +172,50 @@ class ResponseManager implements ResponseManagerInterface {
 
 				delete this._pendingBroadcastQueries[identifier];
 
-				if (results && this._circuitManager.getReadyCircuits().length) {
-					var myFeedingNodes:HydraNodeList = this._circuitManager.getRandomFeedingNodesBatch();
+				if (results) {
+					var msg:Buffer = this._wrapQueryResponse(identifier, results);
 
-					var msg:Buffer = this._transferMessageCenter.wrapTransferMessage('QUERY_RESPONSE', identifier, this._writableQueryResponseFactory.constructMessage(myFeedingNodes, results));
-
-					this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
+					if (msg) {
+						this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
+					}
 				}
 			}
 		});
+
+		this._transferMessageCenter.on('issueBroadcastQuery', (predecessorCircuitId:string, broadcastId:string, searchObject:Buffer, myFeedingBlock:Buffer) => {
+			// start a broadcast but answer to the query by yourself after a given time
+			var broadcastPayload:Buffer = Buffer.concat([myFeedingBlock, searchObject]);
+
+			this._broadcastManager.initBroadcast('BROADCAST_QUERY', broadcastPayload, broadcastId);
+
+			this.externalQueryHandler(broadcastId, searchObject, (identifier:string, results:Buffer) => {
+				if (results) {
+					var msg = this._wrapQueryResponse(identifier, results);
+
+					if (msg) {
+						setTimeout(() => {
+							this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg);
+						}, Math.random() * this._waitForOwnResponseAsBroadcastInitiatorInMs);
+					}
+				}
+			});
+		});
+	}
+
+	/**
+	 * Given a results byte buffer, a random feeding nodes block of this node is prepended to the results, wrapped
+	 * within a QUERY_RESPONSE message. If no production-ready circuits are available, `null` is returned.
+	 *
+	 * @param {string} queryIdentifier The identifier of the query to use as transferId for the QUERY_RESPONSE message.
+	 * @param {Buffer} results The results batch as byte buffer.
+	 * @returns {Buffer} The resulting message which can be piped through circuits
+	 */
+	private _wrapQueryResponse (queryIdentifier:string, results:Buffer):Buffer {
+		if (this._circuitManager.getReadyCircuits().length) {
+			return this._transferMessageCenter.wrapTransferMessage('QUERY_RESPONSE', queryIdentifier, this._writableQueryResponseFactory.constructMessage(this._circuitManager.getRandomFeedingNodesBatch(), results));
+		}
+
+		return null;
 	}
 
 }

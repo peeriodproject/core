@@ -137,6 +137,16 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 		return null;
 	}
 
+	public getFeedingIdentifierByCircuitId (circuitId:string):string {
+		var cell:HydraCellInterface = this._cellsByPredecessorCircuitId[circuitId];
+
+		if (cell) {
+			return cell.getFeedingIdentifier();
+		}
+
+		return null;
+	}
+
 	public pipeFileTransferMessage (predecessorCircuitId:string, payload:Buffer):boolean {
 		var cell:HydraCellInterface = this._cellsByPredecessorCircuitId[predecessorCircuitId];
 

@@ -120,6 +120,16 @@ var CellManager = (function (_super) {
         return null;
     };
 
+    CellManager.prototype.getFeedingIdentifierByCircuitId = function (circuitId) {
+        var cell = this._cellsByPredecessorCircuitId[circuitId];
+
+        if (cell) {
+            return cell.getFeedingIdentifier();
+        }
+
+        return null;
+    };
+
     CellManager.prototype.pipeFileTransferMessage = function (predecessorCircuitId, payload) {
         var cell = this._cellsByPredecessorCircuitId[predecessorCircuitId];
 
