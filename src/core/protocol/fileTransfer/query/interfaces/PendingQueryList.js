@@ -1,3 +1,3 @@
 /// <reference path='../../../../../../ts-definitions/node/node.d.ts' />
 
-//# sourceMappingURL=PendingQueriesList.js.map
+//# sourceMappingURL=PendingQueryList.js.map

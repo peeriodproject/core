@@ -5,20 +5,73 @@ import TransferMessageCenterInterface = require('../interfaces/TransferMessageCe
 import CircuitManagerInterface = require('../../hydra/interfaces/CircuitManagerInterface');
 import FeedingNodesMessageBlock = require('../messages/FeedingNodesMessageBlock');
 import HydraNodeList = require('../../hydra/interfaces/HydraNodeList');
-import PendingQueriesList = require('./interfaces/PendingQueriesList');
+import ExternalQueryList = require('./interfaces/ExternalQueryList');
+import PendingQueryList = require('./interfaces/PendingQueryList');
 import WritableQueryResponseMessageFactoryInterface = require('../messages/interfaces/WritableQueryResponseMessageFactoryInterface');
 
+/**
+ * ResponseManagerInterface implementation.
+ *
+ * @class core.protocol.fileTransfer.ResponseManager
+ * @implements core.protocol.fileTransfer.ResponseManagerInterface
+ *
+ * @param {core.protocol.fileTransfer.TransferMessageCenterInterface} transferMessageCenter A working transfer message center.
+ * @param {core.search.SearchMessageBridgeInterface} searchBridge The bridge network / search bridge
+ * @param {core.protocol.broadcast.BroadcastManagerInterface} broadcastManager A working broadcast manager
+ * @param {core.protocol.hydra.CircuitManagerInterface} circuitManager Working hydra circuit manager
+ * @param {core.protocol.fileTransfer.WritableQueryResponseMessageFactoryInterface} writableQueryResponseFactory Factory for QUERY_RESPONSE message payloads.
+ */
 class ResponseManager implements ResponseManagerInterface {
 
-	private _searchBridge:SearchMessageBridgeInterface = null;
+	/**
+	 * The broadcast manager.
+	 *
+	 * @member {core.protocol.broadcast.BroadcastManagerInterface} core.protocol.fileTransfer.ResponseManager~_broadcastManager
+	 */
 	private _broadcastManager:BroadcastManagerInterface = null;
-	private _transferMessageCenter:TransferMessageCenterInterface = null;
+
+	/**
+	 * The hydra circuit manager.
+	 *
+	 * @member {core.protocol.hydra.CircuitManagerInterface} core.protocol.fileTransfer.ResponseManager~_circuitManager
+	 */
 	private _circuitManager:CircuitManagerInterface = null;
+
+	/**
+	 * Stores references to callbacks waiting for query responses issued externally.
+	 *
+	 * @member {core.protocol.fileTransfer.ExternalQueryList} core.protocol.fileTransfer.ResponseManager~_externalQueryHandlers
+	 */
+	private _externalQueryHandlers:ExternalQueryList = {};
+
+	/**
+	 * Stores the feeding nodes byte block which was received with a search object, in order to correctly issue
+	 * EXTERNAL_FEEDs to the right feeding nodes belonging to a potential response.
+	 *
+	 * @member {core.protocol.fileTransfer.PendingQueryList} core.protocol.fileTransfer.ResponseManager~_pendingBroadcastQueries
+	 */
+	private _pendingBroadcastQueries:PendingQueryList = {};
+
+	/**
+	 * The bridge between search / network
+	 *
+	 * @member {core.search.SearchMessageBridgeInterface} core.protocol.fileTransfer.ResponseManager~_searchBridge
+	 */
+	private _searchBridge:SearchMessageBridgeInterface = null;
+
+	/**
+	 * The transfer message center.
+	 *
+	 * @member {core.protocol.fileTransfer.TransferMessageCenterInterface} core.protocol.fileTransfer.ResponseManager~_transferMessageCenter
+	 */
+	private _transferMessageCenter:TransferMessageCenterInterface = null;
+
+	/**
+	 * The factory for QUERY_RESPONSE payloads.
+	 *
+	 * @member {core.protocol.fileTransfer.WritableQueryResponseMessageFactoryInterface} core.protocol.fileTransfer.ResponseManager~_writableQueryResponseFactory
+	 */
 	private _writableQueryResponseFactory:WritableQueryResponseMessageFactoryInterface = null;
-
-	private _pendingBroadcastQueries:PendingQueriesList = {};
-
-	private _externalQueryHandlers:{[identifier:string]:Function} = {};
 
 	public constructor (transferMessageCenter:TransferMessageCenterInterface, searchBridge:SearchMessageBridgeInterface, broadcastManager:BroadcastManagerInterface, circuitManager:CircuitManagerInterface, writableQueryResponseFactory:WritableQueryResponseMessageFactoryInterface) {
 		this._transferMessageCenter = transferMessageCenter;
@@ -35,10 +88,19 @@ class ResponseManager implements ResponseManagerInterface {
 		this._searchBridge.emit('matchBroadcastQuery', identifier, searchObject);
 	}
 
+	/**
+	 * Sets up the listeners for broadcasts and the result event from the bridge.
+	 * If results come through, it is checked if there is an external callback waiting for the result. If yes, call, else
+	 * prepare the QUERY_RESPONSE message with a random batch of feeding nodes and issue an EXTERNAL_FEED request
+	 * through a circuit (if present)
+	 *
+	 * @method core.protocol.fileTransfer.ResponseManager~_setupListeners
+	 */
 	private _setupListeners ():void {
 		this._broadcastManager.on('BROADCAST_QUERY', (broadcastPayload:Buffer, broadcastId:string) => {
 			// we need to extract the possible feeding nodes
 			var feedingObj:any = null;
+
 			try {
 				feedingObj = FeedingNodesMessageBlock.extractAndDeconstructBlock(broadcastPayload);
 			}

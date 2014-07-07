@@ -2,10 +2,10 @@
 
 /**
  * @interface
- * @class core.protocol.fileTransfer.PendingQueriesList
+ * @class core.protocol.fileTransfer.PendingQueryList
  */
-interface PendingQueriesList {
+interface PendingQueryList {
 	[broadcastId:string]:Buffer;
 }
 
-export = PendingQueriesList;
+export = PendingQueryList;
