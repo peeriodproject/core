@@ -63,7 +63,6 @@ class UiFolderDropzoneComponent extends UiComponent {
 		});
 
 		this.on('open', () => {
-			console.log('on open!');
 			this._getWindow().focus();
 		});
 

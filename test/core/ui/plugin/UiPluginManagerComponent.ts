@@ -9,7 +9,7 @@ import PluginManager = require('../../../../src/core/plugin/PluginManager');
 import PluginRunner = require('../../../../src/core/plugin/PluginRunner');
 import UiPluginManagerComponent = require('../../../../src/core/ui/plugin/UiPluginManagerComponent');
 
-describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent @_joern', function () {
+describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent', function () {
 	var sandbox:SinonSandbox;
 	var component:UiPluginManagerComponent;
 	var eventListeners:{ [eventName:string]:Function };
@@ -107,16 +107,17 @@ describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent @_joern', function
 	});
 
 	it('should correctly add the fields of a plugin whenever it receives an "pluginAdded" event and update the UI', function (done) {
-		component.onConnection(sparkStub);
+		var uiUpdateSpy = sandbox.spy();
+		component.onUiUpdate(uiUpdateSpy);
+
 		eventListeners['pluginAdded']('fooIdentifier');
 
 		// waiting for pluginManager.open
 		setImmediate(function () {
 			// waiting for pluginManager.activatePluginState
 			setImmediate(function () {
-				sparkStub.send.calledOnce.should.be.true;
-				sparkStub.send.getCall(0).args[0].should.equal('update');
-				sparkStub.send.getCall(0).args[1].should.containDeep({
+				uiUpdateSpy.calledOnce.should.be.true;
+				component.getState().should.containDeep({
 					identifier   : { fields: 'foobar' },
 					fooIdentifier: { fields: 'foobar' }
 				});

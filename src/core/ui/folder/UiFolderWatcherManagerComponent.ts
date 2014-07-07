@@ -46,7 +46,7 @@ class UiFolderWatcherManagerComponent extends UiComponent {
 	}
 
 	public getEventNames ():Array<string> {
-		return ['addFolder', 'removeFolder', 'syncFolders'];;
+		return ['addFolder', 'removeFolder', 'syncFolders'];
 	}
 
 	public getState():UiFolderListInterface {

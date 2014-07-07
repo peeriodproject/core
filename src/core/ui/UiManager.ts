@@ -107,7 +107,7 @@ class UiManager implements UiManagerInterface {
 	 */
 	private _socketServer = null;
 
-	private _sparkCount = 0;
+	//private _sparkCount = 0;
 
 	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, components:UiComponentListInterface, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
@@ -215,8 +215,8 @@ class UiManager implements UiManagerInterface {
 	}
 
 	/**
-	 * Iterates over the {@link core.ui.UiManager~_components} list and and calls [sets up]{@link core.ui.UiManager~_setupSocketChannelComponent}
-	 * each component
+	 * Iterates over the {@link core.ui.UiManager~_components} list and [sets up]{@link core.ui.UiManager~_setupSocketChannelComponent}
+	 * each component.
 	 *
 	 * @method core.ui.UiManager~_setupSocketChannelComponentMap
 	 */
@@ -229,8 +229,8 @@ class UiManager implements UiManagerInterface {
 	}
 
 	/**
-	 * Sets up the channel for the specified component and sends an `update` event with the current [compoent state]{@link core.ui.UiComponentInterface#getState}
-	 * to connectd clients whenever the component updates.
+	 * Sets up the channel for the specified component and sends an `update` event with the current [componet state]{@link core.ui.UiComponentInterface#getState}
+	 * to connected clients whenever the component updates. After the manager has sent the state it will call {@link core.ui.UiComponentInterface#onAfterUiUpdate}.
 	 *
 	 * @method core.ui.UiManager~_setupSocketChannelComponent
 	 *
@@ -246,7 +246,7 @@ class UiManager implements UiManagerInterface {
 		// create channel
 		this._channelsMap[channelName] = this._socketServer.channel(channelName);
 
-		// register component to channel
+		// map component to channel
 		this._channelComponentsMap[channelName] = component;
 		this._channelComponentsMap[channelName].onUiUpdate(() => {
 			var state = component.getState();
@@ -297,11 +297,11 @@ class UiManager implements UiManagerInterface {
 			callback(component.getState());
 		});
 
-		spark.on('end', () => {
+		/*spark.on('end', () => {
 			this._sparkCount--;
 
 			console.log('spark ended', this._sparkCount);
-		});
+		});*/
 
 		// register component events
 		var events:Array<string> = component.getEventNames();
@@ -325,7 +325,7 @@ class UiManager implements UiManagerInterface {
 
 		if (index !== -1) {
 			this._httpSockets.splice(index, 1);
-			console.log('http closed', this._httpSockets.length);
+			//console.log('http closed', this._httpSockets.length);
 		}
 	}
 
@@ -343,7 +343,6 @@ class UiManager implements UiManagerInterface {
 			var args = arguments || [];
 
 			Array.prototype.unshift.call(args, eventName);
-			console.log(args);
 
 			component.emit.apply(component, args);
 		});
@@ -397,14 +396,14 @@ class UiManager implements UiManagerInterface {
 	 */
 	private _setupSocketChannel (channelName:string):void {
 		this._channelsMap[channelName].on('connection', (connection) => {
-			this._sparkCount++
-			console.log('spark connected', this._sparkCount);
+			/*this._sparkCount++
+			console.log('spark connected', this._sparkCount);*/
 			this._handleSocketChannel(channelName, connection);
 		});
 
-		this._channelsMap[channelName].on('disconnection', (spark) => {
+		/*this._channelsMap[channelName].on('disconnection', (spark) => {
 			console.log('spark disconnected');
-		});
+		});*/
 	}
 
 	/**
@@ -430,7 +429,7 @@ class UiManager implements UiManagerInterface {
 
 		this._httpServer.on('connection', (socket:net.Socket) => {
 			this._httpSockets.push(socket);
-			console.log('http connected', this._httpSockets.length);
+			//console.log('http connected', this._httpSockets.length);
 			socket.setTimeout(4000);
 			socket.on('close', () => {
 				this._cleanupHttpSocket(socket);
@@ -442,18 +441,13 @@ class UiManager implements UiManagerInterface {
 	}
 
 	/**
-	 * Starts the http server (and the ) and calls the callback on listening.
+	 * Starts the http server and calls the callback on listening.
 	 *
 	 * @method core.ui.UiManager~_startServers
 	 *
 	 * @param {Function} callback
 	 */
 	private _startServers (callback:Function):void {
-		/*this._socketServer.on('connection', (spark) => {
-		 this._handleSocket(spark);
-		 });*/
-
-		//console.log(' [*] Listening on 127.0.0.1:9999' );
 		this._httpServer.listen(this._config.get('ui.UiManager.staticServer.port'), 'localhost', 511, function () {
 			callback();
 		});

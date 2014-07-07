@@ -58,7 +58,6 @@ var UiFolderDropzoneComponent = (function (_super) {
         });
 
         this.on('open', function () {
-            console.log('on open!');
             _this._getWindow().focus();
         });
 

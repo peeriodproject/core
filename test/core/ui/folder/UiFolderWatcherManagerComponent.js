@@ -10,8 +10,6 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
     var component;
     var eventListeners;
     var folderWatcherManagerStub;
-    var sparkStub;
-    var sparkOnListeners;
 
     beforeEach(function () {
         sandbox = sinon.sandbox.create();
@@ -25,18 +23,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
                 eventListeners[eventName] = callback;
             }
         });
-        sparkOnListeners = {};
 
-        sparkStub = {
-            send: sandbox.spy(),
-            on: function (eventName, listener) {
-                if (!sparkOnListeners[eventName]) {
-                    sparkOnListeners[eventName] = [];
-                }
-
-                sparkOnListeners[eventName].push(listener);
-            }
-        };
         component = new UiFolderWatcherManagerComponent(folderWatcherManagerStub);
     });
 
@@ -45,8 +32,6 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
         component = null;
         folderWatcherManagerStub = null;
         eventListeners = null;
-        sparkStub = null;
-        sparkOnListeners = null;
     });
 
     it('should correctly instantiate without error', function () {
@@ -66,6 +51,10 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
         component.getChannelName().should.equal('folder');
     });
 
+    it('should correctly return the event names', function () {
+        component.getEventNames().should.containDeep(['addFolder', 'removeFolder', 'syncFolders']);
+    });
+
     it('should correctly return the state', function () {
         var state = component.getState();
 
@@ -73,73 +62,64 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
         state.length.should.equal(0);
     });
 
-    it('should correctly send a new folder to the ui', function () {
-        // add a client connection
-        component.onConnection(sparkStub);
-
+    it('should correctly send a new folder to the ui', function (done) {
         // add a new folder
-        eventListeners['watcher.add']('/path/to/the/Folder Name');
+        component.onUiUpdate(function () {
+            component.getState().should.containDeep([{
+                    items: 0,
+                    name: 'Folder Name',
+                    path: '/path/to/the/Folder Name',
+                    status: 'active'
+                }]);
 
-        sparkStub.send.calledOnce.should.be.true;
-
-        // check message key
-        sparkStub.send.getCall(0).args[0].should.equal('update');
-
-        // check folder list
-        sparkStub.send.getCall(0).args[1].length.should.equal(1);
-        sparkStub.send.getCall(0).args[1][0].should.containDeep({
-            items: 0,
-            name: 'Folder Name',
-            path: '/path/to/the/Folder Name',
-            status: 'active'
+            done();
         });
+
+        eventListeners['watcher.add']('/path/to/the/Folder Name');
     });
 
     it('should correctly remove a folder from the ui', function () {
-        // add a client connection
-        component.onConnection(sparkStub);
+        var uiUpdateSpy = sandbox.spy();
+        component.onUiUpdate(uiUpdateSpy);
 
         // add a new folder
         eventListeners['watcher.add']('/path/to/the/Folder Name');
+        uiUpdateSpy.calledOnce.should.be.true;
+        component.getState().should.have.a.lengthOf(1);
+
         eventListeners['watcher.remove']('/path/to/the/Folder Name');
 
-        sparkStub.send.calledTwice.should.be.true;
-
-        // check message key
-        sparkStub.send.getCall(1).args[0].should.equal('update');
-
-        // check folders list
-        sparkStub.send.getCall(1).args[1].length.should.equal(0);
+        uiUpdateSpy.calledTwice.should.be.true;
+        component.getState().should.have.a.lengthOf(0);
     });
 
     it('should correctly remove a invalid folder from the ui', function () {
-        // add a client connection
-        component.onConnection(sparkStub);
+        var uiUpdateSpy = sandbox.spy();
+        component.onUiUpdate(uiUpdateSpy);
 
         // add a new folder
         eventListeners['watcher.invalid']('/path/to/the/Folder Name');
         eventListeners['watcher.removeInvalid']('/path/to/the/Folder Name');
 
-        sparkStub.send.calledTwice.should.be.true;
-
-        // check message key
-        sparkStub.send.getCall(1).args[0].should.equal('update');
-
-        // check folders list
-        sparkStub.send.getCall(1).args[1].length.should.equal(0);
+        uiUpdateSpy.calledTwice.should.be.true;
+        component.getState().should.have.a.lengthOf(0);
     });
 
     it('should correctly set the folder status', function () {
-        // add a client connection
-        component.onConnection(sparkStub);
+        var uiUpdateSpy = sandbox.spy();
+        component.onUiUpdate(uiUpdateSpy);
 
         eventListeners['watcher.add']('/path/to/the/Folder Name');
+        component.getState()[0].should.containDeep({
+            items: 0,
+            name: 'Folder Name',
+            path: '/path/to/the/Folder Name',
+            status: 'active'
+        });
+
         eventListeners['watcher.invalid']('/path/to/the/Folder Name');
-
-        sparkStub.send.calledTwice.should.be.true;
-
-        // check folder status
-        sparkStub.send.getCall(0).args[1][0].should.containDeep({
+        uiUpdateSpy.calledTwice.should.be.true;
+        component.getState()[0].should.containDeep({
             items: 0,
             name: 'Folder Name',
             path: '/path/to/the/Folder Name',
@@ -148,8 +128,8 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
     });
 
     it('should correctly increment the item count', function () {
-        // add a client connection
-        component.onConnection(sparkStub);
+        var uiUpdateSpy = sandbox.spy();
+        component.onUiUpdate(uiUpdateSpy);
 
         // add folder
         eventListeners['watcher.add']('/path/to/the/folder');
@@ -159,9 +139,12 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
         // add item to the folder
         eventListeners['add']('/path/to/the/folder/foo/bar.txt');
 
-        var folders = sparkStub.send.getCall(3).args[1];
-        for (var i in folders) {
-            var folder = folders[i];
+        uiUpdateSpy.callCount.should.equal(4);
+
+        var state = component.getState();
+
+        for (var i in state) {
+            var folder = state[i];
 
             if (folder.path === '/path/to/the/folder') {
                 folder.items.should.equal(1);
@@ -172,8 +155,8 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
     });
 
     it('should correctly decrement the item count', function () {
-        // add a client connection
-        component.onConnection(sparkStub);
+        var uiUpdateSpy = sandbox.spy();
+        component.onUiUpdate(uiUpdateSpy);
 
         // add folder
         eventListeners['watcher.add']('/path/to/the/folder');
@@ -184,41 +167,34 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
         eventListeners['add']('/path/to/the/folder/foo/bar.txt');
         eventListeners['unlink']('/path/to/the/folder/foo/bar.txt');
 
-        var folders = sparkStub.send.getCall(3).args[1];
-        for (var i in folders) {
-            folders[i].items.should.equal(0);
+        uiUpdateSpy.callCount.should.equal(5);
+
+        var state = component.getState();
+        for (var i in state) {
+            state[i].items.should.equal(0);
         }
     });
 
-    it('should correctly call the FolderWatcherManager.addFolderWatcher method when the spark receives an "addFolder" event', function () {
+    it('should correctly call the FolderWatcherManager.addFolderWatcher method when the component recieves an "addFolder" event', function () {
         var newFolderPath = '/the/path/to/the/folder/to/add';
 
-        component.onConnection(sparkStub);
-
-        sparkOnListeners['addFolder'].length.should.equal(1);
-        sparkOnListeners['addFolder'][0](newFolderPath);
+        component.emit('addFolder', newFolderPath);
 
         folderWatcherManagerStub.addFolderWatcher.calledOnce.should.be.true;
         folderWatcherManagerStub.addFolderWatcher.getCall(0).args[0].should.equal(newFolderPath);
     });
 
-    it('should correctly call the FolderWatcherManager.removeFolderWatcher method when the spark receives an "removeFolder" event', function () {
+    it('should correctly call the FolderWatcherManager.removeFolderWatcher method when the component receives an "removeFolder" event', function () {
         var newFolderPath = '/the/path/to/the/folder/to/remove';
 
-        component.onConnection(sparkStub);
-
-        sparkOnListeners['removeFolder'].length.should.equal(1);
-        sparkOnListeners['removeFolder'][0](newFolderPath);
+        component.emit('removeFolder', newFolderPath);
 
         folderWatcherManagerStub.removeFolderWatcher.calledOnce.should.be.true;
         folderWatcherManagerStub.removeFolderWatcher.getCall(0).args[0].should.equal(newFolderPath);
     });
 
-    it('should correctly call the FolderWatcherManager.removeFolderWatcher method when the spark receives an "syncFolders" event', function () {
-        component.onConnection(sparkStub);
-
-        sparkOnListeners['syncFolders'].length.should.equal(1);
-        sparkOnListeners['syncFolders'][0]();
+    it('should correctly call the FolderWatcherManager.removeFolderWatcher method when the component receives an "syncFolders" event', function () {
+        component.emit('syncFolders');
 
         folderWatcherManagerStub.checkFolderWatcherPaths.calledOnce.should.be.true;
     });

@@ -44,7 +44,6 @@ var UiFolderWatcherManagerComponent = (function (_super) {
 
     UiFolderWatcherManagerComponent.prototype.getEventNames = function () {
         return ['addFolder', 'removeFolder', 'syncFolders'];
-        ;
     };
 
     UiFolderWatcherManagerComponent.prototype.getState = function () {

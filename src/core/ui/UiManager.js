@@ -19,6 +19,7 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @param {core.utils.ClosableAsyncOptions} options (optional)
 */
 var UiManager = (function () {
+    //private _sparkCount = 0;
     function UiManager(config, appQuitHandler, components, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
@@ -90,7 +91,6 @@ var UiManager = (function () {
         * @member {} core.ui.UiManager~_socketServer
         */
         this._socketServer = null;
-        this._sparkCount = 0;
         var defaults = {
             closeOnProcessExit: true,
             onCloseCallback: function () {
@@ -194,8 +194,8 @@ var UiManager = (function () {
     };
 
     /**
-    * Iterates over the {@link core.ui.UiManager~_components} list and and calls [sets up]{@link core.ui.UiManager~_setupSocketChannelComponent}
-    * each component
+    * Iterates over the {@link core.ui.UiManager~_components} list and [sets up]{@link core.ui.UiManager~_setupSocketChannelComponent}
+    * each component.
     *
     * @method core.ui.UiManager~_setupSocketChannelComponentMap
     */
@@ -208,8 +208,8 @@ var UiManager = (function () {
     };
 
     /**
-    * Sets up the channel for the specified component and sends an `update` event with the current [compoent state]{@link core.ui.UiComponentInterface#getState}
-    * to connectd clients whenever the component updates.
+    * Sets up the channel for the specified component and sends an `update` event with the current [componet state]{@link core.ui.UiComponentInterface#getState}
+    * to connected clients whenever the component updates. After the manager has sent the state it will call {@link core.ui.UiComponentInterface#onAfterUiUpdate}.
     *
     * @method core.ui.UiManager~_setupSocketChannelComponent
     *
@@ -226,7 +226,7 @@ var UiManager = (function () {
         // create channel
         this._channelsMap[channelName] = this._socketServer.channel(channelName);
 
-        // register component to channel
+        // map component to channel
         this._channelComponentsMap[channelName] = component;
         this._channelComponentsMap[channelName].onUiUpdate(function () {
             var state = component.getState();
@@ -267,7 +267,6 @@ var UiManager = (function () {
     * @param {todo} spark
     */
     UiManager.prototype._handleSocketChannel = function (channelName, spark) {
-        var _this = this;
         var component = this._channelComponentsMap[channelName];
 
         if (!component) {
@@ -279,12 +278,11 @@ var UiManager = (function () {
             callback(component.getState());
         });
 
-        spark.on('end', function () {
-            _this._sparkCount--;
-
-            console.log('spark ended', _this._sparkCount);
-        });
-
+        /*spark.on('end', () => {
+        this._sparkCount--;
+        
+        console.log('spark ended', this._sparkCount);
+        });*/
         // register component events
         var events = component.getEventNames();
 
@@ -307,7 +305,7 @@ var UiManager = (function () {
 
         if (index !== -1) {
             this._httpSockets.splice(index, 1);
-            console.log('http closed', this._httpSockets.length);
+            //console.log('http closed', this._httpSockets.length);
         }
     };
 
@@ -325,7 +323,6 @@ var UiManager = (function () {
             var args = arguments || [];
 
             Array.prototype.unshift.call(args, eventName);
-            console.log(args);
 
             component.emit.apply(component, args);
         });
@@ -380,14 +377,13 @@ var UiManager = (function () {
     UiManager.prototype._setupSocketChannel = function (channelName) {
         var _this = this;
         this._channelsMap[channelName].on('connection', function (connection) {
-            _this._sparkCount++;
-            console.log('spark connected', _this._sparkCount);
+            /*this._sparkCount++
+            console.log('spark connected', this._sparkCount);*/
             _this._handleSocketChannel(channelName, connection);
         });
-
-        this._channelsMap[channelName].on('disconnection', function (spark) {
-            console.log('spark disconnected');
-        });
+        /*this._channelsMap[channelName].on('disconnection', (spark) => {
+        console.log('spark disconnected');
+        });*/
     };
 
     /**
@@ -414,7 +410,8 @@ var UiManager = (function () {
 
         this._httpServer.on('connection', function (socket) {
             _this._httpSockets.push(socket);
-            console.log('http connected', _this._httpSockets.length);
+
+            //console.log('http connected', this._httpSockets.length);
             socket.setTimeout(4000);
             socket.on('close', function () {
                 _this._cleanupHttpSocket(socket);
@@ -426,17 +423,13 @@ var UiManager = (function () {
     };
 
     /**
-    * Starts the http server (and the ) and calls the callback on listening.
+    * Starts the http server and calls the callback on listening.
     *
     * @method core.ui.UiManager~_startServers
     *
     * @param {Function} callback
     */
     UiManager.prototype._startServers = function (callback) {
-        /*this._socketServer.on('connection', (spark) => {
-        this._handleSocket(spark);
-        });*/
-        //console.log(' [*] Listening on 127.0.0.1:9999' );
         this._httpServer.listen(this._config.get('ui.UiManager.staticServer.port'), 'localhost', 511, function () {
             callback();
         });
