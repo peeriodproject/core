@@ -1,25 +1,36 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
 
+import events = require('events');
+
 import UiComponentInterface = require('./interfaces/UiComponentInterface');
 
 /**
  * @class core.ui.UiComponent
  * @implements core.ui.UiComponentInterface
  */
-class UiComponent implements UiComponentInterface {
+class UiComponent extends events.EventEmitter implements UiComponentInterface {
 
-	getChannelName ():string {
+	public getEventNames ():Array<string> {
+		return [];
+	}
+
+	public getChannelName ():string {
 		return undefined;
 	}
 
-	getState ():Object {
+	public getState ():Object {
 		return {};
 	}
 
-	/*onMessage (message:any):void {
-	}*/
+	public onUiUpdate (listener:() => any):void {
+		this.addListener('updateUi', listener);
+	}
 
-	onConnection (spark:any) {
+	public onAfterUiUpdate ():void {
+	}
+
+	public updateUi ():void {
+		this.emit('updateUi');
 	}
 
 }

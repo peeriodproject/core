@@ -1,10 +1,11 @@
 /// <reference path='../../../../ts-definitions/node/node.d.ts' />
 
 import FolderWatcherManagerInterface = require('../../fs/interfaces/FolderWatcherManagerInterface');
-import UiComponentInterface = require('../interfaces/UiComponentInterface');
 import UiFolderInterface = require('./interfaces/UiFolderInterface');
 import UiFolderListInterface = require('./interfaces/UiFolderListInterface');
 import UiFolderMapInterface = require('./interfaces/UiFolderMapInterface');
+
+import UiComponent = require('../UiComponent');
 
 /**
  * The UiFolderWatcherManagerComponent acts as a controller between the {@link core.fs.FolderWatcherManager} and the user interface.
@@ -14,12 +15,7 @@ import UiFolderMapInterface = require('./interfaces/UiFolderMapInterface');
  *
  * @param {core.fs.FolderWatcherManagerInterface} folderWatcherManager
  */
-class UiFolderWatcherManagerComponent implements UiComponentInterface {
-
-	/**
-	 * todo ts-definition
-	 */
-	private _connections:Array<any> = [];
+class UiFolderWatcherManagerComponent extends UiComponent {
 
 	/**
 	 * The folder watcher manager instance
@@ -36,14 +32,21 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 	private _folders:UiFolderMapInterface = {};
 
 	constructor (folderWatcherManager:FolderWatcherManagerInterface) {
+		super();
+
 		this._folderWatcherManager = folderWatcherManager;
 
+		this._setupEventListeners();
 		this._setupFolderWatcherEvents();
 		this._setupItemEvents();
 	}
 
 	public getChannelName ():string {
 		return 'folder';
+	}
+
+	public getEventNames ():Array<string> {
+		return ['addFolder', 'removeFolder', 'syncFolders'];
 	}
 
 	public getState():UiFolderListInterface {
@@ -59,22 +62,6 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 		}
 
 		return folders;
-	}
-
-	public onConnection (spark:any):void {
-		this._connections.push(spark);
-
-		spark.on('addFolder', (path) => {
-			this._folderWatcherManager.addFolderWatcher(path);
-		});
-
-		spark.on('removeFolder', (path) => {
-			this._folderWatcherManager.removeFolderWatcher(path);
-		});
-
-		spark.on('syncFolders', () => {
-			this._folderWatcherManager.checkFolderWatcherPaths();
-		});
 	}
 
 	/**
@@ -187,6 +174,20 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 		this._folders[folderPath].items--;
 	}
 
+	private _setupEventListeners ():void {
+		this.on('addFolder', (path) => {
+			this._folderWatcherManager.addFolderWatcher(path);
+		});
+
+		this.on('removeFolder', (path) => {
+			this._folderWatcherManager.removeFolderWatcher(path);
+		});
+
+		this.on('syncFolders', () => {
+			this._folderWatcherManager.checkFolderWatcherPaths();
+		});
+	}
+
 	/**
 	 * Registers listeners for folder changes on the {@link core.ui.UiFolderWatcherManagerComponent~_folderWatcherManager}
 	 *
@@ -195,19 +196,22 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 	private _setupFolderWatcherEvents ():void {
 		this._folderWatcherManager.on('watcher.add', (path) => {
 			this._setStatus(path, 'active');
-			this._updateUi();
+			this.updateUi();
 		});
+
 		this._folderWatcherManager.on('watcher.invalid', (path) => {
 			this._setStatus(path, 'invalid');
-			this._updateUi();
+			this.updateUi();
 		});
+
 		this._folderWatcherManager.on('watcher.remove', (path) => {
 			this._removeFolder(path);
-			this._updateUi();
+			this.updateUi();
 		});
+
 		this._folderWatcherManager.on('watcher.removeInvalid', (path) => {
 			this._removeFolder(path);
-			this._updateUi();
+			this.updateUi();
 		});
 	}
 
@@ -219,12 +223,12 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 	private _setupItemEvents ():void {
 		this._folderWatcherManager.on('add', (path) => {
 			this._addItem(path);
-			this._updateUi();
+			this.updateUi();
 		});
 
 		this._folderWatcherManager.on('unlink', (path) => {
 			this._removeItem(path);
-			this._updateUi();
+			this.updateUi();
 		});
 	}
 
@@ -244,22 +248,6 @@ class UiFolderWatcherManagerComponent implements UiComponentInterface {
 			this._folders[path].status = status;
 		}
 	}
-
-	/**
-	 * Sends the updates to all connected clients via `update` message.
-	 *
-	 * @member core.ui.UiFolderWatcherManagerComponent~_updateUi
-	 */
-	private _updateUi():void {
-		if (this._connections.length) {
-			var state:Object = this.getState();
-
-			for (var i = 0, l = this._connections.length; i < l; i++) {
-				this._connections[i].send('update', state);
-			}
-		}
-	}
-
 
 }
 

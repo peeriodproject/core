@@ -117,23 +117,20 @@ describe('CORE --> UI --> UiManager', function () {
     });
 
     it('should correctly create a socket connection', function (done) {
+        var listeners = {};
         var componentStub = testUtils.stubPublicApi(sandbox, UiComponent, {
             getChannelName: function () {
                 return 'chat';
             },
+            getEventNames: function () {
+                return ['foo'];
+            },
             getState: function () {
                 return { foo: 'bar' };
             },
-            onConnection: function (spark) {
-                spark.send('message', 'welcome to this chat', function (message) {
-                    message.should.equal('i am glad to be here!');
-                });
-
-                spark.on('weather', function (message, callback) {
-                    message.should.equal('how is it outside?');
-
-                    callback('it is nice and sunny.');
-                });
+            emit: function () {
+                // callback(data)
+                return arguments[2](arguments[1]);
             }
         });
 
@@ -150,19 +147,38 @@ describe('CORE --> UI --> UiManager', function () {
                         JSON.stringify(state).should.equal(JSON.stringify({ foo: 'bar' }));
                     });
 
-                    chat.on('message', function (message, callback) {
-                        message.should.equal('welcome to this chat');
+                    chat.send('foo', { data: true }, function (message) {
+                        JSON.stringify(message).should.equal(JSON.stringify({ data: true }));
 
-                        callback('i am glad to be here!');
-
-                        chat.send('weather', 'how is it outside?', function (message) {
-                            message.should.equal('it is nice and sunny.');
-
-                            closeAndDone(done);
-                        });
+                        closeAndDone(done);
                     });
                 });
             });
+        });
+    });
+
+    it('should correctly forward a component update event', function (done) {
+        var componentStub = testUtils.stubPublicApi(sandbox, UiComponent, {
+            getChannelName: function () {
+                return 'chat';
+            },
+            getEventNames: function () {
+                return ['foo'];
+            },
+            getState: function () {
+                return { foo: 'bar' };
+            }
+        });
+
+        createUiManager(configStub, appQuitHandlerStub, [componentStub], function () {
+            // trigger the onUiUpdate listener
+            componentStub.onUiUpdate.getCall(0).args[0]();
+
+            componentStub.getState.callCount.should.equal(1);
+            componentStub.onAfterUiUpdate.callCount.should.equal(1);
+            componentStub.getState.calledBefore(componentStub.onAfterUiUpdate).should.be.true;
+
+            done();
         });
     });
 });

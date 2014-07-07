@@ -1,18 +1,26 @@
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var UiComponent = require('../UiComponent');
+
 /**
 * @class core.ui.UiPluginManagerComponent
 * @implements core.ui.UiComponentInterface
 */
-var UiPluginManagerComponent = (function () {
+var UiPluginManagerComponent = (function (_super) {
+    __extends(UiPluginManagerComponent, _super);
     function UiPluginManagerComponent(pluginManager) {
         var _this = this;
-        /**
-        * todo ts-definition
-        */
-        this._connections = [];
+        _super.call(this);
         this._pluginManager = null;
         this._state = {};
+
         this._pluginManager = pluginManager;
 
+        //this._setupEventListeners();
         this._setupPluginManagerEvents();
 
         pluginManager.open(function (err) {
@@ -28,12 +36,12 @@ var UiPluginManagerComponent = (function () {
         return 'plugin';
     };
 
-    UiPluginManagerComponent.prototype.getState = function () {
-        return this._state;
+    UiPluginManagerComponent.prototype.getEventNames = function () {
+        return [];
     };
 
-    UiPluginManagerComponent.prototype.onConnection = function (spark) {
-        this._connections.push(spark);
+    UiPluginManagerComponent.prototype.getState = function () {
+        return this._state;
     };
 
     UiPluginManagerComponent.prototype._setupPluginManagerEvents = function () {
@@ -50,7 +58,7 @@ var UiPluginManagerComponent = (function () {
             var callbackCount = 0;
             var checkAndUpdate = function () {
                 if (callbackCount === runnerIdentifiers.length) {
-                    _this._updateUi();
+                    _this.updateUi();
                 }
             };
 
@@ -85,13 +93,13 @@ var UiPluginManagerComponent = (function () {
 
             runner.getSearchFields(function (err, fields) {
                 _this._addSearchFields(identifier, err, fields);
-                //this._updateUi();
+                //this.updateUi();
             });
         });
     };
 
     /**
-    * Adds the givent fields to the specified identifier and logs an error to the console if present
+    * Adds the given fields to the specified identifier and logs an error to the console if present
     *
     * @member core.ui.UiPluginManagerComponent~_addSearchFields
     *
@@ -106,25 +114,8 @@ var UiPluginManagerComponent = (function () {
             this._state[identifier] = fields;
         }
     };
-
-    /**
-    * Sends the updates to all connected clients via `update` message.
-    *
-    * todo move this to the base class!
-    *
-    * @member core.ui.UiPluginManagerComponent~_updateUi
-    */
-    UiPluginManagerComponent.prototype._updateUi = function () {
-        if (this._connections.length) {
-            var state = this.getState();
-
-            for (var i = 0, l = this._connections.length; i < l; i++) {
-                this._connections[i].send('update', state);
-            }
-        }
-    };
     return UiPluginManagerComponent;
-})();
+})(UiComponent);
 
 module.exports = UiPluginManagerComponent;
 //# sourceMappingURL=UiPluginManagerComponent.js.map

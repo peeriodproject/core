@@ -1,25 +1,24 @@
 import PluginManagerInterface = require('../../plugin/interfaces/PluginManagerInterface');
 import PluginRunnerMapInterface = require('../../plugin/interfaces/PluginRunnerMapInterface');
-import UiComponentInterface = require('../interfaces/UiComponentInterface');
+
+import UiComponent = require('../UiComponent');
 
 /**
  * @class core.ui.UiPluginManagerComponent
  * @implements core.ui.UiComponentInterface
  */
-class UiPluginManagerComponent  implements UiComponentInterface {
-
-	/**
-	 * todo ts-definition
-	 */
-	private _connections:Array<any> = [];
+class UiPluginManagerComponent  extends UiComponent {
 
 	private _pluginManager:PluginManagerInterface = null;
 
 	private _state:Object = {};
 
 	constructor (pluginManager:PluginManagerInterface) {
+		super();
+
 		this._pluginManager = pluginManager;
 
+		//this._setupEventListeners();
 		this._setupPluginManagerEvents();
 
 		pluginManager.open((err)  => {
@@ -36,13 +35,12 @@ class UiPluginManagerComponent  implements UiComponentInterface {
 		return 'plugin';
 	}
 
-	public getState():Object {
-		return this._state;
+	public getEventNames ():Array<string> {
+		return [];
 	}
 
-	public onConnection (spark:any):void {
-		this._connections.push(spark);
-
+	public getState():Object {
+		return this._state;
 	}
 
 	private _setupPluginManagerEvents ():void {
@@ -57,7 +55,7 @@ class UiPluginManagerComponent  implements UiComponentInterface {
 			var callbackCount:number = 0;
 			var checkAndUpdate:Function = () => {
 				if (callbackCount === runnerIdentifiers.length) {
-					this._updateUi();
+					this.updateUi();
 				}
 			};
 
@@ -93,13 +91,13 @@ class UiPluginManagerComponent  implements UiComponentInterface {
 			runner.getSearchFields((err, fields) => {
 				this._addSearchFields(identifier, err, fields);
 
-				//this._updateUi();
+				//this.updateUi();
 			});
 		});
 	}
 
 	/**
-	 * Adds the givent fields to the specified identifier and logs an error to the console if present
+	 * Adds the given fields to the specified identifier and logs an error to the console if present
 	 *
 	 * @member core.ui.UiPluginManagerComponent~_addSearchFields
 	 *
@@ -113,23 +111,6 @@ class UiPluginManagerComponent  implements UiComponentInterface {
 		}
 		else if (fields) {
 			this._state[identifier] = fields;
-		}
-	}
-
-	/**
-	 * Sends the updates to all connected clients via `update` message.
-	 *
-	 * todo move this to the base class!
-	 *
-	 * @member core.ui.UiPluginManagerComponent~_updateUi
-	 */
-	private _updateUi():void {
-		if (this._connections.length) {
-			var state:Object = this.getState();
-
-			for (var i = 0, l = this._connections.length; i < l; i++) {
-				this._connections[i].send('update', state);
-			}
 		}
 	}
 

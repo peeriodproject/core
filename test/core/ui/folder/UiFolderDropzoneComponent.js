@@ -106,35 +106,32 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
         state.length.should.equal(0);
     });
 
-    it('should correctly save the given color object in localStorage', function () {
-        component.onConnection(sparkStub);
-
-        sparkOnListeners['background'].forEach(function (listener) {
-            listener({
-                background: 'background',
-                color: 'color',
-                inverted: 'inverted',
-                invertedBackgroundColor: 'invertedBackgroundColor'
-            });
-        });
-
-        nwWindowStub._window.window.localStorage.setItem.callCount.should.equal(4);
-
-        var data = ['background', 'color', 'inverted', 'invertedBackgroundColor'];
-
-        for (var i = 0; i < 4; i++) {
-            // key data[i] exists
-            nwWindowStub._window.window.localStorage.setItem.getCall(i).args[0].should.equal(data[i]);
-
-            // value for key data[i] equals data[i]
-            nwWindowStub._window.window.localStorage.setItem.getCall(i).args[1].should.equal(data[i]);
-        }
+    /*it('should correctly save the given color object in localStorage', function () {
+    component.onConnection(sparkStub);
+    
+    sparkOnListeners['background'].forEach(function(listener) {
+    listener({
+    background             : 'background',
+    color                  : 'color',
+    inverted               : 'inverted',
+    invertedBackgroundColor: 'invertedBackgroundColor'
     });
-
+    });
+    
+    nwWindowStub._window.window.localStorage.setItem.callCount.should.equal(4);
+    
+    var data = ['background', 'color', 'inverted', 'invertedBackgroundColor'];
+    
+    for (var i = 0; i < 4; i++) {
+    // key data[i] exists
+    nwWindowStub._window.window.localStorage.setItem.getCall(i).args[0].should.equal(data[i]);
+    
+    // value for key data[i] equals data[i]
+    nwWindowStub._window.window.localStorage.setItem.getCall(i).args[1].should.equal(data[i]);
+    }
+    });*/
     it('should correctly open the internal window and focus it', function () {
-        component.onConnection(sparkStub);
-
-        triggerListeners(sparkOnListeners['open']);
+        component.emit('open');
 
         nwWindowStub._window.show.calledOnce.should.be.true;
         nwWindowStub._window.setAlwaysOnTop.calledOnce.should.be.true;
@@ -142,18 +139,15 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
     });
 
     it('should correctly call the internal window close method on close', function () {
-        component.onConnection(sparkStub);
-
-        triggerListeners(sparkOnListeners['open']);
-        triggerListeners(sparkOnListeners['close']);
+        component.emit('open');
+        component.emit('close');
 
         nwWindowStub._window.close.calledOnce.should.be.true;
     });
 
     it('should correctly open and close the internal window', function () {
-        component.onConnection(sparkStub);
+        component.emit('open');
 
-        triggerListeners(sparkOnListeners['open']);
         triggerListeners(windowOnListeners['close']);
 
         nwWindowStub._window.hide.calledOnce.should.be.true;
@@ -161,48 +155,47 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
     });
 
     it('should correctly open the window on the previous position', function () {
-        component.onConnection(sparkStub);
-
-        triggerListeners(sparkOnListeners['open']);
+        component.emit('open');
         triggerListeners(windowOnListeners['move'], 123, 321);
-        triggerListeners(sparkOnListeners['close']);
 
-        triggerListeners(sparkOnListeners['open']);
+        component.emit('close');
+        component.emit('open');
 
         nwWindowStub._window.moveTo.getCall(1).args[0].should.equal(123);
         nwWindowStub._window.moveTo.getCall(1).args[1].should.equal(321);
     });
 
     it('should correctly open the window with the previous dimensions', function () {
-        component.onConnection(sparkStub);
-
-        triggerListeners(sparkOnListeners['open']);
+        component.emit('open');
         triggerListeners(windowOnListeners['resize'], 358, 853);
-        triggerListeners(sparkOnListeners['close']);
 
-        triggerListeners(sparkOnListeners['open']);
+        component.emit('close');
+        component.emit('open');
 
         nwWindowStub._window.resizeTo.getCall(1).args[0].should.equal(358);
         nwWindowStub._window.resizeTo.getCall(1).args[1].should.equal(853);
     });
 
     it('should correctly set the path list, update the UI on drop and clean up the path list', function () {
-        component.onConnection(sparkStub);
+        var uiUpdateSpy = sandbox.spy();
+        component.onUiUpdate(uiUpdateSpy);
 
-        triggerListeners(sparkOnListeners['open']);
+        component.emit('open');
+
         triggerListeners(windowOnListeners['drop'], ['/path/one', '/path/two']);
 
-        sparkStub.send.calledOnce.should.be.true;
+        uiUpdateSpy.calledOnce.should.be.true;
 
-        // check socket key
-        sparkStub.send.getCall(0).args[0].should.equal('update');
+        var state = component.getState();
 
         // check paths
-        sparkStub.send.getCall(0).args[1][0].should.equal('/path/one');
-        sparkStub.send.getCall(0).args[1][1].should.equal('/path/two');
+        state[0].should.equal('/path/one');
+        state[1].should.equal('/path/two');
+
+        component.onAfterUiUpdate();
 
         // paths should be removed from the list
-        component.getState().length.should.equal(0);
+        component.getState().should.have.a.lengthOf(0);
     });
 });
 //# sourceMappingURL=UiFolderDropzoneComponent.js.map
