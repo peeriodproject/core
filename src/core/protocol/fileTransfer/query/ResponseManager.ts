@@ -5,7 +5,7 @@ import TransferMessageCenterInterface = require('../interfaces/TransferMessageCe
 import CircuitManagerInterface = require('../../hydra/interfaces/CircuitManagerInterface');
 import FeedingNodesMessageBlock = require('../messages/FeedingNodesMessageBlock');
 import HydraNodeList = require('../../hydra/interfaces/HydraNodeList');
-import ExternalQueryList = require('./interfaces/ExternalQueryList');
+import ExternalQueryHandlerList = require('./interfaces/ExternalQueryHandlerList');
 import PendingQueryList = require('./interfaces/PendingQueryList');
 import WritableQueryResponseMessageFactoryInterface = require('../messages/interfaces/WritableQueryResponseMessageFactoryInterface');
 
@@ -40,9 +40,9 @@ class ResponseManager implements ResponseManagerInterface {
 	/**
 	 * Stores references to callbacks waiting for query responses issued externally.
 	 *
-	 * @member {core.protocol.fileTransfer.ExternalQueryList} core.protocol.fileTransfer.ResponseManager~_externalQueryHandlers
+	 * @member {core.protocol.fileTransfer.ExternalQueryHandlerList} core.protocol.fileTransfer.ResponseManager~_externalQueryHandlers
 	 */
-	private _externalQueryHandlers:ExternalQueryList = {};
+	private _externalQueryHandlers:ExternalQueryHandlerList = {};
 
 	/**
 	 * Stores the feeding nodes byte block which was received with a search object, in order to correctly issue
@@ -82,6 +82,22 @@ class ResponseManager implements ResponseManagerInterface {
 
 		this._setupListeners();
 	}
+
+	/**
+	 * BEGIN TESTING PURPOSES ONLY
+	 */
+
+	public getExternalQueryHandlers ():ExternalQueryHandlerList {
+		return this._externalQueryHandlers;
+	}
+
+	public getPendingBroadcastQueries ():PendingQueryList {
+		return this._pendingBroadcastQueries;
+	}
+
+	/**
+	 * END TESTING PURPOSES ONLY
+	 */
 
 	public externalQueryHandler (identifier:string, searchObject:Buffer, callback:(identifier:string, results:Buffer) => any):void {
 		this._externalQueryHandlers[identifier] = callback;

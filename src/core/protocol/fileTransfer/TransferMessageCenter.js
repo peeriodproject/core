@@ -39,7 +39,6 @@ var TransferMessageCenter = (function (_super) {
         this._readableQueryResponseMessageFactory = readableQueryResponseFactory;
         this._writableQueryResponseMessageFactory = writableQueryResponseFactory;
 
-        //this._buildFeedingNodesBlock();
         this._setupListeners();
     }
     TransferMessageCenter.prototype.issueExternalFeedToCircuit = function (nodesToFeedBlock, payload, circuitId) {
@@ -60,37 +59,8 @@ var TransferMessageCenter = (function (_super) {
         }
     };
 
-    // not sure of to really use this in this way
-    TransferMessageCenter.prototype._buildFeedingNodesBlock = function () {
-        var nodes = [];
-        var circuits = this._circuitManager.getReadyCircuits();
-
-        if (circuits && circuits.length) {
-            for (var i = 0, l = circuits.length; i < l; i++) {
-                var circuitNodes = circuits[i].getCircuitNodes();
-                var node = circuitNodes[circuitNodes.length - 1];
-
-                if (node && node.ip && node.port && node.feedingIdentifier) {
-                    nodes.push(node);
-                }
-            }
-        }
-
-        if (nodes.length) {
-            this._feedingNodesBlock = FeedingNodesMessageBlock.constructBlock(nodes);
-            this._feedingNodesBlockLength = this._feedingNodesBlock.length;
-        } else {
-            this._feedingNodesBlock = null;
-            this._feedingNodesBlockLength = 0;
-        }
-    };
-
     TransferMessageCenter.prototype._setupListeners = function () {
         var _this = this;
-        this._circuitManager.on('circuitCount', function () {
-            _this._buildFeedingNodesBlock();
-        });
-
         this._circuitManager.on('circuitReceivedTransferMessage', function (circuitId, payload) {
             var msg = _this._readableFileTransferMessageFactory.create(payload);
 

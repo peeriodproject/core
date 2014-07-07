@@ -29,7 +29,7 @@ var ResponseManager = (function () {
         /**
         * Stores references to callbacks waiting for query responses issued externally.
         *
-        * @member {core.protocol.fileTransfer.ExternalQueryList} core.protocol.fileTransfer.ResponseManager~_externalQueryHandlers
+        * @member {core.protocol.fileTransfer.ExternalQueryHandlerList} core.protocol.fileTransfer.ResponseManager~_externalQueryHandlers
         */
         this._externalQueryHandlers = {};
         /**
@@ -65,6 +65,20 @@ var ResponseManager = (function () {
 
         this._setupListeners();
     }
+    /**
+    * BEGIN TESTING PURPOSES ONLY
+    */
+    ResponseManager.prototype.getExternalQueryHandlers = function () {
+        return this._externalQueryHandlers;
+    };
+
+    ResponseManager.prototype.getPendingBroadcastQueries = function () {
+        return this._pendingBroadcastQueries;
+    };
+
+    /**
+    * END TESTING PURPOSES ONLY
+    */
     ResponseManager.prototype.externalQueryHandler = function (identifier, searchObject, callback) {
         this._externalQueryHandlers[identifier] = callback;
         this._searchBridge.emit('matchBroadcastQuery', identifier, searchObject);

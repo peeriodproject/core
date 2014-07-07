@@ -15,7 +15,7 @@ var HydraCircuit = require('../../../../src/core/protocol/hydra/HydraCircuit');
 var CircuitManager = require('../../../../src/core/protocol/hydra/CircuitManager');
 var HydraCircuitFactory = require('../../../../src/core/protocol/hydra/HydraCircuitFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> CircuitManager @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> CircuitManager', function () {
     var minNodes = 3;
     var maxNodes = 7;
     var desiredNumOfCircs = 4;

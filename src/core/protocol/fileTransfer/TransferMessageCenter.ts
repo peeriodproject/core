@@ -51,8 +51,6 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 		this._readableQueryResponseMessageFactory = readableQueryResponseFactory;
 		this._writableQueryResponseMessageFactory = writableQueryResponseFactory;
 
-		//this._buildFeedingNodesBlock();
-
 		this._setupListeners();
 	}
 
@@ -77,36 +75,7 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 		}
 	}
 
-	// not sure of to really use this in this way
-	private _buildFeedingNodesBlock ():void {
-		var nodes:HydraNodeList = [];
-		var circuits:HydraCircuitList = this._circuitManager.getReadyCircuits();
-
-		if (circuits && circuits.length) {
-			for (var i=0, l=circuits.length; i<l; i++) {
-				var circuitNodes:HydraNodeList = circuits[i].getCircuitNodes();
-				var node:HydraNode = circuitNodes[circuitNodes.length - 1];
-
-				if (node && node.ip && node.port && node.feedingIdentifier) {
-					nodes.push(node);
-				}
-			}
-		}
-
-		if (nodes.length) {
-			this._feedingNodesBlock = FeedingNodesMessageBlock.constructBlock(nodes);
-			this._feedingNodesBlockLength = this._feedingNodesBlock.length;
-		}
-		else {
-			this._feedingNodesBlock = null;
-			this._feedingNodesBlockLength = 0;
-		}
-	}
-
 	private _setupListeners ():void {
-		this._circuitManager.on('circuitCount', () => {
-			this._buildFeedingNodesBlock();
-		});
 
 		this._circuitManager.on('circuitReceivedTransferMessage', (circuitId:string, payload:Buffer) => {
 			var msg:ReadableFileTransferMessageInterface = this._readableFileTransferMessageFactory.create(payload);
