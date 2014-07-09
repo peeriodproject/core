@@ -29,6 +29,9 @@ var SearchStoreFactory = require('./search/SearchStoreFactory');
 var SearchItemFactory = require('./search/SearchItemFactory');
 var SearchClient = require('./search/SearchClient');
 var SearchManager = require('./search/SearchManager');
+var SearchRequestManager = require('./search/SearchRequestManager');
+var SearchResponseManager = require('./search/SearchResponseManager');
+var SearchMessageBridge = require('./search/SearchMessageBridge');
 
 var PluginFinder = require('./plugin/PluginFinder');
 var PluginValidator = require('./plugin/PluginValidator');
@@ -68,8 +71,14 @@ var App = {
             fs.copySync(path.join(__dirname, '../config/nodeDiscovery.json'), nodeDiscoveryPath);
         }
 
-        this.startTopology(dataPath, win);
+        //this.startTopology(dataPath, win);
         this.startSearchClient(function (searchConfig, searchClient) {
+            var searchRequestManager = new SearchRequestManager(_this.appQuitHandler, 'searchrequests', searchClient);
+            var searchResponseManager = new SearchResponseManager(_this.appQuitHandler, searchClient);
+
+            var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
+
+            _this.startTopology(dataPath, searchMessageBridge);
             _this.startIndexer(searchConfig, searchClient);
 
             console.log('started indexer');
@@ -135,7 +144,7 @@ var App = {
 
         var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
     },
-    startTopology: function (dataPath, win) {
+    startTopology: function (dataPath, searchMessageBridge) {
         var _this = this;
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
