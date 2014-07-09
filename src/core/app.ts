@@ -1,5 +1,6 @@
 import crypto = require('crypto');
 import path = require('path');
+import fs = require('fs-extra');
 
 // global imports
 import JSONConfig = require('./config/JSONConfig');
@@ -65,6 +66,14 @@ var App = {
 
 		this.appQuitHandler = new AppQuitHandler(nwApp);
 
+		// copy node discovery.json to app data path
+		var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
+		var nodeDiscoveryPath = path.resolve(appConfig.get('app.dataPath'), 'nodeDiscovery.json');
+
+		if (!fs.existsSync(nodeDiscoveryPath)) {
+			fs.copySync(path.join(__dirname, '../config/nodeDiscovery.json'), nodeDiscoveryPath);
+		}
+
 		//this.startTopology(dataPath, win);
 		this.startSearchClient((searchConfig, searchClient) => {
 			console.log('starting indexer');
@@ -117,7 +126,6 @@ var App = {
 		//var testFolderPath:string = path.resolve(__dirname, '../../utils/TestFolder');
 		//var externalFolderPath:string = path.resolve('/Volumes/External/path/Folder');
 
-		var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
 		var searchConfig = new JSONConfig('../../config/mainConfig.json', ['search']);
 
 		var searchStoreFactory = new SearchStoreFactory();
@@ -211,9 +219,9 @@ var App = {
 							console.error(err);
 						}
 
-						protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable);
+						//protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable);
 
-						protocolGateway.start();
+						//protocolGateway.start();
 					}
 				});
 			});
