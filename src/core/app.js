@@ -46,7 +46,7 @@ var IndexManager = require('./search/IndexManager');
 // ui imports
 var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
-var UiPluginManagerComponent = require('./ui/plugin/UiPluginManagerComponent');
+
 var UiManager = require('./ui/UiManager');
 
 var App = {
@@ -101,7 +101,7 @@ var App = {
         // register ui components
         // ----------------------
         this.addUiComponent(new UiFolderWatcherManagerComponent(folderWatcherManager));
-        this.addUiComponent(new UiPluginManagerComponent(pluginManager));
+        //this.addUiComponent(new UiPluginManagerComponent(pluginManager));
     },
     startSearchClient: function (callback) {
         //var testFolderPath:string = path.resolve(__dirname, '../../utils/TestFolder');
@@ -189,11 +189,17 @@ var App = {
                 bucketStore = new BucketStore('foo', topologyConfig.get('topology.bucketStore.databasePath'));
                 bucketFactory = new BucketFactory();
                 contactNodeFactory = new ContactNodeFactory();
-                routingTable = new RoutingTable(topologyConfig, _this.appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory);
+                routingTable = new RoutingTable(topologyConfig, _this.appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory, {
+                    onOpenCallback: function (err) {
+                        if (err) {
+                            console.error(err);
+                        }
 
-                protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable);
+                        protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable);
 
-                protocolGateway.start();
+                        protocolGateway.start();
+                    }
+                });
             });
         });
     }
