@@ -250,7 +250,7 @@ class NodePicker implements NodePickerInterface {
 				this._routingTable.getRandomContactNode((err:Error, contactNode:ContactNodeInterface) => {
 					var noError:boolean = false;
 
-					if (!err  && contactNode) {
+					if (!err && contactNode) {
 
 						var node:HydraNode = this._contactNodeToRandHydraNode(contactNode);
 
