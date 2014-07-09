@@ -35,7 +35,7 @@
         "pingpong"                    : {
             "maxWaitingListSize": 20
         },
-        "broadast": {
+        "broadcast": {
             "broadcastLifetimeInSeconds": 30
         },
         "findClosestNodes"            : {
