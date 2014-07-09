@@ -70,8 +70,8 @@ var App = {
 
         this.startTopology(dataPath, win);
         this.startSearchClient(function (searchConfig, searchClient) {
-            console.log('starting indexer');
             _this.startIndexer(searchConfig, searchClient);
+
             console.log('started indexer');
             _this.startUi(gui);
             console.log('rockn roll!');
@@ -84,6 +84,7 @@ var App = {
         }.bind(this));
     },
     startIndexer: function (searchConfig, searchClient) {
+        var _this = this;
         var fsConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'fs']);
         var pluginConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'plugin']);
 
@@ -92,27 +93,31 @@ var App = {
         var pluginLoaderFactory = new PluginLoaderFactory();
         var pluginRunnerFactory = new PluginRunnerFactory();
 
-        var pluginManager = new PluginManager(pluginConfig, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory);
-
-        var searchManager = new SearchManager(searchConfig, pluginManager, searchClient);
-
+        var searchManager;
         var stateHandlerFactory = new JSONStateHandlerFactory();
         var folderWatcherFactory = new FolderWatcherFactory();
-
-        var folderWatcherManager = new FolderWatcherManager(fsConfig, this.appQuitHandler, stateHandlerFactory, folderWatcherFactory);
-
         var pathValidator = new PathValidator();
+        var folderWatcherManager;
+        var indexManager;
 
-        var indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
+        var pluginManager = new PluginManager(pluginConfig, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+            onOpenCallback: function () {
+                // activate plugin state
+                pluginManager.activatePluginState(function () {
+                    searchManager = new SearchManager(searchConfig, pluginManager, searchClient);
+                    folderWatcherManager = new FolderWatcherManager(fsConfig, _this.appQuitHandler, stateHandlerFactory, folderWatcherFactory);
+                    indexManager = new IndexManager(searchConfig, _this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
 
-        // register ui components
-        // ----------------------
-        this.addUiComponent(new UiFolderWatcherManagerComponent(folderWatcherManager));
-        //this.addUiComponent(new UiPluginManagerComponent(pluginManager));
+                    // register ui components
+                    // ----------------------
+                    _this.addUiComponent(new UiFolderWatcherManagerComponent(folderWatcherManager));
+                    //this.addUiComponent(new UiPluginManagerComponent(pluginManager));
+                });
+            }
+        });
     },
+    // index database setup
     startSearchClient: function (callback) {
-        //var testFolderPath:string = path.resolve(__dirname, '../../utils/TestFolder');
-        //var externalFolderPath:string = path.resolve('/Volumes/External/path/Folder');
         var searchConfig = new JSONConfig('../../config/mainConfig.json', ['search']);
 
         var searchStoreFactory = new SearchStoreFactory();
