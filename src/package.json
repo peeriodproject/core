@@ -4,9 +4,9 @@
   "version": "0.0.1",
   "main": "index.html",
   "window": {
-    "show": false,
-    "frame": false,
-    "show_in_taskbar": false
+    "show": true,
+    "frame": true,
+    "show_in_taskbar": true
   },
   "dependencies": {
     "chokidar": "^0.8.2",
