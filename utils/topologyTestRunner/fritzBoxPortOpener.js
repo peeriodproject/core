@@ -1,40 +1,43 @@
 var startPort = -1;
 var processed = 0;
-var amount = 100;
+var amount = 200;
 
 function run () {
 	var isListPage = true;
 	var pageLoadTimeout;
 
 	var checkPage = function () {
+		console.log('checking page...');
 		var form = window.frames['frame_content'].document.getElementsByTagName('form')[0];
 
 		if (!form || !form.action) {
-			runner();0
+			console.log('no form found');
+			runner();
 		}
 		else if (startPort === -1) {
 			startPort = parseInt(prompt('Port: 31000 + x', 0));
 			processed = startPort;
 			runner();
 		}
-		else if (form.action === 'http://fritz.box/internet/port_fw_edit.lua') {
+		else if (form.action.indexOf('/internet/port_fw_edit.lua') !== -1) {
+			console.log('edit form...');
 			if (isListPage) {
-				console.log('filling form');
 				fillForm();
 				isListPage = false;
 			}
 			else {
+				console.log('edit form. already filled...');
 				runner();
 			}
 		}
-		else if (form.action === 'http://fritz.box/internet/port_fw.lua') {
+		else if (form.action.indexOf('/internet/port_fw.lua') !== -1) {
 			if (!isListPage) {
-				isListPage = true;
 				console.log('on the list');
 				var buttons = form.getElementsByTagName('button');
 				for (var i in buttons) {
 					if (buttons[i].name === 'new_rule') {
 						buttons[i].click();
+						isListPage = true;
 						break;
 					}
 				}
@@ -42,9 +45,15 @@ function run () {
 
 			runner();
 		}
+		else {
+			console.log('running...');
+			runner();
+		}
 	};
 
 	var fillForm = function () {
+		console.log('filling form');
+
 		var form = window.frames['frame_content'].document.getElementsByTagName('form')[0];
 		var inputs = form.getElementsByTagName('input');
 		var port = startPort;
