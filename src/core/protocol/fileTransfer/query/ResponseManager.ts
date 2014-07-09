@@ -17,7 +17,9 @@ import CellManagerInterface = require('../../hydra/interfaces/CellManagerInterfa
  * @class core.protocol.fileTransfer.ResponseManager
  * @implements core.protocol.fileTransfer.ResponseManagerInterface
  *
- * @param {core.protocol.fileTransfer.TransferMessageCenterInterface} transferMessageCenter A working transfer message center.
+ * @param {core.config.ConfigInterface} transferConfig File transfer configuration
+ * @param {core.protocol.hydra.CellManagerInterface} cellManager Working hydra cell manager
+ * @param {core.protocol.fileTransfer.TransferMessageCenterInterface} transferMessageCenter A working transfer message center.+
  * @param {core.search.SearchMessageBridgeInterface} searchBridge The bridge network / search bridge
  * @param {core.protocol.broadcast.BroadcastManagerInterface} broadcastManager A working broadcast manager
  * @param {core.protocol.hydra.CircuitManagerInterface} circuitManager Working hydra circuit manager

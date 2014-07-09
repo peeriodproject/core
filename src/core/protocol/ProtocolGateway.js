@@ -41,16 +41,35 @@ var Aes128GcmLayeredEncDecHandlerFactory = require('./hydra/messages/Aes128GcmLa
 var Aes128GcmWritableMessageFactory = require('./hydra/messages/Aes128GcmWritableMessageFactory');
 var Aes128GcmReadableDecryptedMessageFactory = require('./hydra/messages/Aes128GcmReadableDecryptedMessageFactory');
 
+// FILE TRANSFER
+var Middleware = require('./fileTransfer/Middleware');
+
+var BroadcastManager = require('./broadcast/BroadcastManager');
+
+var TransferMessageCenter = require('./fileTransfer/TransferMessageCenter');
+var BroadcastReadableMessageFactory = require('./broadcast/messages/BroadcastReadableMessageFactory');
+var BroadcastWritableMessageFactory = require('./broadcast/messages/BroadcastWritableMessageFactory');
+var WritableFileTransferMessageFactory = require('./fileTransfer/messages/WritableFileTransferMessageFactory');
+var ReadableFileTransferMessageFactory = require('./fileTransfer/messages/ReadableFileTransferMessageFactory');
+var ReadableQueryResponseMessageFactory = require('./fileTransfer/messages/ReadableQueryResponseMessageFactory');
+var WritableQueryResponseMessageFactory = require('./fileTransfer/messages/WritableQueryResponseMessageFactory');
+var QueryFactory = require('./fileTransfer/query/QueryFactory');
+
+var QueryManager = require('./fileTransfer/query/QueryManager');
+
+var ResponseManager = require('./fileTransfer/query/ResponseManager');
+
 var logger = require('../utils/logger/LoggerFactory').create();
 
 var ProtocolGateway = (function () {
-    function ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable) {
+    function ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchBridge) {
         var _this = this;
         this._myNode = null;
         this._tcpSocketHandler = null;
         this._appConfig = null;
         this._hydraConfig = null;
         this._protocolConfig = null;
+        this._transferConfig = null;
         this._protocolConnectionManager = null;
         this._proxyManager = null;
         this._routingTable = null;
@@ -64,14 +83,23 @@ var ProtocolGateway = (function () {
         this._hydraConnectionManager = null;
         this._hydraCircuitManager = null;
         this._hydraCellManager = null;
+        this._middleware = null;
+        this._transferMessageCenter = null;
+        this._broadcastManager = null;
+        this._queryManager = null;
+        this._responseManager = null;
+        this._searchBridge = null;
         this._appConfig = appConfig;
         this._protocolConfig = protocolConfig;
         this._topologyConfig = topologyConfig;
         this._hydraConfig = hydraConfig;
+        this._transferConfig = transferConfig;
 
         this._myNode = myNode;
         this._tcpSocketHandler = tcpSocketHandler;
         this._routingTable = routingTable;
+
+        this._searchBridge = searchBridge;
 
         // build up the ProtocolConnectionManager
         this._protocolConnectionManager = new ProtocolConnectionManager(this._protocolConfig, this._myNode, this._tcpSocketHandler);
@@ -126,6 +154,25 @@ var ProtocolGateway = (function () {
 
         this._hydraCircuitManager = new CircuitManager(this._hydraConfig, hydraCircuitFactory);
         this._hydraCellManager = new CellManager(this._hydraConfig, this._hydraConnectionManager, this._hydraMessageCenter, hydraCellFactory);
+
+        // FileTransfer things
+        var writableFileTransferMessageFactory = new WritableFileTransferMessageFactory();
+        var readableFileTransferMessageFactory = new ReadableFileTransferMessageFactory();
+        var readableQueryResponseMessageFactory = new ReadableQueryResponseMessageFactory();
+        var writableQueryResponseMessageFactory = new WritableQueryResponseMessageFactory();
+        var readableBroadcastMessageFactory = new BroadcastReadableMessageFactory();
+        var writableBroadcastMessageFactory = new BroadcastWritableMessageFactory();
+
+        this._middleware = new Middleware(this._hydraCellManager, this._protocolConnectionManager, this._hydraMessageCenter, writableFileTransferMessageFactory);
+        this._transferMessageCenter = new TransferMessageCenter(this._protocolConnectionManager, this._middleware, this._hydraCircuitManager, this._hydraCellManager, this._hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseMessageFactory, writableQueryResponseMessageFactory);
+
+        this._broadcastManager = new BroadcastManager(this._topologyConfig, this._protocolConfig, this._myNode, this._protocolConnectionManager, this._proxyManager, this._routingTable, readableBroadcastMessageFactory, writableBroadcastMessageFactory);
+
+        var queryFactory = new QueryFactory(this._transferConfig, this._transferMessageCenter, this._hydraCircuitManager, this._broadcastManager);
+
+        this._queryManager = new QueryManager(this._transferConfig, queryFactory, this._hydraCircuitManager, this._searchBridge);
+
+        this._responseManager = new ResponseManager(this._transferConfig, this._hydraCellManager, this._transferMessageCenter, this._searchBridge, this._broadcastManager, this._hydraCircuitManager, writableQueryResponseMessageFactory);
     }
     ProtocolGateway.prototype.start = function () {
         /**
