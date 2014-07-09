@@ -54,6 +54,9 @@ import UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponen
 import UiPluginManagerComponent = require('./ui/plugin/UiPluginManagerComponent');
 import UiManager = require('./ui/UiManager');
 
+// Testing purposes only
+var nameFixtures = require('../../test/fixtures/nameFixtures');
+
 var App = {
 
 	appQuitHandler: null,
@@ -82,9 +85,15 @@ var App = {
 			var searchRequestManager = new SearchRequestManager(this.appQuitHandler, 'searchrequests', searchClient);
 			var searchResponseManager = new SearchResponseManager(this.appQuitHandler, searchClient);
 
+			searchResponseManager.onResultsFound((identifier:string, results:Buffer) => {
+				var result = results.toString();
+
+				logger.info('Received query results', {result: result});
+			});
+
 			var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
-			this.startTopology(dataPath, searchMessageBridge);
+			this.startTopology(dataPath, searchMessageBridge, searchRequestManager);
 			this.startIndexer(searchConfig, searchClient);
 
 			console.log('started indexer');
@@ -156,7 +165,7 @@ var App = {
 		var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
 	},
 
-	startTopology: function (dataPath, searchMessageBridge) {
+	startTopology: function (dataPath, searchMessageBridge, searchRequestManager) {
 		var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
 		var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
 		var protocolConfig = new JSONConfig('../../config/mainConfig.json', ['protocol']);
@@ -231,9 +240,26 @@ var App = {
 							console.error(err);
 						}
 
-						protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable);
+						protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge);
 
-						//protocolGateway.start();
+						protocolGateway.start();
+
+						protocolGateway.once('readyToSearch', function () {
+							var i = Math.floor(Math.random() * nameFixtures.length);
+							var name = nameFixtures[i].name;
+
+							var queryBody = {
+								"query": {
+									"match": {
+										"file": name
+									}
+								}
+							};
+
+							logger.info('Starting query', {name: name, id: myId.toHexString()});
+
+							searchRequestManager.addQuery(queryBody);
+						});
 					}
 				});
 			});
