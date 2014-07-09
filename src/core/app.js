@@ -206,4 +206,4 @@ var App = {
 };
 
 module.exports = App;
-//# sourceMappingURL=app.js.map
+//# sourceMappingURL=App.js.map

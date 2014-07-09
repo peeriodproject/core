@@ -1,27 +1,15 @@
 /// <reference path='./main.d.ts' />
 
-<<<<<<< HEAD
 var gui = require('nw.gui');
 var logger = require('./core/utils/logger/LoggerFactory').create();
 
-=======
-import gui = require('nw.gui');
->>>>>>> FETCH_HEAD
 import App = require('./core/App');
 
 var logger = require('./core/utils/logger/LoggerFactory').create();
 
 App.start(gui, gui.App, gui.App.dataPath, gui.Window.get());
 
-// lifetime > 5 min < 1 day
-/*var minSeconds:number = 300;
-var maxSeconds:number = 86400;
-var lifeTime = Math.max(minSeconds * 1000, Math.random() * maxSeconds * 1000);
-
-setTimeout(function () {
-	logger.info('quitting...');
-
-<<<<<<< HEAD
+/*
 // lifetime > 5 min < 1 day
 var minSeconds:number = 30;//300;
 var maxSeconds:number =120;//86400;
@@ -34,14 +22,7 @@ setTimeout(function () {
 		gui.App.quit();
 	});
 }, lifeTime);
-
-=======
-	setTimeout(function () {
-		gui.App.quit();
-	}, 100);
-}, lifeTime);*/
->>>>>>> FETCH_HEAD
-
+*/
 
 var tray = new gui.Tray({
         title: 'App',
