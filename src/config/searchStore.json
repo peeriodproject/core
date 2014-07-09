@@ -23,5 +23,8 @@
     },
     "plugin": {
         "mandatory": "mapper-attachments"
+    },
+    "http": {
+        "port": 9200
     }
 }
