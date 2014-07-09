@@ -53,7 +53,7 @@
     "fileTransfer": {
         "query": {
             "broadcastValidityInSeconds": 30,
-            "minimNumberOfReadyCircuits": 1,
+            "minimumNumberOfReadyCircuits": 1,
             "maximumNumberOfParallelQueries": 10
         },
         "response": {
