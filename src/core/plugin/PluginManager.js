@@ -236,8 +236,6 @@ var PluginManager = (function () {
         var _this = this;
         logger.debug('on before item add:', itemPath);
         this.getPluginRunnersForItem(itemPath, function (runners) {
-            logger.debug('runners for item', itemPath, runners);
-
             var runnersLength = Object.keys(runners).length;
             var counter = 0;
             var useApacheTika = [];
@@ -344,8 +342,6 @@ var PluginManager = (function () {
         var _this = this;
         var internalCallback = callback || function (err) {
         };
-
-        logger.debug('going to activate plugin', pluginState);
 
         this._pluginValidator.validateState(pluginState, function (err) {
             var identifier = pluginState.name;

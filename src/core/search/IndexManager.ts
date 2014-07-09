@@ -433,7 +433,7 @@ class IndexManager implements IndexManagerInterface {
 	 * @param {Function} callback
 	 */
 	private _addItem (pathToAdd:string, stats:fs.Stats, fileHash:string, callback:(err:Error) => any):void {
-		logger.debug('add item', { path: pathToAdd });
+		logger.debug('indexing item', { path: pathToAdd });
 
 		this._searchManager.addItem(pathToAdd, stats, fileHash, (err:Error) => {
 			if (err) {
