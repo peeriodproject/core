@@ -9,7 +9,7 @@ import SearchClientInterface = require('./interfaces/SearchClientInterface');
 import SearchItemInterface = require('../../../src/core/search/interfaces/SearchItemInterface');
 import SearchManagerInterface = require('./interfaces/SearchManagerInterface');
 
-var logger = require('./utils/logger/LoggerFactory').create();
+var logger = require('../utils/logger/LoggerFactory').create();
 
 import ObjectUtils = require('../utils/ObjectUtils');
 

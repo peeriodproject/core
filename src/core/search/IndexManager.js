@@ -1,5 +1,5 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
-var logger = require('./utils/logger/LoggerFactory').create();
+var logger = require('../utils/logger/LoggerFactory').create();
 
 var ObjectUtils = require('../utils/ObjectUtils');
 
