@@ -408,7 +408,7 @@ var IndexManager = (function () {
     * @param {Function} callback
     */
     IndexManager.prototype._addItem = function (pathToAdd, stats, fileHash, callback) {
-        logger.debug('add item', { path: pathToAdd });
+        logger.debug('indexing item', { path: pathToAdd });
 
         this._searchManager.addItem(pathToAdd, stats, fileHash, function (err) {
             if (err) {
