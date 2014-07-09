@@ -4,9 +4,9 @@
   "version": "0.0.1",
   "main": "index.html",
   "window": {
-    "show": true,
-    "frame": true,
-    "show_in_taskbar": true
+    "show": false,
+    "frame": false,
+    "show_in_taskbar": false
   },
   "dependencies": {
     "buffertools": "^2.1.2",
