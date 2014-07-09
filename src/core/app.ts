@@ -78,7 +78,7 @@ var App = {
 		this.startSearchClient((searchConfig, searchClient) => {
 			console.log('starting indexer');
 			this.startIndexer(searchConfig, searchClient);
-
+			console.log('started indexer');
 			this.startUi(gui);
 			console.log('rockn roll!');
 		});
