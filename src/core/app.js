@@ -68,7 +68,7 @@ var App = {
             fs.copySync(path.join(__dirname, '../config/nodeDiscovery.json'), nodeDiscoveryPath);
         }
 
-        //this.startTopology(dataPath, win);
+        this.startTopology(dataPath, win);
         this.startSearchClient(function (searchConfig, searchClient) {
             console.log('starting indexer');
             _this.startIndexer(searchConfig, searchClient);
@@ -192,7 +192,7 @@ var App = {
 
                 myNode = new MyNode(myId, addressList);
 
-                bucketStore = new BucketStore('foo', topologyConfig.get('topology.bucketStore.databasePath'));
+                bucketStore = new BucketStore('bucketstore', topologyConfig.get('topology.bucketStore.databasePath'));
                 bucketFactory = new BucketFactory();
                 contactNodeFactory = new ContactNodeFactory();
                 routingTable = new RoutingTable(topologyConfig, _this.appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory, {
