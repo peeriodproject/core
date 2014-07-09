@@ -32,12 +32,12 @@ function run () {
 		}
 		else if (form.action.indexOf('/internet/port_fw.lua') !== -1) {
 			if (!isListPage) {
-				isListPage = true;
 				console.log('on the list');
 				var buttons = form.getElementsByTagName('button');
 				for (var i in buttons) {
 					if (buttons[i].name === 'new_rule') {
 						buttons[i].click();
+						isListPage = true;
 						break;
 					}
 				}

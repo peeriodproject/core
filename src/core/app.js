@@ -1,5 +1,6 @@
 var crypto = require('crypto');
 var path = require('path');
+var fs = require('fs-extra');
 
 // global imports
 var JSONConfig = require('./config/JSONConfig');
@@ -19,8 +20,6 @@ var JSONStateHandlerFactory = require('./utils/JSONStateHandlerFactory');
 var JSONWebIp = require('./net/ip/JSONWebIp');
 var MyNode = require('./topology/MyNode');
 var NetworkBootstrapper = require('./net/NetworkBootstrapper');
-
-var ProtocolGateway = require('./protocol/ProtocolGateway');
 
 var RoutingTable = require('./topology/RoutingTable');
 var TCPSocketHandlerFactory = require('./net/tcp/TCPSocketHandlerFactory');
@@ -46,7 +45,7 @@ var IndexManager = require('./search/IndexManager');
 // ui imports
 var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
-var UiPluginManagerComponent = require('./ui/plugin/UiPluginManagerComponent');
+
 var UiManager = require('./ui/UiManager');
 
 var App = {
@@ -60,6 +59,14 @@ var App = {
         win.showDevTools();
 
         this.appQuitHandler = new AppQuitHandler(nwApp);
+
+        // copy node discovery.json to app data path
+        var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
+        var nodeDiscoveryPath = path.resolve(appConfig.get('app.dataPath'), 'nodeDiscovery.json');
+
+        if (!fs.existsSync(nodeDiscoveryPath)) {
+            fs.copySync(path.join(__dirname, '../config/nodeDiscovery.json'), nodeDiscoveryPath);
+        }
 
         //this.startTopology(dataPath, win);
         this.startSearchClient(function (searchConfig, searchClient) {
@@ -101,12 +108,11 @@ var App = {
         // register ui components
         // ----------------------
         this.addUiComponent(new UiFolderWatcherManagerComponent(folderWatcherManager));
-        this.addUiComponent(new UiPluginManagerComponent(pluginManager));
+        //this.addUiComponent(new UiPluginManagerComponent(pluginManager));
     },
     startSearchClient: function (callback) {
         //var testFolderPath:string = path.resolve(__dirname, '../../utils/TestFolder');
         //var externalFolderPath:string = path.resolve('/Volumes/External/path/Folder');
-        var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var searchConfig = new JSONConfig('../../config/mainConfig.json', ['search']);
 
         var searchStoreFactory = new SearchStoreFactory();
@@ -189,11 +195,15 @@ var App = {
                 bucketStore = new BucketStore('foo', topologyConfig.get('topology.bucketStore.databasePath'));
                 bucketFactory = new BucketFactory();
                 contactNodeFactory = new ContactNodeFactory();
-                routingTable = new RoutingTable(topologyConfig, _this.appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory);
-
-                protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable);
-
-                protocolGateway.start();
+                routingTable = new RoutingTable(topologyConfig, _this.appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory, {
+                    onOpenCallback: function (err) {
+                        if (err) {
+                            console.error(err);
+                        }
+                        //protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable);
+                        //protocolGateway.start();
+                    }
+                });
             });
         });
     }

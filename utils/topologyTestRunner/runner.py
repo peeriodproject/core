@@ -129,6 +129,16 @@ def updateConfig(amount):
 			packageFile.write(json.dumps(content))
 			packageFile.close()
 
+			configFile = open('./' + folder + '/node-webkit.app/Contents/Resources/app.nw/config/mainConfig.json', 'r')
+			config = json.loads(configFile.read())
+			packageFile.close()
+
+			config['app']['dataPath'] = '/Users/jj/Library/Application Support/App-' + str(j)
+
+			configFile = open('./' + folder + '/node-webkit.app/Contents/Resources/app.nw/config/mainConfig.json', 'w')
+			configFile.write(json.dumps(config))
+			configFile.close()
+
 			j += 1
 
 def resetAppData(amount):
@@ -191,14 +201,14 @@ def updateApps(amount):
 			path = '/Users/jj/Desktop/abschluss_app/utils/topologyTestRunner/' + folder + '/node-webkit.app/Contents/Resources/app.nw'
 			print folder
 
-			subprocess.call('cd "' + path + '"; git pull;', shell=True, stdout=open(os.devnull, 'wb'));
+			subprocess.call('cd "' + path + '"; git stash save --keep-index; git stash drop; git pull;', shell=True, stdout=open(os.devnull, 'wb'));
 			#packageFile = open('./' + folder + '/node-webkit.app/Contents/Resources/app.nw/package.json', 'r')
 
 			j += 1
 
 
 
-def startInstances(amount):
+def startInstances(amount, delay, printFolderName=False):
 	print 'starting '  + str(amount) + ' node-webkit instances'
 	print '------------------------------------------------'
 
@@ -213,9 +223,15 @@ def startInstances(amount):
 
 		if j < amount and isRunner:
 			#folder = folder.replace(' ', '\ ')
-			print folder
+			if printFolderName: print folder
 			os.system('open "' + folder + '/node-webkit.app"')
-			time.sleep(.5)
+			time.sleep(delay)
 			j += 1
 
+def restartInstancesEverySeconds(seconds, amount, delay):
+	print 'restarting all closed node-webkit instances'
+	print '------------------------------------------------'
+	startInstances(amount, delay, printFolderName=False)
+	time.sleep(seconds)
+	restartInstancesEverySeconds(seconds, amount, delay)
 	

@@ -12,6 +12,10 @@ import ObjectUtils = require('../ObjectUtils');
 /**
  * @class core.utils.logger.IrcLogger
  * @implements core.utils.logger.LoggerInterface
+ *
+ * @param {core.config.ConfigInterface} config
+ * @param {string} uuid
+ * @param {core.utils.LoggerInterface} logger
  */
 class IrcLogger implements LoggerInterface {
 
@@ -30,15 +34,6 @@ class IrcLogger implements LoggerInterface {
 
 	private _uuid:string = '';
 
-	/**
-	 * The prefix seperator
-	 *
-	 * @member {string} core.utils.logger.IrcLogger~_prefix
-	 */
-	//private _prefix:string = ';';
-	/**
-	 * @param {string} name
-	 */
 	constructor (config:ConfigInterface, uuid:string, logger:LoggerInterface) {
 		// @see http://stackoverflow.com/a/105074
 		var generateUuid:Function = (function() {
