@@ -15,7 +15,7 @@ var LoggerFactory;
         var configPath = path.join(process.cwd(), envPronePath);
 
         if (!_ircLogger) {
-            _ircLogger = new IrcLogger(new JSONConfig(configPath, ['simulator']), uuid, new IrcLoggerBackend());
+            _ircLogger = new IrcLogger(new JSONConfig(configPath, ['net']), uuid, new IrcLoggerBackend());
         }
 
         return _ircLogger;
