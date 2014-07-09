@@ -21,6 +21,8 @@ var JSONWebIp = require('./net/ip/JSONWebIp');
 var MyNode = require('./topology/MyNode');
 var NetworkBootstrapper = require('./net/NetworkBootstrapper');
 
+var ProtocolGateway = require('./protocol/ProtocolGateway');
+
 var RoutingTable = require('./topology/RoutingTable');
 var TCPSocketHandlerFactory = require('./net/tcp/TCPSocketHandlerFactory');
 
@@ -151,6 +153,7 @@ var App = {
         var protocolConfig = new JSONConfig('../../config/mainConfig.json', ['protocol']);
         var topologyConfig = new JSONConfig('../../config/mainConfig.json', ['topology']);
         var hydraConfig = new JSONConfig('../../config/mainConfig.json', ['hydra']);
+        var transferConfig = new JSONConfig('../../config/mainConfig.json', ['fileTransfer']);
         var tcpSocketHandlerFactory = new TCPSocketHandlerFactory();
         var jsonWebIp = new JSONWebIp();
         var nodeAddressFactory = new ContactNodeAddressFactory();
@@ -214,7 +217,8 @@ var App = {
                         if (err) {
                             console.error(err);
                         }
-                        //protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable);
+
+                        protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable);
                         //protocolGateway.start();
                     }
                 });
