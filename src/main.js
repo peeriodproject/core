@@ -21,7 +21,7 @@ gui.App.quit();
 }, lifeTime);
 */
 var tray = new gui.Tray({
-    title: 'App',
+    title: 'A',
     icon: 'icon.png'
 }), menu = new gui.Menu();
 

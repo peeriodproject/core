@@ -25,7 +25,7 @@ setTimeout(function () {
 */
 
 var tray = new gui.Tray({
-        title: 'App',
+        title: 'A',
         icon: 'icon.png'
     }),
     menu = new gui.Menu();
