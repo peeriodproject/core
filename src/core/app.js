@@ -53,6 +53,9 @@ var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent')
 
 var UiManager = require('./ui/UiManager');
 
+// Testing purposes only
+var nameFixtures = require('../../test/fixtures/nameFixtures');
+
 var App = {
     appQuitHandler: null,
     _uiComponents: [],
@@ -78,9 +81,15 @@ var App = {
             var searchRequestManager = new SearchRequestManager(_this.appQuitHandler, 'searchrequests', searchClient);
             var searchResponseManager = new SearchResponseManager(_this.appQuitHandler, searchClient);
 
+            searchResponseManager.onResultsFound(function (identifier, results) {
+                var result = results.toString();
+
+                logger.info('Received query results', { result: result });
+            });
+
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
-            _this.startTopology(dataPath, searchMessageBridge);
+            _this.startTopology(dataPath, searchMessageBridge, searchRequestManager);
             _this.startIndexer(searchConfig, searchClient);
 
             console.log('started indexer');
@@ -146,7 +155,7 @@ var App = {
 
         var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
     },
-    startTopology: function (dataPath, searchMessageBridge) {
+    startTopology: function (dataPath, searchMessageBridge, searchRequestManager) {
         var _this = this;
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
@@ -218,8 +227,26 @@ var App = {
                             console.error(err);
                         }
 
-                        protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable);
-                        //protocolGateway.start();
+                        protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge);
+
+                        protocolGateway.start();
+
+                        protocolGateway.once('readyToSearch', function () {
+                            var i = Math.floor(Math.random() * nameFixtures.length);
+                            var name = nameFixtures[i].name;
+
+                            var queryBody = {
+                                "query": {
+                                    "match": {
+                                        "file": name
+                                    }
+                                }
+                            };
+
+                            logger.info('Starting query', { name: name, id: myId.toHexString() });
+
+                            searchRequestManager.addQuery(queryBody);
+                        });
                     }
                 });
             });
