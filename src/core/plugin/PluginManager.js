@@ -7,6 +7,8 @@ var mime = require('mime');
 
 var ObjectUtils = require('../utils/ObjectUtils');
 
+var logger = require('../utils/logger/LoggerFactory').create();
+
 /**
 * PluginManagerInterface implementation
 *
@@ -127,6 +129,8 @@ var PluginManager = (function () {
         var _this = this;
         var internalCallback = callback || function (err) {
         };
+
+        logger.debug('plugin state', this._pluginState);
 
         if (this._pluginState && this._pluginState.active) {
             var plugins = this._pluginState.active;
@@ -366,6 +370,7 @@ var PluginManager = (function () {
                 _this._pluginLoaders[identifier] = pluginLoader;
                 _this._pluginRunners[identifier] = _this._pluginRunnerFactory.create(_this._config, pluginState.name, pluginLoader.getMain());
 
+                logger.debug('plugin added', { identifier: identifier });
                 _this._eventEmitter.emit('pluginAdded', identifier);
 
                 internalCallback(null);

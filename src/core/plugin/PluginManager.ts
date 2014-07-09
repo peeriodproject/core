@@ -25,6 +25,8 @@ import PluginValidatorInterface = require('./interfaces/PluginValidatorInterface
 
 import ObjectUtils = require('../utils/ObjectUtils');
 
+var logger = require('../utils/logger/LoggerFactory').create();
+
 /**
  * PluginManagerInterface implementation
  *
@@ -158,6 +160,8 @@ class PluginManager implements PluginManagerInterface {
 	activatePluginState (callback?:(err:Error) => void):void {
 		var internalCallback = callback || function (err:Error) {
 		};
+
+		logger.debug('plugin state', this._pluginState);
 
 		if (this._pluginState && this._pluginState.active) {
 			var plugins:PluginStateObjectListInterface = this._pluginState.active;
@@ -404,6 +408,7 @@ class PluginManager implements PluginManagerInterface {
 				this._pluginLoaders[identifier] = pluginLoader;
 				this._pluginRunners[identifier] = this._pluginRunnerFactory.create(this._config, pluginState.name, pluginLoader.getMain());
 
+				logger.debug('plugin added', { identifier: identifier });
 				this._eventEmitter.emit('pluginAdded', identifier);
 
 				internalCallback(null);
