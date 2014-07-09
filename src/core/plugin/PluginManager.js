@@ -130,8 +130,6 @@ var PluginManager = (function () {
         var internalCallback = callback || function (err) {
         };
 
-        logger.debug('plugin state', this._pluginState);
-
         if (this._pluginState && this._pluginState.active) {
             var plugins = this._pluginState.active;
             var activated = 0;
@@ -236,7 +234,10 @@ var PluginManager = (function () {
 
     PluginManager.prototype.onBeforeItemAdd = function (itemPath, stats, fileHash, callback) {
         var _this = this;
+        logger.debug('on before item add:', itemPath);
         this.getPluginRunnersForItem(itemPath, function (runners) {
+            logger.debug('runners for item', itemPath, runners);
+
             var runnersLength = Object.keys(runners).length;
             var counter = 0;
             var useApacheTika = [];
@@ -343,6 +344,8 @@ var PluginManager = (function () {
         var _this = this;
         var internalCallback = callback || function (err) {
         };
+
+        logger.debug('going to activate plugin', pluginState);
 
         this._pluginValidator.validateState(pluginState, function (err) {
             var identifier = pluginState.name;

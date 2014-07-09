@@ -161,8 +161,6 @@ class PluginManager implements PluginManagerInterface {
 		var internalCallback = callback || function (err:Error) {
 		};
 
-		logger.debug('plugin state', this._pluginState);
-
 		if (this._pluginState && this._pluginState.active) {
 			var plugins:PluginStateObjectListInterface = this._pluginState.active;
 			var activated:number = 0;
@@ -267,7 +265,10 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, fileHash:string, callback:(pluginDatas:Object) => any):void {
+		logger.debug('on before item add:', itemPath);
 		this.getPluginRunnersForItem(itemPath, (runners:PluginRunnerMapInterface) => {
+			logger.debug('runners for item', itemPath, runners);
+
 			var runnersLength:number = Object.keys(runners).length;
 			var counter:number = 0;
 			var useApacheTika:Array<string> = [];
@@ -379,6 +380,8 @@ class PluginManager implements PluginManagerInterface {
 	private _activatePlugin (pluginState:PluginStateObjectInterface, callback:(err:Error) => void):void {
 		var internalCallback = callback || function (err:Error) {
 		};
+
+		logger.debug('going to activate plugin', pluginState);
 
 		this._pluginValidator.validateState(pluginState, (err:Error) => {
 			var identifier:string = pluginState.name;
