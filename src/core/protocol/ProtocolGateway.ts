@@ -1,3 +1,5 @@
+import events = require('events');
+
 import ProtocolGatewayInterface = require('./interfaces/ProtocolGatewayInterface');
 import ProtocolConnectionManagerInterface = require('./net/interfaces/ProtocolConnectionManagerInterface');
 import ProtocolConnectionManager = require('./net/ProtocolConnectionManager');
@@ -68,7 +70,7 @@ import SearchMessageBridgeInterface = require('../search/interfaces/SearchMessag
 
 var logger = require('../utils/logger/LoggerFactory').create();
 
-class ProtocolGateway implements ProtocolGatewayInterface {
+class ProtocolGateway extends events.EventEmitter implements ProtocolGatewayInterface {
 
 	private _myNode:MyNodeInterface = null;
 	private _tcpSocketHandler:TCPSocketHandlerInterface = null;
@@ -97,6 +99,8 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 	private _searchBridge:SearchMessageBridgeInterface = null;
 
 	constructor (appConfig:ConfigInterface, protocolConfig:ConfigInterface, topologyConfig:ConfigInterface, hydraConfig:ConfigInterface, transferConfig:ConfigInterface, myNode:MyNodeInterface, tcpSocketHandler:TCPSocketHandlerInterface, routingTable:RoutingTableInterface, searchBridge:SearchMessageBridgeInterface) {
+		super();
+
 		this._appConfig = appConfig;
 		this._protocolConfig = protocolConfig;
 		this._topologyConfig = topologyConfig;
@@ -215,7 +219,8 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 			this._hydraCircuitManager.kickOff();
 
 			this._hydraCircuitManager.once('desiredCircuitAmountReached', () => {
-				logger.info('Hydra circuit construction done.', {id: this._myNode.getId().toHexString()});
+				logger.info('Hydra circuits constructed.', {id: this._myNode.getId().toHexString()});
+				this.emit('readyToSearch');
 			});
 		});
 

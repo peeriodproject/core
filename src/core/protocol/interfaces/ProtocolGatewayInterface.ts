@@ -4,7 +4,7 @@
  * @interface
  * @class core.protocol.ProtocolGatewayInterface
  */
-interface ProtocolGatewayInterface {
+interface ProtocolGatewayInterface extends NodeJS.EventEmitter {
 
 }
 

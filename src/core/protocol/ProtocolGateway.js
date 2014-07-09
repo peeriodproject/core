@@ -1,3 +1,11 @@
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var events = require('events');
+
 var ProtocolConnectionManager = require('./net/ProtocolConnectionManager');
 
 var ProxyManager = require('./proxy/ProxyManager');
@@ -61,9 +69,11 @@ var ResponseManager = require('./fileTransfer/query/ResponseManager');
 
 var logger = require('../utils/logger/LoggerFactory').create();
 
-var ProtocolGateway = (function () {
+var ProtocolGateway = (function (_super) {
+    __extends(ProtocolGateway, _super);
     function ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchBridge) {
         var _this = this;
+        _super.call(this);
         this._myNode = null;
         this._tcpSocketHandler = null;
         this._appConfig = null;
@@ -89,6 +99,7 @@ var ProtocolGateway = (function () {
         this._queryManager = null;
         this._responseManager = null;
         this._searchBridge = null;
+
         this._appConfig = appConfig;
         this._protocolConfig = protocolConfig;
         this._topologyConfig = topologyConfig;
@@ -203,14 +214,15 @@ var ProtocolGateway = (function () {
             _this._hydraCircuitManager.kickOff();
 
             _this._hydraCircuitManager.once('desiredCircuitAmountReached', function () {
-                logger.info('Hydra circuit construction done.', { id: _this._myNode.getId().toHexString() });
+                logger.info('Hydra circuits constructed.', { id: _this._myNode.getId().toHexString() });
+                _this.emit('readyToSearch');
             });
         });
 
         this._networkMaintainer.joinNetwork();
     };
     return ProtocolGateway;
-})();
+})(events.EventEmitter);
 
 module.exports = ProtocolGateway;
 //# sourceMappingURL=ProtocolGateway.js.map
