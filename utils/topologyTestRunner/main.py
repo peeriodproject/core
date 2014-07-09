@@ -37,6 +37,8 @@ extractApps = True
 
 updateApps = False
 resetAppData = True
+
+createSharedFolders = True
 startApps = True
 
 clearExistingLogs = True
@@ -55,7 +57,7 @@ configBuilder.fetchLocations(fetchLocations, amount)
 if overrideConfig: configBuilder.writeConfigFiles(configTemplatePath, amount)
 
 if extractApps: runner.extractApps(amount, 8)
-if resetAppData: runner.resetAppData(amount)
+if resetAppData: runner.resetAppData(amount, createSharedFolders)
 if updateApps: runner.updateApps(amount)
 
 if startApps:

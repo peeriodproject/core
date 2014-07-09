@@ -141,7 +141,7 @@ def updateConfig(amount):
 
 			j += 1
 
-def resetAppData(amount):
+def resetAppData(amount, createSharedFolders):
 	print 'reset app runtime data'
 	print '------------------------------------------------' 
 
@@ -171,6 +171,26 @@ def resetAppData(amount):
 			shutil.rmtree('/Users/jj/Library/Application Support/App-' + str(a))
 		except:
 			pass
+
+	if createSharedFolders:
+		# recreate application support
+		for a in range(amount):
+			try:
+				appDataPath = '/Users/jj/Library/Application Support/App-' + str(a)
+				os.makedirs(appDataPath)
+
+				# add default plugins
+				shutil.copyfile('/Users/jj/Desktop/sharedFolders/_template/pluginManager.json', appDest + '/pluginManager.json');
+
+				# add custom shared folder
+				appSharedFolder = '/Users/jj/Desktop/sharedFolders/App-' + str(a)
+				os.makedirs(appSharedFolder)
+
+				folderWatcherFile = open(appDataPath + '/FolderWatcherManager.json', 'w')
+				folderWatcherFile.write(json.dumps(json.loads('{"paths": [' + appSharedFolder + ']}')))
+				folderWatcherFile.close()
+			except:
+				pass
 
 def updateApps(amount):
 	print "\n"'updating app sources'
@@ -205,7 +225,6 @@ def updateApps(amount):
 			#packageFile = open('./' + folder + '/node-webkit.app/Contents/Resources/app.nw/package.json', 'r')
 
 			j += 1
-
 
 
 def startInstances(amount, delay, printFolderName=False):
