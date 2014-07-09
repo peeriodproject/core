@@ -234,7 +234,6 @@ var PluginManager = (function () {
 
     PluginManager.prototype.onBeforeItemAdd = function (itemPath, stats, fileHash, callback) {
         var _this = this;
-        logger.debug('on before item add:', itemPath);
         this.getPluginRunnersForItem(itemPath, function (runners) {
             var runnersLength = Object.keys(runners).length;
             var counter = 0;
