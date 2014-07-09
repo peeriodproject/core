@@ -55,7 +55,7 @@ import UiPluginManagerComponent = require('./ui/plugin/UiPluginManagerComponent'
 import UiManager = require('./ui/UiManager');
 
 // Testing purposes only
-var nameFixtures = require('../../test/fixtures/nameFixtures');
+var nameFixtures = require('../config/nameFixtures');
 
 var App = {
 
