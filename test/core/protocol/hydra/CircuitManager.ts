@@ -16,7 +16,7 @@ import HydraCircuitList = require('../../../../src/core/protocol/hydra/interface
 import CircuitManager = require('../../../../src/core/protocol/hydra/CircuitManager');
 import HydraCircuitFactory = require('../../../../src/core/protocol/hydra/HydraCircuitFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> CircuitManager @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> CircuitManager', function () {
 
 	var minNodes = 3;
 	var maxNodes = 7;

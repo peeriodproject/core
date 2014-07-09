@@ -42,7 +42,23 @@ var ReadableFileTransferMessageFactory = require('../../../../src/core/protocol/
 var TransferMessageCenter = require('../../../../src/core/protocol/fileTransfer/TransferMessageCenter');
 var FeedingNodesMessageBlock = require('../../../../src/core/protocol/fileTransfer/messages/FeedingNodesMessageBlock');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', function () {
+var QueryManager = require('../../../../src/core/protocol/fileTransfer/query/QueryManager');
+var ResponseManager = require('../../../../src/core/protocol/fileTransfer/query/ResponseManager');
+var QueryFactory = require('../../../../src/core/protocol/fileTransfer/query/QueryFactory');
+
+var RoutingTable = require('../../../../src/core/topology/RoutingTable');
+var MyNode = require('../../../../src/core/topology/MyNode');
+var Id = require('../../../../src/core/topology/Id');
+var ContactNode = require('../../../../src/core/topology/ContactNode');
+
+var BroadcastManager = require('../../../../src/core/protocol/broadcast/BroadcastManager');
+var BroadcastReadableMessageFactory = require('../../../../src/core/protocol/broadcast/messages/BroadcastReadableMessageFactory');
+var BroadcastWritableMessageFactory = require('../../../../src/core/protocol/broadcast/messages/BroadcastWritableMessageFactory');
+
+var WritableQueryResponseMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/WritableQueryResponseMessageFactory');
+var ReadableQueryResponseMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/ReadableQueryResponseMessageFactory');
+
+describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @current', function () {
     var sandbox = null;
     var config = null;
     var readableHydraMessageFactory = new ReadableHydraMessageFactory();
@@ -157,6 +173,23 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', func
         nodeThatFeeds.transferMessageCenter.issueExternalFeedToCircuit(feedingNodeBlockBuffer, payload);
     });
 
+    it('should start a broadcast query and receive results', function (done) {
+        var nodeThatQueries = nodes[0];
+        var checks = ['3.3.3.3', '2.2.2.2', '4.4.4.4', '5.5.5.5'];
+
+        nodeThatQueries.searchBridge.on('result', function (queryIdentifier, resultBuffer) {
+            var i = checks.indexOf(resultBuffer.toString());
+
+            if (i >= 0) {
+                checks.splice(i, 1);
+            }
+
+            if (checks.length === 0)
+                done();
+        });
+        nodeThatQueries.searchBridge.emit('newBroadcastQuery', 'aQuery', new Buffer('foo'));
+    });
+
     var createNode = function () {
         ipCount++;
 
@@ -205,6 +238,39 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', func
             }
 
             return null;
+        };
+
+        protocolConnectionManager.getRandomExternalIpPortPair = function () {
+            return { ip: ip, port: 80 };
+        };
+
+        protocolConnectionManager.writeMessageTo = function (node, messageType, payload) {
+            var msg = testUtils.stubPublicApi(sandbox, ReadableMessage, {
+                getMessageType: function () {
+                    return messageType;
+                },
+                getPayload: function () {
+                    return payload;
+                },
+                getSender: function () {
+                    return testUtils.stubPublicApi(sandbox, ContactNode, {
+                        getId: function () {
+                            return testUtils.stubPublicApi(sandbox, Id, {
+                                differsInHighestBit: function () {
+                                    return 1;
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            for (var i = 0; i < nodes.length; i++) {
+                if (nodes[i] === node) {
+                    node.proxyManager.emit('message', msg);
+                    break;
+                }
+            }
         };
 
         var pickBatch = function (amount) {
@@ -256,7 +322,43 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', func
 
         var middleware = new Middleware(cellManager, protocolConnectionManager, messageCenter, new WritableFileTransferMessageFactory());
 
-        var transferMessageCenter = new TransferMessageCenter(middleware, circuitManager, cellManager, messageCenter, new ReadableFileTransferMessageFactory(), new WritableFileTransferMessageFactory(), null, null);
+        var transferMessageCenter = new TransferMessageCenter(protocolConnectionManager, middleware, circuitManager, cellManager, messageCenter, new ReadableFileTransferMessageFactory(), new WritableFileTransferMessageFactory(), new ReadableQueryResponseMessageFactory(), new WritableQueryResponseMessageFactory());
+
+        var routingTable = testUtils.stubPublicApi(sandbox, RoutingTable, {
+            getRandomContactNodesFromBucket: function (a, b, callback) {
+                var ret = [];
+                for (var i = 0; i < nodes.length; i++) {
+                    if (nodes[i].ip !== ip) {
+                        ret.push(nodes[i]);
+                    }
+                }
+                callback(null, ret);
+            }
+        });
+
+        var proxyManager = new events.EventEmitter();
+
+        var myNode = testUtils.stubPublicApi(sandbox, MyNode, {
+            getId: function () {
+                return null;
+            }
+        });
+
+        var broadcastManager = new BroadcastManager(config, config, myNode, protocolConnectionManager, proxyManager, routingTable, new BroadcastReadableMessageFactory(), new BroadcastWritableMessageFactory());
+
+        var searchBridge = new events.EventEmitter();
+
+        searchBridge.on('matchBroadcastQuery', function (broadcastId, queryBuffer) {
+            setImmediate(function () {
+                searchBridge.emit('broadcastQueryResults', broadcastId, new Buffer(ip));
+            });
+        });
+
+        var queryFactory = new QueryFactory(config, transferMessageCenter, circuitManager, broadcastManager);
+
+        var queryManager = new QueryManager(config, queryFactory, circuitManager, searchBridge);
+
+        var responseManager = new ResponseManager(config, cellManager, transferMessageCenter, searchBridge, broadcastManager, circuitManager, new WritableQueryResponseMessageFactory());
 
         nodes.push({
             ip: ip,
@@ -264,7 +366,9 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', func
             protocolConnectionManager: protocolConnectionManager,
             circuitManager: circuitManager,
             cellManager: cellManager,
-            transferMessageCenter: transferMessageCenter
+            transferMessageCenter: transferMessageCenter,
+            proxyManager: proxyManager,
+            searchBridge: searchBridge
         });
     };
 
@@ -273,6 +377,20 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', func
 
         config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
             get: function (what) {
+                if (what === 'fileTransfer.query.maximumNumberOfParallelQueries')
+                    return 10;
+                if (what === 'fileTransfer.response.waitForOwnResponseAsBroadcastInitiatorInSeconds')
+                    return 0.01;
+                if (what === 'fileTransfer.query.minimumNumberOfReadyCircuits')
+                    return 1;
+                if (what === 'topology.bitLength')
+                    return 1;
+                if (what === 'topology.alpha')
+                    return 1;
+                if (what === 'protocol.broadcast.broadcastLifetimeInSeconds')
+                    return 10;
+                if (what === 'fileTransfer.query.broadcastValidityInSeconds')
+                    return 30;
                 if (what === 'hydra.desiredNumberOfCircuits')
                     return 1;
                 if (what === 'hydra.maximumNumberOfMaintainedCells')

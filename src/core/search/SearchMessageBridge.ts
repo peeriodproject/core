@@ -88,7 +88,7 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 	}
 
 	private _setupIncomingQuery ():void {
-		this.on('INCOMING_QUERY_EVENT_NAME', (queryId:string, compressedQueryBody:Buffer) => {
+		this.on('matchBroadcastQuery', (queryId:string, compressedQueryBody:Buffer) => {
 			this._decompressBuffer(compressedQueryBody, (err:Error, queryBody:Buffer) => {
 				if (!err) {
 					this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
@@ -101,13 +101,13 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 		this._searchResponseManager.onResultsFound((queryId:string, results:Buffer) => {
 			this._compressBuffer(results, (err:Error, compressedResults:Buffer) => {
 				if (!err) {
-					this.emit('OUTGOING_RESULTS_EVENT_NAME', queryId, compressedResults);
+					this.emit('broadcastQueryResults', queryId, compressedResults);
 				}
 			});
 		});
 
 		this._searchResponseManager.onNoResultsFound((queryId:string) => {
-			this.emit('OUTGOING_RESULTS_EVENT_NAME', queryId, null);
+			this.emit('broadcastQueryResults', queryId, null);
 		});
 
 	}

@@ -180,6 +180,16 @@ interface ProtocolConnectionManagerInterface extends NodeJS.EventEmitter {
 	getMyNode ():MyNodeInterface;
 
 	/**
+	 * If the machine can be reached from outside, i.e. it has open ports, this method returns an object
+	 * with an ip and a port attribute, where the port is chosen randomly from the open ports.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManagerInterface#getRandomExternalIpPortPair
+	 *
+	 * @returns {any} Object containing ip and random open port. If it does not have an open port, returns `null`
+	 */
+	getRandomExternalIpPortPair ():any;
+
+	/**
 	 * The anti-version to {@link core.topology.net.ProtocolConnectionManagerInterface#keepHydraSocketOpen}.
 	 *
 	 * @method core.protocol.net.ProtocolConnectionManagerInterface#keepHydraSocketNoLongerOpen

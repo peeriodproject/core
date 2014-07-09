@@ -170,9 +170,8 @@ var CircuitExtender = (function () {
 
         this._currentUUID = crypto.pseudoRandomBytes(16).toString('hex');
         this._currentNodeToExtendWith = nodeToExtendWith;
-        this._currentDiffieHellman = crypto.getDiffieHellman('modp14');
 
-        var dhPublicKey = this._currentDiffieHellman.generateKeys();
+        var dhPublicKey = this._getDiffieHellmanAndReturnPublicKey();
 
         AdditiveSharingScheme.getShares(dhPublicKey, additiveNodes.length + 1, 256, function (shares) {
             for (var i = 0, l = additiveNodes.length; i < l; i++) {
@@ -204,6 +203,25 @@ var CircuitExtender = (function () {
     };
 
     /**
+    * This hack is a workaround around some pretty weird bug in either node.js or OpenSSL where
+    * the diffie hellman public key returned is missing one byte sometimes.
+    *
+    * @method core.protocol.hydra.CircuitExtender~_getDiffieHellmanAndReturnPublicKey
+    *
+    * @returns {Buffer}
+    */
+    CircuitExtender.prototype._getDiffieHellmanAndReturnPublicKey = function () {
+        this._currentDiffieHellman = crypto.getDiffieHellman('modp14');
+        var dhPublicKey = this._currentDiffieHellman.generateKeys();
+
+        if (dhPublicKey.length !== 256) {
+            return this._getDiffieHellmanAndReturnPublicKey();
+        } else {
+            return dhPublicKey;
+        }
+    };
+
+    /**
     * @method core.protocol.hydra.CircuitExtender~_doCallback
     *
     * @param {Error} err
@@ -223,6 +241,7 @@ var CircuitExtender = (function () {
     * @param {string} errMsg Message for the passed in error.
     */
     CircuitExtender.prototype._extensionError = function (errMsg) {
+        console.log(errMsg);
         this._removeMessageListener();
         this._removeTerminationListener();
 
@@ -298,7 +317,9 @@ var CircuitExtender = (function () {
 
                     sha1.update(secret);
 
-                    if (sha1.digest('hex') === message.getSecretHash().toString('hex')) {
+                    var digest = sha1.digest('hex');
+
+                    if (digest === message.getSecretHash().toString('hex')) {
                         var hkdf = new HKDF('sha256', secret);
                         var keysConcat = hkdf.derive(48, new Buffer(message.getUUID(), 'hex'));
                         var outgoingKey = keysConcat.slice(0, 16);

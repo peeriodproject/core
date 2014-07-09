@@ -18,34 +18,38 @@ import configBuilder
 import runner
 
 amount = 100
+maxOpenPorts = 200
 
 # --------- Runner ------------------------------
 
-appSrc = '../../src'
+appSrc = '/Users/jj/Desktop/testing/abschluss_app_src/src'
 
 # --------- Config Builder ----------------------
 
-configTemplatePath = '../../src/config/mainConfig.json'
-#amount = 1000
+configTemplatePath = '/Users/jj/Desktop/testing/abschluss_app_src/src/config/mainConfig.json'
+
+
 crawlIpAddresses = False
 fetchLocations = False
-overrideConfig = False
+overrideConfig = True
 
 extractApps = True
 
-updateApps = True
+updateApps = False
 resetAppData = True
 startApps = True
 
 clearExistingLogs = True
 
+delayBetweenAppStarts = 10
+tryToRestartAppsEverySeconds = 900
 
 # -----------------------------------------------
 
 #if clearExistingLogs:
 #	subprocess.call('curator --time-unit minutes ')
 
-configBuilder.setOpenPorts(min(amount, 133), 31000)
+configBuilder.setOpenPorts(min(amount, maxOpenPorts), 31000)
 if crawlIpAddresses: configBuilder.crawlIpAddresses(amount)
 configBuilder.fetchLocations(fetchLocations, amount)
 if overrideConfig: configBuilder.writeConfigFiles(configTemplatePath, amount)
@@ -56,4 +60,7 @@ if updateApps: runner.updateApps(amount)
 
 if startApps:
 	runner.updateConfig(amount)
-	runner.startInstances(amount)
+	runner.startInstances(amount, delayBetweenAppStarts, printFolderName=True)
+
+	if tryToRestartAppsEverySeconds:
+		runner.restartInstancesEverySeconds(tryToRestartAppsEverySeconds, amount, delayBetweenAppStarts)

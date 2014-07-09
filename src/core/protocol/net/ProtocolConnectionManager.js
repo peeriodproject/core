@@ -214,6 +214,20 @@ var ProtocolConnectionManager = (function (_super) {
         return this._myNode;
     };
 
+    ProtocolConnectionManager.prototype.getRandomExternalIpPortPair = function () {
+        var openPorts = this._tcpSocketHandler.getOpenServerPortsArray();
+        var externalIp = this._tcpSocketHandler.getMyExternalIp();
+
+        if (openPorts.length && externalIp) {
+            return {
+                ip: externalIp,
+                port: Math.floor(Math.random() * openPorts.length)
+            };
+        } else {
+            return null;
+        }
+    };
+
     /**
     * Testing purposes only. Should not be used in production.
     *

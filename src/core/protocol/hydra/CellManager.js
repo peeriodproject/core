@@ -120,6 +120,16 @@ var CellManager = (function (_super) {
         return null;
     };
 
+    CellManager.prototype.getFeedingIdentifierByCircuitId = function (circuitId) {
+        var cell = this._cellsByPredecessorCircuitId[circuitId];
+
+        if (cell) {
+            return cell.getFeedingIdentifier();
+        }
+
+        return null;
+    };
+
     CellManager.prototype.pipeFileTransferMessage = function (predecessorCircuitId, payload) {
         var cell = this._cellsByPredecessorCircuitId[predecessorCircuitId];
 
@@ -154,7 +164,9 @@ var CellManager = (function (_super) {
         var diffie = crypto.getDiffieHellman('modp14');
         var dhPublicKey = diffie.generateKeys();
         var secret = diffie.computeSecret(AdditiveSharingScheme.getCleartext(pending.additivePayloads, 256));
+
         var sha1 = crypto.createHash('sha1').update(secret).digest();
+
         var hkdf = new HKDF('sha256', secret);
         var keysConcat = hkdf.derive(48, new Buffer(pending.uuid, 'hex'));
 

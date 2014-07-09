@@ -87,7 +87,7 @@ var SearchMessageBridge = (function (_super) {
 
     SearchMessageBridge.prototype._setupIncomingQuery = function () {
         var _this = this;
-        this.on('INCOMING_QUERY_EVENT_NAME', function (queryId, compressedQueryBody) {
+        this.on('matchBroadcastQuery', function (queryId, compressedQueryBody) {
             _this._decompressBuffer(compressedQueryBody, function (err, queryBody) {
                 if (!err) {
                     _this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
@@ -101,13 +101,13 @@ var SearchMessageBridge = (function (_super) {
         this._searchResponseManager.onResultsFound(function (queryId, results) {
             _this._compressBuffer(results, function (err, compressedResults) {
                 if (!err) {
-                    _this.emit('OUTGOING_RESULTS_EVENT_NAME', queryId, compressedResults);
+                    _this.emit('broadcastQueryResults', queryId, compressedResults);
                 }
             });
         });
 
         this._searchResponseManager.onNoResultsFound(function (queryId) {
-            _this.emit('OUTGOING_RESULTS_EVENT_NAME', queryId, null);
+            _this.emit('broadcastQueryResults', queryId, null);
         });
     };
 

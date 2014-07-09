@@ -55,6 +55,9 @@
             "broadcastValidityInSeconds": 30,
             "minimNumberOfReadyCircuits": 1,
             "maximumNumberOfParallelQueries": 10
+        },
+        "response": {
+            "waitForOwnResponseAsBroadcastInitiatorInSeconds": 2
         }
     },
     "hydra": {

@@ -46,6 +46,26 @@ import Aes128GcmLayeredEncDecHandlerFactory = require('./hydra/messages/Aes128Gc
 import Aes128GcmWritableMessageFactory = require('./hydra/messages/Aes128GcmWritableMessageFactory');
 import Aes128GcmReadableDecryptedMessageFactory = require('./hydra/messages/Aes128GcmReadableDecryptedMessageFactory');
 
+// FILE TRANSFER
+import Middleware = require('./fileTransfer/Middleware');
+import MiddlewareInterface = require('./fileTransfer/interfaces/MiddlewareInterface');
+import BroadcastManagerInterface = require('./broadcast/interfaces/BroadcastManagerInterface');
+import BroadcastManager = require('./broadcast/BroadcastManager');
+import TransferMessageCenterInterface = require('./fileTransfer/interfaces/TransferMessageCenterInterface');
+import TransferMessageCenter = require('./fileTransfer/TransferMessageCenter');
+import BroadcastReadableMessageFactory = require('./broadcast/messages/BroadcastReadableMessageFactory');
+import BroadcastWritableMessageFactory = require('./broadcast/messages/BroadcastWritableMessageFactory');
+import WritableFileTransferMessageFactory = require('./fileTransfer/messages/WritableFileTransferMessageFactory');
+import ReadableFileTransferMessageFactory = require('./fileTransfer/messages/ReadableFileTransferMessageFactory');
+import ReadableQueryResponseMessageFactory = require('./fileTransfer/messages/ReadableQueryResponseMessageFactory');
+import WritableQueryResponseMessageFactory = require('./fileTransfer/messages/WritableQueryResponseMessageFactory');
+import QueryFactory = require('./fileTransfer/query/QueryFactory');
+import QueryManagerInterface = require('./fileTransfer/query/interfaces/QueryManagerInterface');
+import QueryManager = require('./fileTransfer/query/QueryManager');
+import ResponseManagerInterface = require('./fileTransfer/query/interfaces/ResponseManagerInterface');
+import ResponseManager = require('./fileTransfer/query/ResponseManager');
+import SearchMessageBridgeInterface = require('../search/interfaces/SearchMessageBridgeInterface');
+
 var logger = require('../utils/logger/LoggerFactory').create();
 
 class ProtocolGateway implements ProtocolGatewayInterface {
@@ -55,6 +75,7 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 	private _appConfig:ConfigInterface = null;
 	private _hydraConfig:ConfigInterface = null;
 	private _protocolConfig:ConfigInterface = null;
+	private _transferConfig:ConfigInterface = null;
 	private _protocolConnectionManager:ProtocolConnectionManagerInterface = null;
 	private _proxyManager:ProxyManagerInterface = null;
 	private _routingTable:RoutingTableInterface = null;
@@ -68,16 +89,25 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 	private _hydraConnectionManager:ConnectionManagerInterface = null;
 	private _hydraCircuitManager:CircuitManagerInterface = null;
 	private _hydraCellManager:CellManagerInterface = null;
+	private _middleware:MiddlewareInterface = null;
+	private _transferMessageCenter:TransferMessageCenter = null;
+	private _broadcastManager:BroadcastManagerInterface = null;
+	private _queryManager:QueryManagerInterface = null;
+	private _responseManager:ResponseManagerInterface = null;
+	private _searchBridge:SearchMessageBridgeInterface = null;
 
-	constructor (appConfig:ConfigInterface, protocolConfig:ConfigInterface, topologyConfig:ConfigInterface, hydraConfig:ConfigInterface, myNode:MyNodeInterface, tcpSocketHandler:TCPSocketHandlerInterface, routingTable:RoutingTableInterface) {
+	constructor (appConfig:ConfigInterface, protocolConfig:ConfigInterface, topologyConfig:ConfigInterface, hydraConfig:ConfigInterface, transferConfig:ConfigInterface, myNode:MyNodeInterface, tcpSocketHandler:TCPSocketHandlerInterface, routingTable:RoutingTableInterface, searchBridge:SearchMessageBridgeInterface) {
 		this._appConfig = appConfig;
 		this._protocolConfig = protocolConfig;
 		this._topologyConfig = topologyConfig;
 		this._hydraConfig = hydraConfig;
+		this._transferConfig = transferConfig;
 
 		this._myNode = myNode;
 		this._tcpSocketHandler = tcpSocketHandler;
 		this._routingTable = routingTable;
+
+		this._searchBridge = searchBridge;
 
 		// build up the ProtocolConnectionManager
 		this._protocolConnectionManager = new ProtocolConnectionManager(this._protocolConfig, this._myNode, this._tcpSocketHandler);
@@ -134,6 +164,25 @@ class ProtocolGateway implements ProtocolGatewayInterface {
 
 		this._hydraCircuitManager = new CircuitManager(this._hydraConfig, hydraCircuitFactory);
 		this._hydraCellManager = new CellManager(this._hydraConfig, this._hydraConnectionManager, this._hydraMessageCenter, hydraCellFactory);
+
+		// FileTransfer things
+		var writableFileTransferMessageFactory = new WritableFileTransferMessageFactory();
+		var readableFileTransferMessageFactory = new ReadableFileTransferMessageFactory();
+		var readableQueryResponseMessageFactory = new ReadableQueryResponseMessageFactory();
+		var writableQueryResponseMessageFactory = new WritableQueryResponseMessageFactory();
+		var readableBroadcastMessageFactory = new BroadcastReadableMessageFactory();
+		var writableBroadcastMessageFactory = new BroadcastWritableMessageFactory();
+
+		this._middleware = new Middleware(this._hydraCellManager, this._protocolConnectionManager, this._hydraMessageCenter, writableFileTransferMessageFactory);
+		this._transferMessageCenter = new TransferMessageCenter(this._protocolConnectionManager, this._middleware, this._hydraCircuitManager, this._hydraCellManager, this._hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseMessageFactory, writableQueryResponseMessageFactory);
+
+		this._broadcastManager = new BroadcastManager(this._topologyConfig, this._protocolConfig, this._myNode, this._protocolConnectionManager, this._proxyManager, this._routingTable, readableBroadcastMessageFactory, writableBroadcastMessageFactory);
+
+		var queryFactory = new QueryFactory(this._transferConfig, this._transferMessageCenter, this._hydraCircuitManager, this._broadcastManager);
+
+		this._queryManager = new QueryManager(this._transferConfig, queryFactory, this._hydraCircuitManager, this._searchBridge);
+
+		this._responseManager = new ResponseManager(this._transferConfig, this._hydraCellManager, this._transferMessageCenter, this._searchBridge, this._broadcastManager, this._hydraCircuitManager, writableQueryResponseMessageFactory);
 	}
 
 	public start ():void {
