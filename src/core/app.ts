@@ -157,7 +157,7 @@ var App = {
 		var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, netConfig, [jsonWebIp]);
 		var protocolGateway = null;
 
-		networkBootstrapper.bootstrap(function (err) {
+		networkBootstrapper.bootstrap((err) => {
 			if (err) {
 				logger.error('Network Bootstrapper: ERROR', {
 					err: err

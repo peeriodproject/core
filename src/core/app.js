@@ -131,6 +131,7 @@ var App = {
         var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
     },
     startTopology: function (dataPath, win) {
+        var _this = this;
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
         var protocolConfig = new JSONConfig('../../config/mainConfig.json', ['protocol']);
@@ -143,7 +144,6 @@ var App = {
         var protocolGateway = null;
 
         networkBootstrapper.bootstrap(function (err) {
-            var _this = this;
             if (err) {
                 logger.error('Network Bootstrapper: ERROR', {
                     err: err
