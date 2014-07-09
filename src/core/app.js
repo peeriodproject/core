@@ -93,7 +93,8 @@ var App = {
             _this.startIndexer(searchConfig, searchClient);
 
             console.log('started indexer');
-            _this.startUi(gui);
+
+            //this.startUi(gui);
             console.log('rockn roll!');
         });
     },

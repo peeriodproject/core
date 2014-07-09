@@ -97,7 +97,7 @@ var App = {
 			this.startIndexer(searchConfig, searchClient);
 
 			console.log('started indexer');
-			this.startUi(gui);
+			//this.startUi(gui);
 			console.log('rockn roll!');
 		});
 	},
