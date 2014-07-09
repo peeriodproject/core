@@ -7,17 +7,12 @@ var ObjectUtils = require('../ObjectUtils');
 /**
 * @class core.utils.logger.IrcLogger
 * @implements core.utils.logger.LoggerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {string} uuid
+* @param {core.utils.LoggerInterface} logger
 */
 var IrcLogger = (function () {
-    /**
-    * The prefix seperator
-    *
-    * @member {string} core.utils.logger.IrcLogger~_prefix
-    */
-    //private _prefix:string = ';';
-    /**
-    * @param {string} name
-    */
     function IrcLogger(config, uuid, logger) {
         this._basePath = '';
         /**
