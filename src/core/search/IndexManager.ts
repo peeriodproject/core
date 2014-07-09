@@ -12,6 +12,8 @@ import IndexManagerPendingListObjectMapInterface = require('./interfaces/IndexMa
 import PathValidatorInterface = require('../fs/interfaces/PathValidatorInterface');
 import SearchManagerInterface = require('./interfaces/SearchManagerInterface');
 
+var logger = require('./utils/logger/LoggerFactory').create();
+
 import ObjectUtils = require('../utils/ObjectUtils');
 
 /**
@@ -431,6 +433,8 @@ class IndexManager implements IndexManagerInterface {
 	 * @param {Function} callback
 	 */
 	private _addItem (pathToAdd:string, stats:fs.Stats, fileHash:string, callback:(err:Error) => any):void {
+		logger.debug('add item', { path: pathToAdd });
+
 		this._searchManager.addItem(pathToAdd, stats, fileHash, (err:Error) => {
 			if (err) {
 				// todo reset isIndexing flag

@@ -9,6 +9,8 @@ import SearchClientInterface = require('./interfaces/SearchClientInterface');
 import SearchItemInterface = require('../../../src/core/search/interfaces/SearchItemInterface');
 import SearchManagerInterface = require('./interfaces/SearchManagerInterface');
 
+var logger = require('./utils/logger/LoggerFactory').create();
+
 import ObjectUtils = require('../utils/ObjectUtils');
 
 /**
@@ -40,11 +42,14 @@ class SearchManager implements SearchManagerInterface {
 	addItem (pathToIndex:string, stats:fs.Stats, fileHash:string, callback?:(err:Error) => any):void {
 		var internalCallback:Function = callback || function () {};
 
+		logger.debug('add item', { path: pathToIndex });
+
 		this._pluginManager.onBeforeItemAdd(pathToIndex, stats, fileHash, (pluginData:Object) => {
 
 			pluginData = this._updatePluginData(pluginData, pathToIndex, stats, fileHash);
 			//console.log(JSON.stringify(pluginData));
 			// to the request to the database
+			logger.debug('add item', { data: pluginData });
 			this._searchClient.addItem(pluginData, function(err) {
 				internalCallback(err);
 			});

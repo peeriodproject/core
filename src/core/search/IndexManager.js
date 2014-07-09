@@ -1,4 +1,6 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
+var logger = require('./utils/logger/LoggerFactory').create();
+
 var ObjectUtils = require('../utils/ObjectUtils');
 
 /**
@@ -406,6 +408,8 @@ var IndexManager = (function () {
     * @param {Function} callback
     */
     IndexManager.prototype._addItem = function (pathToAdd, stats, fileHash, callback) {
+        logger.debug('add item', { path: pathToAdd });
+
         this._searchManager.addItem(pathToAdd, stats, fileHash, function (err) {
             if (err) {
                 // todo reset isIndexing flag
