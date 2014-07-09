@@ -129,6 +129,16 @@ def updateConfig(amount):
 			packageFile.write(json.dumps(content))
 			packageFile.close()
 
+			configFile = open('./' + folder + '/node-webkit.app/Contents/Resources/app.nw/config/mainConfig.json', 'r')
+			config = json.loads(configFile.read())
+			packageFile.close()
+
+			config['app']['dataPath'] = '/Users/jj/Library/Application Support/App-' + str(j)
+
+			configFile = open('./' + folder + '/node-webkit.app/Contents/Resources/app.nw/config/mainConfig.json', 'w')
+			configFile.write(json.dumps(config))
+			configFile.close()
+
 			j += 1
 
 def resetAppData(amount):
