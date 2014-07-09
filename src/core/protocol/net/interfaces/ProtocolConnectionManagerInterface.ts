@@ -74,6 +74,15 @@ import TCPSocketInterface = require('../../../net/tcp/interfaces/TCPSocketInterf
 interface ProtocolConnectionManagerInterface extends NodeJS.EventEmitter {
 
 	/**
+	 * Tries to close a hydra socket by the given identifier.
+	 *
+	 * @method core.protocol.ProtocolConnectionManagerInterface#closeHydraSocket
+	 *
+	 * @param {string} identifier The socket identifier.
+	 */
+	closeHydraSocket (identifier:string):void;
+
+	/**
 	 * Forces a raw buffer through the incoming data pipeline. Lets the pipeline deformat the buffer.
 	 * If a ReadableMessage will be returned, AND IT IS NO HYDRA MESSAGE, the message will be emitted in
 	 * a `message` event. If it is a hydra message or the unwrapped message is not intended for MyNode,
@@ -88,6 +97,16 @@ interface ProtocolConnectionManagerInterface extends NodeJS.EventEmitter {
 	forceMessageThroughPipe (originalSender:ContactNodeInterface, rawBuffer:Buffer):void;
 
 	/**
+	 * Returns the IP of a socket stored in the hydra socket list under the given identifier, `undefined` if none is found.
+	 *
+	 * @method core.protocol.ProtocolConnectionManagerInterface#getHydraSocketIp
+	 *
+	 * @param (string} identifier
+	 * @returns {string} The IP address
+	 */
+	getHydraSocketIp (identifier:string):string;
+
+	/**
 	 * Forces an outgoing connection to the specified port and ip. It doesn't matter which node sits behind it.
 	 * If successful, the socket is saved within the hydra list, and the identifier (a prefix plus an increasing number)
 	 * used for it is returned.
@@ -99,10 +118,10 @@ interface ProtocolConnectionManagerInterface extends NodeJS.EventEmitter {
 	 * @param {Function} callback Mandatory callback which gets called with an error (if the connection was not successful)
 	 * and the identifier used as arguments.
 	 */
-	hydraConnectTo (port:number, ip:string, callback:(err:Error, identifier:string) => any):void;
+	hydraConnectTo (port:number, ip:string, callback?:(err:Error, identifier:string) => any):void;
 
 	/**
-	 * Writes a buffer to a socket stored under the specified hydra identifier. Generates an error if there is not socket
+	 * Writes a buffer to a socket stored under the specified hydra identifier. Generates an error if there is no socket
 	 * under this identifier.
 	 *
 	 * @method core.protocol.net.ProtocolConnectionManagerInterface#hydraWriteBufferTo
@@ -159,6 +178,16 @@ interface ProtocolConnectionManagerInterface extends NodeJS.EventEmitter {
 	 * @returns {core.topology.MyNodeInterface}
 	 */
 	getMyNode ():MyNodeInterface;
+
+	/**
+	 * If the machine can be reached from outside, i.e. it has open ports, this method returns an object
+	 * with an ip and a port attribute, where the port is chosen randomly from the open ports.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManagerInterface#getRandomExternalIpPortPair
+	 *
+	 * @returns {any} Object containing ip and random open port. If it does not have an open port, returns `null`
+	 */
+	getRandomExternalIpPortPair ():any;
 
 	/**
 	 * The anti-version to {@link core.topology.net.ProtocolConnectionManagerInterface#keepHydraSocketOpen}.

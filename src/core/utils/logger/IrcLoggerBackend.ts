@@ -109,7 +109,7 @@ class IrcLoggerBackend implements LoggerInterface {
 
 	private _addTransportBasedOnEnvironment ():void {
 		if (process.env.NODE_ENV === 'test') {
-			this._logger.add(winston.transports.Console, {});
+			//this._logger.add(winston.transports.Console, {});
 		}
 		else if (this._useIrc) {
 			// 9 chars official max. length https://tools.ietf.org/html/rfc2812#section-1.2.1

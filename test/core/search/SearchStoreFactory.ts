@@ -7,6 +7,7 @@ import testUtils = require('../../utils/testUtils');
 
 import SearchStoreInterface = require('../../../src/core/search/interfaces/SearchStoreInterface');
 
+import AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 import SearchStore = require('../../../src/core/search/SearchStore');
@@ -14,6 +15,7 @@ import SearchStore = require('../../../src/core/search/SearchStore');
 describe('CORE --> SEARCH --> SearchStoreFactory', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
+	var appQuitHandlerStub:any;
 	var searchStoreLogsFolder:string = testUtils.getFixturePath('core/search/searchStoreLogs');
 	var searchStoreDataFolder:string = testUtils.getFixturePath('core/search/searchStoreData');
 	var searchStore:SearchStoreInterface = null;
@@ -44,8 +46,8 @@ describe('CORE --> SEARCH --> SearchStoreFactory', function () {
 				}
 			}
 		});
-		searchStore = (new SearchStoreFactory()).create(config, {
-			closeOnProcessExit: false,
+		appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
+		searchStore = (new SearchStoreFactory()).create(config, appQuitHandlerStub, {
 			logPath       : searchStoreLogsFolder,
 			onOpenCallback: function (err:Error) {
 				if (err) {
@@ -61,10 +63,16 @@ describe('CORE --> SEARCH --> SearchStoreFactory', function () {
 	after(function (done) {
 		searchStore.close(function () {
 			testUtils.deleteFolderRecursive(searchStoreLogsFolder);
-			testUtils.deleteFolderRecursive(searchStoreDataFolder);
+
+			try {
+				testUtils.deleteFolderRecursive(searchStoreDataFolder);
+			}
+			catch (e) {
+			}
 
 			sandbox.restore();
 			config = null;
+			appQuitHandlerStub = null;
 			searchStore = null;
 
 			done();

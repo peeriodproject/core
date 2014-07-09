@@ -3,6 +3,13 @@
 import crypto = require('crypto');
 import fs = require('fs');
 
+/*
+ * deterministic JSON.stringify() with custom sorting to get deterministic hashes from stringified results
+ *
+ * @see https://github.com/substack/json-stable-stringify
+ */
+var stringify = require('json-stable-stringify');
+
 import PathValidatorInterface = require('./interfaces/PathValidatorInterface');
 
 /**
@@ -73,13 +80,12 @@ class PathValidator implements PathValidatorInterface {
 			delete stats.atime;
 
 			// @see http://stackoverflow.com/a/1144249
-			var isValid:boolean = JSON.stringify(stats) === JSON.stringify(statsToValidate);
+			var isValid:boolean = stringify(stats) === stringify(statsToValidate);
 
 			callback(null, isValid, stats);
 
 		});
 	}
-
 
 }
 

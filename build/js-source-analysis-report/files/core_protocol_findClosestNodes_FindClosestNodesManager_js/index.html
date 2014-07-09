@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">69.39</p>
+      <p class="stat">68.65</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">237</p>
+      <p class="stat">245</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">35.94</p>
+      <p class="stat">38.71</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.50</p>
+      <p class="stat">1.61</p>
     </div>
   </div>
 </div>
@@ -99,6 +99,8 @@
 var events = require(&#039;events&#039;);
 
 var Id = require(&#039;../../topology/Id&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 /**
 *
@@ -233,6 +235,9 @@ var FindClosestNodesManager = (function (_super) {
             this._routingTable.getClosestContactNodes(searchForId, null, function (err, contacts) {
                 if (!err &amp;&amp; contacts &amp;&amp; contacts.length) {
                     _this._startCycleWithList(searchForId, contacts);
+                } else {
+                    logger.error(&#039;Routing table getClosestContactNodes error! Calling back with empty list.&#039;);
+                    _this.emit(&#039;foundClosestNodes&#039;, searchForId, []);
                 }
             });
         }
@@ -249,7 +254,7 @@ var FindClosestNodesManager = (function (_super) {
 
             this._findClosestNodesCycleFactory.create(searchForId, startWithList, function (resultingList) {
                 _this._pendingCycles.splice(_this._pendingCycles.indexOf(identifier), 1);
-
+                logger.info(&#039;Found closest nodes cycle done&#039;, { for: searchForId.toHexString() });
                 _this.emit(&#039;foundClosestNodes&#039;, searchForId, resultingList);
             });
         }
@@ -272,16 +277,19 @@ var FindClosestNodesManager = (function (_super) {
         }
 
         this._routingTable.getClosestContactNodes(searchForId, requestingNode.getId(), function (err, contacts) {
-            if (!err &amp;&amp; contacts &amp;&amp; contacts.length) {
-                var payload = null;
-                try  {
-                    payload = _this._writableMessageFactory.constructPayload(searchForId, contacts);
-                } catch (e) {
-                }
+            if (!contacts) {
+                contacts = [];
+            }
 
-                if (payload) {
-                    _this._protocolConnectionManager.writeMessageTo(requestingNode, &#039;FOUND_CLOSEST_NODES&#039;, payload);
-                }
+            var payload = null;
+            try  {
+                payload = _this._writableMessageFactory.constructPayload(searchForId, contacts);
+            } catch (e) {
+                logger.error(&#039;Could not construct found closest ndoes message&#039;);
+            }
+
+            if (payload) {
+                _this._protocolConnectionManager.writeMessageTo(requestingNode, &#039;FOUND_CLOSEST_NODES&#039;, payload);
             }
         });
     };

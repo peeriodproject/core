@@ -10,16 +10,21 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @class core.search.SearchClient
 * @implements core.search.SearchClientInterface
 *
-* @see https://www.npmjs.org/package/base64-stream
-*
 * @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {core.search.SearchStoreFactory} searchStoreFactory
 * @param {core.search.SearchClientOptions} options
 */
 var SearchClient = (function () {
-    function SearchClient(config, indexName, searchStoreFactory, searchItemFactory, options) {
+    function SearchClient(config, appQuitHandler, indexName, searchStoreFactory, searchItemFactory, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
+        /**
+        * The internally used appQuitHandler instance
+        *
+        * @member {core.utils.AppQuitHandler} core.search.SearchClient~_appQuitHandler
+        */
+        this._appQuitHandler = null;
         /**
         * The client which is used internally to make requests against the database api
         *
@@ -81,6 +86,7 @@ var SearchClient = (function () {
         };
 
         this._config = config;
+        this._appQuitHandler = appQuitHandler;
         this._indexName = indexName.toLowerCase();
         this._searchStoreFactory = searchStoreFactory;
         this._searchItemFactory = searchItemFactory;
@@ -89,13 +95,34 @@ var SearchClient = (function () {
         this._options.logsPath = path.resolve(__dirname, this._options.logsPath);
 
         if (this._options.closeOnProcessExit) {
-            process.on('exit', function () {
-                _this.close(_this._options.onCloseCallback);
+            appQuitHandler.add(function (done) {
+                _this.close(done);
             });
         }
 
         this.open(this._options.onOpenCallback);
     }
+    SearchClient.prototype.addIncomingResponse = function (indexName, type, responseBody, responseMeta, callback) {
+        var internalCallback = callback || function (err, response) {
+        };
+
+        var responseObject = ObjectUtils.extend(responseBody, {
+            meta: responseMeta
+        });
+
+        this._client.percolate({
+            index: indexName.toLowerCase(),
+            type: 'response-' + type.toLowerCase(),
+            body: {
+                doc: responseObject
+            }
+        }, function (err, response, status) {
+            err = err || null;
+
+            return internalCallback(err, response);
+        });
+    };
+
     SearchClient.prototype.addItem = function (objectToIndex, callback) {
         var pluginIdentifiers = Object.keys(objectToIndex);
         var amount = pluginIdentifiers.length;
@@ -111,18 +138,18 @@ var SearchClient = (function () {
             }
         };
 
-        if (pluginIdentifiers.length) {
-            for (var i in pluginIdentifiers) {
-                var identifier = pluginIdentifiers[i];
-
-                this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
-                    itemIds.push(id);
-
-                    checkCallback(err);
-                });
-            }
-        } else {
+        if (!pluginIdentifiers.length) {
             return process.nextTick(callback.bind(null, new Error('SearchClient.addItem: No item data specified! Preventing item creation.'), null));
+        }
+
+        for (var i = 0, l = pluginIdentifiers.length; i < l; i++) {
+            var identifier = pluginIdentifiers[i];
+
+            this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
+                itemIds.push(id);
+
+                return checkCallback(err);
+            });
         }
     };
 
@@ -131,28 +158,28 @@ var SearchClient = (function () {
         var internalCallback = callback || function () {
         };
 
-        this._createIndex(function (err) {
+        this._createIndex(this._indexName, null, function (err) {
             var map = null;
             if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
                 // wrap mapping in type root
                 map = {};
-                map[type] = mapping;
+                map[type.toLowerCase()] = mapping;
             } else {
                 map = mapping;
             }
 
-            if (err) {
-                internalCallback(err);
-            } else {
-                _this._client.indices.putMapping({
-                    index: _this._indexName,
-                    type: type.toLowerCase(),
-                    body: map
-                }, function (err, response, status) {
-                    err = err || null;
-                    internalCallback(err);
-                });
+            if (!(!err && _this._client)) {
+                return internalCallback(err);
             }
+
+            _this._client.indices.putMapping({
+                index: _this._indexName,
+                type: type.toLowerCase(),
+                body: map
+            }, function (err, response, status) {
+                err = err || null;
+                internalCallback(err);
+            });
         });
     };
 
@@ -168,7 +195,48 @@ var SearchClient = (function () {
             _this._isOpen = false;
             _this._client = null;
 
-            internalCallback(err);
+            return internalCallback(err);
+        });
+    };
+
+    SearchClient.prototype.createOutgoingQuery = function (indexName, id, queryBody, callback) {
+        var internalCallback = callback || function (err) {
+        };
+
+        this._client.index({
+            index: indexName.toLowerCase(),
+            type: '.percolator',
+            id: id,
+            body: queryBody
+        }, function (err, response, status) {
+            err = err || null;
+            return internalCallback(err);
+        });
+    };
+
+    SearchClient.prototype.createOutgoingQueryIndex = function (indexName, callback) {
+        var internalCallback = callback || function (err) {
+        };
+
+        var mapping = {
+            _default_: {
+                meta: {
+                    type: 'object',
+                    index: 'no'
+                }
+            }
+        };
+
+        indexName = indexName.toLowerCase();
+
+        this._createIndex(indexName, mapping, function (err) {
+            console.log(err);
+
+            if (err) {
+                return internalCallback(err);
+            }
+
+            return internalCallback(err);
         });
     };
 
@@ -177,23 +245,90 @@ var SearchClient = (function () {
         var internalCallback = callback || function (err) {
         };
 
-        if (this._isOpen) {
-            this._client.indices.delete({
-                index: this._indexName
-            }, function (err, response, status) {
-                if (_this._isValidResponse(err, status, 'IndexMissingException')) {
-                    internalCallback(null);
-                } else {
-                    internalCallback(err);
-                }
-            });
-        } else {
+        if (!(this._isOpen && this._client)) {
             return process.nextTick(internalCallback.bind(null, null));
         }
+
+        this._client.indices.delete({
+            index: this._indexName
+        }, function (err, response, status) {
+            if (!_this._isValidResponse(err, status, 'IndexMissingException')) {
+                return internalCallback(err);
+            }
+
+            return internalCallback(null);
+        });
     };
 
-    SearchClient.prototype.getItem = function (query, callback) {
-        return process.nextTick(callback.bind(null, null, null));
+    SearchClient.prototype.deleteOutgoingQuery = function (indexName, queryId, callback) {
+        var _this = this;
+        var internalCallback = callback || function (err) {
+        };
+        var queryDeleted = false;
+        var responsesDeleted = false;
+
+        var checkCallback = function (err) {
+            if (err) {
+                queryDeleted = false;
+                responsesDeleted = false;
+
+                console.error(err);
+
+                return internalCallback(err);
+            } else if (queryDeleted && responsesDeleted) {
+                return internalCallback(null);
+            }
+        };
+
+        if (!(this._isOpen && this._client)) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+
+        indexName = indexName.toLowerCase();
+
+        // delete query
+        this._client.delete({
+            index: indexName,
+            type: '.percolator',
+            id: queryId
+        }, function (err, response, status) {
+            console.log(err);
+
+            if (_this._isValidResponse(err, status, 'IndexMissingException') || _this._isValidResponse(err, status, 'Not Found')) {
+                err = null;
+            }
+
+            queryDeleted = true;
+
+            return checkCallback(err);
+        });
+
+        // delete all responses for the queryId
+        this._client.deleteByQuery({
+            index: indexName,
+            type: 'response-' + queryId.toLowerCase(),
+            body: {
+                query: {
+                    bool: {
+                        must: [
+                            {
+                                match_all: {}
+                            }
+                        ]
+                    }
+                }
+            }
+        }, function (err, response, status) {
+            console.log(err);
+
+            if (_this._isValidResponse(err, status, 'IndexMissingException')) {
+                err = null;
+            }
+
+            responsesDeleted = true;
+
+            return checkCallback(err);
+        });
     };
 
     SearchClient.prototype.getItemById = function (id, callback) {
@@ -205,11 +340,11 @@ var SearchClient = (function () {
         }, function (err, response, status) {
             err = err || null;
 
-            if (_this._isValidResponse(err, status, 'IndexMissingException')) {
-                callback(null, _this._createSearchItemFromResponse(response));
-            } else {
-                callback(err, null);
+            if (!_this._isValidResponse(err, status, 'IndexMissingException')) {
+                return callback(err, null);
             }
+
+            return callback(null, _this._createSearchItemFromResponse(response));
         });
     };
 
@@ -227,31 +362,29 @@ var SearchClient = (function () {
             index: this._indexName,
             body: searchQuery
         }, function (err, response, status) {
+            var hits = response && response['hits'] ? response['hits'] : {};
+
             err = err || null;
 
-            var hits = response['hits'];
-
-            if (_this._isValidResponse(err, status, 'IndexMissingException')) {
-                if (hits && hits['total']) {
-                    callback(null, _this._createSearchItemFromHits(hits['hits']));
-                } else {
-                    callback(null, null);
-                }
-            } else {
-                callback(err, null);
+            if (!_this._isValidResponse(err, status, 'IndexMissingException')) {
+                return callback(err, null);
             }
+
+            if (!(hits && hits['total'])) {
+                return callback(null, null);
+            }
+
+            return callback(null, _this._createSearchItemFromHits(hits['hits']));
         });
     };
 
-    /*public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
-    // todo iplementation
-    return process.nextTick(callback.bind(null, null, null));
-    }*/
     SearchClient.prototype.isOpen = function (callback) {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
     SearchClient.prototype.itemExists = function (pathToIndex, callback) {
+        console.log('todo SearchClient#itemExists');
+
         // todo iplementation
         return process.nextTick(callback.bind(null, null, null));
     };
@@ -292,17 +425,18 @@ var SearchClient = (function () {
             _this._waitForDatabaseServer(function (err) {
                 if (err) {
                     console.error(err);
-                    internalCallback(err);
-                } else {
-                    _this._createIndex(function (err) {
-                        if (err) {
-                            console.error(err);
-                        } else {
-                            _this._isOpen = true;
-                            internalCallback(null);
-                        }
-                    });
+                    return internalCallback(err);
                 }
+
+                _this._createIndex(_this._indexName, null, function (err) {
+                    err = err || null;
+
+                    if (!err) {
+                        _this._isOpen = true;
+                    }
+
+                    return internalCallback(null);
+                });
             });
         };
 
@@ -312,16 +446,37 @@ var SearchClient = (function () {
             onOpenCallback: onSearchStoreOpen
         }));
 
-        this._searchStore = this._searchStoreFactory.create(this._config, searchStoreOptions);
+        this._searchStore = this._searchStoreFactory.create(this._config, this._appQuitHandler, searchStoreOptions);
+    };
+
+    SearchClient.prototype.search = function (queryObject, callback) {
+        this._client.search({
+            index: this._indexName,
+            body: queryObject
+        }, function (err, response, status) {
+            var hits = response && response['hits'] ? response['hits'] : null;
+
+            err = err || null;
+
+            if (err) {
+                console.log(err);
+            }
+
+            return callback(err, hits);
+        });
     };
 
     SearchClient.prototype.typeExists = function (type, callback) {
-        this._client.indices.existsType({
-            index: this._indexName,
-            type: type
-        }, function (err, response, status) {
-            callback(response);
-        });
+        if (this._client) {
+            this._client.indices.existsType({
+                index: this._indexName,
+                type: type
+            }, function (err, response, status) {
+                return callback(response);
+            });
+        } else {
+            return callback(false);
+        }
     };
 
     /**
@@ -340,10 +495,10 @@ var SearchClient = (function () {
             refresh: true,
             body: data
         }, function (err, response, status) {
-            if (response['created']) {
-                callback(err, response['_id']);
+            if (response && response['created']) {
+                return callback(err, response['_id']);
             } else {
-                callback(err, null);
+                return callback(err, null);
             }
         });
     };
@@ -353,19 +508,30 @@ var SearchClient = (function () {
     *
     * @method core.search.SearchClient~_createIndex
     *
-    * @param {string} name
+    * @param {string} indexName
+    * @param {Object|Null} mapping The optional mapping to stick to the index.
     * @param {Function} callback
     */
-    SearchClient.prototype._createIndex = function (callback) {
+    SearchClient.prototype._createIndex = function (indexName, mapping, callback) {
         var _this = this;
-        this._client.indices.create({
-            index: this._indexName
-        }, function (err, response, status) {
+        var params = {
+            index: indexName
+        };
+
+        if (mapping) {
+            params = ObjectUtils.extend(params, {
+                body: {
+                    mappings: mapping
+                }
+            });
+        }
+
+        this._client.indices.create(params, function (err, response, status) {
             // everything went fine or index already exists
             if (_this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
-                callback(null);
+                return callback(null);
             } else {
-                callback(err);
+                return callback(err);
             }
         });
     };
@@ -406,10 +572,10 @@ var SearchClient = (function () {
                             check(++i);
                         }, 500);
                     } else {
-                        callback(new Error('SearchClient~waitForServer: Server is not reachable after 15 seconds'));
+                        return callback(new Error('SearchClient~waitForServer: Server is not reachable after 15 seconds'));
                     }
                 } else {
-                    callback(null);
+                    return callback(null);
                 }
             });
         };
@@ -418,6 +584,11 @@ var SearchClient = (function () {
     };
 
     /**
+    * Returns `true` if the given response objects matches with the http status code ( >= 200 < 300) or the error matches the specified error name.
+    * This method is used to gracefully ignore expected errors such as `not found` or `already exists`.
+    *
+    * @method core.search.SearchClient~_isValidResponse
+    *
     * @param {Error} err
     * @param {number} status
     * @param {string} errorNameToIgnore

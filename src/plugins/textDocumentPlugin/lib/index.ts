@@ -1,80 +1,104 @@
 // sandbox exit callback
-declare function exit(output?:any):void;
+declare function exit (output?:any):void;
 
 // api methods
-declare function getState():any;
-declare function setState(state:any):void;
+declare function getState ():any;
+declare function setState (state:any):void;
 
 // plugin globals
-declare function getFileName():string;
-declare function getStats():Object;
+declare function getFileName ():string;
+declare function getStats ():Object;
 
-export module main {
+declare var fileName:string;
+declare var fileStats:Object;
+declare var fileBuffer:any;
 
-	export function onTest() {
-		setState('foobar');
-		var bar = getState();
 
-		exit({ foo: 'foo', bar: bar });
-	}
+export var main = {
 
 	/**
 	 * Returns the mapping used in the elasticsearch index to store the plugin data
-	 * The mapping doesn't include the document root!
+	 * The mapping doesn"t include the document root!
 	 *
 	 * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/indices-put-mapping.html
 	 */
-	export function getMapping () {
-		var mapping = {
-			_source: {
-				excludes: ['file']
+	getMapping: function () {
+		exit({
+			_source   : {
+				excludes: ["file"]
 			},
 			properties: {
 				file: {
-					type  : 'attachment',
-					indexed_chars: -1,
+					type          : "attachment",
+					indexed_chars : -1,
 					detect_anguage: true,
-					fields: {
+					fields        : {
 						file          : {
-							store      : 'yes',
-							term_vector: 'with_positions_offsets'
+							store      : "yes",
+							term_vector: "with_positions_offsets"
 						},
 						author        : {
-							store: 'yes'
+							store: "yes"
 						},
 						title         : {
-							store   : 'yes'
+							store: "yes"
 						},
 						date          : {
-							store: 'yes'
+							store: "yes"
 						},
 						keywords      : {
-							store   : 'yes',
-							analyzer: 'keyword'
+							store   : "yes",
+							analyzer: "keyword"
 						},
 						content_type  : {
-							store: 'yes'
+							store: "yes"
 						},
 						content_length: {
-							store: 'yes'
+							store: "yes"
 						},
-						language: {
-							store: 'yes'
+						language      : {
+							store: "yes"
 						}
 					}
 				}
 			}
-		};
+		});
+	},
 
-		exit(mapping);
+	getSearchFields: function () {
+		exit({
+			"action": "index.html",
+			"method": "get",
+			"html"  : [
+				{
+					"type": "p",
+					"html": "You must login"
+				},
+				{
+					"name"       : "username",
+					"id"         : "txt-username",
+					"caption"    : "Username",
+					"type"       : "text",
+					"placeholder": "E.g. user@example.com"
+				},
+				{
+					"name"   : "password",
+					"caption": "Password",
+					"type"   : "password"
+				},
+				{
+					"type" : "submit",
+					"value": "Login"
+				}
+			]
+		});
+	},
+
+	onBeforeItemAdd: function () {
+		exit({
+			//name : fileName,
+			//stats: fileStats,
+			file: fileBuffer
+		});
 	}
-
-	export function onBeforeItemAdd () {
-		var data = {
-			name: getFileName(),
-			stats: getStats()
-		};
-
-		exit(data);
-	}
-}
+};

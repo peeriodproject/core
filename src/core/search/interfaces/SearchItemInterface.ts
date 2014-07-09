@@ -9,6 +9,7 @@ import PluginNameListInterface = require('../../plugin/interfaces/PluginNameList
  * @class core.search.SearchItemInterface
  */
 interface SearchItemInterface {
+
 	/**
 	 * Returns the hash of the item
 	 *
@@ -28,15 +29,6 @@ interface SearchItemInterface {
 	getPath():string;
 
 	/**
-	 * Returns an array of plugin identifiers
-	 *
-	 * @method core.search.SearchItemInterface#getPluginIdentifiers
-	 *
-	 * @param {core.plugin.PluginNameListInterface}
-	 */
-	getPluginIdentifiers ():PluginNameListInterface;
-
-	/**
 	 * Returns the plugin data for the specified identifier or null
 	 *
 	 * @method core.search.SearchItemInterface#getPluginData
@@ -47,9 +39,13 @@ interface SearchItemInterface {
 	getPluginData (identifier:string):Object;
 
 	/**
-	 * Returns the `fs.Stats` object of the item
+	 * Returns an array of plugin identifiers
+	 *
+	 * @method core.search.SearchItemInterface#getPluginIdentifiers
+	 *
+	 * @param {core.plugin.PluginNameListInterface}
 	 */
-	getStats():fs.Stats;
+	getPluginIdentifiers ():PluginNameListInterface;
 
 	/**
 	 * Returns the average score of all plugin data.
@@ -59,6 +55,11 @@ interface SearchItemInterface {
 	 * @returns {number}
 	 */
 	getScore ():number;
+
+	/**
+	 * Returns the `fs.Stats` object of the item
+	 */
+	getStats():fs.Stats;
 
 }
 

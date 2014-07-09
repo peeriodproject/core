@@ -4,6 +4,9 @@ var IrcLogger = require('./IrcLogger');
 var IrcLoggerBackend = require('./IrcLoggerBackend');
 var JSONConfig = require('../../config/JSONConfig');
 
+/**
+* @module core.utils.logger.LoggerFactory
+*/
 var LoggerFactory;
 (function (LoggerFactory) {
     var _ircLogger = null;

@@ -104,7 +104,7 @@ describe('CORE --> SEARCH --> SearchManager @_joern', function () {
         };
         var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
             getMapping: function (callback) {
-                callback(pluginMapping);
+                callback(null, pluginMapping);
             }
         });
         var pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager, {

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.92</p>
+      <p class="stat">72.71</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">400</p>
+      <p class="stat">510</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">70.12</p>
+      <p class="stat">70.55</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.59</p>
+      <p class="stat">2.88</p>
     </div>
   </div>
 </div>
@@ -91,35 +91,125 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../ts-definitions/node/node.d.ts&#039; /&gt;
+var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
+
 /**
 * @class core.search.IndexManager
 * @implements core.search.IndexManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
+* @param {core.fs.FolderWatcherManagerInterface} folerWatcherManager
+* @param {core.fs.PathValidatorInterface} pathValidator
+* @param {core.search.SearchManagerInterface} searchManager
 */
 var IndexManager = (function () {
-    function IndexManager(config, folderWatcherManager, pathValidator, searchManager) {
+    function IndexManager(config, appQuitHandler, folderWatcherManager, pathValidator, searchManager, options) {
+        if (typeof options === &quot;undefined&quot;) { options = {}; }
+        var _this = this;
+        /**
+        * The inernally used config instance
+        *
+        * @member {core.config.ConfigInterface} core.search.IndexManager~_config
+        */
         this._config = null;
-        this._folderWatcherManager = null;
-        this._isOpen = false;
-        this._isIndexing = false;
-        this._indexRunnerDelayInMilliSeconds = 10000;
-        this._indexRunnerTimeout = -1;
-        this._indexRunnersInParallelAmount = 3;
-        this._indexRunnersInParallelRunning = 0;
-        this._pathValidator = null;
-        this._pendingPathsToIndex = {};
+        /**
+        * The map of paths that are currently processed
+        *
+        * @member {core.search.IndexManagerPendingListObjectMapInterface} core.search.IndexManager~_currentPendingPathsToIndex
+        */
         this._currentPendingPathsToIndex = {};
+        /**
+        * The internally used FolderWatcherManager instance
+        *
+        * @member {core.fs.FolderWatcherManagerInterface} core.search.IndexManager~_folderWatcherManager
+        */
+        this._folderWatcherManager = null;
+        /**
+        * A flag indicates weather the IndexManager is currently indexing or paused
+        *
+        * @member {boolean} core.search.IndexManager~_isIndexing
+        */
+        this._isIndexing = false;
+        /**
+        * The idle time between index runs in milliseconds
+        *
+        * @member {number} core.search.IndexManager~_indexRunnerDelayInMilliSeconds
+        */
+        this._indexRunnerDelayInMilliSeconds = 10000;
+        /**
+        * Stores the index runner timeout function
+        *
+        * @member {number} core.search.IndexManager~_indexRunnerTimeout
+        */
+        this._indexRunnerTimeout = null;
+        /**
+        * The amount of index runners running in parallel
+        *
+        * @member {number} core.search.IndexManager~_indexRunnersInParallelAmount
+        */
+        this._indexRunnersInParallelAmount = 3;
+        /**
+        * The amount of index runners that are currently running
+        *
+        * @member {number} core.search.IndexManager~_indexRunnersInParallelRunning
+        */
+        this._indexRunnersInParallelRunning = 0;
+        /**
+        * A flag indicates weather the IndexManager is open or closed
+        *
+        * @member {boolean} core.search.IndexManager~_isOpen
+        */
+        this._isOpen = false;
+        /**
+        * The merged options object
+        *
+        * @member {core.utils.ClosableAsyncOptions} core.search.IndexManager~_options
+        */
+        this._options = {};
+        /**
+        * The internally used PathValidatorInterface instance
+        *
+        * @member {core.fs.PathValidatorInterface} core.search.IndexManager~_pathValidator
+        */
+        this._pathValidator = null;
+        /**
+        * The map of pending paths to index
+        *
+        * @member {core.search.IndexManagerPendingListObjectMapInterface} core.search.IndexManager~_pendingPathsToIndex
+        */
+        this._pendingPathsToIndex = {};
+        /**
+        * The internally used SearchManagerInterface instance
+        *
+        * @member {core.search.SearchManagerInterface} core.search.IndexManager~_searchManager
+        */
         this._searchManager = null;
-        // todo add defaults
+        var defaults = {
+            onOpenCallback: function () {
+            },
+            onCloseCallback: function () {
+            },
+            closeOnProcessExit: true
+        };
+
         this._config = config;
         this._folderWatcherManager = folderWatcherManager;
         this._pathValidator = pathValidator;
         this._searchManager = searchManager;
 
+        this._options = ObjectUtils.extend(defaults, options);
+
         this._indexRunnerDelayInMilliSeconds = this._config.get(&#039;search.indexManager.indexRunnerDelayInMilliSeconds&#039;);
         this._indexRunnersInParallelAmount = this._config.get(&#039;search.indexManager.indexRunnersInParallel&#039;);
 
-        // todo add merged options
-        this.open();
+        if (this._options.closeOnProcessExit) {
+            appQuitHandler.add(function (done) {
+                _this.close(done);
+            });
+        }
+
+        this.open(this._options.onOpenCallback);
     }
     IndexManager.prototype.addToIndex = function (pathToAdd, stats, callback) {
         if (!this._pendingPathsToIndex[pathToAdd]) {
@@ -129,8 +219,7 @@ var IndexManager = (function () {
 
     IndexManager.prototype.close = function (callback) {
         var _this = this;
-        var internalCallback = callback || function (err) {
-        };
+        var internalCallback = callback || this._options.onCloseCallback;
 
         if (!this._isOpen) {
             this.pause();
@@ -185,8 +274,7 @@ var IndexManager = (function () {
 
     IndexManager.prototype.open = function (callback) {
         var _this = this;
-        var internalCallback = callback || function (err) {
-        };
+        var internalCallback = callback || this._options.onOpenCallback;
 
         if (this._isOpen) {
             this.resume();
@@ -228,7 +316,6 @@ var IndexManager = (function () {
         };
 
         if (this._isIndexing) {
-            //console.log(&#039;stopping the index runner&#039;);
             this._stopIndexRunner();
             this._isIndexing = false;
         }
@@ -241,7 +328,6 @@ var IndexManager = (function () {
         };
 
         if (!this._isIndexing) {
-            //console.log(&#039;starting the index runner&#039;);
             this._isIndexing = true;
             this._startIndexRunner();
         }
@@ -250,7 +336,9 @@ var IndexManager = (function () {
     };
 
     IndexManager.prototype._bindToFolderWatcherManagerEvents = function () {
+        var _this = this;
         this._folderWatcherManager.on(&#039;add&#039;, function (changedPath, stats) {
+            _this.addToIndex(changedPath, stats);
             //this._triggerEvent(&#039;add&#039;, changedPath, stats);
         });
         this._folderWatcherManager.on(&#039;change&#039;, function (changedPath, stats) {
@@ -261,38 +349,55 @@ var IndexManager = (function () {
         });
     };
 
+    /**
+    *
+    * @private
+    */
     IndexManager.prototype._indexRunner = function () {
-        ////console.log(&#039;pending&#039;);
-        ////console.log(this._pendingPathsToIndex);
-        // copy items from the pending paths list into the current batch
-        if (Object.keys(this._pendingPathsToIndex).length) {
+        var keys = Object.keys(this._pendingPathsToIndex);
+
+        if (keys.length) {
             for (var pathToIndex in this._pendingPathsToIndex) {
                 this._currentPendingPathsToIndex[pathToIndex] = this._pendingPathsToIndex[pathToIndex];
 
                 delete this._pendingPathsToIndex[pathToIndex];
-                //console.log(this._currentPendingPathsToIndex[pathToIndex]);
             }
 
             this._processPendingPathsToIndex();
         }
 
-        ////console.log(&#039;current&#039;);
-        ////console.log(this._currentPendingPathsToIndex);
         this._startIndexRunner();
     };
 
+    /**
+    * Creates {@link core.search.IndexManager~_indexInrrersInParallelAmount} new
+    * [PendingPathProcessors]{@link @method core.search.IndexManager~_createPendingPathProcessor}
+    *
+    * @method core.search.IndexManager~_processPendingPathToIndex
+    */
     IndexManager.prototype._processPendingPathsToIndex = function () {
-        //console.log(&#039;process pending path to index&#039;);
-        // run x index processes in parallel
         var processesStarted = 0;
         var created = true;
 
         while (created &amp;&amp; processesStarted &lt; this._indexRunnersInParallelAmount) {
             created = this._createPendingPathProcessor();
+
+            if (created) {
+                processesStarted++;
+            }
         }
     };
 
-    // todo add return type
+    /**
+    * Creates a {@link core.search.IndexManagerPendingListObjectInterface} of the given arguments
+    *
+    * @method core.search.IndexManager~_createPendingListObject
+    *
+    * @param {string} pathToIndex
+    * @param {fs.Stats} stats
+    * @param {Function} callback
+    * @returns {core.search.IndexManagerPendingListObjectInterface}
+    */
     IndexManager.prototype._createPendingListObject = function (pathToIndex, stats, callback) {
         return {
             isIndexing: false,
@@ -303,7 +408,11 @@ var IndexManager = (function () {
     };
 
     /**
-    * @returns {boolean} processor created
+    * Creates a path processor for all pending paths in the {@link core.search.IndexManager~_currentPendingPathsToIndex} List
+    *
+    * @method core.search.IndexManager~_createPendingPathProcessor
+    *
+    * @returns {boolean} processor successfully created
     */
     IndexManager.prototype._createPendingPathProcessor = function () {
         var _this = this;
@@ -322,7 +431,6 @@ var IndexManager = (function () {
             }
 
             if (pathToIndex &amp;&amp; pathData) {
-                //console.log(&#039;created parallel index runner for&#039;, pathToIndex);
                 this._processPendingPathToIndex(pathToIndex, pathData.stats, function (err) {
                     _this._indexRunnersInParallelRunning--;
 
@@ -361,19 +469,16 @@ var IndexManager = (function () {
 
         this._getItemStatsFromSearchManager(pathToIndex, function (searchManagerHash, searchManagerStats) {
             // item exists
-            if (searchManagerStats) {
+            if (searchManagerHash &amp;&amp; searchManagerStats) {
                 ////console.log(&#039;validating item&#039;);
                 _this._validateItem(pathToIndex, searchManagerHash, searchManagerStats, function (err, isValid, fileHash, fileStats) {
-                    //console.log(&#039;item is valid:&#039;, isValid);
                     if (isValid) {
-                        //console.log(&#039;item is already fully indexed&#039;);
                         // todo check against the amount of plugins which indexed this file. Maybe some plugins are new
                         callback(new Error(&#039;IndexManager~_processPendingPathToIndex: The item at path &quot;&#039; + pathToIndex + &#039;&quot; is already indexed.&#039;));
                     } else {
                         _this._addItem(pathToIndex, stats, fileHash, callback);
                     }
                 });
-                /**/
             } else {
                 // adding new item
                 _this._pathValidator.getHash(pathToIndex, function (err, fileHash) {
@@ -422,6 +527,8 @@ var IndexManager = (function () {
     * The first step is a fs.Stats validation using the {@link core.fs.PathValidator#validateStats}
     * If the first step fails a second check using {@link core.fs.PathValidator#validateHash} will be performed.
     *
+    * @method core.search.IndexManager~_validateItem
+    *
     * @param {string} itemPath
     * @param {string} searchManagerItemHash
     * @param {fs.Stats} searchManagerItemStats
@@ -454,11 +561,12 @@ var IndexManager = (function () {
     /**
     * Calls the callback method stored for the path and removes it from the processing list.
     *
+    * @method core.search.IndexManager~_removeCurrentPendingPathToIndex
+    *
     * @param {string} pathToIndex
     * @param {Error} err
     */
     IndexManager.prototype._removeCurrentPendingPathToIndex = function (pathToIndex, err) {
-        //console.log(&#039;removing from current list and calling callback for&#039;, pathToIndex);
         this._currentPendingPathsToIndex[pathToIndex].callback(err);
 
         delete this._currentPendingPathsToIndex[pathToIndex];
@@ -474,8 +582,6 @@ var IndexManager = (function () {
         var _this = this;
         if (this._isIndexing) {
             this._indexRunnerTimeout = setTimeout(function () {
-                ////console.log(&#039;index runner interval&#039;);
-                ////console.log(this._pendingPathsToIndex);
                 _this._indexRunner();
             }, this._indexRunnerDelayInMilliSeconds);
         }

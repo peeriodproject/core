@@ -250,6 +250,21 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		return this._myNode;
 	}
 
+	getRandomExternalIpPortPair ():any {
+		var openPorts:Array<number> = this._tcpSocketHandler.getOpenServerPortsArray();
+		var externalIp:string = this._tcpSocketHandler.getMyExternalIp();
+
+		if (openPorts.length && externalIp) {
+			return {
+				ip: externalIp,
+				port: Math.floor(Math.random() * openPorts.length)
+			}
+		}
+		else {
+			return null;
+		}
+	}
+
 	/**
 	 * Testing purposes only. Should not be used in production.
 	 *
@@ -283,6 +298,14 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		return this._connectionWaitingList;
 	}
 
+	public closeHydraSocket (identifier:string):void {
+		var socket:TCPSocketInterface = this._hydraSockets[identifier];
+
+		if (socket) {
+			socket.end();
+		}
+	}
+
 	public getConfirmedSocketByContactNode (node:ContactNodeInterface):TCPSocketInterface {
 		return this._getConfirmedSocketByIdentifier(this._nodeToIdentifier(node));
 	}
@@ -303,8 +326,18 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 	}
 
+	public getHydraSocketIp (identifier:string):string {
+		var socket:TCPSocketInterface = this._hydraSockets[identifier];
 
-	public hydraConnectTo (port:number, ip:string, callback:(err:Error, identifier:string) => any):void {
+		if (socket) {
+			return socket.getIP();
+		}
+
+		return undefined;
+	}
+
+	public hydraConnectTo (port:number, ip:string, callback?:(err:Error, identifier:string) => any):void {
+
 		this._tcpSocketHandler.connectTo(port, ip, (socket:TCPSocketInterface) => {
 			if (socket) {
 				var identifier:string = this._setHydraIdentifier(socket);
@@ -319,6 +352,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 	public hydraWriteBufferTo (identifier:string, buffer:Buffer, callback?:(err:Error) => any):void {
 		var socket:TCPSocketInterface = this._hydraSockets[identifier];
+
 		if (!socket) {
 			if (callback) {
 				callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));
@@ -566,7 +600,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 	/**
 	 * Destroys a socket connection. Removes all references within the manager, clears any incmoing pending timeouts.
-	 * unhooks it from the data pipeline and forces destroys the socket itself (removing all listeners and dumping the reference).
+	 * unhooks it from the data pipeline and force destroys the socket itself (removing all listeners and dumping the reference).
 	 * Emits a `terminatedConnection` event if the socket was a confirmed one and the event should not be blocked.
 	 *
 	 * @method core.protocol.net.ProtocolConnectionManager~_destroyConnection
@@ -868,7 +902,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 
 		if (propagateMessage) {
-			this.emit('hydraMessage', identifier, message);
+			this.emit('hydraMessage', identifier, this.getHydraSocketIp(identifier), message);
 		}
 	}
 

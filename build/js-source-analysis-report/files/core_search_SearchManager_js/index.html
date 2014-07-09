@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">76.10</p>
+      <p class="stat">67.55</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">150</p>
+      <p class="stat">254</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">23.09</p>
+      <p class="stat">32.85</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.03</p>
+      <p class="stat">1.68</p>
     </div>
   </div>
 </div>
@@ -96,6 +96,10 @@ var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
 /**
 * @class core.search.SearchManager
 * @implements core.search.SearchManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.plugin.PluginManagerInterface} pluginManager
+* @param {core.search.SearchClientInterface} searchClient
 */
 var SearchManager = (function () {
     function SearchManager(config, pluginManager, searchClient) {
@@ -120,7 +124,7 @@ var SearchManager = (function () {
             //console.log(JSON.stringify(pluginData));
             // to the request to the database
             _this._searchClient.addItem(pluginData, function (err) {
-                callback(err);
+                internalCallback(err);
             });
         });
     };
@@ -129,7 +133,9 @@ var SearchManager = (function () {
         var internalCallback = callback || function () {
         };
 
-        return process.nextTick(callback.bind(null, null));
+        console.log(&#039;todo SearchManager#close&#039;);
+
+        return process.nextTick(internalCallback.bind(null, null));
     };
 
     SearchManager.prototype.getItem = function (pathToIndex, callback) {
@@ -147,11 +153,18 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype.itemExists = function (pathToIndex, callback) {
-        // todo iplementation
+        console.log(&#039;todo SearchManager#itemExists&#039;);
+
         return process.nextTick(callback.bind(null, null, null));
     };
 
     SearchManager.prototype.open = function (callback) {
+        var internalCallback = callback || function () {
+        };
+
+        console.log(&#039;todo SearchManager#open&#039;);
+
+        return process.nextTick(internalCallback.bind(null, null));
     };
 
     SearchManager.prototype._registerPluginManagerEvents = function () {
@@ -170,7 +183,10 @@ var SearchManager = (function () {
             }
 
             _this._pluginManager.getActivePluginRunner(pluginIdentifier, function (pluginRunner) {
-                pluginRunner.getMapping(function (mapping) {
+                pluginRunner.getMapping(function (err, mapping) {
+                    if (err) {
+                        console.error(err);
+                    }
                     if (mapping) {
                         mapping = _this._updateMapping(mapping);
 
@@ -181,6 +197,7 @@ var SearchManager = (function () {
                         });
                     } else {
                         // todo plugin uses elasticsearch auto mapping feature! Maybe it&#039;s better to throw an error here?
+                        console.log(&#039;todo: plugin uses elasticsearch auto mapping feature! Maybe it\&#039;s better to throw an error here?&#039;);
                     }
                 });
             });
@@ -188,10 +205,11 @@ var SearchManager = (function () {
     };
 
     /**
-    * Updates the given mapping.
+    * Updates the given mapping by adding the item hash, item path and item stats.
+    *
+    * @method core.search.SearchManager~_updateMapping
     *
     * @param {Object} mapping
-    * @param {boolean} isApacheTikaPlugin
     * @returns {Object} the restricted mapping
     */
     SearchManager.prototype._updateMapping = function (mapping) {
@@ -199,10 +217,10 @@ var SearchManager = (function () {
         var properties = mapping[&#039;properties&#039;] || {};
 
         // remove file content from source
-        // todo iterate over mapping and find attachment filed by type
+        // todo iterate over mapping and find attachment field by type
         if (properties &amp;&amp; properties[&#039;file&#039;]) {
             mapping[&#039;_source&#039;] = ObjectUtils.extend(source, {
-                excludes: &#039;file&#039;
+                excludes: [&#039;file&#039;]
             });
         }
 
@@ -210,22 +228,108 @@ var SearchManager = (function () {
         mapping[&#039;properties&#039;] = ObjectUtils.extend(properties, {
             itemHash: {
                 type: &#039;string&#039;,
-                store: &#039;yes&#039;
+                store: &#039;yes&#039;,
+                index: &#039;not_analyzed&#039;
             },
             itemPath: {
                 type: &#039;string&#039;,
-                store: &#039;yes&#039;
+                store: &#039;yes&#039;,
+                index: &#039;not_analyzed&#039;
+            },
+            itemStats: {
+                type: &#039;nested&#039;,
+                properties: {
+                    atime: {
+                        type: &#039;date&#039;,
+                        format: &#039;dateOptionalTime&#039;,
+                        store: &#039;yes&#039;,
+                        index: &#039;not_analyzed&#039;
+                    },
+                    blksize: {
+                        type: &#039;long&#039;,
+                        store: &#039;yes&#039;,
+                        index: &#039;not_analyzed&#039;
+                    },
+                    blocks: {
+                        type: &#039;long&#039;,
+                        store: &#039;yes&#039;,
+                        index: &#039;not_analyzed&#039;
+                    },
+                    ctime: {
+                        type: &#039;date&#039;,
+                        format: &#039;dateOptionalTime&#039;,
+                        store: &#039;yes&#039;,
+                        index: &#039;not_analyzed&#039;
+                    },
+                    dev: {
+                        type: &#039;long&#039;,
+                        store: &#039;yes&#039;,
+                        index: &#039;not_analyzed&#039;
+                    },
+                    gid: {
+                        type: &#039;long&#039;,
+                        store: &#039;yes&#039;,
+                        index: &#039;not_analyzed&#039;
+                    },
+                    ino: {
+                        type: &#039;long&#039;,
+                        store: &#039;yes&#039;,
+                        index: &#039;not_analyzed&#039;
+                    },
+                    mode: {
+                        type: &#039;long&#039;,
+                        store: &#039;yes&#039;,
+                        index: &#039;not_analyzed&#039;
+                    },
+                    mtime: {
+                        type: &#039;date&#039;,
+                        format: &#039;dateOptionalTime&#039;,
+                        store: &#039;yes&#039;,
+                        index: &#039;not_analyzed&#039;
+                    },
+                    nlink: {
+                        type: &#039;long&#039;,
+                        store: &#039;yes&#039;,
+                        index: &#039;not_analyzed&#039;
+                    },
+                    rdev: {
+                        type: &#039;long&#039;,
+                        store: &#039;yes&#039;,
+                        index: &#039;not_analyzed&#039;
+                    },
+                    size: {
+                        type: &#039;long&#039;,
+                        store: &#039;yes&#039;,
+                        index: &#039;not_analyzed&#039;
+                    },
+                    uid: {
+                        type: &#039;long&#039;,
+                        store: &#039;yes&#039;,
+                        index: &#039;not_analyzed&#039;
+                    }
+                }
             }
         });
 
         return mapping;
     };
 
+    /**
+    * Updates the given plugin data by adding the item path, stats and hash to each plugin identifier object
+    *
+    * @method core.search.SearchManager~_updatePluginData
+    *
+    * @param {Object} pluginData
+    * @param {string} itemPath
+    * @param {fs.Stats} stats
+    * @param {string} fileHash
+    * @returns {Object} the updated plugin data
+    */
     SearchManager.prototype._updatePluginData = function (pluginData, itemPath, stats, fileHash) {
         var identifiers = Object.keys(pluginData);
 
         if (identifiers.length) {
-            for (var i in identifiers) {
+            for (var i = 0, l = identifiers.length; i &lt; l; i++) {
                 var identifier = identifiers[i];
 
                 pluginData[identifier] = ObjectUtils.extend(pluginData[identifier], {

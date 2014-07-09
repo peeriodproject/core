@@ -20,6 +20,8 @@ describe('CORE --> PLUGIN --> PluginRunnerFactory', function () {
                     return 'src/core/plugin/api';
                 } else if (key === 'plugin.api.pluginApiName') {
                     return 'PluginApi.js';
+                } else if (key === 'plugin.binaryPath') {
+                    return './core/plugin/pluginRunner/node';
                 }
             }
         });

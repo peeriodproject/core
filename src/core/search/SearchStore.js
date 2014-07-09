@@ -17,10 +17,11 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @implements core.search.SearchStoreInterface
 *
 * @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {core.search.SearchStore.Options} options
 */
 var SearchStore = (function () {
-    function SearchStore(config, options) {
+    function SearchStore(config, appQuitHandler, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
         /**
@@ -57,8 +58,8 @@ var SearchStore = (function () {
         this._options = ObjectUtils.extend(SearchStore.getDefaults(), options);
 
         if (this._options.closeOnProcessExit) {
-            process.on('exit', function () {
-                _this.close(_this._options.onCloseCallback);
+            appQuitHandler.add(function (done) {
+                _this.close(done);
             });
         }
 
@@ -147,10 +148,11 @@ var SearchStore = (function () {
     * - __-p__: The path where elasticsearch should save it's process id
     * - __-Des.config__: The path to the config file
     * - __-Des.path.data__: The path where the indexes should be stored
+    * * - __-Des.logger.level__: The level of the logger
     *
     * @method core.search.SearchStore~_getDatabaseServerProcessArgs
     *
-    * @returns {string[]}
+    * @returns {Array<string>}
     */
     SearchStore.prototype._getDatabaseServerProcessArgs = function () {
         var configPath = path.resolve(__dirname, '../../', this._config.get('search.searchStoreConfig'));

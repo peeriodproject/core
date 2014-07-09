@@ -1,3 +1,4 @@
+import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
 import BucketFactoryInterface = require('./interfaces/BucketFactoryInterface');
 import BucketInterface = require('./interfaces/BucketInterface');
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
@@ -23,6 +24,7 @@ var logger = require('../utils/logger/LoggerFactory').create();
  * @implements RoutingTableInterface
  *
  * @param {config.ConfigInterface} config
+ * @param {core.utils.AppQuitHandlerInterface} appQuitHandler
  * @param {core.topology.IdInterface} id
  * @param {core.topology.BucketStoreInterface} bucketStore
  */
@@ -82,7 +84,7 @@ class RoutingTable implements RoutingTableInterface {
 	 */
 	private _options:RoutingTableOptions = null;
 
-	constructor (config:ConfigInterface, id:IdInterface, bucketFactory:BucketFactoryInterface, bucketStore:BucketStoreInterface, contactNodeFactory:ContactNodeFactoryInterface, options:RoutingTableOptions = {}) {
+	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, id:IdInterface, bucketFactory:BucketFactoryInterface, bucketStore:BucketStoreInterface, contactNodeFactory:ContactNodeFactoryInterface, options:RoutingTableOptions = {}) {
 
 		var defaults:RoutingTableOptions = {
 			closeOnProcessExit: true,
@@ -101,8 +103,8 @@ class RoutingTable implements RoutingTableInterface {
 		this._options = ObjectUtils.extend(defaults, options);
 
 		if (this._options.closeOnProcessExit) {
-			process.on('exit', () => {
-				this.close(this._options.onCloseCallback);
+			appQuitHandler.add((done) => {
+				this.close(done);
 			});
 		}
 
@@ -129,19 +131,19 @@ class RoutingTable implements RoutingTableInterface {
 	}
 
 	public getAllContactNodesSize (callback:(err:Error, count:number) => any):void {
-		var bucketAmount = Object.keys(this._buckets).length;
+		var bucketKeys = Object.keys(this._buckets);
 		var processed:number = 0;
 		var contactNodeCount:number = 0;
 
 		var checkCallback:Function = function (err) {
-			if (processed === bucketAmount) {
+			if (processed === bucketKeys.length) {
 				callback(null, contactNodeCount);
 			}
 		};
 
-		if (bucketAmount) {
-			for (var i in this._buckets) {
-				this._buckets[i].size(function (err, size) {
+		if (bucketKeys.length) {
+			for (var i = 0, l = bucketKeys.length; i < l; i++) {
+				this._buckets[bucketKeys[i]].size(function (err, size) {
 					processed++;
 					contactNodeCount += size;
 
@@ -179,7 +181,7 @@ class RoutingTable implements RoutingTableInterface {
 		var crawlBucket = (crawlBucketKey:number, crawlReverse:boolean, onCrawlEnd:Function) => {
 			var bucketGetAllCallback = (err:Error, contacts:ContactNodeListInterface) => {
 				if (contacts.length) {
-					for (var i in contacts) {
+					for (var i = 0, l = contacts.length; i < l; i++) {
 						var contact:ContactNodeInterface = contacts[i];
 						var contactId:IdInterface = contact.getId();
 
@@ -251,7 +253,7 @@ class RoutingTable implements RoutingTableInterface {
 			// console.log(distances);
 
 			if (distances.length) {
-				for (var i in distances) {
+				for (var i = 0, l = distances.length; i < l; i++) {
 					if (i < topologyK) {
 						closestContactNodes.push(getContactFromDistanceMap(distances[i]));
 					}
@@ -314,6 +316,30 @@ class RoutingTable implements RoutingTableInterface {
 		crawlRandomBucket();
 	}
 
+	public getRandomContactNodesFromBucket (bucketKey:number, amount:number, callback:(err:Error, contactNodes:ContactNodeListInterface) => any):void {
+		if (this._isInBucketKeyRange(bucketKey)) {
+			this._getBucket(bucketKey).getAll((err:Error, contacts:ContactNodeListInterface) => {
+				var contactLength:number;
+
+				if (err) {
+					return callback(err, null);
+				}
+
+				contactLength = contacts.length;
+
+				if (!contactLength || contactLength <= amount) {
+					return callback(null, contacts);
+				}
+				else {
+					return callback(null, this._getRandomizedArray(contacts).slice(0, amount));
+				}
+			});
+		}
+		else {
+			return process.nextTick(callback.bind(null, new Error('RoutingTable.getRandomContactNodesFromBucket: The bucket key is out of range.'), null));
+		}
+	}
+
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
@@ -348,9 +374,9 @@ class RoutingTable implements RoutingTableInterface {
 		if (oldBucketKey !== newBucketKey) {
 			logger.error('can not replace nodes in bucket', {
 				oldBucketKey: oldBucketKey,
-				oldId: oldContactNodeId.toBitString(),
+				oldId       : oldContactNodeId.toBitString(),
 				newBucketKey: newBucketKey,
-				newId: newContactNodeId.toBitString()
+				newId       : newContactNodeId.toBitString()
 
 			});
 
@@ -440,6 +466,38 @@ class RoutingTable implements RoutingTableInterface {
 	 */
 	private _getBucketKey (id:IdInterface):number {
 		return this._id.differsInHighestBit(id);
+	}
+
+	/**
+	 * Returns a shuffled copy of the given array.
+	 *
+	 * @see https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
+	 * @see http://sroucheray.org/blog/2009/11/array-sort-should-not-be-used-to-shuffle-an-array/
+	 *
+	 * @method core.topology.RoutingTable~_getRandomizedArray
+	 *
+	 * @param {Array} input The array to shuffle
+	 * @returns {Array} the shuffled copy of the input array
+	 */
+	private _getRandomizedArray (input:Array<any>):Array<any> {
+		var output:Array<any> = input.slice();
+		var i = output.length;
+		var j;
+		var temp;
+
+
+		if (i === 0) {
+			return;
+		}
+
+		while (--i) {
+			j = Math.floor(Math.random() * ( i + 1 ));
+			temp = output[i];
+			output[i] = output[j];
+			output[j] = temp;
+		}
+
+		return output;
 	}
 
 	/*

@@ -14,6 +14,10 @@ import ObjectUtils = require('../utils/ObjectUtils');
 /**
  * @class core.search.SearchManager
  * @implements core.search.SearchManagerInterface
+ *
+ * @param {core.config.ConfigInterface} config
+ * @param {core.plugin.PluginManagerInterface} pluginManager
+ * @param {core.search.SearchClientInterface} searchClient
  */
 class SearchManager implements SearchManagerInterface {
 
@@ -42,15 +46,41 @@ class SearchManager implements SearchManagerInterface {
 			//console.log(JSON.stringify(pluginData));
 			// to the request to the database
 			this._searchClient.addItem(pluginData, function(err) {
-				callback(err);
+				internalCallback(err);
 			});
 		});
 	}
 
 	close (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function () {};
+		var closedPluginManager:boolean = false;
+		var closedSearchClient:boolean = false;
+		var checkAndClose = (err) => {
+			if (closedPluginManager && closedSearchClient || err) {
+				closedPluginManager = false;
+				closedSearchClient = false;
 
-		return process.nextTick(callback.bind(null, null));
+				this._isOpen = false;
+
+				return internalCallback(err);
+			}
+		};
+
+		if (!this._isOpen) {
+			return process.nextTick(internalCallback.bind(null, null));
+		}
+
+		this._pluginManager.close(function (err) {
+			closedPluginManager = true;
+
+			return checkAndClose(err);
+		});
+
+		this._searchClient.close(function (err) {
+			closedSearchClient = true;
+
+			return checkAndClose(err);
+		});
 	}
 
 	public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
@@ -69,12 +99,41 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	public itemExists (pathToIndex:string, callback:(exists:boolean) => void):void {
-		// todo iplementation
+		console.log('todo SearchManager#itemExists');
+
 		return process.nextTick(callback.bind(null, null, null));
 	}
 
 	open (callback?:(err:Error) => any):void {
+		var internalCallback = callback || function () {};
+		var openedPluginManager:boolean = false;
+		var openedSearchClient:boolean = false;
+		var checkAndClose = (err) => {
+			if (openedPluginManager && openedSearchClient || err) {
+				openedPluginManager = false;
+				openedSearchClient = false;
 
+				this._isOpen = true;
+
+				return internalCallback(err);
+			}
+		};
+
+		if (this._isOpen) {
+			return process.nextTick(internalCallback.bind(null, null));
+		}
+
+		this._pluginManager.open(function (err) {
+			openedPluginManager = true;
+
+			return checkAndClose(err);
+		});
+
+		this._searchClient.open(function (err) {
+			openedSearchClient = true;
+
+			return checkAndClose(err);
+		});
 	}
 
 	private _registerPluginManagerEvents ():void {
@@ -91,7 +150,10 @@ class SearchManager implements SearchManagerInterface {
 			}
 
 			this._pluginManager.getActivePluginRunner(pluginIdentifier, (pluginRunner:PluginRunnerInterface) => {
-				pluginRunner.getMapping((mapping:Object) => {
+				pluginRunner.getMapping((err:Error, mapping:Object) => {
+					if (err) {
+						console.error(err);
+					}
 					if (mapping) {
 						mapping = this._updateMapping(mapping);
 
@@ -103,6 +165,7 @@ class SearchManager implements SearchManagerInterface {
 					}
 					else {
 						// todo plugin uses elasticsearch auto mapping feature! Maybe it's better to throw an error here?
+						console.log('todo: plugin uses elasticsearch auto mapping feature! Maybe it\'s better to throw an error here?');
 					}
 				});
 			});
@@ -110,10 +173,11 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	/**
-	 * Updates the given mapping.
+	 * Updates the given mapping by adding the item hash, item path and item stats.
+	 *
+	 * @method core.search.SearchManager~_updateMapping
 	 *
 	 * @param {Object} mapping
-	 * @param {boolean} isApacheTikaPlugin
 	 * @returns {Object} the restricted mapping
 	 */
 	private _updateMapping(mapping:Object):Object {
@@ -121,10 +185,10 @@ class SearchManager implements SearchManagerInterface {
 		var properties:Object = mapping['properties'] || {};
 
 		// remove file content from source
-		// todo iterate over mapping and find attachment filed by type
+		// todo iterate over mapping and find attachment field by type
 		if (properties && properties['file']) {
 			mapping['_source'] = ObjectUtils.extend(source, {
-				excludes: 'file'
+				excludes: ['file']
 			});
 		}
 
@@ -132,26 +196,108 @@ class SearchManager implements SearchManagerInterface {
 		mapping['properties'] = ObjectUtils.extend(properties, {
 			itemHash: {
 				type: 'string',
-				store: 'yes'
+				store: 'yes',
+				index: 'not_analyzed'
 			},
 			itemPath: {
 				type: 'string',
-				store: 'yes'
-			}/*,
-			todo add item stats inner object to mapping
+				store: 'yes',
+				index: 'not_analyzed'
+			},
 			itemStats: {
-				type:Object
-			}*/
+				type : 'nested',
+				properties: {
+					atime: {
+						type: 'date',
+						format: 'dateOptionalTime',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					blksize: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					blocks: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					ctime: {
+						type: 'date',
+						format: 'dateOptionalTime',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					dev: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					gid: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					ino: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					mode: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					mtime: {
+						type: 'date',
+						format: 'dateOptionalTime',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					nlink: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					rdev: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					size: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					},
+					uid: {
+						type: 'long',
+						store: 'yes',
+						index: 'not_analyzed'
+					}
+				}
+			}
 		});
 
 		return mapping;
 	}
 
+	/**
+	 * Updates the given plugin data by adding the item path, stats and hash to each plugin identifier object
+	 *
+	 * @method core.search.SearchManager~_updatePluginData
+	 *
+	 * @param {Object} pluginData
+	 * @param {string} itemPath
+	 * @param {fs.Stats} stats
+	 * @param {string} fileHash
+	 * @returns {Object} the updated plugin data
+	 */
 	private _updatePluginData (pluginData:Object, itemPath:string, stats:fs.Stats, fileHash:string):Object {
 		var identifiers:Array<string> = Object.keys(pluginData);
 
 		if (identifiers.length) {
-			for (var i in identifiers) {
+			for (var i = 0, l = identifiers.length; i < l; i++) {
 				var identifier:string = identifiers[i];
 
 				pluginData[identifier] = ObjectUtils.extend(pluginData[identifier], {

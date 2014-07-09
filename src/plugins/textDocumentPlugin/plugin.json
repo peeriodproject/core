@@ -4,7 +4,7 @@
     "identifier": "jj.core.documentAnalyser",
     "version": "0.0.1",
     "type": "searchPlugin",
-    "main": "lib/main.js",
+    "main": "lib/index.js",
     "private": true,
     "fileTypes": "./lib/fileTypes.json",
     "settings": {

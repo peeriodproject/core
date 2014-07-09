@@ -10,11 +10,12 @@ var logger = require('../utils/logger/LoggerFactory').create();
 * @implements RoutingTableInterface
 *
 * @param {config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {core.topology.IdInterface} id
 * @param {core.topology.BucketStoreInterface} bucketStore
 */
 var RoutingTable = (function () {
-    function RoutingTable(config, id, bucketFactory, bucketStore, contactNodeFactory, options) {
+    function RoutingTable(config, appQuitHandler, id, bucketFactory, bucketStore, contactNodeFactory, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
         /**
@@ -80,8 +81,8 @@ var RoutingTable = (function () {
         this._options = ObjectUtils.extend(defaults, options);
 
         if (this._options.closeOnProcessExit) {
-            process.on('exit', function () {
-                _this.close(_this._options.onCloseCallback);
+            appQuitHandler.add(function (done) {
+                _this.close(done);
             });
         }
 
@@ -107,19 +108,19 @@ var RoutingTable = (function () {
     };
 
     RoutingTable.prototype.getAllContactNodesSize = function (callback) {
-        var bucketAmount = Object.keys(this._buckets).length;
+        var bucketKeys = Object.keys(this._buckets);
         var processed = 0;
         var contactNodeCount = 0;
 
         var checkCallback = function (err) {
-            if (processed === bucketAmount) {
+            if (processed === bucketKeys.length) {
                 callback(null, contactNodeCount);
             }
         };
 
-        if (bucketAmount) {
-            for (var i in this._buckets) {
-                this._buckets[i].size(function (err, size) {
+        if (bucketKeys.length) {
+            for (var i = 0, l = bucketKeys.length; i < l; i++) {
+                this._buckets[bucketKeys[i]].size(function (err, size) {
                     processed++;
                     contactNodeCount += size;
 
@@ -157,7 +158,7 @@ var RoutingTable = (function () {
         var crawlBucket = function (crawlBucketKey, crawlReverse, onCrawlEnd) {
             var bucketGetAllCallback = function (err, contacts) {
                 if (contacts.length) {
-                    for (var i in contacts) {
+                    for (var i = 0, l = contacts.length; i < l; i++) {
                         var contact = contacts[i];
                         var contactId = contact.getId();
 
@@ -220,7 +221,7 @@ var RoutingTable = (function () {
 
             // console.log(distances);
             if (distances.length) {
-                for (var i in distances) {
+                for (var i = 0, l = distances.length; i < l; i++) {
                     if (i < topologyK) {
                         closestContactNodes.push(getContactFromDistanceMap(distances[i]));
                     }
@@ -279,6 +280,29 @@ var RoutingTable = (function () {
 
         // start crawling
         crawlRandomBucket();
+    };
+
+    RoutingTable.prototype.getRandomContactNodesFromBucket = function (bucketKey, amount, callback) {
+        var _this = this;
+        if (this._isInBucketKeyRange(bucketKey)) {
+            this._getBucket(bucketKey).getAll(function (err, contacts) {
+                var contactLength;
+
+                if (err) {
+                    return callback(err, null);
+                }
+
+                contactLength = contacts.length;
+
+                if (!contactLength || contactLength <= amount) {
+                    return callback(null, contacts);
+                } else {
+                    return callback(null, _this._getRandomizedArray(contacts).slice(0, amount));
+                }
+            });
+        } else {
+            return process.nextTick(callback.bind(null, new Error('RoutingTable.getRandomContactNodesFromBucket: The bucket key is out of range.'), null));
+        }
     };
 
     RoutingTable.prototype.isOpen = function (callback) {
@@ -406,6 +430,37 @@ var RoutingTable = (function () {
     */
     RoutingTable.prototype._getBucketKey = function (id) {
         return this._id.differsInHighestBit(id);
+    };
+
+    /**
+    * Returns a shuffled copy of the given array.
+    *
+    * @see https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
+    * @see http://sroucheray.org/blog/2009/11/array-sort-should-not-be-used-to-shuffle-an-array/
+    *
+    * @method core.topology.RoutingTable~_getRandomizedArray
+    *
+    * @param {Array} input The array to shuffle
+    * @returns {Array} the shuffled copy of the input array
+    */
+    RoutingTable.prototype._getRandomizedArray = function (input) {
+        var output = input.slice();
+        var i = output.length;
+        var j;
+        var temp;
+
+        if (i === 0) {
+            return;
+        }
+
+        while (--i) {
+            j = Math.floor(Math.random() * (i + 1));
+            temp = output[i];
+            output[i] = output[j];
+            output[j] = temp;
+        }
+
+        return output;
     };
 
     /*

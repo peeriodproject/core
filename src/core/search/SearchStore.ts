@@ -4,11 +4,13 @@ import childProcess = require('child_process');
 import fs = require('fs');
 import path = require('path');
 
+import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import SearchStoreInterface = require('./interfaces/SearchStoreInterface');
 import SearchStoreOptions = require('./interfaces/SearchStoreOptions');
 
 import ObjectUtils = require('../utils/ObjectUtils');
+
 /**
  * @see http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/
  * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/setup-configuration.html
@@ -21,6 +23,7 @@ import ObjectUtils = require('../utils/ObjectUtils');
  * @implements core.search.SearchStoreInterface
  *
  * @param {core.config.ConfigInterface} config
+ * @param {core.utils.AppQuitHandlerInterface} appQuitHandler
  * @param {core.search.SearchStore.Options} options
  */
 class SearchStore implements SearchStoreInterface {
@@ -70,13 +73,13 @@ class SearchStore implements SearchStoreInterface {
 		};
 	}
 
-	constructor (config:ConfigInterface, options:SearchStoreOptions = {}) {
+	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, options:SearchStoreOptions = {}) {
 		this._config = config;
 		this._options = ObjectUtils.extend(SearchStore.getDefaults(), options);
 
 		if (this._options.closeOnProcessExit) {
-			process.on('exit', () => {
-				this.close(this._options.onCloseCallback);
+			appQuitHandler.add((done) => {
+				this.close(done);
 			});
 		}
 
@@ -157,10 +160,11 @@ class SearchStore implements SearchStoreInterface {
 	 * - __-p__: The path where elasticsearch should save it's process id
 	 * - __-Des.config__: The path to the config file
 	 * - __-Des.path.data__: The path where the indexes should be stored
+	 * * - __-Des.logger.level__: The level of the logger
 	 *
 	 * @method core.search.SearchStore~_getDatabaseServerProcessArgs
 	 *
-	 * @returns {string[]}
+	 * @returns {Array<string>}
 	 */
 	private _getDatabaseServerProcessArgs ():Array<string> {
 		var configPath:string = path.resolve(__dirname, '../../', this._config.get('search.searchStoreConfig'));

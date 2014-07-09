@@ -1,0 +1,23 @@
+name,date,error,count,cycles,hz
+"for key in obj","Fri Jun 13 2014 13:32:32 GMT+0200 (CEST)",,207,3,3958.7549673058365
+"for loop with cached keys and length","Fri Jun 13 2014 13:32:37 GMT+0200 (CEST)",,379,4,7292.277405435951
+"get object keys as array. --> Array.forEach","Fri Jun 13 2014 13:32:43 GMT+0200 (CEST)",,262,5,4994.100396186688
+"array with strings as keys. --> array.forEach","Fri Jun 13 2014 13:32:48 GMT+0200 (CEST)",,222756,5,4288099.940621341
+"for loop with cached keys and length","Fri Jun 13 2014 13:47:37 GMT+0200 (CEST)",,29236,5,569840.3732667086
+"array.forEach","Fri Jun 13 2014 13:47:42 GMT+0200 (CEST)",,804,4,15551.954914729913
+"for key in obj","Fri Jun 13 2014 13:47:48 GMT+0200 (CEST)",,206,4,3951.7412525253667
+"for loop with cached keys and length","Fri Jun 13 2014 13:47:53 GMT+0200 (CEST)",,366,5,6871.672574128067
+"get object keys as array. --> Array.forEach","Fri Jun 13 2014 13:47:59 GMT+0200 (CEST)",,253,4,4810.882674299279
+"array with strings as keys. --> array.forEach","Fri Jun 13 2014 13:48:04 GMT+0200 (CEST)",,220717,6,4173923.857884169
+"for loop with cached keys and length","Mon Jun 16 2014 17:28:04 GMT+0200 (CEST)",,2712383,4,50815891.08732449
+"array.forEach","Mon Jun 16 2014 17:28:09 GMT+0200 (CEST)",,150303,4,2887777.119779167
+"for key in obj","Mon Jun 16 2014 17:28:15 GMT+0200 (CEST)",,347,3,6691.9991154728505
+"for loop with cached keys and length","Mon Jun 16 2014 17:28:20 GMT+0200 (CEST)",,700,4,13622.263100487779
+"get object keys as array. --> Array.forEach","Mon Jun 16 2014 17:28:25 GMT+0200 (CEST)",,452,4,8796.891393674716
+"array with strings as keys. --> array.forEach","Mon Jun 16 2014 17:28:31 GMT+0200 (CEST)",,389301,6,7466529.160033072
+"for loop with cached keys and length","Mon Jun 16 2014 17:29:17 GMT+0200 (CEST)",,1310858,6,25383880.77443533
+"array.forEach","Mon Jun 16 2014 17:29:23 GMT+0200 (CEST)",,56642,4,1097558.7523431191
+"for key in obj","Mon Jun 16 2014 17:29:28 GMT+0200 (CEST)",,351,4,6869.209186656319
+"for loop with cached keys and length","Mon Jun 16 2014 17:29:34 GMT+0200 (CEST)",,699,5,13633.992345161683
+"get object keys as array. --> Array.forEach","Mon Jun 16 2014 17:29:39 GMT+0200 (CEST)",,458,4,8889.28084198347
+"array with strings as keys. --> array.forEach","Mon Jun 16 2014 17:29:45 GMT+0200 (CEST)",,15346,4,253000.92594040005

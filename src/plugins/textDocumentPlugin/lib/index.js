@@ -1,76 +1,89 @@
 
 
 
-(function (main) {
-    function onTest() {
-        setState('foobar');
-        var bar = getState();
-
-        exit({ foo: 'foo', bar: bar });
-    }
-    main.onTest = onTest;
-
+exports.main = {
     /**
     * Returns the mapping used in the elasticsearch index to store the plugin data
-    * The mapping doesn't include the document root!
+    * The mapping doesn"t include the document root!
     *
     * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/indices-put-mapping.html
     */
-    function getMapping() {
-        var mapping = {
+    getMapping: function () {
+        exit({
             _source: {
-                excludes: ['file']
+                excludes: ["file"]
             },
             properties: {
                 file: {
-                    type: 'attachment',
+                    type: "attachment",
                     indexed_chars: -1,
                     detect_anguage: true,
                     fields: {
                         file: {
-                            store: 'yes',
-                            term_vector: 'with_positions_offsets'
+                            store: "yes",
+                            term_vector: "with_positions_offsets"
                         },
                         author: {
-                            store: 'yes'
+                            store: "yes"
                         },
                         title: {
-                            store: 'yes'
+                            store: "yes"
                         },
                         date: {
-                            store: 'yes'
+                            store: "yes"
                         },
                         keywords: {
-                            store: 'yes',
-                            analyzer: 'keyword'
+                            store: "yes",
+                            analyzer: "keyword"
                         },
                         content_type: {
-                            store: 'yes'
+                            store: "yes"
                         },
                         content_length: {
-                            store: 'yes'
+                            store: "yes"
                         },
                         language: {
-                            store: 'yes'
+                            store: "yes"
                         }
                     }
                 }
             }
-        };
-
-        exit(mapping);
+        });
+    },
+    getSearchFields: function () {
+        exit({
+            "action": "index.html",
+            "method": "get",
+            "html": [
+                {
+                    "type": "p",
+                    "html": "You must login"
+                },
+                {
+                    "name": "username",
+                    "id": "txt-username",
+                    "caption": "Username",
+                    "type": "text",
+                    "placeholder": "E.g. user@example.com"
+                },
+                {
+                    "name": "password",
+                    "caption": "Password",
+                    "type": "password"
+                },
+                {
+                    "type": "submit",
+                    "value": "Login"
+                }
+            ]
+        });
+    },
+    onBeforeItemAdd: function () {
+        exit({
+            //name : fileName,
+            //stats: fileStats,
+            file: fileBuffer
+        });
     }
-    main.getMapping = getMapping;
-
-    function onBeforeItemAdd() {
-        var data = {
-            name: getFileName(),
-            stats: getStats()
-        };
-
-        exit(data);
-    }
-    main.onBeforeItemAdd = onBeforeItemAdd;
-})(exports.main || (exports.main = {}));
-var main = exports.main;
+};
 //# sourceMappingURL=index.js.map

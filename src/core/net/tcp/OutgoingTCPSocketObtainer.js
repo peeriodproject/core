@@ -1,6 +1,9 @@
 /// <reference path='../../../../ts-definitions/node/node.d.ts' />
 var net = require('net');
 
+/**
+* @class core.net.tcp.OutgoingTCPSocketObtainer
+*/
 var OutgoingTCPSocketObtainer = (function () {
     function OutgoingTCPSocketObtainer(port, ip, callback, factory, options, timeoutInMs) {
         var _this = this;

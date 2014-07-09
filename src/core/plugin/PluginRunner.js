@@ -12,7 +12,7 @@ var PluginGlobalsFactory = require('./PluginGlobalsFactory');
 *
 * @params {core.config.ConfigInterface} config
 * @params {string} identifier todo remove identifer
-* @params {string} plugnScriptPath
+* @params {string} pluginScriptPath
 */
 var PluginRunner = (function () {
     // todo plugin-type PluginGlobalsFactory factory parameter
@@ -26,12 +26,19 @@ var PluginRunner = (function () {
         this._config = config;
         this._pluginScriptPath = pluginScriptPath;
 
+        // todo wait for node webkits child_process.spawn fix and remove own binary
+        // we're using our own node binary as a temporary fix here!
+        // @see https://github.com/rogerwang/node-webkit/issues/213
+        var nodeBinaryPath = path.join(__dirname, '../../bin/', this._config.get('plugin.binaryPath'));
+
         this._sandbox = new SandCastle({
-            memoryLimitMB: 100,
-            timeout: 2000,
+            memoryLimitMB: 1024,
+            timeout: 30000,
             useStrictMode: true,
-            api: this._getPluginApiPath()
+            api: this._getPluginApiPath(),
+            spawnExecPath: nodeBinaryPath
         });
+
         this._pluginGlobalsFactory = new PluginGlobalsFactory();
         this._pluginCode = fs.readFileSync(this._pluginScriptPath, 'utf-8');
     }
@@ -43,21 +50,27 @@ var PluginRunner = (function () {
     };
 
     PluginRunner.prototype.getMapping = function (callback) {
-        this._createAndRunSandbox(null, null, null, 'main.getMapping', callback, function (output) {
+        this._createAndRunStaticSandbox('main.getMapping', callback, function (output) {
+            callback(null, output);
+        });
+    };
+
+    PluginRunner.prototype.getSearchFields = function (callback) {
+        this._createAndRunStaticSandbox('main.getSearchFields', callback, function (output) {
             callback(null, output);
         });
     };
 
     PluginRunner.prototype.onBeforeItemAdd = function (itemPath, stats, globals, callback) {
-        this._createAndRunSandbox(itemPath, stats, globals, 'main.onBeforeItemAdd', callback, function (output) {
+        this._createAndRunItemSandbox(itemPath, stats, globals, 'main.onBeforeItemAdd', callback, function (output) {
             callback(null, output);
         });
     };
 
     /**
-    * Creates a sandbox, registers a timeout handler, addes the onExit callback and runs the specified method name.
+    * Creates a sandbox for a specified itemPath, registers a timeout handler, adds the onExit callback and runs the specified method name.
     *
-    * @method core.plugin.PluginRunner~_createAndRunSandbox
+    * @method core.plugin.PluginRunner~_createAndRunItemSandbox
     *
     * @param {string} itemPath
     * @param {fs.Stats} stats
@@ -66,18 +79,29 @@ var PluginRunner = (function () {
     * @param {Function} callback
     * @param {Function} onExit
     */
-    PluginRunner.prototype._createAndRunSandbox = function (itemPath, stats, globals, methodName, callback, onExit) {
+    PluginRunner.prototype._createAndRunItemSandbox = function (itemPath, stats, globals, methodName, callback, onExit) {
         this._createSandbox(itemPath);
         this._registerSandboxTimeoutHandler(itemPath, callback);
-        this._sandboxScripts[itemPath].on('exit', function (err, output, methodName) {
-            if (err) {
-                return callback(err, null, methodName);
-            } else {
-                return onExit(output);
-            }
-        });
+        this._registerSandboxExitHandler(itemPath, callback, onExit);
 
         this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
+    };
+
+    /**
+    * Creates a static sandbox for the specified methodName, registers a timeout handler, adds the onExit callback and runs the specified method name.
+    *
+    * @method core.plugin.PluginRunner~_createAndRunStaticSandbox
+    *
+    * @param {string} methodName
+    * @param {Function} callback
+    * @param {Function} onExit
+    */
+    PluginRunner.prototype._createAndRunStaticSandbox = function (methodName, callback, onExit) {
+        this._createSandbox(methodName);
+        this._registerSandboxTimeoutHandler(methodName, callback);
+        this._registerSandboxExitHandler(methodName, callback, onExit);
+
+        this._sandboxScripts[methodName].run(methodName);
     };
 
     /**
@@ -108,6 +132,27 @@ var PluginRunner = (function () {
         if (this._sandboxScripts[itemPath]) {
             this._sandboxScripts[itemPath].on('timeout', function (methodName) {
                 callback(new Error('PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call "' + methodName), null);
+            });
+        }
+    };
+
+    /**
+    * Binds a `exit` handler to the event. It calls the specified callback on error, or the onExit method after the sandbox finished it's run.
+    *
+    * @method core.plugin.PluginRunner~_registerSandboxExitHandler
+    *
+    * @param {string} identifier
+    * @param {Function} callback
+    * @param {Function} onExit
+    */
+    PluginRunner.prototype._registerSandboxExitHandler = function (identifier, callback, onExit) {
+        if (this._sandboxScripts[identifier]) {
+            this._sandboxScripts[identifier].on('exit', function (err, output, methodName) {
+                if (err) {
+                    return callback(err, null, methodName);
+                } else {
+                    return onExit(output);
+                }
             });
         }
     };

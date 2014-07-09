@@ -5,7 +5,7 @@ import PluginStateObjectListInterface = require('./PluginStateObjectListInterfac
  * about the plugins in the applcation.
  *
  * @interface
- * @class core.plugin.PluginStateObjectInterface
+ * @class core.plugin.PluginStateInterface
  */
 interface PluginStateInterface {
 	active:PluginStateObjectListInterface;

@@ -6,6 +6,9 @@ import TCPSocketFactoryInterface = require('./interfaces/TCPSocketFactoryInterfa
 import TCPSocketInterface = require('./interfaces/TCPSocketInterface');
 import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
 
+/**
+ * @class core.net.tcp.OutgoingTCPSocketObtainer
+ */
 class OutgoingTCPSocketObtainer {
 
 	private _factory:TCPSocketFactoryInterface = null;

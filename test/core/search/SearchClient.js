@@ -6,15 +6,17 @@ var fs = require('fs');
 var sinon = require('sinon');
 var testUtils = require('../../utils/testUtils');
 
+var AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var SearchClient = require('../../../src/core/search/SearchClient');
 var SearchItem = require('../../../src/core/search/SearchItem');
 var SearchItemFactory = require('../../../src/core/search/SearchItemFactory');
 var SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
-describe('CORE --> SEARCH --> SearchClient @_joern', function () {
+describe('CORE --> SEARCH --> SearchClient', function () {
     var sandbox;
     var config;
+    var appQuitHandlerStub;
     var searchStoreLogsFolder = testUtils.getFixturePath('core/search/searchStoreLogs');
     var searchStoreDataFolder = testUtils.getFixturePath('core/search/searchStoreData');
     var searchClient = null;
@@ -46,9 +48,10 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
             }
         });
 
-        searchClient = new SearchClient(config, 'mainIndex', new SearchStoreFactory(), new SearchItemFactory(), {
+        appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
+
+        searchClient = new SearchClient(config, appQuitHandlerStub, 'mainIndex', new SearchStoreFactory(), new SearchItemFactory(), {
             logsPath: searchStoreLogsFolder,
-            closeOnProcessExit: false,
             onOpenCallback: function (err) {
                 if (err) {
                     throw err;
@@ -63,7 +66,7 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
         searchClient.close(function () {
             searchClient = null;
             try  {
-                testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+                //testUtils.deleteFolderRecursive(searchStoreLogsFolder);
                 testUtils.deleteFolderRecursive(searchStoreDataFolder);
             } catch (e) {
                 console.log(e);
@@ -71,6 +74,7 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
 
             sandbox.restore();
             config = null;
+            appQuitHandlerStub = null;
 
             done();
         });
@@ -291,16 +295,100 @@ describe('CORE --> SEARCH --> SearchClient @_joern', function () {
             });
         });
     });
-    /*it('should correctly create an index with the specified name and handle "already exists" errors gracefully', function (done) {
-    searchClient.createIndex('foobar', function (err:Error) {
-    (err === null).should.be.true;
-    
-    searchClient.createIndex('foobar', function (err:Error) {
-    (err === null).should.be.true;
-    
-    done();
+
+    it('should correctly create an index with not indexed meta fields in the mapping', function (done) {
+        searchClient.createOutgoingQueryIndex('indexname', function (err) {
+            (err === null).should.be.true;
+
+            done();
+        });
     });
+
+    it('should correctly create a percolate index and add an item to the index', function (done) {
+        var queryBody = {
+            // This query will be run against documents sent to percolate
+            query: {
+                match: {
+                    message: "bonsai tree"
+                }
+            }
+        };
+
+        searchClient.createOutgoingQuery('myindex', 'searchQueryId', queryBody, function (err) {
+            console.log(err);
+            (err === null).should.be.true;
+
+            searchClient.addIncomingResponse('myindex', 'searchQueryId', { message: 'A new bonsai tree in the office' }, { metadata: true }, function (err, response) {
+                console.log(err);
+                console.log(response);
+
+                (err === null).should.be.true;
+
+                response.should.containDeep({
+                    total: 1,
+                    matches: [
+                        {
+                            _index: 'myindex',
+                            _id: 'searchQueryId'
+                        }
+                    ]
+                });
+
+                done();
+            });
+        });
     });
-    });*/
+
+    it('should correctly remove a outgoing query and all corresponding responses from the database', function (done) {
+        searchClient.deleteOutgoingQuery('myotherindex', 'searchQueryId', function (err) {
+            console.log(err);
+            (err === null).should.be.true;
+
+            done();
+        });
+    });
+
+    it('should correctly match the results for the given query', function (done) {
+        var dataToIndex = {
+            pluginidentifier: {
+                itemHash: 'fileHash',
+                itemPath: '../path/file.txt',
+                itemStats: {
+                    stats: true
+                },
+                foo: 'bar io'
+            }
+        };
+
+        searchClient.addItem(dataToIndex, function (err, ids) {
+            searchClient.search({
+                query: {
+                    match: {
+                        "pluginidentifier.foo": "bar"
+                    }
+                }
+            }, function (err, results) {
+                (err === null).should.be.true;
+
+                results.should.containDeep({
+                    total: 1,
+                    hits: [{
+                            _index: 'mainindex',
+                            _type: 'pluginidentifier',
+                            _source: {
+                                itemHash: "fileHash",
+                                itemPath: "../path/file.txt",
+                                itemStats: {
+                                    stats: true
+                                },
+                                foo: "bar io"
+                            }
+                        }]
+                });
+
+                done();
+            });
+        });
+    });
 });
 //# sourceMappingURL=SearchClient.js.map

@@ -214,6 +214,20 @@ var ProtocolConnectionManager = (function (_super) {
         return this._myNode;
     };
 
+    ProtocolConnectionManager.prototype.getRandomExternalIpPortPair = function () {
+        var openPorts = this._tcpSocketHandler.getOpenServerPortsArray();
+        var externalIp = this._tcpSocketHandler.getMyExternalIp();
+
+        if (openPorts.length && externalIp) {
+            return {
+                ip: externalIp,
+                port: Math.floor(Math.random() * openPorts.length)
+            };
+        } else {
+            return null;
+        }
+    };
+
     /**
     * Testing purposes only. Should not be used in production.
     *
@@ -247,6 +261,14 @@ var ProtocolConnectionManager = (function (_super) {
         return this._connectionWaitingList;
     };
 
+    ProtocolConnectionManager.prototype.closeHydraSocket = function (identifier) {
+        var socket = this._hydraSockets[identifier];
+
+        if (socket) {
+            socket.end();
+        }
+    };
+
     ProtocolConnectionManager.prototype.getConfirmedSocketByContactNode = function (node) {
         return this._getConfirmedSocketByIdentifier(this._nodeToIdentifier(node));
     };
@@ -266,6 +288,16 @@ var ProtocolConnectionManager = (function (_super) {
         }
     };
 
+    ProtocolConnectionManager.prototype.getHydraSocketIp = function (identifier) {
+        var socket = this._hydraSockets[identifier];
+
+        if (socket) {
+            return socket.getIP();
+        }
+
+        return undefined;
+    };
+
     ProtocolConnectionManager.prototype.hydraConnectTo = function (port, ip, callback) {
         var _this = this;
         this._tcpSocketHandler.connectTo(port, ip, function (socket) {
@@ -281,6 +313,7 @@ var ProtocolConnectionManager = (function (_super) {
 
     ProtocolConnectionManager.prototype.hydraWriteBufferTo = function (identifier, buffer, callback) {
         var socket = this._hydraSockets[identifier];
+
         if (!socket) {
             if (callback) {
                 callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));
@@ -525,7 +558,7 @@ var ProtocolConnectionManager = (function (_super) {
 
     /**
     * Destroys a socket connection. Removes all references within the manager, clears any incmoing pending timeouts.
-    * unhooks it from the data pipeline and forces destroys the socket itself (removing all listeners and dumping the reference).
+    * unhooks it from the data pipeline and force destroys the socket itself (removing all listeners and dumping the reference).
     * Emits a `terminatedConnection` event if the socket was a confirmed one and the event should not be blocked.
     *
     * @method core.protocol.net.ProtocolConnectionManager~_destroyConnection
@@ -826,7 +859,7 @@ var ProtocolConnectionManager = (function (_super) {
         }
 
         if (propagateMessage) {
-            this.emit('hydraMessage', identifier, message);
+            this.emit('hydraMessage', identifier, this.getHydraSocketIp(identifier), message);
         }
     };
 

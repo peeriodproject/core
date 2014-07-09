@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">63.14</p>
+      <p class="stat">61.56</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">94</p>
+      <p class="stat">168</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">16.29</p>
+      <p class="stat">18.75</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.82</p>
+      <p class="stat">1.95</p>
     </div>
   </div>
 </div>
@@ -107,12 +107,41 @@ var NodePublisherFactory = require(&#039;./networkMaintenance/nodeDiscovery/node
 
 var NetworkMaintainer = require(&#039;./networkMaintenance/NetworkMaintainer&#039;);
 
+// HYDRA
+var HydraMessageCenter = require(&#039;./hydra/HydraMessageCenter&#039;);
+
+var CircuitManager = require(&#039;./hydra/CircuitManager&#039;);
+
+var CellManager = require(&#039;./hydra/CellManager&#039;);
+
+var ConnectionManager = require(&#039;./hydra/ConnectionManager&#039;);
+
+var CircuitExtenderFactory = require(&#039;./hydra/CircuitExtenderFactory&#039;);
+var HydraCircuitFactory = require(&#039;./hydra/HydraCircuitFactory&#039;);
+var HydraCellFactory = require(&#039;./hydra/HydraCellFactory&#039;);
+
+// Message factories
+var ReadableHydraMessageFactory = require(&#039;./hydra/messages/ReadableHydraMessageFactory&#039;);
+var WritableHydraMessageFactory = require(&#039;./hydra/messages/WritableHydraMessageFactory&#039;);
+var ReadableCellCreatedRejectedMessageFactory = require(&#039;./hydra/messages/ReadableCellCreatedRejectedMessageFactory&#039;);
+var WritableCellCreatedRejectedMessageFactory = require(&#039;./hydra/messages/WritableCellCreatedRejectedMessageFactory&#039;);
+var ReadableAdditiveSharingMessageFactory = require(&#039;./hydra/messages/ReadableAdditiveSharingMessageFactory&#039;);
+var ReadableCreateCellAdditiveMessageFactory = require(&#039;./hydra/messages/ReadableCreateCellAdditiveMessageFactory&#039;);
+var WritableCreateCellAdditiveMessageFactory = require(&#039;./hydra/messages/WritableCreateCellAdditiveMessageFactory&#039;);
+var WritableAdditiveSharingMessageFactory = require(&#039;./hydra/messages/WritableAdditiveSharingMessageFactory&#039;);
+var Aes128GcmLayeredEncDecHandlerFactory = require(&#039;./hydra/messages/Aes128GcmLayeredEncDecHandlerFactory&#039;);
+var Aes128GcmWritableMessageFactory = require(&#039;./hydra/messages/Aes128GcmWritableMessageFactory&#039;);
+var Aes128GcmReadableDecryptedMessageFactory = require(&#039;./hydra/messages/Aes128GcmReadableDecryptedMessageFactory&#039;);
+
+var logger = require(&#039;../utils/logger/LoggerFactory&#039;).create();
+
 var ProtocolGateway = (function () {
-    function ProtocolGateway(appConfig, protocolConfig, topologyConfig, myNode, tcpSocketHandler, routingTable) {
+    function ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable) {
         var _this = this;
         this._myNode = null;
         this._tcpSocketHandler = null;
         this._appConfig = null;
+        this._hydraConfig = null;
         this._protocolConfig = null;
         this._protocolConnectionManager = null;
         this._proxyManager = null;
@@ -123,9 +152,14 @@ var ProtocolGateway = (function () {
         this._nodeSeekerManager = null;
         this._nodePublishers = null;
         this._networkMaintainer = null;
+        this._hydraMessageCenter = null;
+        this._hydraConnectionManager = null;
+        this._hydraCircuitManager = null;
+        this._hydraCellManager = null;
         this._appConfig = appConfig;
         this._protocolConfig = protocolConfig;
         this._topologyConfig = topologyConfig;
+        this._hydraConfig = hydraConfig;
 
         this._myNode = myNode;
         this._tcpSocketHandler = tcpSocketHandler;
@@ -150,10 +184,10 @@ var ProtocolGateway = (function () {
         // build up the NodeSeekerManager
         var nodeSeekerFactory = new NodeSeekerFactory(this._appConfig, this._routingTable);
 
-        this._nodeSeekerManager = new NodeSeekerManager(nodeSeekerFactory, this._protocolConnectionManager, this._proxyManager);
+        this._nodeSeekerManager = new NodeSeekerManager(this._protocolConfig, this._myNode, nodeSeekerFactory, this._protocolConnectionManager, this._proxyManager);
 
         // build up the NodePublishers
-        var nodePublisherFactory = new NodePublisherFactory(appConfig, this._myNode);
+        var nodePublisherFactory = new NodePublisherFactory(appConfig, protocolConfig, this._myNode);
 
         nodePublisherFactory.createPublisherList(function (list) {
             _this._nodePublishers = list;
@@ -161,15 +195,40 @@ var ProtocolGateway = (function () {
 
         // build up the NetworkMaintainer
         this._networkMaintainer = new NetworkMaintainer(this._topologyConfig, this._protocolConfig, this._myNode, this._nodeSeekerManager, this._findClosestNodesManager, this._proxyManager);
+
+        // HYDRA THINGS
+        var readableHydraMessageFactory = new ReadableHydraMessageFactory();
+        var writableHydraMessageFactory = new WritableHydraMessageFactory();
+        var readableCellCreatedRejectedMessageFactory = new ReadableCellCreatedRejectedMessageFactory();
+        var writableCellCreatedRejectedMessageFactory = new WritableCellCreatedRejectedMessageFactory();
+        var readableAdditiveSharingMessageFactory = new ReadableAdditiveSharingMessageFactory();
+        var readableCreateCellAdditiveMessageFactory = new ReadableCreateCellAdditiveMessageFactory();
+        var writableCreateCellAdditiveMessageFactory = new WritableCreateCellAdditiveMessageFactory();
+        var writableAdditiveSharingMessageFactory = new WritableAdditiveSharingMessageFactory();
+
+        this._hydraConnectionManager = new ConnectionManager(this._protocolConnectionManager, writableHydraMessageFactory, readableHydraMessageFactory);
+        this._hydraMessageCenter = new HydraMessageCenter(this._hydraConnectionManager, readableHydraMessageFactory, readableCellCreatedRejectedMessageFactory, readableAdditiveSharingMessageFactory, readableCreateCellAdditiveMessageFactory, writableCreateCellAdditiveMessageFactory, writableAdditiveSharingMessageFactory, writableHydraMessageFactory, writableCellCreatedRejectedMessageFactory);
+
+        var circuitExtenderFactory = new CircuitExtenderFactory(this._hydraConnectionManager, this._hydraMessageCenter);
+        var aes128GcmLayeredEncDecHandlerFactory = new Aes128GcmLayeredEncDecHandlerFactory();
+        var aes128GcmDecryptionFactory = new Aes128GcmReadableDecryptedMessageFactory();
+        var aes128GcmEncryptionFactory = new Aes128GcmWritableMessageFactory();
+        var hydraCircuitFactory = new HydraCircuitFactory(this._hydraConfig, this._routingTable, this._hydraConnectionManager, this._hydraMessageCenter, circuitExtenderFactory, aes128GcmLayeredEncDecHandlerFactory);
+        var hydraCellFactory = new HydraCellFactory(this._hydraConfig, this._hydraConnectionManager, this._hydraMessageCenter, aes128GcmDecryptionFactory, aes128GcmEncryptionFactory);
+
+        this._hydraCircuitManager = new CircuitManager(this._hydraConfig, hydraCircuitFactory);
+        this._hydraCellManager = new CellManager(this._hydraConfig, this._hydraConnectionManager, this._hydraMessageCenter, hydraCellFactory);
     }
     ProtocolGateway.prototype.start = function () {
-        var _this = this;
         /**
         *
         * If it needs a proxy, kick off proxy manager only when the NetworkMaintainer has finished its entry
         * If it doesnt need a proxy, kick off proxy manager right away
         *
         */
+        var _this = this;
+        logger.info(&#039;New node joining the network&#039;, { id: this._myNode.getId().toHexString() });
+
         if (this._proxyManager.needsAdditionalProxy()) {
             this._networkMaintainer.once(&#039;initialContactQueryCompleted&#039;, function () {
                 _this._proxyManager.kickOff();
@@ -177,6 +236,21 @@ var ProtocolGateway = (function () {
         } else {
             this._proxyManager.kickOff();
         }
+
+        this._networkMaintainer.once(&#039;initialContactQueryCompleted&#039;, function () {
+            logger.info(&#039;Initial contact query completed. Kicking off proxy manager...&#039;, { id: _this._myNode.getId().toHexString() });
+        });
+
+        this._networkMaintainer.once(&#039;joinedNetwork&#039;, function () {
+            logger.info(&#039;Successfully joined the network.&#039;, { id: _this._myNode.getId().toHexString() });
+
+            // start the hydra things
+            _this._hydraCircuitManager.kickOff();
+
+            _this._hydraCircuitManager.once(&#039;desiredCircuitAmountReached&#039;, function () {
+                logger.info(&#039;Hydra circuit construction done.&#039;, { id: _this._myNode.getId().toHexString() });
+            });
+        });
 
         this._networkMaintainer.joinNetwork();
     };

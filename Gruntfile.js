@@ -18,7 +18,7 @@ module.exports = function (grunt) {
         plato: {
             source: {
                 options: {
-                    exclude: /node_modules|reports|interfaces|namespace\.js|\.json/
+                    exclude: /node_modules|reports|interfaces|public|namespace\.js|\.json/
                 },
                 files  : {
                     'build/js-source-analysis-report': ['src/**/*.js']
@@ -73,6 +73,13 @@ module.exports = function (grunt) {
             src    : ['./application.nw/**/*'] // Your node-webkit app
         },
 
+        benchmark: {
+            all: {
+                src: ['utils/benchmarks/**/*.js'],
+                dest: 'utils/benchmarks/results.csv'
+            }
+        },
+
         // execute 'grunt curl' manually to refresh the external definition files
         curl      : {
             'ts-definitions/fs-extra/fs-extra.d.ts'    : 'https://github.com/borisyankov/DefinitelyTyped/raw/master/fs-extra/fs-extra.d.ts',
@@ -96,15 +103,16 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-curl');
     grunt.loadNpmTasks('grunt-node-webkit-builder');
     grunt.loadNpmTasks('grunt-plato');
+    grunt.loadNpmTasks('grunt-benchmark');
 
     // Task aliases
-    grunt.registerTask('createReports', ['env:test', 'mochaTest:coverage', 'plato:source']);
-    grunt.registerTask('_runTests', ['env:test', 'mochaTest']);
-    grunt.registerTask('_coverage', ['env:test', 'mochaTest:coverage']);
-    grunt.registerTask('test', ['_runTests']);
-    grunt.registerTask('dev', ['env:dev', 'nodemon']);
-    grunt.registerTask('prod', ['env:prod', 'nodemon']);
+    grunt.registerTask('createReports', ['coverage', 'plato:source']);
+    grunt.registerTask('runTests', ['env:test', 'mochaTest']);
+    grunt.registerTask('coverage', ['env:test', 'mochaTest:coverage']);
+    //grunt.registerTask('test', ['_runTests']);
+    //grunt.registerTask('dev', ['env:dev', 'nodemon']);
+    //grunt.registerTask('prod', ['env:prod', 'nodemon']);
 
     // Default task
-    grunt.registerTask('default', ['test']);
+    grunt.registerTask('default', ['runTests']);
 };

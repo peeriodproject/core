@@ -4,6 +4,7 @@ require('should');
 var sinon = require('sinon');
 var testUtils = require('../../utils/testUtils');
 
+var AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 var FolderWatcherManager = require('../../../src/core/fs/FolderWatcherManager');
 var IndexManager = require('../../../src/core/search/IndexManager');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
@@ -14,6 +15,7 @@ describe('CORE --> SEARCH --> IndexManager @_joern', function () {
     var sandbox;
     var indexManager;
     var configStub;
+    var appQuitHandlerStub;
     var folderWatcherManagerStub;
     var pathValidatorStub;
     var searchManagerStub;
@@ -51,7 +53,7 @@ describe('CORE --> SEARCH --> IndexManager @_joern', function () {
 
         searchManagerStub = testUtils.stubPublicApi(sandbox, SearchManager, searchManagerMethods);
 
-        indexManager = new IndexManager(configStub, folderWatcherManagerStub, pathValidatorStub, searchManagerStub);
+        indexManager = new IndexManager(configStub, appQuitHandlerStub, folderWatcherManagerStub, pathValidatorStub, searchManagerStub);
         indexManager.open(function () {
             callback();
         });
@@ -76,6 +78,7 @@ describe('CORE --> SEARCH --> IndexManager @_joern', function () {
                 }
             }
         });
+        appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
         folderWatcherManagerStub = testUtils.stubPublicApi(sandbox, FolderWatcherManager, closableAsync);
     });
 
@@ -83,6 +86,7 @@ describe('CORE --> SEARCH --> IndexManager @_joern', function () {
         sandbox.restore();
         indexManager = null;
         configStub = null;
+        appQuitHandlerStub = null;
         folderWatcherManagerStub = null;
         searchManagerStub = null;
     });

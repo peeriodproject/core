@@ -24,7 +24,7 @@
             "maxByteLengthPerMessage"      : 1048576,
             "msToKeepNonAddressableMemory" : 10000,
             "msToWaitForIncomingMessage"   : 2000,
-            "maxSecondsToWaitForConnection": 2.1
+            "maxSecondsToWaitForConnection": 2.5
         },
         "proxy"                       : {
             "maxNumberOfProxies"                   : 2,
@@ -35,29 +35,65 @@
         "pingpong"                    : {
             "maxWaitingListSize": 20
         },
+        "broadast": {
+            "broadcastLifetimeInSeconds": 30
+        },
         "findClosestNodes"            : {
             "cycleExpirationInSeconds" : 2,
             "parallelismDelayInSeconds": 1.5
         },
-        "networkMaintenance": {
+        "networkMaintenance"          : {
             "bucketRefreshRateInSeconds": 3600
         },
-        "nodeDiscovery": {
+        "nodeDiscovery"               : {
             "iterativeSeekTimeoutInMs": 1500,
-            "republishInSeconds": 3600
+            "republishInSeconds"      : 3600
+        }
+    },
+    "fileTransfer": {
+        "query": {
+            "broadcastValidityInSeconds": 30,
+            "minimNumberOfReadyCircuits": 1,
+            "maximumNumberOfParallelQueries": 10
+        },
+        "response": {
+            "waitForOwnResponseAsBroadcastInitiatorInSeconds": 2
+        }
+    },
+    "hydra": {
+        "desiredNumberOfCircuits": 4,
+        "maximumNumberOfMaintainedCells": 3,
+        "minimumNumberOfRelayNodes": 3,
+        "maximumNumberOfRelayNodes": 5,
+        "additiveSharingNodeAmount": 4,
+        "waitForAdditiveBatchFinishInSeconds": 3,
+        "nodePicker": {
+            "allowIdenticalIps": false,
+            "roundThreshold": 2,
+            "waitingTimeInSeconds": 3,
+            "errorThreshold": 5
+        },
+        "circuit": {
+            "extensionReactionTimeBaseInSeconds": 3,
+            "extensionReactionTimeFactor": 1.2,
+            "maximumExtensionRetries": 3
+        },
+        "cell": {
+            "extensionReactionInSeconds": 3
         }
     },
     "plugin"  : {
         "folderPath"              : "plugin",
         "pluginConfigName"        : "plugin.json",
         "pluginManagerStateConfig": "pluginManager.json",
+        "binaryPath"              : "core/plugin/pluginRunner/node",
         "api"                     : {
             "basePath"     : "core/plugin/api",
             "pluginApiName": "PluginApi.js"
         }
     },
     "app"     : {
-        "dataPath": "/Volumes/HDD/Users/Johnny/Documents/node/abschluss_app/src/config"
+        "dataPath": "appDataFolder"
     },
     "search"  : {
         "host"             : "localhost",
@@ -69,13 +105,31 @@
         "indexManager"     : {
             "indexRunnerDelayInMilliSeconds": 10000,
             "indexRunnersInParallel"        : 3
-        }
+        },
+        "searchRequestManager": {
+            "queryLifetimeIntervalInMilliSeconds": 1000
+        },
+        "queryLifetimeInSeconds": 60
     },
     "fs"      : {
         "folderWatcher": {
-            "interval"      : 1000,
-            "binaryInterval": 5000,
-            "eventDelay"    : 1000
+            "interval"      : 5000,
+            "binaryInterval": 15000,
+            "eventDelay"    : 1000,
+            "usePolling"    : false
+        }
+    },
+    "ui"      : {
+        "UiManager": {
+            "staticServer": {
+                "port": 7474,
+                "publicPath": "public"
+            },
+            "socketServer": {
+                "parser": "JSON",
+                "port": 8080,
+                "transformer": "websockets"
+            }
         }
     }
 }

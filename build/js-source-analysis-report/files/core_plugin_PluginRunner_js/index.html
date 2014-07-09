@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">75.64</p>
+      <p class="stat">75.75</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">127</p>
+      <p class="stat">172</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">23.84</p>
+      <p class="stat">26.39</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.78</p>
+      <p class="stat">1.02</p>
     </div>
   </div>
 </div>
@@ -104,7 +104,7 @@ var PluginGlobalsFactory = require(&#039;./PluginGlobalsFactory&#039;);
 *
 * @params {core.config.ConfigInterface} config
 * @params {string} identifier todo remove identifer
-* @params {string} plugnScriptPath
+* @params {string} pluginScriptPath
 */
 var PluginRunner = (function () {
     // todo plugin-type PluginGlobalsFactory factory parameter
@@ -118,12 +118,19 @@ var PluginRunner = (function () {
         this._config = config;
         this._pluginScriptPath = pluginScriptPath;
 
+        // todo wait for node webkits child_process.spawn fix and remove own binary
+        // we&#039;re using our own node binary as a temporary fix here!
+        // @see https://github.com/rogerwang/node-webkit/issues/213
+        var nodeBinaryPath = path.join(__dirname, &#039;../../bin/&#039;, this._config.get(&#039;plugin.binaryPath&#039;));
+
         this._sandbox = new SandCastle({
-            memoryLimitMB: 100,
-            timeout: 2000,
+            memoryLimitMB: 1024,
+            timeout: 30000,
             useStrictMode: true,
-            api: this._getPluginApiPath()
+            api: this._getPluginApiPath(),
+            spawnExecPath: nodeBinaryPath
         });
+
         this._pluginGlobalsFactory = new PluginGlobalsFactory();
         this._pluginCode = fs.readFileSync(this._pluginScriptPath, &#039;utf-8&#039;);
     }
@@ -135,21 +142,27 @@ var PluginRunner = (function () {
     };
 
     PluginRunner.prototype.getMapping = function (callback) {
-        this._createAndRunSandbox(null, null, null, &#039;main.getMapping&#039;, callback, function (output) {
+        this._createAndRunStaticSandbox(&#039;main.getMapping&#039;, callback, function (output) {
+            callback(null, output);
+        });
+    };
+
+    PluginRunner.prototype.getSearchFields = function (callback) {
+        this._createAndRunStaticSandbox(&#039;main.getSearchFields&#039;, callback, function (output) {
             callback(null, output);
         });
     };
 
     PluginRunner.prototype.onBeforeItemAdd = function (itemPath, stats, globals, callback) {
-        this._createAndRunSandbox(itemPath, stats, globals, &#039;main.onBeforeItemAdd&#039;, callback, function (output) {
+        this._createAndRunItemSandbox(itemPath, stats, globals, &#039;main.onBeforeItemAdd&#039;, callback, function (output) {
             callback(null, output);
         });
     };
 
     /**
-    * Creates a sandbox, registers a timeout handler, addes the onExit callback and runs the specified method name.
+    * Creates a sandbox for a specified itemPath, registers a timeout handler, adds the onExit callback and runs the specified method name.
     *
-    * @method core.plugin.PluginRunner~_createAndRunSandbox
+    * @method core.plugin.PluginRunner~_createAndRunItemSandbox
     *
     * @param {string} itemPath
     * @param {fs.Stats} stats
@@ -158,18 +171,29 @@ var PluginRunner = (function () {
     * @param {Function} callback
     * @param {Function} onExit
     */
-    PluginRunner.prototype._createAndRunSandbox = function (itemPath, stats, globals, methodName, callback, onExit) {
+    PluginRunner.prototype._createAndRunItemSandbox = function (itemPath, stats, globals, methodName, callback, onExit) {
         this._createSandbox(itemPath);
         this._registerSandboxTimeoutHandler(itemPath, callback);
-        this._sandboxScripts[itemPath].on(&#039;exit&#039;, function (err, output, methodName) {
-            if (err) {
-                return callback(err, null, methodName);
-            } else {
-                return onExit(output);
-            }
-        });
+        this._registerSandboxExitHandler(itemPath, callback, onExit);
 
         this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
+    };
+
+    /**
+    * Creates a static sandbox for the specified methodName, registers a timeout handler, adds the onExit callback and runs the specified method name.
+    *
+    * @method core.plugin.PluginRunner~_createAndRunStaticSandbox
+    *
+    * @param {string} methodName
+    * @param {Function} callback
+    * @param {Function} onExit
+    */
+    PluginRunner.prototype._createAndRunStaticSandbox = function (methodName, callback, onExit) {
+        this._createSandbox(methodName);
+        this._registerSandboxTimeoutHandler(methodName, callback);
+        this._registerSandboxExitHandler(methodName, callback, onExit);
+
+        this._sandboxScripts[methodName].run(methodName);
     };
 
     /**
@@ -200,6 +224,27 @@ var PluginRunner = (function () {
         if (this._sandboxScripts[itemPath]) {
             this._sandboxScripts[itemPath].on(&#039;timeout&#039;, function (methodName) {
                 callback(new Error(&#039;PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call &quot;&#039; + methodName), null);
+            });
+        }
+    };
+
+    /**
+    * Binds a `exit` handler to the event. It calls the specified callback on error, or the onExit method after the sandbox finished it&#039;s run.
+    *
+    * @method core.plugin.PluginRunner~_registerSandboxExitHandler
+    *
+    * @param {string} identifier
+    * @param {Function} callback
+    * @param {Function} onExit
+    */
+    PluginRunner.prototype._registerSandboxExitHandler = function (identifier, callback, onExit) {
+        if (this._sandboxScripts[identifier]) {
+            this._sandboxScripts[identifier].on(&#039;exit&#039;, function (err, output, methodName) {
+                if (err) {
+                    return callback(err, null, methodName);
+                } else {
+                    return onExit(output);
+                }
             });
         }
     };

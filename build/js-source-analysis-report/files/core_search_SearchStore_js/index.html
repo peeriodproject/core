@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.92</p>
+      <p class="stat">73.90</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">207</p>
+      <p class="stat">209</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">31.48</p>
+      <p class="stat">30.99</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.13</p>
+      <p class="stat">1.12</p>
     </div>
   </div>
 </div>
@@ -109,10 +109,11 @@ var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
 * @implements core.search.SearchStoreInterface
 *
 * @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
 * @param {core.search.SearchStore.Options} options
 */
 var SearchStore = (function () {
-    function SearchStore(config, options) {
+    function SearchStore(config, appQuitHandler, options) {
         if (typeof options === &quot;undefined&quot;) { options = {}; }
         var _this = this;
         /**
@@ -149,8 +150,8 @@ var SearchStore = (function () {
         this._options = ObjectUtils.extend(SearchStore.getDefaults(), options);
 
         if (this._options.closeOnProcessExit) {
-            process.on(&#039;exit&#039;, function () {
-                _this.close(_this._options.onCloseCallback);
+            appQuitHandler.add(function (done) {
+                _this.close(done);
             });
         }
 
@@ -239,10 +240,11 @@ var SearchStore = (function () {
     * - __-p__: The path where elasticsearch should save it&#039;s process id
     * - __-Des.config__: The path to the config file
     * - __-Des.path.data__: The path where the indexes should be stored
+    * * - __-Des.logger.level__: The level of the logger
     *
     * @method core.search.SearchStore~_getDatabaseServerProcessArgs
     *
-    * @returns {string[]}
+    * @returns {Array&lt;string&gt;}
     */
     SearchStore.prototype._getDatabaseServerProcessArgs = function () {
         var configPath = path.resolve(__dirname, &#039;../../&#039;, this._config.get(&#039;search.searchStoreConfig&#039;));

@@ -4,6 +4,10 @@ var ObjectUtils = require('../utils/ObjectUtils');
 /**
 * @class core.search.SearchManager
 * @implements core.search.SearchManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.plugin.PluginManagerInterface} pluginManager
+* @param {core.search.SearchClientInterface} searchClient
 */
 var SearchManager = (function () {
     function SearchManager(config, pluginManager, searchClient) {
@@ -28,16 +32,43 @@ var SearchManager = (function () {
             //console.log(JSON.stringify(pluginData));
             // to the request to the database
             _this._searchClient.addItem(pluginData, function (err) {
-                callback(err);
+                internalCallback(err);
             });
         });
     };
 
     SearchManager.prototype.close = function (callback) {
+        var _this = this;
         var internalCallback = callback || function () {
         };
+        var closedPluginManager = false;
+        var closedSearchClient = false;
+        var checkAndClose = function (err) {
+            if (closedPluginManager && closedSearchClient || err) {
+                closedPluginManager = false;
+                closedSearchClient = false;
 
-        return process.nextTick(callback.bind(null, null));
+                _this._isOpen = false;
+
+                return internalCallback(err);
+            }
+        };
+
+        if (!this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+
+        this._pluginManager.close(function (err) {
+            closedPluginManager = true;
+
+            return checkAndClose(err);
+        });
+
+        this._searchClient.close(function (err) {
+            closedSearchClient = true;
+
+            return checkAndClose(err);
+        });
     };
 
     SearchManager.prototype.getItem = function (pathToIndex, callback) {
@@ -55,11 +86,43 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype.itemExists = function (pathToIndex, callback) {
-        // todo iplementation
+        console.log('todo SearchManager#itemExists');
+
         return process.nextTick(callback.bind(null, null, null));
     };
 
     SearchManager.prototype.open = function (callback) {
+        var _this = this;
+        var internalCallback = callback || function () {
+        };
+        var openedPluginManager = false;
+        var openedSearchClient = false;
+        var checkAndClose = function (err) {
+            if (openedPluginManager && openedSearchClient || err) {
+                openedPluginManager = false;
+                openedSearchClient = false;
+
+                _this._isOpen = true;
+
+                return internalCallback(err);
+            }
+        };
+
+        if (this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+
+        this._pluginManager.open(function (err) {
+            openedPluginManager = true;
+
+            return checkAndClose(err);
+        });
+
+        this._searchClient.open(function (err) {
+            openedSearchClient = true;
+
+            return checkAndClose(err);
+        });
     };
 
     SearchManager.prototype._registerPluginManagerEvents = function () {
@@ -78,7 +141,10 @@ var SearchManager = (function () {
             }
 
             _this._pluginManager.getActivePluginRunner(pluginIdentifier, function (pluginRunner) {
-                pluginRunner.getMapping(function (mapping) {
+                pluginRunner.getMapping(function (err, mapping) {
+                    if (err) {
+                        console.error(err);
+                    }
                     if (mapping) {
                         mapping = _this._updateMapping(mapping);
 
@@ -89,6 +155,7 @@ var SearchManager = (function () {
                         });
                     } else {
                         // todo plugin uses elasticsearch auto mapping feature! Maybe it's better to throw an error here?
+                        console.log('todo: plugin uses elasticsearch auto mapping feature! Maybe it\'s better to throw an error here?');
                     }
                 });
             });
@@ -96,10 +163,11 @@ var SearchManager = (function () {
     };
 
     /**
-    * Updates the given mapping.
+    * Updates the given mapping by adding the item hash, item path and item stats.
+    *
+    * @method core.search.SearchManager~_updateMapping
     *
     * @param {Object} mapping
-    * @param {boolean} isApacheTikaPlugin
     * @returns {Object} the restricted mapping
     */
     SearchManager.prototype._updateMapping = function (mapping) {
@@ -107,10 +175,10 @@ var SearchManager = (function () {
         var properties = mapping['properties'] || {};
 
         // remove file content from source
-        // todo iterate over mapping and find attachment filed by type
+        // todo iterate over mapping and find attachment field by type
         if (properties && properties['file']) {
             mapping['_source'] = ObjectUtils.extend(source, {
-                excludes: 'file'
+                excludes: ['file']
             });
         }
 
@@ -118,22 +186,108 @@ var SearchManager = (function () {
         mapping['properties'] = ObjectUtils.extend(properties, {
             itemHash: {
                 type: 'string',
-                store: 'yes'
+                store: 'yes',
+                index: 'not_analyzed'
             },
             itemPath: {
                 type: 'string',
-                store: 'yes'
+                store: 'yes',
+                index: 'not_analyzed'
+            },
+            itemStats: {
+                type: 'nested',
+                properties: {
+                    atime: {
+                        type: 'date',
+                        format: 'dateOptionalTime',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    blksize: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    blocks: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    ctime: {
+                        type: 'date',
+                        format: 'dateOptionalTime',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    dev: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    gid: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    ino: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    mode: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    mtime: {
+                        type: 'date',
+                        format: 'dateOptionalTime',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    nlink: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    rdev: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    size: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    },
+                    uid: {
+                        type: 'long',
+                        store: 'yes',
+                        index: 'not_analyzed'
+                    }
+                }
             }
         });
 
         return mapping;
     };
 
+    /**
+    * Updates the given plugin data by adding the item path, stats and hash to each plugin identifier object
+    *
+    * @method core.search.SearchManager~_updatePluginData
+    *
+    * @param {Object} pluginData
+    * @param {string} itemPath
+    * @param {fs.Stats} stats
+    * @param {string} fileHash
+    * @returns {Object} the updated plugin data
+    */
     SearchManager.prototype._updatePluginData = function (pluginData, itemPath, stats, fileHash) {
         var identifiers = Object.keys(pluginData);
 
         if (identifiers.length) {
-            for (var i in identifiers) {
+            for (var i = 0, l = identifiers.length; i < l; i++) {
                 var identifier = identifiers[i];
 
                 pluginData[identifier] = ObjectUtils.extend(pluginData[identifier], {

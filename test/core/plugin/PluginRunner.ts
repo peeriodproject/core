@@ -41,6 +41,9 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
 				else if (key === 'plugin.api.pluginApiName') {
 					return 'PluginApi.js';
 				}
+				else if (key === 'plugin.binaryPath') {
+					return './core/plugin/pluginRunner/node';
+				}
 			}
 		});
 	});
@@ -122,6 +125,27 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
 							"message": {"type": "string", "store": true }
 						}
 					}
+				});
+
+				cleanupAndDone(pluginRunner, done);
+			});
+		});
+
+		it('should correctly call the getSearchFields method', function (done) {
+			var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
+
+			pluginRunner.getSearchFields(function (err:Error, output) {
+				(err === null).should.be.true;
+
+				output.should.containDeep({
+					"action": "index.html",
+					"method": "get",
+					"html"  : [
+						{
+							"type": "p",
+							"html": "You must login"
+						}
+					]
 				});
 
 				cleanupAndDone(pluginRunner, done);

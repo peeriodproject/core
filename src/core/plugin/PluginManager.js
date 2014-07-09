@@ -8,7 +8,7 @@ var mime = require('mime');
 var ObjectUtils = require('../utils/ObjectUtils');
 
 /**
-* todo implement StateHandler!
+* PluginManagerInterface implementation
 *
 * @class core.plugin.PluginManager
 * @implements PluginManagerInterface
@@ -33,6 +33,8 @@ var PluginManager = (function () {
         *
         * - pluginAdded
         * - pluginRemoved
+        *
+        * @member {events.EventEmitter} core.plugin.PluginManager~_eventEmitter
         */
         this._eventEmitter = null;
         /**
@@ -42,7 +44,9 @@ var PluginManager = (function () {
         */
         this._isOpen = false;
         /**
+        * todo specify object type in docs
         *
+        * @member {Object} core.plugin.PluginManager~_mimeTypeMap
         */
         this._mimeTypeMap = {};
         /**
@@ -74,7 +78,7 @@ var PluginManager = (function () {
         /**
         * The list of (active) {@link core.plugin.PluginRunnerInterface}
         *
-        * @member {core.plugin.PluginRunnerListInterface} core.plugin.PluginManager~_pluginRunners
+        * @member {core.plugin.PluginRunnerMapInterface} core.plugin.PluginManager~_pluginRunners
         */
         this._pluginRunners = {};
         /**
@@ -120,6 +124,7 @@ var PluginManager = (function () {
     };
 
     PluginManager.prototype.activatePluginState = function (callback) {
+        var _this = this;
         var internalCallback = callback || function (err) {
         };
 
@@ -127,15 +132,9 @@ var PluginManager = (function () {
             var plugins = this._pluginState.active;
             var activated = 0;
             var errors = [];
-            var manager = this;
 
-            return (function activatePlugin(i) {
-                if (i >= plugins.length) {
-                    // callback
-                    return;
-                }
-
-                manager._activatePlugin(plugins[i], function (err) {
+            for (var i = 0, l = plugins.length; i < l; i++) {
+                this._activatePlugin(plugins[i], function (err) {
                     activated++;
 
                     if (err) {
@@ -145,12 +144,12 @@ var PluginManager = (function () {
                     if (activated === plugins.length) {
                         // todo implement error callback!
                         internalCallback(null);
-                        manager._pluginStateIsActive = true;
+                        _this._pluginStateIsActive = true;
                     }
                 });
-
-                return process.nextTick(activatePlugin.bind(null, i + 1));
-            }(0));
+            }
+        } else {
+            return process.nextTick(internalCallback.bind(null, null));
         }
     };
 
@@ -197,10 +196,6 @@ var PluginManager = (function () {
         return process.nextTick(callback.bind(null, this._pluginRunners));
     };
 
-    /**
-    * @param {string} identifier
-    * @returns {core.plugin.PluginRunnerInterface}
-    */
     PluginManager.prototype.getActivePluginRunner = function (identifier, callback) {
         var runner = this._pluginRunners[identifier] ? this._pluginRunners[identifier] : null;
 
@@ -216,7 +211,7 @@ var PluginManager = (function () {
         var map = this._mimeTypeMap[mimeType];
 
         if (map && map.length) {
-            for (var i in map) {
+            for (var i = 0, l = map.length; i < l; i++) {
                 var key = map[i];
 
                 responsibleRunners[key] = this._pluginRunners[key];
@@ -263,15 +258,18 @@ var PluginManager = (function () {
 
                         for (var key in runners) {
                             // call the plugin!
-                            runners[key].onBeforeItemAdd(itemPath, stats, globals, function (data) {
+                            runners[key].onBeforeItemAdd(itemPath, stats, globals, function (err, data) {
                                 counter++;
 
-                                mergedPluginData[key] = data;
+                                if (err) {
+                                    console.log(err);
+                                } else if (data) {
+                                    mergedPluginData[key] = data;
+                                }
 
                                 checkAndSendCallback();
                             });
                         }
-                        //console.log(JSON.stringify(mergedPluginData));
                     });
                 } else {
                     sendCallback();
@@ -304,7 +302,7 @@ var PluginManager = (function () {
 
     PluginManager.prototype.open = function (callback) {
         var _this = this;
-        var internalCallback = callback || this._options.onCloseCallback;
+        var internalCallback = callback || this._options.onOpenCallback;
 
         if (this._isOpen) {
             return process.nextTick(internalCallback.bind(null, null));
@@ -332,7 +330,10 @@ var PluginManager = (function () {
     * The PluginManager is going to activate the plugin. But before we're going to run thirdparty code within
     * the app we validate the plugin using a {@link core.plugin.PluginValidatorInterface}.
     *
-    * todo deactivate plugin
+    * @member {core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_activatePlugin
+    *
+    * @param {core.plugin.PluginStateObjectInterface} pluginState
+    * @param {Function} callback
     */
     PluginManager.prototype._activatePlugin = function (pluginState, callback) {
         var _this = this;
@@ -345,15 +346,13 @@ var PluginManager = (function () {
             if (err) {
                 return internalCallback(err);
             } else {
-                _this._pluginRunners[identifier] = _this._pluginRunnerFactory.create(_this._config, pluginState.name, pluginState.path);
-
                 // register plugin to mime type list
                 // todo create extensions list
                 var pluginLoader = _this._pluginLoaderFactory.create(_this._config, pluginState.path);
                 var mimeTypes = pluginLoader.getFileMimeTypes();
 
                 if (mimeTypes.length) {
-                    for (var i in mimeTypes) {
+                    for (var i = 0, l = mimeTypes.length; i < l; i++) {
                         var mimeType = mimeTypes[i];
 
                         if (!_this._mimeTypeMap[mimeType]) {
@@ -365,6 +364,7 @@ var PluginManager = (function () {
                 }
 
                 _this._pluginLoaders[identifier] = pluginLoader;
+                _this._pluginRunners[identifier] = _this._pluginRunnerFactory.create(_this._config, pluginState.name, pluginLoader.getMain());
 
                 _this._eventEmitter.emit('pluginAdded', identifier);
 
@@ -374,14 +374,14 @@ var PluginManager = (function () {
     };
 
     /**
-    * Returns the path where the manager should load/store the plugin state
+    * Returns the absolute path where the manager should load and store the plugin state
     *
     * @method core.plugin.PluginManager~_getManagerStoragePath
     *
     * @returns {string} The path to load from/store to
     */
     PluginManager.prototype._getManagerStoragePath = function () {
-        return path.join(this._config.get('app.dataPath'), 'pluginManager.json');
+        return path.resolve(this._config.get('app.dataPath'), 'pluginManager.json');
     };
 
     /**
@@ -405,20 +405,38 @@ var PluginManager = (function () {
     * todo define pluginState
     *
     * @method core.plugin.PluginManager~_loadPluginState
+    *
+    * @param {Function} callback
     */
     PluginManager.prototype._loadPluginState = function (callback) {
         //console.log('loading the plugin state from the preferences!');
         fs.readJson(this._getManagerStoragePath(), function (err, data) {
-            if (err) {
-                // check for syntax errors
-                console.log(err);
+            var hasPlugins = data ? data.hasOwnProperty('plugins') : false;
+
+            // no file or no plugins
+            if (err && err.name === 'ENOENT' || !hasPlugins) {
+                callback(null, null);
+            } else if (hasPlugins) {
+                callback(null, data['plugins']);
             } else {
-                if (data.hasOwnProperty('plugins')) {
-                    callback(null, data['plugins']);
-                } else {
-                    callback(null, null);
-                }
+                // check for syntax errors
+                console.warn(err);
             }
+            /*if (err) {
+            
+            console.log(err);
+            if (err.code === 'ENOENT') {
+            
+            }
+            }
+            else {
+            if (data.hasOwnProperty('plugins')) {
+            callback(null, data['plugins']);
+            }
+            else {
+            callback(null, null);
+            }
+            }*/
         });
     };
 
@@ -427,7 +445,9 @@ var PluginManager = (function () {
     *
     * todo define pluginState
     *
-    * @method core.plugin.PluginManagerInterface#savePluginState
+    * @method core.plugin.PluginManagerInterface~_savePluginState
+    *
+    * @param {Function} callback
     */
     PluginManager.prototype._savePluginState = function (callback) {
         var state = {
@@ -439,32 +459,50 @@ var PluginManager = (function () {
         });
     };
 
+    /**
+    * Loads additional data for the specified path that are required for a plugin that uses `Apache Tika`.
+    *
+    * @method core.plugin.PluginManagerInterface~_loadApacheTikaGlobals
+    *
+    * @param {string} itemPath
+    * @param {Function} callback
+    */
     PluginManager.prototype._loadApacheTikaGlobals = function (itemPath, callback) {
         var tikaGlobals = {};
 
-        callback(null, tikaGlobals);
+        fs.stat(itemPath, function (err, stats) {
+            if (err) {
+                return callback(err, tikaGlobals);
+            } else if (stats.isFile()) {
+                fs.readFile(itemPath, function (err, data) {
+                    if (err) {
+                        return callback(err, null);
+                    } else {
+                        tikaGlobals['fileBuffer'] = data.toString('base64');
+                        return callback(null, tikaGlobals);
+                    }
+                });
+            }
+        });
+        //callback(null, tikaGlobals);
     };
 
+    /**
+    * Loads the default globals used by every plugin type.
+    *
+    * @method core.plugin.PluginManagerInterface~_loadGlobals
+    *
+    * @param {string} itemPath
+    * @param {string} fileHash
+    * @param {Function} callback
+    */
     PluginManager.prototype._loadGlobals = function (itemPath, fileHash, callback) {
         var globals = {
             fileBuffer: null,
             fileHash: fileHash
         };
 
-        fs.stat(itemPath, function (err, stats) {
-            if (err) {
-                return callback(err, null);
-            } else if (stats.isFile()) {
-                fs.readFile(itemPath, function (err, data) {
-                    if (err) {
-                        return callback(err, null);
-                    } else {
-                        globals['fileBuffer'] = data;
-                        return callback(null, globals);
-                    }
-                });
-            }
-        });
+        callback(null, globals);
     };
     return PluginManager;
 })();

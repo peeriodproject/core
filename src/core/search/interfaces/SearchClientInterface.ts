@@ -15,6 +15,19 @@ import SearchItemInterface = require('./SearchItemInterface');
 interface SearchClientInterface extends ClosableAsyncInterface {
 
 	/**
+	 * Adds a incoming response to the specified index
+	 *
+	 * @method core.search.SearchClientInterface#addIncomingResponse
+	 *
+	 * @param {string} indexName The index to perculate the object into.
+	 * @param {string} type The type of the response object
+	 * @param {Object} responseBody The response body to store
+	 * * @param {Object} responseMeta The response meta data to store
+	 * @param {Function} callback
+	 */
+	addIncomingResponse (indexName:string, type:string, responseBody:Object, responseMeta:Object, callback?:(err:Error, response:Object) => any):void;
+
+	/**
 	 * Adds the specified object to the search index.
 	 *
 	 * @method core.search.SearchClientInterface#addItem
@@ -35,6 +48,30 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 */
 	addMapping (type:string, mapping:Object, callback?:(err:Error) => any):void;
 
+
+	/**
+	 * Stores the query and prepares an index where incoming results will be stored.
+	 *
+	 * @method core.search.SearchClientInterface#createOutgoingQuery
+	 *
+	 * @param {string} indexName
+	 * @param {string} queryId
+	 * @param {Object} queryBody
+	 * @param {Function} callback
+	 */
+	createOutgoingQuery (indexName:string, queryId:string, queryBody:Object, callback?:(err:Error) => any):void;
+
+	/**
+	 * Prepares the index which will be used as the datastore for outgoing queries and corresponding results.
+	 *
+	 * @method core.search.SearchClientInterface#createOutgoingQueryIndex
+	 *
+	 * @param {string} indexName The name of the index
+	 * @param {Object} mapping The mapping of the index. The mapping should set additional metadata to `index:no`
+	 * @param {Function} callback
+	 */
+	createOutgoingQueryIndex (indexName:string, callback?:(err:Error) => any):void
+
 	/**
 	 * Deletes the index which is managed by the SearchClient instance.
 	 *
@@ -45,16 +82,13 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	deleteIndex (callback?:(err:Error) => any):void;
 
 	/**
-	 * Returns if an item type (plugin identifier) exitsts in the search index.
+	 * Removes a query and all corresponding responses from the database.
 	 *
-	 * @method core.search.SearchClientInterface#typeExists
-	 *
-	 * @param {string} type
-	 * @param {Function} callback
+	 * @param {string} indexName
+	 * @param {string} queryId
+	 * @param callback
 	 */
-	typeExists (type:string, callback:(exists:boolean) => any):void
-
-	getItem (query:Object, callback:(err:Error, item:SearchItemInterface) => any):void;
+	deleteOutgoingQuery (indexName:string, queryId:string, callback?:(err:Error) => any):void
 
 	/**
 	 * Returns the first item which matches the specified id accross all types (plugin identifiers)
@@ -79,6 +113,24 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	itemExists (pathToIndex:string, callback:(exists:boolean) => void):void;
 
 	itemExistsById (id:string, callback:(exists:boolean) => void):void;
+
+	/**
+	 * @method core.search.SearchClientInterface#search
+	 *
+	 * @param {Object} queryObject
+	 * @param {Function} callback
+	 */
+	search (queryObject:Object, callback:(err:Error, results:any) => any):void;
+
+	/**
+	 * Returns if an item type (plugin identifier) exitsts in the search index.
+	 *
+	 * @method core.search.SearchClientInterface#typeExists
+	 *
+	 * @param {string} type
+	 * @param {Function} callback
+	 */
+	typeExists (type:string, callback:(exists:boolean) => any):void
 }
 
 export = SearchClientInterface;

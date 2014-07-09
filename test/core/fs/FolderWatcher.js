@@ -5,17 +5,16 @@ require('should');
 var sinon = require('sinon');
 var testUtils = require('../../utils/testUtils');
 
-var ObjectConfig = require('../../../src/core/config/ObjectConfig');
+var AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 var FolderWatcher = require('../../../src/core/fs/FolderWatcher');
+var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
 describe('CORE --> FS --> FolderWatcher', function () {
     var sandbox;
     var configStub;
+    var appQuitHandlerStub;
     var validPathToWatch = testUtils.getFixturePath('core/fs/folderWatcherTest/folderToWatch');
     var fileContent = "if (humans!=robots) {\n\treality();\n}\n\n// code {poems}\n// David Sjunnesson";
-    var options = {
-        closeOnProcessExit: false
-    };
     var folderWatcher;
 
     this.timeout(0);
@@ -37,6 +36,7 @@ describe('CORE --> FS --> FolderWatcher', function () {
                 }
             }
         });
+        appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
         testUtils.createFolder(validPathToWatch);
     });
 
@@ -46,6 +46,8 @@ describe('CORE --> FS --> FolderWatcher', function () {
 
         sandbox.restore();
         configStub = null;
+        appQuitHandlerStub = null;
+
         testUtils.deleteFolderRecursive(validPathToWatch);
     });
 
@@ -54,12 +56,12 @@ describe('CORE --> FS --> FolderWatcher', function () {
     });
 
     it('should correctly instantiate the folder watcher', function () {
-        folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+        folderWatcher = new FolderWatcher(configStub, appQuitHandlerStub, validPathToWatch);
         folderWatcher.should.be.an.instanceof(FolderWatcher);
     });
 
     it('should correctly return the state of the watcher', function () {
-        folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+        folderWatcher = new FolderWatcher(configStub, appQuitHandlerStub, validPathToWatch);
 
         folderWatcher.isOpen().should.be.true;
         folderWatcher.close();
@@ -73,7 +75,7 @@ describe('CORE --> FS --> FolderWatcher', function () {
     it('should correctly ignore the folder updates', function () {
         var onAddCallback = sinon.spy();
         var onUnlinkCallback = sinon.spy();
-        folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+        folderWatcher = new FolderWatcher(configStub, appQuitHandlerStub, validPathToWatch);
 
         folderWatcher.on('add', onAddCallback);
         folderWatcher.on('unlink', onUnlinkCallback);
@@ -91,7 +93,7 @@ describe('CORE --> FS --> FolderWatcher', function () {
     it('should correctly trigger one add event', function (done) {
         var filePath = validPathToWatch + '/message.txt';
 
-        folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+        folderWatcher = new FolderWatcher(configStub, appQuitHandlerStub, validPathToWatch);
         folderWatcher.on('add', function (path, stats) {
             path.should.equal(filePath);
             stats.isFile().should.be.true;
@@ -105,7 +107,7 @@ describe('CORE --> FS --> FolderWatcher', function () {
     it('should correctly emit one unlink event', function (done) {
         var filePath = validPathToWatch + '/message.txt';
 
-        folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+        folderWatcher = new FolderWatcher(configStub, appQuitHandlerStub, validPathToWatch);
 
         folderWatcher.on('add', function (path, stats) {
             fs.unlinkSync(filePath);
@@ -124,7 +126,7 @@ describe('CORE --> FS --> FolderWatcher', function () {
     it('should correctly emit one change event', function (done) {
         var filePath = validPathToWatch + '/message.txt';
 
-        folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+        folderWatcher = new FolderWatcher(configStub, appQuitHandlerStub, validPathToWatch);
 
         folderWatcher.on('add', function (path, stats) {
             fs.writeFileSync(filePath, fileContent);
@@ -155,7 +157,7 @@ describe('CORE --> FS --> FolderWatcher', function () {
             }
         };
 
-        folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+        folderWatcher = new FolderWatcher(configStub, appQuitHandlerStub, validPathToWatch);
 
         folderWatcher.on('add', function (path, stats) {
             written.should.be.true;
@@ -188,7 +190,7 @@ describe('CORE --> FS --> FolderWatcher', function () {
             }
         };
 
-        folderWatcher = new FolderWatcher(configStub, validPathToWatch, options);
+        folderWatcher = new FolderWatcher(configStub, appQuitHandlerStub, validPathToWatch);
         folderWatcher.on('add', function (path, stats) {
             added++;
 

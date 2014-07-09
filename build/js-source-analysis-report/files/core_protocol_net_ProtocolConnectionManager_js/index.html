@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.99</p>
+      <p class="stat">68.73</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">948</p>
+      <p class="stat">981</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">84.97</p>
+      <p class="stat">85.88</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">6.00</p>
+      <p class="stat">6.45</p>
     </div>
   </div>
 </div>
@@ -109,6 +109,8 @@ var MessageByteCheatsheet = require(&#039;./../messages/MessageByteCheatsheet&#0
 var IncomingDataPipeline = require(&#039;./../messages/IncomingDataPipeline&#039;);
 
 var GeneralWritableMessageFactory = require(&#039;./../messages/GeneralWritableMessageFactory&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * ProtocolConnectionManager implementation.
@@ -356,6 +358,24 @@ var ProtocolConnectionManager = (function (_super) {
         }
     };
 
+    ProtocolConnectionManager.prototype.closeHydraSocket = function (identifier) {
+        var socket = this._hydraSockets[identifier];
+
+        if (socket) {
+            socket.end();
+        }
+    };
+
+    ProtocolConnectionManager.prototype.getHydraSocketIp = function (identifier) {
+        var socket = this._hydraSockets[identifier];
+
+        if (socket) {
+            return socket.getIP();
+        }
+
+        return undefined;
+    };
+
     ProtocolConnectionManager.prototype.hydraConnectTo = function (port, ip, callback) {
         var _this = this;
         this._tcpSocketHandler.connectTo(port, ip, function (socket) {
@@ -371,6 +391,7 @@ var ProtocolConnectionManager = (function (_super) {
 
     ProtocolConnectionManager.prototype.hydraWriteBufferTo = function (identifier, buffer, callback) {
         var socket = this._hydraSockets[identifier];
+
         if (!socket) {
             if (callback) {
                 callback(new Error(&#039;ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.&#039;));
@@ -466,6 +487,11 @@ var ProtocolConnectionManager = (function (_super) {
         var buffer = this._generalWritableMessageFactory.constructMessage(payload, payload.length);
 
         this.writeBufferTo(node, buffer, callback);
+
+        // testing purposes only
+        var payloadStr = messageType === &#039;FIND_CLOSEST_NODES&#039; ? payload.toString(&#039;hex&#039;) : &#039;&#039;;
+
+        logger.info(&#039;&#039;, { to: node.getId().toHexString(), msgType: messageType, payload: payloadStr, myId: this._myNode.getId().toHexString() });
     };
 
     /**
@@ -603,20 +629,21 @@ var ProtocolConnectionManager = (function (_super) {
     */
     ProtocolConnectionManager.prototype._createConnectionWaitingListTimeout = function (identifier, index) {
         var _this = this;
-        return setTimeout(function () {
+        return global.setTimeout(function () {
             _this._callbackWaitingConnection(identifier, index, new Error(&#039;ProtocolConnectionManager: Unable to obtain connection to &#039; + identifier), null);
         }, this._msToWaitForConnection);
     };
 
     /**
     * Destroys a socket connection. Removes all references within the manager, clears any incmoing pending timeouts.
-    * unhooks it from the data pipeline and forces destroys the socket itself (removing all listeners and dumping the reference).
+    * unhooks it from the data pipeline and force destroys the socket itself (removing all listeners and dumping the reference).
     * Emits a `terminatedConnection` event if the socket was a confirmed one and the event should not be blocked.
     *
     * @method core.protocol.net.ProtocolConnectionManager~_destroyConnection
     *
     * @param {core.net.tcp.TCPSocketInterface} socket The socket to destroy
     * @param {boolean} blockTerminationEvent Indicates whether a `terminatedConnection` event should be blocked or not.
+    * @param {boolean} avoidEnd Indicates whether the socket should be ended or not, e.g. already closed sockets
     */
     ProtocolConnectionManager.prototype._destroyConnection = function (socket, blockTerminationEvent) {
         var identifier = socket.getIdentifier();
@@ -629,7 +656,7 @@ var ProtocolConnectionManager = (function (_super) {
 
         if (incoming) {
             if (incoming.timeout) {
-                clearTimeout(incoming.timeout);
+                global.clearTimeout(incoming.timeout);
             }
             delete this._incomingPendingSockets[identifier];
         }
@@ -643,7 +670,7 @@ var ProtocolConnectionManager = (function (_super) {
             delete this._hydraSockets[identifier];
         }
 
-        socket.forceDestroy();
+        socket.end();
 
         if ((confirmed || hydra) &amp;&amp; !blockTerminationEvent) {
             this._emitTerminatedEventByIdentifier(identifier);
@@ -709,7 +736,7 @@ var ProtocolConnectionManager = (function (_super) {
         var outgoingPending = this._outgoingPendingSockets[newIdentifier];
 
         if (pending.timeout) {
-            clearTimeout(pending.timeout);
+            global.clearTimeout(pending.timeout);
         }
         delete this._incomingPendingSockets[oldIdentifier];
 
@@ -736,7 +763,7 @@ var ProtocolConnectionManager = (function (_super) {
         var socket = pending.socket;
 
         if (pending.timeout) {
-            clearTimeout(pending.timeout);
+            global.clearTimeout(pending.timeout);
         }
         delete this._incomingPendingSockets[oldIdentifier];
 
@@ -772,7 +799,7 @@ var ProtocolConnectionManager = (function (_super) {
         var _this = this;
         // remote close
         socket.on(&#039;close&#039;, function () {
-            _this._destroyConnection(socket);
+            _this._destroyConnection(socket, false);
         });
     };
 
@@ -813,7 +840,7 @@ var ProtocolConnectionManager = (function (_super) {
                 delete _this._outgoingPendingSockets[identifier];
                 if (socket) {
                     if (outgoingEntry.closeAtOnce) {
-                        socket.forceDestroy();
+                        socket.end();
                     } else {
                         socket.setIdentifier(identifier);
                         _this._incomingDataPipeline.hookSocket(socket);
@@ -851,7 +878,7 @@ var ProtocolConnectionManager = (function (_super) {
         if (waiting) {
             for (var i = 0; i &lt; waiting.length; i++) {
                 var item = waiting[i];
-                clearTimeout(item.timeout);
+                global.clearTimeout(item.timeout);
                 item.callback(null, socket);
             }
 
@@ -871,10 +898,12 @@ var ProtocolConnectionManager = (function (_super) {
     */
     ProtocolConnectionManager.prototype._onIncomingConnection = function (socket) {
         var _this = this;
+        console.log(this._incomingPendingTimeoutLength);
+
         var identifier = this._setTemporaryIdentifier(socket);
         var pending = {
             socket: socket,
-            timeout: setTimeout(function () {
+            timeout: global.setTimeout(function () {
                 _this._destroyConnection(socket);
             }, this._incomingPendingTimeoutLength)
         };
@@ -908,7 +937,7 @@ var ProtocolConnectionManager = (function (_super) {
         }
 
         if (propagateMessage) {
-            this.emit(&#039;hydraMessage&#039;, identifier, message);
+            this.emit(&#039;hydraMessage&#039;, identifier, this.getHydraSocketIp(identifier), message);
         }
     };
 
@@ -1032,7 +1061,11 @@ var ProtocolConnectionManager = (function (_super) {
             callback(socket);
         };
 
-        connectToAddressByIndex(startAt, theCallback);
+        if (maxIndex &gt;= 0) {
+            connectToAddressByIndex(startAt, theCallback);
+        } else {
+            callback(null);
+        }
     };
     return ProtocolConnectionManager;
 })(events.EventEmitter);

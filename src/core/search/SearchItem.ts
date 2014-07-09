@@ -29,7 +29,7 @@ class SearchItem implements SearchItemInterface {
 
 		var calcScoreAverage:boolean = false;
 
-		for (var i in data) {
+		for (var i = 0, l = data.length; i < l; i++) {
 			var item = data[i];
 			var source:Object = item['_source'];
 
@@ -94,6 +94,12 @@ class SearchItem implements SearchItemInterface {
 		return this._stats;
 	}
 
+	/**
+	 * @method core.search.SearchItem~_processItemMember
+	 *
+	 * @param {string} name
+	 * @param {Object} source
+	 */
 	private _processItemMember (name:string, source:Object):void {
 		var lower:string = name.toLowerCase();
 		var memberName:string  = '_' + lower;

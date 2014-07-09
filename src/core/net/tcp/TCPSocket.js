@@ -129,6 +129,12 @@ var TCPSocket = (function (_super) {
         return this._identifier;
     };
 
+    TCPSocket.prototype.getIP = function () {
+        var socket = this.getSocket();
+
+        return socket.remoteAddress;
+    };
+
     TCPSocket.prototype.getIPPortString = function () {
         var socket = this.getSocket();
 

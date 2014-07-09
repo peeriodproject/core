@@ -6,6 +6,7 @@ import path = require('path');
 
 import elasticsearch = require('elasticsearch');
 
+import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
 import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions');
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import SearchClientInterface = require('./interfaces/SearchClientInterface');
@@ -23,13 +24,19 @@ import ObjectUtils = require('../utils/ObjectUtils');
  * @class core.search.SearchClient
  * @implements core.search.SearchClientInterface
  *
- * @see https://www.npmjs.org/package/base64-stream
- *
  * @param {core.config.ConfigInterface} config
+ * @param {core.utils.AppQuitHandlerInterface} appQuitHandler
  * @param {core.search.SearchStoreFactory} searchStoreFactory
  * @param {core.search.SearchClientOptions} options
  */
 class SearchClient implements SearchClientInterface {
+
+	/**
+	 * The internally used appQuitHandler instance
+	 *
+	 * @member {core.utils.AppQuitHandler} core.search.SearchClient~_appQuitHandler
+	 */
+	private _appQuitHandler:AppQuitHandlerInterface = null;
 
 	/**
 	 * The client which is used internally to make requests against the database api
@@ -87,7 +94,7 @@ class SearchClient implements SearchClientInterface {
 	 */
 	private _searchStoreFactory:SearchStoreFactoryInterface = null;
 
-	constructor (config:ConfigInterface, indexName:string, searchStoreFactory:SearchStoreFactoryInterface, searchItemFactory:SearchItemFactoryInterface, options:SearchClientOptions = {}) {
+	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, indexName:string, searchStoreFactory:SearchStoreFactoryInterface, searchItemFactory:SearchItemFactoryInterface, options:SearchClientOptions = {}) {
 		var defaults:SearchClientOptions = {
 			logsPath          : '../../logs',
 			logsFileName      : 'searchStore.log',
@@ -99,6 +106,7 @@ class SearchClient implements SearchClientInterface {
 		};
 
 		this._config = config;
+		this._appQuitHandler = appQuitHandler;
 		this._indexName = indexName.toLowerCase();
 		this._searchStoreFactory = searchStoreFactory;
 		this._searchItemFactory = searchItemFactory;
@@ -107,12 +115,33 @@ class SearchClient implements SearchClientInterface {
 		this._options.logsPath = path.resolve(__dirname, this._options.logsPath);
 
 		if (this._options.closeOnProcessExit) {
-			process.on('exit', () => {
-				this.close(this._options.onCloseCallback);
+			appQuitHandler.add((done) => {
+				this.close(done);
 			});
 		}
 
 		this.open(this._options.onOpenCallback);
+	}
+
+	public addIncomingResponse (indexName:string, type:string, responseBody:Object, responseMeta:Object, callback?:(err:Error, response:Object) => any):void {
+		var internalCallback = callback || function (err:Error, response:Object) {
+		};
+
+		var responseObject = ObjectUtils.extend(responseBody, {
+			meta: responseMeta
+		});
+
+		this._client.percolate({
+			index: indexName.toLowerCase(),
+			type : 'response-' + type.toLowerCase(),
+			body : {
+				doc: responseObject
+			}
+		}, function (err:Error, response:Object, status:number) {
+			err = err || null;
+
+			return internalCallback(err, response);
+		});
 	}
 
 	public addItem (objectToIndex:Object, callback?:(err:Error, ids:SearchItemIdListInterface) => any):void {
@@ -130,19 +159,18 @@ class SearchClient implements SearchClientInterface {
 			}
 		};
 
-		if (pluginIdentifiers.length) {
-			for (var i in pluginIdentifiers) {
-				var identifier:string = pluginIdentifiers[i];
-
-				this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
-					itemIds.push(id);
-
-					checkCallback(err);
-				});
-			}
-		}
-		else {
+		if (!pluginIdentifiers.length) {
 			return process.nextTick(callback.bind(null, new Error('SearchClient.addItem: No item data specified! Preventing item creation.'), null));
+		}
+
+		for (var i = 0, l = pluginIdentifiers.length; i < l; i++) {
+			var identifier:string = pluginIdentifiers[i];
+
+			this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
+				itemIds.push(id);
+
+				return checkCallback(err);
+			});
 		}
 	}
 
@@ -150,30 +178,29 @@ class SearchClient implements SearchClientInterface {
 		var internalCallback:Function = callback || function () {
 		};
 
-		this._createIndex((err:Error) => {
+		this._createIndex(this._indexName, null, (err:Error) => {
 			var map = null;
 			if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
 				// wrap mapping in type root
 				map = {};
-				map[type] = mapping;
+				map[type.toLowerCase()] = mapping;
 			}
 			else {
 				map = mapping;
 			}
 
-			if (err) {
+			if (!(!err && this._client)) {
+				return internalCallback(err);
+			}
+
+			this._client.indices.putMapping({
+				index: this._indexName,
+				type : type.toLowerCase(),
+				body : map
+			}, function (err, response, status) {
+				err = err || null;
 				internalCallback(err);
-			}
-			else {
-				this._client.indices.putMapping({
-					index: this._indexName,
-					type : type.toLowerCase(),
-					body : map
-				}, function (err, response, status) {
-					err = err || null;
-					internalCallback(err);
-				});
-			}
+			});
 		});
 	}
 
@@ -188,7 +215,48 @@ class SearchClient implements SearchClientInterface {
 			this._isOpen = false;
 			this._client = null;
 
-			internalCallback(err);
+			return internalCallback(err);
+		});
+	}
+
+	public createOutgoingQuery (indexName:string, id:string, queryBody:Object, callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {
+		};
+
+		this._client.index({
+			index: indexName.toLowerCase(),
+			type : '.percolator',
+			id   : id,
+			body : queryBody // todo add meta data ObjectUtils.extend(queryBody, queryMetas)
+		}, function (err:Error, response:Object, status:number) {
+			err = err || null;
+			return internalCallback(err);
+		});
+	}
+
+	public createOutgoingQueryIndex (indexName:string, callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {
+		};
+
+		var mapping = {
+			_default_: {
+				meta: {
+					type: 'object',
+					index: 'no'
+				}
+			}
+		};
+
+		indexName = indexName.toLowerCase();
+
+		this._createIndex(indexName, mapping, (err:Error) => {
+			console.log(err);
+
+			if (err) {
+				return internalCallback(err);
+			}
+
+			return internalCallback(err);
 		});
 	}
 
@@ -196,41 +264,106 @@ class SearchClient implements SearchClientInterface {
 		var internalCallback = callback || function (err:Error) {
 		};
 
-		if (this._isOpen) {
-			this._client.indices.delete({
-				index: this._indexName
-			}, (err:Error, response, status) => {
-				if (this._isValidResponse(err, status, 'IndexMissingException')) {
-					internalCallback(null);
-				}
-				else {
-					internalCallback(err);
-				}
-			});
-		}
-		else {
+		if (!(this._isOpen && this._client)) {
 			return process.nextTick(internalCallback.bind(null, null));
 		}
+
+		this._client.indices.delete({
+			index: this._indexName
+		}, (err:Error, response, status) => {
+			if (!this._isValidResponse(err, status, 'IndexMissingException')) {
+				return internalCallback(err);
+			}
+
+			return internalCallback(null);
+		});
 	}
 
-	public getItem (query:Object, callback:(err:Error, item:SearchItemInterface) => any):void {
-		return process.nextTick(callback.bind(null, null, null));
+	public deleteOutgoingQuery (indexName:string, queryId:string, callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {
+		};
+		var queryDeleted:boolean = false;
+		var responsesDeleted:boolean = false;
+
+		var checkCallback:Function = function (err:Error) {
+			if (err) {
+				queryDeleted = false;
+				responsesDeleted = false;
+
+				console.error(err);
+
+				return internalCallback(err);
+			}
+			else if (queryDeleted && responsesDeleted) {
+				return internalCallback(null);
+			}
+		};
+
+		if (!(this._isOpen && this._client)) {
+			return process.nextTick(internalCallback.bind(null, null));
+		}
+
+		indexName = indexName.toLowerCase();
+
+		// delete query
+		this._client.delete({
+			index: indexName,
+			type : '.percolator',
+			id   : queryId
+		}, (err:Error, response, status) => {
+			console.log(err);
+
+			if (this._isValidResponse(err, status, 'IndexMissingException') || this._isValidResponse(err, status, 'Not Found')) {
+				err = null;
+			}
+
+			queryDeleted = true;
+
+			return checkCallback(err);
+		});
+
+		// delete all responses for the queryId
+		this._client.deleteByQuery({
+			index: indexName,
+			type : 'response-' + queryId.toLowerCase(),
+			body : {
+				query: {
+					bool: {
+						must: [
+							{
+								match_all: {}
+							}
+						]
+					}
+				}
+			}
+		}, (err:Error, response, status) => {
+			console.log(err);
+
+			if (this._isValidResponse(err, status, 'IndexMissingException')) {
+				err = null;
+			}
+
+			responsesDeleted = true;
+
+			return checkCallback(err);
+		});
+
 	}
 
 	public getItemById (id:string, callback:(err:Error, item:SearchItemInterface) => any):void {
 		this._client.get({
 			index: this._indexName,
-			type: '_all',
-			id: id
+			type : '_all',
+			id   : id
 		}, (err:Error, response:Object, status:number) => {
 			err = err || null;
 
-			if (this._isValidResponse(err, status, 'IndexMissingException')) {
-				callback(null, this._createSearchItemFromResponse(response));
+			if (!this._isValidResponse(err, status, 'IndexMissingException')) {
+				return callback(err, null);
 			}
-			else {
-				callback(err, null);
-			}
+
+			return callback(null, this._createSearchItemFromResponse(response));
 		});
 	}
 
@@ -245,36 +378,30 @@ class SearchClient implements SearchClientInterface {
 
 		this._client.search({
 			index: this._indexName,
-			body: searchQuery
+			body : searchQuery
 		}, (err:Error, response:Object, status:number) => {
+			var hits:Object = response && response['hits'] ? response['hits'] : {};
+
 			err = err || null;
 
-			var hits:Object = response['hits'];
+			if (!this._isValidResponse(err, status, 'IndexMissingException')) {
+				return callback(err, null);
+			}
 
-			if (this._isValidResponse(err, status, 'IndexMissingException')) {
-				if (hits && hits['total']) {
-					callback(null, this._createSearchItemFromHits(hits['hits']));
-				}
-				else {
-					callback(null, null);
-				}
+			if (!(hits && hits['total'])) {
+				return callback(null, null);
 			}
-			else {
-				callback(err, null);
-			}
+
+			return callback(null, this._createSearchItemFromHits(hits['hits']));
 		});
 	}
-
-	/*public getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void {
-		// todo iplementation
-		return process.nextTick(callback.bind(null, null, null));
-	}*/
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
 	public itemExists (pathToIndex:string, callback:(exists:boolean) => void):void {
+		console.log('todo SearchClient#itemExists');
 		// todo iplementation
 		return process.nextTick(callback.bind(null, null, null));
 	}
@@ -282,8 +409,8 @@ class SearchClient implements SearchClientInterface {
 	public itemExistsById (id:string, callback:(exists:boolean) => void):void {
 		this._client.exists({
 			index: this._indexName,
-			type: '_all',
-			id: id
+			type : '_all',
+			id   : id
 		}, function (err, exists) {
 			return callback(exists === true);
 		});
@@ -314,19 +441,18 @@ class SearchClient implements SearchClientInterface {
 			this._waitForDatabaseServer((err:Error) => {
 				if (err) {
 					console.error(err);
-					internalCallback(err);
+					return internalCallback(err);
 				}
-				else {
-					this._createIndex((err:Error) => {
-						if (err) {
-							console.error(err);
-						}
-						else {
-							this._isOpen = true;
-							internalCallback(null);
-						}
-					});
-				}
+
+				this._createIndex(this._indexName, null, (err:Error) => {
+					err = err || null;
+
+					if (!err) {
+						this._isOpen = true;
+					}
+
+					return internalCallback(null);
+				});
 			});
 		};
 
@@ -336,16 +462,38 @@ class SearchClient implements SearchClientInterface {
 			onOpenCallback    : onSearchStoreOpen
 		}));
 
-		this._searchStore = this._searchStoreFactory.create(this._config, searchStoreOptions);
+		this._searchStore = this._searchStoreFactory.create(this._config, this._appQuitHandler, searchStoreOptions);
+	}
+
+	public search (queryObject:Object, callback:(err:Error, results:any) => any):void {
+		this._client.search({
+			index: this._indexName,
+			body: queryObject
+		}, function(err, response, status) {
+			var hits:Object = response && response['hits'] ? response['hits'] : null;
+
+			err = err || null;
+
+			if (err) {
+				console.log(err);
+			}
+
+			return callback(err, hits);
+		});
 	}
 
 	public typeExists (type:string, callback:(exists:boolean) => any):void {
-		this._client.indices.existsType({
-			index: this._indexName,
-			type : type
-		}, function (err, response, status) {
-			callback(response);
-		});
+		if (this._client) {
+			this._client.indices.existsType({
+				index: this._indexName,
+				type : type
+			}, function (err, response, status) {
+				return callback(response);
+			});
+		}
+		else {
+			return callback(false);
+		}
 	}
 
 	/**
@@ -364,11 +512,11 @@ class SearchClient implements SearchClientInterface {
 			refresh: true,
 			body   : data
 		}, function (err:Error, response, status) {
-			if (response['created']) {
-				callback(err, response['_id']);
+			if (response && response['created']) {
+				return callback(err, response['_id']);
 			}
 			else {
-				callback(err, null);
+				return callback(err, null);
 			}
 		});
 	}
@@ -378,19 +526,30 @@ class SearchClient implements SearchClientInterface {
 	 *
 	 * @method core.search.SearchClient~_createIndex
 	 *
-	 * @param {string} name
+	 * @param {string} indexName
+	 * @param {Object|Null} mapping The optional mapping to stick to the index.
 	 * @param {Function} callback
 	 */
-	private _createIndex (callback:(err:Error) => any):void {
-		this._client.indices.create({
-			index: this._indexName
-		}, (err, response, status) => {
+	private _createIndex (indexName:string, mapping:Object, callback:(err:Error) => any):void {
+		var params:Object = {
+			index: indexName
+		};
+
+		if (mapping) {
+			params = ObjectUtils.extend(params, {
+				body: {
+					mappings: mapping
+				}
+			});
+		}
+
+		this._client.indices.create(params, (err, response, status) => {
 			// everything went fine or index already exists
 			if (this._isValidResponse(err, status, 'IndexAlreadyExistsException')) {
-				callback(null);
+				return callback(null);
 			}
 			else {
-				callback(err);
+				return callback(err);
 			}
 		});
 	}
@@ -431,11 +590,11 @@ class SearchClient implements SearchClientInterface {
 						}, 500);
 					}
 					else {
-						callback(new Error('SearchClient~waitForServer: Server is not reachable after 15 seconds'));
+						return callback(new Error('SearchClient~waitForServer: Server is not reachable after 15 seconds'));
 					}
 				}
 				else {
-					callback(null);
+					return callback(null);
 				}
 			});
 		};
@@ -444,12 +603,17 @@ class SearchClient implements SearchClientInterface {
 	}
 
 	/**
+	 * Returns `true` if the given response objects matches with the http status code ( >= 200 < 300) or the error matches the specified error name.
+	 * This method is used to gracefully ignore expected errors such as `not found` or `already exists`.
+	 *
+	 * @method core.search.SearchClient~_isValidResponse
+	 *
 	 * @param {Error} err
 	 * @param {number} status
 	 * @param {string} errorNameToIgnore
 	 * @returns {boolean}
 	 */
-	private _isValidResponse(err:Error, status:number, errorNameToIgnore:string):boolean {
+	private _isValidResponse (err:Error, status:number, errorNameToIgnore:string):boolean {
 		return ((status >= 200 && status < 300) || (status >= 400 && err && err.message.indexOf(errorNameToIgnore) === 0)) ? true : false;
 	}
 

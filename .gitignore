@@ -33,3 +33,6 @@ node_modules
 /utils/topologyTestRunner/zmap-results.json
 /utils/topologyTestRunner/node-webkit/**/*.app
 *.pyc
+
+/src/public/primus.io.js
+/src/bin/core/search/elasticsearch/logs/

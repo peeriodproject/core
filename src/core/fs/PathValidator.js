@@ -2,6 +2,13 @@
 var crypto = require('crypto');
 var fs = require('fs');
 
+/*
+* deterministic JSON.stringify() with custom sorting to get deterministic hashes from stringified results
+*
+* @see https://github.com/substack/json-stable-stringify
+*/
+var stringify = require('json-stable-stringify');
+
 /**
 * @class core.fs.PathValidator
 * @implements core.fs.PathValidatorInterface
@@ -68,7 +75,7 @@ var PathValidator = (function () {
             delete stats.atime;
 
             // @see http://stackoverflow.com/a/1144249
-            var isValid = JSON.stringify(stats) === JSON.stringify(statsToValidate);
+            var isValid = stringify(stats) === stringify(statsToValidate);
 
             callback(null, isValid, stats);
         });

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/crypto/HKDF.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/crypto/HKDF.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">67.39</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">129</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">29.93</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.58</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../ts-definitions/node/node.d.ts&#039; /&gt;
+var crypto = require(&#039;crypto&#039;);
+
+/**
+*
+* This is a node.js implementation of the [HMAC-based Extract-and-Expand Key Derivation Function (HKDF) RFC-5869](http://tools.ietf.org/html/rfc5869)
+*
+* This class merely uses Buffers. See tests for test vectors of the RFC.
+*
+* @class core.crypto.HKDF
+*
+* @param {string} algorithm The Hash algorithm to use
+* @param {Buffer} IKM Input key material to use.
+*/
+var HKDF = (function () {
+    function HKDF(algorithm, IKM) {
+        /**
+        *
+        * Number of octets output by the used hashing function
+        *
+        * @member {number} core.crypto.HKDF~_hashLen
+        */
+        this._hashLen = 0;
+        /**
+        *
+        * Stores the Input Key Material
+        *
+        * @member {Buffer} core.crypto.HKDF~_IKM
+        */
+        this._IKM = null;
+        /**
+        *
+        * Name of the algorithm to use.
+        * For available algorithms, use `require(&#039;crypto&#039;).getHashes()`
+        *
+        * @member {string} core.crypto.HKDF~_algorithm
+        */
+        this._algorithm = null;
+        this._hashLen = crypto.createHash(algorithm).digest().length;
+        this._algorithm = algorithm;
+        this._IKM = IKM;
+    }
+    /**
+    *
+    * Derives the output keying material (OKM)
+    *
+    * @method core.crypto.HKDF#derive
+    *
+    * @param {number} L Length of output keying material in octets (&lt;= 255 * HashLength)
+    * @param {Buffer} salt Optional salt value (a non-secret random value) (can be null)
+    * @param {Buffer} info Optional context and application specific information (can be null). Please note that if no salt is used, this parameter should always be different for derivations using the same input keying material.
+    *
+    *
+    * @returns {Buffer} The output keying material
+    */
+    HKDF.prototype.derive = function (L, salt, info) {
+        var PRK = this.extract(salt);
+
+        return this.expand(PRK, L, info);
+    };
+
+    /**
+    * &#039;Extract&#039; part of the RFC.
+    *
+    * @method core.crypto.HKDF#extract
+    *
+    * @param {Buffer} salt Optional salt value (a non-secret random value) (can be null)
+    *
+    * @returns {Buffer} The PRK, a pseudorandom key (of hashLength octets)
+    */
+    HKDF.prototype.extract = function (salt) {
+        salt = salt || this._zeroBuffer(this._hashLen);
+
+        var hmac = crypto.createHmac(this._algorithm, salt);
+
+        hmac.update(this._IKM);
+        return hmac.digest();
+    };
+
+    /**
+    * &#039;Expand&#039; part of the RFC.
+    *
+    * @method core.crypto.HKDF#expand
+    *
+    * @param {Buffer} PRK A pseudorandom key of at least HashLenght octets (usually the output from the extract step)
+    * @param {number} L Length of output keying material in octets (&lt;= 255 * HashLen)
+    * @param {Buffer} optInfo Optional context and application specific information (can be null). Please note that if no salt is used, this parameter should always be different for derivations using the same input keying material.
+    *
+    * @returns {Buffer} Output keying material (of L octets)
+    */
+    HKDF.prototype.expand = function (PRK, L, optInfo) {
+        var info = optInfo ? optInfo : new Buffer(0);
+
+        var infoLen = info.length;
+        var n = Math.ceil(L / this._hashLen);
+        var prevBuffer = new Buffer(0);
+        var output = new Buffer(n * this._hashLen);
+        var retBuffer = new Buffer(L);
+
+        for (var i = 0; i &lt; n; i++) {
+            var hmac = crypto.createHmac(this._algorithm, PRK);
+            hmac.update(Buffer.concat([prevBuffer, info, new Buffer([i + 1])], infoLen + 1 + (i === 0 ? 0 : this._hashLen)));
+            prevBuffer = hmac.digest();
+
+            prevBuffer.copy(output, i * this._hashLen);
+        }
+
+        output.copy(retBuffer, 0, 0, L);
+
+        return retBuffer;
+    };
+
+    /**
+    * Returns a buffer of the given length filled with 0x00 bytes.
+    *
+    * @method core.crypto.HKDF~_zeroBuffer
+    *
+    * @param {number} ofLength Length of the output buffer in octets.
+    * @returns {Buffer} An empty buffer of the given length
+    */
+    HKDF.prototype._zeroBuffer = function (ofLength) {
+        var buf = new Buffer(ofLength);
+
+        buf.fill(0x00);
+        return buf;
+    };
+    return HKDF;
+})();
+
+module.exports = HKDF;
+//# sourceMappingURL=HKDF.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

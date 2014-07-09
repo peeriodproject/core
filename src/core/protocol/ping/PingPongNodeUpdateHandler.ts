@@ -4,6 +4,7 @@ import ConfigInterface = require('../../config/interfaces/ConfigInterface');
 import ProtocolConnectionManagerInterface = require('../net/interfaces/ProtocolConnectionManagerInterface');
 import ProxyManagerInterface = require('../proxy/interfaces/ProxyManagerInterface');
 import PingPongNodeUpdateHandlerInterface = require('./interfaces/PingPongNodeUpdateHandlerInterface');
+import PongWaitingListList = require('./interfaces/PongWaitingListList');
 import RoutingTableInterface = require('../../topology/interfaces/RoutingTableInterface');
 import MyNodeInterface = require('../../topology/interfaces/MyNodeInterface');
 import ReadableMessageInterface = require('../messages/interfaces/ReadableMessageInterface');
@@ -73,9 +74,9 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 	/**
 	 * The array holding the waiting lists for the buckets.
 	 *
-	 * @member {Array<core.protocol.ping.PongWaitingList} core.protocol.ping.PingPongNodeUpdateHandler~_waitingLists
+	 * @member {core.protocol.ping.PongWaitingListList} core.protocol.ping.PingPongNodeUpdateHandler~_waitingLists
 	 */
-	private _waitingLists:Array<PongWaitingList> = [];
+	private _waitingLists:PongWaitingListList = [];
 
 	constructor (config:ConfigInterface, myNode:MyNodeInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, proxyManager:ProxyManagerInterface, routingTable:RoutingTableInterface) {
 		super();
@@ -93,7 +94,7 @@ class PingPongNodeUpdateHandler extends events.EventEmitter implements PingPongN
 		this._setupListeners();
 	}
 
-	public getWaitingLists ():Array<PongWaitingList> {
+	public getWaitingLists ():PongWaitingListList {
 		return this._waitingLists;
 	}
 

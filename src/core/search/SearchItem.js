@@ -20,7 +20,7 @@ var SearchItem = (function () {
 
         var calcScoreAverage = false;
 
-        for (var i in data) {
+        for (var i = 0, l = data.length; i < l; i++) {
             var item = data[i];
             var source = item['_source'];
 
@@ -82,6 +82,12 @@ var SearchItem = (function () {
         return this._stats;
     };
 
+    /**
+    * @method core.search.SearchItem~_processItemMember
+    *
+    * @param {string} name
+    * @param {Object} source
+    */
     SearchItem.prototype._processItemMember = function (name, source) {
         var lower = name.toLowerCase();
         var memberName = '_' + lower;

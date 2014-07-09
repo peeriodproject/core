@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">58.93</p>
+      <p class="stat">67.11</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">111</p>
+      <p class="stat">206</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">22.42</p>
+      <p class="stat">20.98</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.21</p>
+      <p class="stat">2.16</p>
     </div>
   </div>
 </div>
@@ -90,38 +90,154 @@
 
 <div class="container">
   <div class="row">
-    <textarea id="file-source" class="col-md-12">var JSONConfig = require(&#039;./config/JSONConfig&#039;);
-var TCPSocketHandlerFactory = require(&#039;./net/tcp/TCPSocketHandlerFactory&#039;);
-var NetworkBootstrapper = require(&#039;./net/NetworkBootstrapper&#039;);
-var FreeGeoIp = require(&#039;./net/ip/FreeGeoIp&#039;);
-var Id = require(&#039;./topology/Id&#039;);
-var MyNode = require(&#039;./topology/MyNode&#039;);
-var ContactNodeAddressFactory = require(&#039;./topology/ContactNodeAddressFactory&#039;);
-var ContactNodeAddress = require(&#039;./topology/ContactNodeAddress&#039;);
-var ContactNode = require(&#039;./topology/ContactNode&#039;);
-var ProtocolConnectionManager = require(&#039;./protocol/net/ProtocolConnectionManager&#039;);
-var GeneralWritableMessageFactory = require(&#039;./protocol/messages/GeneralWritableMessageFactory&#039;);
+    <textarea id="file-source" class="col-md-12">var crypto = require(&#039;crypto&#039;);
+var path = require(&#039;path&#039;);
+
+// global imports
+var JSONConfig = require(&#039;./config/JSONConfig&#039;);
+var logger = require(&#039;./utils/logger/LoggerFactory&#039;).create();
+
+var AppQuitHandler = require(&#039;./utils/AppQuitHandler&#039;);
+
+// topology imports
 var BucketFactory = require(&#039;./topology/BucketFactory&#039;);
 var BucketStore = require(&#039;./topology/BucketStore&#039;);
-var ContactNodeFactory = require(&#039;./topology/ContactNodeFactory&#039;);
-var RoutingTable = require(&#039;./topology/RoutingTable&#039;);
 
+var ContactNodeAddressFactory = require(&#039;./topology/ContactNodeAddressFactory&#039;);
+var ContactNodeFactory = require(&#039;./topology/ContactNodeFactory&#039;);
+
+var Id = require(&#039;./topology/Id&#039;);
+var JSONStateHandlerFactory = require(&#039;./utils/JSONStateHandlerFactory&#039;);
+var JSONWebIp = require(&#039;./net/ip/JSONWebIp&#039;);
+var MyNode = require(&#039;./topology/MyNode&#039;);
+var NetworkBootstrapper = require(&#039;./net/NetworkBootstrapper&#039;);
+
+var ProtocolGateway = require(&#039;./protocol/ProtocolGateway&#039;);
+
+var RoutingTable = require(&#039;./topology/RoutingTable&#039;);
+var TCPSocketHandlerFactory = require(&#039;./net/tcp/TCPSocketHandlerFactory&#039;);
+
+// search imports
+var SearchStoreFactory = require(&#039;./search/SearchStoreFactory&#039;);
+var SearchItemFactory = require(&#039;./search/SearchItemFactory&#039;);
+var SearchClient = require(&#039;./search/SearchClient&#039;);
+var SearchManager = require(&#039;./search/SearchManager&#039;);
+
+var PluginFinder = require(&#039;./plugin/PluginFinder&#039;);
+var PluginValidator = require(&#039;./plugin/PluginValidator&#039;);
+var PluginLoaderFactory = require(&#039;./plugin/PluginLoaderFactory&#039;);
+var PluginRunnerFactory = require(&#039;./plugin/PluginRunnerFactory&#039;);
+var PluginManager = require(&#039;./plugin/PluginManager&#039;);
+
+var FolderWatcherFactory = require(&#039;./fs/FolderWatcherFactory&#039;);
+var FolderWatcherManager = require(&#039;./fs/FolderWatcherManager&#039;);
+var PathValidator = require(&#039;./fs/PathValidator&#039;);
+
+var IndexManager = require(&#039;./search/IndexManager&#039;);
+
+// ui imports
+var UiFolderWatcherManagerComponent = require(&#039;./ui/folder/UiFolderWatcherManagerComponent&#039;);
+var UiFolderDropzoneComponent = require(&#039;./ui/folder/UiFolderDropzoneComponent&#039;);
+var UiPluginManagerComponent = require(&#039;./ui/plugin/UiPluginManagerComponent&#039;);
+var UiManager = require(&#039;./ui/UiManager&#039;);
+
+/**
+*
+* @mixin core.App
+*/
 var App = {
-    start: function () {
+    appQuitHandler: null,
+    _uiComponents: [],
+    addUiComponent: function (component) {
+        this._uiComponents.push(component);
+    },
+    start: function (gui, nwApp, dataPath, win) {
+        var _this = this;
+        win.showDevTools();
+
+        this.appQuitHandler = new AppQuitHandler(nwApp);
+
+        //this.startTopology(dataPath, win);
+        this.startSearchClient(function (searchConfig, searchClient) {
+            console.log(&#039;starting indexer&#039;);
+            _this.startIndexer(searchConfig, searchClient);
+
+            _this.startUi(gui);
+            console.log(&#039;rockn roll!&#039;);
+        });
+    },
+    quit: function () {
+        console.log(&#039;quitting...&#039;);
+        return process.nextTick(function () {
+            this.appQuitHandler.quit();
+        }.bind(this));
+    },
+    startIndexer: function (searchConfig, searchClient) {
+        var fsConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;fs&#039;]);
+        var pluginConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;plugin&#039;]);
+
+        var pluginFinder = new PluginFinder(pluginConfig);
+        var pluginValidator = new PluginValidator();
+        var pluginLoaderFactory = new PluginLoaderFactory();
+        var pluginRunnerFactory = new PluginRunnerFactory();
+
+        var pluginManager = new PluginManager(pluginConfig, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory);
+
+        var searchManager = new SearchManager(searchConfig, pluginManager, searchClient);
+
+        var stateHandlerFactory = new JSONStateHandlerFactory();
+        var folderWatcherFactory = new FolderWatcherFactory();
+
+        var folderWatcherManager = new FolderWatcherManager(fsConfig, this.appQuitHandler, stateHandlerFactory, folderWatcherFactory);
+
+        var pathValidator = new PathValidator();
+
+        var indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
+
+        // register ui components
+        // ----------------------
+        this.addUiComponent(new UiFolderWatcherManagerComponent(folderWatcherManager));
+        this.addUiComponent(new UiPluginManagerComponent(pluginManager));
+    },
+    startSearchClient: function (callback) {
+        //var testFolderPath:string = path.resolve(__dirname, &#039;../../utils/TestFolder&#039;);
+        //var externalFolderPath:string = path.resolve(&#039;/Volumes/External/path/Folder&#039;);
+        var appConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;]);
+        var searchConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;search&#039;]);
+
+        var searchStoreFactory = new SearchStoreFactory();
+        var searchItemFactory = new SearchItemFactory();
+        var searchClient = new SearchClient(searchConfig, this.appQuitHandler, &#039;mainIndex&#039;, searchStoreFactory, searchItemFactory, {
+            onOpenCallback: function () {
+                callback(searchConfig, searchClient);
+            }
+        });
+    },
+    startUi: function (gui) {
+        var uiConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;ui&#039;]);
+
+        this.addUiComponent(new UiFolderDropzoneComponent(gui.Window));
+
+        var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
+    },
+    startTopology: function (dataPath, win) {
+        var appConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;]);
         var netConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;net&#039;]);
         var protocolConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;protocol&#039;]);
         var topologyConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;topology&#039;]);
-
+        var hydraConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;hydra&#039;]);
         var tcpSocketHandlerFactory = new TCPSocketHandlerFactory();
-        var freeGeoIp = new FreeGeoIp();
-
+        var jsonWebIp = new JSONWebIp();
         var nodeAddressFactory = new ContactNodeAddressFactory();
-
-        var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, netConfig, [freeGeoIp]);
+        var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, netConfig, [jsonWebIp]);
+        var protocolGateway = null;
 
         networkBootstrapper.bootstrap(function (err) {
+            var _this = this;
             if (err) {
-                console.log(&#039;Network Bootstrapper: ERROR&#039;);
+                logger.error(&#039;Network Bootstrapper: ERROR&#039;, {
+                    err: err
+                });
                 return;
             }
 
@@ -132,70 +248,49 @@ var App = {
             var addressList = [];
 
             var myNode = null;
-            var protocolConnectionManager = null;
-            var generalWritableMessageFactory = null;
+
             var bucketStore = null;
             var bucketFactory = null;
             var contactNodeFactory = null;
             var routingTable = null;
 
-            if (myOpenPorts.length === 0) {
-                console.log(&#039;NO PORTS OPEN. ERROR&#039;);
-                return;
-            }
-
-            console.log(&#039;bootstrapped the network&#039;);
+            logger.info(&#039;bootstrapped the network&#039;);
 
             for (var i = 0; i &lt; myOpenPorts.length; i++) {
                 addressList.push(nodeAddressFactory.create(myIp, myOpenPorts[i]));
             }
 
-            // switch on ports for id
-            var hexVal = myOpenPorts[0] === 30415 ? &#039;0020000000000000009400010100000050f40602&#039; : &#039;0a0000000000000078f406020100000005000000&#039;;
-            var myId = new Id(Id.byteBufferByHexString(hexVal, 20), 160);
+            var handlerFactory = new JSONStateHandlerFactory();
+            var idState = handlerFactory.create(path.resolve(dataPath, &#039;myId.json&#039;));
 
-            myNode = new MyNode(myId, addressList);
-            protocolConnectionManager = new ProtocolConnectionManager(protocolConfig, tcpSocketHandler);
-            generalWritableMessageFactory = new GeneralWritableMessageFactory(myNode);
-            bucketStore = new BucketStore(&#039;foo&#039;, topologyConfig.get(&#039;topology.bucketStore.databasePath&#039;));
-            bucketFactory = new BucketFactory();
-            contactNodeFactory = new ContactNodeFactory();
-            routingTable = new RoutingTable(topologyConfig, myId, bucketFactory, bucketStore, contactNodeFactory);
+            idState.load(function (err, state) {
+                var myId = null;
 
-            if (myOpenPorts[0] === 30415) {
-                console.log(&#039;In Port 30415. johnny&#039;);
+                if (state &amp;&amp; state.id) {
+                    myId = new Id(Id.byteBufferByHexString(state.id, 20), 160);
+                } else {
+                    state = {};
+                    var randBuffer = crypto.randomBytes(20);
+                    state.id = randBuffer.toString(&#039;hex&#039;);
+                    idState.save(state, function () {
+                    });
 
-                // initializer
-                var remoteNodeId = new Id(Id.byteBufferByHexString(&#039;0a0000000000000078f406020100000005000000&#039;, 20), 160);
-                var remoteContact = new ContactNode(remoteNodeId, [new ContactNodeAddress(myIp, 30414)], Date.now());
+                    myId = new Id(randBuffer, 160);
+                }
 
-                generalWritableMessageFactory.setReceiver(remoteContact);
-                generalWritableMessageFactory.setMessageType(&#039;PING&#039;);
-                var buf = generalWritableMessageFactory.constructMessage(new Buffer(0));
+                logger.info(&#039;My ID is: &#039; + myId.toHexString());
 
-                protocolConnectionManager.writeBufferTo(remoteContact, buf, function (err) {
-                    if (err)
-                        console.log(err);
-                });
+                myNode = new MyNode(myId, addressList);
 
-                protocolConnectionManager.on(&#039;message&#039;, function (message) {
-                    console.log(&#039;Message from &#039; + message.getSender().getId().toHexString() + &#039;: &#039; + message.getMessageType());
-                });
-            } else {
-                console.log(&#039;In Port 30414. joern&#039;);
-                protocolConnectionManager.on(&#039;message&#039;, function (message) {
-                    if (message.getMessageType() === &#039;PING&#039;) {
-                        console.log(&#039;Message from &#039; + message.getSender().getId().toHexString() + &#039;: &#039; + message.getMessageType());
-                        generalWritableMessageFactory.setReceiver(message.getSender());
-                        generalWritableMessageFactory.setMessageType(&#039;PONG&#039;);
-                        var buf = generalWritableMessageFactory.constructMessage(new Buffer(0));
+                bucketStore = new BucketStore(&#039;foo&#039;, topologyConfig.get(&#039;topology.bucketStore.databasePath&#039;));
+                bucketFactory = new BucketFactory();
+                contactNodeFactory = new ContactNodeFactory();
+                routingTable = new RoutingTable(topologyConfig, _this.appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory);
 
-                        protocolConnectionManager.writeBufferTo(message.getSender(), buf);
-                    }
-                });
-            }
+                protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable);
 
-            console.log(&#039;everything set up!&#039;);
+                protocolGateway.start();
+            });
         });
     }
 };

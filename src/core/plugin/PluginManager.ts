@@ -13,10 +13,11 @@ import PluginInterface = require('./interfaces/PluginInterface');
 import PluginManagerInterface = require('./interfaces/PluginManagerInterface');
 import PluginLoaderFactoryInterface = require('./interfaces/PluginLoaderFactoryInterface');
 import PluginLoaderInterface = require('./interfaces/PluginLoaderInterface');
-import PluginLoaderListInterface = require('./interfaces/PluginLoaderListInterface');
+import PluginLoaderMapInterface = require('./interfaces/PluginLoaderMapInterface');
+import PluginPathListInterface = require('./interfaces/PluginPathListInterface');
 import PluginRunnerFactoryInterface = require('./interfaces/PluginRunnerFactoryInterface');
 import PluginRunnerInterface = require('./interfaces/PluginRunnerInterface');
-import PluginRunnerListInterface = require('./interfaces/PluginRunnerListInterface');
+import PluginRunnerMapInterface = require('./interfaces/PluginRunnerMapInterface');
 import PluginStateInterface = require('./interfaces/PluginStateInterface');
 import PluginStateObjectInterface = require('./interfaces/PluginStateObjectInterface');
 import PluginStateObjectListInterface = require('./interfaces/PluginStateObjectListInterface');
@@ -25,7 +26,7 @@ import PluginValidatorInterface = require('./interfaces/PluginValidatorInterface
 import ObjectUtils = require('../utils/ObjectUtils');
 
 /**
- * todo implement StateHandler!
+ * PluginManagerInterface implementation
  *
  * @class core.plugin.PluginManager
  * @implements PluginManagerInterface
@@ -50,6 +51,8 @@ class PluginManager implements PluginManagerInterface {
 	 *
 	 * - pluginAdded
 	 * - pluginRemoved
+	 *
+	 * @member {events.EventEmitter} core.plugin.PluginManager~_eventEmitter
 	 */
 	private _eventEmitter:events.EventEmitter = null;
 
@@ -61,7 +64,9 @@ class PluginManager implements PluginManagerInterface {
 	private _isOpen:boolean = false;
 
 	/**
+	 * todo specify object type in docs
 	 *
+	 * @member {Object} core.plugin.PluginManager~_mimeTypeMap
 	 */
 	private _mimeTypeMap:{ [mimeType:string]:Array<string>; } = {};
 
@@ -87,7 +92,7 @@ class PluginManager implements PluginManagerInterface {
 	 *
 	 * @member {core.plugin.PluginLoadersListInterface} core.plugin.PluginManager~_pluginLoaders
 	 */
-	private _pluginLoaders:PluginLoaderListInterface = {};
+	private _pluginLoaders:PluginLoaderMapInterface = {};
 
 	/**
 	 * The internally used {@link core.plugin.PluginRunnerFactoryInterface} instance
@@ -99,9 +104,9 @@ class PluginManager implements PluginManagerInterface {
 	/**
 	 * The list of (active) {@link core.plugin.PluginRunnerInterface}
 	 *
-	 * @member {core.plugin.PluginRunnerListInterface} core.plugin.PluginManager~_pluginRunners
+	 * @member {core.plugin.PluginRunnerMapInterface} core.plugin.PluginManager~_pluginRunners
 	 */
-	private _pluginRunners:PluginRunnerListInterface = {};
+	private _pluginRunners:PluginRunnerMapInterface = {};
 
 	/**
 	 * Represents the state of activated, deactivated and idle plugins
@@ -158,15 +163,9 @@ class PluginManager implements PluginManagerInterface {
 			var plugins:PluginStateObjectListInterface = this._pluginState.active;
 			var activated:number = 0;
 			var errors:Array<Error> = [];
-			var manager = this;
 
-			return (function activatePlugin (i) {
-				if (i >= plugins.length) {
-					// callback
-					return;
-				}
-
-				manager._activatePlugin(plugins[i], function (err:Error) {
+			for (var i = 0, l = plugins.length; i < l; i++) {
+				this._activatePlugin(plugins[i], (err:Error) => {
 					activated++;
 
 					if (err) {
@@ -176,12 +175,13 @@ class PluginManager implements PluginManagerInterface {
 					if (activated === plugins.length) {
 						// todo implement error callback!
 						internalCallback(null);
-						manager._pluginStateIsActive = true;
+						this._pluginStateIsActive = true;
 					}
 				});
-
-				return process.nextTick(activatePlugin.bind(null, i + 1));
-			}(0));
+			}
+		}
+		else {
+			return process.nextTick(internalCallback.bind(null, null));
 		}
 	}
 
@@ -217,21 +217,17 @@ class PluginManager implements PluginManagerInterface {
 
 	}
 
-	public findNewPlugins (callback?:(err:Error) => void):void {
+	public findNewPlugins (callback?:(err:Error, pluginPaths:PluginPathListInterface) => void):void {
 		var internalCallback = callback || function (err:Error) {
 		};
 
 		this._pluginFinder.findPlugins(internalCallback);
 	}
 
-	public getActivePluginRunners (callback:(pluginRunners:PluginRunnerListInterface) => void):void {
+	public getActivePluginRunners (callback:(pluginRunners:PluginRunnerMapInterface) => void):void {
 		return process.nextTick(callback.bind(null, this._pluginRunners));
 	}
 
-	/**
-	 * @param {string} identifier
-	 * @returns {core.plugin.PluginRunnerInterface}
-	 */
 	public getActivePluginRunner (identifier:string, callback:(pluginRunner:PluginRunnerInterface) => void):void {
 		var runner:PluginRunnerInterface = this._pluginRunners[identifier] ? this._pluginRunners[identifier] : null;
 
@@ -240,14 +236,14 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	// todo check file extension
-	public getPluginRunnersForItem (itemPath:string, callback:(pluginRunners:PluginRunnerListInterface) => void):void {
+	public getPluginRunnersForItem (itemPath:string, callback:(pluginRunners:PluginRunnerMapInterface) => void):void {
 		var mimeType = this._getMimeType(itemPath);
-		var responsibleRunners:PluginRunnerListInterface = {};
+		var responsibleRunners:PluginRunnerMapInterface = {};
 		// todo replace array<string> with PluginIdentifierListInterface
 		var map:Array<string> = this._mimeTypeMap[mimeType];
 
 		if (map && map.length) {
-			for (var i in map) {
+			for (var i = 0, l = map.length; i < l; i++) {
 				var key:string = map[i];
 
 				responsibleRunners[key] = this._pluginRunners[key];
@@ -267,7 +263,7 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, fileHash:string, callback:(pluginDatas:Object) => any):void {
-		this.getPluginRunnersForItem(itemPath, (runners:PluginRunnerListInterface) => {
+		this.getPluginRunnersForItem(itemPath, (runners:PluginRunnerMapInterface) => {
 			var runnersLength:number = Object.keys(runners).length;
 			var counter:number = 0;
 			var useApacheTika:Array<string> = [];
@@ -293,16 +289,19 @@ class PluginManager implements PluginManagerInterface {
 
 						for (var key in runners) {
 							// call the plugin!
-							runners[key].onBeforeItemAdd(itemPath, stats, globals, (data:Object) => {
+							runners[key].onBeforeItemAdd(itemPath, stats, globals, (err:Error, data:Object) => {
 								counter++;
 
-								mergedPluginData[key] = data;
+								if (err) {
+									console.log(err);
+								}
+								else if (data) {
+									mergedPluginData[key] = data;
+								}
 
 								checkAndSendCallback();
 							});
 						}
-
-						//console.log(JSON.stringify(mergedPluginData));
 					});
 				}
 				else {
@@ -339,7 +338,7 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	public open (callback?:(err:Error) => any):void {
-		var internalCallback = callback || this._options.onCloseCallback;
+		var internalCallback = callback || this._options.onOpenCallback;
 
 		if (this._isOpen) {
 			return process.nextTick(internalCallback.bind(null, null));
@@ -368,7 +367,10 @@ class PluginManager implements PluginManagerInterface {
 	 * The PluginManager is going to activate the plugin. But before we're going to run thirdparty code within
 	 * the app we validate the plugin using a {@link core.plugin.PluginValidatorInterface}.
 	 *
-	 * todo deactivate plugin
+	 * @member {core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_activatePlugin
+	 *
+	 * @param {core.plugin.PluginStateObjectInterface} pluginState
+	 * @param {Function} callback
 	 */
 	private _activatePlugin (pluginState:PluginStateObjectInterface, callback:(err:Error) => void):void {
 		var internalCallback = callback || function (err:Error) {
@@ -381,15 +383,13 @@ class PluginManager implements PluginManagerInterface {
 				return internalCallback(err);
 			}
 			else {
-				this._pluginRunners[identifier] = this._pluginRunnerFactory.create(this._config, pluginState.name, pluginState.path);
-
 				// register plugin to mime type list
 				// todo create extensions list
 				var pluginLoader:PluginLoaderInterface = this._pluginLoaderFactory.create(this._config, pluginState.path);
 				var mimeTypes:Array<string> = pluginLoader.getFileMimeTypes();
 
 				if (mimeTypes.length) {
-					for (var i in mimeTypes) {
+					for (var i = 0, l = mimeTypes.length; i < l; i++) {
 						var mimeType:string = mimeTypes[i];
 
 						if (!this._mimeTypeMap[mimeType]) {
@@ -402,6 +402,7 @@ class PluginManager implements PluginManagerInterface {
 				}
 
 				this._pluginLoaders[identifier] = pluginLoader;
+				this._pluginRunners[identifier] = this._pluginRunnerFactory.create(this._config, pluginState.name, pluginLoader.getMain());
 
 				this._eventEmitter.emit('pluginAdded', identifier);
 
@@ -411,14 +412,14 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	/**
-	 * Returns the path where the manager should load/store the plugin state
+	 * Returns the absolute path where the manager should load and store the plugin state
 	 *
 	 * @method core.plugin.PluginManager~_getManagerStoragePath
 	 *
 	 * @returns {string} The path to load from/store to
 	 */
 	private _getManagerStoragePath ():string {
-		return path.join(this._config.get('app.dataPath'), 'pluginManager.json');
+		return path.resolve(this._config.get('app.dataPath'), 'pluginManager.json');
 	}
 
 	/**
@@ -443,22 +444,41 @@ class PluginManager implements PluginManagerInterface {
 	 * todo define pluginState
 	 *
 	 * @method core.plugin.PluginManager~_loadPluginState
+	 *
+	 * @param {Function} callback
 	 */
 	private _loadPluginState (callback:(err:Error, pluginState:any) => void):void {
 		//console.log('loading the plugin state from the preferences!');
 		fs.readJson(this._getManagerStoragePath(), (err:Error, data:Object) => {
-			if (err) {
-				// check for syntax errors
-				console.log(err);
+			var hasPlugins:boolean = data ? data.hasOwnProperty('plugins') : false;
+
+			// no file or no plugins
+			if (err && err.name === 'ENOENT' || !hasPlugins) {
+				callback(null, null);
+			}
+			else if (hasPlugins) {
+				callback(null, data['plugins']);
 			}
 			else {
-				if (data.hasOwnProperty('plugins')) {
-					callback(null, data['plugins']);
-				}
-				else {
-					callback(null, null);
-				}
+				// check for syntax errors
+				console.warn(err);
 			}
+
+			/*if (err) {
+
+			 console.log(err);
+			 if (err.code === 'ENOENT') {
+
+			 }
+			 }
+			 else {
+			 if (data.hasOwnProperty('plugins')) {
+			 callback(null, data['plugins']);
+			 }
+			 else {
+			 callback(null, null);
+			 }
+			 }*/
 		});
 	}
 
@@ -467,7 +487,9 @@ class PluginManager implements PluginManagerInterface {
 	 *
 	 * todo define pluginState
 	 *
-	 * @method core.plugin.PluginManagerInterface#savePluginState
+	 * @method core.plugin.PluginManagerInterface~_savePluginState
+	 *
+	 * @param {Function} callback
 	 */
 	private _savePluginState (callback:(err:Error) => void):void {
 		var state = {
@@ -479,22 +501,21 @@ class PluginManager implements PluginManagerInterface {
 		});
 	}
 
+	/**
+	 * Loads additional data for the specified path that are required for a plugin that uses `Apache Tika`.
+	 *
+	 * @method core.plugin.PluginManagerInterface~_loadApacheTikaGlobals
+	 *
+	 * @param {string} itemPath
+	 * @param {Function} callback
+	 */
 	private _loadApacheTikaGlobals (itemPath:string, callback:Function):void {
 		var tikaGlobals = {
 		};
 
-		callback(null, tikaGlobals);
-	}
-
-	private _loadGlobals (itemPath:string, fileHash:string, callback:(err:Error, globals:Object) => any):void {
-		var globals = {
-			fileBuffer: null,
-			fileHash: fileHash
-		};
-
 		fs.stat(itemPath, function (err:Error, stats:fs.Stats) {
 			if (err) {
-				return callback(err, null);
+				return callback(err, tikaGlobals);
 			}
 			else if (stats.isFile()) {
 				fs.readFile(itemPath, function (err:Error, data:Buffer) {
@@ -502,12 +523,31 @@ class PluginManager implements PluginManagerInterface {
 						return callback(err, null);
 					}
 					else {
-						globals['fileBuffer'] = data;
-						return callback(null, globals);
+						tikaGlobals['fileBuffer'] = data.toString('base64');
+						return callback(null, tikaGlobals);
 					}
 				})
 			}
 		});
+		//callback(null, tikaGlobals);
+	}
+
+	/**
+	 * Loads the default globals used by every plugin type.
+	 *
+	 * @method core.plugin.PluginManagerInterface~_loadGlobals
+	 *
+	 * @param {string} itemPath
+	 * @param {string} fileHash
+	 * @param {Function} callback
+	 */
+	private _loadGlobals (itemPath:string, fileHash:string, callback:(err:Error, globals:Object) => any):void {
+		var globals = {
+			fileBuffer: null,
+			fileHash  : fileHash
+		};
+
+		callback(null, globals);
 	}
 
 }

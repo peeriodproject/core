@@ -125,7 +125,7 @@ class Bucket implements BucketInterface {
 		var contacts:ContactNodeListInterface = [];
 
 		if (storedObjects && storedObjects.length) {
-			for (var i in storedObjects) {
+			for (var i = 0, l = storedObjects.length; i < l; i++) {
 				contacts.push(this._convertToContactNodeInstance(storedObjects[i]));
 			}
 		}
