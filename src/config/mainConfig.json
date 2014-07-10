@@ -66,7 +66,7 @@
         "minimumNumberOfRelayNodes": 3,
         "maximumNumberOfRelayNodes": 3,
         "additiveSharingNodeAmount": 4,
-        "waitForAdditiveBatchFinishInSeconds": 5,
+        "waitForAdditiveBatchFinishInSeconds": 10,
         "nodePicker": {
             "allowIdenticalIps": true,
             "roundThreshold": 2,
@@ -74,12 +74,12 @@
             "errorThreshold": 5
         },
         "circuit": {
-            "extensionReactionTimeBaseInSeconds": 5,
-            "extensionReactionTimeFactor": 1.2,
+            "extensionReactionTimeBaseInSeconds": 10,
+            "extensionReactionTimeFactor": 1.5,
             "maximumExtensionRetries": 3
         },
         "cell": {
-            "extensionReactionInSeconds": 5
+            "extensionReactionInSeconds": 10
         }
     },
     "plugin"  : {
