@@ -201,7 +201,7 @@ var SearchStore = (function () {
                     logger.error('SearchStore~_startUpDatabaseServer: could not read elasticsearch process id!');
                     return callback(err);
                 } else {
-                    logger.log('search', 'SearchStore~_startUpDatabaseServer: database is running with pid:', pid);
+                    logger.log('search', 'SearchStore~_startUpDatabaseServer: database is running', { pid: pid });
                 }
 
                 _this._databaseServerProcessId = pid;
