@@ -203,7 +203,7 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 			var circuitNode:HydraNode = this._removeFromCircuitNodesByIdentifier(identifier, false);
 
 			if (circuitNode) {
-				this.emit('circuitTermination', circuitNode.circuitId);
+				this.emit('circuitTermination', circuitNode.circuitId, identifier);
 			}
 		});
 

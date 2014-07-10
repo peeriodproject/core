@@ -183,7 +183,7 @@ var ConnectionManager = (function (_super) {
             var circuitNode = _this._removeFromCircuitNodesByIdentifier(identifier, false);
 
             if (circuitNode) {
-                _this.emit('circuitTermination', circuitNode.circuitId);
+                _this.emit('circuitTermination', circuitNode.circuitId, identifier);
             }
         });
 

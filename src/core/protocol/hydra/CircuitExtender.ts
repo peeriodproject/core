@@ -186,8 +186,10 @@ class CircuitExtender implements CircuitExtenderInterface {
 				this._onReaction(from, message, decrypted);
 			};
 
-			this._circuitTerminationListener = (circuitId:string) => {
+			this._circuitTerminationListener = (circuitId:string, socketIdentifier:string) => {
 				if (circuitId === this._circuitId) {
+					logger.log('hydra', 'Socket terminated', {identifier:socketIdentifier});
+
 					this._onCircuitTermination();
 				}
 			};

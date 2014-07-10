@@ -160,8 +160,10 @@ var CircuitExtender = (function () {
                 _this._onReaction(from, message, decrypted);
             };
 
-            this._circuitTerminationListener = function (circuitId) {
+            this._circuitTerminationListener = function (circuitId, socketIdentifier) {
                 if (circuitId === _this._circuitId) {
+                    logger.log('hydra', 'Socket terminated', { identifier: socketIdentifier });
+
                     _this._onCircuitTermination();
                 }
             };
