@@ -12,6 +12,7 @@ import ContactNodeAddress = require('../../../../src/core/topology/ContactNodeAd
 import ContactNode = require('../../../../src/core/topology/ContactNode');
 import HydraNode = require('../../../../src/core/protocol/hydra/interfaces/HydraNode');
 import ObjectConfig = require('../../../../src/core/config/ObjectConfig');
+import TCPSocketHandler = require('../../../../src/core/net/tcp/TCPSocketHandler');
 
 describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 
@@ -52,6 +53,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 
 	var routingTable:any = null;
 	var config:any = null;
+	var tcpSocketHandler:any = null;
 
 	var createRandomList = function (ips:Array<string>) {
 		randomNodeList = [];
@@ -87,6 +89,15 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 
 			}
 		});
+
+		tcpSocketHandler = testUtils.stubPublicApi(sandbox, TCPSocketHandler, {
+			getMyExternalIp: function () {
+				return 'foobar';
+			},
+			getOpenServerPortsArray: function () {
+				return [666];
+			}
+		});
 	});
 
 	after(function () {
@@ -94,7 +105,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> NodePicker', function () {
 	});
 
 	it('should correctly instantiate', function () {
-		nodePicker = new NodePicker(config, 3, routingTable);
+		nodePicker = new NodePicker(config, 3, routingTable, tcpSocketHandler);
 
 		nodePicker.should.be.instanceof(NodePicker);
 		nodePicker.getAdditiveNodeAmount().should.equal(3);

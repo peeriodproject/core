@@ -9,9 +9,10 @@ var logger = require('../../utils/logger/LoggerFactory').create();
 * @param {core.config.ConfigInterface} hydraConfig Hydra configuration
 * @param {number} relayNodeAmount Number of nodes which will be returned on a call to `pickRelayNodeBatch`
 * @param {core.topology.RoutingTableInterface} routingTable A routing table instance where all nodes will be picked from.
+* @param {core.net.tcp.TCPSocketHandlerInterface} tcpSocketHandler Working TCP socket handler
 */
 var NodePicker = (function () {
-    function NodePicker(hydraConfig, relayNodeAmount, routingTable) {
+    function NodePicker(hydraConfig, relayNodeAmount, routingTable, tcpSocketHandler) {
         /**
         * The number of nodes which will be chosen on a call to `pickNextAdditiveNodeBatch`.
         * This gets populated by the config.
@@ -62,6 +63,12 @@ var NodePicker = (function () {
         */
         this._routingTable = null;
         /**
+        * TCP Socket handler to check node addresses against own addresses.
+        *
+        * @member {core.net.tcp.TCPSocketHandlerInterface} core.protocol.hydra.NodePicker~_tcpSocketHandler
+        */
+        this._tcpSocketHandler = null;
+        /**
         * Maximum number of nodes which have been chosen in previous additive rounds that can be used in subsequent rounds.
         * (this is per round)
         *
@@ -81,6 +88,7 @@ var NodePicker = (function () {
         this._waitingTimeInMs = hydraConfig.get('hydra.nodePicker.waitingTimeInSeconds') * 1000;
         this._errorThreshold = hydraConfig.get('hydra.nodePicker.errorThreshold');
         this._routingTable = routingTable;
+        this._tcpSocketHandler = tcpSocketHandler;
     }
     /**
     * BEGIN TESTING PURPOSES ONLY
@@ -206,6 +214,19 @@ var NodePicker = (function () {
     };
 
     /**
+    * Checks if the ip and port of a chosen node is similar to the machine's own address.
+    * This can happen if this node proxies for others, i.e. the own address appears in the routing table.
+    *
+    * @method core.protocol.hydra.NodePicker~_nodeIsSelf
+    *
+    * @param {core.protocol.hydra.HydraNode} node The node to check.
+    * @returns {boolean}
+    */
+    NodePicker.prototype._nodeIsSelf = function (node) {
+        return this._tcpSocketHandler.getMyExternalIp() === node.ip && (this._tcpSocketHandler.getOpenServerPortsArray().indexOf(node.port) > -1);
+    };
+
+    /**
     * The main method which picks random nodes from the routing table and returns them (via a callback) as an array.
     * It follows the rules specified in {@link core.protocol.hydra.NodePickerInterface}.
     *
@@ -237,7 +258,7 @@ var NodePicker = (function () {
                     if (!err && contactNode) {
                         var node = _this._contactNodeToRandHydraNode(contactNode);
 
-                        if (node && !_this._nodeExistsInBatch(node, returnBatch) && (!avoidRelayNodes || !_this._nodeExistsInBatch(node, _this._relayNodes))) {
+                        if (node && !_this._nodeIsSelf(node) && !_this._nodeExistsInBatch(node, returnBatch) && (!avoidRelayNodes || !_this._nodeExistsInBatch(node, _this._relayNodes))) {
                             if (!_this._nodeExistsInBatch(node, _this._nodesUsed)) {
                                 noError = true;
                                 returnBatch.push(node);

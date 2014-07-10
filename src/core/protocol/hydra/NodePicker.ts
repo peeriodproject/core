@@ -6,6 +6,7 @@ import ConfigInterface = require('../../config/interfaces/ConfigInterface');
 import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInterface');
 import ContactNodeAddressListInterface = require('../../topology/interfaces/ContactNodeAddressListInterface');
 import ContactNodeAddressInterface = require('../../topology/interfaces/ContactNodeAddressInterface');
+import TCPSocketHandlerInterface = require('../../net/tcp/interfaces/TCPSocketHandlerInterface');
 
 var logger = require('../../utils/logger/LoggerFactory').create();
 
@@ -18,6 +19,7 @@ var logger = require('../../utils/logger/LoggerFactory').create();
  * @param {core.config.ConfigInterface} hydraConfig Hydra configuration
  * @param {number} relayNodeAmount Number of nodes which will be returned on a call to `pickRelayNodeBatch`
  * @param {core.topology.RoutingTableInterface} routingTable A routing table instance where all nodes will be picked from.
+ * @param {core.net.tcp.TCPSocketHandlerInterface} tcpSocketHandler Working TCP socket handler
  */
 class NodePicker implements NodePickerInterface {
 
@@ -78,6 +80,13 @@ class NodePicker implements NodePickerInterface {
 	_routingTable:RoutingTableInterface = null;
 
 	/**
+	 * TCP Socket handler to check node addresses against own addresses.
+	 *
+	 * @member {core.net.tcp.TCPSocketHandlerInterface} core.protocol.hydra.NodePicker~_tcpSocketHandler
+	 */
+	_tcpSocketHandler:TCPSocketHandlerInterface = null;
+
+	/**
 	 * Maximum number of nodes which have been chosen in previous additive rounds that can be used in subsequent rounds.
 	 * (this is per round)
 	 *
@@ -92,7 +101,7 @@ class NodePicker implements NodePickerInterface {
 	 */
 	_waitingTimeInMs:number = 0;
 
-	public constructor (hydraConfig:ConfigInterface, relayNodeAmount:number, routingTable:RoutingTableInterface) {
+	public constructor (hydraConfig:ConfigInterface, relayNodeAmount:number, routingTable:RoutingTableInterface, tcpSocketHandler:TCPSocketHandlerInterface) {
 		this._relayNodeAmount = relayNodeAmount;
 		this._allowIdenticalIps = hydraConfig.get('hydra.nodePicker.allowIdenticalIps');
 		this._additiveNodeAmount = hydraConfig.get('hydra.additiveSharingNodeAmount');
@@ -100,6 +109,7 @@ class NodePicker implements NodePickerInterface {
 		this._waitingTimeInMs = hydraConfig.get('hydra.nodePicker.waitingTimeInSeconds') * 1000;
 		this._errorThreshold = hydraConfig.get('hydra.nodePicker.errorThreshold');
 		this._routingTable = routingTable;
+		this._tcpSocketHandler = tcpSocketHandler;
 	}
 
 	/**
@@ -224,6 +234,19 @@ class NodePicker implements NodePickerInterface {
 	}
 
 	/**
+	 * Checks if the ip and port of a chosen node is similar to the machine's own address.
+	 * This can happen if this node proxies for others, i.e. the own address appears in the routing table.
+	 *
+	 * @method core.protocol.hydra.NodePicker~_nodeIsSelf
+	 *
+	 * @param {core.protocol.hydra.HydraNode} node The node to check.
+	 * @returns {boolean}
+	 */
+	private _nodeIsSelf (node:HydraNode):boolean {
+		return this._tcpSocketHandler.getMyExternalIp() === node.ip && (this._tcpSocketHandler.getOpenServerPortsArray().indexOf(node.port) > -1);
+	}
+
+	/**
 	 * The main method which picks random nodes from the routing table and returns them (via a callback) as an array.
 	 * It follows the rules specified in {@link core.protocol.hydra.NodePickerInterface}.
 	 *
@@ -258,7 +281,7 @@ class NodePicker implements NodePickerInterface {
 
 						var node:HydraNode = this._contactNodeToRandHydraNode(contactNode);
 
-						if (node && !this._nodeExistsInBatch(node, returnBatch) && (!avoidRelayNodes || !this._nodeExistsInBatch(node, this._relayNodes))) {
+						if (node && !this._nodeIsSelf(node) && !this._nodeExistsInBatch(node, returnBatch) && (!avoidRelayNodes || !this._nodeExistsInBatch(node, this._relayNodes))) {
 
 							if (!this._nodeExistsInBatch(node, this._nodesUsed)) {
 								noError = true;
