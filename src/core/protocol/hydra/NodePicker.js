@@ -89,6 +89,8 @@ var NodePicker = (function () {
         this._errorThreshold = hydraConfig.get('hydra.nodePicker.errorThreshold');
         this._routingTable = routingTable;
         this._tcpSocketHandler = tcpSocketHandler;
+
+        console.log(this._tcpSocketHandler);
     }
     /**
     * BEGIN TESTING PURPOSES ONLY
