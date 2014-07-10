@@ -38,7 +38,23 @@ var IrcLoggerBackend = (function () {
 
         this._logger = new winLogger({
             transports: [],
-            exitOnError: false
+            exitOnError: false,
+            levels: {
+                debug: 0,
+                ping: 1,
+                proxy: 2,
+                findClosestNodes: 3,
+                nodeSeeker: 4,
+                hydra: 5,
+                query: 6,
+                topology: 7,
+                network: 8,
+                message: 9,
+                routingTable: 10,
+                info: 12,
+                error: 13,
+                warn: 14
+            }
         });
 
         this._addTransportBasedOnEnvironment();
