@@ -89,7 +89,7 @@ var names = [
     {
         "name": "Tran"
     },
-    {
+   /* {
         "name": "Cannon"
     },
     {
@@ -298,7 +298,7 @@ var names = [
     },
     {
         "name": "Jaclyn"
-    }
+    }*/
 ];
 
 module.exports = names;
