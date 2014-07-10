@@ -327,7 +327,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 				if (msgType === 'PROXY_ACCEPT' && Object.keys(this._confirmedProxies).length < this._maxNumberOfProxies) {
 					this._addToConfirmedProxies(identifier, sender);
 					this.emit('newProxy', sender);
-					logger.info('Got new proxy', {id: sender.getId().toHexString(), lengthNow: Object.keys(this._confirmedProxies).length});
+					logger.log('proxy', 'Got new proxy', {id: sender.getId().toHexString(), lengthNow: Object.keys(this._confirmedProxies).length});
 				}
 				else {
 					this.emit('proxyReject', sender);
@@ -343,7 +343,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 					if (!err) {
 						this._addToProxyingFor(identifier, sender);
 						this.emit('proxyingFor', sender);
-						logger.info('Proxying now for', {id: sender.getId().toHexString()});
+						logger.log('proxy', 'Proxying now for', {id: sender.getId().toHexString()});
 					}
 				});
 			}
@@ -495,7 +495,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 			this._ignoreProxies.push(identifier);
 
 			// this event is for testing purposes only
-			logger.info('Proxy request timed out', {identifier: identifier});
+			logger.log('proxy', 'Proxy request timed out', {identifier: identifier});
 			this.emit('requestProxyTimeout', identifier);
 			this._proxyCycleOnNextTick();
 		}
@@ -548,13 +548,13 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 					delete this._confirmedProxies[identifier];
 					this._updateMyNodeAddresses();
 					this.emit('lostProxy', confirmedProxy);
-					logger.info('Lost proxy', {id: confirmedProxy.getId().toHexString()})
+					logger.log('proxy', 'Lost proxy', {id: confirmedProxy.getId().toHexString()})
 				}
 				if (proxyingFor) {
 					this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(proxyingFor);
 					delete this._proxyingFor[identifier];
 					this.emit('lostProxyingFor', proxyingFor);
-					logger.info('No longer proxying for', {id: proxyingFor.getId().toHexString()})
+					logger.proxy('proxy', 'No longer proxying for', {id: proxyingFor.getId().toHexString()})
 				}
 
 

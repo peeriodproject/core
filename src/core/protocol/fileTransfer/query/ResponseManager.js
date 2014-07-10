@@ -1,5 +1,7 @@
 var FeedingNodesMessageBlock = require('../messages/FeedingNodesMessageBlock');
 
+var logger = require('../../../utils/logger/LoggerFactory').create();
+
 /**
 * ResponseManagerInterface implementation.
 *

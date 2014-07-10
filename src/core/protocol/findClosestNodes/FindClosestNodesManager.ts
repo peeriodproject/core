@@ -188,7 +188,7 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 
 			this._findClosestNodesCycleFactory.create(searchForId, startWithList, (resultingList:ContactNodeListInterface) => {
 				this._pendingCycles.splice(this._pendingCycles.indexOf(identifier), 1);
-				logger.info('Found closest nodes cycle done', {for: searchForId.toHexString()});
+				logger.log('findClosestNodes', 'Found closest nodes cycle done', {for: searchForId.toHexString()});
 				this.emit('foundClosestNodes', searchForId, resultingList);
 			});
 		}
@@ -219,7 +219,7 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 				payload = this._writableMessageFactory.constructPayload(searchForId, contacts);
 			}
 			catch (e) {
-				logger.error('Could not construct found closest ndoes message');
+				logger.error('Could not construct found closest nodes message');
 			}
 
 			if (payload) {

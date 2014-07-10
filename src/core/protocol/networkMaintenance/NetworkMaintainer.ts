@@ -144,7 +144,7 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 
 			this._prepopulateBucketRefreshes();
 
-			logger.info('Joining the network');
+			logger.log('topology', 'Joining the network');
 
 			this._proxyManager.on('contactNodeInformation', (node:ContactNodeInterface) => {
 				this._handleBucketAccess(node);
@@ -215,7 +215,7 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 	private _findEntryNodeAndJoin (avoidNode:ContactNodeInterface):void {
 
 		this._nodeSeekerManager.forceFindActiveNode(avoidNode, (node:ContactNodeInterface) => {
-			logger.info('Found an entry node, starting search for own id...', {with: node.getId().toHexString()});
+			logger.log('topology', 'Found an entry node, starting search for own id...', {with: node.getId().toHexString()});
 
 			this._findClosestNodesManager.startCycleFor(this._myIdToSearchFor, [node]);
 
@@ -224,13 +224,13 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 				//logger.info('Find closest nodes cycle finished', {for: searchForId.toHexString(), resultLen: resultingList.length});
 
 				if (!resultingList.length) {
-					logger.info('Resulting list is empty, trying to find another node.');
+					logger.log('topology', 'Resulting list is empty, trying to find another node.');
 					setImmediate(() => {
 						this._findEntryNodeAndJoin(node);
 					});
 				}
 				else {
-					logger.info('The initial contact query is done.', {resultLen: resultingList.length});
+					logger.log('topology', 'The initial contact query is done.', {resultLen: resultingList.length});
 					this.emit('initialContactQueryCompleted');
 					this._finalizeEntryWithBucketRefreshes();
 				}

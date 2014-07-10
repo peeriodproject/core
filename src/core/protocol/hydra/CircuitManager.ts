@@ -8,6 +8,8 @@ import HydraCircuitList = require('./interfaces/HydraCircuitList');
 import HydraNode = require('./interfaces/HydraNode');
 import HydraNodeList = require('./interfaces/HydraNodeList');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * CircuitManagerInterface implementation
  *
@@ -198,10 +200,14 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 			this._circuitsUnderConstruction.push(circuit);
 
 			circuit.once('isTornDown', () => {
+				logger.log('hydra', 'Circuit was torn down', {circuitId: circuit.getCircuitId(), numOfCircs: this._productionReadyCircuits.length});
+
 				this._onCircuitTeardown(circuit);
 			});
 
 			circuit.once('isConstructed', () => {
+				logger.log('hydra', 'Fully constructed circuit', {circuitId: circuit.getCircuitId(), numOfNodes: circuit.getCircuitNodes().length, numOfCircs: this._productionReadyCircuits.length});
+
 				this._onCircuitConstructed(circuit);
 			});
 

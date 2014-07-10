@@ -84,7 +84,11 @@ var App = {
             searchResponseManager.onResultsFound(function (identifier, results) {
                 var result = results.toString();
 
-                logger.info('Received query results', { result: result });
+                logger.log('query', 'Issuing query results', { queryIdent: identifier, result: result });
+            });
+
+            searchRequestManager.onQueryResultsChanged(function (identifier, results) {
+                logger.log('query', 'Received results', { queryIdent: identifier, result: results.toString() });
             });
 
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
@@ -191,7 +195,7 @@ var App = {
             var contactNodeFactory = null;
             var routingTable = null;
 
-            logger.info('bootstrapped the network');
+            logger.log('network', 'Bootstrapped the network');
 
             for (var i = 0; i < myOpenPorts.length; i++) {
                 addressList.push(nodeAddressFactory.create(myIp, myOpenPorts[i]));
@@ -215,7 +219,7 @@ var App = {
                     myId = new Id(randBuffer, 160);
                 }
 
-                logger.info('My ID is: ' + myId.toHexString());
+                logger.log('topology', 'My ID is: ' + myId.toHexString());
 
                 myNode = new MyNode(myId, addressList);
 
@@ -244,7 +248,7 @@ var App = {
                                 }
                             };
 
-                            logger.info('Starting query', { name: name, id: myId.toHexString() });
+                            logger.log('query', 'Starting query', { name: name, id: myId.toHexString() });
 
                             searchRequestManager.addQuery(queryBody);
                         });

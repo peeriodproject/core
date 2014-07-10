@@ -96,12 +96,12 @@ var TCPSocket = (function (_super) {
 
         this._uuid = s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 
-        logger.info('added socket');
+        logger.log('socket', 'Added socket');
     }
     TCPSocket.prototype.end = function (data, encoding) {
         if (this.getSocket() && !this._preventWrite) {
             this._preventWrite = true;
-            logger.info('socket ending...', { ident: this.getIdentifier() });
+            logger.log('socket', 'Socket ending...', { ident: this.getIdentifier() });
             this.getSocket().end(data, encoding);
         }
     };
@@ -147,7 +147,7 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.onTimeout = function () {
         if (this._closeOnTimeout) {
-            logger.info('timing out socket', { ident: this.getIdentifier(), sockid: this._uuid });
+            logger.log('socket', 'Timing out socket', { ident: this.getIdentifier(), sockid: this._uuid });
             this.end();
         }
     };
@@ -196,7 +196,7 @@ var TCPSocket = (function (_super) {
             });
 
             if (!_this._preventWrite) {
-                logger.info('preventing write', { ident: _this.getIdentifier(), sockid: _this._uuid });
+                logger.log('socket', 'preventing write', { ident: _this.getIdentifier(), sockid: _this._uuid });
             }
             _this._preventWrite = true;
 
@@ -208,12 +208,12 @@ var TCPSocket = (function (_super) {
 
         socket.on('close', function (had_error) {
             if (!_this._preventWrite) {
-                logger.info('preventing write', { ident: _this.getIdentifier(), sockid: _this._uuid });
+                logger.log('socket', 'preventing write', { ident: _this.getIdentifier(), sockid: _this._uuid });
             }
             _this._preventWrite = true;
             _this._socket = null;
 
-            logger.info('socket closed', { ident: _this.getIdentifier(), had_error: had_error, sockid: _this._uuid });
+            logger.log('socket', 'socket closed', { ident: _this.getIdentifier(), had_error: had_error, sockid: _this._uuid });
 
             _this.emit('destroy');
 
@@ -224,7 +224,7 @@ var TCPSocket = (function (_super) {
 
         socket.on('end', function () {
             if (!_this._preventWrite) {
-                logger.info('preventing write', { ident: _this.getIdentifier(), sockid: _this._uuid });
+                logger.log('socket', 'preventing write', { ident: _this.getIdentifier(), sockid: _this._uuid });
             }
             _this._preventWrite = true;
         });
