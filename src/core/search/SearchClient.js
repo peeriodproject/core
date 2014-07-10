@@ -470,7 +470,7 @@ var SearchClient = (function () {
         if (this._client) {
             this._client.indices.existsType({
                 index: this._indexName,
-                type: type
+                type: type.toLowerCase()
             }, function (err, response, status) {
                 return callback(response);
             });
