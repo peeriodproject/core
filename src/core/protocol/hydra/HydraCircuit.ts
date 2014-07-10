@@ -273,7 +273,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 				}
 				// error. tear down shit
 				else if (err) {
-					logger.log('Extension rendered an error. Circuit is tearing down', {error: err.message});
+					logger.log('hydra', 'Extension rendered an error. Circuit is tearing down', {error: err.message});
 
 					this._teardown(err.message.indexOf('Circuit socket terminated') === -1);
 				}

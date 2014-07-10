@@ -235,7 +235,7 @@ var HydraCircuit = (function (_super) {
                         });
                     }
                 } else if (err) {
-                    logger.log('Extension rendered an error. Circuit is tearing down', { error: err.message });
+                    logger.log('hydra', 'Extension rendered an error. Circuit is tearing down', { error: err.message });
 
                     _this._teardown(err.message.indexOf('Circuit socket terminated') === -1);
                 }
