@@ -274,7 +274,6 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 * @param {string} errMsg Message for the passed in error.
 	 */
 	private _extensionError (errMsg:string):void {
-		console.log(errMsg);
 		this._removeMessageListener();
 		this._removeTerminationListener();
 

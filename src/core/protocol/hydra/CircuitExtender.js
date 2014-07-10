@@ -243,7 +243,6 @@ var CircuitExtender = (function () {
     * @param {string} errMsg Message for the passed in error.
     */
     CircuitExtender.prototype._extensionError = function (errMsg) {
-        console.log(errMsg);
         this._removeMessageListener();
         this._removeTerminationListener();
 
