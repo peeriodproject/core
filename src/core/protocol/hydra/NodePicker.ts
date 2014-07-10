@@ -111,7 +111,7 @@ class NodePicker implements NodePickerInterface {
 		this._routingTable = routingTable;
 		this._tcpSocketHandler = tcpSocketHandler;
 
-		console.log(this._tcpSocketHandler);
+		//console.log(this._tcpSocketHandler);
 	}
 
 	/**
@@ -294,10 +294,10 @@ class NodePicker implements NodePickerInterface {
 								threshold++;
 								returnBatch.push(node);
 							}
-							logger.log('hydra', 'Node is accepted', {ip:node.ip, port:node.port});
+							//logger.log('hydra', 'Node is accepted', {ip:node.ip, port:node.port});
 						}
 						else {
-							logger.log('hydra', 'Node is already in return batch or in relay nodes', {ip:node.ip, port:node.port});
+							//logger.log('hydra', 'Node is already in return batch or in relay nodes', {ip:node.ip, port:node.port});
 						}
 					}
 

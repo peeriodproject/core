@@ -54,7 +54,8 @@ var IrcLoggerBackend = (function () {
                 search: 11,
                 info: 12,
                 error: 13,
-                warn: 14
+                warn: 14,
+                socket: 15
             }
         });
 
