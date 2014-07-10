@@ -99,7 +99,7 @@ var FolderWatcherManager = (function () {
             });
         }
 
-        this.open();
+        this.open(this._options.onOpenCallback);
         /*monitor.find(function(err, devices) {
         console.log('- - FOUND - -');
         console.log(err);
@@ -251,27 +251,31 @@ var FolderWatcherManager = (function () {
 
             _this._checkFolderWatcherPaths(pathsToWatch, function (err, invalidPaths, validPaths) {
                 if (err) {
-                    internalCallback(err);
-                } else {
-                    if (invalidPaths && invalidPaths.length) {
-                        for (var i = 0, l = invalidPaths.length; i < l; i++) {
-                            _this._addToInvalidWatcherPaths(invalidPaths[i]);
+                    console.error(err);
+                    return internalCallback(err);
+                }
+
+                console.log('invalid path', invalidPaths);
+                console.log('valid path', validPaths);
+
+                if (invalidPaths && invalidPaths.length) {
+                    for (var i = 0, l = invalidPaths.length; i < l; i++) {
+                        _this._addToInvalidWatcherPaths(invalidPaths[i]);
+                    }
+                }
+
+                if (validPaths && validPaths.length) {
+                    _this._createWatchers(validPaths, function (err) {
+                        if (!err) {
+                            _this._isOpen = true;
                         }
-                    }
 
-                    if (validPaths && validPaths.length) {
-                        _this._createWatchers(validPaths, function (err) {
-                            if (!err) {
-                                _this._isOpen = true;
-                            }
+                        return internalCallback(err);
+                    });
+                } else {
+                    _this._isOpen = true;
 
-                            return internalCallback(err);
-                        });
-                    } else {
-                        _this._isOpen = true;
-
-                        return internalCallback(null);
-                    }
+                    return internalCallback(null);
                 }
             });
         });

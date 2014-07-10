@@ -120,7 +120,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 			});
 		}
 
-		this.open();
+		this.open(this._options.onOpenCallback);
 		/*monitor.find(function(err, devices) {
 		 console.log('- - FOUND - -');
 		 console.log(err);
@@ -271,29 +271,32 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 
 			this._checkFolderWatcherPaths(pathsToWatch, (err:Error, invalidPaths:PathListInterface, validPaths:PathListInterface) => {
 				if (err) {
-					internalCallback(err);
+					console.error(err);
+					return internalCallback(err);
+				}
+
+				console.log('invalid path', invalidPaths);
+				console.log('valid path', validPaths);
+
+				if (invalidPaths && invalidPaths.length) {
+					for (var i = 0, l = invalidPaths.length; i < l; i++) {
+						this._addToInvalidWatcherPaths(invalidPaths[i]);
+					}
+				}
+
+				if (validPaths && validPaths.length) {
+					this._createWatchers(validPaths, (err:Error) => {
+						if (!err) {
+							this._isOpen = true;
+						}
+
+						return internalCallback(err);
+					});
 				}
 				else {
-					if (invalidPaths && invalidPaths.length) {
-						for (var i = 0, l = invalidPaths.length; i < l; i++) {
-							this._addToInvalidWatcherPaths(invalidPaths[i]);
-						}
-					}
+					this._isOpen = true;
 
-					if (validPaths && validPaths.length) {
-						this._createWatchers(validPaths, (err:Error) => {
-							if (!err) {
-								this._isOpen = true;
-							}
-
-							return internalCallback(err);
-						});
-					}
-					else {
-						this._isOpen = true;
-
-						return internalCallback(null);
-					}
+					return internalCallback(null);
 				}
 			});
 		});

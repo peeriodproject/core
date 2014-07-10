@@ -155,6 +155,12 @@ var IrcLoggerBackend = (function () {
                 level: 'debug',
                 handleExceptions: true
             });
+            /*this._logger.add(winston.transports.Console, {
+            silent   : false,
+            timestamp: true,
+            level    : 'debug',
+            handleExceptions: true
+            });*/
         }
     };
 

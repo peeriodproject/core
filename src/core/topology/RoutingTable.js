@@ -97,6 +97,7 @@ var RoutingTable = (function () {
         }
 
         this._isOpen = false;
+        logger.log('routingTable', 'closed');
 
         for (var key in this._buckets) {
             this._buckets[key].close();
@@ -323,6 +324,8 @@ var RoutingTable = (function () {
         }
 
         this._isOpen = true;
+
+        logger.log('routingTable', 'opened');
 
         return process.nextTick(internalCallback.bind(null, null));
     };
