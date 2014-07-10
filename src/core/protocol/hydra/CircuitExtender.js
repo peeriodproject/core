@@ -307,6 +307,8 @@ var CircuitExtender = (function () {
     * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} message The reaction message.
     */
     CircuitExtender.prototype._onReaction = function (from, message, decrypted) {
+        logger.log('hydraReaction', 'Received reaction', { circuitId: from.circuitId });
+
         if (this._expectReactionFrom === from && (!this._nodes.length || decrypted)) {
             this._clearReactionTimeout();
 
