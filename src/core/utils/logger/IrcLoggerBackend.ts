@@ -59,6 +59,7 @@ class IrcLoggerBackend implements LoggerInterface {
 				network: 8,
 				message: 9,
 				routingTable: 10,
+				search: 11,
 				info: 12,
 				error: 13,
 				warn: 14

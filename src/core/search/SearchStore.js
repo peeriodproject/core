@@ -5,6 +5,8 @@ var path = require('path');
 
 var ObjectUtils = require('../utils/ObjectUtils');
 
+var logger = require('../utils/logger/LoggerFactory').create();
+
 /**
 * @see http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/
 * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/setup-configuration.html
@@ -88,7 +90,7 @@ var SearchStore = (function () {
                 process.kill(this._databaseServerProcessId);
             } catch (err) {
                 // todo log process not found!
-                console.error('process was killed before...');
+                console.error('SearchStore#close: Database is already down.');
             }
         }
 
@@ -196,11 +198,15 @@ var SearchStore = (function () {
                 var pid = parseInt(data, 10);
 
                 if (err || isNaN(pid)) {
-                    callback(err);
+                    logger.error('SearchStore~_startUpDatabaseServer: could not read elasticsearch process id!');
+                    return callback(err);
                 } else {
-                    _this._databaseServerProcessId = pid;
-                    callback(null);
+                    logger.log('search', 'SearchStore~_startUpDatabaseServer: database is running with pid:', pid);
                 }
+
+                _this._databaseServerProcessId = pid;
+
+                return callback(null);
             });
         });
     };

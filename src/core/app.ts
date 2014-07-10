@@ -157,6 +157,7 @@ var App = {
 		var searchItemFactory = new SearchItemFactory();
 		var searchClient = new SearchClient(searchConfig, this.appQuitHandler, 'mainIndex', searchStoreFactory, searchItemFactory, {
 			onOpenCallback: function () {
+				logger.log('search', 'searchClient started');
 				callback(searchConfig, searchClient);
 			}
 		});
