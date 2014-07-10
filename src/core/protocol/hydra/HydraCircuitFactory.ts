@@ -8,6 +8,7 @@ import ConfigInterface = require('../../config/interfaces/ConfigInterface');
 import RoutingTableInterface = require('../../topology/interfaces/RoutingTableInterface');
 import LayeredEncDecHandlerFactoryInterface = require('./messages/interfaces/LayeredEncDecHandlerFactoryInterface');
 import CircuitExtenderFactoryInterface = require('./interfaces/CircuitExtenderFactoryInterface');
+import TCPSocketHandlerInterface = require('../../net/tcp/interfaces/TCPSocketHandlerInterface');
 
 /**
  * @class core.protocol.hydra.HydraCircuitFactory
@@ -19,6 +20,7 @@ import CircuitExtenderFactoryInterface = require('./interfaces/CircuitExtenderFa
  * @param {core.protocol.hydra.HydraMessageCenterInterface} messageCenter
  * @param {core.protocol.hydra.CircuitExtenderFactoryInterface} circuitExtenderFactory
  * @param {core.protocol.hydra.LayeredEncDecHandlerFactoryInterface} layeredEncDecHandlerFactory
+ * @param {core.net.tcp.TCPSocketHandlerInterface} tcpSocketHandler
  */
 class HydraCircuitFactory implements HydraCircuitFactoryInterface {
 
@@ -54,17 +56,23 @@ class HydraCircuitFactory implements HydraCircuitFactoryInterface {
 	 */
 	private _routingTable:RoutingTableInterface = null;
 
-	public constructor (hydraConfig:ConfigInterface, routingTable:RoutingTableInterface, connectionManager:ConnectionManagerInterface, messageCenter:HydraMessageCenterInterface, circuitExtenderFactory:CircuitExtenderFactoryInterface, layeredEncDecHandlerFactory:LayeredEncDecHandlerFactoryInterface) {
+	/**
+	 * @member {core.net.tcp.TCPSocketHandlerInterface} core.protocol.hydra.HyraCircuitFactory~_tcpSocketHandler
+	 */
+	private _tcpSocketHandler:TCPSocketHandlerInterface = null;
+
+	public constructor (hydraConfig:ConfigInterface, routingTable:RoutingTableInterface, connectionManager:ConnectionManagerInterface, messageCenter:HydraMessageCenterInterface, circuitExtenderFactory:CircuitExtenderFactoryInterface, layeredEncDecHandlerFactory:LayeredEncDecHandlerFactoryInterface, tcpSocketHandler:TCPSocketHandlerInterface) {
 		this._hydraConfig = hydraConfig;
 		this._routingTable = routingTable;
 		this._connectionManager = connectionManager;
 		this._messageCenter = messageCenter;
 		this._circuitExtenderFactory = circuitExtenderFactory;
 		this._layeredEncDecHandlerFactory = layeredEncDecHandlerFactory;
+		this._tcpSocketHandler = tcpSocketHandler;
 	}
 
 	public create (numOfRelayNodes:number):HydraCircuitInterface {
-		var nodePicker:NodePicker = new NodePicker(this._hydraConfig, numOfRelayNodes, this._routingTable);
+		var nodePicker:NodePicker = new NodePicker(this._hydraConfig, numOfRelayNodes, this._routingTable, this._tcpSocketHandler);
 
 		return new HydraCircuit(this._hydraConfig, numOfRelayNodes, nodePicker, this._messageCenter, this._connectionManager, this._layeredEncDecHandlerFactory, this._circuitExtenderFactory);
 	}
