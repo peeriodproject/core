@@ -302,7 +302,7 @@ var ProxyManager = (function (_super) {
                 if (msgType === 'PROXY_ACCEPT' && Object.keys(this._confirmedProxies).length < this._maxNumberOfProxies) {
                     this._addToConfirmedProxies(identifier, sender);
                     this.emit('newProxy', sender);
-                    logger.info('Got new proxy', { id: sender.getId().toHexString(), lengthNow: Object.keys(this._confirmedProxies).length });
+                    logger.log('proxy', 'Got new proxy', { id: sender.getId().toHexString(), lengthNow: Object.keys(this._confirmedProxies).length });
                 } else {
                     this.emit('proxyReject', sender);
                 }
@@ -316,7 +316,7 @@ var ProxyManager = (function (_super) {
                     if (!err) {
                         _this._addToProxyingFor(identifier, sender);
                         _this.emit('proxyingFor', sender);
-                        logger.info('Proxying now for', { id: sender.getId().toHexString() });
+                        logger.log('proxy', 'Proxying now for', { id: sender.getId().toHexString() });
                     }
                 });
             } else {
@@ -464,7 +464,7 @@ var ProxyManager = (function (_super) {
             this._ignoreProxies.push(identifier);
 
             // this event is for testing purposes only
-            logger.info('Proxy request timed out', { identifier: identifier });
+            logger.log('proxy', 'Proxy request timed out', { identifier: identifier });
             this.emit('requestProxyTimeout', identifier);
             this._proxyCycleOnNextTick();
         }
@@ -516,13 +516,13 @@ var ProxyManager = (function (_super) {
                     delete _this._confirmedProxies[identifier];
                     _this._updateMyNodeAddresses();
                     _this.emit('lostProxy', confirmedProxy);
-                    logger.info('Lost proxy', { id: confirmedProxy.getId().toHexString() });
+                    logger.log('proxy', 'Lost proxy', { id: confirmedProxy.getId().toHexString() });
                 }
                 if (proxyingFor) {
                     _this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(proxyingFor);
                     delete _this._proxyingFor[identifier];
                     _this.emit('lostProxyingFor', proxyingFor);
-                    logger.info('No longer proxying for', { id: proxyingFor.getId().toHexString() });
+                    logger.proxy('proxy', 'No longer proxying for', { id: proxyingFor.getId().toHexString() });
                 }
 
                 if (doStartCycle) {

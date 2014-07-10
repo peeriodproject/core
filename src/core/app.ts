@@ -88,7 +88,7 @@ var App = {
 			searchResponseManager.onResultsFound((identifier:string, results:Buffer) => {
 				var result = results.toString();
 
-				logger.info('Received query results', {result: result});
+				logger.log('query', 'Received query results', {result: result});
 			});
 
 			var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
@@ -200,7 +200,7 @@ var App = {
 			var routingTable = null;
 
 
-			logger.info('bootstrapped the network');
+			logger.log('network', 'Bootstrapped the network');
 
 			for (var i = 0; i < myOpenPorts.length; i++) {
 				addressList.push(nodeAddressFactory.create(myIp, myOpenPorts[i]));
@@ -227,7 +227,7 @@ var App = {
 				}
 
 
-				logger.info('My ID is: ' + myId.toHexString());
+				logger.log('topology', 'My ID is: ' + myId.toHexString());
 
 				myNode = new MyNode(myId, addressList);
 
@@ -256,7 +256,7 @@ var App = {
 								}
 							};
 
-							logger.info('Starting query', {name: name, id: myId.toHexString()});
+							logger.log('query', 'Starting query', {name: name, id: myId.toHexString()});
 
 							searchRequestManager.addQuery(queryBody);
 						});

@@ -104,14 +104,14 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		this._uuid = s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 
-		logger.info('added socket');
+		logger.log('socket', 'Added socket');
 	}
 
 	public end (data?:any, encoding?:string):void {
 
 		if (this.getSocket() && !this._preventWrite) {
 			this._preventWrite = true;
-			logger.info('socket ending...', {ident: this.getIdentifier()});
+			logger.log('socket', 'Socket ending...', {ident: this.getIdentifier()});
 			this.getSocket().end(data, encoding);
 
 		}
@@ -158,7 +158,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	public onTimeout ():void {
 		if (this._closeOnTimeout) {
-			logger.info('timing out socket', {ident: this.getIdentifier(), sockid: this._uuid});
+			logger.log('socket', 'Timing out socket', {ident: this.getIdentifier(), sockid: this._uuid});
 			this.end();
 		}
 	}
@@ -204,7 +204,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			});
 
 			if (!this._preventWrite) {
-				logger.info('preventing write', {ident: this.getIdentifier(), sockid: this._uuid});
+				logger.log('socket', 'preventing write', {ident: this.getIdentifier(), sockid: this._uuid});
 			}
 			this._preventWrite = true;
 
@@ -216,12 +216,12 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		socket.on('close', (had_error:boolean) => {
 			if (!this._preventWrite) {
-				logger.info('preventing write', {ident: this.getIdentifier(), sockid: this._uuid});
+				logger.log('socket', 'preventing write', {ident: this.getIdentifier(), sockid: this._uuid});
 			}
 			this._preventWrite = true;
 			this._socket = null;
 
-			logger.info('socket closed', {ident: this.getIdentifier(), had_error:had_error, sockid: this._uuid});
+			logger.log('socket', 'socket closed', {ident: this.getIdentifier(), had_error:had_error, sockid: this._uuid});
 
 			this.emit('destroy');
 
@@ -232,7 +232,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		socket.on('end', () => {
 			if (!this._preventWrite) {
-				logger.info('preventing write', {ident: this.getIdentifier(), sockid: this._uuid});
+				logger.log('socket', 'preventing write', {ident: this.getIdentifier(), sockid: this._uuid});
 			}
 			this._preventWrite = true;
 		});

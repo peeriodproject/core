@@ -413,7 +413,7 @@ var ProtocolConnectionManager = (function (_super) {
         // testing purposes only
         var payloadStr = messageType === 'FIND_CLOSEST_NODES' ? payload.toString('hex') : '';
 
-        logger.info('', { to: node.getId().toHexString(), msgType: messageType, payload: payloadStr, myId: this._myNode.getId().toHexString() });
+        logger.log('message', '', { to: node.getId().toHexString(), msgType: messageType, payload: payloadStr, myId: this._myNode.getId().toHexString() });
     };
 
     /**

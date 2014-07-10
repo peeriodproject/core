@@ -226,7 +226,7 @@ var TCPSocketHandler = (function (_super) {
 
             // remove it from our open server list
             server.on('close', function () {
-                logger.info('closed server');
+                logger.log('network', 'closed server');
                 delete _this._openTCPServers[port];
                 _this.emit('closedServer', port);
             });

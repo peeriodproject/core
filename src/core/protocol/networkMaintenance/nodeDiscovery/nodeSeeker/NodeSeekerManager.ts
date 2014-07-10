@@ -111,7 +111,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	}
 
 	public forceFindActiveNode (avoidNode:ContactNodeInterface, callback:(node:ContactNodeInterface) => any):void {
-		logger.info('Force find active node initiated.');
+		logger.log('nodeSeeker', 'Force find active node initiated.');
 		this._avoidNode = avoidNode;
 
 		if (!this._nodeSeekerList) {
@@ -123,25 +123,25 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 
 		this._proxyManager.once('contactNodeInformation', (node:ContactNodeInterface) => {
 
-			logger.info('NodeSeeker: on contact node!');
+			logger.log('nodeSeeker', 'NodeSeeker: on contact node!');
 
 			this._forceSearchActive = false;
 
 			if (this._iterativeSeekTimeout) {
-				logger.info('clearing iterative seek timeout');
+				logger.log('nodeSeeker', 'clearing iterative seek timeout');
 				global.clearTimeout(this._iterativeSeekTimeout);
 				this._iterativeSeekTimeout = 0;
 			}
 
 			if (this._avoidNode && this._avoidNode.getId().equals(node.getId())) {
-				logger.info('Force finding again on nex event loop');
+				logger.log('nodeSeeker', 'Force finding again on nex event loop');
 				setImmediate(() => {
-					logger.info('Force finding again, as the node should be avoided.');
+					logger.log('nodeSeeker', 'Force finding again, as the node should be avoided.');
 					this.forceFindActiveNode(this._avoidNode, callback);
 				});
 			}
 			else {
-				logger.info('Found a node, calling back');
+				logger.log('nodeSeeker', 'Found a node, calling back');
 				this._avoidNode = null;
 				callback(node);
 			}
@@ -162,7 +162,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 
 		if (this._forceSearchActive) {
 
-			logger.info('Doing iterative seek.');
+			logger.log('nodeSeeker', 'Doing iterative seek.');
 
 			setImmediate(() => {
 
@@ -178,14 +178,14 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 				}
 
 				this._iterativeSeekTimeout = global.setTimeout(() => {
-					logger.info('setting new iterative seek timeout');
+					logger.log('nodeSeeker', 'setting new iterative seek timeout');
 					this._iterativeSeekAndPing(avoidNode);
 				}, this._iterativeSeekTimeoutMs);
 
 			});
 		}
 		else {
-			logger.info('do not seek again.');
+			logger.log('nodeSeeker', 'do not seek again.');
 		}
 
 	}
@@ -199,7 +199,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	 */
 	private _pingNodeIfActive (node:ContactNodeInterface):void {
 		if (this._forceSearchActive) {
-			logger.info('pinging node.');
+			logger.log('nodeSeeker', 'pinging node.');
 			this._protocolConnectionManager.writeMessageTo(node, 'PING', new Buffer(0));
 		}
 	}

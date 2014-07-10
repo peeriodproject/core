@@ -244,7 +244,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 
 			// remove it from our open server list
 			server.on('close', () => {
-				logger.info('closed server');
+				logger.log('network', 'closed server');
 				delete this._openTCPServers[port];
 				this.emit('closedServer', port);
 			});

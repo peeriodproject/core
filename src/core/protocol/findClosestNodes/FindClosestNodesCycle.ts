@@ -206,16 +206,16 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 	 */
 	private _doAlphaTimeout ():void {
 		if (!this._alphaTimeout) {
-			logger.info('Creating alpha timeout', {ms: this._parallelismDelayMillis});
+			logger.log('findClosestNodes', 'Creating alpha timeout', {ms: this._parallelismDelayMillis});
 
 			this._alphaTimeout = global.setTimeout(() => {
-				logger.info('alpha timeout elapsed.');
+				logger.log('findClosestNodes', 'alpha timeout elapsed.');
 				this._alphaTimeout = 0;
 				this._requestAlphaNodes();
 			}, this._parallelismDelayMillis);
 		}
 		else {
-			logger.info('there is already an alpha timeout');
+			logger.info('findClosestNodes', 'there is already an alpha timeout');
 		}
 	}
 
@@ -225,7 +225,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 	 * @method core.protocol.findClosestNodes.FindClosestNodesCycle~_finish
 	 */
 	private _finish ():void {
-		logger.info('Finished cycle', {for: this._searchForId.toHexString()});
+		logger.log('findClosestNodes', 'Finished cycle', {for: this._searchForId.toHexString()});
 
 		this._unbindListener();
 
@@ -252,12 +252,12 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 	 * @param {core.protocol.findClosestNodes.messages.FoundClosestNodesReadableMessageInterface} message The message payload.
 	 */
 	private _handleReply (from:ContactNodeInterface, message:FoundClosestNodesReadableMessageInterface):void {
-		logger.info('got reply', {from: from.getId().toHexString()});
+		logger.log('findClosestNodes', 'got reply', {from: from.getId().toHexString()});
 
 		this._sortInsertNodeInList(from, this._confirmedList);
 
 		if (this._confirmedList.length >= this._k) {
-			logger.info('confirmed list is full, finishing');
+			logger.log('findClosestNodes', 'confirmed list is full, finishing');
 			this._finish();
 		}
 		else {
@@ -284,7 +284,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 			//if (probedPrevLength === 0 && this._probeList.length) {
 			if (this._probeList.length) {
 				if (this._cycleTimeout) {
-					logger.info('Celaring cycle timeout 2');
+					logger.log('findClosestNodes', 'Clearing cycle timeout 2');
 					global.clearTimeout(this._cycleTimeout);
 					this._cycleTimeout = 0;
 				}
@@ -302,7 +302,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 	 * @method core.protocol.findClosestNodes.FindClosestNodesCycle~_requestAlphaNodes
 	 */
 	private _requestAlphaNodes ():void {
-		logger.info('Requesting next alpha nodes');
+		logger.log('findClosestNodes', 'Requesting next alpha nodes');
 		var times:number = Math.min(this._probeList.length, this._alpha);
 
 		while (times--) {
@@ -311,12 +311,12 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 
 		if (!this._probeList.length) {
 			if (this._cycleTimeout) {
-				logger.info('Clearing cycle timeout');
+				logger.log('findClosestNodes', 'Clearing cycle timeout');
 				global.clearTimeout(this._cycleTimeout);
 				this._cycleTimeout = 0;
 			}
 
-			logger.info('Setting cycle timeout, as probe list is empty');
+			logger.log('findClosestNodes', 'Setting cycle timeout, as probe list is empty');
 			this._cycleTimeout = global.setTimeout(() => {
 				this._finish();
 			}, this._cycleExpirationMillis);

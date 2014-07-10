@@ -162,7 +162,7 @@ var FindClosestNodesManager = (function (_super) {
 
             this._findClosestNodesCycleFactory.create(searchForId, startWithList, function (resultingList) {
                 _this._pendingCycles.splice(_this._pendingCycles.indexOf(identifier), 1);
-                logger.info('Found closest nodes cycle done', { for: searchForId.toHexString() });
+                logger.log('findClosestNodes', 'Found closest nodes cycle done', { for: searchForId.toHexString() });
                 _this.emit('foundClosestNodes', searchForId, resultingList);
             });
         }
@@ -193,7 +193,7 @@ var FindClosestNodesManager = (function (_super) {
             try  {
                 payload = _this._writableMessageFactory.constructPayload(searchForId, contacts);
             } catch (e) {
-                logger.error('Could not construct found closest ndoes message');
+                logger.error('Could not construct found closest nodes message');
             }
 
             if (payload) {

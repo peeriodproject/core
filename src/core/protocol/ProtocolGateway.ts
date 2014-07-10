@@ -197,7 +197,7 @@ class ProtocolGateway extends events.EventEmitter implements ProtocolGatewayInte
 		 *
 		 */
 
-		logger.info('New node joining the network', {id: this._myNode.getId().toHexString()});
+		logger.log('topology', 'New node joining the network', {id: this._myNode.getId().toHexString()});
 
 		if (this._proxyManager.needsAdditionalProxy()) {
 			this._networkMaintainer.once('initialContactQueryCompleted', () => {
@@ -209,17 +209,17 @@ class ProtocolGateway extends events.EventEmitter implements ProtocolGatewayInte
 		}
 
 		this._networkMaintainer.once('initialContactQueryCompleted', () => {
-			logger.info('Initial contact query completed. Kicking off proxy manager...', {id: this._myNode.getId().toHexString()});
+			logger.log('topology', 'Initial contact query completed. Kicking off proxy manager...', {id: this._myNode.getId().toHexString()});
 		});
 
 		this._networkMaintainer.once('joinedNetwork', () => {
-			logger.info('Successfully joined the network.', {id: this._myNode.getId().toHexString()});
+			logger.log('topology', 'Successfully joined the network.', {id: this._myNode.getId().toHexString()});
 
 			// start the hydra things
 			this._hydraCircuitManager.kickOff();
 
 			this._hydraCircuitManager.once('desiredCircuitAmountReached', () => {
-				logger.info('Hydra circuits constructed.', {id: this._myNode.getId().toHexString()});
+				logger.log('hydra', 'Hydra circuits constructed.', {id: this._myNode.getId().toHexString()});
 				this.emit('readyToSearch');
 			});
 		});
