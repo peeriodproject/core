@@ -682,6 +682,7 @@ var ProtocolConnectionManager = (function (_super) {
     *
     * @param {string} oldIdentifier The old temporary identifier
     * @param {core.protocol.net.IncomingPendingSocket} pending The incoming pending socket object
+    * @returns {string} The new hydra identifier of the socket
     */
     ProtocolConnectionManager.prototype._fromIncomingPendingToHydra = function (oldIdentifier, pending) {
         var socket = pending.socket;
@@ -694,6 +695,8 @@ var ProtocolConnectionManager = (function (_super) {
         var identifier = this._setHydraIdentifier(socket);
 
         this._addToHydra(identifier, socket);
+
+        return identifier;
     };
 
     /**
@@ -854,14 +857,14 @@ var ProtocolConnectionManager = (function (_super) {
         var incomingPending = this._incomingPendingSockets[identifier];
 
         if (incomingPending) {
-            this._fromIncomingPendingToHydra(identifier, incomingPending);
+            var hydraIdentifier = this._fromIncomingPendingToHydra(identifier, incomingPending);
         } else if (!(this._hydraSockets[identifier])) {
             propagateMessage = false;
             this._destroyConnectionByIdentifier(identifier);
         }
 
         if (propagateMessage) {
-            this.emit('hydraMessage', identifier, this.getHydraSocketIp(identifier), message);
+            this.emit('hydraMessage', hydraIdentifier, this.getHydraSocketIp(hydraIdentifier), message);
         }
     };
 
