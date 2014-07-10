@@ -383,6 +383,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 	 */
 	private _teardown (closeSocket:boolean):void {
 		if (!this._isTornDown) {
+			logger.log('hydra', 'Tearing down circuit.');
 			this._isTornDown = true;
 
 			this._removeEventListeners();
@@ -395,6 +396,9 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 			}
 
 			this.emit('isTornDown');
+		}
+		else {
+			logger.log('hydra', 'Circuit has already been torn down. Ignoring.');
 		}
 	}
 

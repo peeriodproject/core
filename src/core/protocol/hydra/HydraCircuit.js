@@ -340,6 +340,7 @@ var HydraCircuit = (function (_super) {
     */
     HydraCircuit.prototype._teardown = function (closeSocket) {
         if (!this._isTornDown) {
+            logger.log('hydra', 'Tearing down circuit.');
             this._isTornDown = true;
 
             this._removeEventListeners();
@@ -352,6 +353,8 @@ var HydraCircuit = (function (_super) {
             }
 
             this.emit('isTornDown');
+        } else {
+            logger.log('hydra', 'Circuit has already been torn down. Ignoring.');
         }
     };
     return HydraCircuit;

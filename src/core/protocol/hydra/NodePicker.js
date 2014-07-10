@@ -1,3 +1,5 @@
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * NodePickerInterface implementation.
 *
@@ -130,6 +132,7 @@ var NodePicker = (function () {
             throw new Error('NodePicker: Picking additive nodes before relay nodes is not allowed!');
         }
 
+        logger.log('hydra', 'Picking next additive node batch.');
         this._pickBatch(this._additiveNodeAmount, this._threshold, true, function (batch) {
             _this._nodesUsed = _this._nodesUsed.concat(batch);
             callback(batch);
@@ -142,6 +145,7 @@ var NodePicker = (function () {
             throw new Error('NodePicker: Relay nodes can only be picked once!');
         }
 
+        logger.log('hydra', 'Picking relay node batch.');
         this._pickBatch(this._relayNodeAmount, this._threshold, false, function (batch) {
             _this._relayNodes = batch;
 
@@ -242,6 +246,9 @@ var NodePicker = (function () {
                                 threshold++;
                                 returnBatch.push(node);
                             }
+                            logger.log('hydra', 'Node is accepted', { ip: node.ip, port: node.port });
+                        } else {
+                            logger.log('hydra', 'Node is already in return batch or in relay nodes', { ip: node.ip, port: node.port });
                         }
                     }
 

@@ -89,7 +89,7 @@ var ConnectionManager = (function (_super) {
             if (!this._circuitPipeline[circuitId]) {
                 this._circuitPipeline[circuitId] = [];
 
-                logger.info('hydra', 'Obtaining connection for circuit', { port: node.port, ip: node.ip });
+                logger.log('hydra', 'Obtaining connection for circuit', { port: node.port, ip: node.ip });
 
                 this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
                     if (!err && identifier) {
@@ -98,11 +98,11 @@ var ConnectionManager = (function (_super) {
                         var pipeline = _this._circuitPipeline[circuitId];
 
                         for (var i = 0, l = pipeline.length; i < l; i++) {
-                            logger.info('hydra', 'Writing message', { type: messageType, identifier: identifier, port: node.port, ip: node.ip });
+                            logger.log('hydra', 'Writing message', { type: messageType, identifier: identifier, port: node.port, ip: node.ip });
                             _this._protocolConnectionManager.hydraWriteMessageTo(identifier, pipeline[i]);
                         }
                     } else {
-                        logger.info('hydra', 'Could not connect to node', { port: node.port, ip: node.ip });
+                        logger.log('hydra', 'Could not connect to node', { port: node.port, ip: node.ip });
                     }
 
                     delete _this._circuitPipeline[circuitId];
@@ -125,15 +125,15 @@ var ConnectionManager = (function (_super) {
             return;
         }
 
-        logger.info('hydra', 'Obtaining regular connection', { port: node.port, ip: node.ip });
+        logger.log('hydra', 'Obtaining regular connection', { port: node.port, ip: node.ip });
 
         this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
             if (!err && identifier) {
-                logger.info('hydra', 'Writing message', { type: messageType, identifier: identifier, port: node.port, ip: node.ip });
+                logger.log('hydra', 'Writing message', { type: messageType, identifier: identifier, port: node.port, ip: node.ip });
 
                 _this._protocolConnectionManager.hydraWriteMessageTo(identifier, sendableBuffer);
             } else {
-                logger.info('hydra', 'Could not connect to node', { port: node.port, ip: node.ip });
+                logger.log('hydra', 'Could not connect to node', { port: node.port, ip: node.ip });
             }
         });
     };
