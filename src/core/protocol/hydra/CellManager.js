@@ -190,6 +190,8 @@ var CellManager = (function (_super) {
         this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()] = cell;
         this._cellsByFeedingIdentifier[feedingIdentifier] = cell;
 
+        logger.log('hydraCell', 'Accepting cell request', { circuitId: cell.getPredecessorCircuitId() });
+
         cell.once('isTornDown', function () {
             _this._onTornDownCell(cell);
         });
@@ -319,6 +321,7 @@ var CellManager = (function (_super) {
         }
 
         if (pending.additivePayloads.length === this._additiveSharingMsgAmount && pending.initiator) {
+            logger.log('hydraCell', 'Complete batch.');
             this._onCompleteBatchRequest(pending);
         }
     };
