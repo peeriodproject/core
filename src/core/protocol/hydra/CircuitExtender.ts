@@ -215,7 +215,7 @@ class CircuitExtender implements CircuitExtenderInterface {
 			}
 
 
-
+			logger.log('hydra', 'Setting reaction timeout', {numOfMs: this._reactionTimeInMs * Math.pow(this._reactionTimeFactor, this._nodes.length)});
 			this._currentReactionTimeout = global.setTimeout(() => {
 				this._extensionError('Timed out');
 			}, this._reactionTimeInMs * Math.pow(this._reactionTimeFactor, this._nodes.length));

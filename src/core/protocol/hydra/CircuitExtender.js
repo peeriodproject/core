@@ -186,6 +186,7 @@ var CircuitExtender = (function () {
                 _this._messageCenter.spitoutRelayCreateCellMessage(_this._encDecHandler, nodeToExtendWith.ip, nodeToExtendWith.port, _this._currentUUID, shares[shares.length - 1], _this._circuitId);
             }
 
+            logger.log('hydra', 'Setting reaction timeout', { numOfMs: _this._reactionTimeInMs * Math.pow(_this._reactionTimeFactor, _this._nodes.length) });
             _this._currentReactionTimeout = global.setTimeout(function () {
                 _this._extensionError('Timed out');
             }, _this._reactionTimeInMs * Math.pow(_this._reactionTimeFactor, _this._nodes.length));
