@@ -11,6 +11,8 @@ import SearchStoreOptions = require('./interfaces/SearchStoreOptions');
 
 import ObjectUtils = require('../utils/ObjectUtils');
 
+var logger = require('../utils/logger/LoggerFactory').create();
+
 /**
  * @see http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/
  * @see http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/setup-configuration.html
@@ -101,7 +103,7 @@ class SearchStore implements SearchStoreInterface {
 			}
 			catch (err) {
 				// todo log process not found!
-				console.error('process was killed before...');
+				console.error('SearchStore#close: Database is already down.');
 			}
 		}
 
@@ -208,12 +210,16 @@ class SearchStore implements SearchStoreInterface {
 				var pid:number = parseInt(data, 10);
 
 				if (err || isNaN(pid)) {
-					callback(err);
+					logger.error('SearchStore~_startUpDatabaseServer: could not read elasticsearch process id!');
+					return callback(err);
 				}
 				else {
-					this._databaseServerProcessId = pid;
-					callback(null);
+					logger.log('search', 'SearchStore~_startUpDatabaseServer: database is running', { pid: pid });
 				}
+
+				this._databaseServerProcessId = pid;
+
+				return callback(null);
 			});
 		});
 	}

@@ -6,6 +6,8 @@ var elasticsearch = require('elasticsearch');
 
 var ObjectUtils = require('../utils/ObjectUtils');
 
+var logger = require('../utils/logger/LoggerFactory').create();
+
 /**
 * @class core.search.SearchClient
 * @implements core.search.SearchClientInterface
@@ -230,9 +232,8 @@ var SearchClient = (function () {
         indexName = indexName.toLowerCase();
 
         this._createIndex(indexName, mapping, function (err) {
-            console.log(err);
-
             if (err) {
+                console.error(err);
                 return internalCallback(err);
             }
 
@@ -292,8 +293,6 @@ var SearchClient = (function () {
             type: '.percolator',
             id: queryId
         }, function (err, response, status) {
-            console.log(err);
-
             if (_this._isValidResponse(err, status, 'IndexMissingException') || _this._isValidResponse(err, status, 'Not Found')) {
                 err = null;
             }
@@ -319,8 +318,6 @@ var SearchClient = (function () {
                 }
             }
         }, function (err, response, status) {
-            console.log(err);
-
             if (_this._isValidResponse(err, status, 'IndexMissingException')) {
                 err = null;
             }
@@ -424,7 +421,7 @@ var SearchClient = (function () {
 
             _this._waitForDatabaseServer(function (err) {
                 if (err) {
-                    console.error(err);
+                    logger.error(err);
                     return internalCallback(err);
                 }
 
@@ -459,7 +456,7 @@ var SearchClient = (function () {
             err = err || null;
 
             if (err) {
-                console.log(err);
+                logger.error(err);
             }
 
             return callback(err, hits);

@@ -20,6 +20,8 @@ import SearchStoreOptions = require('./interfaces/SearchStoreOptions');
 
 import ObjectUtils = require('../utils/ObjectUtils');
 
+var logger = require('../utils/logger/LoggerFactory').create();
+
 /**
  * @class core.search.SearchClient
  * @implements core.search.SearchClientInterface
@@ -250,9 +252,8 @@ class SearchClient implements SearchClientInterface {
 		indexName = indexName.toLowerCase();
 
 		this._createIndex(indexName, mapping, (err:Error) => {
-			console.log(err);
-
 			if (err) {
+				console.error(err);
 				return internalCallback(err);
 			}
 
@@ -311,8 +312,6 @@ class SearchClient implements SearchClientInterface {
 			type : '.percolator',
 			id   : queryId
 		}, (err:Error, response, status) => {
-			console.log(err);
-
 			if (this._isValidResponse(err, status, 'IndexMissingException') || this._isValidResponse(err, status, 'Not Found')) {
 				err = null;
 			}
@@ -338,8 +337,6 @@ class SearchClient implements SearchClientInterface {
 				}
 			}
 		}, (err:Error, response, status) => {
-			console.log(err);
-
 			if (this._isValidResponse(err, status, 'IndexMissingException')) {
 				err = null;
 			}
@@ -440,7 +437,7 @@ class SearchClient implements SearchClientInterface {
 
 			this._waitForDatabaseServer((err:Error) => {
 				if (err) {
-					console.error(err);
+					logger.error(err);
 					return internalCallback(err);
 				}
 
@@ -475,7 +472,7 @@ class SearchClient implements SearchClientInterface {
 			err = err || null;
 
 			if (err) {
-				console.log(err);
+				logger.error(err);
 			}
 
 			return callback(err, hits);
