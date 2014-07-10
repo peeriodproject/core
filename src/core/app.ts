@@ -95,10 +95,6 @@ var App = {
 
 			this.startTopology(dataPath, searchMessageBridge, searchRequestManager);
 			this.startIndexer(searchConfig, searchClient);
-
-			console.log('started indexer');
-			//this.startUi(gui);
-			console.log('rockn roll!');
 		});
 	},
 
@@ -127,21 +123,26 @@ var App = {
 
 		var pluginManager = new PluginManager(pluginConfig, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
 			onOpenCallback: () => {
-				// activate plugin state
-				pluginManager.activatePluginState(() => {
+				searchManager = new SearchManager(searchConfig, pluginManager, searchClient);
+				folderWatcherManager = new FolderWatcherManager(fsConfig, this.appQuitHandler, stateHandlerFactory, folderWatcherFactory, {
+					 onOpenCallback: () => {
+						 indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
+						 pluginManager.activatePluginState();
 
-					searchManager = new SearchManager(searchConfig, pluginManager, searchClient);
-					folderWatcherManager = new FolderWatcherManager(fsConfig, this.appQuitHandler, stateHandlerFactory, folderWatcherFactory);
-					indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
-
-					// register ui components
-					// ----------------------
-
-					this.addUiComponent(new UiFolderWatcherManagerComponent(folderWatcherManager));
-					//this.addUiComponent(new UiPluginManagerComponent(pluginManager));
+						 console.log('started indexer');
+						 //this.startUi(gui);
+					 }
 				});
+
+				// register ui components
+				// ----------------------
+
+				this.addUiComponent(new UiFolderWatcherManagerComponent(folderWatcherManager));
+				//});
 			}
 		});
+
+		//this.addUiComponent(new UiPluginManagerComponent(pluginManager));
 	},
 
 	// index database setup
