@@ -6,6 +6,8 @@ var __extends = this.__extends || function (d, b) {
 };
 var events = require('events');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * CircuitManagerInterface implementation
 *
@@ -187,10 +189,14 @@ var CircuitManager = (function (_super) {
             this._circuitsUnderConstruction.push(circuit);
 
             circuit.once('isTornDown', function () {
+                logger.log('hydra', 'Circuit was torn down', { circuitId: circuit.getCircuitId(), numOfCircs: _this._productionReadyCircuits.length });
+
                 _this._onCircuitTeardown(circuit);
             });
 
             circuit.once('isConstructed', function () {
+                logger.log('hydra', 'Fully constructed circuit', { circuitId: circuit.getCircuitId(), numOfNodes: circuit.getCircuitNodes().length, numOfCircs: _this._productionReadyCircuits.length });
+
                 _this._onCircuitConstructed(circuit);
             });
 
