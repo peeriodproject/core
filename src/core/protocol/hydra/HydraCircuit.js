@@ -201,7 +201,7 @@ var HydraCircuit = (function (_super) {
 
                 // successful
                 if (newNode) {
-                    logger.log('hydra', 'Extension was successful. New node is:', { node: newNode });
+                    logger.log('hydraSuccess', 'Extension was successful. New node is:', { node: newNode });
 
                     _this._extensionRetryCount = 0;
 
@@ -213,7 +213,7 @@ var HydraCircuit = (function (_super) {
                     }
 
                     if (circuitNodesLength === _this._numOfRelayNodes) {
-                        logger.log('hydra', 'Circuit has been fully constructed', { circuitId: _this.getCircuitId() });
+                        logger.log('hydraSuccess', 'Circuit has been fully constructed', { circuitId: _this.getCircuitId() });
 
                         // all done, finalize
                         _this._constructed = true;

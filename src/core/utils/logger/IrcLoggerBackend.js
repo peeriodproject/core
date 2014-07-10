@@ -55,7 +55,9 @@ var IrcLoggerBackend = (function () {
                 info: 12,
                 error: 13,
                 warn: 14,
-                socket: 15
+                socket: 15,
+                hydraSuccess: 16,
+                hydraCell: 17
             }
         });
 

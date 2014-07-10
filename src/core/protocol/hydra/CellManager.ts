@@ -14,6 +14,8 @@ import HydraCellInterface = require('./interfaces/HydraCellInterface');
 import HydraCellFactoryInterface = require('./interfaces/HydraCellFactoryInterface');
 import ReadableCreateCellAdditiveMessageInterface = require('./messages/interfaces/ReadableCreateCellAdditiveMessageInterface');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * CellManagerInterface implementation.
  *
@@ -319,6 +321,7 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 				circuitId: circuitId
 			};
 
+			logger.log('hydraCell', 'Adding initiator socket to circuit nodes', {node: initiatorNode, socketIdent: socketIdentifier});
 			this._connectionManager.addToCircuitNodes(socketIdentifier, initiatorNode);
 
 			pending.circuitId = circuitId;

@@ -10,6 +10,8 @@ var crypto = require('crypto');
 var AdditiveSharingScheme = require('../../crypto/AdditiveSharingScheme');
 var HKDF = require('../../crypto/HKDF');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * CellManagerInterface implementation.
 *
@@ -302,6 +304,7 @@ var CellManager = (function (_super) {
                 circuitId: circuitId
             };
 
+            logger.log('hydraCell', 'Adding initiator socket to circuit nodes', { node: initiatorNode, socketIdent: socketIdentifier });
             this._connectionManager.addToCircuitNodes(socketIdentifier, initiatorNode);
 
             pending.circuitId = circuitId;

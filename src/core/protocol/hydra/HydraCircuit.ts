@@ -233,7 +233,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 
 				// successful
 				if (newNode) {
-					logger.log('hydra', 'Extension was successful. New node is:', {node: newNode});
+					logger.log('hydraSuccess', 'Extension was successful. New node is:', {node: newNode});
 
 					this._extensionRetryCount = 0;
 
@@ -245,7 +245,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 					}
 
 					if (circuitNodesLength === this._numOfRelayNodes) {
-						logger.log('hydra', 'Circuit has been fully constructed', {circuitId: this.getCircuitId()});
+						logger.log('hydraSuccess', 'Circuit has been fully constructed', {circuitId: this.getCircuitId()});
 
 						// all done, finalize
 						this._constructed = true;
