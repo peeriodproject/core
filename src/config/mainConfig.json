@@ -64,7 +64,7 @@
         "desiredNumberOfCircuits": 1,
         "maximumNumberOfMaintainedCells": 3,
         "minimumNumberOfRelayNodes": 3,
-        "maximumNumberOfRelayNodes": 5,
+        "maximumNumberOfRelayNodes": 3,
         "additiveSharingNodeAmount": 4,
         "waitForAdditiveBatchFinishInSeconds": 5,
         "nodePicker": {
