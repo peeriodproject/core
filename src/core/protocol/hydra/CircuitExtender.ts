@@ -10,6 +10,8 @@ import HydraMessageCenterInterface = require('./interfaces/HydraMessageCenterInt
 import LayeredEncDecHandlerInterface = require('./messages/interfaces/LayeredEncDecHandlerInterface');
 import ReadableCellCreatedRejectedMessageInterface = require('./messages/interfaces/ReadableCellCreatedRejectedMessageInterface');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * CircuitExtenderInterface implementation.
  *

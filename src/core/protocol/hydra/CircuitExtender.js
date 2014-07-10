@@ -3,6 +3,8 @@ var crypto = require('crypto');
 var AdditiveSharingScheme = require('../../crypto/AdditiveSharingScheme');
 var HKDF = require('../../crypto/HKDF');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * CircuitExtenderInterface implementation.
 *
