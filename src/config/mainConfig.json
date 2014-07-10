@@ -61,12 +61,12 @@
         }
     },
     "hydra": {
-        "desiredNumberOfCircuits": 2,
+        "desiredNumberOfCircuits": 1,
         "maximumNumberOfMaintainedCells": 3,
         "minimumNumberOfRelayNodes": 3,
         "maximumNumberOfRelayNodes": 5,
         "additiveSharingNodeAmount": 4,
-        "waitForAdditiveBatchFinishInSeconds": 3,
+        "waitForAdditiveBatchFinishInSeconds": 5,
         "nodePicker": {
             "allowIdenticalIps": true,
             "roundThreshold": 2,
@@ -74,12 +74,12 @@
             "errorThreshold": 5
         },
         "circuit": {
-            "extensionReactionTimeBaseInSeconds": 3,
+            "extensionReactionTimeBaseInSeconds": 5,
             "extensionReactionTimeFactor": 1.2,
             "maximumExtensionRetries": 3
         },
         "cell": {
-            "extensionReactionInSeconds": 3
+            "extensionReactionInSeconds": 5
         }
     },
     "plugin"  : {
