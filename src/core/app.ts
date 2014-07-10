@@ -88,7 +88,11 @@ var App = {
 			searchResponseManager.onResultsFound((identifier:string, results:Buffer) => {
 				var result = results.toString();
 
-				logger.log('query', 'Received query results', {result: result});
+				logger.log('query', 'Issuing query results', {queryIdent: identifier, result: result});
+			});
+
+			searchRequestManager.onQueryResultsChanged((identifier:string, results:Buffer) => {
+				logger.log('query', 'Received results', {queryIdent: identifier, result: results.toString()});
 			});
 
 			var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);

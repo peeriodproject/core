@@ -11,6 +11,8 @@ import WritableQueryResponseMessageFactoryInterface = require('../messages/inter
 import ConfigInterface = require('../../../config/interfaces/ConfigInterface');
 import CellManagerInterface = require('../../hydra/interfaces/CellManagerInterface');
 
+var logger = require('../../../utils/logger/LoggerFactory').create();
+
 /**
  * ResponseManagerInterface implementation.
  *
