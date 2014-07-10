@@ -68,7 +68,7 @@
         "additiveSharingNodeAmount": 4,
         "waitForAdditiveBatchFinishInSeconds": 3,
         "nodePicker": {
-            "allowIdenticalIps": false,
+            "allowIdenticalIps": true,
             "roundThreshold": 2,
             "waitingTimeInSeconds": 3,
             "errorThreshold": 5
