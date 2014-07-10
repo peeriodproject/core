@@ -302,7 +302,9 @@ var ProtocolConnectionManager = (function (_super) {
         var _this = this;
         this._tcpSocketHandler.connectTo(port, ip, function (socket) {
             if (socket) {
+                logger.log('hydra', 'Got hydra socket');
                 var identifier = _this._setHydraIdentifier(socket);
+                logger.log('hydra', 'Setting identifier on socket', { identifier: identifier });
                 _this._addToHydra(identifier, socket);
                 callback(null, identifier);
             } else {

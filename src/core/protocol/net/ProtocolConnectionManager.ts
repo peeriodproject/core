@@ -340,7 +340,9 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 		this._tcpSocketHandler.connectTo(port, ip, (socket:TCPSocketInterface) => {
 			if (socket) {
+				logger.log('hydra', 'Got hydra socket');
 				var identifier:string = this._setHydraIdentifier(socket);
+				logger.log('hydra', 'Setting identifier on socket', {identifier: identifier});
 				this._addToHydra(identifier, socket);
 				callback(null, identifier);
 			}
