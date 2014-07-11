@@ -62,7 +62,7 @@
     },
     "hydra": {
         "desiredNumberOfCircuits": 2,
-        "maximumNumberOfMaintainedCells": 10,
+        "maximumNumberOfMaintainedCells": 20,
         "minimumNumberOfRelayNodes": 3,
         "maximumNumberOfRelayNodes": 5,
         "additiveSharingNodeAmount": 4,
