@@ -107,7 +107,7 @@ var SearchMessageBridge = (function (_super) {
                 if (!err) {
                     logger.log('search', 'SearchMessageBridge~_setupOutgoingResults: Emitting broadcast query results', {
                         queryId: queryId,
-                        results: results
+                        results: results.toString()
                     });
                     _this.emit('broadcastQueryResults', queryId, compressedResults);
                 }
@@ -131,7 +131,7 @@ var SearchMessageBridge = (function (_super) {
                 if (!err) {
                     logger.log('search', 'a result returned from the broadcast!', {
                         queryId: queryIdentifier,
-                        body: decompressedBuffer
+                        body: decompressedBuffer.toString()
                     });
 
                     _this._searchRequestManager.addResponse(queryIdentifier, decompressedBuffer, metadata);
