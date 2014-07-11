@@ -7,6 +7,8 @@ var __extends = this.__extends || function (d, b) {
 var events = require('events');
 var crypto = require('crypto');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * HydraCellInterface implementation.
 *
@@ -236,6 +238,8 @@ var HydraCell = (function (_super) {
             circuitId: circuitId
         };
 
+        logger.log('hydraCell', 'Further extending cell', { circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier, successorCircuit: this._successor.circuitId, timeoutMs: this._extensionReactionInMs });
+
         this._messageCenter.sendCreateCellAdditiveMessageAsInitiator(this._successor, circuitId, uuid, additivePayload);
 
         // set the timeout
@@ -280,6 +284,8 @@ var HydraCell = (function (_super) {
     */
     HydraCell.prototype._onCircuitTermination = function (terminatedCircuitId) {
         if (this._predecessor.circuitId === terminatedCircuitId) {
+            logger.log('hydraCell', 'Predecessor circuit terminated', { circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier });
+
             this._teardown(false, true);
         } else if (this._successor && this._successor.circuitId === terminatedCircuitId) {
             this._teardown(true, false);
@@ -302,11 +308,15 @@ var HydraCell = (function (_super) {
     * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} msg The received response.
     */
     HydraCell.prototype._onExtensionResponse = function (from, msg) {
+        logger.log('hydraCell', 'Received extension response', { circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier });
+
         if (from === this._successor) {
             this._removeExtensionResponseListener();
 
             if (msg.getUUID() === this._currentExtensionUuid) {
                 if (msg.isRejected()) {
+                    logger.log('hydraCell', 'Extension was rejected', { circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier });
+
                     var succ = this._successor;
                     this._successor = null;
                     this._connectionManager.removeFromCircuitNodes(succ);
@@ -316,6 +326,7 @@ var HydraCell = (function (_super) {
 
                 this._initiateDigestWithReadableMessage('CELL_CREATED_REJECTED', msg);
             } else {
+                logger.log('hydraCell', 'Wrong node', { circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier, successorCircuit: this._successor.circuitId, successorSocketIdent: this._successor.socketIdentifier, receivedSocketIdent: from.socketIdentifier });
                 this._teardown(true, true);
             }
         }
@@ -339,6 +350,7 @@ var HydraCell = (function (_super) {
         } else if (this._successor && this._successor.socketIdentifier) {
             this._connectionManager.pipeCircuitMessageTo(this._successor, 'ENCRYPTED_SPITOUT', decryptedMessage.getPayload());
         } else {
+            logger.log('hydraCell', 'Tearing down cell, wrong message receiver', { circuitId: this._predecessor.circuitId });
             this._teardown(true, true);
         }
     };

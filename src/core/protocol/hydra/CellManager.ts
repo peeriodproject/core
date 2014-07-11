@@ -207,7 +207,7 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 		this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()] = cell;
 		this._cellsByFeedingIdentifier[feedingIdentifier] = cell;
 
-		logger.log('hydraCell', 'Accepting cell request', {circuitId: cell.getPredecessorCircuitId()});
+		logger.log('hydraCell', 'Accepting cell request', {circuitId: cell.getPredecessorCircuitId(), socketIdent: initiatorNode.socketIdentifier});
 
 		cell.once('isTornDown', () => {
 			this._onTornDownCell(cell);
@@ -281,7 +281,7 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 			this._acceptCreateCellRequest(pending);
 		}
 		else {
-			logger.log('hydraCell', 'Rejecting create cell request', {circuitId: pending.initiator.circuitId});
+			logger.log('hydraCell', 'Rejecting create cell request', {circuitId: pending.initiator.circuitId, socketIdent: pending.initiator.socketIdentifier});
 			this._messageCenter.sendCellCreatedRejectedMessage(pending.initiator, pending.uuid);
 			this._connectionManager.removeFromCircuitNodes(pending.initiator, false);
 		}
