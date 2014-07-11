@@ -269,6 +269,7 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 		// set the timeout
 		this._currentExtensionTimeout = global.setTimeout(() => {
 			this._currentExtensionTimeout = 0;
+			logger.log('hydraCell', 'Cell extension timed out', {circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier, successorCircuit: this._successor.circuitId, timeoutMs: this._extensionReactionInMs});
 			this._teardown(true, true);
 		}, this._extensionReactionInMs);
 
@@ -313,6 +314,7 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 			this._teardown(false, true);
 		}
 		else if (this._successor && this._successor.circuitId === terminatedCircuitId) {
+			logger.log('hydraCell', 'Successor circuit terminated', {circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier});
 			this._teardown(true, false);
 		}
 	}

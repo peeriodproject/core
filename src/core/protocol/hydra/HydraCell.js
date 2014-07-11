@@ -245,6 +245,7 @@ var HydraCell = (function (_super) {
         // set the timeout
         this._currentExtensionTimeout = global.setTimeout(function () {
             _this._currentExtensionTimeout = 0;
+            logger.log('hydraCell', 'Cell extension timed out', { circuitId: _this._predecessor.circuitId, socketIdent: _this._predecessor.socketIdentifier, successorCircuit: _this._successor.circuitId, timeoutMs: _this._extensionReactionInMs });
             _this._teardown(true, true);
         }, this._extensionReactionInMs);
 
@@ -288,6 +289,7 @@ var HydraCell = (function (_super) {
 
             this._teardown(false, true);
         } else if (this._successor && this._successor.circuitId === terminatedCircuitId) {
+            logger.log('hydraCell', 'Successor circuit terminated', { circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier });
             this._teardown(true, false);
         }
     };
