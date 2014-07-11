@@ -151,7 +151,7 @@ var TransferMessageCenter = (function (_super) {
             var feedingIdentifier = this._cellManager.getFeedingIdentifierByCircuitId(predecessorCircuitId);
             var externalAddress = this._protocolConnectionManager.getRandomExternalIpPortPair();
 
-            logger.log('query', 'Received QUERY_BROADCAST message', { queryId: broadcastId, feedingIdentifier: feedingIdentifier });
+            logger.log('query', 'Received QUERY_BROADCAST message', { queryId: broadcastId, feedingIdentifier: feedingIdentifier, externalAddress: externalAddress });
 
             if (feedingIdentifier && externalAddress) {
                 externalAddress.feedingIdentifier = feedingIdentifier;

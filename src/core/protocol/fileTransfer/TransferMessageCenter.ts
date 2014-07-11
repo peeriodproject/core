@@ -177,7 +177,7 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 			var feedingIdentifier:string = this._cellManager.getFeedingIdentifierByCircuitId(predecessorCircuitId);
 			var externalAddress:any = this._protocolConnectionManager.getRandomExternalIpPortPair();
 
-			logger.log('query', 'Received QUERY_BROADCAST message', {queryId: broadcastId, feedingIdentifier: feedingIdentifier});
+			logger.log('query', 'Received QUERY_BROADCAST message', {queryId: broadcastId, feedingIdentifier: feedingIdentifier, externalAddress: externalAddress});
 
 			if (feedingIdentifier && externalAddress) {
 				externalAddress.feedingIdentifier = feedingIdentifier;
