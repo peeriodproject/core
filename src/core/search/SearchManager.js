@@ -1,4 +1,6 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
+var path = require('path');
+
 var logger = require('../utils/logger/LoggerFactory').create();
 
 var ObjectUtils = require('../utils/ObjectUtils');
@@ -187,6 +189,7 @@ var SearchManager = (function () {
             });
         }
 
+        // todo check elasticsearch store:yes
         // update properties
         mapping['properties'] = ObjectUtils.extend(properties, {
             itemHash: {
@@ -198,6 +201,10 @@ var SearchManager = (function () {
                 type: 'string',
                 store: 'yes',
                 index: 'not_analyzed'
+            },
+            itemName: {
+                type: 'string',
+                store: 'yes'
             },
             itemStats: {
                 type: 'nested',
@@ -298,6 +305,7 @@ var SearchManager = (function () {
                 pluginData[identifier] = ObjectUtils.extend(pluginData[identifier], {
                     itemHash: fileHash,
                     itemPath: itemPath,
+                    itemName: path.basename(itemPath),
                     itemStats: stats
                 });
             }

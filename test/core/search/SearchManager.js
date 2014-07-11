@@ -49,7 +49,7 @@ describe('CORE --> SEARCH --> SearchManager @_joern', function () {
         closeAndDone(searchManager, done);
     });
 
-    it('should correctly call the addItem method', function (done) {
+    it('should correctly call the addItem method @joern', function (done) {
         var configStub = createConfig();
         var pluginsData = {
             'foo bar active': {
@@ -80,7 +80,16 @@ describe('CORE --> SEARCH --> SearchManager @_joern', function () {
             searchClientStub.addItem.calledOnce.should.be.true;
             pluginManagerStub.onBeforeItemAdd.calledBefore(searchClientStub.addItem).should.be.true;
 
-            // todo test pluginDatas passed to searchClient
+            var data = searchClientStub.addItem.getCall(0).args[0];
+
+            data['foo bar active'].should.be.an.instanceof(Object);
+            data['foo bar active'].file.should.be.an.instanceof(String);
+            data['foo bar active'].file.should.not.equal('');
+            data['foo bar active'].itemHash.should.equal('fileHash');
+            data['foo bar active'].itemPath.should.equal('/path/to/item');
+            data['foo bar active'].itemName.should.equal('item');
+            data['foo bar active'].itemStats.should.be.an.instanceof(Object);
+
             closeAndDone(searchManager, done);
         });
     });
