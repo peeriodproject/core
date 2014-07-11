@@ -151,7 +151,7 @@ var TCPSocket = (function (_super) {
             logger.log('socket', 'Timing out socket', { ident: this.getIdentifier(), sockid: this._uuid });
 
             if (this.getIdentifier().indexOf('hydra') > -1) {
-                logger.log('hydra', 'Hydra socket timed out', { identifier: this.getIdentifier() });
+                logger.log('hydra', 'Hydra socket timed out', { socketIdent: this.getIdentifier() });
             }
 
             this.end();

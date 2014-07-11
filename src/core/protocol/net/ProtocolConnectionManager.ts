@@ -904,6 +904,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			hydraIdentifier = this._fromIncomingPendingToHydra(identifier, incomingPending);
 		}
 		else if (!(this._hydraSockets[identifier])) {
+			logger.log('hydra', 'Closing socket due to non-compliance', {socketIdent: identifier});
 			propagateMessage = false;
 			this._destroyConnectionByIdentifier(identifier);
 		}

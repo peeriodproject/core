@@ -190,7 +190,7 @@ var CellManager = (function (_super) {
         this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()] = cell;
         this._cellsByFeedingIdentifier[feedingIdentifier] = cell;
 
-        logger.log('hydraCell', 'Accepting cell request', { circuitId: cell.getPredecessorCircuitId() });
+        logger.log('hydraCell', 'Accepting cell request', { circuitId: cell.getPredecessorCircuitId(), socketIdent: initiatorNode.socketIdentifier });
 
         cell.once('isTornDown', function () {
             _this._onTornDownCell(cell);
@@ -262,7 +262,7 @@ var CellManager = (function (_super) {
         if (this._canMaintainAdditionalCell()) {
             this._acceptCreateCellRequest(pending);
         } else {
-            logger.log('hydraCell', 'Rejecting create cell request', { circuitId: pending.initiator.circuitId });
+            logger.log('hydraCell', 'Rejecting create cell request', { circuitId: pending.initiator.circuitId, socketIdent: pending.initiator.socketIdentifier });
             this._messageCenter.sendCellCreatedRejectedMessage(pending.initiator, pending.uuid);
             this._connectionManager.removeFromCircuitNodes(pending.initiator, false);
         }
