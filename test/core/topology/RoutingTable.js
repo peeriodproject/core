@@ -257,6 +257,93 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
         });
     });
 
+    describe('should correctly call public methods when the routing table is closed @joern', function () {
+        var routingTable;
+
+        beforeEach(function (done) {
+            routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub);
+            routingTable.close(function () {
+                done();
+            });
+        });
+
+        afterEach(function () {
+            routingTable = null;
+        });
+
+        it('`getAllContactNodesSize` should correctly return 0', function (done) {
+            routingTable.getAllContactNodesSize(function (err, size) {
+                (err === null).should.be.true;
+
+                size.should.equal(0);
+
+                done();
+            });
+        });
+
+        it('`getClosestContactNodes` should correctly return an empty array', function (done) {
+            routingTable.getClosestContactNodes(ContactNodeFactory.createDummy().getId(), null, function (err, contacts) {
+                (err === null).should.be.true;
+
+                contacts.should.be.an.instanceof(Array);
+                contacts.should.have.a.lengthOf(0);
+
+                done();
+            });
+        });
+
+        it('`getContactNode` should correctly return `null`', function (done) {
+            routingTable.getContactNode(ContactNodeFactory.createDummy().getId(), function (err, contact) {
+                (err === null).should.be.true;
+
+                (contact === null).should.be.true;
+
+                done();
+            });
+        });
+
+        it('`getRandomContactNode` should correctly return `null`', function (done) {
+            routingTable.getRandomContactNode(function (err, contact) {
+                (err === null).should.be.true;
+
+                (contact === null).should.be.true;
+
+                done();
+            });
+        });
+
+        it('`getRandomContactNodesFromBucket` should correctly return an empty array', function (done) {
+            routingTable.getRandomContactNodesFromBucket(1, 1, function (err, contacts) {
+                (err === null).should.be.true;
+
+                contacts.should.be.an.instanceof(Array);
+                contacts.should.have.a.lengthOf(0);
+
+                done();
+            });
+        });
+
+        it('`replaceContactNode` should correctly return `null`', function (done) {
+            routingTable.replaceContactNode(ContactNodeFactory.createDummy(), ContactNodeFactory.createDummy(), function (err, longestNotSeenContact) {
+                (err === null).should.be.true;
+
+                (longestNotSeenContact === null).should.be.true;
+
+                done();
+            });
+        });
+
+        it('`updateContactNode` should correctly return `null`', function (done) {
+            routingTable.updateContactNode(ContactNodeFactory.createDummy(), function (err, longestNotSeenContact) {
+                (err === null).should.be.true;
+
+                (longestNotSeenContact === null).should.be.true;
+
+                done();
+            });
+        });
+    });
+
     describe('implementation tests', function () {
         var databasePath = testUtils.getFixturePath('core/topology/bucketstore/db');
         var bucketFactory;

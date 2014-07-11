@@ -132,6 +132,10 @@ class RoutingTable implements RoutingTableInterface {
 	}
 
 	public getAllContactNodesSize (callback:(err:Error, count:number) => any):void {
+		if (!this._isOpen) {
+			return process.nextTick(callback.bind(null, null, 0));
+		}
+
 		var bucketKeys = Object.keys(this._buckets);
 		var processed:number = 0;
 		var contactNodeCount:number = 0;
@@ -155,12 +159,14 @@ class RoutingTable implements RoutingTableInterface {
 	}
 
 	public getClosestContactNodes (id:IdInterface, excludeId:IdInterface, callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
-		var internalCallback = callback || function (err:Error) {
-		};
+		if (!this._isOpen) {
+			return process.nextTick(callback.bind(null, null, []));
+		}
+
 		var startBucketKey:number = this._getBucketKey(id);
 
 		if (!this._isInBucketKeyRange(startBucketKey)) {
-			return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.getClosestContactNode: cannot get closest contact nodes for the given Id.'), null));
+			return process.nextTick(callback.bind(null, new Error('RoutingTable.getClosestContactNode: cannot get closest contact nodes for the given Id.'), null));
 		}
 
 		var topologyK:number = this._config.get('topology.k');
@@ -177,7 +183,6 @@ class RoutingTable implements RoutingTableInterface {
 		var getContactFromDistanceMap = function (contactDistance:Buffer):ContactNodeInterface {
 			return distanceMap[contactDistance.toString('hex')];
 		};
-
 
 		var crawlBucket = (crawlBucketKey:number, crawlReverse:boolean, onCrawlEnd:Function) => {
 			var bucketGetAllCallback = (err:Error, contacts:ContactNodeListInterface) => {
@@ -261,7 +266,7 @@ class RoutingTable implements RoutingTableInterface {
 				}
 			}
 
-			internalCallback(null, closestContactNodes);
+			callback(null, closestContactNodes);
 
 			distances = null;
 			distanceMap = null;
@@ -269,19 +274,25 @@ class RoutingTable implements RoutingTableInterface {
 	}
 
 	public getContactNode (id:IdInterface, callback:(err:Error, contact:ContactNodeInterface) => any):void {
-		var internalCallback = callback || function (err:Error) {
-		};
+		if (!this._isOpen) {
+			return process.nextTick(callback.bind(null, null, null));
+		}
+
 		var bucketKey:number = this._getBucketKey(id);
 
 		if (this._isInBucketKeyRange(bucketKey)) {
-			this._getBucket(bucketKey).get(id, internalCallback);
+			this._getBucket(bucketKey).get(id, callback);
 		}
 		else {
-			return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.getContactNode: cannot get the contact node.'), null));
+			return process.nextTick(callback.bind(null, new Error('RoutingTable.getContactNode: cannot get the contact node.'), null));
 		}
 	}
 
 	public getRandomContactNode (callback:(err:Error, contact:ContactNodeInterface) => any):void {
+		if (!this._isOpen) {
+			return process.nextTick(callback.bind(null, null, null));
+		}
+
 		var bucketKeysToCrawl:Array<string> = new Array(this._getBucketAmount());
 		// Crawls a random bucket from the bucketKeysToCrawlList and calls itself as long as the length is not 0
 		var crawlRandomBucket = () => {
@@ -295,6 +306,7 @@ class RoutingTable implements RoutingTableInterface {
 					bucketKeysToCrawl.splice(randomBucketIndex, 1);
 
 					if (contact === null) {
+						// todo process.nextTick recursion!
 						return crawlRandomBucket();
 					}
 					else {
@@ -318,6 +330,10 @@ class RoutingTable implements RoutingTableInterface {
 	}
 
 	public getRandomContactNodesFromBucket (bucketKey:number, amount:number, callback:(err:Error, contactNodes:ContactNodeListInterface) => any):void {
+		if (!this._isOpen) {
+			return process.nextTick(callback.bind(null, null, []));
+		}
+
 		if (this._isInBucketKeyRange(bucketKey)) {
 			this._getBucket(bucketKey).getAll((err:Error, contacts:ContactNodeListInterface) => {
 				var contactLength:number;
@@ -368,11 +384,17 @@ class RoutingTable implements RoutingTableInterface {
 	public replaceContactNode (oldContactNode:ContactNodeInterface, newContactNode:ContactNodeInterface, callback?:(err:Error, longestNotSeenContact:ContactNodeInterface) => any):void {
 		var internalCallback = callback || function (err:Error, longestNotSeenContact:ContactNodeInterface) {
 		};
+
+		if (!this._isOpen) {
+			return process.nextTick(internalCallback.bind(null, null, null));
+		}
+
 		var oldContactNodeId:IdInterface = oldContactNode.getId();
 		var newContactNodeId:IdInterface = newContactNode.getId();
 
 		var oldBucketKey:number = this._getBucketKey(oldContactNodeId);
 		var newBucketKey:number = this._getBucketKey(newContactNodeId);
+
 
 		if (oldBucketKey !== newBucketKey) {
 			logger.error('can not replace nodes in bucket', {
@@ -400,6 +422,11 @@ class RoutingTable implements RoutingTableInterface {
 	public updateContactNode (contact:ContactNodeInterface, callback?:(err:Error, longestNotSeenContact:ContactNodeInterface) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
+
+		if (!this._isOpen) {
+			return process.nextTick(internalCallback.bind(null, null, null));
+		}
+
 		var bucketKey:number = this._getBucketKey(contact.getId());
 
 		if (this._isInBucketKeyRange(bucketKey)) {
