@@ -243,20 +243,28 @@ var App = {
                         protocolGateway.start();
 
                         protocolGateway.once('readyToSearch', function () {
-                            var i = Math.floor(Math.random() * nameFixtures.length);
-                            var name = nameFixtures[i].name;
+                            setTimeout(function () {
+                                var i = Math.floor(Math.random() * nameFixtures.length);
 
-                            var queryBody = {
-                                "query": {
-                                    "match": {
-                                        "file": name
+                                var name = nameFixtures[i].name;
+
+                                var queryBody = {
+                                    "query": {
+                                        "match": {
+                                            "file": name
+                                        }
+                                    },
+                                    "highlight": {
+                                        "fields": {
+                                            "file": {}
+                                        }
                                     }
-                                }
-                            };
+                                };
 
-                            searchRequestManager.addQuery(queryBody, function (err, queryId) {
-                                logger.log('query', 'Starting query', { name: name, queryId: queryId });
-                            });
+                                searchRequestManager.addQuery(queryBody, function (err, queryId) {
+                                    logger.log('query', 'Starting query', { name: name, queryId: queryId });
+                                });
+                            }, 10000);
                         });
                     }
                 });

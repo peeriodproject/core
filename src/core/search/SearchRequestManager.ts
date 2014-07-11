@@ -278,7 +278,8 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 			}
 
 			logger.log('search', 'SearchRequestManager~_addQuery: Added incoming response to database', {
-				queryId: queryId
+				queryId: queryId,
+				body: responseBody
 			});
 
 			if (response && response['matches'] && response['matches'].length) {

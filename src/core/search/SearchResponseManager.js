@@ -189,7 +189,6 @@ var SearchResponseManager = (function () {
 
             delete hit._index;
             delete hit._source.itemPath;
-            delete hit._source.itemHash;
         }
 
         return hits;
