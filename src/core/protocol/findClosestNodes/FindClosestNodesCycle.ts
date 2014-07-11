@@ -215,7 +215,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 			}, this._parallelismDelayMillis);
 		}
 		else {
-			logger.info('findClosestNodes', 'there is already an alpha timeout');
+			logger.log('findClosestNodes', 'there is already an alpha timeout');
 		}
 	}
 

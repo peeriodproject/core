@@ -214,7 +214,8 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 
 			if (msgToEmit) {
 
-				logger.log('hydraReaction', 'Message Received', {type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId(), socketIdent: identifier, circuitNodes: this._circuitNodes});
+				logger.log('hydraReaction', 'Message Received on ' + identifier, {type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId(), socketIdent: identifier});
+
 
 				var circuitNode:HydraNode = this._circuitNodes[identifier];
 

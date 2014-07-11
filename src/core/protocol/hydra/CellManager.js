@@ -262,6 +262,7 @@ var CellManager = (function (_super) {
         if (this._canMaintainAdditionalCell()) {
             this._acceptCreateCellRequest(pending);
         } else {
+            logger.log('hydraCell', 'Rejecting create cell request', { circuitId: pending.initiator.circuitId });
             this._messageCenter.sendCellCreatedRejectedMessage(pending.initiator, pending.uuid);
             this._connectionManager.removeFromCircuitNodes(pending.initiator, false);
         }
@@ -306,7 +307,6 @@ var CellManager = (function (_super) {
                 circuitId: circuitId
             };
 
-            logger.log('hydraCell', 'Adding initiator socket to circuit nodes', { node: initiatorNode, socketIdent: socketIdentifier });
             this._connectionManager.addToCircuitNodes(socketIdentifier, initiatorNode);
 
             pending.circuitId = circuitId;

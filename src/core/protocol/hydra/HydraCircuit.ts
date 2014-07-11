@@ -233,7 +233,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 
 				// successful
 				if (newNode) {
-					logger.log('hydraSuccess', 'Extension was successful. New node is:', {node: newNode});
+					logger.log('hydraSuccess', 'Extension was successful. New node with socket is:', {socketIdent: newNode.socketIdentifier});
 
 					this._extensionRetryCount = 0;
 
