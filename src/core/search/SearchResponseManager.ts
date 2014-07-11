@@ -7,6 +7,8 @@ import SearchResponseManagerInterface = require('./interfaces/SearchResponseMana
 
 import ObjectUtils = require('../utils/ObjectUtils');
 
+var logger = require('../utils/logger/LoggerFactory').create();
+
 /**
  * @class core.search.SearchResponseManager
  * @implements core.searchSearchResponseManagerInterface
@@ -124,10 +126,19 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 	public validateQueryAndTriggerResults (queryId:string, queryBuffer:Buffer, callback?:(err:Error) => any):void {
 		var internalCallback = callback || function () {};
 
+		logger.log('query', 'got query', {
+			queryId: queryId
+		});
+
 		this._validateQuery(queryBuffer, (err:Error, queryObject:Object) => {
 			if (err) {
 				return internalCallback(err);
 			}
+
+			logger.log('query', 'running query', {
+				queryId: queryId,
+				body: queryObject
+			});
 
 			this._runQuery(queryObject, (err, results) => {
 				if (err) {
@@ -197,6 +208,10 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 
 	private _triggerNoResultsFound (queryId:string):void {
 		if (this._isOpen) {
+			logger.log('query', 'no results found', {
+				queryId: queryId
+			});
+
 			this._eventEmitter.emit('noResultsFound', queryId);
 		}
 	}
@@ -213,6 +228,11 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 	 */
 	private _triggerResultsFound (queryId:string, results:Object):void {
 		if (this._isOpen) {
+			logger.log('query', 'results found', {
+				queryId: queryId,
+				results: results
+			});
+
 			this._eventEmitter.emit('resultsFound', queryId, new Buffer(JSON.stringify(results)));
 		}
 	}

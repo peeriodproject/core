@@ -86,11 +86,11 @@ var App = {
             searchResponseManager.onResultsFound(function (identifier, results) {
                 var result = results.toString();
 
-                logger.log('query', 'Issuing query results', { queryIdent: identifier, result: result });
+                logger.log('query', 'Issuing query results', { queryId: identifier, result: result });
             });
 
             searchRequestManager.onQueryResultsChanged(function (identifier, results) {
-                logger.log('query', 'Received results', { queryIdent: identifier, result: results.toString() });
+                logger.log('query', 'Received results', { queryId: identifier, result: results.toString() });
             });
 
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
@@ -251,9 +251,9 @@ var App = {
                                 }
                             };
 
-                            logger.log('query', 'Starting query', { name: name, id: myId.toHexString() });
-
-                            searchRequestManager.addQuery(queryBody);
+                            searchRequestManager.addQuery(queryBody, function (err, queryId) {
+                                logger.log('query', 'Starting query', { name: name, queryId: queryId });
+                            });
                         });
                     }
                 });

@@ -2,6 +2,8 @@ var events = require('events');
 
 var ObjectUtils = require('../utils/ObjectUtils');
 
+var logger = require('../utils/logger/LoggerFactory').create();
+
 /**
 * @class core.search.SearchResponseManager
 * @implements core.searchSearchResponseManagerInterface
@@ -118,10 +120,19 @@ var SearchResponseManager = (function () {
         var internalCallback = callback || function () {
         };
 
+        logger.log('query', 'got query', {
+            queryId: queryId
+        });
+
         this._validateQuery(queryBuffer, function (err, queryObject) {
             if (err) {
                 return internalCallback(err);
             }
+
+            logger.log('query', 'running query', {
+                queryId: queryId,
+                body: queryObject
+            });
 
             _this._runQuery(queryObject, function (err, results) {
                 if (err) {
@@ -191,6 +202,10 @@ var SearchResponseManager = (function () {
 
     SearchResponseManager.prototype._triggerNoResultsFound = function (queryId) {
         if (this._isOpen) {
+            logger.log('query', 'no results found', {
+                queryId: queryId
+            });
+
             this._eventEmitter.emit('noResultsFound', queryId);
         }
     };
@@ -207,6 +222,11 @@ var SearchResponseManager = (function () {
     */
     SearchResponseManager.prototype._triggerResultsFound = function (queryId, results) {
         if (this._isOpen) {
+            logger.log('query', 'results found', {
+                queryId: queryId,
+                results: results
+            });
+
             this._eventEmitter.emit('resultsFound', queryId, new Buffer(JSON.stringify(results)));
         }
     };

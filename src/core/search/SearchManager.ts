@@ -43,16 +43,17 @@ class SearchManager implements SearchManagerInterface {
 	addItem (pathToIndex:string, stats:fs.Stats, fileHash:string, callback?:(err:Error) => any):void {
 		var internalCallback:Function = callback || function () {};
 
-		logger.debug('add item', { path: pathToIndex });
+		logger.log('search', 'adding item', { path: pathToIndex });
 
 		this._pluginManager.onBeforeItemAdd(pathToIndex, stats, fileHash, (pluginData:Object) => {
 
 			pluginData = this._updatePluginData(pluginData, pathToIndex, stats, fileHash);
 			//console.log(JSON.stringify(pluginData));
 			// to the request to the database
-			logger.debug('add item', { data: pluginData });
 			this._searchClient.addItem(pluginData, function(err) {
-				internalCallback(err);
+				logger.log('search', 'added item', { data: pluginData, path: pathToIndex });
+
+				return internalCallback(err);
 			});
 		});
 	}

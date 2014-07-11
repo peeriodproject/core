@@ -481,6 +481,11 @@ var PluginManager = (function () {
                     if (err) {
                         return callback(err, null);
                     } else {
+                        logger.log('search', 'loading file content', {
+                            path: itemPath,
+                            content: data.toString()
+                        });
+
                         tikaGlobals['fileBuffer'] = data.toString('base64');
                         return callback(null, tikaGlobals);
                     }

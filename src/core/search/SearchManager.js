@@ -30,16 +30,17 @@ var SearchManager = (function () {
         var internalCallback = callback || function () {
         };
 
-        logger.debug('add item', { path: pathToIndex });
+        logger.log('search', 'adding item', { path: pathToIndex });
 
         this._pluginManager.onBeforeItemAdd(pathToIndex, stats, fileHash, function (pluginData) {
             pluginData = _this._updatePluginData(pluginData, pathToIndex, stats, fileHash);
 
             //console.log(JSON.stringify(pluginData));
             // to the request to the database
-            logger.debug('add item', { data: pluginData });
             _this._searchClient.addItem(pluginData, function (err) {
-                internalCallback(err);
+                logger.log('search', 'added item', { data: pluginData, path: pathToIndex });
+
+                return internalCallback(err);
             });
         });
     };
