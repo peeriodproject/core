@@ -189,6 +189,8 @@ var ConnectionManager = (function (_super) {
         });
 
         this._protocolConnectionManager.on('hydraMessage', function (identifier, ip, message) {
+            logger.log('hydraReaction', 'Received message on socket', { socketIdent: identifier });
+
             var msgToEmit = null;
 
             try  {

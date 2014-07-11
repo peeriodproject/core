@@ -203,6 +203,8 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 		});
 
 		this._protocolConnectionManager.on('hydraMessage', (identifier:string, ip:string, message:ReadableMessageInterface) => {
+			logger.log('hydraReaction', 'Received message on socket', {socketIdent: identifier});
+
 			var msgToEmit:ReadableHydraMessageInterface = null;
 
 			try {
