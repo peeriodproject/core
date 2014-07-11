@@ -257,7 +257,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
         });
     });
 
-    describe('should correctly call public methods when the routing table is closed @joern', function () {
+    describe('should correctly call public methods when the routing table is closed', function () {
         var routingTable;
 
         beforeEach(function (done) {

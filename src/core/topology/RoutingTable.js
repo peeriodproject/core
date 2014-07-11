@@ -262,38 +262,20 @@ var RoutingTable = (function () {
             return process.nextTick(callback.bind(null, null, null));
         }
 
-        var bucketKeysToCrawl = new Array(this._getBucketAmount());
+        this._getBucketSizes(function (sizes) {
+            var bucketKeys = Object.keys(sizes);
 
-        // Crawls a random bucket from the bucketKeysToCrawlList and calls itself as long as the length is not 0
-        var crawlRandomBucket = function () {
-            var bucketKeysToCrawlLength = bucketKeysToCrawl.length;
-            var randomBucketIndex = Math.round(Math.random() * (bucketKeysToCrawlLength - 1));
-
-            if (bucketKeysToCrawlLength && randomBucketIndex >= 0 && randomBucketIndex < bucketKeysToCrawlLength) {
-                var randomBucketKey = bucketKeysToCrawl[randomBucketIndex];
-
-                _this._buckets[randomBucketKey].getRandom(function (err, contact) {
-                    bucketKeysToCrawl.splice(randomBucketIndex, 1);
-
-                    if (contact === null) {
-                        // todo process.nextTick recursion!
-                        return crawlRandomBucket();
-                    } else {
-                        bucketKeysToCrawl = null;
-                        return process.nextTick(callback.bind(null, null, contact));
-                    }
-                });
-            } else {
-                return process.nextTick(callback.bind(null, null, null));
+            if (!bucketKeys.length) {
+                return callback(null, null);
             }
-        };
 
-        for (var i = 0, amount = this._getBucketAmount(); i < amount; i++) {
-            bucketKeysToCrawl[i] = this._convertBucketKeyToString(i);
-        }
+            var randomBucketIndex = Math.floor(Math.random() * bucketKeys.length);
+            var randomBucketKey = bucketKeys[randomBucketIndex];
 
-        // start crawling
-        crawlRandomBucket();
+            _this._buckets[randomBucketKey].getRandom(function (err, contact) {
+                return callback(null, contact);
+            });
+        });
     };
 
     RoutingTable.prototype.getRandomContactNodesFromBucket = function (bucketKey, amount, callback) {
@@ -460,6 +442,45 @@ var RoutingTable = (function () {
     */
     RoutingTable.prototype._getBucketKey = function (id) {
         return this._id.differsInHighestBit(id);
+    };
+
+    /**
+    * Returns a map of bucketKeys and the corresponding size of contact nodes if the bucket. Empty buckets are __excluded__ from the map.
+    *
+    * @method core.topology.RoutingTable~_getBucketSizes
+    *
+    * @param {Function} callback The callback that gets called with the map as the first argument after all bucket sizes were collected.
+    */
+    RoutingTable.prototype._getBucketSizes = function (callback) {
+        var _this = this;
+        if (!this._buckets) {
+            return process.nextTick(callback.bind(null, {}));
+        }
+
+        var bucketKeys = Object.keys(this._buckets);
+        var bucketKeysLength = bucketKeys.length;
+
+        var returned = 0;
+        var sizes = {};
+        var checkAndReturn = function () {
+            if (returned === bucketKeysLength) {
+                return callback(sizes);
+            }
+        };
+
+        bucketKeys.forEach(function (key) {
+            _this._buckets[key].size(function (err, size) {
+                size = size || 0;
+
+                if (size) {
+                    sizes[key] = size;
+                }
+
+                returned++;
+
+                return checkAndReturn();
+            });
+        });
     };
 
     /**

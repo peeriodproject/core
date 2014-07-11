@@ -293,40 +293,20 @@ class RoutingTable implements RoutingTableInterface {
 			return process.nextTick(callback.bind(null, null, null));
 		}
 
-		var bucketKeysToCrawl:Array<string> = new Array(this._getBucketAmount());
-		// Crawls a random bucket from the bucketKeysToCrawlList and calls itself as long as the length is not 0
-		var crawlRandomBucket = () => {
-			var bucketKeysToCrawlLength:number = bucketKeysToCrawl.length;
-			var randomBucketIndex:number = Math.round(Math.random() * (bucketKeysToCrawlLength - 1));
+		this._getBucketSizes((sizes) => {
+			var bucketKeys = Object.keys(sizes);
 
-			if (bucketKeysToCrawlLength && randomBucketIndex >= 0 && randomBucketIndex < bucketKeysToCrawlLength) {
-				var randomBucketKey:string = bucketKeysToCrawl[randomBucketIndex];
-
-				this._buckets[randomBucketKey].getRandom(function (err:Error, contact:ContactNodeInterface) {
-					bucketKeysToCrawl.splice(randomBucketIndex, 1);
-
-					if (contact === null) {
-						// todo process.nextTick recursion!
-						return crawlRandomBucket();
-					}
-					else {
-						bucketKeysToCrawl = null;
-						return process.nextTick(callback.bind(null, null, contact));
-					}
-				});
+			if (!bucketKeys.length) {
+				return callback(null, null);
 			}
-			else {
-				return process.nextTick(callback.bind(null, null, null));
-			}
-		};
 
-		// set up bucket list
-		for (var i = 0, amount = this._getBucketAmount(); i < amount; i++) {
-			bucketKeysToCrawl[i] = this._convertBucketKeyToString(i);
-		}
+			var randomBucketIndex:number = Math.floor(Math.random() * bucketKeys.length);
+			var randomBucketKey:string = bucketKeys[randomBucketIndex];
 
-		// start crawling
-		crawlRandomBucket();
+			this._buckets[randomBucketKey].getRandom(function (err:Error, contact:ContactNodeInterface) {
+				return callback(null, contact);
+			});
+		});
 	}
 
 	public getRandomContactNodesFromBucket (bucketKey:number, amount:number, callback:(err:Error, contactNodes:ContactNodeListInterface) => any):void {
@@ -496,6 +476,45 @@ class RoutingTable implements RoutingTableInterface {
 	 */
 	private _getBucketKey (id:IdInterface):number {
 		return this._id.differsInHighestBit(id);
+	}
+
+	/**
+	 * Returns a map of bucketKeys and the corresponding size of contact nodes if the bucket. Empty buckets are __excluded__ from the map.
+	 *
+	 * @method core.topology.RoutingTable~_getBucketSizes
+	 *
+	 * @param {Function} callback The callback that gets called with the map as the first argument after all bucket sizes were collected.
+	 */
+	private _getBucketSizes (callback:(sizes:Object) => any):void {
+		if (!this._buckets) {
+			return process.nextTick(callback.bind(null, {}));
+		}
+
+		var bucketKeys = Object.keys(this._buckets);
+		var bucketKeysLength = bucketKeys.length;
+
+		var returned:number = 0;
+		var sizes = {};
+		var checkAndReturn = function () {
+			if (returned === bucketKeysLength) {
+
+				return callback(sizes);
+			}
+		};
+
+		bucketKeys.forEach((key) => {
+			this._buckets[key].size(function (err, size) {
+				size= size || 0;
+
+				if (size) {
+					sizes[key] = size;
+				}
+
+				returned++;
+
+				return checkAndReturn();
+			});
+		});
 	}
 
 	/**
