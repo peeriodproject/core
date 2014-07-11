@@ -139,6 +139,7 @@ class BroadcastBasedQuery extends events.EventEmitter implements QueryInterface 
 			}, this._validityNumOfMs);
 
 			this._responseListener = (message:ReadableQueryResponseMessageInterface) => {
+				logger.log('query', 'Received QUERY_RESPONSE', {broadcastId: this._queryId});
 				this.emit('result', message.getFeedingNodes(), message.getResponseBuffer());
 			}
 

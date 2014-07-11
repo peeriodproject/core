@@ -8,6 +8,8 @@ import ConfigInterface = require('../../../config/interfaces/ConfigInterface');
 import CircuitManagerInterface = require('../../hydra/interfaces/CircuitManagerInterface');
 import QueryMap = require('./interfaces/QueryMap');
 
+var logger = require('../../../utils/logger/LoggerFactory').create();
+
 /**
  * QueryManagerInterface implementation.
  *
@@ -166,6 +168,8 @@ class QueryManager extends events.EventEmitter implements QueryManagerInterface 
 
 			if (!reason) {
 				var query:QueryInterface = this._queryFactory.constructBroadcastBasedQuery(searchObject);
+
+				logger.log('query', 'New broadcast query', {queryId: queryIdentifier, broadcastId: query.getQueryId()});
 
 				this._initializeQuery(queryIdentifier, query);
 			}

@@ -154,7 +154,8 @@ var ResponseManager = (function () {
                     var msg = _this._wrapQueryResponse(identifier, results);
 
                     if (msg) {
-                        _this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
+                        var result = _this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
+                        logger.log('query', 'Issuing external feed to circuit', { broadcastId: identifier, result: result });
                     }
                 }
             }

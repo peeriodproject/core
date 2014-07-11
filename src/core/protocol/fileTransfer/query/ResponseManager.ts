@@ -180,7 +180,8 @@ class ResponseManager implements ResponseManagerInterface {
 					var msg:Buffer = this._wrapQueryResponse(identifier, results);
 
 					if (msg) {
-						this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
+						var result = this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
+						logger.log('query', 'Issuing external feed to circuit', {broadcastId: identifier, result: result});
 					}
 				}
 			}

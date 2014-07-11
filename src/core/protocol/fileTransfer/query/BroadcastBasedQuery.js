@@ -130,6 +130,7 @@ var BroadcastBasedQuery = (function (_super) {
             }, this._validityNumOfMs);
 
             this._responseListener = function (message) {
+                logger.log('query', 'Received QUERY_RESPONSE', { broadcastId: _this._queryId });
                 _this.emit('result', message.getFeedingNodes(), message.getResponseBuffer());
             };
 
