@@ -112,7 +112,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 				internalCallback(err, queryId);
 
 				if (queryId) {
-					logger.log('query', 'added outgoing query', {
+					logger.log('search', 'SearchRequestManager#addQuery: Added outgoing query', {
 						queryId: queryId,
 						body: queryBody
 					});
@@ -123,7 +123,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	}
 
 	public addResponse (queryId:string, responseBody:Buffer, responseMeta:Object, callback?:(err:Error) => any):void {
-		logger.log('query', 'got response', {
+		logger.log('search', 'SearchRequestManager#addResponse: Got response', {
 			queryId: queryId
 		});
 
@@ -258,6 +258,9 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		this._searchClient.deleteOutgoingQuery(this._indexName, queryId, (err:Error) => {
 			this._triggerQueryRemoved(queryId);
 			//this._checkResultsAndTriggerEvent(this._runningQueryIdMap[queryId]);
+			logger.log('search', 'SearchRequestManager#removeQuery: Removed query', {
+				queryId: queryId
+			});
 
 			return internalCallback(err);
 		});
@@ -274,12 +277,12 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 				return callback(err);
 			}
 
-			logger.log('query', 'added incoming response to database', {
+			logger.log('search', 'SearchRequestManager~_addQuery: Added incoming response to database', {
 				queryId: queryId
 			});
 
 			if (response && response['matches'] && response['matches'].length) {
-				logger.log('query', 'incoming response matched a running query!', {
+				logger.log('search', 'SearchRequestManager~_addQuery: Incoming response matched a running query!', {
 					queryId: queryId,
 					matches: response['matches']
 				});
