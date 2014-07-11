@@ -219,7 +219,7 @@ class ProtocolGateway extends events.EventEmitter implements ProtocolGatewayInte
 			this._hydraCircuitManager.kickOff();
 
 			this._hydraCircuitManager.once('desiredCircuitAmountReached', () => {
-				logger.log('hydra', 'Hydra circuits constructed.', {id: this._myNode.getId().toHexString()});
+				logger.log('hydraSuccess', 'Hydra circuits constructed.', {id: this._myNode.getId().toHexString()});
 				this.emit('readyToSearch');
 			});
 		});
