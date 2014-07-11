@@ -43,8 +43,6 @@ class SearchManager implements SearchManagerInterface {
 	addItem (pathToIndex:string, stats:fs.Stats, fileHash:string, callback?:(err:Error) => any):void {
 		var internalCallback:Function = callback || function () {};
 
-		logger.log('search', 'adding item', { path: pathToIndex });
-
 		this._pluginManager.onBeforeItemAdd(pathToIndex, stats, fileHash, (pluginData:Object) => {
 
 			pluginData = this._updatePluginData(pluginData, pathToIndex, stats, fileHash);
@@ -214,7 +212,7 @@ class SearchManager implements SearchManagerInterface {
 			},
 			itemName: {
 				type: 'string',
-				store: 'yes',
+				store: 'yes'
 			},
 			itemStats: {
 				type : 'nested',

@@ -30,8 +30,6 @@ var SearchManager = (function () {
         var internalCallback = callback || function () {
         };
 
-        logger.log('search', 'adding item', { path: pathToIndex });
-
         this._pluginManager.onBeforeItemAdd(pathToIndex, stats, fileHash, function (pluginData) {
             pluginData = _this._updatePluginData(pluginData, pathToIndex, stats, fileHash);
 
