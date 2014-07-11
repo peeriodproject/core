@@ -196,14 +196,14 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 	 */
 	private _checkAndConstructCircuit ():void {
 		if (this._additionalCircuitNeeded()) {
-			logger.log('hydraExtnesion', 'Constructing new circuit');
+			logger.log('hydraExtension', 'Constructing new circuit', {readLen: this._productionReadyCircuits.length});
 
 			var circuit:HydraCircuitInterface = this._circuitFactory.create(this._generateRelayNodeAmount());
 
 			this._circuitsUnderConstruction.push(circuit);
 
 			circuit.once('isTornDown', () => {
-				logger.log('hydra', 'Circuit was torn down', {circuitId: circuit.getCircuitId(), numOfCircs: this._productionReadyCircuits.length});
+				logger.log('hydraExtension', 'Circuit was torn down', {circuitId: circuit.getCircuitId(), numOfCircs: this._productionReadyCircuits.length});
 
 				this._onCircuitTeardown(circuit);
 			});

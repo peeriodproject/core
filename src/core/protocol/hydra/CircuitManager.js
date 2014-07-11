@@ -185,14 +185,14 @@ var CircuitManager = (function (_super) {
     CircuitManager.prototype._checkAndConstructCircuit = function () {
         var _this = this;
         if (this._additionalCircuitNeeded()) {
-            logger.log('hydraExtnesion', 'Constructing new circuit');
+            logger.log('hydraExtension', 'Constructing new circuit', { readLen: this._productionReadyCircuits.length });
 
             var circuit = this._circuitFactory.create(this._generateRelayNodeAmount());
 
             this._circuitsUnderConstruction.push(circuit);
 
             circuit.once('isTornDown', function () {
-                logger.log('hydra', 'Circuit was torn down', { circuitId: circuit.getCircuitId(), numOfCircs: _this._productionReadyCircuits.length });
+                logger.log('hydraExtension', 'Circuit was torn down', { circuitId: circuit.getCircuitId(), numOfCircs: _this._productionReadyCircuits.length });
 
                 _this._onCircuitTeardown(circuit);
             });
