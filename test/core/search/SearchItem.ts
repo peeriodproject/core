@@ -5,7 +5,7 @@ require('should');
 import SearchItem = require('../../../src/core/search/SearchItem');
 
 describe('CORE --> SEARCH --> SearchItem', function () {
-	var data:string = '[{"_index":"mainindex","_type":"pluginidentifier","_id":"DzEnMrJGROujWKZUC5hZNg","_score":0.5254995,"_source":{"itemHash":"fileHash","itemPath":"../path/file.txt","itemStats":{"stats":true},"foo":"bar"}},{"_index":"mainindex","_type":"pluginidentifier2","_id":"LBcCuWQlRNObplgP4S5KGw","_score":0.5254995,"_source":{"itemHash":"fileHash","itemPath":"../path/file.txt","itemStats":{"stats":true},"foo":"bar"}}]';
+	var data:string = '[{"_index":"mainindex","_type":"pluginidentifier","_id":"DzEnMrJGROujWKZUC5hZNg","_score":0.5254995,"_source":{"itemHash":"fileHash","itemPath":"../path/file.txt","itemName":"file.txt","itemStats":{"stats":true},"foo":"bar"}},{"_index":"mainindex","_type":"pluginidentifier2","_id":"LBcCuWQlRNObplgP4S5KGw","_score":0.5254995,"_source":{"itemHash":"fileHash","itemPath":"../path/file.txt","itemName":"file.txt","itemStats":{"stats":true},"foo":"bar"}}]';
 
 	it ('should correctly instantiate without error', function () {
 		(new SearchItem(JSON.parse(data))).should.be.an.instanceof(SearchItem);

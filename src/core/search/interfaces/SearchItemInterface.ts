@@ -20,6 +20,15 @@ interface SearchItemInterface {
 	getHash():string;
 
 	/**
+	 * Returns the file name of the item
+	 *
+	 * @method core.search.SearchItemInterface#getName
+	 *
+	 * @returns {string}
+	 */
+	getName():string;
+
+	/**
 	 * Returns the path of the item
 	 *
 	 * @method core.search.SearchItemInterface#getPath
