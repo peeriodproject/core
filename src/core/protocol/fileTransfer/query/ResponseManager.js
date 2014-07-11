@@ -141,6 +141,8 @@ var ResponseManager = (function () {
         });
 
         this._searchBridge.on('broadcastQueryResults', function (identifier, results) {
+            logger.log('query', 'Received broadcast query results from bridge', { broadcastId: identifier });
+
             if (_this._externalQueryHandlers[identifier]) {
                 // we call the callback no matter what. if the results are empty, it must be handled externally
                 _this._externalQueryHandlers[identifier](identifier, results);
@@ -151,10 +153,13 @@ var ResponseManager = (function () {
                 delete _this._pendingBroadcastQueries[identifier];
 
                 if (results) {
+                    logger.log('query', 'Wrapping query response message', { broadcastId: identifier });
+
                     var msg = _this._wrapQueryResponse(identifier, results);
 
                     if (msg) {
-                        _this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
+                        var result = _this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
+                        logger.log('query', 'Issuing external feed to circuit', { broadcastId: identifier, result: result });
                     }
                 }
             }
@@ -163,6 +168,8 @@ var ResponseManager = (function () {
         this._transferMessageCenter.on('issueBroadcastQuery', function (predecessorCircuitId, broadcastId, searchObject, myFeedingBlock) {
             // start a broadcast but answer to the query by yourself after a given time
             var broadcastPayload = Buffer.concat([myFeedingBlock, searchObject]);
+
+            logger.log('query', 'Starting a broadcast', { queryId: broadcastId });
 
             _this._broadcastManager.initBroadcast('BROADCAST_QUERY', broadcastPayload, broadcastId);
 

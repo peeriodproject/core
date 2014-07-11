@@ -165,6 +165,8 @@ class ResponseManager implements ResponseManagerInterface {
 		});
 
 		this._searchBridge.on('broadcastQueryResults', (identifier:string, results:Buffer) => {
+			logger.log('query', 'Received broadcast query results from bridge', {broadcastId: identifier});
+
 			if (this._externalQueryHandlers[identifier]) {
 
 				// we call the callback no matter what. if the results are empty, it must be handled externally
@@ -177,10 +179,13 @@ class ResponseManager implements ResponseManagerInterface {
 				delete this._pendingBroadcastQueries[identifier];
 
 				if (results) {
+					logger.log('query', 'Wrapping query response message', {broadcastId: identifier});
+
 					var msg:Buffer = this._wrapQueryResponse(identifier, results);
 
 					if (msg) {
-						this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
+						var result = this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
+						logger.log('query', 'Issuing external feed to circuit', {broadcastId: identifier, result: result});
 					}
 				}
 			}
@@ -189,6 +194,8 @@ class ResponseManager implements ResponseManagerInterface {
 		this._transferMessageCenter.on('issueBroadcastQuery', (predecessorCircuitId:string, broadcastId:string, searchObject:Buffer, myFeedingBlock:Buffer) => {
 			// start a broadcast but answer to the query by yourself after a given time
 			var broadcastPayload:Buffer = Buffer.concat([myFeedingBlock, searchObject]);
+
+			logger.log('query', 'Starting a broadcast', {queryId: broadcastId});
 
 			this._broadcastManager.initBroadcast('BROADCAST_QUERY', broadcastPayload, broadcastId);
 

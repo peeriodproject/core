@@ -8,6 +8,8 @@ var events = require('events');
 
 var FeedingNodesMessageBlock = require('./messages/FeedingNodesMessageBlock');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * TransferMessageCenterInterface implementation.
 *
@@ -148,6 +150,8 @@ var TransferMessageCenter = (function (_super) {
             var broadcastId = msg.getTransferId();
             var feedingIdentifier = this._cellManager.getFeedingIdentifierByCircuitId(predecessorCircuitId);
             var externalAddress = this._protocolConnectionManager.getRandomExternalIpPortPair();
+
+            logger.log('query', 'Received QUERY_BROADCAST message', { queryId: broadcastId, feedingIdentifier: feedingIdentifier, externalAddress: externalAddress });
 
             if (feedingIdentifier && externalAddress) {
                 externalAddress.feedingIdentifier = feedingIdentifier;

@@ -7,6 +7,8 @@ import ReadableQueryResponseMessageInterface = require('../messages/interfaces/R
 import CircuitManagerInterface = require('../../hydra/interfaces/CircuitManagerInterface');
 import BroadcastManagerInterface = require('../../broadcast/interfaces/BroadcastManagerInterface');
 
+var logger = require('../../../utils/logger/LoggerFactory').create();
+
 /**
  * QueryInterface implementation based on broadcast.
  * Lets the broadcast manager ignore the generated query identifier.
@@ -125,6 +127,7 @@ class BroadcastBasedQuery extends events.EventEmitter implements QueryInterface 
 
 		if (queryBroadcastPayload) {
 			allOkay = this._circuitManager.pipeFileTransferMessageThroughAllCircuits(queryBroadcastPayload, true);
+			logger.log('query', 'Piped query broadcast issuing through all circuits', {allOkay: allOkay});
 		}
 
 		if (allOkay) {
@@ -136,6 +139,7 @@ class BroadcastBasedQuery extends events.EventEmitter implements QueryInterface 
 			}, this._validityNumOfMs);
 
 			this._responseListener = (message:ReadableQueryResponseMessageInterface) => {
+				logger.log('query', 'Received QUERY_RESPONSE', {broadcastId: this._queryId});
 				this.emit('result', message.getFeedingNodes(), message.getResponseBuffer());
 			}
 

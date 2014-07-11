@@ -6,6 +6,8 @@ var __extends = this.__extends || function (d, b) {
 };
 var events = require('events');
 
+var logger = require('../../../utils/logger/LoggerFactory').create();
+
 /**
 * QueryManagerInterface implementation.
 *
@@ -155,6 +157,8 @@ var QueryManager = (function (_super) {
 
             if (!reason) {
                 var query = _this._queryFactory.constructBroadcastBasedQuery(searchObject);
+
+                logger.log('query', 'New broadcast query', { queryId: queryIdentifier, broadcastId: query.getQueryId() });
 
                 _this._initializeQuery(queryIdentifier, query);
             } else {
