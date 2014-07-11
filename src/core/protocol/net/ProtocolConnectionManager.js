@@ -858,8 +858,10 @@ var ProtocolConnectionManager = (function (_super) {
         var propagateMessage = true;
         var incomingPending = this._incomingPendingSockets[identifier];
 
+        var hydraIdentifier = identifier;
+
         if (incomingPending) {
-            var hydraIdentifier = this._fromIncomingPendingToHydra(identifier, incomingPending);
+            hydraIdentifier = this._fromIncomingPendingToHydra(identifier, incomingPending);
         } else if (!(this._hydraSockets[identifier])) {
             propagateMessage = false;
             this._destroyConnectionByIdentifier(identifier);

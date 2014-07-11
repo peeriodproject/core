@@ -901,8 +901,10 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		var propagateMessage:boolean = true;
 		var incomingPending:IncomingPendingSocket = this._incomingPendingSockets[identifier];
 
+		var hydraIdentifier:string = identifier;
+
 		if (incomingPending) {
-			var hydraIdentifier:string = this._fromIncomingPendingToHydra(identifier, incomingPending);
+			hydraIdentifier = this._fromIncomingPendingToHydra(identifier, incomingPending);
 		}
 		else if (!(this._hydraSockets[identifier])) {
 			propagateMessage = false;
