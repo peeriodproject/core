@@ -281,6 +281,7 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 			this._acceptCreateCellRequest(pending);
 		}
 		else {
+			logger.log('hydraCell', 'Rejecting create cell request', {circuitId: pending.initiator.circuitId});
 			this._messageCenter.sendCellCreatedRejectedMessage(pending.initiator, pending.uuid);
 			this._connectionManager.removeFromCircuitNodes(pending.initiator, false);
 		}
@@ -324,7 +325,6 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 				circuitId: circuitId
 			};
 
-			logger.log('hydraCell', 'Adding initiator socket to circuit nodes', {node: initiatorNode, socketIdent: socketIdentifier});
 			this._connectionManager.addToCircuitNodes(socketIdentifier, initiatorNode);
 
 			pending.circuitId = circuitId;
