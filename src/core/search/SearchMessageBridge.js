@@ -105,7 +105,10 @@ var SearchMessageBridge = (function (_super) {
         this._searchResponseManager.onResultsFound(function (queryId, results) {
             _this._compressBuffer(results, function (err, compressedResults) {
                 if (!err) {
-                    logger.log('search', 'SearchMessageBridge~_setupOutgoingResults: Emitting broadcast query results', { queryId: queryId });
+                    logger.log('search', 'SearchMessageBridge~_setupOutgoingResults: Emitting broadcast query results', {
+                        queryId: queryId,
+                        results: results
+                    });
                     _this.emit('broadcastQueryResults', queryId, compressedResults);
                 }
             });
@@ -120,8 +123,17 @@ var SearchMessageBridge = (function (_super) {
     SearchMessageBridge.prototype._setupIncomingResults = function () {
         var _this = this;
         this.on('result', function (queryIdentifier, responseBuffer, metadata) {
+            logger.log('search', 'got result!', {
+                queryId: queryIdentifier
+            });
+
             _this._decompressBuffer(responseBuffer, function (err, decompressedBuffer) {
                 if (!err) {
+                    logger.log('search', 'a result returned from the broadcast!', {
+                        queryId: queryIdentifier,
+                        body: decompressedBuffer
+                    });
+
                     _this._searchRequestManager.addResponse(queryIdentifier, decompressedBuffer, metadata);
                 }
             });
