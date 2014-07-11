@@ -184,7 +184,7 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 	 * @returns {boolean}
 	 */
 	private _additionalCircuitNeeded ():boolean {
-		logger.log('hydra', 'Checking if new circuit is needed', {underConstruction: this._circuitsUnderConstruction.length, ready:this._productionReadyCircuits.length, desired: this._desiredNumberOfCircuits});
+		logger.log('hydraExtension', 'Checking if new circuit is needed', {underConstruction: this._circuitsUnderConstruction.length, ready:this._productionReadyCircuits.length, desired: this._desiredNumberOfCircuits});
 		return (this._circuitsUnderConstruction.length + this._productionReadyCircuits.length) < this._desiredNumberOfCircuits;
 	}
 
@@ -196,18 +196,20 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 	 */
 	private _checkAndConstructCircuit ():void {
 		if (this._additionalCircuitNeeded()) {
+			logger.log('hydraExtension', 'Constructing new circuit', {readLen: this._productionReadyCircuits.length});
+
 			var circuit:HydraCircuitInterface = this._circuitFactory.create(this._generateRelayNodeAmount());
 
 			this._circuitsUnderConstruction.push(circuit);
 
 			circuit.once('isTornDown', () => {
-				logger.log('hydra', 'Circuit was torn down', {circuitId: circuit.getCircuitId(), numOfCircs: this._productionReadyCircuits.length});
+				logger.log('hydraExtension', 'Circuit was torn down', {circuitId: circuit.getCircuitId(), numOfCircs: this._productionReadyCircuits.length});
 
 				this._onCircuitTeardown(circuit);
 			});
 
 			circuit.once('isConstructed', () => {
-				logger.log('hydra', 'Fully constructed circuit', {circuitId: circuit.getCircuitId(), numOfNodes: circuit.getCircuitNodes().length, numOfCircs: this._productionReadyCircuits.length});
+				logger.log('hydraExtension', 'Fully constructed circuit', {circuitId: circuit.getCircuitId(), numOfNodes: circuit.getCircuitNodes().length, numOfCircs: this._productionReadyCircuits.length});
 
 				this._onCircuitConstructed(circuit);
 			});
@@ -283,6 +285,8 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 		if (this._productionReadyCircuits.length === this._desiredNumberOfCircuits) {
 			this.emit('desiredCircuitAmountReached');
 		}
+
+		this._checkAndConstructCircuit();
 	}
 
 	/**

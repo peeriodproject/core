@@ -136,9 +136,8 @@ var NodePicker = (function () {
     };
 
     NodePicker.prototype.pickNextAdditiveNodeBatch = function (callback) {
+        //logger.log('hydraExtension', 'Picking next additive node batch.', {relayNodeLen: this._relayNodes.length});
         var _this = this;
-        logger.log('hydraExtension', 'Picking next additive node batch.', { relayNodeLen: this._relayNodes.length });
-
         if (!this._relayNodes.length) {
             throw new Error('NodePicker: Picking additive nodes before relay nodes is not allowed!');
         }
@@ -155,7 +154,7 @@ var NodePicker = (function () {
             throw new Error('NodePicker: Relay nodes can only be picked once!');
         }
 
-        logger.log('hydraExtension', 'Picking relay node batch.');
+        //logger.log('hydraExtension', 'Picking relay node batch.');
         this._pickBatch(this._relayNodeAmount, this._threshold, false, function (batch) {
             _this._relayNodes = batch;
 
@@ -246,12 +245,11 @@ var NodePicker = (function () {
         var threshold = 0;
 
         var getRandomNode = function () {
-            logger.log('hydraExtension', 'Picker: getRandomNode', { batchLen: returnBatch.length });
-
+            //logger.log('hydraExtension', 'Picker: getRandomNode', {batchLen: returnBatch.length});
             if (returnBatch.length === amount) {
                 callback(returnBatch);
             } else if (errorCount > _this._errorThreshold) {
-                logger.log('hydraExtension', 'Setting picker timeout', { ms: _this._waitingTimeInMs });
+                //logger.log('hydraExtension', 'Setting picker timeout', {ms: this._waitingTimeInMs});
                 global.setTimeout(function () {
                     errorCount = 0;
                     getRandomNode();
@@ -272,12 +270,12 @@ var NodePicker = (function () {
                                 threshold++;
                                 returnBatch.push(node);
                             }
-                            logger.log('hydraExtension', 'Picker: Node is accepted', { ip: node.ip, port: node.port });
+                            //logger.log('hydraExtension', 'Picker: Node is accepted', {ip:node.ip, port:node.port});
                         } else {
-                            logger.log('hydraExtension', 'Picker: Node is already in return batch or in relay nodes', { ip: node.ip, port: node.port });
+                            //logger.log('hydraExtension', 'Picker: Node is already in return batch or in relay nodes', {ip:node.ip, port:node.port});
                         }
                     } else {
-                        logger.log('hydraExtension', 'Picker: RoutingTable rendered error.');
+                        //logger.log('hydraExtension', 'Picker: RoutingTable rendered error.');
                     }
 
                     if (!noError) {

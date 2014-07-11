@@ -214,7 +214,7 @@ var ProtocolGateway = (function (_super) {
             _this._hydraCircuitManager.kickOff();
 
             _this._hydraCircuitManager.once('desiredCircuitAmountReached', function () {
-                logger.log('hydra', 'Hydra circuits constructed.', { id: _this._myNode.getId().toHexString() });
+                logger.log('hydraSuccess', 'Hydra circuits constructed.', { id: _this._myNode.getId().toHexString() });
                 _this.emit('readyToSearch');
             });
         });
