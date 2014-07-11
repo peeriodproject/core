@@ -18,7 +18,7 @@ import FeedingNodesMessageBlock = require('./messages/FeedingNodesMessageBlock')
 import MiddlewareInterface = require('./interfaces/MiddlewareInterface');
 import ProtocolConnectionManagerInterface = require('../net/interfaces/ProtocolConnectionManagerInterface');
 
-var logger = require('../../../utils/logger/LoggerFactory').create();
+var logger = require('../../utils/logger/LoggerFactory').create();
 
 /**
  * TransferMessageCenterInterface implementation.

@@ -8,7 +8,7 @@ var events = require('events');
 
 var FeedingNodesMessageBlock = require('./messages/FeedingNodesMessageBlock');
 
-var logger = require('../../../utils/logger/LoggerFactory').create();
+var logger = require('../../utils/logger/LoggerFactory').create();
 
 /**
 * TransferMessageCenterInterface implementation.
