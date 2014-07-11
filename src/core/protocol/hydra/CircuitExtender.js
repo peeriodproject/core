@@ -154,8 +154,6 @@ var CircuitExtender = (function () {
         if (isFirst) {
             this._circuitId = crypto.pseudoRandomBytes(16).toString('hex');
 
-            logger.log('hydraReaction', 'Extending circuit with node', { node: nodeToExtendWith, circuitId: this._circuitId });
-
             this._expectReactionFrom = nodeToExtendWith;
             this._expectReactionFrom.circuitId = this._circuitId;
 
@@ -165,8 +163,6 @@ var CircuitExtender = (function () {
 
             this._circuitTerminationListener = function (circuitId, socketIdentifier) {
                 if (circuitId === _this._circuitId) {
-                    logger.log('hydra', 'Socket terminated', { identifier: socketIdentifier });
-
                     _this._onCircuitTermination();
                 }
             };
@@ -191,7 +187,6 @@ var CircuitExtender = (function () {
                 _this._messageCenter.spitoutRelayCreateCellMessage(_this._encDecHandler, nodeToExtendWith.ip, nodeToExtendWith.port, _this._currentUUID, shares[shares.length - 1], _this._circuitId);
             }
 
-            logger.log('hydra', 'Setting reaction timeout', { numOfMs: _this._reactionTimeInMs * Math.pow(_this._reactionTimeFactor, _this._nodes.length) });
             _this._currentReactionTimeout = global.setTimeout(function () {
                 _this._extensionError('Timed out');
             }, _this._reactionTimeInMs * Math.pow(_this._reactionTimeFactor, _this._nodes.length));
@@ -310,8 +305,6 @@ var CircuitExtender = (function () {
     * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} message The reaction message.
     */
     CircuitExtender.prototype._onReaction = function (from, message, decrypted) {
-        logger.log('hydraReaction', 'Received reaction', { circuitId: from.circuitId });
-
         if (this._expectReactionFrom === from && (!this._nodes.length || decrypted)) {
             this._clearReactionTimeout();
 

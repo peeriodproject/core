@@ -180,8 +180,6 @@ class CircuitExtender implements CircuitExtenderInterface {
 		if (isFirst) {
 			this._circuitId = crypto.pseudoRandomBytes(16).toString('hex');
 
-			logger.log('hydraReaction', 'Extending circuit with node', {node: nodeToExtendWith, circuitId: this._circuitId});
-
 			this._expectReactionFrom = nodeToExtendWith;
 			this._expectReactionFrom.circuitId = this._circuitId;
 
@@ -191,7 +189,6 @@ class CircuitExtender implements CircuitExtenderInterface {
 
 			this._circuitTerminationListener = (circuitId:string, socketIdentifier:string) => {
 				if (circuitId === this._circuitId) {
-					logger.log('hydra', 'Socket terminated', {identifier:socketIdentifier});
 
 					this._onCircuitTermination();
 				}
@@ -219,8 +216,6 @@ class CircuitExtender implements CircuitExtenderInterface {
 				this._messageCenter.spitoutRelayCreateCellMessage(this._encDecHandler, nodeToExtendWith.ip, nodeToExtendWith.port, this._currentUUID, shares[shares.length - 1], this._circuitId);
 			}
 
-
-			logger.log('hydra', 'Setting reaction timeout', {numOfMs: this._reactionTimeInMs * Math.pow(this._reactionTimeFactor, this._nodes.length)});
 			this._currentReactionTimeout = global.setTimeout(() => {
 				this._extensionError('Timed out');
 			}, this._reactionTimeInMs * Math.pow(this._reactionTimeFactor, this._nodes.length));
@@ -340,7 +335,6 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} message The reaction message.
 	 */
 	private _onReaction (from:HydraNode, message:ReadableCellCreatedRejectedMessageInterface, decrypted:boolean):void {
-		logger.log('hydraReaction', 'Received reaction', {circuitId: from.circuitId});
 
 		if (this._expectReactionFrom === from && (!this._nodes.length || decrypted)) {
 

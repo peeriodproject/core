@@ -201,7 +201,7 @@ var HydraCircuit = (function (_super) {
 
                 // successful
                 if (newNode) {
-                    logger.log('hydraSuccess', 'Extension was successful. New node is:', { node: newNode });
+                    logger.log('hydraSuccess', 'Extension was successful. New node with socket is:', { socketIdent: newNode.socketIdentifier });
 
                     _this._extensionRetryCount = 0;
 

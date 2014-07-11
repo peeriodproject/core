@@ -356,8 +356,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	public hydraWriteBufferTo (identifier:string, buffer:Buffer, callback?:(err:Error) => any):void {
 		var socket:TCPSocketInterface = this._hydraSockets[identifier];
 
-		logger.log('hydra', 'Writing buffer to socket', {identifier: identifier});
-
 		if (!socket) {
 			if (callback) {
 				callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));
@@ -365,7 +363,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 		else {
 			socket.writeBuffer(buffer, function () {
-				logger.log('hydra', 'Buffer written out', {identifier: identifier});
 				if (callback) {
 					callback(null);
 				}

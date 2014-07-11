@@ -317,15 +317,12 @@ var ProtocolConnectionManager = (function (_super) {
     ProtocolConnectionManager.prototype.hydraWriteBufferTo = function (identifier, buffer, callback) {
         var socket = this._hydraSockets[identifier];
 
-        logger.log('hydra', 'Writing buffer to socket', { identifier: identifier });
-
         if (!socket) {
             if (callback) {
                 callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));
             }
         } else {
             socket.writeBuffer(buffer, function () {
-                logger.log('hydra', 'Buffer written out', { identifier: identifier });
                 if (callback) {
                     callback(null);
                 }
