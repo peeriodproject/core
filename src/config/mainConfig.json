@@ -65,7 +65,7 @@
         "maximumNumberOfMaintainedCells": 10,
         "minimumNumberOfRelayNodes": 3,
         "maximumNumberOfRelayNodes": 5,
-        "additiveSharingNodeAmount": 3,
+        "additiveSharingNodeAmount": 4,
         "waitForAdditiveBatchFinishInSeconds": 20,
         "nodePicker": {
             "allowIdenticalIps": true,
