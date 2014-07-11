@@ -184,7 +184,7 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 	 * @returns {boolean}
 	 */
 	private _additionalCircuitNeeded ():boolean {
-		logger.log('hydra', 'Checking if new circuit is needed', {underConstruction: this._circuitsUnderConstruction.length, ready:this._productionReadyCircuits.length, desired: this._desiredNumberOfCircuits});
+		logger.log('hydraExtension', 'Checking if new circuit is needed', {underConstruction: this._circuitsUnderConstruction.length, ready:this._productionReadyCircuits.length, desired: this._desiredNumberOfCircuits});
 		return (this._circuitsUnderConstruction.length + this._productionReadyCircuits.length) < this._desiredNumberOfCircuits;
 	}
 
