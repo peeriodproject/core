@@ -191,10 +191,13 @@ var ConnectionManager = (function (_super) {
             }
 
             if (msgToEmit) {
+                logger.log('hydraReaction', 'Message Received', { type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId() });
+
                 var circuitNode = _this._circuitNodes[identifier];
 
                 if (circuitNode) {
                     if (circuitNode.circuitId === msgToEmit.getCircuitId()) {
+                        logger.log('hydraReaction', 'This is a circuit message', { type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId() });
                         _this.emit('circuitMessage', msgToEmit, circuitNode);
                     }
                 } else {
