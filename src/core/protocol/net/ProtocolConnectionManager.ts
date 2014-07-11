@@ -250,14 +250,14 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		return this._myNode;
 	}
 
-	getRandomExternalIpPortPair ():any {
+	public getRandomExternalIpPortPair ():any {
 		var openPorts:Array<number> = this._tcpSocketHandler.getOpenServerPortsArray();
 		var externalIp:string = this._tcpSocketHandler.getMyExternalIp();
 
 		if (openPorts.length && externalIp) {
 			return {
 				ip: externalIp,
-				port: Math.floor(Math.random() * openPorts.length)
+				port: openPorts[Math.floor(Math.random() * openPorts.length)]
 			}
 		}
 		else {

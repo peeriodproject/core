@@ -221,7 +221,7 @@ var ProtocolConnectionManager = (function (_super) {
         if (openPorts.length && externalIp) {
             return {
                 ip: externalIp,
-                port: Math.floor(Math.random() * openPorts.length)
+                port: openPorts[Math.floor(Math.random() * openPorts.length)]
             };
         } else {
             return null;
