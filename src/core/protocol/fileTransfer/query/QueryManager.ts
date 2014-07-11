@@ -146,6 +146,7 @@ class QueryManager extends events.EventEmitter implements QueryManagerInterface 
 		});
 
 		query.on('result', (metadata:any, resultBuffer:Buffer) => {
+			logger.log('query', 'Piping QUERY_RESULT back to bridge. Almost done', {broadcastId: query.getQueryId(), queryId: queryIdentifier, metadata: JSON.stringify(metadata)});
 			this._searchBridge.emit('result', queryIdentifier, resultBuffer, metadata);
 		});
 
