@@ -61,7 +61,7 @@ var App = {
 
 	appQuitHandler: null,
 
-	_gui: null,
+	_gui         : null,
 	_uiComponents: [],
 
 	addUiComponent: function (component) {
@@ -111,7 +111,7 @@ var App = {
 		}.bind(this));
 	},
 
-	startIndexer: function (searchConfig, searchClient) {
+	startIndexer     : function (searchConfig, searchClient) {
 		var fsConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'fs']);
 		var pluginConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'plugin']);
 
@@ -131,13 +131,16 @@ var App = {
 			onOpenCallback: () => {
 				searchManager = new SearchManager(searchConfig, pluginManager, searchClient);
 				folderWatcherManager = new FolderWatcherManager(fsConfig, this.appQuitHandler, stateHandlerFactory, folderWatcherFactory, {
-					 onOpenCallback: () => {
-						 indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
-						 pluginManager.activatePluginState();
+					onOpenCallback: () => {
+						indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
+						pluginManager.activatePluginState();
 
-						 console.log('started indexer');
-						this.startUi();
-					 }
+						console.log('started indexer');
+
+						if (process.env.UI_ENABLED) {
+							this.startUi();
+						}
+					}
 				});
 
 				// register ui components

@@ -131,7 +131,10 @@ var App = {
                         pluginManager.activatePluginState();
 
                         console.log('started indexer');
-                        _this.startUi();
+
+                        if (process.env.UI_ENABLED) {
+                            _this.startUi();
+                        }
                     }
                 });
 
