@@ -286,7 +286,7 @@ var SearchRequestManager = (function () {
     *
     * @method core.search.SearchRequestManager~_createAndStoreQueryId
     *
-    * @param callback The callback that will be called after the generation of the data with `queryId` as first argument.
+    * @param {Function} callback The callback that will be called after the generation of the data with `queryId` as first argument.
     */
     SearchRequestManager.prototype._createAndStoreQueryId = function (callback) {
         var _this = this;
@@ -307,6 +307,7 @@ var SearchRequestManager = (function () {
     * @method core.search.SearchRequestManager~_triggerQueryAdd
     
     * @param {string} queryId The id of the added search query
+    * @param {Object} queryBody The body of the added search query
     */
     SearchRequestManager.prototype._triggerQueryAdd = function (queryId, queryBody) {
         if (this._isOpen) {

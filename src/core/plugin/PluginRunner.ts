@@ -48,7 +48,8 @@ class PluginRunner implements PluginRunnerInterface {
 			timeout      : 30000,
 			useStrictMode: true,
 			api          : this._getPluginApiPath(),
-			spawnExecPath: nodeBinaryPath
+			spawnExecPath: nodeBinaryPath,
+			socket       : '/tmp/pluginrunner' + Math.round(Math.random() * 1000) + '.sock'
 		});
 
 		this._pluginGlobalsFactory = new PluginGlobalsFactory();
