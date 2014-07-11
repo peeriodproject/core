@@ -153,6 +153,8 @@ var ResponseManager = (function () {
                 delete _this._pendingBroadcastQueries[identifier];
 
                 if (results) {
+                    logger.log('query', 'Wrapping query response message', { broadcastId: identifier });
+
                     var msg = _this._wrapQueryResponse(identifier, results);
 
                     if (msg) {

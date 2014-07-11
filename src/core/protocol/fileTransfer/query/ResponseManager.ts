@@ -179,6 +179,8 @@ class ResponseManager implements ResponseManagerInterface {
 				delete this._pendingBroadcastQueries[identifier];
 
 				if (results) {
+					logger.log('query', 'Wrapping query response message', {broadcastId: identifier});
+
 					var msg:Buffer = this._wrapQueryResponse(identifier, results);
 
 					if (msg) {
