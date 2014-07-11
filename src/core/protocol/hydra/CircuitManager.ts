@@ -196,6 +196,8 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 	 */
 	private _checkAndConstructCircuit ():void {
 		if (this._additionalCircuitNeeded()) {
+			logger.log('hydraExtnesion', 'Constructing new circuit');
+
 			var circuit:HydraCircuitInterface = this._circuitFactory.create(this._generateRelayNodeAmount());
 
 			this._circuitsUnderConstruction.push(circuit);
@@ -207,7 +209,7 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 			});
 
 			circuit.once('isConstructed', () => {
-				logger.log('hydra', 'Fully constructed circuit', {circuitId: circuit.getCircuitId(), numOfNodes: circuit.getCircuitNodes().length, numOfCircs: this._productionReadyCircuits.length});
+				logger.log('hydraExtension', 'Fully constructed circuit', {circuitId: circuit.getCircuitId(), numOfNodes: circuit.getCircuitNodes().length, numOfCircs: this._productionReadyCircuits.length});
 
 				this._onCircuitConstructed(circuit);
 			});
@@ -283,6 +285,8 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 		if (this._productionReadyCircuits.length === this._desiredNumberOfCircuits) {
 			this.emit('desiredCircuitAmountReached');
 		}
+
+		this._checkAndConstructCircuit();
 	}
 
 	/**

@@ -185,6 +185,8 @@ var CircuitManager = (function (_super) {
     CircuitManager.prototype._checkAndConstructCircuit = function () {
         var _this = this;
         if (this._additionalCircuitNeeded()) {
+            logger.log('hydraExtnesion', 'Constructing new circuit');
+
             var circuit = this._circuitFactory.create(this._generateRelayNodeAmount());
 
             this._circuitsUnderConstruction.push(circuit);
@@ -196,7 +198,7 @@ var CircuitManager = (function (_super) {
             });
 
             circuit.once('isConstructed', function () {
-                logger.log('hydra', 'Fully constructed circuit', { circuitId: circuit.getCircuitId(), numOfNodes: circuit.getCircuitNodes().length, numOfCircs: _this._productionReadyCircuits.length });
+                logger.log('hydraExtension', 'Fully constructed circuit', { circuitId: circuit.getCircuitId(), numOfNodes: circuit.getCircuitNodes().length, numOfCircs: _this._productionReadyCircuits.length });
 
                 _this._onCircuitConstructed(circuit);
             });
@@ -270,6 +272,8 @@ var CircuitManager = (function (_super) {
         if (this._productionReadyCircuits.length === this._desiredNumberOfCircuits) {
             this.emit('desiredCircuitAmountReached');
         }
+
+        this._checkAndConstructCircuit();
     };
 
     /**
