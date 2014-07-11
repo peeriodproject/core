@@ -61,6 +61,7 @@ var App = {
 
 	appQuitHandler: null,
 
+	_gui: null,
 	_uiComponents: [],
 
 	addUiComponent: function (component) {
@@ -70,6 +71,7 @@ var App = {
 	start: function (gui, nwApp, dataPath, win) {
 		win.showDevTools();
 
+		this._gui = gui;
 		this.appQuitHandler = new AppQuitHandler(nwApp);
 
 		// copy node discovery.json to app data path
@@ -134,7 +136,7 @@ var App = {
 						 pluginManager.activatePluginState();
 
 						 console.log('started indexer');
-						 //this.startUi(gui);
+						this.startUi();
 					 }
 				});
 
@@ -163,10 +165,10 @@ var App = {
 		});
 	},
 
-	startUi: function (gui) {
+	startUi: function () {
 		var uiConfig = new JSONConfig('../../config/mainConfig.json', ['ui']);
 
-		this.addUiComponent(new UiFolderDropzoneComponent(gui.Window));
+		this.addUiComponent(new UiFolderDropzoneComponent(this._gui.Window));
 
 		var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
 	},
