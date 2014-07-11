@@ -271,6 +271,26 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 			return process.nextTick(callback.bind(null, null));
 		}
 
+		if (responseBody && responseBody['highlight']) {
+			var highlightedFieldKeys = Object.keys(responseBody['highlight']);
+
+			// added source
+			if (!responseBody['_source']) {
+				responseBody['_source'] = {};
+			}
+
+			if (highlightedFieldKeys.length) {
+				// map highlight.field to _source.field
+				for (var i = 0, l = highlightedFieldKeys.length; i < l; i++) {
+					var key = highlightedFieldKeys[i];
+
+					if (!responseBody['_source'][key]) {
+						responseBody['_source'][key] = responseBody['highlight'][key];
+					}
+				}
+			}
+		}
+
 		this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, responseMeta, (err:Error, response:Object) => {
 			if (err) {
 				console.error(err);
