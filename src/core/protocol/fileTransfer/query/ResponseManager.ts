@@ -165,6 +165,8 @@ class ResponseManager implements ResponseManagerInterface {
 		});
 
 		this._searchBridge.on('broadcastQueryResults', (identifier:string, results:Buffer) => {
+			logger.log('query', 'Received broadcast query results from bridge', {broadcastId: identifier});
+
 			if (this._externalQueryHandlers[identifier]) {
 
 				// we call the callback no matter what. if the results are empty, it must be handled externally

@@ -141,6 +141,8 @@ var ResponseManager = (function () {
         });
 
         this._searchBridge.on('broadcastQueryResults', function (identifier, results) {
+            logger.log('query', 'Received broadcast query results from bridge', { broadcastId: identifier });
+
             if (_this._externalQueryHandlers[identifier]) {
                 // we call the callback no matter what. if the results are empty, it must be handled externally
                 _this._externalQueryHandlers[identifier](identifier, results);
