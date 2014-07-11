@@ -203,7 +203,6 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 		});
 
 		this._protocolConnectionManager.on('hydraMessage', (identifier:string, ip:string, message:ReadableMessageInterface) => {
-			logger.log('hydraReaction', 'Received message on socket', {socketIdent: identifier});
 
 			var msgToEmit:ReadableHydraMessageInterface = null;
 
@@ -211,12 +210,11 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 				msgToEmit = this._readableFactory.create(message.getPayload());
 			}
 			catch (e) {
-				logger.log('error', 'Could not deformat hydra message', {socketIdent: identifier});
 			}
 
 			if (msgToEmit) {
 
-				logger.log('hydraReaction', 'Message Received', {type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId()});
+				logger.log('hydraReaction', 'Message Received', {type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId(), socketIdent: identifier});
 
 				var circuitNode:HydraNode = this._circuitNodes[identifier];
 

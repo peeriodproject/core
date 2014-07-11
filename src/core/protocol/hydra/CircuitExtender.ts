@@ -179,6 +179,9 @@ class CircuitExtender implements CircuitExtenderInterface {
 
 		if (isFirst) {
 			this._circuitId = crypto.pseudoRandomBytes(16).toString('hex');
+
+			logger.log('hydraReaction', 'Extending circuit with node', {node: nodeToExtendWith, circuitId: this._circuitId});
+
 			this._expectReactionFrom = nodeToExtendWith;
 			this._expectReactionFrom.circuitId = this._circuitId;
 

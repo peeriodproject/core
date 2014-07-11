@@ -189,18 +189,15 @@ var ConnectionManager = (function (_super) {
         });
 
         this._protocolConnectionManager.on('hydraMessage', function (identifier, ip, message) {
-            logger.log('hydraReaction', 'Received message on socket', { socketIdent: identifier });
-
             var msgToEmit = null;
 
             try  {
                 msgToEmit = _this._readableFactory.create(message.getPayload());
             } catch (e) {
-                logger.log('error', 'Could not deformat hydra message', { socketIdent: identifier });
             }
 
             if (msgToEmit) {
-                logger.log('hydraReaction', 'Message Received', { type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId() });
+                logger.log('hydraReaction', 'Message Received', { type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId(), socketIdent: identifier });
 
                 var circuitNode = _this._circuitNodes[identifier];
 
