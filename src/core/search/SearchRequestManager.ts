@@ -136,9 +136,16 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 
 			if (returned === response.hits.length || err) {
 				returned = -1;
+
+				logger.log('search', 'SearchRequestManager#addResponse: checkAndTriggerCallback', {
+					queryId: queryId
+				});
+				
 				return internalCallback(err);
 			};
 		};
+
+		// todo check start!
 
 		try {
 			response = JSON.parse(responseBody.toString());
@@ -147,9 +154,22 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 			return internalCallback(e);
 		}
 
+		logger.log('search', 'SearchRequestManager#addResponse: After json parsing...', {
+			queryId: queryId,
+			response: response
+		});
+
 		if (!(response && response.hits && response.hits.length)) {
+			logger.log('search', 'SearchRequestManager#addResponse: invalid Response', {
+				queryId: queryId
+			});
+
 			return internalCallback(null);
 		}
+
+		logger.log('search', 'SearchRequestManager#addResponse: Iterating over responses...', {
+			queryId: queryId
+		});
 
 		for (var i = 0, l = response.hits.length; i < l; i++) {
 			this._addResponse(queryId, response.hits[i], responseMeta, function (err) {
@@ -267,6 +287,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	}
 
 	private _addResponse (queryId:string, responseBody:Object, responseMeta:Object, callback:(err:Error) => any):void {
+		// todo check here!
 		if (this._runningQueryIds[queryId] === undefined) {
 			return process.nextTick(callback.bind(null, null));
 		}

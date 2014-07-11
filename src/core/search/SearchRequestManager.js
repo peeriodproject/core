@@ -125,6 +125,11 @@ var SearchRequestManager = (function () {
 
             if (returned === response.hits.length || err) {
                 returned = -1;
+
+                logger.log('search', 'SearchRequestManager#addResponse: checkAndTriggerCallback', {
+                    queryId: queryId
+                });
+
                 return internalCallback(err);
             }
             ;
@@ -136,9 +141,22 @@ var SearchRequestManager = (function () {
             return internalCallback(e);
         }
 
+        logger.log('search', 'SearchRequestManager#addResponse: After json parsing...', {
+            queryId: queryId,
+            response: response
+        });
+
         if (!(response && response.hits && response.hits.length)) {
+            logger.log('search', 'SearchRequestManager#addResponse: invalid Response', {
+                queryId: queryId
+            });
+
             return internalCallback(null);
         }
+
+        logger.log('search', 'SearchRequestManager#addResponse: Iterating over responses...', {
+            queryId: queryId
+        });
 
         for (var i = 0, l = response.hits.length; i < l; i++) {
             this._addResponse(queryId, response.hits[i], responseMeta, function (err) {
@@ -259,6 +277,7 @@ var SearchRequestManager = (function () {
 
     SearchRequestManager.prototype._addResponse = function (queryId, responseBody, responseMeta, callback) {
         var _this = this;
+        // todo check here!
         if (this._runningQueryIds[queryId] === undefined) {
             return process.nextTick(callback.bind(null, null));
         }
