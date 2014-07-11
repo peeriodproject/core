@@ -25,7 +25,8 @@
         }
     },
     "plugin": {
-        "mandatory": "mapper-attachments"
+        "mandatory": "mapper-attachments",
+        "info_refresh_interval": 0
     },
     "http": {
         "port": 9200
