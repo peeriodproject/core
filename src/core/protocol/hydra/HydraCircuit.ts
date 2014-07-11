@@ -132,7 +132,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 	 *
 	 * @member {core.protocol.hydra.HydraNodeList) core.protocol.hydra.HydraCircuit~_nodesToExtendWith
 	 */
-	private _nodesToExtendWith:HydraNodeList = null;
+	private _nodesToExtendWith:HydraNodeList = [];
 
 	/**
 	 * The desired number of relay nodes this circuit should strive for.

@@ -108,7 +108,7 @@ var HydraCircuit = (function (_super) {
         *
         * @member {core.protocol.hydra.HydraNodeList) core.protocol.hydra.HydraCircuit~_nodesToExtendWith
         */
-        this._nodesToExtendWith = null;
+        this._nodesToExtendWith = [];
         /**
         * The desired number of relay nodes this circuit should strive for.
         *
