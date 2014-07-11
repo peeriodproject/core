@@ -6,6 +6,7 @@
 var SearchItem = (function () {
     function SearchItem(data) {
         this._hash = null;
+        this._name = null;
         this._path = null;
         this._pluginIdentifiers = [];
         this._pluginData = {};
@@ -44,6 +45,7 @@ var SearchItem = (function () {
 
             if (source) {
                 this._processItemMember('Hash', source);
+                this._processItemMember('Name', source);
                 this._processItemMember('Path', source);
                 this._processItemMember('Stats', source);
             }
@@ -60,6 +62,10 @@ var SearchItem = (function () {
     }
     SearchItem.prototype.getHash = function () {
         return this._hash;
+    };
+
+    SearchItem.prototype.getName = function () {
+        return this._name;
     };
 
     SearchItem.prototype.getPath = function () {

@@ -154,6 +154,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
     it('should correctly return the added item by id', function (done) {
         var dataToIndex = {
             itemHash: 'fileHash',
+            itemName: 'file.txt',
             itemPath: '../path/file.txt',
             itemStats: {
                 stats: true
@@ -173,6 +174,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
                     item.should.be.an.instanceof(SearchItem);
 
                     item.getHash().should.equal('fileHash');
+                    item.getName().should.equal('file.txt');
                     item.getPath().should.equal('../path/file.txt');
                     item.getStats().should.containDeep({ stats: true });
 
@@ -185,6 +187,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
     it('should correctly return the added item by path', function (done) {
         var dataToIndex = {
             itemHash: 'fileHash',
+            itemName: 'file.txt',
             itemPath: '../path/file.txt',
             itemStats: {
                 stats: true
@@ -266,6 +269,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
             pluginidentifier: {
                 file: fs.readFileSync(filePath).toString('base64'),
                 itemHash: 'fileHash',
+                itemName: 'Peeriod_Anonymous_decentralized_network.pdf',
                 itemPath: filePath,
                 itemStats: {
                     stats: true
@@ -286,6 +290,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 
                     item.should.be.an.instanceof(SearchItem);
 
+                    item.getName().should.equal('Peeriod_Anonymous_decentralized_network.pdf');
                     item.getPath().should.equal(filePath);
                     item.getStats().should.containDeep({ stats: true });
                     item.getHash().should.equal('fileHash');
@@ -315,13 +320,9 @@ describe('CORE --> SEARCH --> SearchClient', function () {
         };
 
         searchClient.createOutgoingQuery('myindex', 'searchQueryId', queryBody, function (err) {
-            console.log(err);
             (err === null).should.be.true;
 
             searchClient.addIncomingResponse('myindex', 'searchQueryId', { message: 'A new bonsai tree in the office' }, { metadata: true }, function (err, response) {
-                console.log(err);
-                console.log(response);
-
                 (err === null).should.be.true;
 
                 response.should.containDeep({
@@ -341,7 +342,6 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 
     it('should correctly remove a outgoing query and all corresponding responses from the database', function (done) {
         searchClient.deleteOutgoingQuery('myotherindex', 'searchQueryId', function (err) {
-            console.log(err);
             (err === null).should.be.true;
 
             done();
@@ -352,6 +352,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
         var dataToIndex = {
             pluginidentifier: {
                 itemHash: 'fileHash',
+                itemName: 'file.txt',
                 itemPath: '../path/file.txt',
                 itemStats: {
                     stats: true
@@ -372,18 +373,21 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 
                 results.should.containDeep({
                     total: 1,
-                    hits: [{
+                    hits: [
+                        {
                             _index: 'mainindex',
                             _type: 'pluginidentifier',
                             _source: {
                                 itemHash: "fileHash",
+                                itemName: 'file.txt',
                                 itemPath: "../path/file.txt",
                                 itemStats: {
                                     stats: true
                                 },
                                 foo: "bar io"
                             }
-                        }]
+                        }
+                    ]
                 });
 
                 done();

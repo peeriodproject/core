@@ -1,6 +1,7 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
 
 import fs = require('fs');
+import path = require('path');
 
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
 import PluginManagerInterface = require('../plugin/interfaces/PluginManagerInterface');
@@ -197,6 +198,7 @@ class SearchManager implements SearchManagerInterface {
 			});
 		}
 
+		// todo check elasticsearch store:yes
 		// update properties
 		mapping['properties'] = ObjectUtils.extend(properties, {
 			itemHash: {
@@ -208,6 +210,10 @@ class SearchManager implements SearchManagerInterface {
 				type: 'string',
 				store: 'yes',
 				index: 'not_analyzed'
+			},
+			itemName: {
+				type: 'string',
+				store: 'yes',
 			},
 			itemStats: {
 				type : 'nested',
@@ -308,6 +314,7 @@ class SearchManager implements SearchManagerInterface {
 				pluginData[identifier] = ObjectUtils.extend(pluginData[identifier], {
 					itemHash: fileHash,
 					itemPath: itemPath,
+					itemName: path.basename(itemPath),
 					itemStats: stats
 				});
 			}

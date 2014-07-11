@@ -12,6 +12,7 @@ import SearchItemInterface = require('./interfaces/SearchItemInterface');
 class SearchItem implements SearchItemInterface {
 
 	private _hash:string = null;
+	private _name:string = null;
 	private _path:string = null;
 	private _pluginIdentifiers:PluginNameListInterface = [];
 	private _pluginData:{ [identifier:string]:Object; } = {};
@@ -55,6 +56,7 @@ class SearchItem implements SearchItemInterface {
 
 			if (source) {
 				this._processItemMember('Hash', source);
+				this._processItemMember('Name', source);
 				this._processItemMember('Path', source);
 				this._processItemMember('Stats', source);
 			}
@@ -72,6 +74,10 @@ class SearchItem implements SearchItemInterface {
 
 	public getHash ():string {
 		return this._hash;
+	}
+
+	public getName ():string {
+		return this._name;
 	}
 
 	public getPath ():string {
