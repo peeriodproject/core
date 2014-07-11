@@ -109,6 +109,10 @@ var RoutingTable = (function () {
     };
 
     RoutingTable.prototype.getAllContactNodesSize = function (callback) {
+        if (!this._isOpen) {
+            return process.nextTick(callback.bind(null, null, 0));
+        }
+
         var bucketKeys = Object.keys(this._buckets);
         var processed = 0;
         var contactNodeCount = 0;
@@ -133,12 +137,14 @@ var RoutingTable = (function () {
 
     RoutingTable.prototype.getClosestContactNodes = function (id, excludeId, callback) {
         var _this = this;
-        var internalCallback = callback || function (err) {
-        };
+        if (!this._isOpen) {
+            return process.nextTick(callback.bind(null, null, []));
+        }
+
         var startBucketKey = this._getBucketKey(id);
 
         if (!this._isInBucketKeyRange(startBucketKey)) {
-            return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.getClosestContactNode: cannot get closest contact nodes for the given Id.'), null));
+            return process.nextTick(callback.bind(null, new Error('RoutingTable.getClosestContactNode: cannot get closest contact nodes for the given Id.'), null));
         }
 
         var topologyK = this._config.get('topology.k');
@@ -229,7 +235,7 @@ var RoutingTable = (function () {
                 }
             }
 
-            internalCallback(null, closestContactNodes);
+            callback(null, closestContactNodes);
 
             distances = null;
             distanceMap = null;
@@ -237,19 +243,25 @@ var RoutingTable = (function () {
     };
 
     RoutingTable.prototype.getContactNode = function (id, callback) {
-        var internalCallback = callback || function (err) {
-        };
+        if (!this._isOpen) {
+            return process.nextTick(callback.bind(null, null, null));
+        }
+
         var bucketKey = this._getBucketKey(id);
 
         if (this._isInBucketKeyRange(bucketKey)) {
-            this._getBucket(bucketKey).get(id, internalCallback);
+            this._getBucket(bucketKey).get(id, callback);
         } else {
-            return process.nextTick(internalCallback.bind(null, new Error('RoutingTable.getContactNode: cannot get the contact node.'), null));
+            return process.nextTick(callback.bind(null, new Error('RoutingTable.getContactNode: cannot get the contact node.'), null));
         }
     };
 
     RoutingTable.prototype.getRandomContactNode = function (callback) {
         var _this = this;
+        if (!this._isOpen) {
+            return process.nextTick(callback.bind(null, null, null));
+        }
+
         var bucketKeysToCrawl = new Array(this._getBucketAmount());
 
         // Crawls a random bucket from the bucketKeysToCrawlList and calls itself as long as the length is not 0
@@ -264,6 +276,7 @@ var RoutingTable = (function () {
                     bucketKeysToCrawl.splice(randomBucketIndex, 1);
 
                     if (contact === null) {
+                        // todo process.nextTick recursion!
                         return crawlRandomBucket();
                     } else {
                         bucketKeysToCrawl = null;
@@ -285,6 +298,10 @@ var RoutingTable = (function () {
 
     RoutingTable.prototype.getRandomContactNodesFromBucket = function (bucketKey, amount, callback) {
         var _this = this;
+        if (!this._isOpen) {
+            return process.nextTick(callback.bind(null, null, []));
+        }
+
         if (this._isInBucketKeyRange(bucketKey)) {
             this._getBucket(bucketKey).getAll(function (err, contacts) {
                 var contactLength;
@@ -334,6 +351,11 @@ var RoutingTable = (function () {
         var _this = this;
         var internalCallback = callback || function (err, longestNotSeenContact) {
         };
+
+        if (!this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null, null));
+        }
+
         var oldContactNodeId = oldContactNode.getId();
         var newContactNodeId = newContactNode.getId();
 
@@ -365,6 +387,11 @@ var RoutingTable = (function () {
     RoutingTable.prototype.updateContactNode = function (contact, callback) {
         var internalCallback = callback || function (err) {
         };
+
+        if (!this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null, null));
+        }
+
         var bucketKey = this._getBucketKey(contact.getId());
 
         if (this._isInBucketKeyRange(bucketKey)) {
