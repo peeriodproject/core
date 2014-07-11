@@ -99,7 +99,10 @@ var ConnectionManager = (function (_super) {
 
                         for (var i = 0, l = pipeline.length; i < l; i++) {
                             logger.log('hydra', 'Writing circuit message', { type: messageType, identifier: identifier, port: node.port, ip: node.ip });
-                            _this._protocolConnectionManager.hydraWriteMessageTo(identifier, pipeline[i]);
+                            _this._protocolConnectionManager.hydraWriteMessageTo(identifier, pipeline[i], function (err) {
+                                if (err)
+                                    logger.log('hydra', 'Writing error 1', { err: err.message });
+                            });
                         }
                     }
 
@@ -110,7 +113,10 @@ var ConnectionManager = (function (_super) {
             this._circuitPipeline[circuitId].push(sendableBuffer);
         } else if (this._circuitNodes[node.socketIdentifier]) {
             logger.log('hydra', 'Writing circuit message', { type: messageType, identifier: node.socketIdentifier });
-            this._protocolConnectionManager.hydraWriteMessageTo(node.socketIdentifier, sendableBuffer);
+            this._protocolConnectionManager.hydraWriteMessageTo(node.socketIdentifier, sendableBuffer, function (err) {
+                if (err)
+                    logger.log('hydra', 'Writing error 2', { err: err.message });
+            });
         }
     };
 
