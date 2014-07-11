@@ -126,7 +126,7 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 	public validateQueryAndTriggerResults (queryId:string, queryBuffer:Buffer, callback?:(err:Error) => any):void {
 		var internalCallback = callback || function () {};
 
-		logger.log('query', 'got query', {
+		logger.log('search', 'SearchResponseManager~_validateQueryAndTriggerResults: got incoming query', {
 			queryId: queryId
 		});
 
@@ -134,11 +134,6 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 			if (err) {
 				return internalCallback(err);
 			}
-
-			logger.log('query', 'running query', {
-				queryId: queryId,
-				body: queryObject
-			});
 
 			this._runQuery(queryObject, (err, results) => {
 				if (err) {
@@ -208,7 +203,7 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 
 	private _triggerNoResultsFound (queryId:string):void {
 		if (this._isOpen) {
-			logger.log('query', 'no results found', {
+			logger.log('search', 'SearchResponseManager~_triggerNoResultsFound: no results found', {
 				queryId: queryId
 			});
 
@@ -228,7 +223,7 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 	 */
 	private _triggerResultsFound (queryId:string, results:Object):void {
 		if (this._isOpen) {
-			logger.log('query', 'results found', {
+			logger.log('search', 'SearchResponseManager~_triggerResultsFound: Results found', {
 				queryId: queryId,
 				results: results
 			});

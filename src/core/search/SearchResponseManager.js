@@ -120,7 +120,7 @@ var SearchResponseManager = (function () {
         var internalCallback = callback || function () {
         };
 
-        logger.log('query', 'got query', {
+        logger.log('search', 'SearchResponseManager~_validateQueryAndTriggerResults: got incoming query', {
             queryId: queryId
         });
 
@@ -128,11 +128,6 @@ var SearchResponseManager = (function () {
             if (err) {
                 return internalCallback(err);
             }
-
-            logger.log('query', 'running query', {
-                queryId: queryId,
-                body: queryObject
-            });
 
             _this._runQuery(queryObject, function (err, results) {
                 if (err) {
@@ -202,7 +197,7 @@ var SearchResponseManager = (function () {
 
     SearchResponseManager.prototype._triggerNoResultsFound = function (queryId) {
         if (this._isOpen) {
-            logger.log('query', 'no results found', {
+            logger.log('search', 'SearchResponseManager~_triggerNoResultsFound: no results found', {
                 queryId: queryId
             });
 
@@ -222,7 +217,7 @@ var SearchResponseManager = (function () {
     */
     SearchResponseManager.prototype._triggerResultsFound = function (queryId, results) {
         if (this._isOpen) {
-            logger.log('query', 'results found', {
+            logger.log('search', 'SearchResponseManager~_triggerResultsFound: Results found', {
                 queryId: queryId,
                 results: results
             });

@@ -101,7 +101,7 @@ var SearchRequestManager = (function () {
                 internalCallback(err, queryId);
 
                 if (queryId) {
-                    logger.log('query', 'added outgoing query', {
+                    logger.log('search', 'SearchRequestManager#addQuery: Added outgoing query', {
                         queryId: queryId,
                         body: queryBody
                     });
@@ -112,7 +112,7 @@ var SearchRequestManager = (function () {
     };
 
     SearchRequestManager.prototype.addResponse = function (queryId, responseBody, responseMeta, callback) {
-        logger.log('query', 'got response', {
+        logger.log('search', 'SearchRequestManager#addResponse: Got response', {
             queryId: queryId
         });
 
@@ -249,6 +249,10 @@ var SearchRequestManager = (function () {
             _this._triggerQueryRemoved(queryId);
 
             //this._checkResultsAndTriggerEvent(this._runningQueryIdMap[queryId]);
+            logger.log('search', 'SearchRequestManager#removeQuery: Removed query', {
+                queryId: queryId
+            });
+
             return internalCallback(err);
         });
     };
@@ -265,12 +269,12 @@ var SearchRequestManager = (function () {
                 return callback(err);
             }
 
-            logger.log('query', 'added incoming response to database', {
+            logger.log('search', 'SearchRequestManager~_addQuery: Added incoming response to database', {
                 queryId: queryId
             });
 
             if (response && response['matches'] && response['matches'].length) {
-                logger.log('query', 'incoming response matched a running query!', {
+                logger.log('search', 'SearchRequestManager~_addQuery: Incoming response matched a running query!', {
                     queryId: queryId,
                     matches: response['matches']
                 });

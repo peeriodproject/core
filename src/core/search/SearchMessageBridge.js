@@ -71,7 +71,7 @@ var SearchMessageBridge = (function (_super) {
         this._searchRequestManager.onQueryAdd(function (queryId, queryBody) {
             _this._compressBuffer(queryBody, function (err, compressedBody) {
                 if (!err) {
-                    logger.log('query', 'emitting outgoing query', { queryId: queryId });
+                    logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Emitting new broadcast query', { queryId: queryId });
                     _this.emit('newBroadcastQuery', queryId, compressedBody);
                 }
             });
@@ -79,13 +79,12 @@ var SearchMessageBridge = (function (_super) {
 
         // query ended: UI
         this._searchRequestManager.onQueryRemoved(function (queryId) {
-            logger.log('query', 'emitting query removed (abort)', { queryId: queryId });
+            logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Query removed', { queryId: queryId });
             _this.emit('abort', queryId);
         });
 
         // query ended: Network
         this.on('end', function (queryIdentifier, reason) {
-            logger.log('query', 'query ended', { queryId: queryIdentifier });
             _this._searchRequestManager.queryEnded(queryIdentifier, reason);
         });
     };
@@ -93,7 +92,6 @@ var SearchMessageBridge = (function (_super) {
     SearchMessageBridge.prototype._setupIncomingQuery = function () {
         var _this = this;
         this.on('matchBroadcastQuery', function (queryId, compressedQueryBody) {
-            logger.log('query', 'match broadcast query', { queryId: queryId });
             _this._decompressBuffer(compressedQueryBody, function (err, queryBody) {
                 if (!err) {
                     _this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
@@ -107,14 +105,14 @@ var SearchMessageBridge = (function (_super) {
         this._searchResponseManager.onResultsFound(function (queryId, results) {
             _this._compressBuffer(results, function (err, compressedResults) {
                 if (!err) {
-                    logger.log('query', 'emitting broadcast query results', { queryId: queryId });
+                    logger.log('search', 'SearchMessageBridge~_setupOutgoingResults: Emitting broadcast query results', { queryId: queryId });
                     _this.emit('broadcastQueryResults', queryId, compressedResults);
                 }
             });
         });
 
         this._searchResponseManager.onNoResultsFound(function (queryId) {
-            logger.log('query', 'emitting broadcast query no results found', { queryId: queryId });
+            logger.log('search', 'emitting broadcast query no results found', { queryId: queryId });
             _this.emit('broadcastQueryResults', queryId, null);
         });
     };
@@ -122,7 +120,6 @@ var SearchMessageBridge = (function (_super) {
     SearchMessageBridge.prototype._setupIncomingResults = function () {
         var _this = this;
         this.on('result', function (queryIdentifier, responseBuffer, metadata) {
-            logger.log('query', 'got result', { queryId: queryIdentifier });
             _this._decompressBuffer(responseBuffer, function (err, decompressedBuffer) {
                 if (!err) {
                     _this._searchRequestManager.addResponse(queryIdentifier, decompressedBuffer, metadata);

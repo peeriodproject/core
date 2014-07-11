@@ -73,7 +73,7 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 		this._searchRequestManager.onQueryAdd((queryId:string, queryBody:Buffer) => {
 			this._compressBuffer(queryBody, (err:Error, compressedBody:Buffer) => {
 				if (!err) {
-					logger.log('query', 'emitting outgoing query', { queryId: queryId });
+					logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Emitting new broadcast query', { queryId: queryId });
 					this.emit('newBroadcastQuery', queryId, compressedBody);
 				}
 			});
@@ -81,20 +81,18 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 
 		// query ended: UI
 		this._searchRequestManager.onQueryRemoved((queryId:string) => {
-			logger.log('query', 'emitting query removed (abort)', { queryId: queryId });
+			logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Query removed', { queryId: queryId });
 			this.emit('abort', queryId);
 		});
 
 		// query ended: Network
 		this.on('end', (queryIdentifier:string, reason:string) => {
-			logger.log('query', 'query ended', { queryId: queryIdentifier });
 			this._searchRequestManager.queryEnded(queryIdentifier, reason);
 		});
 	}
 
 	private _setupIncomingQuery ():void {
 		this.on('matchBroadcastQuery', (queryId:string, compressedQueryBody:Buffer) => {
-			logger.log('query', 'match broadcast query', { queryId: queryId });
 			this._decompressBuffer(compressedQueryBody, (err:Error, queryBody:Buffer) => {
 				if (!err) {
 					this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
@@ -107,14 +105,14 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 		this._searchResponseManager.onResultsFound((queryId:string, results:Buffer) => {
 			this._compressBuffer(results, (err:Error, compressedResults:Buffer) => {
 				if (!err) {
-					logger.log('query', 'emitting broadcast query results', { queryId: queryId });
+					logger.log('search', 'SearchMessageBridge~_setupOutgoingResults: Emitting broadcast query results', { queryId: queryId });
 					this.emit('broadcastQueryResults', queryId, compressedResults);
 				}
 			});
 		});
 
 		this._searchResponseManager.onNoResultsFound((queryId:string) => {
-			logger.log('query', 'emitting broadcast query no results found', { queryId: queryId });
+			logger.log('search', 'emitting broadcast query no results found', { queryId: queryId });
 			this.emit('broadcastQueryResults', queryId, null);
 		});
 
@@ -122,7 +120,6 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 
 	private _setupIncomingResults ():void {
 		this.on('result', (queryIdentifier:string, responseBuffer:Buffer, metadata:Object) => {
-			logger.log('query', 'got result', { queryId: queryIdentifier });
 			this._decompressBuffer(responseBuffer, (err:Error, decompressedBuffer:Buffer) => {
 				if (!err) {
 					this._searchRequestManager.addResponse(queryIdentifier, decompressedBuffer, metadata);
