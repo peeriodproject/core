@@ -159,11 +159,12 @@ class NodePicker implements NodePickerInterface {
 	}
 
 	public pickNextAdditiveNodeBatch (callback:(batch:HydraNodeList) => any):void {
+		logger.log('hydraExtension', 'Picking next additive node batch.', {relayNodeLen: this._relayNodes.length});
+
 		if (!this._relayNodes.length) {
 			throw new Error('NodePicker: Picking additive nodes before relay nodes is not allowed!');
 		}
 
-		logger.log('hydraExtension', 'Picking next additive node batch.');
 		this._pickBatch(this._additiveNodeAmount, this._threshold, true, (batch:HydraNodeList) => {
 			this._nodesUsed = this._nodesUsed.concat(batch);
 			callback(batch);

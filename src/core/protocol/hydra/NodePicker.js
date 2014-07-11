@@ -137,11 +137,12 @@ var NodePicker = (function () {
 
     NodePicker.prototype.pickNextAdditiveNodeBatch = function (callback) {
         var _this = this;
+        logger.log('hydraExtension', 'Picking next additive node batch.', { relayNodeLen: this._relayNodes.length });
+
         if (!this._relayNodes.length) {
             throw new Error('NodePicker: Picking additive nodes before relay nodes is not allowed!');
         }
 
-        logger.log('hydraExtension', 'Picking next additive node batch.');
         this._pickBatch(this._additiveNodeAmount, this._threshold, true, function (batch) {
             _this._nodesUsed = _this._nodesUsed.concat(batch);
             callback(batch);
