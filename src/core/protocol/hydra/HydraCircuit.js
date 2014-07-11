@@ -133,7 +133,7 @@ var HydraCircuit = (function (_super) {
         this._circuitExtender = circuitExtenderFactory.create(hydraConfig.get('hydra.circuit.extensionReactionTimeBaseInSeconds') * 1000, hydraConfig.get('hydra.circuit.extensionReactionTimeFactor'), this._layeredEncDecHandler);
         this._maximumExtensionRetries = hydraConfig.get('hydra.circuit.maximumExtensionRetries');
 
-        logger.log('hydra', 'New circuit initiated.', { numberOfNodes: this._numOfRelayNodes });
+        logger.log('hydraExtension', 'New circuit initiated.', { numberOfNodes: this._numOfRelayNodes });
     }
     /**
     * BEGIN TESTING PURPOSES
@@ -148,9 +148,11 @@ var HydraCircuit = (function (_super) {
     HydraCircuit.prototype.construct = function () {
         var _this = this;
         this._nodePicker.pickRelayNodeBatch(function (batch) {
-            logger.log('hydra', 'Picked a batch of relay nodes', { nodes: batch });
+            logger.log('hydraExtension', 'Picked a batch of relay nodes', { nodes: batch });
 
-            _this._nodesToExtendWith = batch;
+            for (var i = 0, l = batch.length; i < l; i++) {
+                _this._nodesToExtendWith.push(batch[i]);
+            }
 
             _this._extensionCycle();
         });

@@ -163,7 +163,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 		this._circuitExtender = circuitExtenderFactory.create(hydraConfig.get('hydra.circuit.extensionReactionTimeBaseInSeconds') * 1000, hydraConfig.get('hydra.circuit.extensionReactionTimeFactor'), this._layeredEncDecHandler);
 		this._maximumExtensionRetries = hydraConfig.get('hydra.circuit.maximumExtensionRetries');
 
-		logger.log('hydra', 'New circuit initiated.', {numberOfNodes: this._numOfRelayNodes});
+		logger.log('hydraExtension', 'New circuit initiated.', {numberOfNodes: this._numOfRelayNodes});
 	}
 
 	/**
@@ -180,9 +180,11 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 
 	public construct ():void {
 		this._nodePicker.pickRelayNodeBatch((batch:HydraNodeList) => {
-			logger.log('hydra', 'Picked a batch of relay nodes', {nodes: batch});
+			logger.log('hydraExtension', 'Picked a batch of relay nodes', {nodes: batch});
 
-			this._nodesToExtendWith = batch;
+			for (var i=0, l=batch.length; i<l; i++) {
+				this._nodesToExtendWith.push(batch[i]);
+			}
 
 			this._extensionCycle();
 		});
