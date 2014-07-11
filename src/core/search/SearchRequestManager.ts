@@ -271,10 +271,15 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 			return process.nextTick(callback.bind(null, null));
 		}
 
+		logger.log('search', 'SearchRequestManager~_addResponse: going to add a response from an outgoing query', {
+			queryId: queryId,
+			body: responseBody
+		});
+
 		if (responseBody && responseBody['highlight']) {
 			var highlightedFieldKeys = Object.keys(responseBody['highlight']);
 
-			// added source
+			// add missing source
 			if (!responseBody['_source']) {
 				responseBody['_source'] = {};
 			}

@@ -105,7 +105,10 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 		this._searchResponseManager.onResultsFound((queryId:string, results:Buffer) => {
 			this._compressBuffer(results, (err:Error, compressedResults:Buffer) => {
 				if (!err) {
-					logger.log('search', 'SearchMessageBridge~_setupOutgoingResults: Emitting broadcast query results', { queryId: queryId });
+					logger.log('search', 'SearchMessageBridge~_setupOutgoingResults: Emitting broadcast query results', {
+						queryId: queryId,
+						results: results.toString()
+					});
 					this.emit('broadcastQueryResults', queryId, compressedResults);
 				}
 			});
@@ -120,8 +123,17 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 
 	private _setupIncomingResults ():void {
 		this.on('result', (queryIdentifier:string, responseBuffer:Buffer, metadata:Object) => {
+			logger.log('search', 'got result!', {
+				queryId: queryIdentifier
+			});
+
 			this._decompressBuffer(responseBuffer, (err:Error, decompressedBuffer:Buffer) => {
 				if (!err) {
+					logger.log('search', 'a result returned from the broadcast!', {
+						queryId: queryIdentifier,
+						body: decompressedBuffer.toString()
+					});
+
 					this._searchRequestManager.addResponse(queryIdentifier, decompressedBuffer, metadata);
 				}
 			});
