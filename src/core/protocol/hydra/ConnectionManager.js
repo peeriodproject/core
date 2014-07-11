@@ -197,7 +197,7 @@ var ConnectionManager = (function (_super) {
             }
 
             if (msgToEmit) {
-                logger.log('hydraReaction', 'Message Received', { type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId() });
+                logger.log('hydraReaction', 'Message Received', { type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId(), socketIdent: identifier });
 
                 var circuitNode = _this._circuitNodes[identifier];
 

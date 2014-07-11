@@ -340,10 +340,11 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 		this._tcpSocketHandler.connectTo(port, ip, (socket:TCPSocketInterface) => {
 			if (socket) {
-				logger.log('hydra', 'Got hydra socket');
 				var identifier:string = this._setHydraIdentifier(socket);
-				logger.log('hydra', 'Setting identifier on socket', {identifier: identifier});
+
+				this._incomingDataPipeline.hookSocket(socket);
 				this._addToHydra(identifier, socket);
+
 				callback(null, identifier);
 			}
 			else {
@@ -355,6 +356,8 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	public hydraWriteBufferTo (identifier:string, buffer:Buffer, callback?:(err:Error) => any):void {
 		var socket:TCPSocketInterface = this._hydraSockets[identifier];
 
+		logger.log('hydra', 'Writing buffer to socket', {identifier: identifier});
+
 		if (!socket) {
 			if (callback) {
 				callback(new Error('ProtocolConnectionManager#hydraWriteBufferTo: No socket stored under this identifier.'));
@@ -362,6 +365,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 		else {
 			socket.writeBuffer(buffer, function () {
+				logger.log('hydra', 'Buffer written out', {identifier: identifier});
 				if (callback) {
 					callback(null);
 				}
@@ -867,7 +871,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 * @param {core.net.tcp.TCPSocketInterface} socket
 	 */
 	private _onIncomingConnection (socket:TCPSocketInterface):void {
-		console.log(this._incomingPendingTimeoutLength);
 
 		var identifier:string = this._setTemporaryIdentifier(socket);
 		var pending:IncomingPendingSocket = {
