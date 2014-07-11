@@ -209,7 +209,7 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 				msgToEmit = this._readableFactory.create(message.getPayload());
 			}
 			catch (e) {
-
+				logger.log('error', 'Could not deformat hydra message', {socketIdent: identifier});
 			}
 
 			if (msgToEmit) {
