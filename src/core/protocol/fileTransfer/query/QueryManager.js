@@ -134,6 +134,7 @@ var QueryManager = (function (_super) {
         });
 
         query.on('result', function (metadata, resultBuffer) {
+            logger.log('query', 'Piping QUERY_RESULT back to bridge. Almost done', { broadcastId: query.getQueryId(), queryId: queryIdentifier, metadata: JSON.stringify(metadata) });
             _this._searchBridge.emit('result', queryIdentifier, resultBuffer, metadata);
         });
 
