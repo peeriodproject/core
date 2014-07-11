@@ -112,11 +112,11 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 		};
 
 		var opts:RoutingTableOptions = {
-			onCloseCallback   : function () {
+			onCloseCallback: function () {
 				onClose();
 				checkDone();
 			},
-			onOpenCallback    : function () {
+			onOpenCallback : function () {
 				onOpen();
 				checkDone();
 			}
@@ -129,7 +129,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 	it('should correctly create topology.bitLength buckets', function (done) {
 		var routingTable:RoutingTableInterface;
 		var opts:RoutingTableOptions = {
-			onOpenCallback    : function () {
+			onOpenCallback: function () {
 				bucketFactoryStub.create.callCount.should.equal(topologyBitLength);
 
 				closeRtAndDone(routingTable, done);
@@ -142,7 +142,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 	it('should correctly call the internal close method', function (done) {
 		var routingTable:RoutingTableInterface;
 		var opts:RoutingTableOptions = {
-			onCloseCallback   : function () {
+			onCloseCallback: function () {
 				if (bucketStub.close.callCount === topologyBitLength) {
 					done();
 				}
@@ -181,7 +181,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 		var size:number = 0;
 
 		bucketStub = testUtils.stubPublicApi(sandbox, Bucket, {
-			size : function (callback) {
+			size: function (callback) {
 				var bucketSize:number = 10;
 
 				size += bucketSize;
@@ -192,7 +192,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 
 		routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactoryStub, bucketStoreStub, contactNodeFactoryStub);
 
-		routingTable.getAllContactNodesSize(function(err:Error, size:number) {
+		routingTable.getAllContactNodesSize(function (err:Error, size:number) {
 			size.should.equal(topologyBitLength * 10);
 			bucketStub.size.callCount.should.equal(topologyBitLength);
 
@@ -268,7 +268,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 
 	});
 
-	describe('should correctly call public methods when the routing table is closed @joern', function () {
+	describe('should correctly call public methods when the routing table is closed', function () {
 		var routingTable:RoutingTableInterface;
 
 		beforeEach(function (done) {
@@ -282,7 +282,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 			routingTable = null;
 		});
 
-		it ('`getAllContactNodesSize` should correctly return 0', function (done) {
+		it('`getAllContactNodesSize` should correctly return 0', function (done) {
 			routingTable.getAllContactNodesSize(function (err, size) {
 				(err === null).should.be.true;
 
@@ -292,7 +292,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 			});
 		});
 
-		it ('`getClosestContactNodes` should correctly return an empty array', function (done) {
+		it('`getClosestContactNodes` should correctly return an empty array', function (done) {
 			routingTable.getClosestContactNodes(ContactNodeFactory.createDummy().getId(), null, function (err, contacts) {
 				(err === null).should.be.true;
 
@@ -303,7 +303,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 			});
 		});
 
-		it ('`getContactNode` should correctly return `null`', function (done) {
+		it('`getContactNode` should correctly return `null`', function (done) {
 			routingTable.getContactNode(ContactNodeFactory.createDummy().getId(), function (err, contact) {
 				(err === null).should.be.true;
 
@@ -313,7 +313,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 			});
 		});
 
-		it ('`getRandomContactNode` should correctly return `null`', function (done) {
+		it('`getRandomContactNode` should correctly return `null`', function (done) {
 			routingTable.getRandomContactNode(function (err, contact) {
 				(err === null).should.be.true;
 
@@ -323,7 +323,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 			});
 		});
 
-		it ('`getRandomContactNodesFromBucket` should correctly return an empty array', function (done) {
+		it('`getRandomContactNodesFromBucket` should correctly return an empty array', function (done) {
 			routingTable.getRandomContactNodesFromBucket(1, 1, function (err, contacts) {
 				(err === null).should.be.true;
 
@@ -334,7 +334,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 			});
 		});
 
-		it ('`replaceContactNode` should correctly return `null`', function (done) {
+		it('`replaceContactNode` should correctly return `null`', function (done) {
 			routingTable.replaceContactNode(ContactNodeFactory.createDummy(), ContactNodeFactory.createDummy(), function (err, longestNotSeenContact) {
 				(err === null).should.be.true;
 
@@ -344,7 +344,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 			});
 		});
 
-		it ('`updateContactNode` should correctly return `null`', function (done) {
+		it('`updateContactNode` should correctly return `null`', function (done) {
 			routingTable.updateContactNode(ContactNodeFactory.createDummy(), function (err, longestNotSeenContact) {
 				(err === null).should.be.true;
 
@@ -433,7 +433,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 				var newContact = ContactNodeFactory.createDummy(ids[2]);
 
 				routingTable = new RoutingTable(configStub, appQuitHandlerStub, owner.getId(), bucketFactory, bucketStore, contactNodeFactory, {
-					onOpenCallback    : function () {
+					onOpenCallback: function () {
 						routingTable.replaceContactNode(oldContact, newContact, function (err:Error) {
 							err.should.be.an.instanceof(Error);
 							err.message.should.equal('RoutingTable.replaceContactNode: Cannot replace the given contact nodes. They dont belong to the same Bucket.');
@@ -483,7 +483,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 				var routingTable:RoutingTableInterface;
 
 				routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
-					onOpenCallback    : function () {
+					onOpenCallback: function () {
 
 						routingTable.getRandomContactNode(function (err:Error, contact:ContactNodeInterface) {
 							(err === null).should.be.true;
@@ -495,7 +495,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 				});
 			});
 
-			it ('should correctly return a random contact node', function (done) {
+			it('should correctly return a random contact node', function (done) {
 				var routingTable:RoutingTableInterface;
 
 				routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
@@ -517,7 +517,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 
 		describe('should correctly return `amount` random contact nodes from the specified bucket', function () {
 
-			it ('should correctly return all contact nodes if the bucket contains less nodes than specified', function (done) {
+			it('should correctly return all contact nodes if the bucket contains less nodes than specified', function (done) {
 				var routingTable:RoutingTableInterface;
 				var ownerIdStr:string;
 				var ids:Array<string>;
@@ -562,7 +562,7 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
 				});
 			});
 
-			it ('should correctly return `amount` random contact nodes', function (done) {
+			it('should correctly return `amount` random contact nodes', function (done) {
 				var routingTable:RoutingTableInterface;
 				var ownerIdStr:string;
 				var ids:Array<string>;
