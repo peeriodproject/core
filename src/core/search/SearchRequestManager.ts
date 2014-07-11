@@ -295,7 +295,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	 *
 	 * @method core.search.SearchRequestManager~_createAndStoreQueryId
 	 *
-	 * @param callback The callback that will be called after the generation of the data with `queryId` as first argument.
+	 * @param {Function} callback The callback that will be called after the generation of the data with `queryId` as first argument.
 	 */
 	private _createAndStoreQueryId (callback:(id:string) => any):void {
 		crypto.randomBytes(16, (ex, buf) => {
@@ -315,6 +315,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	 * @method core.search.SearchRequestManager~_triggerQueryAdd
 
 	 * @param {string} queryId The id of the added search query
+	 * @param {Object} queryBody The body of the added search query
 	 */
 	private _triggerQueryAdd (queryId:string, queryBody:Object):void {
 		if (this._isOpen) {
