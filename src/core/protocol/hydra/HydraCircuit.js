@@ -191,17 +191,17 @@ var HydraCircuit = (function (_super) {
 
         var nodeToExtendWith = retryNode ? retryNode : this._nodesToExtendWith.shift();
 
-        logger.log('hydra', 'Trying to extend circuit with node', { node: nodeToExtendWith });
+        logger.log('hydraExtension', 'Trying to extend circuit with node', { node: nodeToExtendWith });
 
         this._nodePicker.pickNextAdditiveNodeBatch(function (batch) {
-            logger.log('hydra', 'Picked an additive batch of nodes for the extension. Extending...', { additiveBath: batch });
+            logger.log('hydraExtension', 'Picked an additive batch of nodes for the extension. Extending...', { additiveBath: batch });
 
             _this._circuitExtender.extend(nodeToExtendWith, batch, function (err, isRejected, newNode) {
-                logger.log('hydra', 'The extension has been processed');
+                logger.log('hydraExtension', 'The extension has been processed');
 
                 // successful
                 if (newNode) {
-                    logger.log('hydraSuccess', 'Extension was successful. New node with socket is:', { socketIdent: newNode.socketIdentifier });
+                    logger.log('hydraExtension', 'Extension was successful. New node with socket is:', { socketIdent: newNode.socketIdentifier });
 
                     _this._extensionRetryCount = 0;
 
@@ -213,7 +213,7 @@ var HydraCircuit = (function (_super) {
                     }
 
                     if (circuitNodesLength === _this._numOfRelayNodes) {
-                        logger.log('hydraSuccess', 'Circuit has been fully constructed', { circuitId: _this.getCircuitId() });
+                        logger.log('hydraExtension', 'Circuit has been fully constructed', { circuitId: _this.getCircuitId() });
 
                         // all done, finalize
                         _this._constructed = true;
@@ -223,19 +223,19 @@ var HydraCircuit = (function (_super) {
                         _this._extensionCycle();
                     }
                 } else if (isRejected) {
-                    logger.log('hydra', 'Extension was rejected by the target node');
+                    logger.log('hydraExtension', 'Extension was rejected by the target node');
 
                     if (_this._extensionRetryCount === _this._maximumExtensionRetries) {
-                        logger.log('hydra', 'Too many rejections, tearing down circuit.');
+                        logger.log('hydraExtension', 'Too many rejections, tearing down circuit.');
                         _this._teardown(true);
                     } else {
                         _this._nodePicker.pickAdditionalRelayNode(function (node) {
-                            logger.log('hydra', 'Trying again node with new relay node', { newNode: node });
+                            logger.log('hydraExtension', 'Trying again node with new relay node', { newNode: node });
                             _this._extensionCycle(node);
                         });
                     }
                 } else if (err) {
-                    logger.log('hydra', 'Extension rendered an error. Circuit is tearing down', { error: err.message });
+                    logger.log('hydraExtension', 'Extension rendered an error. Circuit is tearing down', { error: err.message });
 
                     _this._teardown(err.message.indexOf('Circuit socket terminated') === -1);
                 }
