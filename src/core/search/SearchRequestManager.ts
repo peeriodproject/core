@@ -9,6 +9,8 @@ import SearchRequestManagerInterface = require('./interfaces/SearchRequestManage
 
 import ObjectUtils = require('../utils/ObjectUtils');
 
+var logger = require('../utils/logger/LoggerFactory').create();
+
 /**
  * @class core.search.SearchRequestManager
  * @extends core.search.SearchRequestManagerInterface
@@ -110,6 +112,10 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 				internalCallback(err, queryId);
 
 				if (queryId) {
+					logger.log('query', 'added outgoing query', {
+						queryId: queryId,
+						body: queryBody
+					});
 					this._triggerQueryAdd(queryId, queryBody);
 				}
 			});
@@ -117,6 +123,10 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	}
 
 	public addResponse (queryId:string, responseBody:Buffer, responseMeta:Object, callback?:(err:Error) => any):void {
+		logger.log('query', 'got response', {
+			queryId: queryId
+		});
+
 		var internalCallback = callback || function (err:Error) {
 		};
 		var returned:number = 0;
@@ -264,7 +274,16 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 				return callback(err);
 			}
 
+			logger.log('query', 'added incoming response to database', {
+				queryId: queryId
+			});
+
 			if (response && response['matches'] && response['matches'].length) {
+				logger.log('query', 'incoming response matched a running query!', {
+					queryId: queryId,
+					matches: response['matches']
+				});
+
 				response['matches'].forEach((match) => {
 					if (this._runningQueryIds[queryId] !== undefined) {
 						this._runningQueryIds[queryId]++;
