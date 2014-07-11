@@ -302,10 +302,11 @@ var ProtocolConnectionManager = (function (_super) {
         var _this = this;
         this._tcpSocketHandler.connectTo(port, ip, function (socket) {
             if (socket) {
-                logger.log('hydra', 'Got hydra socket');
                 var identifier = _this._setHydraIdentifier(socket);
-                logger.log('hydra', 'Setting identifier on socket', { identifier: identifier });
+
+                _this._incomingDataPipeline.hookSocket(socket);
                 _this._addToHydra(identifier, socket);
+
                 callback(null, identifier);
             } else {
                 callback(new Error('Could not establish connection to [' + ip + ']:' + port), null);
@@ -828,8 +829,6 @@ var ProtocolConnectionManager = (function (_super) {
     */
     ProtocolConnectionManager.prototype._onIncomingConnection = function (socket) {
         var _this = this;
-        console.log(this._incomingPendingTimeoutLength);
-
         var identifier = this._setTemporaryIdentifier(socket);
         var pending = {
             socket: socket,
