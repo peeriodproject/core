@@ -3,6 +3,8 @@ var crypto = require('crypto');
 var AdditiveSharingScheme = require('../../crypto/AdditiveSharingScheme');
 var HKDF = require('../../crypto/HKDF');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * CircuitExtenderInterface implementation.
 *
@@ -158,8 +160,10 @@ var CircuitExtender = (function () {
                 _this._onReaction(from, message, decrypted);
             };
 
-            this._circuitTerminationListener = function (circuitId) {
+            this._circuitTerminationListener = function (circuitId, socketIdentifier) {
                 if (circuitId === _this._circuitId) {
+                    logger.log('hydra', 'Socket terminated', { identifier: socketIdentifier });
+
                     _this._onCircuitTermination();
                 }
             };
@@ -184,6 +188,7 @@ var CircuitExtender = (function () {
                 _this._messageCenter.spitoutRelayCreateCellMessage(_this._encDecHandler, nodeToExtendWith.ip, nodeToExtendWith.port, _this._currentUUID, shares[shares.length - 1], _this._circuitId);
             }
 
+            logger.log('hydra', 'Setting reaction timeout', { numOfMs: _this._reactionTimeInMs * Math.pow(_this._reactionTimeFactor, _this._nodes.length) });
             _this._currentReactionTimeout = global.setTimeout(function () {
                 _this._extensionError('Timed out');
             }, _this._reactionTimeInMs * Math.pow(_this._reactionTimeFactor, _this._nodes.length));
@@ -241,7 +246,6 @@ var CircuitExtender = (function () {
     * @param {string} errMsg Message for the passed in error.
     */
     CircuitExtender.prototype._extensionError = function (errMsg) {
-        console.log(errMsg);
         this._removeMessageListener();
         this._removeTerminationListener();
 
@@ -303,6 +307,8 @@ var CircuitExtender = (function () {
     * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} message The reaction message.
     */
     CircuitExtender.prototype._onReaction = function (from, message, decrypted) {
+        logger.log('hydraReaction', 'Received reaction', { circuitId: from.circuitId });
+
         if (this._expectReactionFrom === from && (!this._nodes.length || decrypted)) {
             this._clearReactionTimeout();
 

@@ -353,6 +353,8 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	}
 
 	public setMyExternalIp (ip:string):void {
+		// @todo Here IPv6 addresses should be transformed into a standardized format!
+
 		this._myExternalIp = ip;
 	}
 

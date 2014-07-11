@@ -6,6 +6,8 @@ var __extends = this.__extends || function (d, b) {
 };
 var events = require('events');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * ConnectionManagerInterface implementation.
 *
@@ -89,12 +91,18 @@ var ConnectionManager = (function (_super) {
 
                 this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
                     if (!err && identifier) {
+                        logger.log('hydra', 'Obtained connection for circuit', { socketIdent: identifier, port: node.port, ip: node.ip });
+
                         _this.addToCircuitNodes(identifier, node);
 
                         var pipeline = _this._circuitPipeline[circuitId];
 
                         for (var i = 0, l = pipeline.length; i < l; i++) {
-                            _this._protocolConnectionManager.hydraWriteMessageTo(identifier, pipeline[i]);
+                            logger.log('hydra', 'Writing circuit message', { type: messageType, identifier: identifier, port: node.port, ip: node.ip });
+                            _this._protocolConnectionManager.hydraWriteMessageTo(identifier, pipeline[i], function (err) {
+                                if (err)
+                                    logger.log('hydra', 'Writing error 1', { err: err.message });
+                            });
                         }
                     }
 
@@ -104,7 +112,11 @@ var ConnectionManager = (function (_super) {
 
             this._circuitPipeline[circuitId].push(sendableBuffer);
         } else if (this._circuitNodes[node.socketIdentifier]) {
-            this._protocolConnectionManager.hydraWriteMessageTo(node.socketIdentifier, sendableBuffer);
+            logger.log('hydra', 'Writing circuit message', { type: messageType, identifier: node.socketIdentifier });
+            this._protocolConnectionManager.hydraWriteMessageTo(node.socketIdentifier, sendableBuffer, function (err) {
+                if (err)
+                    logger.log('hydra', 'Writing error 2', { err: err.message });
+            });
         }
     };
 
@@ -120,6 +132,8 @@ var ConnectionManager = (function (_super) {
 
         this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
             if (!err && identifier) {
+                logger.log('hydra', 'Writing regular message', { type: messageType, identifier: identifier, port: node.port, ip: node.ip });
+
                 _this._protocolConnectionManager.hydraWriteMessageTo(identifier, sendableBuffer);
             }
         });
@@ -170,7 +184,7 @@ var ConnectionManager = (function (_super) {
             var circuitNode = _this._removeFromCircuitNodesByIdentifier(identifier, false);
 
             if (circuitNode) {
-                _this.emit('circuitTermination', circuitNode.circuitId);
+                _this.emit('circuitTermination', circuitNode.circuitId, identifier);
             }
         });
 
@@ -183,10 +197,13 @@ var ConnectionManager = (function (_super) {
             }
 
             if (msgToEmit) {
+                logger.log('hydraReaction', 'Message Received', { type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId() });
+
                 var circuitNode = _this._circuitNodes[identifier];
 
                 if (circuitNode) {
                     if (circuitNode.circuitId === msgToEmit.getCircuitId()) {
+                        logger.log('hydraReaction', 'This is a circuit message', { type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId() });
                         _this.emit('circuitMessage', msgToEmit, circuitNode);
                     }
                 } else {

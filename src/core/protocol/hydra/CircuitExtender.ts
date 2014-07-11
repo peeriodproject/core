@@ -10,6 +10,8 @@ import HydraMessageCenterInterface = require('./interfaces/HydraMessageCenterInt
 import LayeredEncDecHandlerInterface = require('./messages/interfaces/LayeredEncDecHandlerInterface');
 import ReadableCellCreatedRejectedMessageInterface = require('./messages/interfaces/ReadableCellCreatedRejectedMessageInterface');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * CircuitExtenderInterface implementation.
  *
@@ -184,8 +186,10 @@ class CircuitExtender implements CircuitExtenderInterface {
 				this._onReaction(from, message, decrypted);
 			};
 
-			this._circuitTerminationListener = (circuitId:string) => {
+			this._circuitTerminationListener = (circuitId:string, socketIdentifier:string) => {
 				if (circuitId === this._circuitId) {
+					logger.log('hydra', 'Socket terminated', {identifier:socketIdentifier});
+
 					this._onCircuitTermination();
 				}
 			};
@@ -213,7 +217,7 @@ class CircuitExtender implements CircuitExtenderInterface {
 			}
 
 
-
+			logger.log('hydra', 'Setting reaction timeout', {numOfMs: this._reactionTimeInMs * Math.pow(this._reactionTimeFactor, this._nodes.length)});
 			this._currentReactionTimeout = global.setTimeout(() => {
 				this._extensionError('Timed out');
 			}, this._reactionTimeInMs * Math.pow(this._reactionTimeFactor, this._nodes.length));
@@ -272,7 +276,6 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 * @param {string} errMsg Message for the passed in error.
 	 */
 	private _extensionError (errMsg:string):void {
-		console.log(errMsg);
 		this._removeMessageListener();
 		this._removeTerminationListener();
 
@@ -334,6 +337,8 @@ class CircuitExtender implements CircuitExtenderInterface {
 	 * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} message The reaction message.
 	 */
 	private _onReaction (from:HydraNode, message:ReadableCellCreatedRejectedMessageInterface, decrypted:boolean):void {
+		logger.log('hydraReaction', 'Received reaction', {circuitId: from.circuitId});
+
 		if (this._expectReactionFrom === from && (!this._nodes.length || decrypted)) {
 
 			this._clearReactionTimeout();

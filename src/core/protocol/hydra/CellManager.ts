@@ -14,6 +14,8 @@ import HydraCellInterface = require('./interfaces/HydraCellInterface');
 import HydraCellFactoryInterface = require('./interfaces/HydraCellFactoryInterface');
 import ReadableCreateCellAdditiveMessageInterface = require('./messages/interfaces/ReadableCreateCellAdditiveMessageInterface');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * CellManagerInterface implementation.
  *
@@ -177,6 +179,7 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 	 * @param {core.protocol.hydra.PendingCreateCellRequest} pending The request object to accept.
 	 */
 	private _acceptCreateCellRequest (pending:PendingCreateCellRequest):void {
+
 		var diffie:crypto.DiffieHellman = crypto.getDiffieHellman('modp14');
 		var dhPublicKey:Buffer = diffie.generateKeys();
 		var secret:Buffer = diffie.computeSecret(AdditiveSharingScheme.getCleartext(pending.additivePayloads, 256));
@@ -203,6 +206,8 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 		this._maintainedCells.push(cell);
 		this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()] = cell;
 		this._cellsByFeedingIdentifier[feedingIdentifier] = cell;
+
+		logger.log('hydraCell', 'Accepting cell request', {circuitId: cell.getPredecessorCircuitId()});
 
 		cell.once('isTornDown', () => {
 			this._onTornDownCell(cell);
@@ -319,6 +324,7 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 				circuitId: circuitId
 			};
 
+			logger.log('hydraCell', 'Adding initiator socket to circuit nodes', {node: initiatorNode, socketIdent: socketIdentifier});
 			this._connectionManager.addToCircuitNodes(socketIdentifier, initiatorNode);
 
 			pending.circuitId = circuitId;
@@ -333,6 +339,7 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 		}
 
 		if (pending.additivePayloads.length === this._additiveSharingMsgAmount && pending.initiator) {
+			logger.log('hydraCell', 'Complete batch.');
 			this._onCompleteBatchRequest(pending);
 		}
 	}

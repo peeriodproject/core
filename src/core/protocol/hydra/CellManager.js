@@ -10,6 +10,8 @@ var crypto = require('crypto');
 var AdditiveSharingScheme = require('../../crypto/AdditiveSharingScheme');
 var HKDF = require('../../crypto/HKDF');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * CellManagerInterface implementation.
 *
@@ -188,6 +190,8 @@ var CellManager = (function (_super) {
         this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()] = cell;
         this._cellsByFeedingIdentifier[feedingIdentifier] = cell;
 
+        logger.log('hydraCell', 'Accepting cell request', { circuitId: cell.getPredecessorCircuitId() });
+
         cell.once('isTornDown', function () {
             _this._onTornDownCell(cell);
         });
@@ -302,6 +306,7 @@ var CellManager = (function (_super) {
                 circuitId: circuitId
             };
 
+            logger.log('hydraCell', 'Adding initiator socket to circuit nodes', { node: initiatorNode, socketIdent: socketIdentifier });
             this._connectionManager.addToCircuitNodes(socketIdentifier, initiatorNode);
 
             pending.circuitId = circuitId;
@@ -316,6 +321,7 @@ var CellManager = (function (_super) {
         }
 
         if (pending.additivePayloads.length === this._additiveSharingMsgAmount && pending.initiator) {
+            logger.log('hydraCell', 'Complete batch.');
             this._onCompleteBatchRequest(pending);
         }
     };

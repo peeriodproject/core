@@ -340,7 +340,9 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 		this._tcpSocketHandler.connectTo(port, ip, (socket:TCPSocketInterface) => {
 			if (socket) {
+				logger.log('hydra', 'Got hydra socket');
 				var identifier:string = this._setHydraIdentifier(socket);
+				logger.log('hydra', 'Setting identifier on socket', {identifier: identifier});
 				this._addToHydra(identifier, socket);
 				callback(null, identifier);
 			}
@@ -724,8 +726,9 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 	 *
 	 * @param {string} oldIdentifier The old temporary identifier
 	 * @param {core.protocol.net.IncomingPendingSocket} pending The incoming pending socket object
+	 * @returns {string} The new hydra identifier of the socket
 	 */
-	private _fromIncomingPendingToHydra (oldIdentifier:string, pending:IncomingPendingSocket):void {
+	private _fromIncomingPendingToHydra (oldIdentifier:string, pending:IncomingPendingSocket):string {
 		var socket:TCPSocketInterface = pending.socket;
 
 		if (pending.timeout) {
@@ -736,6 +739,8 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		var identifier:string = this._setHydraIdentifier(socket);
 
 		this._addToHydra(identifier, socket);
+
+		return identifier;
 	}
 
 	/**
@@ -894,7 +899,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		var incomingPending:IncomingPendingSocket = this._incomingPendingSockets[identifier];
 
 		if (incomingPending) {
-			this._fromIncomingPendingToHydra(identifier, incomingPending);
+			var hydraIdentifier:string = this._fromIncomingPendingToHydra(identifier, incomingPending);
 		}
 		else if (!(this._hydraSockets[identifier])) {
 			propagateMessage = false;
@@ -902,7 +907,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 
 		if (propagateMessage) {
-			this.emit('hydraMessage', identifier, this.getHydraSocketIp(identifier), message);
+			this.emit('hydraMessage', hydraIdentifier, this.getHydraSocketIp(hydraIdentifier), message);
 		}
 	}
 

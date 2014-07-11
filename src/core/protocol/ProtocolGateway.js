@@ -160,7 +160,7 @@ var ProtocolGateway = (function (_super) {
         var aes128GcmLayeredEncDecHandlerFactory = new Aes128GcmLayeredEncDecHandlerFactory();
         var aes128GcmDecryptionFactory = new Aes128GcmReadableDecryptedMessageFactory();
         var aes128GcmEncryptionFactory = new Aes128GcmWritableMessageFactory();
-        var hydraCircuitFactory = new HydraCircuitFactory(this._hydraConfig, this._routingTable, this._hydraConnectionManager, this._hydraMessageCenter, circuitExtenderFactory, aes128GcmLayeredEncDecHandlerFactory);
+        var hydraCircuitFactory = new HydraCircuitFactory(this._hydraConfig, this._routingTable, this._hydraConnectionManager, this._hydraMessageCenter, circuitExtenderFactory, aes128GcmLayeredEncDecHandlerFactory, this._tcpSocketHandler);
         var hydraCellFactory = new HydraCellFactory(this._hydraConfig, this._hydraConnectionManager, this._hydraMessageCenter, aes128GcmDecryptionFactory, aes128GcmEncryptionFactory);
 
         this._hydraCircuitManager = new CircuitManager(this._hydraConfig, hydraCircuitFactory);

@@ -62,7 +62,11 @@ class IrcLoggerBackend implements LoggerInterface {
 				search: 11,
 				info: 12,
 				error: 13,
-				warn: 14
+				warn: 14,
+				socket: 15,
+				hydraSuccess: 16,
+				hydraCell: 17,
+				hydraReaction: 18
 			}
 		});
 

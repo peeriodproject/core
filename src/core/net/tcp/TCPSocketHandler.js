@@ -334,6 +334,7 @@ var TCPSocketHandler = (function (_super) {
     };
 
     TCPSocketHandler.prototype.setMyExternalIp = function (ip) {
+        // @todo Here IPv6 addresses should be transformed into a standardized format!
         this._myExternalIp = ip;
     };
     return TCPSocketHandler;

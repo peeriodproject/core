@@ -13,6 +13,8 @@ import CircuitExtenderInterface = require('./interfaces/CircuitExtenderInterface
 import CircuitExtenderFactoryInterface = require('./interfaces/CircuitExtenderFactoryInterface');
 import ReadableHydraMessageInterface = require('./messages/interfaces/ReadableHydraMessageInterface');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * HydraCircuitInterface implementation
  *
@@ -160,6 +162,8 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 		this._circuitNodes = this._layeredEncDecHandler.getNodes();
 		this._circuitExtender = circuitExtenderFactory.create(hydraConfig.get('hydra.circuit.extensionReactionTimeBaseInSeconds') * 1000, hydraConfig.get('hydra.circuit.extensionReactionTimeFactor'), this._layeredEncDecHandler);
 		this._maximumExtensionRetries = hydraConfig.get('hydra.circuit.maximumExtensionRetries');
+
+		logger.log('hydra', 'New circuit initiated.', {numberOfNodes: this._numOfRelayNodes});
 	}
 
 	/**
@@ -176,6 +180,8 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 
 	public construct ():void {
 		this._nodePicker.pickRelayNodeBatch((batch:HydraNodeList) => {
+			logger.log('hydra', 'Picked a batch of relay nodes', {nodes: batch});
+
 			this._nodesToExtendWith = batch;
 
 			this._extensionCycle();
@@ -216,11 +222,19 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 
 		var nodeToExtendWith:HydraNode = retryNode ? retryNode : this._nodesToExtendWith.shift();
 
+		logger.log('hydra', 'Trying to extend circuit with node', {node: nodeToExtendWith});
+
 		this._nodePicker.pickNextAdditiveNodeBatch((batch:HydraNodeList) => {
+
+			logger.log('hydra', 'Picked an additive batch of nodes for the extension. Extending...', {additiveBath: batch});
+
 			this._circuitExtender.extend(nodeToExtendWith, batch, (err:Error, isRejected:boolean, newNode:HydraNode) => {
+				logger.log('hydra', 'The extension has been processed');
 
 				// successful
 				if (newNode) {
+					logger.log('hydraSuccess', 'Extension was successful. New node is:', {node: newNode});
+
 					this._extensionRetryCount = 0;
 
 					var circuitNodesLength:number = this._circuitNodes.length;
@@ -231,6 +245,8 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 					}
 
 					if (circuitNodesLength === this._numOfRelayNodes) {
+						logger.log('hydraSuccess', 'Circuit has been fully constructed', {circuitId: this.getCircuitId()});
+
 						// all done, finalize
 						this._constructed = true;
 						this._setupFileTransferListener();
@@ -242,17 +258,23 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 				}
 				// successful, but rejected
 				else if (isRejected) {
+					logger.log('hydra', 'Extension was rejected by the target node');
+
 					if (this._extensionRetryCount === this._maximumExtensionRetries) {
+						logger.log('hydra', 'Too many rejections, tearing down circuit.');
 						this._teardown(true);
 					}
 					else {
 						this._nodePicker.pickAdditionalRelayNode((node:HydraNode) => {
+							logger.log('hydra', 'Trying again node with new relay node', {newNode: node});
 							this._extensionCycle(node);
 						});
 					}
 				}
 				// error. tear down shit
 				else if (err) {
+					logger.log('hydra', 'Extension rendered an error. Circuit is tearing down', {error: err.message});
+
 					this._teardown(err.message.indexOf('Circuit socket terminated') === -1);
 				}
 
@@ -361,6 +383,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 	 */
 	private _teardown (closeSocket:boolean):void {
 		if (!this._isTornDown) {
+			logger.log('hydra', 'Tearing down circuit.');
 			this._isTornDown = true;
 
 			this._removeEventListeners();
@@ -373,6 +396,9 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 			}
 
 			this.emit('isTornDown');
+		}
+		else {
+			logger.log('hydra', 'Circuit has already been torn down. Ignoring.');
 		}
 	}
 

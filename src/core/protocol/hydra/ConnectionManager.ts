@@ -12,6 +12,8 @@ import ReadableMessageInterface = require('../messages/interfaces/ReadableMessag
 import ReadableHydraMessageInterface = require('./messages/interfaces/ReadableHydraMessageInterface');
 import ConnectionManagerInterface = require('./interfaces/ConnectionManagerInterface');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * ConnectionManagerInterface implementation.
  *
@@ -103,14 +105,18 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 
 				this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, (err:Error, identifier:string) => {
 					if (!err && identifier) {
+						logger.log('hydra', 'Obtained connection for circuit', {socketIdent: identifier, port: node.port, ip: node.ip});
+
 						this.addToCircuitNodes(identifier, node);
 
 						var pipeline = this._circuitPipeline[circuitId];
 
 						for (var i = 0, l = pipeline.length; i < l; i++) {
-							this._protocolConnectionManager.hydraWriteMessageTo(identifier, pipeline[i]);
+							logger.log('hydra', 'Writing circuit message', {type: messageType, identifier: identifier, port: node.port, ip: node.ip});
+							this._protocolConnectionManager.hydraWriteMessageTo(identifier, pipeline[i], (err:Error) => {
+								if (err) logger.log('hydra', 'Writing error 1', { err: err.message });
+							});
 						}
-
 					}
 
 					delete this._circuitPipeline[circuitId];
@@ -120,7 +126,10 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 			this._circuitPipeline[circuitId].push(sendableBuffer);
 		}
 		else if (this._circuitNodes[node.socketIdentifier]) {
-			this._protocolConnectionManager.hydraWriteMessageTo(node.socketIdentifier, sendableBuffer);
+			logger.log('hydra', 'Writing circuit message', {type: messageType, identifier: node.socketIdentifier});
+			this._protocolConnectionManager.hydraWriteMessageTo(node.socketIdentifier, sendableBuffer, (err:Error) => {
+				if (err) logger.log('hydra', 'Writing error 2', { err: err.message });
+			});
 		}
 	}
 
@@ -136,6 +145,8 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 
 		this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, (err:Error, identifier:string) => {
 			if (!err && identifier) {
+				logger.log('hydra', 'Writing regular message', {type: messageType, identifier: identifier, port: node.port, ip: node.ip});
+
 				this._protocolConnectionManager.hydraWriteMessageTo(identifier, sendableBuffer);
 			}
 		});
@@ -187,7 +198,7 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 			var circuitNode:HydraNode = this._removeFromCircuitNodesByIdentifier(identifier, false);
 
 			if (circuitNode) {
-				this.emit('circuitTermination', circuitNode.circuitId);
+				this.emit('circuitTermination', circuitNode.circuitId, identifier);
 			}
 		});
 
@@ -203,10 +214,13 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 
 			if (msgToEmit) {
 
+				logger.log('hydraReaction', 'Message Received', {type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId()});
+
 				var circuitNode:HydraNode = this._circuitNodes[identifier];
 
 				if (circuitNode) {
 					if (circuitNode.circuitId === msgToEmit.getCircuitId()) {
+						logger.log('hydraReaction', 'This is a circuit message', {type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId()});
 						this.emit('circuitMessage', msgToEmit, circuitNode);
 					}
 				}

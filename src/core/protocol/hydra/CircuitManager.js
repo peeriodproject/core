@@ -172,6 +172,7 @@ var CircuitManager = (function (_super) {
     * @returns {boolean}
     */
     CircuitManager.prototype._additionalCircuitNeeded = function () {
+        logger.log('hydra', 'Checking if new circuit is needed', { underConstruction: this._circuitsUnderConstruction.length, ready: this._productionReadyCircuits.length, desired: this._desiredNumberOfCircuits });
         return (this._circuitsUnderConstruction.length + this._productionReadyCircuits.length) < this._desiredNumberOfCircuits;
     };
 

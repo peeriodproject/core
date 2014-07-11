@@ -102,6 +102,7 @@ var TCPSocket = (function (_super) {
         if (this.getSocket() && !this._preventWrite) {
             this._preventWrite = true;
             logger.log('socket', 'Socket ending...', { ident: this.getIdentifier() });
+
             this.getSocket().end(data, encoding);
         }
     };
@@ -148,6 +149,11 @@ var TCPSocket = (function (_super) {
     TCPSocket.prototype.onTimeout = function () {
         if (this._closeOnTimeout) {
             logger.log('socket', 'Timing out socket', { ident: this.getIdentifier(), sockid: this._uuid });
+
+            if (this.getIdentifier().indexOf('hydra') > -1) {
+                logger.log('hydra', 'Hydra socket timed out', { identifier: this.getIdentifier() });
+            }
+
             this.end();
         }
     };
