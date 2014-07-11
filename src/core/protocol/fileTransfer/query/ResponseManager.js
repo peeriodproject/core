@@ -164,6 +164,8 @@ var ResponseManager = (function () {
             // start a broadcast but answer to the query by yourself after a given time
             var broadcastPayload = Buffer.concat([myFeedingBlock, searchObject]);
 
+            logger.log('query', 'Starting a broadcast', { queryId: broadcastId });
+
             _this._broadcastManager.initBroadcast('BROADCAST_QUERY', broadcastPayload, broadcastId);
 
             _this.externalQueryHandler(broadcastId, searchObject, function (identifier, results) {

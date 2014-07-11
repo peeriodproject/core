@@ -18,6 +18,8 @@ import FeedingNodesMessageBlock = require('./messages/FeedingNodesMessageBlock')
 import MiddlewareInterface = require('./interfaces/MiddlewareInterface');
 import ProtocolConnectionManagerInterface = require('../net/interfaces/ProtocolConnectionManagerInterface');
 
+var logger = require('../../../utils/logger/LoggerFactory').create();
+
 /**
  * TransferMessageCenterInterface implementation.
  *
@@ -174,6 +176,8 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 			var broadcastId:string = msg.getTransferId();
 			var feedingIdentifier:string = this._cellManager.getFeedingIdentifierByCircuitId(predecessorCircuitId);
 			var externalAddress:any = this._protocolConnectionManager.getRandomExternalIpPortPair();
+
+			logger.log('query', 'Received QUERY_BROADCAST message', {queryId: broadcastId, feedingIdentifier: feedingIdentifier});
 
 			if (feedingIdentifier && externalAddress) {
 				externalAddress.feedingIdentifier = feedingIdentifier;

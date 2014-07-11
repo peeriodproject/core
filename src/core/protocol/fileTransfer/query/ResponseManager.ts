@@ -190,6 +190,8 @@ class ResponseManager implements ResponseManagerInterface {
 			// start a broadcast but answer to the query by yourself after a given time
 			var broadcastPayload:Buffer = Buffer.concat([myFeedingBlock, searchObject]);
 
+			logger.log('query', 'Starting a broadcast', {queryId: broadcastId});
+
 			this._broadcastManager.initBroadcast('BROADCAST_QUERY', broadcastPayload, broadcastId);
 
 			this.externalQueryHandler(broadcastId, searchObject, (identifier:string, results:Buffer) => {

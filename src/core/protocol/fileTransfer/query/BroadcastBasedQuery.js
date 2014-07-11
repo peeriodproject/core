@@ -7,6 +7,8 @@ var __extends = this.__extends || function (d, b) {
 var events = require('events');
 var crypto = require('crypto');
 
+var logger = require('../../../utils/logger/LoggerFactory').create();
+
 /**
 * QueryInterface implementation based on broadcast.
 * Lets the broadcast manager ignore the generated query identifier.
@@ -116,6 +118,7 @@ var BroadcastBasedQuery = (function (_super) {
 
         if (queryBroadcastPayload) {
             allOkay = this._circuitManager.pipeFileTransferMessageThroughAllCircuits(queryBroadcastPayload, true);
+            logger.log('query', 'Piped query broadcast issuing through all circuits', { allOkay: allOkay });
         }
 
         if (allOkay) {
