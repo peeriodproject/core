@@ -146,7 +146,7 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
         var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
             onOpenCallback: function (err) {
                 err.should.be.an.instanceof(Error);
-                err.message.should.equal('FolderWatcherManager~_checkFolderWatcherPaths: The specified path is not absolute. "./not/a/absolute/path"');
+                err.message.should.equal('FolderWatcherManager~_checkFolderWatcherPaths: The specified path is not an absolute path. "./not/a/absolute/path"');
 
                 closeAndDone(folderWatcherManager, done);
             }
