@@ -161,7 +161,8 @@ var FolderWatcherManager = (function () {
             }
 
             checkedInvalidPaths = true;
-            callbackCheck();
+
+            return callbackCheck();
         });
 
         // check invalid Paths
@@ -175,7 +176,7 @@ var FolderWatcherManager = (function () {
             }
 
             checkedValidPaths = true;
-            callbackCheck();
+            return callbackCheck();
         });
     };
 
@@ -346,7 +347,7 @@ var FolderWatcherManager = (function () {
             var pathToWatch = pathsToWatch[i];
 
             if (!this._isAbsolutePath(pathToWatch)) {
-                err = new Error('FolderWatcherManager~_checkFolderWatcherPaths: The specified path is not absolute. "' + pathToWatch + '"');
+                err = new Error('FolderWatcherManager~_checkFolderWatcherPaths: The specified path is not an absolute path. "' + pathToWatch + '"');
                 break;
             }
 
@@ -359,10 +360,10 @@ var FolderWatcherManager = (function () {
         }
 
         if (err) {
-            callback(err, null, null);
-        } else {
-            callback(null, invalidPaths, validPaths);
+            invalidPaths = validPaths = null;
         }
+
+        return callback(null, invalidPaths, validPaths);
     };
 
     /**
