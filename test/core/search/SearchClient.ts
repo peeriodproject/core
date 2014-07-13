@@ -323,7 +323,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 		});
 	});
 
-	it('should correctly create a percolate index and add an item to the index', function (done) {
+	it('should correctly create a percolate index and check the item against the running query', function (done) {
 		var queryBody = {
 			// This query will be run against documents sent to percolate
 			query: {
@@ -336,18 +336,16 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 		searchClient.createOutgoingQuery('myindex', 'searchQueryId', queryBody, function (err) {
 			(err === null).should.be.true;
 
-			searchClient.addIncomingResponse('myindex', 'searchQueryId', { message: 'A new bonsai tree in the office' }, { metadata: true }, function (err, response) {
+			searchClient.checkIncomingResponse('myindex', 'searchQueryId', { message: 'A new bonsai tree in the office' }, function (err, matches) {
 				(err === null).should.be.true;
 
-				response.should.containDeep({
-					total  : 1,
-					matches: [
+				matches.should.have.a.lengthOf(1);
+				matches.should.containDeep([
 						{
 							_index: 'myindex',
 							_id   : 'searchQueryId'
 						}
-					]
-				});
+					]);
 
 				done();
 			});

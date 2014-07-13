@@ -10,7 +10,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var PluginRunner = require('../../../src/core/plugin/PluginRunner');
 
 // todo add json error tests
-describe('CORE --> PLUGIN --> PluginRunner', function () {
+describe('CORE --> PLUGIN --> PluginRunner @joern', function () {
     var sandbox;
     var pluginToLoadPath = 'src/plugins/textDocumentPlugin';
     var pluginsFolderPath = testUtils.getFixturePath('core/plugin/pluginRunner/plugins');
@@ -40,6 +40,8 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
                     return 'PluginApi.js';
                 } else if (key === 'plugin.binaryPath') {
                     return './core/plugin/pluginRunner/node';
+                } else if (key === 'plugin.timeoutInSeconds') {
+                    return 5;
                 }
             }
         });

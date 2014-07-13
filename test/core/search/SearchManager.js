@@ -49,7 +49,7 @@ describe('CORE --> SEARCH --> SearchManager @_joern', function () {
         closeAndDone(searchManager, done);
     });
 
-    it('should correctly call the addItem method @joern', function (done) {
+    it('should correctly call the addItem method', function (done) {
         var configStub = createConfig();
         var pluginsData = {
             'foo bar active': {

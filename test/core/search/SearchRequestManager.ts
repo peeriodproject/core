@@ -11,7 +11,7 @@ import AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 import SearchClient = require('../../../src/core/search/SearchClient');
 import SearchRequestManager = require('../../../src/core/search/SearchRequestManager');
 
-describe('CORE --> SEARCH --> SearchRequestManager', function () {
+describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
 	var sandbox:SinonSandbox;
 	var appQuitHandlerStub:any;
 	var searchClientStub:any;
@@ -41,8 +41,18 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
 				return process.nextTick(callback.bind(null, null));
 			},
 
+			addIncomingResponse: function () {
+				return process.nextTick(arguments[4].bind(null, null));
+			},
+
 			addPercolate: function (percolateParams, callback) {
 				return process.nextTick(callback.bind(null, null));
+			},
+
+			checkIncomingResponse: function () {
+				return process.nextTick(arguments[3].bind(null, null, [
+						{ _index: arguments[0], _id: arguments[1] }
+					]));
 			},
 
 			createOutgoingQuery: function () {
@@ -51,15 +61,6 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
 
 			createOutgoingQueryIndex: function () {
 				return process.nextTick(arguments[1].bind(null, null));
-			},
-
-			addIncomingResponse: function () {
-				return process.nextTick(arguments[4].bind(null, null, {
-					total: 1,
-					matches: [
-						{ _index: arguments[0], _id: arguments[1] }
-					]
-				}));
 			},
 
 			deleteOutgoingQuery: function () {
@@ -138,8 +139,8 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
 		});
 	});
 
-	it('should correctly add a incoming response to the database', function (done) {
-		var responseList:any = {
+	it('should correctly add a incoming response to the database @joern', function (done) {
+		/*var responseList:any = {
 			total: 1,
 			hits: [{
 				_id: 'fileHash',
@@ -152,7 +153,28 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
 					foo: "bar io"
 				}
 			}]
-		};
+		};*/
+
+		var responseList:any = {
+			total : 1,
+			max_score : 0.13424811,
+			hits : [ {
+				_id: 'fileHash',
+				_type : 'pluginidentifier',
+				_score : 0.13424811,
+				_source : {
+					itemHash: 'fileHash',
+					itemStats: {
+						stats: true
+					},
+					itemName:'foobar.txt'
+				},
+				highlight : {
+					file : [
+						'Mollis Magna <em>Euismod</em> Malesuada Dolor\n'
+					]
+				}
+			} ]};
 
 		var manager = new SearchRequestManager(appQuitHandlerStub, 'searchqueries', searchClientStub, {
 			onOpenCallback: function () {
@@ -164,7 +186,19 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
 						searchClientStub.addIncomingResponse.calledOnce.should.be.true;
 						searchClientStub.addIncomingResponse.getCall(0).args[0].should.equal('searchqueries');
 						searchClientStub.addIncomingResponse.getCall(0).args[1].should.equal(queryId);
-						searchClientStub.addIncomingResponse.getCall(0).args[2].should.containDeep(responseList.hits[0]);
+						searchClientStub.addIncomingResponse.getCall(0).args[2].should.containDeep({
+							_id: "fileHash",
+							_score: 0.13424811,
+							_type: "pluginidentifier",
+							file: [
+								"Mollis Magna <em>Euismod</em> Malesuada Dolor\n"
+							],
+							itemHash: "fileHash",
+							itemName: "foobar.txt",
+							itemStats: {
+								stats: true
+							}
+						});
 
 						closeAndDone(manager, done);
 					});

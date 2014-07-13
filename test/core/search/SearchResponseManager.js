@@ -8,7 +8,7 @@ var AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 var SearchClient = require('../../../src/core/search/SearchClient');
 var SearchResponseManager = require('../../../src/core/search/SearchResponseManager');
 
-describe('CORE --> SEARCH --> SearchResponseManager', function () {
+describe('CORE --> SEARCH --> SearchResponseManager @joern', function () {
     var sandbox;
     var appQuitHandlerStub;
     var searchClientStub;
@@ -175,7 +175,7 @@ describe('CORE --> SEARCH --> SearchResponseManager', function () {
             queryId.should.equal('queryId');
             results.should.be.an.instanceof(Buffer);
 
-            results.toString().should.equal('{"total":1,"hits":[{"_type":"pluginidentifier","_source":{"itemStats":{"stats":true},"foo":"bar io"},"_id":"fileHash"}]}');
+            results.toString().should.equal('{"total":1,"hits":[{"_type":"pluginidentifier","_source":{"itemHash":"fileHash","itemStats":{"stats":true},"foo":"bar io"},"_itemId":"fileHash"}]}');
 
             closeAndDone(manager, done);
         });

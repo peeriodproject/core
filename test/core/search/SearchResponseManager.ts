@@ -11,7 +11,7 @@ import AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 import SearchClient = require('../../../src/core/search/SearchClient');
 import SearchResponseManager = require('../../../src/core/search/SearchResponseManager');
 
-describe('CORE --> SEARCH --> SearchResponseManager', function () {
+describe('CORE --> SEARCH --> SearchResponseManager @joern', function () {
 	var sandbox:SinonSandbox;
 	var appQuitHandlerStub:any;
 	var searchClientStub:any;
@@ -182,7 +182,7 @@ describe('CORE --> SEARCH --> SearchResponseManager', function () {
 			queryId.should.equal('queryId');
 			results.should.be.an.instanceof(Buffer);
 
-			results.toString().should.equal('{"total":1,"hits":[{"_type":"pluginidentifier","_source":{"itemStats":{"stats":true},"foo":"bar io"},"_id":"fileHash"}]}');
+			results.toString().should.equal('{"total":1,"hits":[{"_type":"pluginidentifier","_source":{"itemHash":"fileHash","itemStats":{"stats":true},"foo":"bar io"},"_itemId":"fileHash"}]}');
 
 			closeAndDone(manager, done);
 		});

@@ -11,7 +11,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import PluginRunner = require('../../../src/core/plugin/PluginRunner');
 
 // todo add json error tests
-describe('CORE --> PLUGIN --> PluginRunner', function () {
+describe('CORE --> PLUGIN --> PluginRunner @joern', function () {
 	var sandbox:SinonSandbox;
 	var pluginToLoadPath:string = 'src/plugins/textDocumentPlugin';
 	var pluginsFolderPath:string = testUtils.getFixturePath('core/plugin/pluginRunner/plugins');
@@ -34,7 +34,7 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
 	beforeEach(function () {
 		sandbox = sinon.sandbox.create();
 		configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
-			get: function (key) {
+			get: function (key):any {
 				if (key === 'plugin.api.basePath') {
 					return path.resolve(process.cwd(), './src/core/plugin/api');
 				}
@@ -43,6 +43,9 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
 				}
 				else if (key === 'plugin.binaryPath') {
 					return './core/plugin/pluginRunner/node';
+				}
+				else if (key === 'plugin.timeoutInSeconds') {
+					return 5;
 				}
 			}
 		});
