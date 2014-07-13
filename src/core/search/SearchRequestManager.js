@@ -101,10 +101,6 @@ var SearchRequestManager = (function () {
                 internalCallback(err, queryId);
 
                 if (queryId) {
-                    logger.log('search', 'SearchRequestManager#addQuery: Added outgoing query', {
-                        queryId: queryId,
-                        body: queryBody
-                    });
                     _this._triggerQueryAdd(queryId, queryBody);
                 }
             });
@@ -112,10 +108,6 @@ var SearchRequestManager = (function () {
     };
 
     SearchRequestManager.prototype.addResponse = function (queryId, responseBody, responseMeta, callback) {
-        logger.log('search', 'SearchRequestManager#addResponse: Got response', {
-            queryId: queryId
-        });
-
         var internalCallback = callback || function (err) {
         };
         var returned = 0;
@@ -125,10 +117,6 @@ var SearchRequestManager = (function () {
 
             if (returned === response.hits.length || err) {
                 returned = -1;
-
-                logger.log('search', 'SearchRequestManager#addResponse: checkAndTriggerCallback', {
-                    queryId: queryId
-                });
 
                 return internalCallback(err);
             }
@@ -141,11 +129,6 @@ var SearchRequestManager = (function () {
             return internalCallback(e);
         }
 
-        logger.log('search', 'SearchRequestManager#addResponse: After json parsing...', {
-            queryId: queryId,
-            response: response
-        });
-
         if (!(response && response.hits && response.hits.length)) {
             logger.log('search', 'SearchRequestManager#addResponse: invalid Response', {
                 queryId: queryId
@@ -154,12 +137,8 @@ var SearchRequestManager = (function () {
             return internalCallback(null);
         }
 
-        logger.log('search', 'SearchRequestManager#addResponse: Iterating over responses...', {
-            queryId: queryId
-        });
-
         for (var i = 0, l = response.hits.length; i < l; i++) {
-            this._addResponse(queryId, response.hits[i], responseMeta, function (err) {
+            this._checkAndAddResponse(queryId, response.hits[i], responseMeta, function (err) {
                 return checkAndTriggerCallback(err);
             });
         }
@@ -266,7 +245,6 @@ var SearchRequestManager = (function () {
         this._searchClient.deleteOutgoingQuery(this._indexName, queryId, function (err) {
             _this._triggerQueryRemoved(queryId);
 
-            //this._checkResultsAndTriggerEvent(this._runningQueryIdMap[queryId]);
             logger.log('search', 'SearchRequestManager#removeQuery: Removed query', {
                 queryId: queryId
             });
@@ -275,64 +253,102 @@ var SearchRequestManager = (function () {
         });
     };
 
-    SearchRequestManager.prototype._addResponse = function (queryId, responseBody, responseMeta, callback) {
+    SearchRequestManager.prototype._checkAndAddResponse = function (queryId, responseBody, responseMeta, callback) {
         var _this = this;
-        // todo check here!
         if (this._runningQueryIds[queryId] === undefined) {
+            logger.log('search', 'returning: no running query id');
             return process.nextTick(callback.bind(null, null));
         }
 
-        logger.log('search', 'SearchRequestManager~_addResponse: going to add a response from an outgoing query', {
-            queryId: queryId,
-            body: responseBody
-        });
+        responseBody = this._transformResponseBody(responseBody);
 
-        if (responseBody && responseBody['highlight']) {
-            var highlightedFieldKeys = Object.keys(responseBody['highlight']);
-
-            // add missing source
-            if (!responseBody['_source']) {
-                responseBody['_source'] = {};
-            }
-
-            if (highlightedFieldKeys.length) {
-                for (var i = 0, l = highlightedFieldKeys.length; i < l; i++) {
-                    var key = highlightedFieldKeys[i];
-
-                    if (!responseBody['_source'][key]) {
-                        responseBody['_source'][key] = responseBody['highlight'][key];
-                    }
+        this._searchClient.checkIncomingResponse(this._indexName, queryId, responseBody, function (err, matches) {
+            if (err || !(matches && matches.length)) {
+                if (err) {
+                    logger.error(err);
                 }
-            }
-        }
 
-        this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, responseMeta, function (err, response) {
-            if (err) {
-                console.error(err);
                 return callback(err);
             }
 
-            logger.log('search', 'SearchRequestManager~_addQuery: Added incoming response to database', {
-                queryId: queryId,
-                body: responseBody
-            });
+            _this._searchClient.addIncomingResponse(_this._indexName, queryId, responseBody, responseMeta, function (err) {
+                if (err) {
+                    return callback(err);
+                }
 
-            if (response && response['matches'] && response['matches'].length) {
-                logger.log('search', 'SearchRequestManager~_addQuery: Incoming response matched a running query!', {
-                    queryId: queryId,
-                    matches: response['matches']
-                });
+                for (var i = 0, l = matches.length; i < l; i++) {
+                    var match = matches[i];
 
-                response['matches'].forEach(function (match) {
+                    if (match['_id'] !== queryId) {
+                        continue;
+                    }
+
+                    callback(null);
+
                     if (_this._runningQueryIds[queryId] !== undefined) {
                         _this._runningQueryIds[queryId]++;
+
+                        logger.log('search', 'SearchRequestManager:_checkAndAddResponse: Trigger results changed for query', {
+                            queryId: queryId
+                        });
+
                         _this._triggerResultsChanged(queryId);
+                    } else {
+                        logger.log('search', 'SearchRequestManager:_checkAndAddResponse: Query is not running', {
+                            queryId: queryId
+                        });
                     }
-                });
-            }
+                }
+            });
 
             return callback(null);
         });
+    };
+
+    /**
+    * Transforms the given response from a hit object to a item that can be stored in the database.
+    * Basically the `_source` key will be removed and all nested keys will be placed on the object root. Furthermore all
+    * fields under the `highlight` key will be added to the object root if they do not exist yet.
+    *
+    * @param {Object} body A single hit from elasticsearch
+    * @returns {Object} The transformed body
+    */
+    SearchRequestManager.prototype._transformResponseBody = function (body) {
+        var keys = Object.keys(body);
+        var newBody = {};
+
+        var addToTopLevel = function (parentKey) {
+            if (!body[parentKey]) {
+                return;
+            }
+
+            var keys = Object.keys(body[parentKey]);
+            for (var i = 0, l = keys.length; i < l; i++) {
+                var key = keys[i];
+
+                if (newBody[key] === undefined) {
+                    newBody[key] = body[parentKey][key];
+                }
+            }
+        };
+
+        for (var i = 0, l = keys.length; i < l; i++) {
+            var key = keys[i];
+
+            if (['_source', 'highlight'].indexOf(key) === -1) {
+                newBody[key] = body[key];
+            }
+        }
+
+        if (body['_source']) {
+            addToTopLevel('_source');
+        }
+
+        if (body['highlight']) {
+            addToTopLevel('highlight');
+        }
+
+        return newBody;
     };
 
     /**

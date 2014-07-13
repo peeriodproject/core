@@ -125,24 +125,42 @@ class SearchClient implements SearchClientInterface {
 		this.open(this._options.onOpenCallback);
 	}
 
-	public addIncomingResponse (indexName:string, type:string, responseBody:Object, responseMeta:Object, callback?:(err:Error, response:Object) => any):void {
-		var internalCallback = callback || function (err:Error, response:Object) {
+	public addIncomingResponse (indexName:string, type:string, responseBody:Object, responseMeta:Object, callback?:(err:Error) => any):void {
+		var internalCallback = callback || function (err:Error) {
 		};
 
-		var responseObject = ObjectUtils.extend(responseBody, {
-			meta: responseMeta
+		var body = ObjectUtils.extend(responseBody, {
+			_meta: responseMeta
 		});
+
+		this._client.index({
+			index: indexName.toLowerCase(),
+			type : 'response' + type.toLowerCase(),
+			body : body
+		}, function (err:Error, response:Object, status:number) {
+			err = err || null;
+			return internalCallback(err);
+		});
+	}
+
+	public checkIncomingResponse (indexName:string, type:string, responseBody:Object, callback?:(err:Error, matches:Array<Object>) => any):void {
+		var internalCallback = callback || function (err:Error, response:Object) {
+		};
 
 		this._client.percolate({
 			index: indexName.toLowerCase(),
 			type : 'response-' + type.toLowerCase(),
 			body : {
-				doc: responseObject
+				doc: responseBody
 			}
 		}, function (err:Error, response:Object, status:number) {
+			var matches = response && response['total'] ? response['matches'] : [];
+
 			err = err || null;
 
-			return internalCallback(err, response);
+			console.log('RESULT MATCHED', matches.length, 'RUNNING QUERIES');
+
+			return internalCallback(err, matches);
 		});
 	}
 

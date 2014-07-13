@@ -169,6 +169,8 @@ var SearchResponseManager = (function () {
 
             results.hits = _this._cleanupHits(hits);
 
+            delete results.max_score;
+
             return callback(null, results);
         });
     };
@@ -178,15 +180,17 @@ var SearchResponseManager = (function () {
     *
     * @method core.search.SearchResponseManager~_cleanupHits
     *
-    * @param {Array} hits The array of hits from elasticsearch. {@link http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#api-search}
+    * @param {Array} hits The array of hits returned from elasticsearch. {@link http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#api-search}
     * @returns {Array}
     */
     SearchResponseManager.prototype._cleanupHits = function (hits) {
         for (var i = 0, l = hits.length; i < l; i++) {
             var hit = hits[i];
 
-            hit._id = hit._source.itemHash;
+            hit._itemId = hit._source.itemHash;
 
+            delete hit._id;
+            delete hit._score;
             delete hit._index;
             delete hit._source.itemPath;
         }

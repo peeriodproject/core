@@ -175,6 +175,8 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 
 			results.hits = this._cleanupHits(hits);
 
+			delete results.max_score;
+
 			return callback(null, results);
 		});
 	}
@@ -184,15 +186,17 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 	 *
 	 * @method core.search.SearchResponseManager~_cleanupHits
 	 *
-	 * @param {Array} hits The array of hits from elasticsearch. {@link http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#api-search}
+	 * @param {Array} hits The array of hits returned from elasticsearch. {@link http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#api-search}
 	 * @returns {Array}
 	 */
 	private _cleanupHits (hits:Array<Object>):Array<Object> {
 		for (var i = 0, l = hits.length; i < l; i++) {
 			var hit:any = hits[i];
 
-			hit._id = hit._source.itemHash;
+			hit._itemId = hit._source.itemHash;
 
+			delete hit._id;
+			delete hit._score;
 			delete hit._index;
 			delete hit._source.itemPath;
 		}

@@ -22,10 +22,10 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 * @param {string} indexName The index to perculate the object into.
 	 * @param {string} type The type of the response object
 	 * @param {Object} responseBody The response body to store
-	 * * @param {Object} responseMeta The response meta data to store
+	 * @param {Object} responseMeta The response meta data to store
 	 * @param {Function} callback
 	 */
-	addIncomingResponse (indexName:string, type:string, responseBody:Object, responseMeta:Object, callback?:(err:Error, response:Object) => any):void;
+	addIncomingResponse (indexName:string, type:string, responseBody:Object, responseMeta:Object, callback?:(err:Error) => any):void;
 
 	/**
 	 * Adds the specified object to the search index.
@@ -48,6 +48,18 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 */
 	addMapping (type:string, mapping:Object, callback?:(err:Error) => any):void;
 
+	/**
+	 * Checks if the response matches any running queries
+	 *
+	 * @method core.search.SearchClientInterface#checkIncomingResponse
+	 *
+	 * @param {string} indexName
+	 * @param {string} type
+	 * @param {Object} responseBody
+	 * @param {Object} responseMeta
+	 * @param {Function} callback
+	 */
+	checkIncomingResponse (indexName:string, type:string, responseBody:Object, callback?:(err:Error, matches:Array<Object>) => any):void;
 
 	/**
 	 * Stores the query and prepares an index where incoming results will be stored.

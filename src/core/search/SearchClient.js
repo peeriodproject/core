@@ -105,23 +105,41 @@ var SearchClient = (function () {
         this.open(this._options.onOpenCallback);
     }
     SearchClient.prototype.addIncomingResponse = function (indexName, type, responseBody, responseMeta, callback) {
-        var internalCallback = callback || function (err, response) {
+        var internalCallback = callback || function (err) {
         };
 
-        var responseObject = ObjectUtils.extend(responseBody, {
-            meta: responseMeta
+        var body = ObjectUtils.extend(responseBody, {
+            _meta: responseMeta
         });
+
+        this._client.index({
+            index: indexName.toLowerCase(),
+            type: 'response' + type.toLowerCase(),
+            body: body
+        }, function (err, response, status) {
+            err = err || null;
+            return internalCallback(err);
+        });
+    };
+
+    SearchClient.prototype.checkIncomingResponse = function (indexName, type, responseBody, callback) {
+        var internalCallback = callback || function (err, response) {
+        };
 
         this._client.percolate({
             index: indexName.toLowerCase(),
             type: 'response-' + type.toLowerCase(),
             body: {
-                doc: responseObject
+                doc: responseBody
             }
         }, function (err, response, status) {
+            var matches = response && response['total'] ? response['matches'] : [];
+
             err = err || null;
 
-            return internalCallback(err, response);
+            console.log('RESULT MATCHED', matches.length, 'RUNNING QUERIES');
+
+            return internalCallback(err, matches);
         });
     };
 
