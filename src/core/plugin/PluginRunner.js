@@ -33,7 +33,7 @@ var PluginRunner = (function () {
 
         this._sandbox = new SandCastle({
             memoryLimitMB: 1024,
-            timeout: 30000,
+            timeout: this._config.get('plugin.timeoutInSeconds') * 1000,
             useStrictMode: true,
             api: this._getPluginApiPath(),
             spawnExecPath: nodeBinaryPath,

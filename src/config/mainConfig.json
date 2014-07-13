@@ -87,6 +87,7 @@
         "pluginConfigName"        : "plugin.json",
         "pluginManagerStateConfig": "pluginManager.json",
         "binaryPath"              : "core/plugin/pluginRunner/node",
+        "timeoutInSeconds": 30,
         "api"                     : {
             "basePath"     : "core/plugin/api",
             "pluginApiName": "PluginApi.js"
