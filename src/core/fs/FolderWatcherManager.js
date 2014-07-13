@@ -363,7 +363,7 @@ var FolderWatcherManager = (function () {
             invalidPaths = validPaths = null;
         }
 
-        return callback(null, invalidPaths, validPaths);
+        return callback(err, invalidPaths, validPaths);
     };
 
     /**
