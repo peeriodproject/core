@@ -6,7 +6,7 @@ import ReadableShareRequestMessage = require('../../../../src/core/protocol/file
 import WritableShareRequestMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableShareRequestMessageFactory');
 import FeedingNodesMessageBlock = require('../../../../src/core/protocol/fileTransfer/messages/FeedingNodesMessageBlock');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> WritableShareRequestMessageFactory @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> WritableShareRequestMessageFactory (via readable message)', function () {
 
 	it('should correctly create the SHARE_REQUEST payload', function () {
 		var hash:string = '770606aff59bca0b045d8e0eaf5a7a7568bc1d39';

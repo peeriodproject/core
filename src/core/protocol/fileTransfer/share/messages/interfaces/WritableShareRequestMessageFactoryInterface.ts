@@ -2,7 +2,7 @@
 
 /**
  * Constructs the payload for a SHARE_REQUEST message.
- * For more informatino on the message format, see {@link core.protocol.fileTransfer.share.ReadableShareRequestMessageInterface}
+ * For more information on the message format, see {@link core.protocol.fileTransfer.share.ReadableShareRequestMessageInterface}
  *
  * @interface
  * @class core.protocol.fileTransfer.share.WritableShareRequestMessageFactoryInterface
