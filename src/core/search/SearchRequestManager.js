@@ -392,7 +392,7 @@ var SearchRequestManager = (function () {
             logger.log('search', 'SearchRequestManager: Starting query', {
                 queryId: queryId,
                 queryBody: queryBody,
-                eventName: 'QUERY_END'
+                eventName: 'QUERY_ADD'
             });
         }
     };
