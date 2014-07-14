@@ -233,7 +233,7 @@ var CellManager = (function (_super) {
                 pending.terminationListener = null;
             }
         } else {
-            logger.log('hydraCell', 'Trying to clear up nonexisting pending', { pending: pending.uuid });
+            logger.log('hydraCell', 'Trying to clear up nonexisting pending');
         }
     };
 
@@ -248,6 +248,7 @@ var CellManager = (function (_super) {
     CellManager.prototype._onCircuitTermination = function (uuid) {
         var pending = this._pendingRequests[uuid];
 
+        logger.log('hydraCell', 'On circuit termination', { uuid: uuid, exists: !!pending });
         this._cleanupTimeoutAndTerminationListener(pending);
 
         delete this._pendingRequests[uuid];
@@ -263,6 +264,8 @@ var CellManager = (function (_super) {
     * @param {core.protocol.hydra.PendingCreateCellRequest} pending The pending request with the completed batch.
     */
     CellManager.prototype._onCompleteBatchRequest = function (pending) {
+        logger.log('hydraCell', 'Complete batch', { uuid: pending.uuid, exists: !!pending });
+
         this._cleanupTimeoutAndTerminationListener(pending);
 
         if (this._canMaintainAdditionalCell()) {
@@ -346,6 +349,7 @@ var CellManager = (function (_super) {
         var initiatorNode = pending.initiator;
 
         pending.timeout = null;
+        logger.log('hydraCell', 'Pending request timeout', { uuid: uuid, exists: !!pending });
         this._cleanupTimeoutAndTerminationListener(pending);
 
         if (initiatorNode) {

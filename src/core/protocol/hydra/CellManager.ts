@@ -251,7 +251,7 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 			}
 		}
 		else {
-			logger.log('hydraCell', 'Trying to clear up nonexisting pending', {pending: pending.uuid});
+			logger.log('hydraCell', 'Trying to clear up nonexisting pending');
 		}
 	}
 
@@ -266,6 +266,7 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 	private _onCircuitTermination (uuid:string):void {
 		var pending:PendingCreateCellRequest = this._pendingRequests[uuid];
 
+		logger.log('hydraCell', 'On circuit termination', {uuid: uuid, exists: !!pending});
 		this._cleanupTimeoutAndTerminationListener(pending);
 
 		delete this._pendingRequests[uuid];
@@ -282,6 +283,8 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 	 * @param {core.protocol.hydra.PendingCreateCellRequest} pending The pending request with the completed batch.
 	 */
 	private _onCompleteBatchRequest (pending:PendingCreateCellRequest):void {
+		logger.log('hydraCell', 'Complete batch', {uuid: pending.uuid, exists: !!pending});
+
 		this._cleanupTimeoutAndTerminationListener(pending);
 
 		if (this._canMaintainAdditionalCell()) {
@@ -365,6 +368,7 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 		var initiatorNode:HydraNode = pending.initiator;
 
 		pending.timeout = null;
+		logger.log('hydraCell', 'Pending request timeout', {uuid: uuid, exists: !!pending});
 		this._cleanupTimeoutAndTerminationListener(pending);
 
 		if (initiatorNode) {

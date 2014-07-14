@@ -127,7 +127,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 
 			if (now !== this._socketSecond) {
 				this._socketSecond = now;
-				logger.log('socketCount', '', {count: this._socketCount, when: now});
+				logger.log('socketCount', '', {count: this._socketCount, when: new Date(now * 1000)});
 			}
 		}, 1000);
 	}
