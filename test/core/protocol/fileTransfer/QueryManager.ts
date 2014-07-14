@@ -138,6 +138,10 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> QueryManager', function () {
 					query.emit('end', reason);
 				};
 
+				query.getQueryId = function () {
+					return null;
+				}
+
 				return query;
 			}
 		});

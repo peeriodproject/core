@@ -50,6 +50,10 @@ describe('CORE --> PROTOCOL --> HYDRA --> CircuitManager', function () {
 					return circuit.circuitId;
 				}
 
+				circuit.getCircuitNodes = function () {
+					return [];
+				}
+
 				circuit.construct = function () {
 					setImmediate(() => {
 						if (this.toEmit === 'isConstructed') {

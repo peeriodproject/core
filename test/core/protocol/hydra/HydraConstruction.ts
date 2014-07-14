@@ -65,7 +65,7 @@ import BroadcastWritableMessageFactory = require('../../../../src/core/protocol/
 import WritableQueryResponseMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/WritableQueryResponseMessageFactory');
 import ReadableQueryResponseMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/ReadableQueryResponseMessageFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', function () {
 
 	var sandbox:SinonSandbox = null;
 	var config:any = null;

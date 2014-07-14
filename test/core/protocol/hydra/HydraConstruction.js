@@ -58,7 +58,7 @@ var BroadcastWritableMessageFactory = require('../../../../src/core/protocol/bro
 var WritableQueryResponseMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/WritableQueryResponseMessageFactory');
 var ReadableQueryResponseMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/ReadableQueryResponseMessageFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration) @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', function () {
     var sandbox = null;
     var config = null;
     var readableHydraMessageFactory = new ReadableHydraMessageFactory();
