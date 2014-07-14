@@ -7,9 +7,7 @@ var sheet = {
         "QUERY_RESPONSE": 0x04,
         "SHARE_REQUEST": 0x05,
         "SHARE_RATIFY": 0x06,
-        "SHARE_ABORT": 0x07,
-        "BLOCK_REQUEST": 0x08,
-        "BLOCK": 0x09
+        "ENCRYPTED_SHARE": 0x07
     }
 };
 
