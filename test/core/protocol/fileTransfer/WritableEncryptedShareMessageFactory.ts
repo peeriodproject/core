@@ -4,7 +4,7 @@ require('should');
 
 import WritableEncryptedShareMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableEncryptedShareMessageFactory');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> WritableEncryptedShareMessageFactory @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> WritableEncryptedShareMessageFactory', function () {
 
 	var factory = new WritableEncryptedShareMessageFactory();
 

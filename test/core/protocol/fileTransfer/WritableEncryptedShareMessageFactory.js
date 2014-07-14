@@ -3,7 +3,7 @@ require('should');
 
 var WritableEncryptedShareMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableEncryptedShareMessageFactory');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> WritableEncryptedShareMessageFactory @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> WritableEncryptedShareMessageFactory', function () {
     var factory = new WritableEncryptedShareMessageFactory();
 
     it('should correctly construct the ENCRYPTED_SHARE payload', function () {
