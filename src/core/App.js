@@ -80,7 +80,9 @@ var App = {
             fs.copySync(path.join(__dirname, '../config/nodeDiscovery.json'), nodeDiscoveryPath);
         }
 
-        //this.startTopology(dataPath, win);
+        if (!process.env.UI_ENABLED) {
+            this.startTopology(dataPath, win);
+        }
         this.startSearchClient(function (searchConfig, searchClient) {
             var searchRequestManager = new SearchRequestManager(_this.appQuitHandler, 'searchrequests', searchClient);
             var searchResponseManager = new SearchResponseManager(_this.appQuitHandler, searchClient);
@@ -120,9 +122,9 @@ var App = {
     },
     startQuery: function () {
         var i = Math.floor(Math.random() * nameFixtures.length);
+        var name = nameFixtures[i].name;
 
-        //var name = nameFixtures[i].name;
-        var name = "Vivamus";
+        //var name = "Vivamus";
         var queryBody = {
             "query": {
                 "match": {
@@ -285,26 +287,7 @@ var App = {
 
                         protocolGateway.once('readyToSearch', function () {
                             setTimeout(function () {
-                                var i = Math.floor(Math.random() * nameFixtures.length);
-
-                                var name = nameFixtures[i].name;
-
-                                var queryBody = {
-                                    "query": {
-                                        "match": {
-                                            "file": name
-                                        }
-                                    },
-                                    "highlight": {
-                                        "fields": {
-                                            "file": {}
-                                        }
-                                    }
-                                };
-
-                                searchRequestManager.addQuery(queryBody, function (err, queryId) {
-                                    logger.log('query', 'Starting query', { name: name, queryId: queryId });
-                                });
+                                _this.startQuery();
                             }, 10000);
                         });
                     }
