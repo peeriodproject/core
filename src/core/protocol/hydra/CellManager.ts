@@ -237,14 +237,21 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 	 * @param {core.protocol.hydra.PendingCreateCellRequest) pending The request object with a timeout and / or termination listener
 	 */
 	private _cleanupTimeoutAndTerminationListener (pending:PendingCreateCellRequest):void {
-		if (pending.timeout) {
-			global.clearTimeout(pending.timeout);
-			pending.timeout = null;
-		}
+		if (pending) {
+			logger.log('hydraCell', 'Cleaning up pending', {pending: pending.uuid});
 
-		if (pending.terminationListener) {
-			this._connectionManager.removeListener('circuitTermination', pending.terminationListener);
-			pending.terminationListener = null;
+			if (pending.timeout) {
+				global.clearTimeout(pending.timeout);
+				pending.timeout = null;
+			}
+
+			if (pending.terminationListener) {
+				this._connectionManager.removeListener('circuitTermination', pending.terminationListener);
+				pending.terminationListener = null;
+			}
+		}
+		else {
+			logger.log('hydraCell', 'Trying to clear up nonexisting pending', {pending: pending.uuid});
 		}
 	}
 
