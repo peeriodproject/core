@@ -45,7 +45,11 @@ menu.append(new gui.MenuItem({
 }));
 menu.items[menu.items.length - 1].click = function () {
     //console.log('bye bye');
-    App.quit();
+    App.stopQueryInterval();
+
+    setTimeout(function () {
+        App.quit();
+    }, 20000);
 };
 
 tray.menu = menu;
