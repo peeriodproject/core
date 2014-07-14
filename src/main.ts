@@ -54,7 +54,7 @@ menu.items[menu.items.length - 1].click = function() {
 
 	setTimeout(function () {
 		App.quit();
-	}, 20000);
+	}, 40000);
 };
 
 tray.menu = menu;
