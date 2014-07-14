@@ -65,6 +65,7 @@ var App = {
 	_uiComponents: [],
 	_requestManager: null,
 	_responseManager: null,
+	_queryInterval: null,
 
 	addUiComponent: function (component) {
 		this._uiComponents.push(component);
@@ -112,6 +113,12 @@ var App = {
 			this._requestManager = searchRequestManager;
 			this._responseManager = searchResponseManager;
 		});
+	},
+
+	stopQueryInterval: function () {
+		if (this._queryInterval) {
+			clearInterval(this._queryInterval);
+		}
 	},
 
 	startQuery: function () {
@@ -288,7 +295,7 @@ var App = {
 						protocolGateway.start();
 
 						protocolGateway.once('readyToSearch',  ()=> {
-							setInterval(() => {
+							this._queryInterval = setInterval(() => {
 								this.startQuery();
 							}, 15000);
 						});

@@ -204,7 +204,7 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 		if (this._isOpen) {
 			logger.log('search', 'SearchResponseManager: no results found', {
 				queryId: queryId,
-				eventName: 'NO_RESULTS_FOUND'
+				eventName: 'RESULTS_NOT_FOUND'
 			});
 
 			this._eventEmitter.emit('noResultsFound', queryId);
