@@ -71,6 +71,14 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 	private _setupOutgoingQuery ():void {
 		// query added
 		this._searchRequestManager.onQueryAdd((queryId:string, queryBody:Buffer) => {
+			/*console.log('--- 1. QUERY ADDED ---');
+			console.log(queryId, queryBody.toString());
+
+			setTimeout(() => {
+				console.log('--- 2. INCOMING QUERY ---');
+				this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
+			}, 1000);*/
+
 			this._compressBuffer(queryBody, (err:Error, compressedBody:Buffer) => {
 				if (!err) {
 					logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Emitting new broadcast query', { queryId: queryId });
@@ -103,6 +111,13 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 
 	private _setupOutgoingResults ():void {
 		this._searchResponseManager.onResultsFound((queryId:string, results:Buffer) => {
+			/*console.log('--- 3. RESULTS FOUND ---');
+			setTimeout(() => {
+				console.log('--- 4. INCOMING RESULTS ---');
+				console.log(results.toString());
+				this._searchRequestManager.addResponse(queryId, results, { additional: 'metadata' });
+			}, 1000);*/
+
 			this._compressBuffer(results, (err:Error, compressedResults:Buffer) => {
 				if (!err) {
 					logger.log('search', 'SearchMessageBridge~_setupOutgoingResults: Emitting broadcast query results', {

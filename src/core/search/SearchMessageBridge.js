@@ -69,6 +69,13 @@ var SearchMessageBridge = (function (_super) {
         var _this = this;
         // query added
         this._searchRequestManager.onQueryAdd(function (queryId, queryBody) {
+            /*console.log('--- 1. QUERY ADDED ---');
+            console.log(queryId, queryBody.toString());
+            
+            setTimeout(() => {
+            console.log('--- 2. INCOMING QUERY ---');
+            this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
+            }, 1000);*/
             _this._compressBuffer(queryBody, function (err, compressedBody) {
                 if (!err) {
                     logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Emitting new broadcast query', { queryId: queryId });
@@ -103,6 +110,12 @@ var SearchMessageBridge = (function (_super) {
     SearchMessageBridge.prototype._setupOutgoingResults = function () {
         var _this = this;
         this._searchResponseManager.onResultsFound(function (queryId, results) {
+            /*console.log('--- 3. RESULTS FOUND ---');
+            setTimeout(() => {
+            console.log('--- 4. INCOMING RESULTS ---');
+            console.log(results.toString());
+            this._searchRequestManager.addResponse(queryId, results, { additional: 'metadata' });
+            }, 1000);*/
             _this._compressBuffer(results, function (err, compressedResults) {
                 if (!err) {
                     logger.log('search', 'SearchMessageBridge~_setupOutgoingResults: Emitting broadcast query results', {
