@@ -8,7 +8,7 @@ var AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 var SearchClient = require('../../../src/core/search/SearchClient');
 var SearchResponseManager = require('../../../src/core/search/SearchResponseManager');
 
-describe('CORE --> SEARCH --> SearchResponseManager @joern', function () {
+describe('CORE --> SEARCH --> SearchResponseManager', function () {
     var sandbox;
     var appQuitHandlerStub;
     var searchClientStub;

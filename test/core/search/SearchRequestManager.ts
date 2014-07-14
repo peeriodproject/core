@@ -11,7 +11,7 @@ import AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 import SearchClient = require('../../../src/core/search/SearchClient');
 import SearchRequestManager = require('../../../src/core/search/SearchRequestManager');
 
-describe('CORE --> SEARCH --> SearchRequestManager @joern', function () {
+describe('CORE --> SEARCH --> SearchRequestManager', function () {
 	var sandbox:SinonSandbox;
 	var appQuitHandlerStub:any;
 	var searchClientStub:any;
