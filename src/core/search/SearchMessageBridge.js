@@ -78,7 +78,7 @@ var SearchMessageBridge = (function (_super) {
             }, 1000);*/
             _this._compressBuffer(queryBody, function (err, compressedBody) {
                 if (!err) {
-                    logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Emitting new broadcast query', { queryId: queryId });
+                    logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Emitting new broadcast query', { queryId: queryId, body: queryBody.toString() });
                     _this.emit('newBroadcastQuery', queryId, compressedBody);
                 } else {
                     logger.log('error', 'SearchMessageBridge~_setupOutgoingQuery: An error occurred while compressing the buffer.');

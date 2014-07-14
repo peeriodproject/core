@@ -81,7 +81,7 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 
 			this._compressBuffer(queryBody, (err:Error, compressedBody:Buffer) => {
 				if (!err) {
-					logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Emitting new broadcast query', { queryId: queryId });
+					logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Emitting new broadcast query', { queryId: queryId, body: queryBody.toString() });
 					this.emit('newBroadcastQuery', queryId, compressedBody);
 				}
 				else {
