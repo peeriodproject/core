@@ -258,7 +258,7 @@ var TCPSocket = (function (_super) {
             buffer = null;
         }
 
-        return true;
+        return success;
     };
 
     TCPSocket.prototype.writeString = function (message, encoding, callback, forceAvoidSimulation) {

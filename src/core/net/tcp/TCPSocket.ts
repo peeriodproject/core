@@ -268,9 +268,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		}
 
-
-
-		return true;
+		return success;
 	}
 
 	public writeString (message:string, encoding:string = 'utf8', callback?:Function, forceAvoidSimulation?:boolean):boolean {
