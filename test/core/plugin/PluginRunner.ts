@@ -11,7 +11,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import PluginRunner = require('../../../src/core/plugin/PluginRunner');
 
 // todo add json error tests
-describe('CORE --> PLUGIN --> PluginRunner', function () {
+describe('CORE --> PLUGIN --> PluginRunner @joern', function () {
 	var sandbox:SinonSandbox;
 	var pluginToLoadPath:string = 'src/plugins/textDocumentPlugin';
 	var pluginsFolderPath:string = testUtils.getFixturePath('core/plugin/pluginRunner/plugins');
@@ -53,6 +53,9 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
 
 	afterEach(function () {
 		sandbox.restore();
+
+		configStub = null;
+		sandbox = null;
 	});
 
 	after(function () {
@@ -69,12 +72,26 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
 	});
 
 	describe('should correctly run the provided script', function () {
-		var statsJson:string = '{"dev":16777222,"mode":33188,"nlink":1,"uid":501,"gid":20,"rdev":0,"blksize":4096,"ino":27724859,"size":6985,"blocks":16,"atime":"2014-05-18T11:59:13.000Z","mtime":"2014-05-16T21:16:41.000Z","ctime":"2014-05-16T21:16:41.000Z"}';
-		var pluginPath:string = testUtils.getFixturePath('core/plugin/pluginRunner/plugin.js');
-		var filePath:string = testUtils.getFixturePath('core/plugin/pluginRunner/file.jpg');
-		var globals = {
-			fileBuffer: new Buffer(1000)
-		};
+		var statsJson:string;
+		var pluginPath:string;
+		var filePath:string;
+		var globals:any;
+
+		beforeEach(function () {
+			statsJson = '{"dev":16777222,"mode":33188,"nlink":1,"uid":501,"gid":20,"rdev":0,"blksize":4096,"ino":27724859,"size":6985,"blocks":16,"atime":"2014-05-18T11:59:13.000Z","mtime":"2014-05-16T21:16:41.000Z","ctime":"2014-05-16T21:16:41.000Z"}';
+			pluginPath = testUtils.getFixturePath('core/plugin/pluginRunner/plugin.js');
+			filePath = testUtils.getFixturePath('core/plugin/pluginRunner/file.jpg');
+			globals = {
+				fileBuffer: new Buffer(1000)
+			};
+		});
+
+		afterEach(function () {
+			statsJson = null;
+			pluginPath = null;
+			filePath = null;
+			globals = null;
+		});
 
 		it('should correctly return a "timed out" error', function (done) {
 			this.timeout(0);
