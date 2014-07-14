@@ -48,6 +48,11 @@ var TCPSocketHandler = (function (_super) {
         * @member {number} TCPSocketHandler~_idleConnectionKillTimeout
         */
         this._idleConnectionKillTimeout = 0;
+        /**
+        * The maximum number of times to try if a server is reachable from outside.
+        *
+        * @member {number} TCPSocketHandler~_maxReachableTries
+        */
         this._maxReachableTries = 0;
         /**
         * The external IP address of the computer.
@@ -92,6 +97,11 @@ var TCPSocketHandler = (function (_super) {
         * @member TCPSocketHandler~_socketFactory
         */
         this._socketFactory = null;
+        /**
+        * THIS IS FOR TESTING ONLY
+        */
+        this._socketCount = 0;
+        this._socketSecond = 0;
 
         if (!net.isIP(opts.myExternalIp))
             throw new Error('TCPHandler.constructor: Provided IP is no IP');
@@ -106,7 +116,30 @@ var TCPSocketHandler = (function (_super) {
         this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2000;
         this._simulatorRTT = opts.simulatorRTT || 0;
         this._maxReachableTries = opts.maxReachableTries || 3;
+
+        this._TESTstartSocketInterval();
     }
+    TCPSocketHandler.prototype._TESTsocketCount = function (socket) {
+        var _this = this;
+        this._socketCount++;
+
+        socket.once('end', function () {
+            _this._socketCount--;
+        });
+    };
+
+    TCPSocketHandler.prototype._TESTstartSocketInterval = function () {
+        var _this = this;
+        global.setInterval(function () {
+            var now = Math.floor(Date.now() / 1000);
+
+            if (now !== _this._socketSecond) {
+                _this._socketSecond = now;
+                logger.log('socketCount', { count: _this._socketCount, when: now });
+            }
+        }, 1000);
+    };
+
     TCPSocketHandler.prototype.autoBootstrap = function (callback) {
         var _this = this;
         var doCallback = true;
@@ -164,6 +197,8 @@ var TCPSocketHandler = (function (_super) {
                     _this.emit('connection error', port, ip);
                 }
             } else {
+                _this._TESTsocketCount(socket);
+
                 if (callback) {
                     callback(socket);
                 } else {
@@ -215,6 +250,7 @@ var TCPSocketHandler = (function (_super) {
 
                     server.on('connection', function (sock) {
                         var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
+                        _this._TESTsocketCount(socket);
                         _this.emit('connected', socket, 'incoming');
                     });
 
