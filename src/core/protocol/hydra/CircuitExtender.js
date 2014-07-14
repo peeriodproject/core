@@ -206,8 +206,8 @@ var CircuitExtender = (function () {
     };
 
     /**
-    * This hack is a workaround around some pretty weird bug in either node.js or OpenSSL where
-    * the diffie hellman public key returned is missing one byte sometimes.
+    * This hack is a workaround around node.js not padding DH keys. (I would)
+    * Big-endian padding.
     *
     * @method core.protocol.hydra.CircuitExtender~_getDiffieHellmanAndReturnPublicKey
     *
@@ -216,9 +216,15 @@ var CircuitExtender = (function () {
     CircuitExtender.prototype._getDiffieHellmanAndReturnPublicKey = function () {
         this._currentDiffieHellman = crypto.getDiffieHellman('modp14');
         var dhPublicKey = this._currentDiffieHellman.generateKeys();
+        var dhPublicKeyLen = dhPublicKey.length;
 
-        if (dhPublicKey.length !== 256) {
-            return this._getDiffieHellmanAndReturnPublicKey();
+        if (dhPublicKeyLen !== 256) {
+            var returnBuffer = new Buffer(256);
+
+            returnBuffer.fill(0x00);
+            dhPublicKey.copy(returnBuffer, 256 - dhPublicKeyLen, 0);
+
+            return returnBuffer;
         } else {
             return dhPublicKey;
         }
