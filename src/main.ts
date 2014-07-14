@@ -32,11 +32,11 @@ var tray = new gui.Tray({
 
 // Give it a menu
 var addFolderItem = new gui.MenuItem({
-	label: 'Add Folder'
+	label: 'Start Query'
 });
 
 addFolderItem.click = function () {
-	alert('clicked');
+	App.startQuery();
 };
 
 menu.append(addFolderItem);
