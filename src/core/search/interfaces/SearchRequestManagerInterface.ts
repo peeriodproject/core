@@ -39,7 +39,7 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 
 	/**
 	 * Adds a listener to the internal event emitter that triggers whenever a query ends after a specified timeframe expired
-	 * and after it got some results back. This event follows at least one `resultsChanged` event.
+	 * and after it got some results back. This event preceded by at least one `resultsChanged` event.
 	 *
 	 * @member core.search.SearchRequestManagerInterface#onQueryEnd
 	 *
