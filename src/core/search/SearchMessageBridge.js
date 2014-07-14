@@ -81,7 +81,6 @@ var SearchMessageBridge = (function (_super) {
                     logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Emitting new broadcast query', { queryId: queryId, body: queryBody.toString() });
                     _this.emit('newBroadcastQuery', queryId, compressedBody);
                 } else {
-                    logger.log('error', 'SearchMessageBridge~_setupOutgoingQuery: An error occurred while compressing the buffer.');
                     logger.error(err);
                 }
             });
@@ -102,19 +101,10 @@ var SearchMessageBridge = (function (_super) {
     SearchMessageBridge.prototype._setupIncomingQuery = function () {
         var _this = this;
         this.on('matchBroadcastQuery', function (queryId, compressedQueryBody) {
-            logger.log('search', 'SearchMessageBridge~_setupIncomingQuery: A query came in. Decompressing the buffer...', {
-                queryId: queryId
-            });
             _this._decompressBuffer(compressedQueryBody, function (err, queryBody) {
                 if (!err) {
-                    logger.log('search', 'SearchMessageBridge~_setupIncomingQuery: Incoming query buffer decompressed. Passing to validation...', {
-                        queryId: queryId,
-                        body: queryBody.toString()
-                    });
-
                     _this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
                 } else {
-                    logger.log('error', 'SearchMessageBridge~_setupIncomingQuery: An error occurred while decompressing the buffer.');
                     logger.error(err);
                 }
             });
@@ -138,7 +128,6 @@ var SearchMessageBridge = (function (_super) {
                     });
                     _this.emit('broadcastQueryResults', queryId, compressedResults);
                 } else {
-                    logger.log('error', 'SearchMessageBridge~_setupOutgoingResults: An error occurred while compressing the buffer.');
                     logger.error(err);
                 }
             });
@@ -153,10 +142,6 @@ var SearchMessageBridge = (function (_super) {
     SearchMessageBridge.prototype._setupIncomingResults = function () {
         var _this = this;
         this.on('result', function (queryIdentifier, responseBuffer, metadata) {
-            logger.log('search', 'got result!', {
-                queryId: queryIdentifier
-            });
-
             _this._decompressBuffer(responseBuffer, function (err, decompressedBuffer) {
                 if (!err) {
                     logger.log('search', 'a result returned from the broadcast!', {
@@ -166,7 +151,6 @@ var SearchMessageBridge = (function (_super) {
 
                     _this._searchRequestManager.addResponse(queryIdentifier, decompressedBuffer, metadata);
                 } else {
-                    logger.log('error', 'SearchMessageBridge~_setupIncomingResults: An error occurred while decompressing the buffer.');
                     logger.error(err);
                 }
             });

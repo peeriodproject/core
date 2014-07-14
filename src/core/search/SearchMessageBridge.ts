@@ -85,7 +85,6 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 					this.emit('newBroadcastQuery', queryId, compressedBody);
 				}
 				else {
-					logger.log('error', 'SearchMessageBridge~_setupOutgoingQuery: An error occurred while compressing the buffer.');
 					logger.error(err);
 				}
 			});
@@ -105,20 +104,11 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 
 	private _setupIncomingQuery ():void {
 		this.on('matchBroadcastQuery', (queryId:string, compressedQueryBody:Buffer) => {
-			logger.log('search', 'SearchMessageBridge~_setupIncomingQuery: A query came in. Decompressing the buffer...', {
-				queryId: queryId
-			});
 			this._decompressBuffer(compressedQueryBody, (err:Error, queryBody:Buffer) => {
 				if (!err) {
-					logger.log('search', 'SearchMessageBridge~_setupIncomingQuery: Incoming query buffer decompressed. Passing to validation...', {
-						queryId: queryId,
-						body: queryBody.toString()
-					});
-
 					this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
 				}
 				else {
-					logger.log('error', 'SearchMessageBridge~_setupIncomingQuery: An error occurred while decompressing the buffer.');
 					logger.error(err);
 				}
 			});
@@ -143,7 +133,6 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 					this.emit('broadcastQueryResults', queryId, compressedResults);
 				}
 				else {
-					logger.log('error', 'SearchMessageBridge~_setupOutgoingResults: An error occurred while compressing the buffer.');
 					logger.error(err);
 				}
 			});
@@ -158,10 +147,6 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 
 	private _setupIncomingResults ():void {
 		this.on('result', (queryIdentifier:string, responseBuffer:Buffer, metadata:Object) => {
-			logger.log('search', 'got result!', {
-				queryId: queryIdentifier
-			});
-
 			this._decompressBuffer(responseBuffer, (err:Error, decompressedBuffer:Buffer) => {
 				if (!err) {
 					logger.log('search', 'a result returned from the broadcast!', {
@@ -172,7 +157,6 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 					this._searchRequestManager.addResponse(queryIdentifier, decompressedBuffer, metadata);
 				}
 				else {
-					logger.log('error', 'SearchMessageBridge~_setupIncomingResults: An error occurred while decompressing the buffer.');
 					logger.error(err);
 				}
 			});
