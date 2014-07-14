@@ -131,7 +131,6 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 
 				return internalCallback(err);
 			}
-			;
 		};
 
 		try {
@@ -242,7 +241,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		else {
 			this._searchClient.deleteOutgoingQuery(this._indexName, queryId, (err:Error) => {
 				if (err) {
-					console.error(err);
+					logger.error(err);
 				}
 
 				return this._triggerQueryCanceled(queryId, reason);
@@ -263,6 +262,10 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 
 	private _checkAndAddResponse (queryId:string, responseBody:Object, responseMeta:Object, callback:(err:Error) => any):void {
 		if (this._runningQueryIds[queryId] === undefined) {
+			logger.log('search', 'SearchRequestManager: no running query for the given queryId found', {
+				queryId: queryId,
+				eventName: 'QUERY_NOT_RUNNING'
+			});
 
 			return process.nextTick(callback.bind(null, null));
 		}
@@ -280,6 +283,8 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 
 			this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, responseMeta, (err:Error) => {
 				if (err) {
+					logger.error(err);
+
 					return callback(err);
 				}
 
@@ -298,9 +303,9 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 						this._triggerResultsChanged(queryId);
 					}
 					else {
-						logger.log('search', 'SearchRequestManager: results changed', {
+						logger.log('search', 'SearchRequestManager: query is not running anymore', {
 							queryId: queryId,
-							eventName: 'RESULTS_CHANGED'
+							eventName: 'QUERY_NOT_RUNNING'
 						});
 					}
 
