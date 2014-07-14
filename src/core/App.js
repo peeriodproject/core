@@ -80,9 +80,6 @@ var App = {
             fs.copySync(path.join(__dirname, '../config/nodeDiscovery.json'), nodeDiscoveryPath);
         }
 
-        if (!process.env.UI_ENABLED) {
-            this.startTopology(dataPath, win);
-        }
         this.startSearchClient(function (searchConfig, searchClient) {
             var searchRequestManager = new SearchRequestManager(_this.appQuitHandler, 'searchrequests', searchClient);
             var searchResponseManager = new SearchResponseManager(_this.appQuitHandler, searchClient);
@@ -113,7 +110,10 @@ var App = {
 
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
-            //this.startTopology(dataPath, searchMessageBridge, searchRequestManager);
+            if (!process.env.UI_ENABLED) {
+                _this.startTopology(dataPath, searchMessageBridge);
+            }
+
             _this.startIndexer(searchConfig, searchClient);
 
             _this._requestManager = searchRequestManager;
@@ -209,7 +209,7 @@ var App = {
 
         var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
     },
-    startTopology: function (dataPath, searchMessageBridge, searchRequestManager) {
+    startTopology: function (dataPath, searchMessageBridge) {
         var _this = this;
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
