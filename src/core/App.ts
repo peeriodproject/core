@@ -99,10 +99,6 @@ var App = {
 				logger.log('query', 'Received results', {
 					queryId: queryId
 				});
-
-				setImmediate(function () {
-					searchRequestManager.queryEnded(queryId, 'muschi');
-				});
 			});
 
 			searchRequestManager.onQueryEnd((queryId:string, reason:string) => {
@@ -111,6 +107,14 @@ var App = {
 					reason: reason
 				});
 			});
+
+			searchRequestManager.onQueryCanceled((queryId:string, reason:string) => {
+				logger.log('search', 'Query canceled', {
+					queryId: queryId,
+					reason: reason
+				});
+			});
+
 
 			var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
