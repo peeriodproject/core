@@ -271,9 +271,9 @@ var App = {
                         protocolGateway.start();
 
                         protocolGateway.once('readyToSearch', function () {
-                            setTimeout(function () {
+                            setInterval(function () {
                                 _this.startQuery();
-                            }, 10000);
+                            }, 15000);
                         });
                     }
                 });

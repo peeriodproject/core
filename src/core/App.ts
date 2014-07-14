@@ -288,9 +288,9 @@ var App = {
 						protocolGateway.start();
 
 						protocolGateway.once('readyToSearch',  ()=> {
-							setTimeout(() => {
+							setInterval(() => {
 								this.startQuery();
-							}, 10000);
+							}, 15000);
 						});
 					}
 				});
