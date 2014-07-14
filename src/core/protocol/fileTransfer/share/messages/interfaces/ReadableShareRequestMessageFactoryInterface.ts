@@ -13,7 +13,7 @@ interface ReadableShareRequestMessageFactoryInterface {
 	 *
 	 * @method core.protocol.fileTransfer.share.ReadableShareRequestMessageFactoryInterface#create
 	 *
-	 * @param {Buffer} buffer The buffer to create the message f
+	 * @param {Buffer} buffer The buffer to create the message from
 	 * @returns {core.protocol.fileTransfer.share.ReadableShareRequestMessageInterface} The resulting message or `null` on error.
 	 */
 	create (buffer:Buffer):ReadableShareRequestMessageInterface;
