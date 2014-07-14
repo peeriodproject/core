@@ -287,26 +287,7 @@ var App = {
 
                         protocolGateway.once('readyToSearch', function () {
                             setTimeout(function () {
-                                var i = Math.floor(Math.random() * nameFixtures.length);
-
-                                var name = nameFixtures[i].name;
-
-                                var queryBody = {
-                                    "query": {
-                                        "match": {
-                                            "file": name
-                                        }
-                                    },
-                                    "highlight": {
-                                        "fields": {
-                                            "file": {}
-                                        }
-                                    }
-                                };
-
-                                searchRequestManager.addQuery(queryBody, function (err, queryId) {
-                                    logger.log('query', 'Starting query', { name: name, queryId: queryId });
-                                });
+                                _this.startQuery();
                             }, 10000);
                         });
                     }
