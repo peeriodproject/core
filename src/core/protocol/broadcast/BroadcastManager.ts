@@ -14,6 +14,8 @@ import ReadableMessageInterface = require('../messages/interfaces/ReadableMessag
 import MyNodeInterface = require('../../topology/interfaces/MyNodeInterface');
 import IdInterface = require('../../topology/interfaces/IdInterface');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * BroadcastManagerInterface implementation.
  *
@@ -174,6 +176,8 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 			var broadcastId:string = message.getBroadcastId();
 
 			if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1 && this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
+
+				logger.log('query', 'Broadcast that must be processed', {broadcastId: broadcastId});
 
 				this.emit(msg.getMessageType(), message.getPayload(), message.getBroadcastId());
 

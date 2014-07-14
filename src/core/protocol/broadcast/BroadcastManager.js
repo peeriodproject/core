@@ -7,6 +7,8 @@ var __extends = this.__extends || function (d, b) {
 var events = require('events');
 var crypto = require('crypto');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * BroadcastManagerInterface implementation.
 *
@@ -156,6 +158,8 @@ var BroadcastManager = (function (_super) {
             var broadcastId = message.getBroadcastId();
 
             if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1 && this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
+                logger.log('query', 'Broadcast that must be processed', { broadcastId: broadcastId });
+
                 this.emit(msg.getMessageType(), message.getPayload(), message.getBroadcastId());
 
                 var differsInBit = msg.getSender().getId().differsInHighestBit(this._myNode.getId());
