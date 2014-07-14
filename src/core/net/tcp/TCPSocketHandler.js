@@ -135,7 +135,7 @@ var TCPSocketHandler = (function (_super) {
 
             if (now !== _this._socketSecond) {
                 _this._socketSecond = now;
-                logger.log('socketCount', { count: _this._socketCount, when: now });
+                logger.log('socketCount', '', { count: _this._socketCount, when: now });
             }
         }, 1000);
     };
