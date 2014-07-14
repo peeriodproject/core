@@ -81,7 +81,6 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 
 			this._compressBuffer(queryBody, (err:Error, compressedBody:Buffer) => {
 				if (!err) {
-					logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Emitting new broadcast query', { queryId: queryId, body: queryBody.toString() });
 					this.emit('newBroadcastQuery', queryId, compressedBody);
 				}
 				else {
@@ -92,7 +91,6 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 
 		// query ended: UI
 		this._searchRequestManager.onQueryRemoved((queryId:string) => {
-			logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Query removed', { queryId: queryId });
 			this.emit('abort', queryId);
 		});
 
@@ -126,10 +124,6 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 
 			this._compressBuffer(results, (err:Error, compressedResults:Buffer) => {
 				if (!err) {
-					logger.log('search', 'SearchMessageBridge~_setupOutgoingResults: Emitting broadcast query results', {
-						queryId: queryId,
-						results: results.toString()
-					});
 					this.emit('broadcastQueryResults', queryId, compressedResults);
 				}
 				else {
@@ -139,7 +133,6 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 		});
 
 		this._searchResponseManager.onNoResultsFound((queryId:string) => {
-			logger.log('search', 'emitting broadcast query no results found', { queryId: queryId });
 			this.emit('broadcastQueryResults', queryId, null);
 		});
 
@@ -149,11 +142,6 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 		this.on('result', (queryIdentifier:string, responseBuffer:Buffer, metadata:Object) => {
 			this._decompressBuffer(responseBuffer, (err:Error, decompressedBuffer:Buffer) => {
 				if (!err) {
-					logger.log('search', 'a result returned from the broadcast!', {
-						queryId: queryIdentifier,
-						body: decompressedBuffer.toString()
-					});
-
 					this._searchRequestManager.addResponse(queryIdentifier, decompressedBuffer, metadata);
 				}
 				else {

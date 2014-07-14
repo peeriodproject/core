@@ -481,7 +481,7 @@ var PluginManager = (function () {
                     if (err) {
                         return callback(err, null);
                     } else {
-                        logger.log('search', 'loading file content', {
+                        logger.log('plugin', 'loading file content', {
                             path: itemPath,
                             content: data.toString()
                         });

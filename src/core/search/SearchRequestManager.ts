@@ -143,7 +143,8 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 
 		if (!(response && response.hits && response.hits.length)) {
 			logger.log('search', 'SearchRequestManager#addResponse: invalid Response', {
-				queryId: queryId
+				queryId: queryId,
+				response: response
 			});
 
 			return internalCallback(null);
@@ -256,17 +257,13 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		this._searchClient.deleteOutgoingQuery(this._indexName, queryId, (err:Error) => {
 			this._triggerQueryRemoved(queryId);
 
-			logger.log('search', 'SearchRequestManager#removeQuery: Removed query', {
-				queryId: queryId
-			});
-
 			return internalCallback(err);
 		});
 	}
 
 	private _checkAndAddResponse (queryId:string, responseBody:Object, responseMeta:Object, callback:(err:Error) => any):void {
 		if (this._runningQueryIds[queryId] === undefined) {
-			logger.log('search', 'returning: no running query id');
+
 			return process.nextTick(callback.bind(null, null));
 		}
 
@@ -298,15 +295,12 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 					if (this._runningQueryIds[queryId] !== undefined) {
 						this._runningQueryIds[queryId]++;
 
-						logger.log('search', 'SearchRequestManager:_checkAndAddResponse: Trigger results changed for query', {
-							queryId: queryId
-						});
-
 						this._triggerResultsChanged(queryId);
 					}
 					else {
-						logger.log('search', 'SearchRequestManager:_checkAndAddResponse: Query is not running', {
-							queryId: queryId
+						logger.log('search', 'SearchRequestManager: results changed', {
+							queryId: queryId,
+							eventName: 'RESULTS_CHANGED'
 						});
 					}
 
@@ -406,6 +400,12 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	private _triggerQueryAdd (queryId:string, queryBody:Object):void {
 		if (this._isOpen) {
 			this._eventEmitter.emit('queryAdd', queryId, new Buffer(JSON.stringify(queryBody)));
+
+			logger.log('search', 'SearchRequestManager: Starting query', {
+				queryId: queryId,
+				queryBody: queryBody,
+				eventName: 'QUERY_END'
+			});
 		}
 	}
 
@@ -422,6 +422,12 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	private _triggerQueryEnd (queryId:string, reason:string):void {
 		if (this._isOpen) {
 			this._eventEmitter.emit('queryEnd', queryId, reason);
+
+			logger.log('search', 'SearchRequestManager: query end', {
+				queryId: queryId,
+				reason: reason,
+				eventName: 'QUERY_END'
+			});
 		}
 
 		this._cleanupQueryLists(queryId);
@@ -439,6 +445,11 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	private _triggerQueryRemoved (queryId:string):void {
 		if (this._isOpen) {
 			this._eventEmitter.emit('queryRemoved', queryId);
+
+			logger.log('search', 'SearchRequestManager: query removed', {
+				queryId: queryId,
+				eventName: 'QUERY_REMOVED'
+			});
 		}
 
 		this._cleanupQueryLists(queryId);
@@ -457,6 +468,12 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	private _triggerQueryCanceled (queryId:string, reason:string):void {
 		if (this._isOpen) {
 			this._eventEmitter.emit('queryCanceled', queryId, reason);
+
+			logger.log('search', 'SearchRequestManager: query canceled', {
+				queryId: queryId,
+				reason: reason,
+				eventName: 'QUERY_CANCELED'
+			});
 		}
 
 		this._cleanupQueryLists(queryId);
@@ -474,6 +491,11 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	private _triggerResultsChanged (queryId:string):void {
 		if (this._isOpen) {
 			this._eventEmitter.emit('resultsChanged', queryId);
+
+			logger.log('search', 'SearchRequestManager: results changed', {
+				queryId: queryId,
+				eventName: 'RESULTS_CHANGED'
+			});
 		}
 	}
 

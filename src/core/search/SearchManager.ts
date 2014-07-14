@@ -49,7 +49,7 @@ class SearchManager implements SearchManagerInterface {
 			//console.log(JSON.stringify(pluginData));
 			// to the request to the database
 			this._searchClient.addItem(pluginData, function(err) {
-				logger.log('search', 'added item', { data: pluginData, path: pathToIndex });
+				logger.log('index', 'added item', { data: pluginData, path: pathToIndex });
 
 				return internalCallback(err);
 			});

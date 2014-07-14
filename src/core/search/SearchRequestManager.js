@@ -131,7 +131,8 @@ var SearchRequestManager = (function () {
 
         if (!(response && response.hits && response.hits.length)) {
             logger.log('search', 'SearchRequestManager#addResponse: invalid Response', {
-                queryId: queryId
+                queryId: queryId,
+                response: response
             });
 
             return internalCallback(null);
@@ -245,10 +246,6 @@ var SearchRequestManager = (function () {
         this._searchClient.deleteOutgoingQuery(this._indexName, queryId, function (err) {
             _this._triggerQueryRemoved(queryId);
 
-            logger.log('search', 'SearchRequestManager#removeQuery: Removed query', {
-                queryId: queryId
-            });
-
             return internalCallback(err);
         });
     };
@@ -256,7 +253,6 @@ var SearchRequestManager = (function () {
     SearchRequestManager.prototype._checkAndAddResponse = function (queryId, responseBody, responseMeta, callback) {
         var _this = this;
         if (this._runningQueryIds[queryId] === undefined) {
-            logger.log('search', 'returning: no running query id');
             return process.nextTick(callback.bind(null, null));
         }
 
@@ -288,14 +284,11 @@ var SearchRequestManager = (function () {
                     if (_this._runningQueryIds[queryId] !== undefined) {
                         _this._runningQueryIds[queryId]++;
 
-                        logger.log('search', 'SearchRequestManager:_checkAndAddResponse: Trigger results changed for query', {
-                            queryId: queryId
-                        });
-
                         _this._triggerResultsChanged(queryId);
                     } else {
-                        logger.log('search', 'SearchRequestManager:_checkAndAddResponse: Query is not running', {
-                            queryId: queryId
+                        logger.log('search', 'SearchRequestManager: results changed', {
+                            queryId: queryId,
+                            eventName: 'RESULTS_CHANGED'
                         });
                     }
                 }
@@ -395,6 +388,12 @@ var SearchRequestManager = (function () {
     SearchRequestManager.prototype._triggerQueryAdd = function (queryId, queryBody) {
         if (this._isOpen) {
             this._eventEmitter.emit('queryAdd', queryId, new Buffer(JSON.stringify(queryBody)));
+
+            logger.log('search', 'SearchRequestManager: Starting query', {
+                queryId: queryId,
+                queryBody: queryBody,
+                eventName: 'QUERY_END'
+            });
         }
     };
 
@@ -411,6 +410,12 @@ var SearchRequestManager = (function () {
     SearchRequestManager.prototype._triggerQueryEnd = function (queryId, reason) {
         if (this._isOpen) {
             this._eventEmitter.emit('queryEnd', queryId, reason);
+
+            logger.log('search', 'SearchRequestManager: query end', {
+                queryId: queryId,
+                reason: reason,
+                eventName: 'QUERY_END'
+            });
         }
 
         this._cleanupQueryLists(queryId);
@@ -428,6 +433,11 @@ var SearchRequestManager = (function () {
     SearchRequestManager.prototype._triggerQueryRemoved = function (queryId) {
         if (this._isOpen) {
             this._eventEmitter.emit('queryRemoved', queryId);
+
+            logger.log('search', 'SearchRequestManager: query removed', {
+                queryId: queryId,
+                eventName: 'QUERY_REMOVED'
+            });
         }
 
         this._cleanupQueryLists(queryId);
@@ -446,6 +456,12 @@ var SearchRequestManager = (function () {
     SearchRequestManager.prototype._triggerQueryCanceled = function (queryId, reason) {
         if (this._isOpen) {
             this._eventEmitter.emit('queryCanceled', queryId, reason);
+
+            logger.log('search', 'SearchRequestManager: query canceled', {
+                queryId: queryId,
+                reason: reason,
+                eventName: 'QUERY_CANCELED'
+            });
         }
 
         this._cleanupQueryLists(queryId);
@@ -463,6 +479,11 @@ var SearchRequestManager = (function () {
     SearchRequestManager.prototype._triggerResultsChanged = function (queryId) {
         if (this._isOpen) {
             this._eventEmitter.emit('resultsChanged', queryId);
+
+            logger.log('search', 'SearchRequestManager: results changed', {
+                queryId: queryId,
+                eventName: 'RESULTS_CHANGED'
+            });
         }
     };
     return SearchRequestManager;

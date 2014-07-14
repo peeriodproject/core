@@ -214,7 +214,7 @@ class SearchStore implements SearchStoreInterface {
 					return callback(err);
 				}
 				else {
-					logger.log('search', 'SearchStore~_startUpDatabaseServer: database is running', { pid: pid });
+					logger.log('index', 'SearchStore~_startUpDatabaseServer: database is running', { pid: pid });
 				}
 
 				this._databaseServerProcessId = pid;
