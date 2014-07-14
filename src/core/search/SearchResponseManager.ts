@@ -195,6 +195,14 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 			delete hit._score;
 			delete hit._index;
 			delete hit._source.itemPath;
+
+			try {
+				logger.log('search', 'SearchResponseManager: hit file:', {
+					itemName: hit._source.itemName
+				});
+			}
+			catch (e) {
+			}
 		}
 
 		return hits;
