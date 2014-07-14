@@ -1,3 +1,5 @@
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
 * MiddlewareInterface implementation.
 *
@@ -85,6 +87,8 @@ var Middleware = (function () {
     };
 
     Middleware.prototype.feedNode = function (feedingNodes, associatedCircuitId, payloadToFeed) {
+        logger.log('middleware', 'Trying to feed hydra');
+
         var fed = false;
 
         for (var i = 0, l = feedingNodes.length; i < l; i++) {
@@ -135,6 +139,8 @@ var Middleware = (function () {
         }
 
         if (bufferToSend) {
+            logger.log('middleware', 'Actually feeding hydra socket');
+
             this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
         }
     };

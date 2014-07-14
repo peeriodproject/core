@@ -6,6 +6,8 @@ import HydraMessageCenterInterface = require('../hydra/interfaces/HydraMessageCe
 import HydraNodeList = require('../hydra/interfaces/HydraNodeList');
 import HydraNode = require('../hydra/interfaces/HydraNode');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * MiddlewareInterface implementation.
  *
@@ -104,6 +106,8 @@ class Middleware implements MiddlewareInterface {
 	}
 
 	public feedNode (feedingNodes:HydraNodeList, associatedCircuitId:string, payloadToFeed:Buffer):void {
+		logger.log('middleware', 'Trying to feed hydra');
+
 		var fed:boolean = false;
 
 		for (var i=0, l=feedingNodes.length; i<l; i++) {
@@ -155,6 +159,8 @@ class Middleware implements MiddlewareInterface {
 		}
 
 		if (bufferToSend) {
+			logger.log('middleware', 'Actually feeding hydra socket');
+
 			this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
 		}
 	}
