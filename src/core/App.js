@@ -85,30 +85,15 @@ var App = {
             var searchResponseManager = new SearchResponseManager(_this.appQuitHandler, searchClient);
 
             searchResponseManager.onResultsFound(function (queryId, results) {
-                logger.log('query', 'Issuing query results', {
-                    queryId: queryId,
-                    result: results.toString()
-                });
             });
 
             searchRequestManager.onQueryResultsChanged(function (queryId) {
-                logger.log('query', 'Received results', {
-                    queryId: queryId
-                });
             });
 
             searchRequestManager.onQueryEnd(function (queryId, reason) {
-                logger.log('search', 'Query ended', {
-                    queryId: queryId,
-                    reason: reason
-                });
             });
 
             searchRequestManager.onQueryCanceled(function (queryId, reason) {
-                logger.log('search', 'Query canceled', {
-                    queryId: queryId,
-                    reason: reason
-                });
             });
 
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
@@ -141,9 +126,7 @@ var App = {
             }
         };
 
-        this._requestManager.addQuery(queryBody, function (err, queryId) {
-            logger.log('query', 'Starting query', { name: name, queryId: queryId });
-        });
+        this._requestManager.addQuery(queryBody);
     },
     quit: function () {
         console.log('quitting...');
@@ -200,7 +183,6 @@ var App = {
         var searchItemFactory = new SearchItemFactory();
         var searchClient = new SearchClient(searchConfig, this.appQuitHandler, 'mainIndex', searchStoreFactory, searchItemFactory, {
             onOpenCallback: function () {
-                logger.log('search', 'searchClient started');
                 return callback(searchConfig, searchClient);
             }
         });

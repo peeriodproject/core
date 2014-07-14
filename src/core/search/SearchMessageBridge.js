@@ -78,7 +78,6 @@ var SearchMessageBridge = (function (_super) {
             }, 1000);*/
             _this._compressBuffer(queryBody, function (err, compressedBody) {
                 if (!err) {
-                    logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Emitting new broadcast query', { queryId: queryId, body: queryBody.toString() });
                     _this.emit('newBroadcastQuery', queryId, compressedBody);
                 } else {
                     logger.error(err);
@@ -88,7 +87,6 @@ var SearchMessageBridge = (function (_super) {
 
         // query ended: UI
         this._searchRequestManager.onQueryRemoved(function (queryId) {
-            logger.log('search', 'SearchMessageBridge~_setupOutgoingQuery: Query removed', { queryId: queryId });
             _this.emit('abort', queryId);
         });
 
@@ -122,10 +120,6 @@ var SearchMessageBridge = (function (_super) {
             }, 1000);*/
             _this._compressBuffer(results, function (err, compressedResults) {
                 if (!err) {
-                    logger.log('search', 'SearchMessageBridge~_setupOutgoingResults: Emitting broadcast query results', {
-                        queryId: queryId,
-                        results: results.toString()
-                    });
                     _this.emit('broadcastQueryResults', queryId, compressedResults);
                 } else {
                     logger.error(err);
@@ -134,7 +128,6 @@ var SearchMessageBridge = (function (_super) {
         });
 
         this._searchResponseManager.onNoResultsFound(function (queryId) {
-            logger.log('search', 'emitting broadcast query no results found', { queryId: queryId });
             _this.emit('broadcastQueryResults', queryId, null);
         });
     };
@@ -144,11 +137,6 @@ var SearchMessageBridge = (function (_super) {
         this.on('result', function (queryIdentifier, responseBuffer, metadata) {
             _this._decompressBuffer(responseBuffer, function (err, decompressedBuffer) {
                 if (!err) {
-                    logger.log('search', 'a result returned from the broadcast!', {
-                        queryId: queryIdentifier,
-                        body: decompressedBuffer.toString()
-                    });
-
                     _this._searchRequestManager.addResponse(queryIdentifier, decompressedBuffer, metadata);
                 } else {
                     logger.error(err);
