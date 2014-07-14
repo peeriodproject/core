@@ -175,6 +175,8 @@ var ResponseManager = (function () {
 
             _this.externalQueryHandler(broadcastId, searchObject, function (identifier, results) {
                 if (results) {
+                    logger.log('query', 'Issuing external feed to circuit', { broadcastId: identifier });
+
                     var msg = _this._wrapQueryResponse(identifier, results);
 
                     if (msg) {
