@@ -175,6 +175,8 @@ class QueryManager extends events.EventEmitter implements QueryManagerInterface 
 				this._initializeQuery(queryIdentifier, query);
 			}
 			else {
+				logger.log('query', 'Cannot query', {reason: reason, queryId: queryIdentifier});
+
 				setImmediate(() => {
 					this._searchBridge.emit('end', queryIdentifier, reason);
 				});

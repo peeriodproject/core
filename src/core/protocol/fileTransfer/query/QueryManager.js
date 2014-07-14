@@ -163,6 +163,8 @@ var QueryManager = (function (_super) {
 
                 _this._initializeQuery(queryIdentifier, query);
             } else {
+                logger.log('query', 'Cannot query', { reason: reason, queryId: queryIdentifier });
+
                 setImmediate(function () {
                     _this._searchBridge.emit('end', queryIdentifier, reason);
                 });
