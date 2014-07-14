@@ -50,6 +50,11 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	 */
 	private _idleConnectionKillTimeout:number = 0;
 
+	/**
+	 * The maximum number of times to try if a server is reachable from outside.
+	 *
+	 * @member {number} TCPSocketHandler~_maxReachableTries
+	 */
 	private _maxReachableTries:number = 0;
 
 	/**
@@ -102,6 +107,31 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	 */
 	private _socketFactory:TCPSocketFactoryInterface = null;
 
+	/**
+	 * THIS IS FOR TESTING ONLY
+	 */
+	private _socketCount:number = 0;
+	private _socketSecond:number = 0;
+
+	private _TESTsocketCount (socket:TCPSocketInterface):void {
+		this._socketCount++;
+
+		socket.once('end', () => {
+			this._socketCount--;
+		});
+	}
+
+	private _TESTstartSocketInterval ():void {
+		global.setInterval(() => {
+			var now:number = Math.floor(Date.now() / 1000);
+
+			if (now !== this._socketSecond) {
+				this._socketSecond = now;
+				logger.log('socketCount', {count: this._socketCount, when: now});
+			}
+		}, 1000);
+	}
+
 	constructor (socketFactory:TCPSocketFactoryInterface, opts:TCPSocketHandlerOptions) {
 		super();
 
@@ -117,6 +147,8 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2000;
 		this._simulatorRTT = opts.simulatorRTT || 0;
 		this._maxReachableTries = opts.maxReachableTries || 3;
+
+		this._TESTstartSocketInterval();
 	}
 
 	public autoBootstrap (callback:(openPorts:Array<number>) => any):void {
@@ -169,6 +201,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		}
 
 		var theCallback = (socket:TCPSocketInterface) => {
+
 			if (!socket) {
 				if (callback) {
 					callback(null);
@@ -178,6 +211,8 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 				}
 			}
 			else {
+				this._TESTsocketCount(socket);
+
 				if (callback) {
 					callback(socket);
 				}
@@ -232,6 +267,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 
 					server.on('connection', (sock:net.Socket) => {
 						var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
+						this._TESTsocketCount(socket);
 						this.emit('connected', socket, 'incoming');
 					});
 
