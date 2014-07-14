@@ -20,6 +20,7 @@ var PluginRunner = (function () {
         this._config = null;
         this._sandbox = null;
         this._sandboxScripts = [];
+        this._sandboxSocketPath = '';
         this._pluginCode = null;
         this._pluginGlobalsFactory = null;
         this._pluginScriptPath = null;
@@ -31,13 +32,15 @@ var PluginRunner = (function () {
         // @see https://github.com/rogerwang/node-webkit/issues/213
         var nodeBinaryPath = path.join(__dirname, '../../bin/', this._config.get('plugin.binaryPath'));
 
+        this._sandboxSocketPath = '/tmp/jjpluginrunner_' + Math.round(Math.random() * 1000).toString() + '.sock';
+
         this._sandbox = new SandCastle({
             memoryLimitMB: 1024,
             timeout: this._config.get('plugin.timeoutInSeconds') * 1000,
             useStrictMode: true,
             api: this._getPluginApiPath(),
             spawnExecPath: nodeBinaryPath,
-            socket: '/tmp/pluginrunner' + Math.round(Math.random() * 1000) + '.sock'
+            socket: this._sandboxSocketPath
         });
 
         this._pluginGlobalsFactory = new PluginGlobalsFactory();
@@ -48,6 +51,11 @@ var PluginRunner = (function () {
         this._sandboxScripts = null;
         this._sandbox = null;
         this._pluginGlobalsFactory = null;
+
+        try  {
+            fs.unlinkSync(this._sandboxSocketPath);
+        } catch (e) {
+        }
     };
 
     PluginRunner.prototype.getMapping = function (callback) {

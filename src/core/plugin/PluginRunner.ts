@@ -25,7 +25,10 @@ class PluginRunner implements PluginRunnerInterface {
 	private _config:ConfigInterface = null;
 
 	private _sandbox = null;
+
 	private _sandboxScripts = [];
+
+	private _sandboxSocketPath:string = '';
 
 	private _pluginCode:string = null;
 
@@ -43,13 +46,15 @@ class PluginRunner implements PluginRunnerInterface {
 		// @see https://github.com/rogerwang/node-webkit/issues/213
 		var nodeBinaryPath:string = path.join(__dirname, '../../bin/', this._config.get('plugin.binaryPath'));
 
+		this._sandboxSocketPath = '/tmp/jjpluginrunner_' + Math.round(Math.random() * 1000).toString() + '.sock';
+
 		this._sandbox = new SandCastle({
 			memoryLimitMB: 1024,
 			timeout      : this._config.get('plugin.timeoutInSeconds') * 1000,
 			useStrictMode: true,
 			api          : this._getPluginApiPath(),
 			spawnExecPath: nodeBinaryPath,
-			socket       : '/tmp/pluginrunner' + Math.round(Math.random() * 1000) + '.sock'
+			socket       : this._sandboxSocketPath
 		});
 
 		this._pluginGlobalsFactory = new PluginGlobalsFactory();
@@ -61,6 +66,12 @@ class PluginRunner implements PluginRunnerInterface {
 		this._sandboxScripts = null;
 		this._sandbox = null;
 		this._pluginGlobalsFactory = null;
+
+		try {
+			fs.unlinkSync(this._sandboxSocketPath);
+		}
+		catch (e) {
+		}
 	}
 
 	public getMapping (callback:Function):void {

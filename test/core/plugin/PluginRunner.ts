@@ -11,7 +11,7 @@ import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import PluginRunner = require('../../../src/core/plugin/PluginRunner');
 
 // todo add json error tests
-describe('CORE --> PLUGIN --> PluginRunner @joern', function () {
+describe('CORE --> PLUGIN --> PluginRunner', function () {
 	var sandbox:SinonSandbox;
 	var pluginToLoadPath:string = 'src/plugins/textDocumentPlugin';
 	var pluginsFolderPath:string = testUtils.getFixturePath('core/plugin/pluginRunner/plugins');
@@ -59,13 +59,13 @@ describe('CORE --> PLUGIN --> PluginRunner @joern', function () {
 		testUtils.deleteFolderRecursive(pluginsFolderPath);
 	});
 
-	it('should correctly instantiate without errror', function (done) {
+	it('should correctly instantiate without error', function (done) {
 		var pluginRunner = new PluginRunner(configStub, 'identifier', pluginFilePath);
 		pluginRunner.should.be.an.instanceof(PluginRunner);
 
-		setTimeout(function () {
+		setImmediate(function () {
 			cleanupAndDone(pluginRunner, done);
-		}, 500);
+		});
 	});
 
 	describe('should correctly run the provided script', function () {
@@ -155,5 +155,4 @@ describe('CORE --> PLUGIN --> PluginRunner @joern', function () {
 			});
 		});
 	});
-
 });
