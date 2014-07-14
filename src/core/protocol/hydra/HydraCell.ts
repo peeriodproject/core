@@ -464,7 +464,7 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 					this._extendCellWith(msg.getIp(), msg.getPort(), createCellMsg.getUUID(), createCellMsg.getAdditivePayload());
 				}
 				else {
-					logger.log('hydra', 'Wrong node');
+					logger.log('hydraCell', 'Wrong node');
 					this._teardown(true, true);
 				}
 			}
@@ -476,7 +476,7 @@ class HydraCell extends events.EventEmitter implements HydraCellInterface {
 					this.emit('fileTransferMessage', this._predecessor.circuitId, msg.getPayload());
 				}
 				else {
-					logger.log('hydra', 'Wrong node');
+					logger.log('hydraCell', 'Wrong node');
 					this._teardown(true, true);
 				}
 			}

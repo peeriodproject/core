@@ -435,7 +435,7 @@ var HydraCell = (function (_super) {
                 if (createCellMsg && decrypted && !_this._successor) {
                     _this._extendCellWith(msg.getIp(), msg.getPort(), createCellMsg.getUUID(), createCellMsg.getAdditivePayload());
                 } else {
-                    logger.log('hydra', 'Wrong node');
+                    logger.log('hydraCell', 'Wrong node');
                     _this._teardown(true, true);
                 }
             }
@@ -446,7 +446,7 @@ var HydraCell = (function (_super) {
                 if (decrypted) {
                     _this.emit('fileTransferMessage', _this._predecessor.circuitId, msg.getPayload());
                 } else {
-                    logger.log('hydra', 'Wrong node');
+                    logger.log('hydraCell', 'Wrong node');
                     _this._teardown(true, true);
                 }
             }
