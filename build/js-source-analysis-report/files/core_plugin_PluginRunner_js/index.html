@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">75.75</p>
+      <p class="stat">74.10</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">172</p>
+      <p class="stat">181</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">26.39</p>
+      <p class="stat">28.28</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.02</p>
+      <p class="stat">1.16</p>
     </div>
   </div>
 </div>
@@ -112,6 +112,7 @@ var PluginRunner = (function () {
         this._config = null;
         this._sandbox = null;
         this._sandboxScripts = [];
+        this._sandboxSocketPath = &#039;&#039;;
         this._pluginCode = null;
         this._pluginGlobalsFactory = null;
         this._pluginScriptPath = null;
@@ -123,12 +124,15 @@ var PluginRunner = (function () {
         // @see https://github.com/rogerwang/node-webkit/issues/213
         var nodeBinaryPath = path.join(__dirname, &#039;../../bin/&#039;, this._config.get(&#039;plugin.binaryPath&#039;));
 
+        this._sandboxSocketPath = &#039;/tmp/jjpluginrunner_&#039; + Math.round(Math.random() * 1000).toString() + &#039;.sock&#039;;
+
         this._sandbox = new SandCastle({
             memoryLimitMB: 1024,
-            timeout: 30000,
+            timeout: this._config.get(&#039;plugin.timeoutInSeconds&#039;) * 1000,
             useStrictMode: true,
             api: this._getPluginApiPath(),
-            spawnExecPath: nodeBinaryPath
+            spawnExecPath: nodeBinaryPath,
+            socket: this._sandboxSocketPath
         });
 
         this._pluginGlobalsFactory = new PluginGlobalsFactory();
@@ -139,6 +143,11 @@ var PluginRunner = (function () {
         this._sandboxScripts = null;
         this._sandbox = null;
         this._pluginGlobalsFactory = null;
+
+        try  {
+            fs.unlinkSync(this._sandboxSocketPath);
+        } catch (e) {
+        }
     };
 
     PluginRunner.prototype.getMapping = function (callback) {

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">66.26</p>
+      <p class="stat">65.94</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">354</p>
+      <p class="stat">383</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">49.98</p>
+      <p class="stat">49.57</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.17</p>
+      <p class="stat">2.35</p>
     </div>
   </div>
 </div>
@@ -94,6 +94,8 @@
 
 var AdditiveSharingScheme = require(&#039;../../crypto/AdditiveSharingScheme&#039;);
 var HKDF = require(&#039;../../crypto/HKDF&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * CircuitExtenderInterface implementation.
@@ -243,6 +245,7 @@ var CircuitExtender = (function () {
 
         if (isFirst) {
             this._circuitId = crypto.pseudoRandomBytes(16).toString(&#039;hex&#039;);
+
             this._expectReactionFrom = nodeToExtendWith;
             this._expectReactionFrom.circuitId = this._circuitId;
 
@@ -250,7 +253,7 @@ var CircuitExtender = (function () {
                 _this._onReaction(from, message, decrypted);
             };
 
-            this._circuitTerminationListener = function (circuitId) {
+            this._circuitTerminationListener = function (circuitId, socketIdentifier) {
                 if (circuitId === _this._circuitId) {
                     _this._onCircuitTermination();
                 }
@@ -262,9 +265,8 @@ var CircuitExtender = (function () {
 
         this._currentUUID = crypto.pseudoRandomBytes(16).toString(&#039;hex&#039;);
         this._currentNodeToExtendWith = nodeToExtendWith;
-        this._currentDiffieHellman = crypto.getDiffieHellman(&#039;modp14&#039;);
 
-        var dhPublicKey = this._currentDiffieHellman.generateKeys();
+        var dhPublicKey = this._getDiffieHellmanAndReturnPublicKey();
 
         AdditiveSharingScheme.getShares(dhPublicKey, additiveNodes.length + 1, 256, function (shares) {
             for (var i = 0, l = additiveNodes.length; i &lt; l; i++) {
@@ -292,6 +294,31 @@ var CircuitExtender = (function () {
         if (this._currentReactionTimeout) {
             global.clearTimeout(this._currentReactionTimeout);
             this._currentReactionTimeout = 0;
+        }
+    };
+
+    /**
+    * This hack is a workaround around node.js not padding DH keys. (I would)
+    * Big-endian padding.
+    *
+    * @method core.protocol.hydra.CircuitExtender~_getDiffieHellmanAndReturnPublicKey
+    *
+    * @returns {Buffer}
+    */
+    CircuitExtender.prototype._getDiffieHellmanAndReturnPublicKey = function () {
+        this._currentDiffieHellman = crypto.getDiffieHellman(&#039;modp14&#039;);
+        var dhPublicKey = this._currentDiffieHellman.generateKeys();
+        var dhPublicKeyLen = dhPublicKey.length;
+
+        if (dhPublicKeyLen !== 256) {
+            var returnBuffer = new Buffer(256);
+
+            returnBuffer.fill(0x00);
+            dhPublicKey.copy(returnBuffer, 256 - dhPublicKeyLen, 0);
+
+            return returnBuffer;
+        } else {
+            return dhPublicKey;
         }
     };
 
@@ -390,7 +417,9 @@ var CircuitExtender = (function () {
 
                     sha1.update(secret);
 
-                    if (sha1.digest(&#039;hex&#039;) === message.getSecretHash().toString(&#039;hex&#039;)) {
+                    var digest = sha1.digest(&#039;hex&#039;);
+
+                    if (digest === message.getSecretHash().toString(&#039;hex&#039;)) {
                         var hkdf = new HKDF(&#039;sha256&#039;, secret);
                         var keysConcat = hkdf.derive(48, new Buffer(message.getUUID(), &#039;hex&#039;));
                         var outgoingKey = keysConcat.slice(0, 16);

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.57</p>
+      <p class="stat">70.81</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">601</p>
+      <p class="stat">616</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">72.89</p>
+      <p class="stat">72.85</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">4.75</p>
+      <p class="stat">5.00</p>
     </div>
   </div>
 </div>
@@ -97,6 +97,8 @@ var path = require(&#039;path&#039;);
 var elasticsearch = require(&#039;elasticsearch&#039;);
 
 var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
+
+var logger = require(&#039;../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * @class core.search.SearchClient
@@ -195,23 +197,41 @@ var SearchClient = (function () {
         this.open(this._options.onOpenCallback);
     }
     SearchClient.prototype.addIncomingResponse = function (indexName, type, responseBody, responseMeta, callback) {
-        var internalCallback = callback || function (err, response) {
+        var internalCallback = callback || function (err) {
         };
 
-        var responseObject = ObjectUtils.extend(responseBody, {
-            meta: responseMeta
+        var body = ObjectUtils.extend(responseBody, {
+            _meta: responseMeta
         });
+
+        this._client.index({
+            index: indexName.toLowerCase(),
+            type: &#039;response&#039; + type.toLowerCase(),
+            body: body
+        }, function (err, response, status) {
+            err = err || null;
+            return internalCallback(err);
+        });
+    };
+
+    SearchClient.prototype.checkIncomingResponse = function (indexName, type, responseBody, callback) {
+        var internalCallback = callback || function (err, response) {
+        };
 
         this._client.percolate({
             index: indexName.toLowerCase(),
             type: &#039;response-&#039; + type.toLowerCase(),
             body: {
-                doc: responseObject
+                doc: responseBody
             }
         }, function (err, response, status) {
+            var matches = response &amp;&amp; response[&#039;total&#039;] ? response[&#039;matches&#039;] : [];
+
             err = err || null;
 
-            return internalCallback(err, response);
+            console.log(&#039;RESULT MATCHED&#039;, matches.length, &#039;RUNNING QUERIES&#039;);
+
+            return internalCallback(err, matches);
         });
     };
 
@@ -322,9 +342,8 @@ var SearchClient = (function () {
         indexName = indexName.toLowerCase();
 
         this._createIndex(indexName, mapping, function (err) {
-            console.log(err);
-
             if (err) {
+                console.error(err);
                 return internalCallback(err);
             }
 
@@ -384,8 +403,6 @@ var SearchClient = (function () {
             type: &#039;.percolator&#039;,
             id: queryId
         }, function (err, response, status) {
-            console.log(err);
-
             if (_this._isValidResponse(err, status, &#039;IndexMissingException&#039;) || _this._isValidResponse(err, status, &#039;Not Found&#039;)) {
                 err = null;
             }
@@ -411,8 +428,6 @@ var SearchClient = (function () {
                 }
             }
         }, function (err, response, status) {
-            console.log(err);
-
             if (_this._isValidResponse(err, status, &#039;IndexMissingException&#039;)) {
                 err = null;
             }
@@ -516,7 +531,7 @@ var SearchClient = (function () {
 
             _this._waitForDatabaseServer(function (err) {
                 if (err) {
-                    console.error(err);
+                    logger.error(err);
                     return internalCallback(err);
                 }
 
@@ -551,7 +566,7 @@ var SearchClient = (function () {
             err = err || null;
 
             if (err) {
-                console.log(err);
+                logger.error(err);
             }
 
             return callback(err, hits);
@@ -562,7 +577,7 @@ var SearchClient = (function () {
         if (this._client) {
             this._client.indices.existsType({
                 index: this._indexName,
-                type: type
+                type: type.toLowerCase()
             }, function (err, response, status) {
                 return callback(response);
             });

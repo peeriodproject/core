@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">65.52</p>
+      <p class="stat">63.24</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">204</p>
+      <p class="stat">234</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">30.93</p>
+      <p class="stat">24.78</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.34</p>
+      <p class="stat">1.59</p>
     </div>
   </div>
 </div>
@@ -130,7 +130,31 @@ var IrcLoggerBackend = (function () {
 
         this._logger = new winLogger({
             transports: [],
-            exitOnError: false
+            exitOnError: false,
+            levels: {
+                debug: 0,
+                ping: 1,
+                proxy: 2,
+                findClosestNodes: 3,
+                nodeSeeker: 4,
+                hydra: 5,
+                query: 6,
+                topology: 7,
+                network: 8,
+                message: 9,
+                routingTable: 10,
+                search: 11,
+                info: 12,
+                error: 13,
+                warn: 14,
+                socket: 15,
+                hydraSuccess: 16,
+                hydraCell: 17,
+                hydraReaction: 18,
+                hydraExtension: 19,
+                socketCount: 20,
+                middleware: 21
+            }
         });
 
         this._addTransportBasedOnEnvironment();
@@ -231,6 +255,12 @@ var IrcLoggerBackend = (function () {
                 level: &#039;debug&#039;,
                 handleExceptions: true
             });
+            /*this._logger.add(winston.transports.Console, {
+            silent   : false,
+            timestamp: true,
+            level    : &#039;debug&#039;,
+            handleExceptions: true
+            });*/
         }
     };
 

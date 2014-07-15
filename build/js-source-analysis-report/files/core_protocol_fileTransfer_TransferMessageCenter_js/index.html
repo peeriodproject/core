@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">72.12</p>
+      <p class="stat">64.73</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">96</p>
+      <p class="stat">261</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">23.56</p>
+      <p class="stat">33.33</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.77</p>
+      <p class="stat">1.65</p>
     </div>
   </div>
 </div>
@@ -98,27 +98,91 @@
 };
 var events = require(&#039;events&#039;);
 
+var FeedingNodesMessageBlock = require(&#039;./messages/FeedingNodesMessageBlock&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
+
 /**
+* TransferMessageCenterInterface implementation.
+*
 * @class core.protocol.fileTransfer.TransferMessageCenter
 * @extends events.EventEmitter
 * @implements core.protocol.fileTransfer.TransferMessageCenterInterface
+*
+* @param {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager The protocol connection manager instance of this client.
+* @param {core.protocol.fileTransfer.MiddlewareInterface} middleware The middleware instance of this client
+* @param {core.protocol.hydra.CircuitManagerInterface} circuitManager Hydra circuit manager instance.
+* @param {core.protocol.hydra.CellManagerInterface} cellManager Hydra cell manager instance.
+* @param {core.protocol.hydra.HydraMessageCenterInterface} hydraMessageCenter Hydra message center instance.
+* @param {core.protocol.fileTransfer.ReadableFileTransferMessageFactoryInterface} readableFileTransferMessageFactory Factory for reading FILE_TRANSFER messages.
+* @param {core.protocol.fileTransfer.WritableFileTransferMessageFactoryInterface} writableFileTransferMessageFactory Factory for writing FILE_TRANSFER message payloads.
+* @param {core.protocol.fileTransfer.ReadableQueryResponseMessageFactoryInterface} readableQueryResponseFactory Factory for reading QUERY_RESPONSE messsages.
+* @param {core.protocol.fileTransfer.WritableQueryResponseMessageFactoryInterface} writableQueryResponseFactory Factory for writing QUERY_RESPONSE message payloads.
 */
 var TransferMessageCenter = (function (_super) {
     __extends(TransferMessageCenter, _super);
-    function TransferMessageCenter(circuitManager, cellManager, hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseFactory, writableQueryResponseFactory) {
+    function TransferMessageCenter(protocolConnectionManager, middleware, circuitManager, cellManager, hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseFactory, writableQueryResponseFactory) {
         _super.call(this);
-        this._circuitManager = null;
+        /**
+        * Stores the hydra cell manager instance.
+        *
+        * @member {core.protocol.hydra.CellManagerInterface} core.protocol.fileTransfer.TransferMessageCenter~_cellManager
+        */
         this._cellManager = null;
+        /**
+        * Stores the hydra circuit manager instance.
+        *
+        * @member {core.protocol.hydra.CircuitManagerInterface} core.protocol.fileTransfer.TransferMessageCenter~_circuitManager
+        */
+        this._circuitManager = null;
+        /**
+        * Stores the hydra message center instance.
+        *
+        * @member {core.protocol.hydra.HydraMessageCenterInterface} core.protocol.fileTransfer.TransferMessageCenter~_hydraMessageCenter
+        */
         this._hydraMessageCenter = null;
+        /**
+        * Stores the file transfer middleware instance.
+        *
+        * @member {core.protocol.fileTransfer.MiddlewareInterface} core.protocol.fileTransfer.TransferMessageCenter~_middleware
+        */
+        this._middleware = null;
+        /**
+        * Stores the protocol connection manager instance.
+        *
+        * @member {core.protocol.net.ProtocolConnectionManagerInterface} core.protocol.fileTransfer.TransferMessageCenter~_protocolConnectionManager
+        */
+        this._protocolConnectionManager = null;
+        /**
+        * Stores the factory for reading FILE_TRANSFER messages.
+        *
+        * @member {core.protocol.fileTransfer.ReadableFileTransferMessageFactoryInterface} core.protocol.fileTransfer.TransferMessageCenter~_readableFileTransferMessageFactory
+        */
         this._readableFileTransferMessageFactory = null;
-        this._writableFileTransferMessageFactory = null;
+        /**
+        * Stores the factory for reading QUERY_RESPONSE messages.
+        *
+        * @member {core.protocol.fileTransfer.ReadableQueryResponseMessageFactoryInterface} core.protocol.fileTransfer.TransferMessageCenter~_readableQueryResponseMessageFactory
+        */
         this._readableQueryResponseMessageFactory = null;
+        /**
+        * Stores the factory for writing FILE_TRANSFER message payloads.
+        *
+        * @member {core.protocol.fileTransfer.WritableFileTransferMessageFactoryInterface} core.protocol.fileTransfer.TransferMessageCenter~_writableFileTransferMessageFactory
+        */
+        this._writableFileTransferMessageFactory = null;
+        /**
+        * Stores the factory for writing QUERY_RESPONSE messages.
+        *
+        * @member {core.protocol.fileTransfer.WritableQueryResponseMessageFactoryInterface} core.protocol.fileTransfer.TransferMessageCenter~_writableQueryResponseMessageFactory
+        */
         this._writableQueryResponseMessageFactory = null;
 
         this._circuitManager = circuitManager;
         this._cellManager = cellManager;
         this._hydraMessageCenter = hydraMessageCenter;
-
+        this._protocolConnectionManager = protocolConnectionManager;
+        this._middleware = middleware;
         this._readableFileTransferMessageFactory = readableFileTransferMessageFactory;
         this._writableFileTransferMessageFactory = writableFileTransferMessageFactory;
         this._readableQueryResponseMessageFactory = readableQueryResponseFactory;
@@ -126,14 +190,133 @@ var TransferMessageCenter = (function (_super) {
 
         this._setupListeners();
     }
+    TransferMessageCenter.prototype.issueExternalFeedToCircuit = function (nodesToFeedBlock, payload, circuitId) {
+        var wrappedMessage = this.wrapTransferMessage(&#039;EXTERNAL_FEED&#039;, &#039;00000000000000000000000000000000&#039;, Buffer.concat([nodesToFeedBlock, payload]));
+
+        if (wrappedMessage &amp;&amp; !(circuitId &amp;&amp; this._circuitManager.pipeFileTransferMessageThroughCircuit(circuitId, wrappedMessage))) {
+            return this._circuitManager.pipeFileTransferMessageThroughRandomCircuit(wrappedMessage);
+        }
+
+        return true;
+    };
+
     TransferMessageCenter.prototype.wrapTransferMessage = function (messageType, transferId, payload) {
         try  {
             return this._writableFileTransferMessageFactory.constructMessage(transferId, messageType, payload);
         } catch (e) {
+            logger.log(&#039;error&#039;, &#039;Error wrapping transfer message&#039;, { err: e.message });
             return null;
         }
     };
 
+    /**
+    * Function that gets called when this node receives a message as one of the relay nodes of a circuit.
+    *
+    * EXTERNAL_FEED: Unwrap the feeding block and the payload, and feed the nodes in the block via middleware.
+    *
+    * QUERY_BROADCAST: Prepend this node&#039;s own address to the message block and emit a &#039;issueBroadcastQuery&#039; Event
+    * in order to start a new broadcast.
+    *
+    * @method core.protocol.fileTransfer.TransferMessageCenter~_onCellTransfer
+    *
+    * @param {string} predecessorCircuitId The circuit identifier shared with the predecessor of the circuit this node is part of.
+    * @param {core.protocol.fileTransfer.ReadableFileTransferMessageInterface} msg The received FILE_TRANSFER message.
+    */
+    TransferMessageCenter.prototype._onCellTransferMessage = function (predecessorCircuitId, msg) {
+        if (msg.getMessageType() === &#039;EXTERNAL_FEED&#039;) {
+            var feedingNodesBlock = null;
+            var slice = null;
+            var payload = msg.getPayload();
+
+            try  {
+                feedingNodesBlock = FeedingNodesMessageBlock.extractAndDeconstructBlock(payload);
+                slice = payload.slice(feedingNodesBlock.bytesRead);
+            } catch (e) {
+                logger.log(&#039;middleware&#039;, &#039;Tearing down cell, message is wrong&#039;);
+                this._cellManager.teardownCell(predecessorCircuitId);
+            }
+
+            if (feedingNodesBlock &amp;&amp; slice) {
+                this._middleware.feedNode(feedingNodesBlock.nodes, predecessorCircuitId, slice);
+            }
+        } else if (msg.getMessageType() === &#039;QUERY_BROADCAST&#039;) {
+            var payload = msg.getPayload();
+            var broadcastId = msg.getTransferId();
+            var feedingNodesObj = null;
+            var searchObject = null;
+
+            try  {
+                feedingNodesObj = FeedingNodesMessageBlock.extractAndDeconstructBlock(payload);
+                searchObject = payload.slice(feedingNodesObj.bytesRead);
+            } catch (e) {
+            }
+
+            if (searchObject &amp;&amp; feedingNodesObj &amp;&amp; searchObject.length &amp;&amp; feedingNodesObj.nodes.length) {
+                logger.log(&#039;query&#039;, &#039;Received QUERY_BROADCAST message&#039;, { queryId: broadcastId });
+                this.emit(&#039;issueBroadcastQuery&#039;, predecessorCircuitId, broadcastId, searchObject, payload);
+            } else {
+                this._cellManager.teardownCell(predecessorCircuitId);
+            }
+        }
+    };
+
+    /**
+    * Method that gets called when this node receives a message through a circuit which it is initiator of.
+    *
+    * QUERY_RESPONSE: Emit a QUERY_RESPONSE event concatenated with the transfer identifier of the message, as this is
+    * generally equal to the query identifier of the underlying query. Pass in the unwrapped query response message as argument.
+    *
+    * TEST_MESSAGE: Only for testing purposes, emit &#039;testMessage&#039; event
+    *
+    * @param {string} circuitId The identifier of the circuit through which the message came.
+    * @param {core.protocol.fileTransfer.ReadableFileTransferMessageInterface} msg The received message.
+    */
+    TransferMessageCenter.prototype._onCircuitTransferMessage = function (circuitId, msg) {
+        var messageType = msg.getMessageType();
+
+        if (messageType === &#039;QUERY_RESPONSE&#039;) {
+            var queryResponseMessage = this._readableQueryResponseMessageFactory.create(msg.getPayload());
+
+            if (queryResponseMessage) {
+                this.emit(&#039;QUERY_RESPONSE_&#039; + msg.getTransferId(), queryResponseMessage);
+            }
+        } else if (messageType === &#039;TEST_MESSAGE&#039;) {
+            this.emit(&#039;testMessage&#039;, null, msg.getPayload().toString());
+        }
+    };
+
+    /**
+    * This method gets called when a FILE_TRANSFER message rolls in through a socket that is not related to any
+    * existing circuit / cell.
+    *
+    * GOT_FED: Treat the transferId of the message as feedingIdentifier and look for the appropriate circuit. Then
+    * pipe back the payload of the message through the circuit.
+    *
+    * @method core.protocol.fileTransfer.TransferMessageCenter~_onFedTransferMessage
+    *
+    * @param {string} socketIdentifier The identifier of the socket the message came through
+    * @param {core.protocol.fileTransfer.ReadableFileTransferMessageInterface} msg The received message
+    */
+    TransferMessageCenter.prototype._onFedTransferMessage = function (socketIdentifier, msg) {
+        if (msg.getMessageType() === &#039;GOT_FED&#039;) {
+            var predecessorCircuitId = this._cellManager.getCircuitIdByFeedingIdentifier(msg.getTransferId());
+
+            if (predecessorCircuitId) {
+                logger.log(&#039;middleware&#039;, &#039;Got fed&#039;);
+
+                this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg.getPayload());
+                this._middleware.addIncomingSocket(predecessorCircuitId, socketIdentifier);
+            } else {
+                this._middleware.closeSocketByIdentifier(socketIdentifier);
+            }
+        }
+    };
+
+    /**
+    * Sets up the listeners for message that come throuhg circuits, cells, or regular sockets, related to fileTransfer.
+    *
+    * @method core.protocol.fileTransfer.TransferMessageCenter~_setupListeners
+    */
     TransferMessageCenter.prototype._setupListeners = function () {
         var _this = this;
         this._circuitManager.on(&#039;circuitReceivedTransferMessage&#039;, function (circuitId, payload) {
@@ -163,24 +346,6 @@ var TransferMessageCenter = (function (_super) {
                 _this._onFedTransferMessage(socketIdentifier, msg);
             }
         });
-    };
-
-    TransferMessageCenter.prototype._onCircuitTransferMessage = function (circuitId, msg) {
-        var messageType = msg.getMessageType();
-
-        if (messageType === &#039;QUERY_RESPONSE&#039;) {
-            var queryResponseMessage = this._readableQueryResponseMessageFactory.create(msg.getPayload());
-
-            if (queryResponseMessage) {
-                this.emit(&#039;QUERY_RESPONSE_&#039; + msg.getTransferId(), queryResponseMessage);
-            }
-        }
-    };
-
-    TransferMessageCenter.prototype._onCellTransferMessage = function (predecessorCircuitId, msg) {
-    };
-
-    TransferMessageCenter.prototype._onFedTransferMessage = function (socketIdentifier, msg) {
     };
     return TransferMessageCenter;
 })(events.EventEmitter);

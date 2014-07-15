@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">79.76</p>
+      <p class="stat">78.41</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">122</p>
+      <p class="stat">149</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">18.16</p>
+      <p class="stat">20.65</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.74</p>
+      <p class="stat">0.85</p>
     </div>
   </div>
 </div>
@@ -100,6 +100,8 @@ var __extends = this.__extends || function (d, b) {
 var events = require(&#039;events&#039;);
 
 var zlib = require(&#039;zlib&#039;);
+
+var logger = require(&#039;../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * @class core.search.SearchMessageBridge
@@ -159,9 +161,18 @@ var SearchMessageBridge = (function (_super) {
         var _this = this;
         // query added
         this._searchRequestManager.onQueryAdd(function (queryId, queryBody) {
+            /*console.log(&#039;--- 1. QUERY ADDED ---&#039;);
+            console.log(queryId, queryBody.toString());
+            
+            setTimeout(() =&gt; {
+            console.log(&#039;--- 2. INCOMING QUERY ---&#039;);
+            this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
+            }, 1000);*/
             _this._compressBuffer(queryBody, function (err, compressedBody) {
                 if (!err) {
                     _this.emit(&#039;newBroadcastQuery&#039;, queryId, compressedBody);
+                } else {
+                    logger.error(err);
                 }
             });
         });
@@ -179,10 +190,12 @@ var SearchMessageBridge = (function (_super) {
 
     SearchMessageBridge.prototype._setupIncomingQuery = function () {
         var _this = this;
-        this.on(&#039;INCOMING_QUERY_EVENT_NAME&#039;, function (queryId, compressedQueryBody) {
+        this.on(&#039;matchBroadcastQuery&#039;, function (queryId, compressedQueryBody) {
             _this._decompressBuffer(compressedQueryBody, function (err, queryBody) {
                 if (!err) {
                     _this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
+                } else {
+                    logger.error(err);
                 }
             });
         });
@@ -191,11 +204,23 @@ var SearchMessageBridge = (function (_super) {
     SearchMessageBridge.prototype._setupOutgoingResults = function () {
         var _this = this;
         this._searchResponseManager.onResultsFound(function (queryId, results) {
+            /*console.log(&#039;--- 3. RESULTS FOUND ---&#039;);
+            setTimeout(() =&gt; {
+            console.log(&#039;--- 4. INCOMING RESULTS ---&#039;);
+            console.log(results.toString());
+            this._searchRequestManager.addResponse(queryId, results, { additional: &#039;metadata&#039; });
+            }, 1000);*/
             _this._compressBuffer(results, function (err, compressedResults) {
                 if (!err) {
-                    _this.emit(&#039;OUTGOING_RESULTS_EVENT_NAME&#039;, queryId, compressedResults);
+                    _this.emit(&#039;broadcastQueryResults&#039;, queryId, compressedResults);
+                } else {
+                    logger.error(err);
                 }
             });
+        });
+
+        this._searchResponseManager.onNoResultsFound(function (queryId) {
+            _this.emit(&#039;broadcastQueryResults&#039;, queryId, null);
         });
     };
 
@@ -205,6 +230,8 @@ var SearchMessageBridge = (function (_super) {
             _this._decompressBuffer(responseBuffer, function (err, decompressedBuffer) {
                 if (!err) {
                     _this._searchRequestManager.addResponse(queryIdentifier, decompressedBuffer, metadata);
+                } else {
+                    logger.error(err);
                 }
             });
         });

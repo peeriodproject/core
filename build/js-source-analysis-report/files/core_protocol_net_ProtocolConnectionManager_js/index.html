@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.73</p>
+      <p class="stat">68.50</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">981</p>
+      <p class="stat">1002</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">85.88</p>
+      <p class="stat">86.32</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">6.45</p>
+      <p class="stat">6.68</p>
     </div>
   </div>
 </div>
@@ -306,6 +306,20 @@ var ProtocolConnectionManager = (function (_super) {
         return this._myNode;
     };
 
+    ProtocolConnectionManager.prototype.getRandomExternalIpPortPair = function () {
+        var openPorts = this._tcpSocketHandler.getOpenServerPortsArray();
+        var externalIp = this._tcpSocketHandler.getMyExternalIp();
+
+        if (openPorts.length &amp;&amp; externalIp) {
+            return {
+                ip: externalIp,
+                port: openPorts[Math.floor(Math.random() * openPorts.length)]
+            };
+        } else {
+            return null;
+        }
+    };
+
     /**
     * Testing purposes only. Should not be used in production.
     *
@@ -339,6 +353,14 @@ var ProtocolConnectionManager = (function (_super) {
         return this._connectionWaitingList;
     };
 
+    ProtocolConnectionManager.prototype.closeHydraSocket = function (identifier) {
+        var socket = this._hydraSockets[identifier];
+
+        if (socket) {
+            socket.end();
+        }
+    };
+
     ProtocolConnectionManager.prototype.getConfirmedSocketByContactNode = function (node) {
         return this._getConfirmedSocketByIdentifier(this._nodeToIdentifier(node));
     };
@@ -358,14 +380,6 @@ var ProtocolConnectionManager = (function (_super) {
         }
     };
 
-    ProtocolConnectionManager.prototype.closeHydraSocket = function (identifier) {
-        var socket = this._hydraSockets[identifier];
-
-        if (socket) {
-            socket.end();
-        }
-    };
-
     ProtocolConnectionManager.prototype.getHydraSocketIp = function (identifier) {
         var socket = this._hydraSockets[identifier];
 
@@ -381,7 +395,10 @@ var ProtocolConnectionManager = (function (_super) {
         this._tcpSocketHandler.connectTo(port, ip, function (socket) {
             if (socket) {
                 var identifier = _this._setHydraIdentifier(socket);
+
+                _this._incomingDataPipeline.hookSocket(socket);
                 _this._addToHydra(identifier, socket);
+
                 callback(null, identifier);
             } else {
                 callback(new Error(&#039;Could not establish connection to [&#039; + ip + &#039;]:&#039; + port), null);
@@ -491,7 +508,7 @@ var ProtocolConnectionManager = (function (_super) {
         // testing purposes only
         var payloadStr = messageType === &#039;FIND_CLOSEST_NODES&#039; ? payload.toString(&#039;hex&#039;) : &#039;&#039;;
 
-        logger.info(&#039;&#039;, { to: node.getId().toHexString(), msgType: messageType, payload: payloadStr, myId: this._myNode.getId().toHexString() });
+        logger.log(&#039;message&#039;, &#039;&#039;, { to: node.getId().toHexString(), msgType: messageType, payload: payloadStr, myId: this._myNode.getId().toHexString() });
     };
 
     /**
@@ -758,6 +775,7 @@ var ProtocolConnectionManager = (function (_super) {
     *
     * @param {string} oldIdentifier The old temporary identifier
     * @param {core.protocol.net.IncomingPendingSocket} pending The incoming pending socket object
+    * @returns {string} The new hydra identifier of the socket
     */
     ProtocolConnectionManager.prototype._fromIncomingPendingToHydra = function (oldIdentifier, pending) {
         var socket = pending.socket;
@@ -770,6 +788,8 @@ var ProtocolConnectionManager = (function (_super) {
         var identifier = this._setHydraIdentifier(socket);
 
         this._addToHydra(identifier, socket);
+
+        return identifier;
     };
 
     /**
@@ -898,8 +918,6 @@ var ProtocolConnectionManager = (function (_super) {
     */
     ProtocolConnectionManager.prototype._onIncomingConnection = function (socket) {
         var _this = this;
-        console.log(this._incomingPendingTimeoutLength);
-
         var identifier = this._setTemporaryIdentifier(socket);
         var pending = {
             socket: socket,
@@ -929,15 +947,18 @@ var ProtocolConnectionManager = (function (_super) {
         var propagateMessage = true;
         var incomingPending = this._incomingPendingSockets[identifier];
 
+        var hydraIdentifier = identifier;
+
         if (incomingPending) {
-            this._fromIncomingPendingToHydra(identifier, incomingPending);
+            hydraIdentifier = this._fromIncomingPendingToHydra(identifier, incomingPending);
         } else if (!(this._hydraSockets[identifier])) {
+            logger.log(&#039;hydra&#039;, &#039;Closing socket due to non-compliance&#039;, { socketIdent: identifier });
             propagateMessage = false;
             this._destroyConnectionByIdentifier(identifier);
         }
 
         if (propagateMessage) {
-            this.emit(&#039;hydraMessage&#039;, identifier, this.getHydraSocketIp(identifier), message);
+            this.emit(&#039;hydraMessage&#039;, hydraIdentifier, this.getHydraSocketIp(hydraIdentifier), message);
         }
     };
 

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">71.98</p>
+      <p class="stat">70.75</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">226</p>
+      <p class="stat">261</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">45.88</p>
+      <p class="stat">46.49</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.28</p>
+      <p class="stat">1.58</p>
     </div>
   </div>
 </div>
@@ -93,6 +93,8 @@
     <textarea id="file-source" class="col-md-12">var events = require(&#039;events&#039;);
 
 var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
+
+var logger = require(&#039;../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * @class core.search.SearchResponseManager
@@ -174,6 +176,10 @@ var SearchResponseManager = (function () {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
 
+    SearchResponseManager.prototype.onNoResultsFound = function (callback) {
+        this._eventEmitter.addListener(&#039;noResultsFound&#039;, callback);
+    };
+
     SearchResponseManager.prototype.onResultsFound = function (callback) {
         this._eventEmitter.addListener(&#039;resultsFound&#039;, callback);
     };
@@ -218,9 +224,11 @@ var SearchResponseManager = (function () {
 
                 internalCallback(null);
 
-                if (results[&#039;total&#039;]) {
+                if (results &amp;&amp; results[&#039;total&#039;]) {
                     // todo add the ability to manipulate results via plugins before the event will be triggered
                     return _this._triggerResultsFound(queryId, results);
+                } else {
+                    return _this._triggerNoResultsFound(queryId);
                 }
             });
         });
@@ -249,6 +257,8 @@ var SearchResponseManager = (function () {
 
             results.hits = _this._cleanupHits(hits);
 
+            delete results.max_score;
+
             return callback(null, results);
         });
     };
@@ -258,21 +268,40 @@ var SearchResponseManager = (function () {
     *
     * @method core.search.SearchResponseManager~_cleanupHits
     *
-    * @param {Array} hits The array of hits from elasticsearch. {@link http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#api-search}
+    * @param {Array} hits The array of hits returned from elasticsearch. {@link http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#api-search}
     * @returns {Array}
     */
     SearchResponseManager.prototype._cleanupHits = function (hits) {
         for (var i = 0, l = hits.length; i &lt; l; i++) {
             var hit = hits[i];
 
-            hit._id = hit._source.itemHash;
+            hit._itemId = hit._source.itemHash;
 
+            delete hit._id;
+            delete hit._score;
             delete hit._index;
             delete hit._source.itemPath;
-            delete hit._source.itemHash;
+
+            try  {
+                logger.log(&#039;search&#039;, &#039;SearchResponseManager: hit file:&#039;, {
+                    itemName: hit._source.itemName
+                });
+            } catch (e) {
+            }
         }
 
         return hits;
+    };
+
+    SearchResponseManager.prototype._triggerNoResultsFound = function (queryId) {
+        if (this._isOpen) {
+            logger.log(&#039;search&#039;, &#039;SearchResponseManager: no results found&#039;, {
+                queryId: queryId,
+                eventName: &#039;RESULTS_NOT_FOUND&#039;
+            });
+
+            this._eventEmitter.emit(&#039;noResultsFound&#039;, queryId);
+        }
     };
 
     /**
@@ -287,6 +316,12 @@ var SearchResponseManager = (function () {
     */
     SearchResponseManager.prototype._triggerResultsFound = function (queryId, results) {
         if (this._isOpen) {
+            logger.log(&#039;search&#039;, &#039;SearchResponseManager: Results found&#039;, {
+                queryId: queryId,
+                eventName: &#039;RESULTS_FOUND&#039;,
+                results: results
+            });
+
             this._eventEmitter.emit(&#039;resultsFound&#039;, queryId, new Buffer(JSON.stringify(results)));
         }
     };

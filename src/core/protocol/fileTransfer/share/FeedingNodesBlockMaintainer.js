@@ -1,12 +1,40 @@
 var FeedingNodesMessageBlock = require('../messages/FeedingNodesMessageBlock');
 
+/**
+* FeedingNodesBlockMaintainerInterface implementation
+*
+* @class core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer
+* @interface core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface
+*
+* @param {core.protocol.hydra.CircuitManagerInterface} circuitManager Working hydra circuit manager.
+*/
 var FeedingNodesBlockMaintainer = (function () {
     function FeedingNodesBlockMaintainer(circuitManager) {
         var _this = this;
+        /**
+        * Stores the feeding nodes byte buffer block constructed from the currently maintained node batch.
+        *
+        * @member {Buffer} core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer~_block
+        */
         this._block = null;
+        /**
+        * Stores the working hydra circuit manager provided in the constructor.
+        *
+        * @member {core.protocol.hydra.CircuitManagerInterface} core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer~_circuitManager
+        */
         this._circuitManager = null;
-        this._nodeBatch = null;
+        /**
+        * Stores the listener on the hydra circuit manager's 'circuitCount' event, indicating changes in the circuit infrastructure.
+        *
+        * @member {Function} core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer~_countListener
+        */
         this._countListener = null;
+        /**
+        * Stores the currently maintained node batch.
+        *
+        * @member {core.protocol.hydra.HydraNodeList} core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer~_nodeBatch
+        */
+        this._nodeBatch = null;
         this._circuitManager = circuitManager;
 
         this._nodeBatch = this._circuitManager.getRandomFeedingNodesBatch() || [];
@@ -18,6 +46,26 @@ var FeedingNodesBlockMaintainer = (function () {
 
         this._circuitManager.on('circuitCount', this._countListener);
     }
+    FeedingNodesBlockMaintainer.prototype.cleanup = function () {
+        this._circuitManager.removeListener('circuitCount', this._countListener);
+    };
+
+    FeedingNodesBlockMaintainer.prototype.getBlock = function () {
+        return this._block;
+    };
+
+    FeedingNodesBlockMaintainer.prototype.getCurrentNodeBatch = function () {
+        return this._nodeBatch;
+    };
+
+    /**
+    * The listener on the circuit manaager's 'circuitCount' event, indicating changes in the circuits.
+    * It checks every node in the current batch if the assigned circuit is still open. If yes, the node
+    * is kept, if no, it is removed from the batch. If any new circuits come in, a random node from
+    * them is added to the maintained batch.
+    *
+    * @method core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer~_checkCircuitsAndUpdateBlock
+    */
     FeedingNodesBlockMaintainer.prototype._checkCircuitsAndUpdateBlock = function () {
         var existingCircuits = this._circuitManager.getReadyCircuits();
 
@@ -46,18 +94,6 @@ var FeedingNodesBlockMaintainer = (function () {
 
         this._nodeBatch = newBatch;
         this._block = FeedingNodesMessageBlock.constructBlock(this._nodeBatch);
-    };
-
-    FeedingNodesBlockMaintainer.prototype.getCurrentNodeBatch = function () {
-        return this._nodeBatch;
-    };
-
-    FeedingNodesBlockMaintainer.prototype.cleanup = function () {
-        this._circuitManager.removeListener('circuitCount', this._countListener);
-    };
-
-    FeedingNodesBlockMaintainer.prototype.getBlock = function () {
-        return this._block;
     };
     return FeedingNodesBlockMaintainer;
 })();

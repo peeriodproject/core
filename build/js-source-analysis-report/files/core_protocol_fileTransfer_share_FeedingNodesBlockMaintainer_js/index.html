@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/fileTransfer/share/FeedingNodesBlockMaintainer.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/fileTransfer/share/FeedingNodesBlockMaintainer.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">68.88</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">101</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">24.00</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.53</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var FeedingNodesMessageBlock = require(&#039;../messages/FeedingNodesMessageBlock&#039;);
+
+/**
+* FeedingNodesBlockMaintainerInterface implementation
+*
+* @class core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer
+* @interface core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface
+*
+* @param {core.protocol.hydra.CircuitManagerInterface} circuitManager Working hydra circuit manager.
+*/
+var FeedingNodesBlockMaintainer = (function () {
+    function FeedingNodesBlockMaintainer(circuitManager) {
+        var _this = this;
+        /**
+        * Stores the feeding nodes byte buffer block constructed from the currently maintained node batch.
+        *
+        * @member {Buffer} core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer~_block
+        */
+        this._block = null;
+        /**
+        * Stores the working hydra circuit manager provided in the constructor.
+        *
+        * @member {core.protocol.hydra.CircuitManagerInterface} core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer~_circuitManager
+        */
+        this._circuitManager = null;
+        /**
+        * Stores the listener on the hydra circuit manager&#039;s &#039;circuitCount&#039; event, indicating changes in the circuit infrastructure.
+        *
+        * @member {Function} core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer~_countListener
+        */
+        this._countListener = null;
+        /**
+        * Stores the currently maintained node batch.
+        *
+        * @member {core.protocol.hydra.HydraNodeList} core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer~_nodeBatch
+        */
+        this._nodeBatch = null;
+        this._circuitManager = circuitManager;
+
+        this._nodeBatch = this._circuitManager.getRandomFeedingNodesBatch() || [];
+        this._block = FeedingNodesMessageBlock.constructBlock(this._nodeBatch);
+
+        this._countListener = function () {
+            _this._checkCircuitsAndUpdateBlock();
+        };
+
+        this._circuitManager.on(&#039;circuitCount&#039;, this._countListener);
+    }
+    FeedingNodesBlockMaintainer.prototype.cleanup = function () {
+        this._circuitManager.removeListener(&#039;circuitCount&#039;, this._countListener);
+    };
+
+    FeedingNodesBlockMaintainer.prototype.getBlock = function () {
+        return this._block;
+    };
+
+    FeedingNodesBlockMaintainer.prototype.getCurrentNodeBatch = function () {
+        return this._nodeBatch;
+    };
+
+    /**
+    * The listener on the circuit manaager&#039;s &#039;circuitCount&#039; event, indicating changes in the circuits.
+    * It checks every node in the current batch if the assigned circuit is still open. If yes, the node
+    * is kept, if no, it is removed from the batch. If any new circuits come in, a random node from
+    * them is added to the maintained batch.
+    *
+    * @method core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer~_checkCircuitsAndUpdateBlock
+    */
+    FeedingNodesBlockMaintainer.prototype._checkCircuitsAndUpdateBlock = function () {
+        var existingCircuits = this._circuitManager.getReadyCircuits();
+
+        var newBatch = [];
+
+        for (var i = 0, l = existingCircuits.length; i &lt; l; i++) {
+            var circuitNodes = existingCircuits[i].getCircuitNodes();
+            var found = false;
+
+            for (var j = 0, k = this._nodeBatch.length; j &lt; k; j++) {
+                var node = this._nodeBatch[j];
+
+                if (circuitNodes.indexOf(node) &gt; -1) {
+                    found = true;
+
+                    // circuit still exists, keep node
+                    newBatch.push(node);
+                }
+            }
+
+            if (!found) {
+                // circuit seems to be new
+                newBatch.push(circuitNodes[Math.floor(Math.random() * circuitNodes.length)]);
+            }
+        }
+
+        this._nodeBatch = newBatch;
+        this._block = FeedingNodesMessageBlock.constructBlock(this._nodeBatch);
+    };
+    return FeedingNodesBlockMaintainer;
+})();
+
+module.exports = FeedingNodesBlockMaintainer;
+//# sourceMappingURL=FeedingNodesBlockMaintainer.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

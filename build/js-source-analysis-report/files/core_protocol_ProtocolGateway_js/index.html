@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">61.56</p>
+      <p class="stat">59.91</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">168</p>
+      <p class="stat">227</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">18.75</p>
+      <p class="stat">22.61</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.95</p>
+      <p class="stat">2.98</p>
     </div>
   </div>
 </div>
@@ -90,7 +90,15 @@
 
 <div class="container">
   <div class="row">
-    <textarea id="file-source" class="col-md-12">var ProtocolConnectionManager = require(&#039;./net/ProtocolConnectionManager&#039;);
+    <textarea id="file-source" class="col-md-12">var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var events = require(&#039;events&#039;);
+
+var ProtocolConnectionManager = require(&#039;./net/ProtocolConnectionManager&#039;);
 
 var ProxyManager = require(&#039;./proxy/ProxyManager&#039;);
 var PingPongNodeUpdateHandler = require(&#039;./ping/PingPongNodeUpdateHandler&#039;);
@@ -133,16 +141,37 @@ var Aes128GcmLayeredEncDecHandlerFactory = require(&#039;./hydra/messages/Aes128
 var Aes128GcmWritableMessageFactory = require(&#039;./hydra/messages/Aes128GcmWritableMessageFactory&#039;);
 var Aes128GcmReadableDecryptedMessageFactory = require(&#039;./hydra/messages/Aes128GcmReadableDecryptedMessageFactory&#039;);
 
+// FILE TRANSFER
+var Middleware = require(&#039;./fileTransfer/Middleware&#039;);
+
+var BroadcastManager = require(&#039;./broadcast/BroadcastManager&#039;);
+
+var TransferMessageCenter = require(&#039;./fileTransfer/TransferMessageCenter&#039;);
+var BroadcastReadableMessageFactory = require(&#039;./broadcast/messages/BroadcastReadableMessageFactory&#039;);
+var BroadcastWritableMessageFactory = require(&#039;./broadcast/messages/BroadcastWritableMessageFactory&#039;);
+var WritableFileTransferMessageFactory = require(&#039;./fileTransfer/messages/WritableFileTransferMessageFactory&#039;);
+var ReadableFileTransferMessageFactory = require(&#039;./fileTransfer/messages/ReadableFileTransferMessageFactory&#039;);
+var ReadableQueryResponseMessageFactory = require(&#039;./fileTransfer/messages/ReadableQueryResponseMessageFactory&#039;);
+var WritableQueryResponseMessageFactory = require(&#039;./fileTransfer/messages/WritableQueryResponseMessageFactory&#039;);
+var QueryFactory = require(&#039;./fileTransfer/query/QueryFactory&#039;);
+
+var QueryManager = require(&#039;./fileTransfer/query/QueryManager&#039;);
+
+var ResponseManager = require(&#039;./fileTransfer/query/ResponseManager&#039;);
+
 var logger = require(&#039;../utils/logger/LoggerFactory&#039;).create();
 
-var ProtocolGateway = (function () {
-    function ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, myNode, tcpSocketHandler, routingTable) {
+var ProtocolGateway = (function (_super) {
+    __extends(ProtocolGateway, _super);
+    function ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchBridge) {
         var _this = this;
+        _super.call(this);
         this._myNode = null;
         this._tcpSocketHandler = null;
         this._appConfig = null;
         this._hydraConfig = null;
         this._protocolConfig = null;
+        this._transferConfig = null;
         this._protocolConnectionManager = null;
         this._proxyManager = null;
         this._routingTable = null;
@@ -156,14 +185,24 @@ var ProtocolGateway = (function () {
         this._hydraConnectionManager = null;
         this._hydraCircuitManager = null;
         this._hydraCellManager = null;
+        this._middleware = null;
+        this._transferMessageCenter = null;
+        this._broadcastManager = null;
+        this._queryManager = null;
+        this._responseManager = null;
+        this._searchBridge = null;
+
         this._appConfig = appConfig;
         this._protocolConfig = protocolConfig;
         this._topologyConfig = topologyConfig;
         this._hydraConfig = hydraConfig;
+        this._transferConfig = transferConfig;
 
         this._myNode = myNode;
         this._tcpSocketHandler = tcpSocketHandler;
         this._routingTable = routingTable;
+
+        this._searchBridge = searchBridge;
 
         // build up the ProtocolConnectionManager
         this._protocolConnectionManager = new ProtocolConnectionManager(this._protocolConfig, this._myNode, this._tcpSocketHandler);
@@ -213,11 +252,30 @@ var ProtocolGateway = (function () {
         var aes128GcmLayeredEncDecHandlerFactory = new Aes128GcmLayeredEncDecHandlerFactory();
         var aes128GcmDecryptionFactory = new Aes128GcmReadableDecryptedMessageFactory();
         var aes128GcmEncryptionFactory = new Aes128GcmWritableMessageFactory();
-        var hydraCircuitFactory = new HydraCircuitFactory(this._hydraConfig, this._routingTable, this._hydraConnectionManager, this._hydraMessageCenter, circuitExtenderFactory, aes128GcmLayeredEncDecHandlerFactory);
+        var hydraCircuitFactory = new HydraCircuitFactory(this._hydraConfig, this._routingTable, this._hydraConnectionManager, this._hydraMessageCenter, circuitExtenderFactory, aes128GcmLayeredEncDecHandlerFactory, this._tcpSocketHandler);
         var hydraCellFactory = new HydraCellFactory(this._hydraConfig, this._hydraConnectionManager, this._hydraMessageCenter, aes128GcmDecryptionFactory, aes128GcmEncryptionFactory);
 
         this._hydraCircuitManager = new CircuitManager(this._hydraConfig, hydraCircuitFactory);
         this._hydraCellManager = new CellManager(this._hydraConfig, this._hydraConnectionManager, this._hydraMessageCenter, hydraCellFactory);
+
+        // FileTransfer things
+        var writableFileTransferMessageFactory = new WritableFileTransferMessageFactory();
+        var readableFileTransferMessageFactory = new ReadableFileTransferMessageFactory();
+        var readableQueryResponseMessageFactory = new ReadableQueryResponseMessageFactory();
+        var writableQueryResponseMessageFactory = new WritableQueryResponseMessageFactory();
+        var readableBroadcastMessageFactory = new BroadcastReadableMessageFactory();
+        var writableBroadcastMessageFactory = new BroadcastWritableMessageFactory();
+
+        this._middleware = new Middleware(this._hydraCellManager, this._protocolConnectionManager, this._hydraMessageCenter, writableFileTransferMessageFactory);
+        this._transferMessageCenter = new TransferMessageCenter(this._protocolConnectionManager, this._middleware, this._hydraCircuitManager, this._hydraCellManager, this._hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseMessageFactory, writableQueryResponseMessageFactory);
+
+        this._broadcastManager = new BroadcastManager(this._topologyConfig, this._protocolConfig, this._myNode, this._protocolConnectionManager, this._proxyManager, this._routingTable, readableBroadcastMessageFactory, writableBroadcastMessageFactory);
+
+        var queryFactory = new QueryFactory(this._transferConfig, this._transferMessageCenter, this._hydraCircuitManager, this._broadcastManager);
+
+        this._queryManager = new QueryManager(this._transferConfig, queryFactory, this._hydraCircuitManager, this._searchBridge);
+
+        this._responseManager = new ResponseManager(this._transferConfig, this._hydraCellManager, this._transferMessageCenter, this._searchBridge, this._broadcastManager, this._hydraCircuitManager, writableQueryResponseMessageFactory);
     }
     ProtocolGateway.prototype.start = function () {
         /**
@@ -227,7 +285,7 @@ var ProtocolGateway = (function () {
         *
         */
         var _this = this;
-        logger.info(&#039;New node joining the network&#039;, { id: this._myNode.getId().toHexString() });
+        logger.log(&#039;topology&#039;, &#039;New node joining the network&#039;, { id: this._myNode.getId().toHexString() });
 
         if (this._proxyManager.needsAdditionalProxy()) {
             this._networkMaintainer.once(&#039;initialContactQueryCompleted&#039;, function () {
@@ -238,24 +296,25 @@ var ProtocolGateway = (function () {
         }
 
         this._networkMaintainer.once(&#039;initialContactQueryCompleted&#039;, function () {
-            logger.info(&#039;Initial contact query completed. Kicking off proxy manager...&#039;, { id: _this._myNode.getId().toHexString() });
+            logger.log(&#039;topology&#039;, &#039;Initial contact query completed. Kicking off proxy manager...&#039;, { id: _this._myNode.getId().toHexString() });
         });
 
         this._networkMaintainer.once(&#039;joinedNetwork&#039;, function () {
-            logger.info(&#039;Successfully joined the network.&#039;, { id: _this._myNode.getId().toHexString() });
+            logger.log(&#039;topology&#039;, &#039;Successfully joined the network.&#039;, { id: _this._myNode.getId().toHexString() });
 
             // start the hydra things
             _this._hydraCircuitManager.kickOff();
 
             _this._hydraCircuitManager.once(&#039;desiredCircuitAmountReached&#039;, function () {
-                logger.info(&#039;Hydra circuit construction done.&#039;, { id: _this._myNode.getId().toHexString() });
+                logger.log(&#039;hydraSuccess&#039;, &#039;Hydra circuits constructed.&#039;, { id: _this._myNode.getId().toHexString() });
+                _this.emit(&#039;readyToSearch&#039;);
             });
         });
 
         this._networkMaintainer.joinNetwork();
     };
     return ProtocolGateway;
-})();
+})(events.EventEmitter);
 
 module.exports = ProtocolGateway;
 //# sourceMappingURL=ProtocolGateway.js.map</textarea>

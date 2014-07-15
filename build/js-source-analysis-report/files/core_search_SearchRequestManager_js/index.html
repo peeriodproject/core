@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">74.09</p>
+      <p class="stat">70.18</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">387</p>
+      <p class="stat">499</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">60.77</p>
+      <p class="stat">67.38</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.43</p>
+      <p class="stat">3.34</p>
     </div>
   </div>
 </div>
@@ -94,6 +94,8 @@
 var events = require(&#039;events&#039;);
 
 var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
+
+var logger = require(&#039;../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * @class core.search.SearchRequestManager
@@ -207,9 +209,9 @@ var SearchRequestManager = (function () {
 
             if (returned === response.hits.length || err) {
                 returned = -1;
+
                 return internalCallback(err);
             }
-            ;
         };
 
         try  {
@@ -219,11 +221,16 @@ var SearchRequestManager = (function () {
         }
 
         if (!(response &amp;&amp; response.hits &amp;&amp; response.hits.length)) {
+            logger.log(&#039;search&#039;, &#039;SearchRequestManager#addResponse: invalid Response&#039;, {
+                queryId: queryId,
+                response: response
+            });
+
             return internalCallback(null);
         }
 
         for (var i = 0, l = response.hits.length; i &lt; l; i++) {
-            this._addResponse(queryId, response.hits[i], responseMeta, function (err) {
+            this._checkAndAddResponse(queryId, response.hits[i], responseMeta, function (err) {
                 return checkAndTriggerCallback(err);
             });
         }
@@ -314,7 +321,7 @@ var SearchRequestManager = (function () {
         } else {
             this._searchClient.deleteOutgoingQuery(this._indexName, queryId, function (err) {
                 if (err) {
-                    console.error(err);
+                    logger.error(err);
                 }
 
                 return _this._triggerQueryCanceled(queryId, reason);
@@ -330,34 +337,109 @@ var SearchRequestManager = (function () {
         this._searchClient.deleteOutgoingQuery(this._indexName, queryId, function (err) {
             _this._triggerQueryRemoved(queryId);
 
-            //this._checkResultsAndTriggerEvent(this._runningQueryIdMap[queryId]);
             return internalCallback(err);
         });
     };
 
-    SearchRequestManager.prototype._addResponse = function (queryId, responseBody, responseMeta, callback) {
+    SearchRequestManager.prototype._checkAndAddResponse = function (queryId, responseBody, responseMeta, callback) {
         var _this = this;
         if (this._runningQueryIds[queryId] === undefined) {
+            logger.log(&#039;search&#039;, &#039;SearchRequestManager: no running query for the given queryId found&#039;, {
+                queryId: queryId,
+                eventName: &#039;QUERY_NOT_RUNNING&#039;
+            });
+
             return process.nextTick(callback.bind(null, null));
         }
 
-        this._searchClient.addIncomingResponse(this._indexName, queryId, responseBody, responseMeta, function (err, response) {
-            if (err) {
-                console.error(err);
+        responseBody = this._transformResponseBody(responseBody);
+
+        this._searchClient.checkIncomingResponse(this._indexName, queryId, responseBody, function (err, matches) {
+            if (err || !(matches &amp;&amp; matches.length)) {
+                if (err) {
+                    logger.error(err);
+                }
+
                 return callback(err);
             }
 
-            if (response &amp;&amp; response[&#039;matches&#039;] &amp;&amp; response[&#039;matches&#039;].length) {
-                response[&#039;matches&#039;].forEach(function (match) {
+            _this._searchClient.addIncomingResponse(_this._indexName, queryId, responseBody, responseMeta, function (err) {
+                if (err) {
+                    logger.error(err);
+
+                    return callback(err);
+                }
+
+                for (var i = 0, l = matches.length; i &lt; l; i++) {
+                    var match = matches[i];
+
+                    if (match[&#039;_id&#039;] !== queryId) {
+                        continue;
+                    }
+
+                    callback(null);
+
                     if (_this._runningQueryIds[queryId] !== undefined) {
                         _this._runningQueryIds[queryId]++;
+
                         _this._triggerResultsChanged(queryId);
+                    } else {
+                        logger.log(&#039;search&#039;, &#039;SearchRequestManager: query is not running anymore&#039;, {
+                            queryId: queryId,
+                            eventName: &#039;QUERY_NOT_RUNNING&#039;
+                        });
                     }
-                });
-            }
+                }
+            });
 
             return callback(null);
         });
+    };
+
+    /**
+    * Transforms the given response from a hit object to a item that can be stored in the database.
+    * Basically the `_source` key will be removed and all nested keys will be placed on the object root. Furthermore all
+    * fields under the `highlight` key will be added to the object root if they do not exist yet.
+    *
+    * @param {Object} body A single hit from elasticsearch
+    * @returns {Object} The transformed body
+    */
+    SearchRequestManager.prototype._transformResponseBody = function (body) {
+        var keys = Object.keys(body);
+        var newBody = {};
+
+        var addToTopLevel = function (parentKey) {
+            if (!body[parentKey]) {
+                return;
+            }
+
+            var keys = Object.keys(body[parentKey]);
+            for (var i = 0, l = keys.length; i &lt; l; i++) {
+                var key = keys[i];
+
+                if (newBody[key] === undefined) {
+                    newBody[key] = body[parentKey][key];
+                }
+            }
+        };
+
+        for (var i = 0, l = keys.length; i &lt; l; i++) {
+            var key = keys[i];
+
+            if ([&#039;_source&#039;, &#039;highlight&#039;].indexOf(key) === -1) {
+                newBody[key] = body[key];
+            }
+        }
+
+        if (body[&#039;_source&#039;]) {
+            addToTopLevel(&#039;_source&#039;);
+        }
+
+        if (body[&#039;highlight&#039;]) {
+            addToTopLevel(&#039;highlight&#039;);
+        }
+
+        return newBody;
     };
 
     /**
@@ -378,7 +460,7 @@ var SearchRequestManager = (function () {
     *
     * @method core.search.SearchRequestManager~_createAndStoreQueryId
     *
-    * @param callback The callback that will be called after the generation of the data with `queryId` as first argument.
+    * @param {Function} callback The callback that will be called after the generation of the data with `queryId` as first argument.
     */
     SearchRequestManager.prototype._createAndStoreQueryId = function (callback) {
         var _this = this;
@@ -399,10 +481,17 @@ var SearchRequestManager = (function () {
     * @method core.search.SearchRequestManager~_triggerQueryAdd
     
     * @param {string} queryId The id of the added search query
+    * @param {Object} queryBody The body of the added search query
     */
     SearchRequestManager.prototype._triggerQueryAdd = function (queryId, queryBody) {
         if (this._isOpen) {
             this._eventEmitter.emit(&#039;queryAdd&#039;, queryId, new Buffer(JSON.stringify(queryBody)));
+
+            logger.log(&#039;search&#039;, &#039;SearchRequestManager: Starting query&#039;, {
+                queryId: queryId,
+                queryBody: queryBody,
+                eventName: &#039;QUERY_ADD&#039;
+            });
         }
     };
 
@@ -419,6 +508,13 @@ var SearchRequestManager = (function () {
     SearchRequestManager.prototype._triggerQueryEnd = function (queryId, reason) {
         if (this._isOpen) {
             this._eventEmitter.emit(&#039;queryEnd&#039;, queryId, reason);
+
+            logger.log(&#039;search&#039;, &#039;SearchRequestManager: query end&#039;, {
+                queryId: queryId,
+                reason: reason,
+                eventName: &#039;QUERY_END&#039;,
+                resultsCount: this._runningQueryIds[queryId]
+            });
         }
 
         this._cleanupQueryLists(queryId);
@@ -436,6 +532,11 @@ var SearchRequestManager = (function () {
     SearchRequestManager.prototype._triggerQueryRemoved = function (queryId) {
         if (this._isOpen) {
             this._eventEmitter.emit(&#039;queryRemoved&#039;, queryId);
+
+            logger.log(&#039;search&#039;, &#039;SearchRequestManager: query removed&#039;, {
+                queryId: queryId,
+                eventName: &#039;QUERY_REMOVED&#039;
+            });
         }
 
         this._cleanupQueryLists(queryId);
@@ -454,6 +555,12 @@ var SearchRequestManager = (function () {
     SearchRequestManager.prototype._triggerQueryCanceled = function (queryId, reason) {
         if (this._isOpen) {
             this._eventEmitter.emit(&#039;queryCanceled&#039;, queryId, reason);
+
+            logger.log(&#039;search&#039;, &#039;SearchRequestManager: query canceled&#039;, {
+                queryId: queryId,
+                reason: reason,
+                eventName: &#039;QUERY_CANCELED&#039;
+            });
         }
 
         this._cleanupQueryLists(queryId);
@@ -471,6 +578,11 @@ var SearchRequestManager = (function () {
     SearchRequestManager.prototype._triggerResultsChanged = function (queryId) {
         if (this._isOpen) {
             this._eventEmitter.emit(&#039;resultsChanged&#039;, queryId);
+
+            logger.log(&#039;search&#039;, &#039;SearchRequestManager: results changed&#039;, {
+                queryId: queryId,
+                eventName: &#039;RESULTS_CHANGED&#039;
+            });
         }
     };
     return SearchRequestManager;
