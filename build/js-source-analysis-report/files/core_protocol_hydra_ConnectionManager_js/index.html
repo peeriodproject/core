@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">67.57</p>
+      <p class="stat">65.82</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">201</p>
+      <p class="stat">217</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">48.59</p>
+      <p class="stat">58.06</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.36</p>
+      <p class="stat">1.75</p>
     </div>
   </div>
 </div>
@@ -97,6 +97,8 @@
     d.prototype = new __();
 };
 var events = require(&#039;events&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * ConnectionManagerInterface implementation.
@@ -181,12 +183,18 @@ var ConnectionManager = (function (_super) {
 
                 this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
                     if (!err &amp;&amp; identifier) {
+                        logger.log(&#039;hydra&#039;, &#039;Obtained connection for circuit&#039;, { socketIdent: identifier, port: node.port, ip: node.ip });
+
                         _this.addToCircuitNodes(identifier, node);
 
                         var pipeline = _this._circuitPipeline[circuitId];
 
                         for (var i = 0, l = pipeline.length; i &lt; l; i++) {
-                            _this._protocolConnectionManager.hydraWriteMessageTo(identifier, pipeline[i]);
+                            logger.log(&#039;hydra&#039;, &#039;Writing circuit message&#039;, { type: messageType, socketIdent: identifier, port: node.port, ip: node.ip });
+                            _this._protocolConnectionManager.hydraWriteMessageTo(identifier, pipeline[i], function (err) {
+                                if (err)
+                                    logger.log(&#039;hydra&#039;, &#039;Writing error 1&#039;, { err: err.message });
+                            });
                         }
                     }
 
@@ -196,7 +204,11 @@ var ConnectionManager = (function (_super) {
 
             this._circuitPipeline[circuitId].push(sendableBuffer);
         } else if (this._circuitNodes[node.socketIdentifier]) {
-            this._protocolConnectionManager.hydraWriteMessageTo(node.socketIdentifier, sendableBuffer);
+            logger.log(&#039;hydra&#039;, &#039;Writing circuit message&#039;, { type: messageType, socketIdent: node.socketIdentifier });
+            this._protocolConnectionManager.hydraWriteMessageTo(node.socketIdentifier, sendableBuffer, function (err) {
+                if (err)
+                    logger.log(&#039;hydra&#039;, &#039;Writing error 2&#039;, { err: err.message });
+            });
         }
     };
 
@@ -212,6 +224,8 @@ var ConnectionManager = (function (_super) {
 
         this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
             if (!err &amp;&amp; identifier) {
+                logger.log(&#039;hydra&#039;, &#039;Writing regular message&#039;, { type: messageType, identifier: identifier, port: node.port, ip: node.ip });
+
                 _this._protocolConnectionManager.hydraWriteMessageTo(identifier, sendableBuffer);
             }
         });
@@ -262,7 +276,7 @@ var ConnectionManager = (function (_super) {
             var circuitNode = _this._removeFromCircuitNodesByIdentifier(identifier, false);
 
             if (circuitNode) {
-                _this.emit(&#039;circuitTermination&#039;, circuitNode.circuitId);
+                _this.emit(&#039;circuitTermination&#039;, circuitNode.circuitId, identifier);
             }
         });
 
@@ -275,6 +289,8 @@ var ConnectionManager = (function (_super) {
             }
 
             if (msgToEmit) {
+                logger.log(&#039;hydra&#039;, &#039;Message Received on &#039; + identifier, { type: msgToEmit.getMessageType(), circuitId: msgToEmit.getCircuitId(), socketIdent: identifier });
+
                 var circuitNode = _this._circuitNodes[identifier];
 
                 if (circuitNode) {

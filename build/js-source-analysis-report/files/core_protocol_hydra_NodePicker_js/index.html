@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.32</p>
+      <p class="stat">70.17</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">252</p>
+      <p class="stat">295</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">48.44</p>
+      <p class="stat">49.07</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.42</p>
+      <p class="stat">1.59</p>
     </div>
   </div>
 </div>
@@ -90,7 +90,9 @@
 
 <div class="container">
   <div class="row">
-    <textarea id="file-source" class="col-md-12">/**
+    <textarea id="file-source" class="col-md-12">var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
+
+/**
 * NodePickerInterface implementation.
 *
 * @class core.protocol.hydra.NodePicker
@@ -99,9 +101,10 @@
 * @param {core.config.ConfigInterface} hydraConfig Hydra configuration
 * @param {number} relayNodeAmount Number of nodes which will be returned on a call to `pickRelayNodeBatch`
 * @param {core.topology.RoutingTableInterface} routingTable A routing table instance where all nodes will be picked from.
+* @param {core.net.tcp.TCPSocketHandlerInterface} tcpSocketHandler Working TCP socket handler
 */
 var NodePicker = (function () {
-    function NodePicker(hydraConfig, relayNodeAmount, routingTable) {
+    function NodePicker(hydraConfig, relayNodeAmount, routingTable, tcpSocketHandler) {
         /**
         * The number of nodes which will be chosen on a call to `pickNextAdditiveNodeBatch`.
         * This gets populated by the config.
@@ -152,6 +155,12 @@ var NodePicker = (function () {
         */
         this._routingTable = null;
         /**
+        * TCP Socket handler to check node addresses against own addresses.
+        *
+        * @member {core.net.tcp.TCPSocketHandlerInterface} core.protocol.hydra.NodePicker~_tcpSocketHandler
+        */
+        this._tcpSocketHandler = null;
+        /**
         * Maximum number of nodes which have been chosen in previous additive rounds that can be used in subsequent rounds.
         * (this is per round)
         *
@@ -171,6 +180,8 @@ var NodePicker = (function () {
         this._waitingTimeInMs = hydraConfig.get(&#039;hydra.nodePicker.waitingTimeInSeconds&#039;) * 1000;
         this._errorThreshold = hydraConfig.get(&#039;hydra.nodePicker.errorThreshold&#039;);
         this._routingTable = routingTable;
+        this._tcpSocketHandler = tcpSocketHandler;
+        //console.log(this._tcpSocketHandler);
     }
     /**
     * BEGIN TESTING PURPOSES ONLY
@@ -217,6 +228,7 @@ var NodePicker = (function () {
     };
 
     NodePicker.prototype.pickNextAdditiveNodeBatch = function (callback) {
+        //logger.log(&#039;hydraExtension&#039;, &#039;Picking next additive node batch.&#039;, {relayNodeLen: this._relayNodes.length});
         var _this = this;
         if (!this._relayNodes.length) {
             throw new Error(&#039;NodePicker: Picking additive nodes before relay nodes is not allowed!&#039;);
@@ -234,6 +246,7 @@ var NodePicker = (function () {
             throw new Error(&#039;NodePicker: Relay nodes can only be picked once!&#039;);
         }
 
+        //logger.log(&#039;hydraExtension&#039;, &#039;Picking relay node batch.&#039;);
         this._pickBatch(this._relayNodeAmount, this._threshold, false, function (batch) {
             _this._relayNodes = batch;
 
@@ -294,6 +307,19 @@ var NodePicker = (function () {
     };
 
     /**
+    * Checks if the ip and port of a chosen node is similar to the machine&#039;s own address.
+    * This can happen if this node proxies for others, i.e. the own address appears in the routing table.
+    *
+    * @method core.protocol.hydra.NodePicker~_nodeIsSelf
+    *
+    * @param {core.protocol.hydra.HydraNode} node The node to check.
+    * @returns {boolean}
+    */
+    NodePicker.prototype._nodeIsSelf = function (node) {
+        return this._tcpSocketHandler.getMyExternalIp() === node.ip &amp;&amp; (this._tcpSocketHandler.getOpenServerPortsArray().indexOf(node.port) &gt; -1);
+    };
+
+    /**
     * The main method which picks random nodes from the routing table and returns them (via a callback) as an array.
     * It follows the rules specified in {@link core.protocol.hydra.NodePickerInterface}.
     *
@@ -311,9 +337,11 @@ var NodePicker = (function () {
         var threshold = 0;
 
         var getRandomNode = function () {
+            //logger.log(&#039;hydraExtension&#039;, &#039;Picker: getRandomNode&#039;, {batchLen: returnBatch.length});
             if (returnBatch.length === amount) {
                 callback(returnBatch);
             } else if (errorCount &gt; _this._errorThreshold) {
+                //logger.log(&#039;hydraExtension&#039;, &#039;Setting picker timeout&#039;, {ms: this._waitingTimeInMs});
                 global.setTimeout(function () {
                     errorCount = 0;
                     getRandomNode();
@@ -325,7 +353,7 @@ var NodePicker = (function () {
                     if (!err &amp;&amp; contactNode) {
                         var node = _this._contactNodeToRandHydraNode(contactNode);
 
-                        if (node &amp;&amp; !_this._nodeExistsInBatch(node, returnBatch) &amp;&amp; (!avoidRelayNodes || !_this._nodeExistsInBatch(node, _this._relayNodes))) {
+                        if (node &amp;&amp; !_this._nodeIsSelf(node) &amp;&amp; !_this._nodeExistsInBatch(node, returnBatch) &amp;&amp; (!avoidRelayNodes || !_this._nodeExistsInBatch(node, _this._relayNodes))) {
                             if (!_this._nodeExistsInBatch(node, _this._nodesUsed)) {
                                 noError = true;
                                 returnBatch.push(node);
@@ -334,7 +362,12 @@ var NodePicker = (function () {
                                 threshold++;
                                 returnBatch.push(node);
                             }
+                            //logger.log(&#039;hydraExtension&#039;, &#039;Picker: Node is accepted&#039;, {ip:node.ip, port:node.port});
+                        } else {
+                            //logger.log(&#039;hydraExtension&#039;, &#039;Picker: Node is already in return batch or in relay nodes&#039;, {ip:node.ip, port:node.port});
                         }
+                    } else {
+                        //logger.log(&#039;hydraExtension&#039;, &#039;Picker: RoutingTable rendered error.&#039;);
                     }
 
                     if (!noError) {

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.27</p>
+      <p class="stat">67.91</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">473</p>
+      <p class="stat">489</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">47.36</p>
+      <p class="stat">50.65</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.90</p>
+      <p class="stat">3.54</p>
     </div>
   </div>
 </div>
@@ -98,6 +98,8 @@
 };
 var events = require(&#039;events&#039;);
 var crypto = require(&#039;crypto&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * HydraCellInterface implementation.
@@ -328,11 +330,14 @@ var HydraCell = (function (_super) {
             circuitId: circuitId
         };
 
+        logger.log(&#039;hydraCell&#039;, &#039;Further extending cell&#039;, { circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier, successorCircuit: this._successor.circuitId, timeoutMs: this._extensionReactionInMs });
+
         this._messageCenter.sendCreateCellAdditiveMessageAsInitiator(this._successor, circuitId, uuid, additivePayload);
 
         // set the timeout
         this._currentExtensionTimeout = global.setTimeout(function () {
             _this._currentExtensionTimeout = 0;
+            logger.log(&#039;hydraCell&#039;, &#039;Cell extension timed out&#039;, { circuitId: _this._predecessor.circuitId, socketIdent: _this._predecessor.socketIdentifier, successorCircuit: _this._successor.circuitId, timeoutMs: _this._extensionReactionInMs });
             _this._teardown(true, true);
         }, this._extensionReactionInMs);
 
@@ -372,8 +377,11 @@ var HydraCell = (function (_super) {
     */
     HydraCell.prototype._onCircuitTermination = function (terminatedCircuitId) {
         if (this._predecessor.circuitId === terminatedCircuitId) {
+            logger.log(&#039;hydraCell&#039;, &#039;Predecessor circuit terminated&#039;, { circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier });
+
             this._teardown(false, true);
         } else if (this._successor &amp;&amp; this._successor.circuitId === terminatedCircuitId) {
+            logger.log(&#039;hydraCell&#039;, &#039;Successor circuit terminated&#039;, { circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier });
             this._teardown(true, false);
         }
     };
@@ -394,11 +402,15 @@ var HydraCell = (function (_super) {
     * @param {core.protocol.hydra.ReadableCellCreatedRejectedMessageInterface} msg The received response.
     */
     HydraCell.prototype._onExtensionResponse = function (from, msg) {
+        logger.log(&#039;hydraCell&#039;, &#039;Received extension response&#039;, { circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier });
+
         if (from === this._successor) {
             this._removeExtensionResponseListener();
 
             if (msg.getUUID() === this._currentExtensionUuid) {
                 if (msg.isRejected()) {
+                    logger.log(&#039;hydraCell&#039;, &#039;Extension was rejected&#039;, { circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier });
+
                     var succ = this._successor;
                     this._successor = null;
                     this._connectionManager.removeFromCircuitNodes(succ);
@@ -408,6 +420,7 @@ var HydraCell = (function (_super) {
 
                 this._initiateDigestWithReadableMessage(&#039;CELL_CREATED_REJECTED&#039;, msg);
             } else {
+                logger.log(&#039;hydraCell&#039;, &#039;Wrong node&#039;, { circuitId: this._predecessor.circuitId, socketIdent: this._predecessor.socketIdentifier, successorCircuit: this._successor.circuitId, successorSocketIdent: this._successor.socketIdentifier, receivedSocketIdent: from.socketIdentifier });
                 this._teardown(true, true);
             }
         }
@@ -431,6 +444,7 @@ var HydraCell = (function (_super) {
         } else if (this._successor &amp;&amp; this._successor.socketIdentifier) {
             this._connectionManager.pipeCircuitMessageTo(this._successor, &#039;ENCRYPTED_SPITOUT&#039;, decryptedMessage.getPayload());
         } else {
+            logger.log(&#039;hydraCell&#039;, &#039;Tearing down cell, wrong message receiver&#039;, { circuitId: this._predecessor.circuitId });
             this._teardown(true, true);
         }
     };
@@ -513,6 +527,7 @@ var HydraCell = (function (_super) {
                 if (createCellMsg &amp;&amp; decrypted &amp;&amp; !_this._successor) {
                     _this._extendCellWith(msg.getIp(), msg.getPort(), createCellMsg.getUUID(), createCellMsg.getAdditivePayload());
                 } else {
+                    logger.log(&#039;hydraCell&#039;, &#039;Wrong node&#039;);
                     _this._teardown(true, true);
                 }
             }
@@ -523,6 +538,7 @@ var HydraCell = (function (_super) {
                 if (decrypted) {
                     _this.emit(&#039;fileTransferMessage&#039;, _this._predecessor.circuitId, msg.getPayload());
                 } else {
+                    logger.log(&#039;hydraCell&#039;, &#039;Wrong node&#039;);
                     _this._teardown(true, true);
                 }
             }

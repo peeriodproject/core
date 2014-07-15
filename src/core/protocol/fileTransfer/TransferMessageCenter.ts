@@ -122,7 +122,7 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 
 		var wrappedMessage:Buffer = this.wrapTransferMessage('EXTERNAL_FEED', '00000000000000000000000000000000', Buffer.concat([nodesToFeedBlock, payload]));
 
-		if (!(circuitId && this._circuitManager.pipeFileTransferMessageThroughCircuit(circuitId, wrappedMessage))) {
+		if (wrappedMessage && !(circuitId && this._circuitManager.pipeFileTransferMessageThroughCircuit(circuitId, wrappedMessage))) {
 			return this._circuitManager.pipeFileTransferMessageThroughRandomCircuit(wrappedMessage);
 		}
 
@@ -135,6 +135,7 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 			return this._writableFileTransferMessageFactory.constructMessage(transferId, messageType, payload);
 		}
 		catch (e) {
+			logger.log('error', 'Error wrapping transfer message', {err: e.message});
 			return null;
 		}
 	}
@@ -164,6 +165,7 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 				slice = payload.slice(feedingNodesBlock.bytesRead);
 			}
 			catch (e) {
+				logger.log('middleware', 'Tearing down cell, message is wrong');
 				this._cellManager.teardownCell(predecessorCircuitId);
 			}
 
@@ -240,6 +242,8 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 			var predecessorCircuitId:string = this._cellManager.getCircuitIdByFeedingIdentifier(msg.getTransferId());
 
 			if (predecessorCircuitId) {
+				logger.log('middleware', 'Got fed');
+
 				this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg.getPayload());
 				this._middleware.addIncomingSocket(predecessorCircuitId, socketIdentifier);
 			}

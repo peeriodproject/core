@@ -153,13 +153,13 @@ var ResponseManager = (function () {
                 delete _this._pendingBroadcastQueries[identifier];
 
                 if (results) {
-                    logger.log('query', 'Wrapping query response message', { broadcastId: identifier });
+                    logger.log('query', 'Wrapping query response message', { broadcastId: identifier, queryCount: 'wrap' });
 
                     var msg = _this._wrapQueryResponse(identifier, results);
 
                     if (msg) {
                         var result = _this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
-                        logger.log('query', 'Issuing external feed to circuit', { broadcastId: identifier, result: result });
+                        logger.log('query', 'Issuing external feed to circuit', { broadcastId: identifier, result: result, queryCount: 'issuenext' });
                     }
                 }
             }
@@ -173,11 +173,13 @@ var ResponseManager = (function () {
 
             _this.externalQueryHandler(broadcastId, searchObject, function (identifier, results) {
                 if (results) {
-                    logger.log('query', 'Issuing result back through circuit', { broadcastId: identifier });
+                    logger.log('query', 'Wrapping query response message', { broadcastId: identifier, queryCount: 'wrap' });
 
                     var msg = _this._wrapQueryResponse(identifier, results);
 
                     if (msg) {
+                        logger.log('query', 'Issuing result back through circuit', { broadcastId: identifier, queryCount: 'issueback' });
+
                         setTimeout(function () {
                             _this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg);
                         }, Math.random() * _this._waitForOwnResponseAsBroadcastInitiatorInMs);
@@ -200,6 +202,7 @@ var ResponseManager = (function () {
             return this._transferMessageCenter.wrapTransferMessage('QUERY_RESPONSE', queryIdentifier, this._writableQueryResponseFactory.constructMessage(this._circuitManager.getRandomFeedingNodesBatch(), results));
         }
 
+        logger.log('query', 'Has no circuits to pipe it through', { queryCount: 'nocirc' });
         return null;
     };
     return ResponseManager;

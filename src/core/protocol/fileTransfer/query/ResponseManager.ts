@@ -179,13 +179,13 @@ class ResponseManager implements ResponseManagerInterface {
 				delete this._pendingBroadcastQueries[identifier];
 
 				if (results) {
-					logger.log('query', 'Wrapping query response message', {broadcastId: identifier});
+					logger.log('query', 'Wrapping query response message', {broadcastId: identifier, queryCount:'wrap'});
 
 					var msg:Buffer = this._wrapQueryResponse(identifier, results);
 
 					if (msg) {
 						var result = this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
-						logger.log('query', 'Issuing external feed to circuit', {broadcastId: identifier, result: result});
+						logger.log('query', 'Issuing external feed to circuit', {broadcastId: identifier, result: result, queryCount:'issuenext'});
 					}
 				}
 			}
@@ -200,11 +200,14 @@ class ResponseManager implements ResponseManagerInterface {
 
 			this.externalQueryHandler(broadcastId, searchObject, (identifier:string, results:Buffer) => {
 				if (results) {
-					logger.log('query', 'Issuing result back through circuit', {broadcastId: identifier});
+
+					logger.log('query', 'Wrapping query response message', {broadcastId: identifier, queryCount:'wrap'});
 
 					var msg = this._wrapQueryResponse(identifier, results);
 
 					if (msg) {
+						logger.log('query', 'Issuing result back through circuit', {broadcastId: identifier, queryCount:'issueback'});
+
 						setTimeout(() => {
 							this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg);
 						}, Math.random() * this._waitForOwnResponseAsBroadcastInitiatorInMs);
@@ -227,6 +230,7 @@ class ResponseManager implements ResponseManagerInterface {
 			return this._transferMessageCenter.wrapTransferMessage('QUERY_RESPONSE', queryIdentifier, this._writableQueryResponseFactory.constructMessage(this._circuitManager.getRandomFeedingNodesBatch(), results));
 		}
 
+		logger.log('query', 'Has no circuits to pipe it through', {queryCount:'nocirc'});
 		return null;
 	}
 

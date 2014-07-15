@@ -45,7 +45,7 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">64.63</p>
+      <p class="stat">64.59</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">51.58</p>
+      <p class="stat">52.21</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.94</p>
+      <p class="stat">1.97</p>
     </div>
   </div>
 </div>
@@ -263,15 +263,15 @@ var FindClosestNodesCycle = (function () {
     FindClosestNodesCycle.prototype._doAlphaTimeout = function () {
         var _this = this;
         if (!this._alphaTimeout) {
-            logger.info(&#039;Creating alpha timeout&#039;, { ms: this._parallelismDelayMillis });
+            logger.log(&#039;findClosestNodes&#039;, &#039;Creating alpha timeout&#039;, { ms: this._parallelismDelayMillis });
 
             this._alphaTimeout = global.setTimeout(function () {
-                logger.info(&#039;alpha timeout elapsed.&#039;);
+                logger.log(&#039;findClosestNodes&#039;, &#039;alpha timeout elapsed.&#039;);
                 _this._alphaTimeout = 0;
                 _this._requestAlphaNodes();
             }, this._parallelismDelayMillis);
         } else {
-            logger.info(&#039;there is already an alpha timeout&#039;);
+            logger.log(&#039;findClosestNodes&#039;, &#039;there is already an alpha timeout&#039;);
         }
     };
 
@@ -281,7 +281,7 @@ var FindClosestNodesCycle = (function () {
     * @method core.protocol.findClosestNodes.FindClosestNodesCycle~_finish
     */
     FindClosestNodesCycle.prototype._finish = function () {
-        logger.info(&#039;Finished cycle&#039;, { for: this._searchForId.toHexString() });
+        logger.log(&#039;findClosestNodes&#039;, &#039;Finished cycle&#039;, { for: this._searchForId.toHexString() });
 
         this._unbindListener();
 
@@ -308,12 +308,12 @@ var FindClosestNodesCycle = (function () {
     * @param {core.protocol.findClosestNodes.messages.FoundClosestNodesReadableMessageInterface} message The message payload.
     */
     FindClosestNodesCycle.prototype._handleReply = function (from, message) {
-        logger.info(&#039;got reply&#039;, { from: from.getId().toHexString() });
+        logger.log(&#039;findClosestNodes&#039;, &#039;got reply&#039;, { from: from.getId().toHexString() });
 
         this._sortInsertNodeInList(from, this._confirmedList);
 
         if (this._confirmedList.length &gt;= this._k) {
-            logger.info(&#039;confirmed list is full, finishing&#039;);
+            logger.log(&#039;findClosestNodes&#039;, &#039;confirmed list is full, finishing&#039;);
             this._finish();
         } else {
             var returnedList = message.getFoundNodeList();
@@ -339,7 +339,7 @@ var FindClosestNodesCycle = (function () {
             //if (probedPrevLength === 0 &amp;&amp; this._probeList.length) {
             if (this._probeList.length) {
                 if (this._cycleTimeout) {
-                    logger.info(&#039;Celaring cycle timeout 2&#039;);
+                    logger.log(&#039;findClosestNodes&#039;, &#039;Clearing cycle timeout 2&#039;);
                     global.clearTimeout(this._cycleTimeout);
                     this._cycleTimeout = 0;
                 }
@@ -357,7 +357,7 @@ var FindClosestNodesCycle = (function () {
     */
     FindClosestNodesCycle.prototype._requestAlphaNodes = function () {
         var _this = this;
-        logger.info(&#039;Requesting next alpha nodes&#039;);
+        logger.log(&#039;findClosestNodes&#039;, &#039;Requesting next alpha nodes&#039;);
         var times = Math.min(this._probeList.length, this._alpha);
 
         while (times--) {
@@ -366,12 +366,12 @@ var FindClosestNodesCycle = (function () {
 
         if (!this._probeList.length) {
             if (this._cycleTimeout) {
-                logger.info(&#039;Clearing cycle timeout&#039;);
+                logger.log(&#039;findClosestNodes&#039;, &#039;Clearing cycle timeout&#039;);
                 global.clearTimeout(this._cycleTimeout);
                 this._cycleTimeout = 0;
             }
 
-            logger.info(&#039;Setting cycle timeout, as probe list is empty&#039;);
+            logger.log(&#039;findClosestNodes&#039;, &#039;Setting cycle timeout, as probe list is empty&#039;);
             this._cycleTimeout = global.setTimeout(function () {
                 _this._finish();
             }, this._cycleExpirationMillis);

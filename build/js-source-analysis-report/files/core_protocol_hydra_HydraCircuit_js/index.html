@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.60</p>
+      <p class="stat">66.67</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">338</p>
+      <p class="stat">365</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">41.56</p>
+      <p class="stat">54.29</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.91</p>
+      <p class="stat">2.62</p>
     </div>
   </div>
 </div>
@@ -97,6 +97,8 @@
     d.prototype = new __();
 };
 var events = require(&#039;events&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * HydraCircuitInterface implementation
@@ -198,7 +200,7 @@ var HydraCircuit = (function (_super) {
         *
         * @member {core.protocol.hydra.HydraNodeList) core.protocol.hydra.HydraCircuit~_nodesToExtendWith
         */
-        this._nodesToExtendWith = null;
+        this._nodesToExtendWith = [];
         /**
         * The desired number of relay nodes this circuit should strive for.
         *
@@ -222,6 +224,8 @@ var HydraCircuit = (function (_super) {
         this._circuitNodes = this._layeredEncDecHandler.getNodes();
         this._circuitExtender = circuitExtenderFactory.create(hydraConfig.get(&#039;hydra.circuit.extensionReactionTimeBaseInSeconds&#039;) * 1000, hydraConfig.get(&#039;hydra.circuit.extensionReactionTimeFactor&#039;), this._layeredEncDecHandler);
         this._maximumExtensionRetries = hydraConfig.get(&#039;hydra.circuit.maximumExtensionRetries&#039;);
+
+        logger.log(&#039;hydraExtension&#039;, &#039;New circuit initiated.&#039;, { numberOfNodes: this._numOfRelayNodes });
     }
     /**
     * BEGIN TESTING PURPOSES
@@ -236,7 +240,11 @@ var HydraCircuit = (function (_super) {
     HydraCircuit.prototype.construct = function () {
         var _this = this;
         this._nodePicker.pickRelayNodeBatch(function (batch) {
-            _this._nodesToExtendWith = batch;
+            logger.log(&#039;hydraExtension&#039;, &#039;Picked a batch of relay nodes&#039;, { nodes: batch });
+
+            for (var i = 0, l = batch.length; i &lt; l; i++) {
+                _this._nodesToExtendWith.push(batch[i]);
+            }
 
             _this._extensionCycle();
         });
@@ -277,10 +285,18 @@ var HydraCircuit = (function (_super) {
 
         var nodeToExtendWith = retryNode ? retryNode : this._nodesToExtendWith.shift();
 
+        logger.log(&#039;hydraExtension&#039;, &#039;Trying to extend circuit with node&#039;, { node: nodeToExtendWith, circuitId: this.getCircuitId(), nodeLen: this.getCircuitNodes().length });
+
         this._nodePicker.pickNextAdditiveNodeBatch(function (batch) {
+            logger.log(&#039;hydraExtension&#039;, &#039;Picked an additive batch of nodes for the extension. Extending...&#039;, { additiveBath: batch });
+
             _this._circuitExtender.extend(nodeToExtendWith, batch, function (err, isRejected, newNode) {
+                logger.log(&#039;hydraExtension&#039;, &#039;The extension has been processed&#039;);
+
                 // successful
                 if (newNode) {
+                    logger.log(&#039;hydraExtension&#039;, &#039;Extension was successful. New node with socket is:&#039;, { socketIdent: newNode.socketIdentifier, circuitId: _this.getCircuitId(), nodeLen: _this.getCircuitNodes().length });
+
                     _this._extensionRetryCount = 0;
 
                     var circuitNodesLength = _this._circuitNodes.length;
@@ -291,6 +307,8 @@ var HydraCircuit = (function (_super) {
                     }
 
                     if (circuitNodesLength === _this._numOfRelayNodes) {
+                        logger.log(&#039;hydraExtension&#039;, &#039;Circuit has been fully constructed&#039;, { circuitId: _this.getCircuitId(), nodeLen: _this.getCircuitNodes().length });
+
                         // all done, finalize
                         _this._constructed = true;
                         _this._setupFileTransferListener();
@@ -299,14 +317,20 @@ var HydraCircuit = (function (_super) {
                         _this._extensionCycle();
                     }
                 } else if (isRejected) {
+                    logger.log(&#039;hydraExtension&#039;, &#039;Extension was rejected by the target node&#039;, { circuitId: _this.getCircuitId(), nodeLen: _this.getCircuitNodes().length });
+
                     if (_this._extensionRetryCount === _this._maximumExtensionRetries) {
+                        logger.log(&#039;hydraExtension&#039;, &#039;Too many rejections, tearing down circuit.&#039;, { circuitId: _this.getCircuitId(), nodeLen: _this.getCircuitNodes().length });
                         _this._teardown(true);
                     } else {
                         _this._nodePicker.pickAdditionalRelayNode(function (node) {
+                            logger.log(&#039;hydraExtension&#039;, &#039;Trying again node with new relay node&#039;, { newNode: node, circuitId: _this.getCircuitId(), nodeLen: _this.getCircuitNodes().length });
                             _this._extensionCycle(node);
                         });
                     }
                 } else if (err) {
+                    logger.log(&#039;hydraExtension&#039;, &#039;Extension rendered an error. Circuit is tearing down&#039;, { error: err.message, circuitId: _this.getCircuitId(), nodeLen: _this.getCircuitNodes().length });
+
                     _this._teardown(err.message.indexOf(&#039;Circuit socket terminated&#039;) === -1);
                 }
             });
@@ -410,6 +434,7 @@ var HydraCircuit = (function (_super) {
     */
     HydraCircuit.prototype._teardown = function (closeSocket) {
         if (!this._isTornDown) {
+            logger.log(&#039;hydra&#039;, &#039;Tearing down circuit.&#039;);
             this._isTornDown = true;
 
             this._removeEventListeners();
@@ -422,6 +447,8 @@ var HydraCircuit = (function (_super) {
             }
 
             this.emit(&#039;isTornDown&#039;);
+        } else {
+            logger.log(&#039;hydra&#039;, &#039;Circuit has already been torn down. Ignoring.&#039;);
         }
     };
     return HydraCircuit;

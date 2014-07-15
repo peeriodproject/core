@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">71.96</p>
+      <p class="stat">69.84</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">275</p>
+      <p class="stat">302</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">48.09</p>
+      <p class="stat">54.72</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.56</p>
+      <p class="stat">2.04</p>
     </div>
   </div>
 </div>
@@ -97,6 +97,8 @@
     d.prototype = new __();
 };
 var events = require(&#039;events&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * CircuitManagerInterface implementation
@@ -177,6 +179,22 @@ var CircuitManager = (function (_super) {
     /**
     * END TESTING PURPOSES ONLY
     */
+    CircuitManager.prototype.getRandomFeedingNodesBatch = function () {
+        var nodes = [];
+        var circuits = this.getReadyCircuits();
+
+        for (var i = 0, l = circuits.length; i &lt; l; i++) {
+            var circuitNodes = circuits[i].getCircuitNodes();
+            var randomNode = circuitNodes[Math.floor(Math.random() * circuitNodes.length)];
+
+            if (randomNode) {
+                nodes.push(randomNode);
+            }
+        }
+
+        return nodes.length ? nodes : null;
+    };
+
     CircuitManager.prototype.getReadyCircuits = function () {
         return this._productionReadyCircuits;
     };
@@ -246,6 +264,7 @@ var CircuitManager = (function (_super) {
     * @returns {boolean}
     */
     CircuitManager.prototype._additionalCircuitNeeded = function () {
+        logger.log(&#039;hydraExtension&#039;, &#039;Checking if new circuit is needed&#039;, { underConstruction: this._circuitsUnderConstruction.length, ready: this._productionReadyCircuits.length, desired: this._desiredNumberOfCircuits });
         return (this._circuitsUnderConstruction.length + this._productionReadyCircuits.length) &lt; this._desiredNumberOfCircuits;
     };
 
@@ -258,15 +277,21 @@ var CircuitManager = (function (_super) {
     CircuitManager.prototype._checkAndConstructCircuit = function () {
         var _this = this;
         if (this._additionalCircuitNeeded()) {
+            logger.log(&#039;hydraExtension&#039;, &#039;Constructing new circuit&#039;, { readLen: this._productionReadyCircuits.length });
+
             var circuit = this._circuitFactory.create(this._generateRelayNodeAmount());
 
             this._circuitsUnderConstruction.push(circuit);
 
             circuit.once(&#039;isTornDown&#039;, function () {
+                logger.log(&#039;hydraExtension&#039;, &#039;Circuit was torn down&#039;, { circuitId: circuit.getCircuitId(), numOfCircs: _this._productionReadyCircuits.length });
+
                 _this._onCircuitTeardown(circuit);
             });
 
             circuit.once(&#039;isConstructed&#039;, function () {
+                logger.log(&#039;hydraExtension&#039;, &#039;Fully constructed circuit&#039;, { circuitId: circuit.getCircuitId(), numOfNodes: circuit.getCircuitNodes().length, numOfCircs: _this._productionReadyCircuits.length });
+
                 _this._onCircuitConstructed(circuit);
             });
 
@@ -339,6 +364,8 @@ var CircuitManager = (function (_super) {
         if (this._productionReadyCircuits.length === this._desiredNumberOfCircuits) {
             this.emit(&#039;desiredCircuitAmountReached&#039;);
         }
+
+        this._checkAndConstructCircuit();
     };
 
     /**

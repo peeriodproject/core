@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/fileTransfer/Middleware.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/fileTransfer/Middleware.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">66.53</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">241</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">51.04</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.43</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
+
+/**
+* MiddlewareInterface implementation.
+*
+* @class core.protocol.fileTransfer.Middleware
+* @implements core.protocol.fileTransfer.MiddlewareInterface
+*
+* @param {core.protocol.hydra.CellManagerInterface} A working hydra cell manager.
+* @param {core.protocol.net.ProtocolConnectionManagerInterface} A working protocol connection manager.
+* @param {core.protocol.hydra.HydraMessageCenterInterface} A working hydra message center.
+* @param {core.protocol.fileTransfer.WritableFileTransferMessageFactoryInterface} Factory for writable FILE_TRANSFER messages
+*/
+var Middleware = (function () {
+    function Middleware(cellManager, protocolConnectionManager, hydraMessageCenter, writableFileTransferMessageFactory) {
+        /**
+        * Stores the hydra cell manager instance.
+        *
+        * @member {core.protocol.hydra.CellManagerInterface} core.protocol.fileTransfer.Middleware~_cellManager
+        */
+        this._cellManager = null;
+        /**
+        * Stores the hydra message center.
+        *
+        * @member {core.protocol.hydra.HydraMessageCenterInterface} core.protocol.fileTransfer.Middleware~_hydraMessageCenter
+        */
+        this._hydraMessageCenter = null;
+        /**
+        * Stores references to incoming middleware sockets assigned to the identifier of the circuit through which the messages should
+        * be piped through.
+        *
+        * @member {Object} core.protocol.fileTransfer.Middleware~_incomingSockets
+        */
+        this._incomingSockets = {};
+        /**
+        * Stores references to outgoing middleware sockets assigned to the concatenation of the fed node&#039;s attributes + the circuit
+        * through which the EXTERNAL_FEED message came.
+        *
+        * @member {Object} core.protocol.fileTransfer.Middleware~_outgoingSockets
+        */
+        this._outgoingSockets = {};
+        /**
+        * Stores the protocol connection manager.
+        *
+        * @member {core.protocol.net.ProtcolConnectionManagerInterface} core.protocol.fileTransfer.Middleware~_protocolConnectionManager
+        */
+        this._protocolConnectionManager = null;
+        /**
+        * Stores the factory for writable FILE_TRANSFER messages
+        *
+        * @member {core.protocol.fileTransfer.WritableFileTransferMessageFactoryInterface} core.protocol.fileTransfer.Middleware~_writableFileTransferMessageFactory
+        */
+        this._writableFileTransferMessageFactory = null;
+        this._cellManager = cellManager;
+        this._protocolConnectionManager = protocolConnectionManager;
+        this._hydraMessageCenter = hydraMessageCenter;
+        this._writableFileTransferMessageFactory = writableFileTransferMessageFactory;
+
+        this._setupListeners();
+    }
+    /**
+    * BEGIN TESTING PURPOSES ONLY
+    */
+    Middleware.prototype.getOutgoingList = function () {
+        return this._outgoingSockets;
+    };
+
+    Middleware.prototype.getIncomingList = function () {
+        return this._incomingSockets;
+    };
+
+    /**
+    * END TESTING PURPOSES ONLY
+    */
+    Middleware.prototype.addIncomingSocket = function (circuitId, socketIdentifier) {
+        var existing = this._incomingSockets[circuitId];
+
+        if (existing) {
+            existing.push(socketIdentifier);
+        } else {
+            this._incomingSockets[circuitId] = [socketIdentifier];
+        }
+    };
+
+    Middleware.prototype.closeSocketByIdentifier = function (socketIdentifier) {
+        this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
+    };
+
+    Middleware.prototype.feedNode = function (feedingNodes, associatedCircuitId, payloadToFeed) {
+        logger.log(&#039;middleware&#039;, &#039;Trying to feed hydra&#039;);
+
+        var fed = false;
+
+        for (var i = 0, l = feedingNodes.length; i &lt; l; i++) {
+            var node = feedingNodes[i];
+            var existingSocket = this._outgoingSockets[this._constructOutgoingKey(node, associatedCircuitId)];
+
+            if (existingSocket) {
+                this._feedSocket(existingSocket, node.feedingIdentifier, payloadToFeed);
+                fed = true;
+                break;
+            }
+        }
+
+        if (!fed) {
+            this._obtainConnectionAndFeed(feedingNodes, associatedCircuitId, payloadToFeed);
+        }
+    };
+
+    /**
+    * Self explanatory method. Used for assigning outgoing socket identifiers to nodes / circuits.
+    *
+    * @method core.protocol.fileTransfer.Middleware~_constructOutgoingKey
+    *
+    * @param {core.protocol.hydra.HydraNode} node The potential node to feed.
+    * @param {string} circuitId The identifier of the circuit through which the EXTERNAL_FEED message came through
+    * @returns {string} The concatenation used as identifier to assign a socket to.
+    */
+    Middleware.prototype._constructOutgoingKey = function (node, circuitId) {
+        return circuitId + &#039;_&#039; + node.ip + &#039;_&#039; + node.port + &#039;_&#039; + node.feedingIdentifier;
+    };
+
+    /**
+    * Wraps a payload ina GOT_FED message, which again is wrapped in a FILE_TRANSFER message, and pipes it through
+    * the TCP hydra socket stored under the given identifier (in the protocol connection manager).
+    *
+    * @method core.protocol.fileTransfer.Middleware~_feedSocket
+    *
+    * @param {string} socketIdentifier The TCP hydra socket to use.
+    * @param {string} feedingIdentifier The feedingIdentifier of the node to feed. This is used as transferId for the FILE_TRANSFER message.
+    * @param {Buffer} payloadToFeed The complete buffer of the message to feed.
+    */
+    Middleware.prototype._feedSocket = function (socketIdentifier, feedingIdentifier, payloadToFeed) {
+        var bufferToSend = null;
+
+        try  {
+            bufferToSend = this._hydraMessageCenter.wrapFileTransferMessage(this._writableFileTransferMessageFactory.constructMessage(feedingIdentifier, &#039;GOT_FED&#039;, payloadToFeed));
+        } catch (e) {
+            logger.log(&#039;middleware&#039;, &#039;Wrapping file transfer error&#039;);
+        }
+
+        if (bufferToSend) {
+            logger.log(&#039;middleware&#039;, &#039;Actually feeding hydra socket&#039;);
+
+            this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
+        }
+    };
+
+    /**
+    * Tries to open a TCP socket to one of the nodes of the provided list. This is done in the fashion described in
+    * {@link core.protocol.fileTransfer.MiddlewareInterface}.
+    * As soon as a connection has been established, the payload is fed to it.
+    *
+    * @method core.protocol.fileTransfer.Middleware~_obtainConnectionAndFeed
+    *
+    * @param {core.protocol.hydra.HydraNodeList} feedingNodes List of potential nodes to feed. The payload is of course, however, only fed to ONE node.
+    * @param {string} associatedCircuitId The identifier of the circuit which the originating EXTERNAL_FEED message came through
+    * @param {Buffer} payloadToFeed The payload to feed.
+    * @param {Array&lt;number&gt;} usedIndices Optional, and only used internally if a follow-up call to this method must be performed. Indicates which nodes in the
+    * list have already been probed.
+    */
+    Middleware.prototype._obtainConnectionAndFeed = function (feedingNodes, associatedCircuitId, payloadToFeed, usedIndices) {
+        var _this = this;
+        if (typeof usedIndices === &quot;undefined&quot;) { usedIndices = []; }
+        var feedingNodesLength = feedingNodes.length;
+
+        if (usedIndices.length !== feedingNodesLength) {
+            var randIndex = Math.floor(Math.random() * feedingNodesLength);
+
+            if (usedIndices.indexOf(randIndex) &gt;= 0) {
+                this._obtainConnectionAndFeed(feedingNodes, associatedCircuitId, payloadToFeed, usedIndices);
+            } else {
+                var node = feedingNodes[randIndex];
+
+                usedIndices.push(randIndex);
+
+                this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
+                    if (!err &amp;&amp; identifier) {
+                        _this._outgoingSockets[_this._constructOutgoingKey(node, associatedCircuitId)] = identifier;
+
+                        _this._feedSocket(identifier, node.feedingIdentifier, payloadToFeed);
+                    } else {
+                        logger.log(&#039;middleware&#039;, &#039;Cannot connect to node&#039;);
+
+                        _this._obtainConnectionAndFeed(feedingNodes, associatedCircuitId, payloadToFeed, usedIndices);
+                    }
+                });
+            }
+        }
+    };
+
+    /**
+    * Sets up the appropriate listeners on the cell manager and the protocol connection manager. Called in constructor.
+    *
+    * @method core.protocol.fileTransfer.Middleware~_setupListeners
+    */
+    Middleware.prototype._setupListeners = function () {
+        var _this = this;
+        this._cellManager.on(&#039;tornDownCell&#039;, function (circuitId) {
+            var incomingSockets = _this._incomingSockets[circuitId];
+
+            if (incomingSockets &amp;&amp; incomingSockets.length) {
+                for (var i = 0, l = incomingSockets.length; i &lt; l; i++) {
+                    _this._protocolConnectionManager.closeHydraSocket(incomingSockets[i]);
+                }
+
+                delete _this._incomingSockets[circuitId];
+            }
+
+            var outgoingSocketsKeys = Object.keys(_this._outgoingSockets);
+
+            for (var i = 0, l = outgoingSocketsKeys.length; i &lt; l; i++) {
+                var key = outgoingSocketsKeys[i];
+
+                if (key.indexOf(circuitId) === 0) {
+                    _this._protocolConnectionManager.closeHydraSocket(_this._outgoingSockets[key]);
+
+                    delete _this._outgoingSockets[key];
+                }
+            }
+        });
+
+        this._protocolConnectionManager.on(&#039;terminatedConnection&#039;, function (identifier) {
+            // we do not care for the incoming sockets, they clean themselves up as soon as the circuit is torn down
+            // we only care for the outgoing sockets
+            var outgoingSocketsKeys = Object.keys(_this._outgoingSockets);
+
+            for (var i = 0, l = outgoingSocketsKeys.length; i &lt; l; i++) {
+                var key = outgoingSocketsKeys[i];
+
+                if (_this._outgoingSockets[key] === identifier) {
+                    delete _this._outgoingSockets[key];
+                    break;
+                }
+            }
+        });
+    };
+    return Middleware;
+})();
+
+module.exports = Middleware;
+//# sourceMappingURL=Middleware.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

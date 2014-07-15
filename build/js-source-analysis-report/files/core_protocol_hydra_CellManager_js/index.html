@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.05</p>
+      <p class="stat">66.42</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">360</p>
+      <p class="stat">402</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">45.02</p>
+      <p class="stat">48.23</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.30</p>
+      <p class="stat">2.82</p>
     </div>
   </div>
 </div>
@@ -101,6 +101,8 @@ var crypto = require(&#039;crypto&#039;);
 
 var AdditiveSharingScheme = require(&#039;../../crypto/AdditiveSharingScheme&#039;);
 var HKDF = require(&#039;../../crypto/HKDF&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * CellManagerInterface implementation.
@@ -202,6 +204,26 @@ var CellManager = (function (_super) {
     /**
     * END TESTING PURPOSES
     */
+    CellManager.prototype.getCircuitIdByFeedingIdentifier = function (feedingIdentifier) {
+        var cell = this._cellsByFeedingIdentifier[feedingIdentifier];
+
+        if (cell) {
+            return cell.getPredecessorCircuitId();
+        }
+
+        return null;
+    };
+
+    CellManager.prototype.getFeedingIdentifierByCircuitId = function (circuitId) {
+        var cell = this._cellsByPredecessorCircuitId[circuitId];
+
+        if (cell) {
+            return cell.getFeedingIdentifier();
+        }
+
+        return null;
+    };
+
     CellManager.prototype.pipeFileTransferMessage = function (predecessorCircuitId, payload) {
         var cell = this._cellsByPredecessorCircuitId[predecessorCircuitId];
 
@@ -236,7 +258,9 @@ var CellManager = (function (_super) {
         var diffie = crypto.getDiffieHellman(&#039;modp14&#039;);
         var dhPublicKey = diffie.generateKeys();
         var secret = diffie.computeSecret(AdditiveSharingScheme.getCleartext(pending.additivePayloads, 256));
+
         var sha1 = crypto.createHash(&#039;sha1&#039;).update(secret).digest();
+
         var hkdf = new HKDF(&#039;sha256&#039;, secret);
         var keysConcat = hkdf.derive(48, new Buffer(pending.uuid, &#039;hex&#039;));
 
@@ -257,6 +281,8 @@ var CellManager = (function (_super) {
         this._maintainedCells.push(cell);
         this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()] = cell;
         this._cellsByFeedingIdentifier[feedingIdentifier] = cell;
+
+        logger.log(&#039;hydraCell&#039;, &#039;Accepting cell request&#039;, { circuitId: cell.getPredecessorCircuitId(), socketIdent: initiatorNode.socketIdentifier });
 
         cell.once(&#039;isTornDown&#039;, function () {
             _this._onTornDownCell(cell);
@@ -286,14 +312,20 @@ var CellManager = (function (_super) {
     * @param {core.protocol.hydra.PendingCreateCellRequest) pending The request object with a timeout and / or termination listener
     */
     CellManager.prototype._cleanupTimeoutAndTerminationListener = function (pending) {
-        if (pending.timeout) {
-            global.clearTimeout(pending.timeout);
-            pending.timeout = null;
-        }
+        if (pending) {
+            logger.log(&#039;hydraCell&#039;, &#039;Cleaning up pending&#039;, { pending: pending.uuid });
 
-        if (pending.terminationListener) {
-            this._connectionManager.removeListener(&#039;circuitTermination&#039;, pending.terminationListener);
-            pending.terminationListener = null;
+            if (pending.timeout) {
+                global.clearTimeout(pending.timeout);
+                pending.timeout = null;
+            }
+
+            if (pending.terminationListener) {
+                this._connectionManager.removeListener(&#039;circuitTermination&#039;, pending.terminationListener);
+                pending.terminationListener = null;
+            }
+        } else {
+            logger.log(&#039;hydraCell&#039;, &#039;Trying to clear up nonexisting pending&#039;);
         }
     };
 
@@ -308,6 +340,7 @@ var CellManager = (function (_super) {
     CellManager.prototype._onCircuitTermination = function (uuid) {
         var pending = this._pendingRequests[uuid];
 
+        logger.log(&#039;hydraCell&#039;, &#039;On circuit termination&#039;, { uuid: uuid, exists: !!pending });
         this._cleanupTimeoutAndTerminationListener(pending);
 
         delete this._pendingRequests[uuid];
@@ -323,11 +356,14 @@ var CellManager = (function (_super) {
     * @param {core.protocol.hydra.PendingCreateCellRequest} pending The pending request with the completed batch.
     */
     CellManager.prototype._onCompleteBatchRequest = function (pending) {
+        logger.log(&#039;hydraCell&#039;, &#039;Complete batch&#039;, { uuid: pending.uuid, exists: !!pending });
+
         this._cleanupTimeoutAndTerminationListener(pending);
 
         if (this._canMaintainAdditionalCell()) {
             this._acceptCreateCellRequest(pending);
         } else {
+            logger.log(&#039;hydraCell&#039;, &#039;Rejecting create cell request&#039;, { circuitId: pending.initiator.circuitId, socketIdent: pending.initiator.socketIdentifier });
             this._messageCenter.sendCellCreatedRejectedMessage(pending.initiator, pending.uuid);
             this._connectionManager.removeFromCircuitNodes(pending.initiator, false);
         }
@@ -386,6 +422,7 @@ var CellManager = (function (_super) {
         }
 
         if (pending.additivePayloads.length === this._additiveSharingMsgAmount &amp;&amp; pending.initiator) {
+            logger.log(&#039;hydraCell&#039;, &#039;Complete batch.&#039;);
             this._onCompleteBatchRequest(pending);
         }
     };
@@ -404,6 +441,7 @@ var CellManager = (function (_super) {
         var initiatorNode = pending.initiator;
 
         pending.timeout = null;
+        logger.log(&#039;hydraCell&#039;, &#039;Pending request timeout&#039;, { uuid: uuid, exists: !!pending });
         this._cleanupTimeoutAndTerminationListener(pending);
 
         if (initiatorNode) {
@@ -424,7 +462,9 @@ var CellManager = (function (_super) {
     CellManager.prototype._onTornDownCell = function (cell) {
         cell.removeAllListeners(&#039;fileTransferMessage&#039;);
 
-        delete this._cellsByPredecessorCircuitId[cell.getPredecessorCircuitId()];
+        var predecessorCircuitId = cell.getPredecessorCircuitId();
+
+        delete this._cellsByPredecessorCircuitId[predecessorCircuitId];
         delete this._cellsByFeedingIdentifier[cell.getFeedingIdentifier()];
 
         for (var i = 0, l = this._maintainedCells.length; i &lt; l; i++) {
@@ -433,6 +473,8 @@ var CellManager = (function (_super) {
                 break;
             }
         }
+
+        this.emit(&#039;tornDownCell&#039;, predecessorCircuitId);
     };
 
     /**

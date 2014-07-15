@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.10</p>
+      <p class="stat">69.95</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">532</p>
+      <p class="stat">537</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">80.05</p>
+      <p class="stat">78.36</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.34</p>
+      <p class="stat">3.42</p>
     </div>
   </div>
 </div>
@@ -191,7 +191,7 @@ var FolderWatcherManager = (function () {
             });
         }
 
-        this.open();
+        this.open(this._options.onOpenCallback);
         /*monitor.find(function(err, devices) {
         console.log(&#039;- - FOUND - -&#039;);
         console.log(err);
@@ -253,7 +253,8 @@ var FolderWatcherManager = (function () {
             }
 
             checkedInvalidPaths = true;
-            callbackCheck();
+
+            return callbackCheck();
         });
 
         // check invalid Paths
@@ -267,7 +268,7 @@ var FolderWatcherManager = (function () {
             }
 
             checkedValidPaths = true;
-            callbackCheck();
+            return callbackCheck();
         });
     };
 
@@ -343,27 +344,31 @@ var FolderWatcherManager = (function () {
 
             _this._checkFolderWatcherPaths(pathsToWatch, function (err, invalidPaths, validPaths) {
                 if (err) {
-                    internalCallback(err);
-                } else {
-                    if (invalidPaths &amp;&amp; invalidPaths.length) {
-                        for (var i = 0, l = invalidPaths.length; i &lt; l; i++) {
-                            _this._addToInvalidWatcherPaths(invalidPaths[i]);
+                    console.error(err);
+                    return internalCallback(err);
+                }
+
+                console.log(&#039;invalid path&#039;, invalidPaths);
+                console.log(&#039;valid path&#039;, validPaths);
+
+                if (invalidPaths &amp;&amp; invalidPaths.length) {
+                    for (var i = 0, l = invalidPaths.length; i &lt; l; i++) {
+                        _this._addToInvalidWatcherPaths(invalidPaths[i]);
+                    }
+                }
+
+                if (validPaths &amp;&amp; validPaths.length) {
+                    _this._createWatchers(validPaths, function (err) {
+                        if (!err) {
+                            _this._isOpen = true;
                         }
-                    }
 
-                    if (validPaths &amp;&amp; validPaths.length) {
-                        _this._createWatchers(validPaths, function (err) {
-                            if (!err) {
-                                _this._isOpen = true;
-                            }
+                        return internalCallback(err);
+                    });
+                } else {
+                    _this._isOpen = true;
 
-                            return internalCallback(err);
-                        });
-                    } else {
-                        _this._isOpen = true;
-
-                        return internalCallback(null);
-                    }
+                    return internalCallback(null);
                 }
             });
         });
@@ -434,7 +439,7 @@ var FolderWatcherManager = (function () {
             var pathToWatch = pathsToWatch[i];
 
             if (!this._isAbsolutePath(pathToWatch)) {
-                err = new Error(&#039;FolderWatcherManager~_checkFolderWatcherPaths: The specified path is not absolute. &quot;&#039; + pathToWatch + &#039;&quot;&#039;);
+                err = new Error(&#039;FolderWatcherManager~_checkFolderWatcherPaths: The specified path is not an absolute path. &quot;&#039; + pathToWatch + &#039;&quot;&#039;);
                 break;
             }
 
@@ -447,10 +452,10 @@ var FolderWatcherManager = (function () {
         }
 
         if (err) {
-            callback(err, null, null);
-        } else {
-            callback(null, invalidPaths, validPaths);
+            invalidPaths = validPaths = null;
         }
+
+        return callback(err, invalidPaths, validPaths);
     };
 
     /**

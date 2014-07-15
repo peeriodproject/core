@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">69.82</p>
+      <p class="stat">69.32</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">225</p>
+      <p class="stat">229</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">39.31</p>
+      <p class="stat">42.23</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.40</p>
+      <p class="stat">1.47</p>
     </div>
   </div>
 </div>
@@ -98,6 +98,8 @@
 };
 var events = require(&#039;events&#039;);
 var crypto = require(&#039;crypto&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 /**
 * BroadcastManagerInterface implementation.
@@ -248,7 +250,9 @@ var BroadcastManager = (function (_super) {
             var broadcastId = message.getBroadcastId();
 
             if (timeElapsed &lt; this._broadcastLifetimeInMs &amp;&amp; this._knownBroadcastIds.indexOf(broadcastId) === -1 &amp;&amp; this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
-                this.emit(msg.getMessageType(), message.getPayload());
+                logger.log(&#039;query&#039;, &#039;Broadcast that must be processed&#039;, { broadcastId: broadcastId });
+
+                this.emit(msg.getMessageType(), message.getPayload(), message.getBroadcastId());
 
                 var differsInBit = msg.getSender().getId().differsInHighestBit(this._myNode.getId());
 
