@@ -3,6 +3,7 @@ import FeedingNodesMessageBlock = require('../messages/FeedingNodesMessageBlock'
 import CircuitManagerInterface = require('../../hydra/interfaces/CircuitManagerInterface');
 import HydraNodeList = require('../../hydra/interfaces/HydraNodeList');
 import HydraCircuitList = require('../../hydra/interfaces/HydraCircuitList');
+import HydraCircuitInterface = require('../../hydra/interfaces/HydraCircuitInterface');
 import HydraNode = require('../../hydra/interfaces/HydraNode');
 
 class FeedingNodesBlockMaintainer implements FeedingNodesBlockMaintainerInterface {
@@ -27,6 +28,32 @@ class FeedingNodesBlockMaintainer implements FeedingNodesBlockMaintainerInterfac
 
 	private _checkCircuitsAndUpdateBlock():void {
 		var existingCircuits:HydraCircuitList = this._circuitManager.getReadyCircuits();
+
+		var newBatch:HydraNodeList = [];
+
+		for (var i=0, l=existingCircuits.length; i<l; i++) {
+			var circuitNodes:HydraNodeList = existingCircuits[i].getCircuitNodes();
+			var found:boolean = false;
+
+			for (var j=0, k=this._nodeBatch.length; j<k; j++) {
+				var node:HydraNode = this._nodeBatch[j];
+
+				if (circuitNodes.indexOf(node) > -1) {
+					found = true;
+
+					// circuit still exists, keep node
+					newBatch.push(node);
+				}
+			}
+
+			if (!found) {
+				// circuit seems to be new
+				newBatch.push(circuitNodes[Math.floor(Math.random() * circuitNodes.length)]);
+			}
+		}
+
+		this._nodeBatch = newBatch;
+		this._block = FeedingNodesMessageBlock.constructBlock(this._nodeBatch);
 	}
 
 	public getCurrentNodeBatch ():HydraNodeList {
