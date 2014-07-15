@@ -13,6 +13,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
 	var component:UiFolderWatcherManagerComponent;
 	var eventListeners:{ [eventName:string]:Function };
 	var folderWatcherManagerStub:any;
+	var nwGuiStub:any;
 
 	beforeEach(function () {
 		sandbox = sinon.sandbox.create();
@@ -27,13 +28,20 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
 			}
 		});
 
-		component = new UiFolderWatcherManagerComponent(folderWatcherManagerStub);
+		nwGuiStub = {
+			Shell: {
+				showItemInFolder: sandbox.spy()
+			}
+		};
+
+		component = new UiFolderWatcherManagerComponent(nwGuiStub, folderWatcherManagerStub);
 	});
 
 	afterEach(function () {
 		sandbox.restore();
 		component = null;
 		folderWatcherManagerStub = null;
+		nwGuiStub = null;
 		eventListeners = null;
 	});
 
@@ -55,7 +63,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
 	});
 
 	it('should correctly return the event names', function () {
-		component.getEventNames().should.containDeep(['addFolder', 'removeFolder', 'syncFolders']);
+		component.getEventNames().should.containDeep(['addFolder', 'removeFolder', 'showFolder', 'syncFolders']);
 	});
 
 	it('should correctly return the state', function () {
@@ -202,6 +210,13 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
 		component.emit('syncFolders');
 
 		folderWatcherManagerStub.checkFolderWatcherPaths.calledOnce.should.be.true;
+	});
+
+	it ('should correctly open the given path by calling nw.Shell.showItemInFolder', function () {
+		component.emit('showFolder', '/path/to/the/folder');
+
+		nwGuiStub.Shell.showItemInFolder.calledOnce.should.be.true;
+		nwGuiStub.Shell.showItemInFolder.getCall(0).args[0].should.equal('/path/to/the/folder');
 	});
 
 });

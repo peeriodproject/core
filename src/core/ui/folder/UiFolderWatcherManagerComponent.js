@@ -17,7 +17,7 @@ var UiComponent = require('../UiComponent');
 */
 var UiFolderWatcherManagerComponent = (function (_super) {
     __extends(UiFolderWatcherManagerComponent, _super);
-    function UiFolderWatcherManagerComponent(folderWatcherManager) {
+    function UiFolderWatcherManagerComponent(gui, folderWatcherManager) {
         _super.call(this);
         /**
         * The folder watcher manager instance
@@ -31,7 +31,16 @@ var UiFolderWatcherManagerComponent = (function (_super) {
         * @member {core.ui.folder.UiFolderMapInterface} core.ui.UiFolderWatcherManagerComponent~_folders
         */
         this._folders = {};
+        /**
+        * The node webkit gui instance
+        *
+        * todo ts-definitions
+        *
+        * @member {nw.gui} core.ui.UiFolderWatcherManagerComponent~_gui
+        */
+        this._gui = null;
 
+        this._gui = gui;
         this._folderWatcherManager = folderWatcherManager;
 
         this._setupEventListeners();
@@ -43,7 +52,7 @@ var UiFolderWatcherManagerComponent = (function (_super) {
     };
 
     UiFolderWatcherManagerComponent.prototype.getEventNames = function () {
-        return ['addFolder', 'removeFolder', 'syncFolders'];
+        return ['addFolder', 'removeFolder', 'showFolder', 'syncFolders'];
     };
 
     UiFolderWatcherManagerComponent.prototype.getState = function () {
@@ -180,6 +189,10 @@ var UiFolderWatcherManagerComponent = (function (_super) {
 
         this.on('removeFolder', function (path) {
             _this._folderWatcherManager.removeFolderWatcher(path);
+        });
+
+        this.on('showFolder', function (path) {
+            _this._gui.Shell.showItemInFolder(path);
         });
 
         this.on('syncFolders', function () {

@@ -1,5 +1,7 @@
 /// <reference path='../../../../ts-definitions/node/node.d.ts' />
 
+import gui = require('nw.gui');
+
 import FolderWatcherManagerInterface = require('../../fs/interfaces/FolderWatcherManagerInterface');
 import UiFolderInterface = require('./interfaces/UiFolderInterface');
 import UiFolderListInterface = require('./interfaces/UiFolderListInterface');
@@ -31,9 +33,19 @@ class UiFolderWatcherManagerComponent extends UiComponent {
 	 */
 	private _folders:UiFolderMapInterface = {};
 
-	constructor (folderWatcherManager:FolderWatcherManagerInterface) {
+	/**
+	 * The node webkit gui instance
+	 *
+	 * todo ts-definitions
+	 *
+	 * @member {nw.gui} core.ui.UiFolderWatcherManagerComponent~_gui
+	 */
+	private _gui:any = null;
+
+	constructor (gui:any, folderWatcherManager:FolderWatcherManagerInterface) {
 		super();
 
+		this._gui = gui;
 		this._folderWatcherManager = folderWatcherManager;
 
 		this._setupEventListeners();
@@ -46,7 +58,7 @@ class UiFolderWatcherManagerComponent extends UiComponent {
 	}
 
 	public getEventNames ():Array<string> {
-		return ['addFolder', 'removeFolder', 'syncFolders'];
+		return ['addFolder', 'removeFolder', 'showFolder', 'syncFolders'];
 	}
 
 	public getState():UiFolderListInterface {
@@ -181,6 +193,10 @@ class UiFolderWatcherManagerComponent extends UiComponent {
 
 		this.on('removeFolder', (path) => {
 			this._folderWatcherManager.removeFolderWatcher(path);
+		});
+
+		this.on('showFolder', (path) => {
+			this._gui.Shell.showItemInFolder(path);
 		});
 
 		this.on('syncFolders', () => {

@@ -186,7 +186,7 @@ var App = {
 				// register ui components
 				// ----------------------
 
-				this.addUiComponent(new UiFolderWatcherManagerComponent(folderWatcherManager));
+				this.addUiComponent(new UiFolderWatcherManagerComponent(this._gui, folderWatcherManager));
 				//});
 			}
 		});
