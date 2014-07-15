@@ -143,6 +143,8 @@ interface TCPSocketInterface extends NodeJS.EventEmitter {
 	 */
 	writeString (message:string, encoding?:string, callback?:Function):boolean;
 
+	TESTsetIsCircuit (flag:boolean):void;
+
 }
 
 export = TCPSocketInterface;

@@ -52,6 +52,10 @@ class FileBlockWriter implements FileBlockWriterInterface {
 		}
 	}
 
+	public getFilePath ():string {
+		return this._fullPath;
+	}
+
 	public prepareToWrite (callback:(err:Error) => any):void {
 		fs.open(this._fullPath, 'wx', (err:Error, fd:number) => {
 			if (err) {

@@ -46,6 +46,10 @@ var FileBlockWriter = (function () {
         }
     };
 
+    FileBlockWriter.prototype.getFilePath = function () {
+        return this._fullPath;
+    };
+
     FileBlockWriter.prototype.prepareToWrite = function (callback) {
         var _this = this;
         fs.open(this._fullPath, 'wx', function (err, fd) {

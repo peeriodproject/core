@@ -66,6 +66,12 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	private _uuid:string = '';
 
+	private _TESTisCircuit:boolean = false;
+
+
+	public TESTsetIsCircuit (flag:boolean):void {
+		this._TESTisCircuit = flag;
+	}
 
 	public constructor (socket:net.Socket, opts:TCPSocketOptions) {
 		super();
@@ -163,6 +169,9 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 			if (this.getIdentifier().indexOf('hydra') > -1) {
 				logger.log('hydra', 'Hydra socket timed out', {socketIdent: this.getIdentifier()});
+				if (this._TESTisCircuit) {
+					logger.log('error', 'Timed out a hydra circuit socket');
+				}
 			}
 
 			this.end();

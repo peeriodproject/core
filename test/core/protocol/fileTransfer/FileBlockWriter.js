@@ -21,6 +21,8 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> FileBlockWriter @current', fun
     it('should correctly prepare to write the file block writer', function (done) {
         blockWriter = new FileBlockWriter(filename, writePath, filesize, sha1Hash);
 
+        blockWriter.getFilePath().should.equal(writePath + filename);
+
         blockWriter.prepareToWrite(function (err) {
             (err === null).should.be.true;
             done();
