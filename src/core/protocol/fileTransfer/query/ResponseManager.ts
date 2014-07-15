@@ -201,7 +201,7 @@ class ResponseManager implements ResponseManagerInterface {
 
 			this.externalQueryHandler(broadcastId, searchObject, (identifier:string, results:Buffer) => {
 				if (results) {
-					logger.log('query', 'Issuing external feed to circuit', {broadcastId: identifier});
+					logger.log('query', 'Issuing result back through circuit', {broadcastId: identifier});
 
 					var msg = this._wrapQueryResponse(identifier, results);
 
