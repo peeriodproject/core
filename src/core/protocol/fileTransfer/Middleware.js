@@ -176,12 +176,12 @@ var Middleware = (function () {
 
                 this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
                     if (!err && identifier) {
-                        logger.log('middleware', 'Cannot connect to node');
-
                         _this._outgoingSockets[_this._constructOutgoingKey(node, associatedCircuitId)] = identifier;
 
                         _this._feedSocket(identifier, node.feedingIdentifier, payloadToFeed);
                     } else {
+                        logger.log('middleware', 'Cannot connect to node');
+
                         _this._obtainConnectionAndFeed(feedingNodes, associatedCircuitId, payloadToFeed, usedIndices);
                     }
                 });

@@ -196,13 +196,14 @@ class Middleware implements MiddlewareInterface {
 
 				this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, (err:Error, identifier:string) => {
 					if (!err && identifier) {
-						logger.log('middleware', 'Cannot connect to node');
 
 						this._outgoingSockets[this._constructOutgoingKey(node, associatedCircuitId)] = identifier;
 
 						this._feedSocket(identifier, node.feedingIdentifier, payloadToFeed);
 					}
 					else {
+						logger.log('middleware', 'Cannot connect to node');
+
 						this._obtainConnectionAndFeed(feedingNodes, associatedCircuitId, payloadToFeed, usedIndices);
 					}
 				});
