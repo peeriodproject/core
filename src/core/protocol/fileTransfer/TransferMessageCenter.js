@@ -101,7 +101,7 @@ var TransferMessageCenter = (function (_super) {
     TransferMessageCenter.prototype.issueExternalFeedToCircuit = function (nodesToFeedBlock, payload, circuitId) {
         var wrappedMessage = this.wrapTransferMessage('EXTERNAL_FEED', '00000000000000000000000000000000', Buffer.concat([nodesToFeedBlock, payload]));
 
-        if (!(circuitId && this._circuitManager.pipeFileTransferMessageThroughCircuit(circuitId, wrappedMessage))) {
+        if (wrappedMessage && !(circuitId && this._circuitManager.pipeFileTransferMessageThroughCircuit(circuitId, wrappedMessage))) {
             return this._circuitManager.pipeFileTransferMessageThroughRandomCircuit(wrappedMessage);
         }
 
@@ -139,6 +139,7 @@ var TransferMessageCenter = (function (_super) {
                 feedingNodesBlock = FeedingNodesMessageBlock.extractAndDeconstructBlock(payload);
                 slice = payload.slice(feedingNodesBlock.bytesRead);
             } catch (e) {
+                logger.log('middleware', 'Tearing down cell, message is wrong');
                 this._cellManager.teardownCell(predecessorCircuitId);
             }
 
@@ -208,6 +209,8 @@ var TransferMessageCenter = (function (_super) {
             var predecessorCircuitId = this._cellManager.getCircuitIdByFeedingIdentifier(msg.getTransferId());
 
             if (predecessorCircuitId) {
+                logger.log('middleware', 'Got fed');
+
                 this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg.getPayload());
                 this._middleware.addIncomingSocket(predecessorCircuitId, socketIdentifier);
             } else {
