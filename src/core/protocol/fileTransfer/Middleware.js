@@ -136,6 +136,7 @@ var Middleware = (function () {
         try  {
             bufferToSend = this._hydraMessageCenter.wrapFileTransferMessage(this._writableFileTransferMessageFactory.constructMessage(feedingIdentifier, 'GOT_FED', payloadToFeed));
         } catch (e) {
+            logger.log('middleware', 'Wrapping file transfer error');
         }
 
         if (bufferToSend) {
@@ -175,6 +176,8 @@ var Middleware = (function () {
 
                 this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
                     if (!err && identifier) {
+                        logger.log('middleware', 'Cannot connect to node');
+
                         _this._outgoingSockets[_this._constructOutgoingKey(node, associatedCircuitId)] = identifier;
 
                         _this._feedSocket(identifier, node.feedingIdentifier, payloadToFeed);
