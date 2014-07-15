@@ -294,6 +294,10 @@ class RoutingTable implements RoutingTableInterface {
 		}
 
 		this._getBucketSizes((sizes) => {
+			if (!this._isOpen) {
+				return callback(null, null);
+			}
+
 			var bucketKeys = Object.keys(sizes);
 
 			if (!bucketKeys.length) {
