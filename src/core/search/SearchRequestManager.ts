@@ -431,7 +431,8 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 			logger.log('search', 'SearchRequestManager: query end', {
 				queryId: queryId,
 				reason: reason,
-				eventName: 'QUERY_END'
+				eventName: 'QUERY_END',
+				resultsCount: this._runningQueryIds[queryId]
 			});
 		}
 
