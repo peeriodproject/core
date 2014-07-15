@@ -135,6 +135,7 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 			return this._writableFileTransferMessageFactory.constructMessage(transferId, messageType, payload);
 		}
 		catch (e) {
+			logger.log('error', 'Error wrapping transfer message', {err: e.message});
 			return null;
 		}
 	}
