@@ -7,7 +7,7 @@ import testUtils = require('../../../utils/testUtils');
 
 import FileBlockWriter = require('../../../../src/core/protocol/fileTransfer/share/FileBlockWriter');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> FileBlockWriter @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> FileBlockWriter', function () {
 
 	var filename = 'snowden_brighton_2.jpg';
 	var sha1Hash = '4dad5e4374038a14465f0c42fc150a36674b4bd8';
