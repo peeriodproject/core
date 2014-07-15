@@ -127,21 +127,7 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
         });
     });
 
-    it('should correctly add a incoming response to the database @joern', function (done) {
-        /*var responseList:any = {
-        total: 1,
-        hits: [{
-        _id: 'fileHash',
-        _type: 'pluginidentifier',
-        _source: {
-        itemHash: "fileHash",
-        itemStats: {
-        stats: true
-        },
-        foo: "bar io"
-        }
-        }]
-        };*/
+    it('should correctly add a incoming response to the database', function (done) {
         var responseList = {
             total: 1,
             max_score: 0.13424811,

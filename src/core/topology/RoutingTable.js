@@ -263,6 +263,10 @@ var RoutingTable = (function () {
         }
 
         this._getBucketSizes(function (sizes) {
+            if (!_this._isOpen) {
+                return callback(null, null);
+            }
+
             var bucketKeys = Object.keys(sizes);
 
             if (!bucketKeys.length) {
