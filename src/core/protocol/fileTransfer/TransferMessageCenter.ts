@@ -172,18 +172,22 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 			}
 		}
 		else if (msg.getMessageType() === 'QUERY_BROADCAST') {
-			var searchObject:Buffer = msg.getPayload();
+
+			var payload = msg.getPayload();
 			var broadcastId:string = msg.getTransferId();
-			var feedingIdentifier:string = this._cellManager.getFeedingIdentifierByCircuitId(predecessorCircuitId);
-			var externalAddress:any = this._protocolConnectionManager.getRandomExternalIpPortPair();
+			var feedingNodesObj:any = null;
+			var searchObject:Buffer = null;
 
-			logger.log('query', 'Received QUERY_BROADCAST message', {queryId: broadcastId, feedingIdentifier: feedingIdentifier, externalAddress: externalAddress});
+			try {
+				feedingNodesObj = FeedingNodesMessageBlock.extractAndDeconstructBlock(payload);
+				searchObject = payload.slice(feedingNodesObj.bytesRead);
+			}
+			catch (e) {
+			}
 
-			if (feedingIdentifier && externalAddress) {
-				externalAddress.feedingIdentifier = feedingIdentifier;
-				var myFeedingBlock:Buffer = FeedingNodesMessageBlock.constructBlock([externalAddress]);
-
-				this.emit('issueBroadcastQuery', predecessorCircuitId, broadcastId, searchObject, myFeedingBlock);
+			if (searchObject && feedingNodesObj && searchObject.length && feedingNodesObj.nodes.length) {
+				logger.log('query', 'Received QUERY_BROADCAST message', {queryId: broadcastId});
+				this.emit('issueBroadcastQuery', predecessorCircuitId, broadcastId, searchObject, payload);
 			}
 			else {
 				this._cellManager.teardownCell(predecessorCircuitId);

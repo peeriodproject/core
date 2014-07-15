@@ -191,9 +191,8 @@ class ResponseManager implements ResponseManagerInterface {
 			}
 		});
 
-		this._transferMessageCenter.on('issueBroadcastQuery', (predecessorCircuitId:string, broadcastId:string, searchObject:Buffer, myFeedingBlock:Buffer) => {
+		this._transferMessageCenter.on('issueBroadcastQuery', (predecessorCircuitId:string, broadcastId:string, searchObject:Buffer, broadcastPayload:Buffer) => {
 			// start a broadcast but answer to the query by yourself after a given time
-			var broadcastPayload:Buffer = Buffer.concat([myFeedingBlock, searchObject]);
 
 			logger.log('query', 'Starting a broadcast', {queryId: broadcastId});
 

@@ -12,6 +12,7 @@ var BroadcastBasedQuery = require('../../../../src/core/protocol/fileTransfer/qu
 var CircuitManager = require('../../../../src/core/protocol/hydra/CircuitManager');
 var BroadcastManager = require('../../../../src/core/protocol/broadcast/BroadcastManager');
 var ReadableQueryResponseMessage = require('../../../../src/core/protocol/fileTransfer/messages/ReadableQueryResponseMessage');
+var FeedingNodesMessageBlock = require('../../../../src/core/protocol/fileTransfer/messages/FeedingNodesMessageBlock');
 
 describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery', function () {
     var sandbox = null;
@@ -53,7 +54,9 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery', function
         query.kickOff();
 
         ignoredIdentifier.should.equal(query.getQueryId());
-        sentPayload.toString().should.equal('foobar');
+
+        var nodesBlockObj = FeedingNodesMessageBlock.extractAndDeconstructBlock(sentPayload);
+        sentPayload.slice(nodesBlockObj.bytesRead).toString().should.equal('foobar');
 
         emitResult('muschi');
     });
@@ -107,6 +110,9 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery', function
             pipeFileTransferMessageThroughAllCircuits: function (payload) {
                 sentPayload = payload;
                 return sendAnon;
+            },
+            getRandomFeedingNodesBatch: function () {
+                return [{ ip: '1.1.1.1', port: 80, feedingIdentifier: 'cafebabecafebabecafebabecafebabe' }];
             }
         });
     });

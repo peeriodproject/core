@@ -165,10 +165,8 @@ var ResponseManager = (function () {
             }
         });
 
-        this._transferMessageCenter.on('issueBroadcastQuery', function (predecessorCircuitId, broadcastId, searchObject, myFeedingBlock) {
+        this._transferMessageCenter.on('issueBroadcastQuery', function (predecessorCircuitId, broadcastId, searchObject, broadcastPayload) {
             // start a broadcast but answer to the query by yourself after a given time
-            var broadcastPayload = Buffer.concat([myFeedingBlock, searchObject]);
-
             logger.log('query', 'Starting a broadcast', { queryId: broadcastId });
 
             _this._broadcastManager.initBroadcast('BROADCAST_QUERY', broadcastPayload, broadcastId);

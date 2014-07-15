@@ -7,6 +7,8 @@ var __extends = this.__extends || function (d, b) {
 var events = require('events');
 var crypto = require('crypto');
 
+var FeedingNodesMessageBlock = require('../messages/FeedingNodesMessageBlock');
+
 var logger = require('../../../utils/logger/LoggerFactory').create();
 
 /**
@@ -113,7 +115,10 @@ var BroadcastBasedQuery = (function (_super) {
 
     BroadcastBasedQuery.prototype.kickOff = function () {
         var _this = this;
-        var queryBroadcastPayload = this._transferMessageCenter.wrapTransferMessage('QUERY_BROADCAST', this._queryId, this._searchObjectAsBuffer);
+        var feedingNodesBatch = this._circuitManager.getRandomFeedingNodesBatch();
+        var feedingNodesBlock = FeedingNodesMessageBlock.constructBlock(feedingNodesBatch);
+
+        var queryBroadcastPayload = this._transferMessageCenter.wrapTransferMessage('QUERY_BROADCAST', this._queryId, Buffer.concat([feedingNodesBlock, this._searchObjectAsBuffer]));
         var allOkay = false;
 
         if (queryBroadcastPayload) {

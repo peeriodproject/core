@@ -13,6 +13,7 @@ import TransferMessageCenter = require('../../../../src/core/protocol/fileTransf
 import CircuitManager = require('../../../../src/core/protocol/hydra/CircuitManager');
 import BroadcastManager = require('../../../../src/core/protocol/broadcast/BroadcastManager');
 import ReadableQueryResponseMessage = require('../../../../src/core/protocol/fileTransfer/messages/ReadableQueryResponseMessage');
+import FeedingNodesMessageBlock = require('../../../../src/core/protocol/fileTransfer/messages/FeedingNodesMessageBlock');
 
 describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery', function () {
 
@@ -55,7 +56,9 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery', function
 		query.kickOff();
 
 		ignoredIdentifier.should.equal(query.getQueryId());
-		sentPayload.toString().should.equal('foobar');
+
+		var nodesBlockObj:any = FeedingNodesMessageBlock.extractAndDeconstructBlock(sentPayload);
+		sentPayload.slice(nodesBlockObj.bytesRead).toString().should.equal('foobar');
 
 		emitResult('muschi');
 	});
@@ -113,6 +116,9 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> BroadcastBasedQuery', function
 			pipeFileTransferMessageThroughAllCircuits : function (payload) {
 				sentPayload = payload;
 				return sendAnon;
+			},
+			getRandomFeedingNodesBatch: function () {
+				return [{ip: '1.1.1.1', port: 80, feedingIdentifier: 'cafebabecafebabecafebabecafebabe'}]
 			}
 		});
 	});
