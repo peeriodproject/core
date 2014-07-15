@@ -165,6 +165,15 @@ var CellManager = (function (_super) {
         var _this = this;
         var diffie = crypto.getDiffieHellman('modp14');
         var dhPublicKey = diffie.generateKeys();
+        var dhPublicKeyLen = dhPublicKey.length;
+        var dhPublicKeyPadded = dhPublicKeyLen === 256 ? dhPublicKey : null;
+
+        if (!dhPublicKeyPadded) {
+            dhPublicKeyPadded = new Buffer(256);
+            dhPublicKeyPadded.fill(0x00);
+            dhPublicKey.copy(dhPublicKeyPadded, 256 - dhPublicKeyLen, 0);
+        }
+
         var secret = diffie.computeSecret(AdditiveSharingScheme.getCleartext(pending.additivePayloads, 256));
 
         var sha1 = crypto.createHash('sha1').update(secret).digest();
@@ -182,7 +191,7 @@ var CellManager = (function (_super) {
         initiatorNode.outgoingKey = outgoingKey;
         initiatorNode.feedingIdentifier = feedingIdentifier;
 
-        this._messageCenter.sendCellCreatedRejectedMessage(initiatorNode, pending.uuid, sha1, dhPublicKey);
+        this._messageCenter.sendCellCreatedRejectedMessage(initiatorNode, pending.uuid, sha1, dhPublicKeyPadded);
 
         var cell = this._cellFactory.create(initiatorNode);
 

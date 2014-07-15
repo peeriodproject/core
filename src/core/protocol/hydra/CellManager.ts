@@ -182,6 +182,15 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 
 		var diffie:crypto.DiffieHellman = crypto.getDiffieHellman('modp14');
 		var dhPublicKey:Buffer = diffie.generateKeys();
+		var dhPublicKeyLen:number = dhPublicKey.length;
+		var dhPublicKeyPadded:Buffer = dhPublicKeyLen === 256 ? dhPublicKey : null;
+
+		if (!dhPublicKeyPadded) {
+			dhPublicKeyPadded = new Buffer(256);
+			dhPublicKeyPadded.fill(0x00);
+			dhPublicKey.copy(dhPublicKeyPadded, 256 - dhPublicKeyLen, 0);
+		}
+
 		var secret:Buffer = diffie.computeSecret(AdditiveSharingScheme.getCleartext(pending.additivePayloads, 256));
 
 		var sha1:Buffer = crypto.createHash('sha1').update(secret).digest();
@@ -199,7 +208,7 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 		initiatorNode.outgoingKey = outgoingKey;
 		initiatorNode.feedingIdentifier = feedingIdentifier;
 
-		this._messageCenter.sendCellCreatedRejectedMessage(initiatorNode, pending.uuid, sha1, dhPublicKey);
+		this._messageCenter.sendCellCreatedRejectedMessage(initiatorNode, pending.uuid, sha1, dhPublicKeyPadded);
 
 		var cell:HydraCellInterface = this._cellFactory.create(initiatorNode);
 
