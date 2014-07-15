@@ -2,6 +2,10 @@
 
 import HydraNodeList = require('../../../hydra/interfaces/HydraNodeList');
 
+/**
+ * The FeedingNodesBlockMaintainer
+ *
+ */
 interface FeedingNodesBlockMaintainerInterface {
 
 	getCurrentNodeBatch ():HydraNodeList;

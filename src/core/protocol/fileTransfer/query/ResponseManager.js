@@ -200,6 +200,7 @@ var ResponseManager = (function () {
             return this._transferMessageCenter.wrapTransferMessage('QUERY_RESPONSE', queryIdentifier, this._writableQueryResponseFactory.constructMessage(this._circuitManager.getRandomFeedingNodesBatch(), results));
         }
 
+        logger.log('query', 'Has no circuits to pipe it through');
         return null;
     };
     return ResponseManager;
