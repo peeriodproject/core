@@ -144,6 +144,11 @@ class ResponseManager implements ResponseManagerInterface {
 	 */
 	private _setupListeners ():void {
 		this._broadcastManager.on('BROADCAST_QUERY', (broadcastPayload:Buffer, broadcastId:string) => {
+			// only respond to it if we have circuits
+			if (!this._circuitManager.getReadyCircuits().length) {
+				return;
+			}
+
 			// we need to extract the possible feeding nodes
 			var feedingObj:any = null;
 

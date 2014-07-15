@@ -121,6 +121,11 @@ var ResponseManager = (function () {
     ResponseManager.prototype._setupListeners = function () {
         var _this = this;
         this._broadcastManager.on('BROADCAST_QUERY', function (broadcastPayload, broadcastId) {
+            // only respond to it if we have circuits
+            if (!_this._circuitManager.getReadyCircuits().length) {
+                return;
+            }
+
             // we need to extract the possible feeding nodes
             var feedingObj = null;
 
