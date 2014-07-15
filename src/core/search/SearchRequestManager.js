@@ -122,6 +122,11 @@ var SearchRequestManager = (function () {
             }
         };
 
+        logger.log('search', 'received response', {
+            queryId: queryId,
+            eventName: 'RECEIVED_RESULTS'
+        });
+
         try  {
             response = JSON.parse(responseBody.toString());
         } catch (e) {
