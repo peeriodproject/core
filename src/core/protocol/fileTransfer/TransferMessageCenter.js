@@ -146,18 +146,20 @@ var TransferMessageCenter = (function (_super) {
                 this._middleware.feedNode(feedingNodesBlock.nodes, predecessorCircuitId, slice);
             }
         } else if (msg.getMessageType() === 'QUERY_BROADCAST') {
-            var searchObject = msg.getPayload();
+            var payload = msg.getPayload();
             var broadcastId = msg.getTransferId();
-            var feedingIdentifier = this._cellManager.getFeedingIdentifierByCircuitId(predecessorCircuitId);
-            var externalAddress = this._protocolConnectionManager.getRandomExternalIpPortPair();
+            var feedingNodesObj = null;
+            var searchObject = null;
 
-            logger.log('query', 'Received QUERY_BROADCAST message', { queryId: broadcastId, feedingIdentifier: feedingIdentifier, externalAddress: externalAddress });
+            try  {
+                feedingNodesObj = FeedingNodesMessageBlock.extractAndDeconstructBlock(payload);
+                searchObject = payload.slice(feedingNodesObj.bytesRead);
+            } catch (e) {
+            }
 
-            if (feedingIdentifier && externalAddress) {
-                externalAddress.feedingIdentifier = feedingIdentifier;
-                var myFeedingBlock = FeedingNodesMessageBlock.constructBlock([externalAddress]);
-
-                this.emit('issueBroadcastQuery', predecessorCircuitId, broadcastId, searchObject, myFeedingBlock);
+            if (searchObject && feedingNodesObj && searchObject.length && feedingNodesObj.nodes.length) {
+                logger.log('query', 'Received QUERY_BROADCAST message', { queryId: broadcastId });
+                this.emit('issueBroadcastQuery', predecessorCircuitId, broadcastId, searchObject, payload);
             } else {
                 this._cellManager.teardownCell(predecessorCircuitId);
             }

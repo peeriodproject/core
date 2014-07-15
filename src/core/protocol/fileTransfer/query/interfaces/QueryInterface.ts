@@ -39,7 +39,8 @@ interface QueryInterface extends NodeJS.EventEmitter {
 	getQueryId ():string;
 
 	/**
-	 * Kicks off the query by sending the query instructions through the established hydra circuits.
+	 * Kicks off the query by sending the query instructions through the established hydra circuits, joined by a random
+	 * feeding nodes batch retrieved from the circuit manager.
 	 * Also sets the timeout the query lives.
 	 *
 	 * @method core.protocol.fileTransfer.QueryInterface#kickOff

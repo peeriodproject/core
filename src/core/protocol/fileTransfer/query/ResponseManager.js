@@ -165,17 +165,15 @@ var ResponseManager = (function () {
             }
         });
 
-        this._transferMessageCenter.on('issueBroadcastQuery', function (predecessorCircuitId, broadcastId, searchObject, myFeedingBlock) {
+        this._transferMessageCenter.on('issueBroadcastQuery', function (predecessorCircuitId, broadcastId, searchObject, broadcastPayload) {
             // start a broadcast but answer to the query by yourself after a given time
-            var broadcastPayload = Buffer.concat([myFeedingBlock, searchObject]);
-
             logger.log('query', 'Starting a broadcast', { queryId: broadcastId });
 
             _this._broadcastManager.initBroadcast('BROADCAST_QUERY', broadcastPayload, broadcastId);
 
             _this.externalQueryHandler(broadcastId, searchObject, function (identifier, results) {
                 if (results) {
-                    logger.log('query', 'Issuing external feed to circuit', { broadcastId: identifier });
+                    logger.log('query', 'Issuing result back through circuit', { broadcastId: identifier });
 
                     var msg = _this._wrapQueryResponse(identifier, results);
 

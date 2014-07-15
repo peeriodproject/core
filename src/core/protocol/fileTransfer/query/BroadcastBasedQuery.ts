@@ -6,6 +6,8 @@ import TransferMessageCenterInterface = require('../interfaces/TransferMessageCe
 import ReadableQueryResponseMessageInterface = require('../messages/interfaces/ReadableQueryResponseMessageInterface');
 import CircuitManagerInterface = require('../../hydra/interfaces/CircuitManagerInterface');
 import BroadcastManagerInterface = require('../../broadcast/interfaces/BroadcastManagerInterface');
+import HydraNodeList = require('../../hydra/interfaces/HydraNodeList');
+import FeedingNodesMessageBlock = require('../messages/FeedingNodesMessageBlock');
 
 var logger = require('../../../utils/logger/LoggerFactory').create();
 
@@ -122,7 +124,10 @@ class BroadcastBasedQuery extends events.EventEmitter implements QueryInterface 
 	}
 
 	public kickOff ():void {
-		var queryBroadcastPayload:Buffer = this._transferMessageCenter.wrapTransferMessage('QUERY_BROADCAST', this._queryId, this._searchObjectAsBuffer);
+		var feedingNodesBatch:HydraNodeList = this._circuitManager.getRandomFeedingNodesBatch();
+		var feedingNodesBlock:Buffer = FeedingNodesMessageBlock.constructBlock(feedingNodesBatch);
+
+		var queryBroadcastPayload:Buffer = this._transferMessageCenter.wrapTransferMessage('QUERY_BROADCAST', this._queryId, Buffer.concat([feedingNodesBlock, this._searchObjectAsBuffer]));
 		var allOkay:boolean = false;
 
 		if (queryBroadcastPayload) {

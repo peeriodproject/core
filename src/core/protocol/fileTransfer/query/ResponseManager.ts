@@ -191,9 +191,8 @@ class ResponseManager implements ResponseManagerInterface {
 			}
 		});
 
-		this._transferMessageCenter.on('issueBroadcastQuery', (predecessorCircuitId:string, broadcastId:string, searchObject:Buffer, myFeedingBlock:Buffer) => {
+		this._transferMessageCenter.on('issueBroadcastQuery', (predecessorCircuitId:string, broadcastId:string, searchObject:Buffer, broadcastPayload:Buffer) => {
 			// start a broadcast but answer to the query by yourself after a given time
-			var broadcastPayload:Buffer = Buffer.concat([myFeedingBlock, searchObject]);
 
 			logger.log('query', 'Starting a broadcast', {queryId: broadcastId});
 
@@ -201,7 +200,7 @@ class ResponseManager implements ResponseManagerInterface {
 
 			this.externalQueryHandler(broadcastId, searchObject, (identifier:string, results:Buffer) => {
 				if (results) {
-					logger.log('query', 'Issuing external feed to circuit', {broadcastId: identifier});
+					logger.log('query', 'Issuing result back through circuit', {broadcastId: identifier});
 
 					var msg = this._wrapQueryResponse(identifier, results);
 

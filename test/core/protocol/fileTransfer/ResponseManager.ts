@@ -121,7 +121,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> ResponseManager', function () 
 	});
 
 	it('should correctly issue a broadcast', function () {
-		transferMessageCenterStub.emit('issueBroadcastQuery', 'predecessorCirc', 'broadcastIdYo', new Buffer('muschi'), new Buffer('meine '));
+		transferMessageCenterStub.emit('issueBroadcastQuery', 'predecessorCirc', 'broadcastIdYo', new Buffer('muschi'), new Buffer('meine muschi'));
 		broadcastPayload.toString().should.equal('meine muschi');
 	});
 

@@ -156,6 +156,7 @@ class Middleware implements MiddlewareInterface {
 			bufferToSend = this._hydraMessageCenter.wrapFileTransferMessage(this._writableFileTransferMessageFactory.constructMessage(feedingIdentifier, 'GOT_FED', payloadToFeed));
 		}
 		catch(e) {
+			logger.log('middleware', 'Wrapping file transfer error');
 		}
 
 		if (bufferToSend) {
@@ -201,6 +202,8 @@ class Middleware implements MiddlewareInterface {
 						this._feedSocket(identifier, node.feedingIdentifier, payloadToFeed);
 					}
 					else {
+						logger.log('middleware', 'Cannot connect to node');
+
 						this._obtainConnectionAndFeed(feedingNodes, associatedCircuitId, payloadToFeed, usedIndices);
 					}
 				});
