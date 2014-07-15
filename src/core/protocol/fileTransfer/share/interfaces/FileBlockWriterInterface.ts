@@ -44,8 +44,28 @@ interface FileBlockWriterInterface {
 	 */
 	getFilePath ():string;
 
+	/**
+	 * Opens a file descriptor to the destination path and prepares a writable hash stream. Calls back with an error
+	 * if the file descriptor could not be opened.
+	 *
+	 * @method core.protocol.fileTransfer.share.FileBlockWriterInterface#prepareToWrite
+	 *
+	 * @param {Function} callback Function that gets called when everything has been prepared. Takes an error object as argument.
+	 */
 	prepareToWrite (callback:(err:Error) => any):void
 
+	/**
+	 * The main function: Write a byte block to the destination file, appending the bytes.
+	 * Calls back with a function with an optional eror, the full number of bytes that have been written (thus indicating
+	 * the position of the first byte of the next expected block) and a flag indicating whether the file is considered finished.
+	 * Finished is true, if the full count of written bytes equals the number of expected bytes of the file, plus if then
+	 * the calculated SHA-1 hash equals the expected hash.
+	 *
+	 * @method core.protocol.fileTransfer.share.FileBlockWriterInterface#writeBlock
+	 *
+	 * @param {Buffer} byteBlock The bytes to write to the file
+	 * @param {Function} callback The callback function (see above)
+	 */
 	writeBlock (byteBlock:Buffer, callback:(err:Error, fullCountOfWrittenBytes?:number, isFinished?:boolean) => any):void;
 
 
