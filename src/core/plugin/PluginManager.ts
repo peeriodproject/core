@@ -226,15 +226,18 @@ class PluginManager implements PluginManagerInterface {
 		this._pluginFinder.findPlugins(internalCallback);
 	}
 
-	public getActivePluginRunners (callback:(pluginRunners:PluginRunnerMapInterface) => void):void {
-		return process.nextTick(callback.bind(null, this._pluginRunners));
-	}
-
 	public getActivePluginRunner (identifier:string, callback:(pluginRunner:PluginRunnerInterface) => void):void {
 		var runner:PluginRunnerInterface = this._pluginRunners[identifier] ? this._pluginRunners[identifier] : null;
 
 		return process.nextTick(callback.bind(null, runner));
+	}
 
+	public getActivePluginRunnerIdentifiers (callback:(pluginRunnerIdentifiers:Array<string>) => any):void {
+		return process.nextTick(callback.bind(null, Object.keys(this._pluginRunners)));
+	}
+
+	public getActivePluginRunners (callback:(pluginRunners:PluginRunnerMapInterface) => void):void {
+		return process.nextTick(callback.bind(null, this._pluginRunners));
 	}
 
 	// todo check file extension

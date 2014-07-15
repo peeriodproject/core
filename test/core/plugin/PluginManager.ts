@@ -180,7 +180,7 @@ describe('CORE --> PLUGIN --> PluginManager', function () {
 		});
 	});
 
-	it('should correctly activate the plugin, trigger the "pluginAdded" event and return it\'s runner', function (done) {
+	it('should correctly activate the plugin, trigger the "pluginAdded" event and return it\'s runner @joern', function (done) {
 		var config:any = createConfig();
 		var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
 		var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator, {
@@ -224,7 +224,12 @@ describe('CORE --> PLUGIN --> PluginManager', function () {
 				pluginManager.getActivePluginRunner('foo bar active', function (pluginRunner) {
 					pluginRunner.should.equal(pluginRunnerStub);
 
-					closeAndDone(pluginManager, done);
+					pluginManager.getActivePluginRunnerIdentifiers(function (identifiers) {
+						identifiers.should.have.a.lengthOf(1);
+						identifiers[0].should.equal('foo bar active');
+
+						closeAndDone(pluginManager, done);
+					});
 				});
 			});
 		};
