@@ -12,10 +12,10 @@ class FileBlockWriter implements FileBlockWriterInterface {
 	private _canBeWritten:boolean = false;
 	private _hashStream:crypto.Hash = null;
 	private _fileDescriptor:number = null;
-	private _writePosition:number = 0;
 	private _fullCountOfWrittenBytes:number = 0;
 	private _aborted:boolean = false;
 	private _hashEnded:boolean = false;
+	private _fileDeleted:boolean = false;
 
 	public constructor (filename:string, toFolderPath:string, expectedSize:number, expectedHash:string) {
 		this._expectedHash = expectedHash;
@@ -23,8 +23,33 @@ class FileBlockWriter implements FileBlockWriterInterface {
 		this._fullPath = path.join(toFolderPath, filename);
 	}
 
+	public canBeWritten ():boolean {
+		return this._canBeWritten;
+	}
+
+	public getFileDescriptor ():number {
+		return this._fileDescriptor;
+	}
+
 	public abort (callback:Function):void {
 		this._abort(true, callback);
+	}
+
+	public deleteFile (callback:(err:Error) => any):void {
+		if (!this._fileDeleted) {
+			fs.unlink(this._fullPath, (err:Error) => {
+				if (!err) {
+					this._fileDeleted = true;
+					callback(null);
+				}
+				else {
+					callback(err);
+				}
+			});
+		}
+		else {
+			callback(null);
+		}
 	}
 
 	public prepareToWrite (callback:(err:Error) => any):void {
@@ -55,7 +80,7 @@ class FileBlockWriter implements FileBlockWriterInterface {
 
 			fs.close(this._fileDescriptor, () => {
 				if (deleteFile) {
-					fs.unlink(this._fullPath, () => {
+					this.deleteFile(() => {
 						callback();
 					});
 				}
@@ -69,7 +94,7 @@ class FileBlockWriter implements FileBlockWriterInterface {
 		}
 	}
 
-	public writeBlock (byteBlock:Buffer, callback:(err:Error, fullCountOfWrittenBytes?:number, isFinished?:boolean, positionOfFirstByteInNextBlock?:number) => any):void {
+	public writeBlock (byteBlock:Buffer, callback:(err:Error, fullCountOfWrittenBytes?:number, isFinished?:boolean) => any):void {
 		if (!this._canBeWritten) {
 			callback(new Error('FileBlockWriter: Cannot be written to.'));
 			return;
@@ -80,13 +105,14 @@ class FileBlockWriter implements FileBlockWriterInterface {
 
 
 		if (this._fullCountOfWrittenBytes + expectedBytesToWrite > this._expectedSize) {
-			byteBlockToWrite = byteBlock.slice(0, this._expectedSize - expectedBytesToWrite);
+			expectedBytesToWrite = this._expectedSize - this._fullCountOfWrittenBytes;
+			byteBlockToWrite = byteBlock.slice(0, expectedBytesToWrite);
 		}
 		else {
 			byteBlockToWrite = byteBlock;
 		}
 
-		fs.write(this._fileDescriptor, byteBlockToWrite, 0, expectedBytesToWrite, this._writePosition, (err:Error, numOfBytesWritten:number, writtenBuffer:Buffer) => {
+		fs.write(this._fileDescriptor, byteBlockToWrite, 0, expectedBytesToWrite, this._fullCountOfWrittenBytes, (err:Error, numOfBytesWritten:number, writtenBuffer:Buffer) => {
 			if (err) {
 				this._abort(true, () => {
 					callback(err);
@@ -118,13 +144,12 @@ class FileBlockWriter implements FileBlockWriterInterface {
 					}
 					else {
 						this._abort(true, () => {
-							callback(new Error('FileBlockWriter: Hashes do not match.'));
+							callback(new Error('FileBlockWriter: Hashes do not match.'), this._fullCountOfWrittenBytes);
 						});
 					}
 				}
 				else {
-					this._writePosition = this._fullCountOfWrittenBytes + 1;
-					callback(null, this._fullCountOfWrittenBytes, false, this._writePosition);
+					callback(null, this._fullCountOfWrittenBytes, false);
 				}
 			}
 		});

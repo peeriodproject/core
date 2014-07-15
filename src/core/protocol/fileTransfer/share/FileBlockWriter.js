@@ -10,16 +10,40 @@ var FileBlockWriter = (function () {
         this._canBeWritten = false;
         this._hashStream = null;
         this._fileDescriptor = null;
-        this._writePosition = 0;
         this._fullCountOfWrittenBytes = 0;
         this._aborted = false;
         this._hashEnded = false;
+        this._fileDeleted = false;
         this._expectedHash = expectedHash;
         this._expectedSize = expectedSize;
         this._fullPath = path.join(toFolderPath, filename);
     }
+    FileBlockWriter.prototype.canBeWritten = function () {
+        return this._canBeWritten;
+    };
+
+    FileBlockWriter.prototype.getFileDescriptor = function () {
+        return this._fileDescriptor;
+    };
+
     FileBlockWriter.prototype.abort = function (callback) {
         this._abort(true, callback);
+    };
+
+    FileBlockWriter.prototype.deleteFile = function (callback) {
+        var _this = this;
+        if (!this._fileDeleted) {
+            fs.unlink(this._fullPath, function (err) {
+                if (!err) {
+                    _this._fileDeleted = true;
+                    callback(null);
+                } else {
+                    callback(err);
+                }
+            });
+        } else {
+            callback(null);
+        }
     };
 
     FileBlockWriter.prototype.prepareToWrite = function (callback) {
@@ -50,7 +74,7 @@ var FileBlockWriter = (function () {
 
             fs.close(this._fileDescriptor, function () {
                 if (deleteFile) {
-                    fs.unlink(_this._fullPath, function () {
+                    _this.deleteFile(function () {
                         callback();
                     });
                 } else {
@@ -73,12 +97,13 @@ var FileBlockWriter = (function () {
         var byteBlockToWrite = null;
 
         if (this._fullCountOfWrittenBytes + expectedBytesToWrite > this._expectedSize) {
-            byteBlockToWrite = byteBlock.slice(0, this._expectedSize - expectedBytesToWrite);
+            expectedBytesToWrite = this._expectedSize - this._fullCountOfWrittenBytes;
+            byteBlockToWrite = byteBlock.slice(0, expectedBytesToWrite);
         } else {
             byteBlockToWrite = byteBlock;
         }
 
-        fs.write(this._fileDescriptor, byteBlockToWrite, 0, expectedBytesToWrite, this._writePosition, function (err, numOfBytesWritten, writtenBuffer) {
+        fs.write(this._fileDescriptor, byteBlockToWrite, 0, expectedBytesToWrite, this._fullCountOfWrittenBytes, function (err, numOfBytesWritten, writtenBuffer) {
             if (err) {
                 _this._abort(true, function () {
                     callback(err);
@@ -105,12 +130,11 @@ var FileBlockWriter = (function () {
                         });
                     } else {
                         _this._abort(true, function () {
-                            callback(new Error('FileBlockWriter: Hashes do not match.'));
+                            callback(new Error('FileBlockWriter: Hashes do not match.'), _this._fullCountOfWrittenBytes);
                         });
                     }
                 } else {
-                    _this._writePosition = _this._fullCountOfWrittenBytes + 1;
-                    callback(null, _this._fullCountOfWrittenBytes, false, _this._writePosition);
+                    callback(null, _this._fullCountOfWrittenBytes, false);
                 }
             }
         });
