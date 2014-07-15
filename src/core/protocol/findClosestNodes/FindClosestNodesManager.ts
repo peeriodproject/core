@@ -170,7 +170,6 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 					this._startCycleWithList(searchForId, contacts);
 				}
 				else {
-					logger.error('Routing table getClosestContactNodes error! Calling back with empty list.');
 					this.emit('foundClosestNodes', searchForId, []);
 				}
 			});

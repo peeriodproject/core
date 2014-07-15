@@ -144,7 +144,6 @@ var FindClosestNodesManager = (function (_super) {
                 if (!err && contacts && contacts.length) {
                     _this._startCycleWithList(searchForId, contacts);
                 } else {
-                    logger.error('Routing table getClosestContactNodes error! Calling back with empty list.');
                     _this.emit('foundClosestNodes', searchForId, []);
                 }
             });
