@@ -200,11 +200,14 @@ class ResponseManager implements ResponseManagerInterface {
 
 			this.externalQueryHandler(broadcastId, searchObject, (identifier:string, results:Buffer) => {
 				if (results) {
-					logger.log('query', 'Issuing result back through circuit', {broadcastId: identifier});
+
+					logger.log('query', 'Wrapping query response message', {broadcastId: identifier});
 
 					var msg = this._wrapQueryResponse(identifier, results);
 
 					if (msg) {
+						logger.log('query', 'Issuing result back through circuit', {broadcastId: identifier});
+
 						setTimeout(() => {
 							this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg);
 						}, Math.random() * this._waitForOwnResponseAsBroadcastInitiatorInMs);

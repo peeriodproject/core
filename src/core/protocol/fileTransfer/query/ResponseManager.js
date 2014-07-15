@@ -173,11 +173,13 @@ var ResponseManager = (function () {
 
             _this.externalQueryHandler(broadcastId, searchObject, function (identifier, results) {
                 if (results) {
-                    logger.log('query', 'Issuing result back through circuit', { broadcastId: identifier });
+                    logger.log('query', 'Wrapping query response message', { broadcastId: identifier });
 
                     var msg = _this._wrapQueryResponse(identifier, results);
 
                     if (msg) {
+                        logger.log('query', 'Issuing result back through circuit', { broadcastId: identifier });
+
                         setTimeout(function () {
                             _this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg);
                         }, Math.random() * _this._waitForOwnResponseAsBroadcastInitiatorInMs);
