@@ -120,7 +120,6 @@ var SearchRequestManager = (function () {
 
                 return internalCallback(err);
             }
-            ;
         };
 
         try  {
@@ -230,7 +229,7 @@ var SearchRequestManager = (function () {
         } else {
             this._searchClient.deleteOutgoingQuery(this._indexName, queryId, function (err) {
                 if (err) {
-                    console.error(err);
+                    logger.error(err);
                 }
 
                 return _this._triggerQueryCanceled(queryId, reason);
@@ -253,6 +252,11 @@ var SearchRequestManager = (function () {
     SearchRequestManager.prototype._checkAndAddResponse = function (queryId, responseBody, responseMeta, callback) {
         var _this = this;
         if (this._runningQueryIds[queryId] === undefined) {
+            logger.log('search', 'SearchRequestManager: no running query for the given queryId found', {
+                queryId: queryId,
+                eventName: 'QUERY_NOT_RUNNING'
+            });
+
             return process.nextTick(callback.bind(null, null));
         }
 
@@ -269,6 +273,8 @@ var SearchRequestManager = (function () {
 
             _this._searchClient.addIncomingResponse(_this._indexName, queryId, responseBody, responseMeta, function (err) {
                 if (err) {
+                    logger.error(err);
+
                     return callback(err);
                 }
 
@@ -286,9 +292,9 @@ var SearchRequestManager = (function () {
 
                         _this._triggerResultsChanged(queryId);
                     } else {
-                        logger.log('search', 'SearchRequestManager: results changed', {
+                        logger.log('search', 'SearchRequestManager: query is not running anymore', {
                             queryId: queryId,
-                            eventName: 'RESULTS_CHANGED'
+                            eventName: 'QUERY_NOT_RUNNING'
                         });
                     }
                 }
