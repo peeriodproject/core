@@ -7,9 +7,15 @@ import PluginInterface = require('./PluginInterface');
  * @class core.plugin.PluginRunnerInterface
  */
 interface PluginRunnerInterface extends PluginInterface  {
+
 	cleanup():void;
+
 	getMapping(callback:Function):void;
+
+	getQuery (query:Object, callback:Function):void;
+
 	getSearchFields(callback:Function):void;
+
 }
 
 export = PluginRunnerInterface;

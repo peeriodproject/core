@@ -107,6 +107,7 @@
         "databasePath"     : "db/searchStore",
         "searchStoreConfig": "./config/searchStore.json",
         "pidFilename"      : "elasticsearch-pid",
+        "searchFormStateConfig": "searchFormManager.json",
         "indexManager"     : {
             "indexRunnerDelayInMilliSeconds": 10000,
             "indexRunnersInParallel"        : 3

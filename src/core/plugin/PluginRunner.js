@@ -59,20 +59,26 @@ var PluginRunner = (function () {
     };
 
     PluginRunner.prototype.getMapping = function (callback) {
-        this._createAndRunStaticSandbox('main.getMapping', callback, function (output) {
-            callback(null, output);
+        this._createAndRunStaticSandbox('main.getMapping', {}, callback, function (output) {
+            return callback(null, output);
+        });
+    };
+
+    PluginRunner.prototype.getQuery = function (query, callback) {
+        this._createAndRunStaticSandbox('main.getQuery', { query: query }, callback, function (output) {
+            return callback(null, output);
         });
     };
 
     PluginRunner.prototype.getSearchFields = function (callback) {
-        this._createAndRunStaticSandbox('main.getSearchFields', callback, function (output) {
-            callback(null, output);
+        this._createAndRunStaticSandbox('main.getSearchFields', {}, callback, function (output) {
+            return callback(null, output);
         });
     };
 
     PluginRunner.prototype.onBeforeItemAdd = function (itemPath, stats, globals, callback) {
         this._createAndRunItemSandbox(itemPath, stats, globals, 'main.onBeforeItemAdd', callback, function (output) {
-            callback(null, output);
+            return callback(null, output);
         });
     };
 
@@ -102,15 +108,16 @@ var PluginRunner = (function () {
     * @method core.plugin.PluginRunner~_createAndRunStaticSandbox
     *
     * @param {string} methodName
+    * @param {Object} globals
     * @param {Function} callback
     * @param {Function} onExit
     */
-    PluginRunner.prototype._createAndRunStaticSandbox = function (methodName, callback, onExit) {
+    PluginRunner.prototype._createAndRunStaticSandbox = function (methodName, globals, callback, onExit) {
         this._createSandbox(methodName);
         this._registerSandboxTimeoutHandler(methodName, callback);
         this._registerSandboxExitHandler(methodName, callback, onExit);
 
-        this._sandboxScripts[methodName].run(methodName);
+        this._sandboxScripts[methodName].run(methodName, globals);
     };
 
     /**
@@ -140,7 +147,7 @@ var PluginRunner = (function () {
     PluginRunner.prototype._registerSandboxTimeoutHandler = function (itemPath, callback) {
         if (this._sandboxScripts[itemPath]) {
             this._sandboxScripts[itemPath].on('timeout', function (methodName) {
-                callback(new Error('PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call "' + methodName), null);
+                return callback(new Error('PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call "' + methodName), null);
             });
         }
     };
@@ -159,9 +166,9 @@ var PluginRunner = (function () {
             this._sandboxScripts[identifier].on('exit', function (err, output, methodName) {
                 if (err) {
                     return callback(err, null, methodName);
-                } else {
-                    return onExit(output);
                 }
+
+                return onExit(output);
             });
         }
     };

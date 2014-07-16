@@ -194,14 +194,18 @@ var PluginManager = (function () {
         this._pluginFinder.findPlugins(internalCallback);
     };
 
-    PluginManager.prototype.getActivePluginRunners = function (callback) {
-        return process.nextTick(callback.bind(null, this._pluginRunners));
-    };
-
     PluginManager.prototype.getActivePluginRunner = function (identifier, callback) {
         var runner = this._pluginRunners[identifier] ? this._pluginRunners[identifier] : null;
 
         return process.nextTick(callback.bind(null, runner));
+    };
+
+    PluginManager.prototype.getActivePluginRunnerIdentifiers = function (callback) {
+        return process.nextTick(callback.bind(null, Object.keys(this._pluginRunners)));
+    };
+
+    PluginManager.prototype.getActivePluginRunners = function (callback) {
+        return process.nextTick(callback.bind(null, this._pluginRunners));
     };
 
     // todo check file extension

@@ -75,20 +75,26 @@ class PluginRunner implements PluginRunnerInterface {
 	}
 
 	public getMapping (callback:Function):void {
-		this._createAndRunStaticSandbox('main.getMapping', callback, function (output:any) {
-			callback(null, output);
+		this._createAndRunStaticSandbox('main.getMapping', {}, callback, function (output:any) {
+			return callback(null, output);
+		});
+	}
+
+	public getQuery (query:Object, callback:Function):void {
+		this._createAndRunStaticSandbox('main.getQuery', { query: query }, callback, function (output:any) {
+			return callback(null, output);
 		});
 	}
 
 	public getSearchFields (callback:Function):void {
-		this._createAndRunStaticSandbox('main.getSearchFields', callback, function (output:any) {
-			callback(null, output);
+		this._createAndRunStaticSandbox('main.getSearchFields', {}, callback, function (output:any) {
+			return callback(null, output);
 		});
 	}
 
 	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, globals:Object, callback:Function):void {
 		this._createAndRunItemSandbox(itemPath, stats, globals, 'main.onBeforeItemAdd', callback, function (output:any) {
-			callback(null, output);
+			return callback(null, output);
 		});
 	}
 
@@ -118,15 +124,16 @@ class PluginRunner implements PluginRunnerInterface {
 	 * @method core.plugin.PluginRunner~_createAndRunStaticSandbox
 	 *
 	 * @param {string} methodName
+	 * @param {Object} globals
 	 * @param {Function} callback
 	 * @param {Function} onExit
 	 */
-	private _createAndRunStaticSandbox (methodName:string, callback:Function, onExit:(output:any) => void):void {
+	private _createAndRunStaticSandbox (methodName:string, globals, callback:Function, onExit:(output:any) => void):void {
 		this._createSandbox(methodName);
 		this._registerSandboxTimeoutHandler(methodName, callback);
 		this._registerSandboxExitHandler(methodName, callback, onExit);
 
-		this._sandboxScripts[methodName].run(methodName);
+		this._sandboxScripts[methodName].run(methodName, globals);
 	}
 
 	/**
@@ -156,7 +163,7 @@ class PluginRunner implements PluginRunnerInterface {
 	private _registerSandboxTimeoutHandler (itemPath:string, callback:Function):void {
 		if (this._sandboxScripts[itemPath]) {
 			this._sandboxScripts[itemPath].on('timeout', function (methodName) {
-				callback(new Error('PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call "' + methodName), null);
+				return callback(new Error('PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call "' + methodName), null);
 			});
 		}
 	}
@@ -176,9 +183,8 @@ class PluginRunner implements PluginRunnerInterface {
 				if (err) {
 					return callback(err, null, methodName);
 				}
-				else {
-					return onExit(output);
-				}
+
+				return onExit(output);
 			});
 		}
 	}

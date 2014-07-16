@@ -68,6 +68,15 @@ interface PluginManagerInterface extends ClosableAsyncInterface {
 	getActivePluginRunner (identifier:string, callback:(pluginRunner:PluginRunnerInterface) => void):void;
 
 	/**
+	 * Returns a list of active pluginRunner identifiers
+	 *
+	 * @method core.plugin.PluginManagerInterface#getActivePluginRunnerIdentifiers
+	 *
+	 * @param {Function} callback
+	 */
+	getActivePluginRunnerIdentifiers (callback:(pluginRunnerIdentifiers:Array<string>) => any):void;
+
+	/**
 	 * Returns a list of active plugin runners
 	 *
 	 * @method core.plugin.PluginManagerInterface#getActivePluginRunners
@@ -85,6 +94,7 @@ interface PluginManagerInterface extends ClosableAsyncInterface {
 	 * @param {Function} callback
 	 */
 	getPluginRunnersForItem (itemPath:string, callback:(pluginRunners:PluginRunnerMapInterface) => void):void;
+
 	/**
 	 * Returns the plugin state
 	 *
