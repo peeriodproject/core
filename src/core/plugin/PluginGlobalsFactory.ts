@@ -1,6 +1,7 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
 
 import fs = require('fs');
+import path = require('path');
 
 import PluginGlobalsFactoryInterface = require('./interfaces/PluginGlobalsFactoryInterface');
 
@@ -26,7 +27,7 @@ class PluginGlobalsFactory implements PluginGlobalsFactoryInterface {
 	 */
 	public create (itemPath:string, stats:fs.Stats, globals:Object):Object {
 		return ObjectUtils.extend({
-			fileName  : itemPath, // todo remove path
+			fileName  : path.basename(itemPath),
 			fileStats : stats ? Object.freeze(stats) : {}
 		}, globals);
 	}

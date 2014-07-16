@@ -1,4 +1,6 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
+var path = require('path');
+
 var ObjectUtils = require('../utils/ObjectUtils');
 
 /**
@@ -21,7 +23,7 @@ var PluginGlobalsFactory = (function () {
     */
     PluginGlobalsFactory.prototype.create = function (itemPath, stats, globals) {
         return ObjectUtils.extend({
-            fileName: itemPath,
+            fileName: path.basename(itemPath),
             fileStats: stats ? Object.freeze(stats) : {}
         }, globals);
     };
