@@ -52,6 +52,7 @@ var IndexManager = require('./search/IndexManager');
 var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
 
+var UiSearchFormManagerComponent = require('./ui/search/UiSearchFormManagerComponent');
 var UiManager = require('./ui/UiManager');
 
 // Testing purposes only
@@ -86,17 +87,6 @@ var App = {
             var searchRequestManager = new SearchRequestManager(_this.appQuitHandler, 'searchrequests', searchClient);
             var searchResponseManager = new SearchResponseManager(_this.appQuitHandler, searchClient);
 
-            /*searchResponseManager.onResultsFound((queryId:string, results:Buffer) => {
-            });
-            
-            searchRequestManager.onQueryResultsChanged((queryId:string) => {
-            });
-            
-            searchRequestManager.onQueryEnd((queryId:string, reason:string) => {
-            });
-            
-            searchRequestManager.onQueryCanceled((queryId:string, reason:string) => {
-            });*/
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
             if (!process.env.UI_ENABLED) {
@@ -170,8 +160,8 @@ var App = {
                         pluginManager.activatePluginState();
 
                         searchFormManager = new SearchFormManager(searchAppConfig, _this.appQuitHandler, stateHandlerFactory, pluginManager, searchRequestManager);
+                        _this.addUiComponent(new UiSearchFormManagerComponent(searchFormManager, searchRequestManager));
 
-                        //this.addUiComponent(new UiSearchFormManagerComponent(searchFormManager, searchRequestManager));
                         console.log('started indexer');
 
                         if (process.env.UI_ENABLED) {

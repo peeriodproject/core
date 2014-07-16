@@ -91,19 +91,6 @@ var App = {
 			var searchRequestManager = new SearchRequestManager(this.appQuitHandler, 'searchrequests', searchClient);
 			var searchResponseManager = new SearchResponseManager(this.appQuitHandler, searchClient);
 
-			/*searchResponseManager.onResultsFound((queryId:string, results:Buffer) => {
-			});
-
-			searchRequestManager.onQueryResultsChanged((queryId:string) => {
-			});
-
-			searchRequestManager.onQueryEnd((queryId:string, reason:string) => {
-			});
-
-			searchRequestManager.onQueryCanceled((queryId:string, reason:string) => {
-			});*/
-
-
 			var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
 			if (!process.env.UI_ENABLED) {
@@ -182,7 +169,7 @@ var App = {
 
 
 						searchFormManager = new SearchFormManager(searchAppConfig, this.appQuitHandler, stateHandlerFactory, pluginManager, searchRequestManager);
-						//this.addUiComponent(new UiSearchFormManagerComponent(searchFormManager, searchRequestManager));
+						this.addUiComponent(new UiSearchFormManagerComponent(searchFormManager, searchRequestManager));
 
 						console.log('started indexer');
 
