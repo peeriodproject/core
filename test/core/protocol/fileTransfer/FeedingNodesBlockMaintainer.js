@@ -10,7 +10,7 @@ var testUtils = require('../../../utils/testUtils');
 var HydraCircuit = require('../../../../src/core/protocol/hydra/HydraCircuit');
 var FeedingNodesBlockMaintainer = require('../../../../src/core/protocol/fileTransfer/share/FeedingNodesBlockMaintainer');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> FeedingNodesBlockMaintainer', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> FeedingNodesBlockMaintainer @current', function () {
     var circuitManagerStub = new events.EventEmitter();
     var sandbox = sinon.sandbox.create();
 
@@ -26,7 +26,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> FeedingNodesBlockMaintainer', 
         circuitManagerStub.listeners('circuitCount').length.should.equal(1);
     });
 
-    it('should correctly add new circuit nodes', function () {
+    it('should correctly add new circuit nodes', function (done) {
         maintainedCircuitNodes = [
             [
                 {
@@ -53,6 +53,13 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> FeedingNodesBlockMaintainer', 
                 }
             ]
         ];
+
+        blockMaintainer.once('nodeBatchLength', function (count) {
+            count.should.equal(2);
+            setImmediate(function () {
+                done();
+            });
+        });
 
         circuitManagerStub.emit('circuitCount');
 
