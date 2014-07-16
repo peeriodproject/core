@@ -10,7 +10,7 @@ var testUtils = require('../../../utils/testUtils');
 var HydraCircuit = require('../../../../src/core/protocol/hydra/HydraCircuit');
 var FeedingNodesBlockMaintainer = require('../../../../src/core/protocol/fileTransfer/share/FeedingNodesBlockMaintainer');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> FeedingNodesBlockMaintainer @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> FeedingNodesBlockMaintainer', function () {
     var circuitManagerStub = new events.EventEmitter();
     var sandbox = sinon.sandbox.create();
 

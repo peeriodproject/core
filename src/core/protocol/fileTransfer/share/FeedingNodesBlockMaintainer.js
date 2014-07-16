@@ -59,6 +59,7 @@ var FeedingNodesBlockMaintainer = (function (_super) {
     }
     FeedingNodesBlockMaintainer.prototype.cleanup = function () {
         this._circuitManager.removeListener('circuitCount', this._countListener);
+        this.removeAllListeners('nodeBatchLength');
     };
 
     FeedingNodesBlockMaintainer.prototype.getBlock = function () {

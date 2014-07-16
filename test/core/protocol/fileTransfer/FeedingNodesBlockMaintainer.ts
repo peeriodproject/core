@@ -12,7 +12,7 @@ import CircuitManager = require('../../../../src/core/protocol/hydra/CircuitMana
 import HydraCircuit = require('../../../../src/core/protocol/hydra/HydraCircuit');
 import FeedingNodesBlockMaintainer = require('../../../../src/core/protocol/fileTransfer/share/FeedingNodesBlockMaintainer');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> FeedingNodesBlockMaintainer @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> FeedingNodesBlockMaintainer', function () {
 
 	var circuitManagerStub:any = new events.EventEmitter();
 	var sandbox:SinonSandbox = sinon.sandbox.create();

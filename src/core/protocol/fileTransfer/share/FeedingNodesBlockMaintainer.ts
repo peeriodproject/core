@@ -63,6 +63,7 @@ class FeedingNodesBlockMaintainer extends events.EventEmitter implements Feeding
 
 	public cleanup ():void {
 		this._circuitManager.removeListener('circuitCount', this._countListener);
+		this.removeAllListeners('nodeBatchLength');
 	}
 
 	public getBlock ():Buffer {
