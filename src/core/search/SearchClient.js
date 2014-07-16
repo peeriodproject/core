@@ -137,8 +137,6 @@ var SearchClient = (function () {
 
             err = err || null;
 
-            console.log('RESULT MATCHED', matches.length, 'RUNNING QUERIES');
-
             return internalCallback(err, matches);
         });
     };

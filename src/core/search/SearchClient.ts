@@ -158,8 +158,6 @@ class SearchClient implements SearchClientInterface {
 
 			err = err || null;
 
-			console.log('RESULT MATCHED', matches.length, 'RUNNING QUERIES');
-
 			return internalCallback(err, matches);
 		});
 	}

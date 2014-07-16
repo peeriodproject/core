@@ -272,12 +272,8 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 
 			this._checkFolderWatcherPaths(pathsToWatch, (err:Error, invalidPaths:PathListInterface, validPaths:PathListInterface) => {
 				if (err) {
-					console.error(err);
 					return internalCallback(err);
 				}
-
-				console.log('invalid path', invalidPaths);
-				console.log('valid path', validPaths);
 
 				if (invalidPaths && invalidPaths.length) {
 					for (var i = 0, l = invalidPaths.length; i < l; i++) {
