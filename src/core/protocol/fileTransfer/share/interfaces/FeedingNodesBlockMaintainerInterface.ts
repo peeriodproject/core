@@ -14,7 +14,7 @@ import HydraNodeList = require('../../../hydra/interfaces/HydraNodeList');
  * @class
  * @interface core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface
  */
-interface FeedingNodesBlockMaintainerInterface {
+interface FeedingNodesBlockMaintainerInterface extends NodeJS.EventEmitter {
 
 	/**
 	 * Cleans up the listener on the circuit manager, so that the instance can be garbage collected.

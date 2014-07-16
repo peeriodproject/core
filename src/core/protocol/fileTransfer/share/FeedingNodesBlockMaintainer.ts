@@ -1,3 +1,5 @@
+import events = require('events');
+
 import FeedingNodesBlockMaintainerInterface = require('./interfaces/FeedingNodesBlockMaintainerInterface');
 import FeedingNodesMessageBlock = require('../messages/FeedingNodesMessageBlock');
 import CircuitManagerInterface = require('../../hydra/interfaces/CircuitManagerInterface');
@@ -14,7 +16,7 @@ import HydraNode = require('../../hydra/interfaces/HydraNode');
  *
  * @param {core.protocol.hydra.CircuitManagerInterface} circuitManager Working hydra circuit manager.
  */
-class FeedingNodesBlockMaintainer implements FeedingNodesBlockMaintainerInterface {
+class FeedingNodesBlockMaintainer extends events.EventEmitter implements FeedingNodesBlockMaintainerInterface {
 
 	/**
 	 * Stores the feeding nodes byte buffer block constructed from the currently maintained node batch.
@@ -45,6 +47,8 @@ class FeedingNodesBlockMaintainer implements FeedingNodesBlockMaintainerInterfac
 	private _nodeBatch:HydraNodeList = null;
 
 	public constructor (circuitManager:CircuitManagerInterface) {
+		super();
+
 		this._circuitManager = circuitManager;
 
 		this._nodeBatch = this._circuitManager.getRandomFeedingNodesBatch() || [];
@@ -59,6 +63,7 @@ class FeedingNodesBlockMaintainer implements FeedingNodesBlockMaintainerInterfac
 
 	public cleanup ():void {
 		this._circuitManager.removeListener('circuitCount', this._countListener);
+		this.removeAllListeners('nodeBatchLength');
 	}
 
 	public getBlock ():Buffer {
@@ -104,7 +109,14 @@ class FeedingNodesBlockMaintainer implements FeedingNodesBlockMaintainerInterfac
 		}
 
 		this._nodeBatch = newBatch;
+
 		this._block = FeedingNodesMessageBlock.constructBlock(this._nodeBatch);
+
+		var nodeBatchLength:number = this._nodeBatch.length;
+
+		if (nodeBatchLength) {
+			this.emit('nodeBatchLength', nodeBatchLength)
+		}
 	}
 
 }

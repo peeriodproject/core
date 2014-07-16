@@ -1,3 +1,11 @@
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var events = require('events');
+
 var FeedingNodesMessageBlock = require('../messages/FeedingNodesMessageBlock');
 
 /**
@@ -8,9 +16,11 @@ var FeedingNodesMessageBlock = require('../messages/FeedingNodesMessageBlock');
 *
 * @param {core.protocol.hydra.CircuitManagerInterface} circuitManager Working hydra circuit manager.
 */
-var FeedingNodesBlockMaintainer = (function () {
+var FeedingNodesBlockMaintainer = (function (_super) {
+    __extends(FeedingNodesBlockMaintainer, _super);
     function FeedingNodesBlockMaintainer(circuitManager) {
         var _this = this;
+        _super.call(this);
         /**
         * Stores the feeding nodes byte buffer block constructed from the currently maintained node batch.
         *
@@ -35,6 +45,7 @@ var FeedingNodesBlockMaintainer = (function () {
         * @member {core.protocol.hydra.HydraNodeList} core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer~_nodeBatch
         */
         this._nodeBatch = null;
+
         this._circuitManager = circuitManager;
 
         this._nodeBatch = this._circuitManager.getRandomFeedingNodesBatch() || [];
@@ -48,6 +59,7 @@ var FeedingNodesBlockMaintainer = (function () {
     }
     FeedingNodesBlockMaintainer.prototype.cleanup = function () {
         this._circuitManager.removeListener('circuitCount', this._countListener);
+        this.removeAllListeners('nodeBatchLength');
     };
 
     FeedingNodesBlockMaintainer.prototype.getBlock = function () {
@@ -93,10 +105,17 @@ var FeedingNodesBlockMaintainer = (function () {
         }
 
         this._nodeBatch = newBatch;
+
         this._block = FeedingNodesMessageBlock.constructBlock(this._nodeBatch);
+
+        var nodeBatchLength = this._nodeBatch.length;
+
+        if (nodeBatchLength) {
+            this.emit('nodeBatchLength', nodeBatchLength);
+        }
     };
     return FeedingNodesBlockMaintainer;
-})();
+})(events.EventEmitter);
 
 module.exports = FeedingNodesBlockMaintainer;
 //# sourceMappingURL=FeedingNodesBlockMaintainer.js.map
