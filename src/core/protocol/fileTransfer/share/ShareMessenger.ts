@@ -145,6 +145,7 @@ class ShareMessenger implements ShareMessengerInterface {
 
 		this._currentMessageListenerKey = expectedMessageType + '_' + expectedTransferIdentifier;
 		this._currentMessageListener = (circuitId:string, responseMessagePayload:Buffer) => {
+
 			this._hasResponded = true;
 			this._messageReceivedThroughCircuitId = circuitId;
 			this._currentMessageListener = null;
@@ -228,14 +229,19 @@ class ShareMessenger implements ShareMessengerInterface {
 	 * @returns {boolean} True if the message could be sent through one circuit, false if no circuit could be used.
 	 */
 	private _issueFeedAndSetTimeout (nodesToFeedBlock:Buffer, payloadToFeed:Buffer, skipCircuitListener:boolean = false, useDifferentCircuit:boolean = false):boolean {
+
 		var success:boolean = this._transferMessageCenter.issueExternalFeedToCircuit(nodesToFeedBlock, payloadToFeed, useDifferentCircuit ? null : this._messageReceivedThroughCircuitId);
 
 		if (success) {
+
 			this._waitForResponseTimeout = global.setTimeout(() => {
+				// it's important that this happens here and not after the other function, otherwise the timeout can get lost!
+				this._waitForResponseTimeout = 0;
+
 				if (!this._hasResponded) {
 					this._increaseRetryCountAndIssueAgain(nodesToFeedBlock, payloadToFeed);
 				}
-				this._waitForResponseTimeout = 0;
+
 			}, this._waitForResponseMessageInMs);
 		}
 		else {
