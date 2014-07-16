@@ -9,6 +9,14 @@ exports.main = {
         });
     },
 
+    getQuery: function () {
+        exit({
+            "term": {
+                "field": query
+            }
+        });
+    },
+
     getSearchFields: function () {
         exit({
             "action": "index.html",

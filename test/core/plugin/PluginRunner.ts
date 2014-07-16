@@ -151,6 +151,16 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
 			});
 		});
 
+		it ('should correctly call the getQuery method', function (done) {
+			var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
+
+			pluginRunner.getQuery('foobario', function (err:Error, output) {
+				output.should.containDeep({ term: { field: 'foobario' } });
+
+				done();
+			});
+		});
+
 		it('should correctly call the getSearchFields method', function (done) {
 			var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
 

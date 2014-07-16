@@ -10,7 +10,7 @@ var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var PluginRunner = require('../../../src/core/plugin/PluginRunner');
 
 // todo add json error tests
-describe('CORE --> PLUGIN --> PluginRunner', function () {
+describe('CORE --> PLUGIN --> PluginRunner @joern', function () {
     var sandbox;
     var pluginToLoadPath = 'src/plugins/textDocumentPlugin';
     var pluginsFolderPath = testUtils.getFixturePath('core/plugin/pluginRunner/plugins');
@@ -144,6 +144,16 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
                 });
 
                 cleanupAndDone(pluginRunner, done);
+            });
+        });
+
+        it('should correctly call the getQuery method', function (done) {
+            var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
+
+            pluginRunner.getQuery('foobario', function (err, output) {
+                output.should.containDeep({ term: { field: 'foobario' } });
+
+                done();
             });
         });
 
