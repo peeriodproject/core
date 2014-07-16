@@ -34,6 +34,7 @@ var SearchManager = require('./search/SearchManager');
 var SearchRequestManager = require('./search/SearchRequestManager');
 var SearchResponseManager = require('./search/SearchResponseManager');
 var SearchMessageBridge = require('./search/SearchMessageBridge');
+var SearchFormManager = require('./search/SearchFormManager');
 
 var PluginFinder = require('./plugin/PluginFinder');
 var PluginValidator = require('./plugin/PluginValidator');
@@ -85,25 +86,24 @@ var App = {
             var searchRequestManager = new SearchRequestManager(_this.appQuitHandler, 'searchrequests', searchClient);
             var searchResponseManager = new SearchResponseManager(_this.appQuitHandler, searchClient);
 
-            searchResponseManager.onResultsFound(function (queryId, results) {
+            /*searchResponseManager.onResultsFound((queryId:string, results:Buffer) => {
             });
-
-            searchRequestManager.onQueryResultsChanged(function (queryId) {
+            
+            searchRequestManager.onQueryResultsChanged((queryId:string) => {
             });
-
-            searchRequestManager.onQueryEnd(function (queryId, reason) {
+            
+            searchRequestManager.onQueryEnd((queryId:string, reason:string) => {
             });
-
-            searchRequestManager.onQueryCanceled(function (queryId, reason) {
-            });
-
+            
+            searchRequestManager.onQueryCanceled((queryId:string, reason:string) => {
+            });*/
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
             if (!process.env.UI_ENABLED) {
                 _this.startTopology(dataPath, searchMessageBridge);
             }
 
-            _this.startIndexer(searchConfig, searchClient);
+            _this.startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager);
 
             _this._requestManager = searchRequestManager;
             _this._responseManager = searchResponseManager;
@@ -122,11 +122,13 @@ var App = {
         var queryBody = {
             "query": {
                 "match": {
+                    "itemName": name,
                     "file": name
                 }
             },
             "highlight": {
                 "fields": {
+                    "itemName": {},
                     "file": {}
                 }
             }
@@ -140,10 +142,11 @@ var App = {
             this.appQuitHandler.quit();
         }.bind(this));
     },
-    startIndexer: function (searchConfig, searchClient) {
+    startIndexer: function (searchConfig, searchClient, searchRequestManager, searchResponseManager) {
         var _this = this;
         var fsConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'fs']);
         var pluginConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'plugin']);
+        var searchAppConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'search']);
 
         var pluginFinder = new PluginFinder(pluginConfig);
         var pluginValidator = new PluginValidator();
@@ -156,6 +159,7 @@ var App = {
         var pathValidator = new PathValidator();
         var folderWatcherManager;
         var indexManager;
+        var searchFormManager;
 
         var pluginManager = new PluginManager(pluginConfig, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
@@ -165,6 +169,9 @@ var App = {
                         indexManager = new IndexManager(searchConfig, _this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
                         pluginManager.activatePluginState();
 
+                        searchFormManager = new SearchFormManager(searchAppConfig, _this.appQuitHandler, stateHandlerFactory, pluginManager, searchRequestManager);
+
+                        //this.addUiComponent(new UiSearchFormManagerComponent(searchFormManager, searchRequestManager));
                         console.log('started indexer');
 
                         if (process.env.UI_ENABLED) {

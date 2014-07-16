@@ -252,12 +252,8 @@ var FolderWatcherManager = (function () {
 
             _this._checkFolderWatcherPaths(pathsToWatch, function (err, invalidPaths, validPaths) {
                 if (err) {
-                    console.error(err);
                     return internalCallback(err);
                 }
-
-                console.log('invalid path', invalidPaths);
-                console.log('valid path', validPaths);
 
                 if (invalidPaths && invalidPaths.length) {
                     for (var i = 0, l = invalidPaths.length; i < l; i++) {

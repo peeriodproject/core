@@ -12,7 +12,7 @@ interface SearchFormManagerInterface extends ClosableAsyncInterface {
 	 * @param query
 	 * @param {Function} callback
 	 */
-	addQuery (query:Object, callback?:(err:Error) => any):void
+	addQuery (query:any, callback?:(err:Error, queryId:string) => any):void
 
 	/**
 	 * Calls the given callback with a list of available forms as the first argument.
