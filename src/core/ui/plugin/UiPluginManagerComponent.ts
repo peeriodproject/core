@@ -7,7 +7,7 @@ import UiComponent = require('../UiComponent');
  * @class core.ui.UiPluginManagerComponent
  * @implements core.ui.UiComponentInterface
  */
-class UiPluginManagerComponent  extends UiComponent {
+class UiPluginManagerComponent extends UiComponent {
 
 	private _pluginManager:PluginManagerInterface = null;
 
@@ -23,8 +23,8 @@ class UiPluginManagerComponent  extends UiComponent {
 
 		pluginManager.open((err)  => {
 			/*pluginManager.findNewPlugins(function (err, data) {
-				console.log(err, data);
-			});*/
+			 console.log(err, data);
+			 });*/
 			pluginManager.activatePluginState(() => {
 				this._setInitialState();
 			});
@@ -39,7 +39,7 @@ class UiPluginManagerComponent  extends UiComponent {
 		return [];
 	}
 
-	public getState():Object {
+	public getState ():Object {
 		return this._state;
 	}
 
