@@ -17,7 +17,7 @@ import JSONStateHandlerFactory = require('../../../src/core/utils/JSONStateHandl
 import AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> SEARCH --> SearchFormManager @joern', function () {
+describe('CORE --> SEARCH --> SearchFormManager', function () {
 	var sandbox:SinonSandbox;
 	var configStub:any;
 	var appQuitHandlerStub:any;

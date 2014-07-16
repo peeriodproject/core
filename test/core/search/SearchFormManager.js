@@ -14,7 +14,7 @@ var JSONStateHandlerFactory = require('../../../src/core/utils/JSONStateHandlerF
 var AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> SEARCH --> SearchFormManager @joern', function () {
+describe('CORE --> SEARCH --> SearchFormManager', function () {
     var sandbox;
     var configStub;
     var appQuitHandlerStub;

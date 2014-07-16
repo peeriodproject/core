@@ -172,7 +172,7 @@ describe('CORE --> PLUGIN --> PluginManager', function () {
         });
     });
 
-    it('should correctly activate the plugin, trigger the "pluginAdded" event and return it\'s runner @joern', function (done) {
+    it('should correctly activate the plugin, trigger the "pluginAdded" event and return it\'s runner', function (done) {
         var config = createConfig();
         var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
         var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator, {
