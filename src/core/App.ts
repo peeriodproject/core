@@ -53,6 +53,7 @@ import IndexManager = require('./search/IndexManager');
 import UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 import UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
 import UiPluginManagerComponent = require('./ui/plugin/UiPluginManagerComponent');
+import UiSearchFormManagerComponent = require('./ui/search/UiSearchFormManagerComponent');
 import UiManager = require('./ui/UiManager');
 
 // Testing purposes only
@@ -181,7 +182,7 @@ var App = {
 
 
 						searchFormManager = new SearchFormManager(searchAppConfig, this.appQuitHandler, stateHandlerFactory, pluginManager, searchRequestManager);
-						//this.addUiComponent(new UiSearchFormManager(searchFormManager));
+						//this.addUiComponent(new UiSearchFormManagerComponent(searchFormManager, searchRequestManager));
 
 						console.log('started indexer');
 

@@ -171,7 +171,7 @@ var App = {
 
                         searchFormManager = new SearchFormManager(searchAppConfig, _this.appQuitHandler, stateHandlerFactory, pluginManager, searchRequestManager);
 
-                        //this.addUiComponent(new UiSearchFormManager(searchFormManager));
+                        //this.addUiComponent(new UiSearchFormManagerComponent(searchFormManager, searchRequestManager));
                         console.log('started indexer');
 
                         if (process.env.UI_ENABLED) {
