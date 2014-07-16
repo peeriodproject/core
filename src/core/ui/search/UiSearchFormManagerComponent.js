@@ -20,13 +20,13 @@ var UiSearchFormManagerComponent = (function (_super) {
         /**
         * The internally used SearchFormManagerInterface instance to start new queries
         *
-        * @member {core.search.SearchFormManagerInterface} core.ui.UiSearchFormManager~_searchFormManager
+        * @member {core.search.SearchFormManagerInterface} core.ui.UiSearchFormManagerComponent~_searchFormManager
         */
         this._searchFormManager = null;
         /**
         * The internally used SearchRequestManagerInterface to remove old queries
         *
-        * @member {core.search.SearchRequestManagerInterface} core.ui.UiSearchFormManager~_searchRequestManager
+        * @member {core.search.SearchRequestManagerInterface} core.ui.UiSearchFormManagerComponent~_searchRequestManager
         */
         this._searchRequestManager = null;
         /**
@@ -34,7 +34,7 @@ var UiSearchFormManagerComponent = (function (_super) {
         *
         * todo add the ability to run multiple queries in parallel aka tabs
         *
-        * @member {string} core.ui.UiSearchFormManager~_runningQueryId
+        * @member {string} core.ui.UiSearchFormManagerComponent~_runningQueryId
         */
         this._runningQueryId = null;
         /**
@@ -65,7 +65,7 @@ var UiSearchFormManagerComponent = (function (_super) {
     /**
     * Sets up the `addQuery` and `removeQuery` event listener
     *
-    * @method core.ui.UiSearchFormManager~_setupEventListeners
+    * @method core.ui.UiSearchFormManagerComponent~_setupEventListeners
     */
     UiSearchFormManagerComponent.prototype._setupEventListeners = function () {
         var _this = this;
@@ -105,7 +105,7 @@ var UiSearchFormManagerComponent = (function (_super) {
     /**
     * Removes the running query from the database
     *
-    * @method core.ui.UiSearchFormManager~_removeRunningQuery
+    * @method core.ui.UiSearchFormManagerComponent~_removeRunningQuery
     */
     UiSearchFormManagerComponent.prototype._removeRunningQuery = function () {
         if (!this._runningQueryId) {

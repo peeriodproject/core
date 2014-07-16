@@ -15,14 +15,14 @@ class UiSearchFormManagerComponent extends UiComponent {
 	/**
 	 * The internally used SearchFormManagerInterface instance to start new queries
 	 *
-	 * @member {core.search.SearchFormManagerInterface} core.ui.UiSearchFormManager~_searchFormManager
+	 * @member {core.search.SearchFormManagerInterface} core.ui.UiSearchFormManagerComponent~_searchFormManager
 	 */
 	private _searchFormManager:SearchFormManagerInterface = null;
 
 	/**
 	 * The internally used SearchRequestManagerInterface to remove old queries
 	 *
-	 * @member {core.search.SearchRequestManagerInterface} core.ui.UiSearchFormManager~_searchRequestManager
+	 * @member {core.search.SearchRequestManagerInterface} core.ui.UiSearchFormManagerComponent~_searchRequestManager
 	 */
 	private _searchRequestManager:SearchRequestManagerInterface = null;
 
@@ -31,7 +31,7 @@ class UiSearchFormManagerComponent extends UiComponent {
 	 *
 	 * todo add the ability to run multiple queries in parallel aka tabs
 	 *
-	 * @member {string} core.ui.UiSearchFormManager~_runningQueryId
+	 * @member {string} core.ui.UiSearchFormManagerComponent~_runningQueryId
 	 */
 	private _runningQueryId:string = null;
 
@@ -67,7 +67,7 @@ class UiSearchFormManagerComponent extends UiComponent {
 	/**
 	 * Sets up the `addQuery` and `removeQuery` event listener
 	 *
-	 * @method core.ui.UiSearchFormManager~_setupEventListeners
+	 * @method core.ui.UiSearchFormManagerComponent~_setupEventListeners
 	 */
 	private _setupEventListeners ():void {
 		this.on('addQuery', (rawQuery) => {
@@ -105,7 +105,7 @@ class UiSearchFormManagerComponent extends UiComponent {
 	/**
 	 * Removes the running query from the database
 	 *
-	 * @method core.ui.UiSearchFormManager~_removeRunningQuery
+	 * @method core.ui.UiSearchFormManagerComponent~_removeRunningQuery
 	 */
 	private _removeRunningQuery ():void {
 		if (!this._runningQueryId) {
