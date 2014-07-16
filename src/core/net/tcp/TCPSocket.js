@@ -63,6 +63,7 @@ var TCPSocket = (function (_super) {
         this._socket = null;
         this._preventWrite = false;
         this._uuid = '';
+        this._TESTisCircuit = false;
 
         if (!(socket && socket instanceof net.Socket)) {
             throw new Error('TCPSocket.constructor: Invalid or no socket specified');
@@ -98,6 +99,10 @@ var TCPSocket = (function (_super) {
 
         logger.log('socket', 'Added socket');
     }
+    TCPSocket.prototype.TESTsetIsCircuit = function (flag) {
+        this._TESTisCircuit = flag;
+    };
+
     TCPSocket.prototype.end = function (data, encoding) {
         if (this.getSocket() && !this._preventWrite) {
             this._preventWrite = true;
@@ -152,6 +157,9 @@ var TCPSocket = (function (_super) {
 
             if (this.getIdentifier().indexOf('hydra') > -1) {
                 logger.log('hydra', 'Hydra socket timed out', { socketIdent: this.getIdentifier() });
+                if (this._TESTisCircuit) {
+                    logger.log('error', 'Timed out a hydra circuit socket');
+                }
             }
 
             this.end();
