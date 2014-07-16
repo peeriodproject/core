@@ -71,8 +71,8 @@ var SearchFormManager = (function () {
         this._options = ObjectUtils.extend(defaults, options);
 
         if (this._options.closeOnProcessExit) {
-            appQuitHandler.add(function () {
-                _this.close(_this._options.onCloseCallback);
+            appQuitHandler.add(function (done) {
+                _this.close(done);
             });
         }
 

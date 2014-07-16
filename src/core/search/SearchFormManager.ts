@@ -89,8 +89,8 @@ class SearchFormManager implements SearchFormManagerInterface {
 		this._options = ObjectUtils.extend(defaults, options);
 
 		if (this._options.closeOnProcessExit) {
-			appQuitHandler.add(() => {
-				this.close(this._options.onCloseCallback);
+			appQuitHandler.add((done) => {
+				this.close(done);
 			});
 		}
 
