@@ -18,19 +18,56 @@ import ObjectUtils = require('../utils/ObjectUtils');
 /**
  * @class core.search.SearchFormManager
  * @implements core.search.SearchFormManagerInterface
+ *
+ * @param {core.config.ConfigInterface} config
+ * @param {core.utils.AppQuitHandlerInterface} appQuitHandler
+ * @param {core.utils.StateHandlerFactoryInterface} stateHandlerFactory
+ * @param {core.plugin.PluginManagerInterface} pluginManager
+ * @param {core.search.SearchRequestManagerInterface} searchRequestManager
+ * @param {core.utils.ClosableAsyncOptions} [options]
  */
 class SearchFormManager implements SearchFormManagerInterface {
 
+	/**
+	 * The internally used config instance
+	 *
+	 * @member {core.config.ConfigInterface} core.search.SearchFormManager~_config
+	 */
 	private _config:ConfigInterface = null;
 
+	/**
+	 * The identifier of the currently activated plugin to process incoming queries with.
+	 *
+	 * @member {string} core.search.SearchFormManager~_currentFormIdentifier
+	 */
 	private _currentFormIdentifier:string = null;
 
+	/**
+	 * A flag indicates weather the manager is open or closed
+	 *
+	 * @member {boolean} core.search.SearchFormManager~_isOpen
+	 */
 	private _isOpen:boolean = false;
 
+	/**
+	 * The internally uses PluginManagerInterface instance
+	 *
+	 * @member {core.plugin.PluginManagerInterface} core.search.SearchFormManager~_pluginManager
+	 */
 	private _pluginManager:PluginManagerInterface = null;
 
+	/**
+	 * The internally used StateHandlerInterface instance to load and save the current form state
+	 *
+	 * @member {core.utils.StateHandlerInterface} core.search.SearchFormManager~_stateHandler
+	 */
 	private _stateHandler:StateHandlerInterface = null;
 
+	/**
+	 * The internally used SearchRequestManagerInterface instance to start queries
+	 *
+	 * @member {core.search.SearchRequestManagerInterface} core.search.SearchFormManager~_searchRequestManager
+	 */
 	private _searchRequestManager:SearchRequestManagerInterface = null;
 
 	private _options:ClosableAsyncOptions = {};
@@ -60,15 +97,15 @@ class SearchFormManager implements SearchFormManagerInterface {
 		this.open(this._options.onOpenCallback);
 	}
 
-	public addQuery (rawQuery:any, callback?:(err:Error) => any):void {
-		var internalCallback = callback || function (err:Error) {
+	public addQuery (rawQuery:any, callback?:(err:Error, queryId:string) => any):void {
+		var internalCallback = callback || function (err:Error, queryId:string) {
 		};
 
 		this._pluginManager.getActivePluginRunner(this._currentFormIdentifier, (pluginRunner:PluginRunnerInterface) => {
 			pluginRunner.getQuery(rawQuery, (err:Error, query:Object) => {
 				if (err) {
 					console.log(err);
-					return internalCallback(err);
+					return internalCallback(err, null);
 				}
 
 				return this._searchRequestManager.addQuery(query, internalCallback);
@@ -152,6 +189,17 @@ class SearchFormManager implements SearchFormManagerInterface {
 		});
 	}
 
+	/**
+	 * Sets the given identifier as the new form processor and returns an error if the identifier is not available within the given identifiers list.
+	 *
+	 * @method core.search.SearchFormManager~_setForm
+	 *
+	 * todo ts-definition
+	 *
+	 * @param {Array} identifiers A list of all available identifiers
+	 * @param {string} identifier The identifier to activate
+	 * @returns {Error}
+	 */
 	private _setForm (identifiers:Array<string>, identifier:string):Error {
 		if (identifiers.indexOf(identifier) === -1) {
 			return new Error('SearchFormManager#setForm: Could not activate the given identifier. The Identifier "' + identifier + '" is invalid');
