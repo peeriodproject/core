@@ -9,6 +9,8 @@ declare function setState (state:any):void;
 declare function getFileName ():string;
 declare function getStats ():Object;
 
+declare var query:Object;
+
 declare var fileName:string;
 declare var fileStats:Object;
 declare var fileBuffer:any;
@@ -60,6 +62,26 @@ export var main = {
 							store: "yes"
 						}
 					}
+				}
+			}
+		});
+	},
+
+	getQuery: function () {
+		exit({
+			"query": {
+				"multi_match": {
+					"query": query,
+					"fields": [
+						"itemName",
+						"file"
+					]
+				}
+			},
+			"highlight": {
+				"fields": {
+					"itemName": {},
+					"file": {}
 				}
 			}
 		});

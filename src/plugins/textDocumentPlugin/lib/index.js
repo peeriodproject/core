@@ -50,6 +50,25 @@ exports.main = {
             }
         });
     },
+    getQuery: function () {
+        exit({
+            "query": {
+                "multi_match": {
+                    "query": query,
+                    "fields": [
+                        "itemName",
+                        "file"
+                    ]
+                }
+            },
+            "highlight": {
+                "fields": {
+                    "itemName": {},
+                    "file": {}
+                }
+            }
+        });
+    },
     getSearchFields: function () {
         exit({
             "action": "index.html",
