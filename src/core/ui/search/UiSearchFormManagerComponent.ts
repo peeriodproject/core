@@ -85,11 +85,16 @@ class UiSearchFormManagerComponent extends UiComponent {
 	}
 
 	/**
-	 * Creates a new query and stores the `queryId` for further cleanup
+	 * Creates a new query if it differs from the stored {@link core.ui.UiSearchFormManagerComponent~_runningQuery}
+	 * and stores the `queryId` for further cleanup.
 	 *
 	 * @param rawQuery
 	 */
 	private _addQuery (rawQuery:any):void {
+		if (this._runningQuery === rawQuery) {
+			return;
+		}
+
 		this._searchFormManager.addQuery(rawQuery, (err:Error, queryId:string) => {
 			if (err) {
 				console.error(err);

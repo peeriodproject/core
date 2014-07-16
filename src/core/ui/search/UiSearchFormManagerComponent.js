@@ -84,12 +84,17 @@ var UiSearchFormManagerComponent = (function (_super) {
     };
 
     /**
-    * Creates a new query and stores the `queryId` for further cleanup
+    * Creates a new query if it differs from the stored {@link core.ui.UiSearchFormManagerComponent~_runningQuery}
+    * and stores the `queryId` for further cleanup.
     *
     * @param rawQuery
     */
     UiSearchFormManagerComponent.prototype._addQuery = function (rawQuery) {
         var _this = this;
+        if (this._runningQuery === rawQuery) {
+            return;
+        }
+
         this._searchFormManager.addQuery(rawQuery, function (err, queryId) {
             if (err) {
                 console.error(err);
