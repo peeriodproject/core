@@ -216,10 +216,12 @@ var ShareMessenger = (function () {
 
         if (success) {
             this._waitForResponseTimeout = global.setTimeout(function () {
+                // it's important that this happens here and not after the other function, otherwise the timeout can get lost!
+                _this._waitForResponseTimeout = 0;
+
                 if (!_this._hasResponded) {
                     _this._increaseRetryCountAndIssueAgain(nodesToFeedBlock, payloadToFeed);
                 }
-                _this._waitForResponseTimeout = 0;
             }, this._waitForResponseMessageInMs);
         } else {
             if (!skipCircuitListener) {
