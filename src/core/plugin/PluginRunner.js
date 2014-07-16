@@ -19,7 +19,7 @@ var PluginRunner = (function () {
     function PluginRunner(config, identifier, pluginScriptPath) {
         this._config = null;
         this._sandbox = null;
-        this._sandboxScripts = [];
+        this._sandboxScripts = {};
         this._sandboxSocketPath = '';
         this._pluginCode = null;
         this._pluginGlobalsFactory = null;
@@ -46,6 +46,7 @@ var PluginRunner = (function () {
         this._pluginGlobalsFactory = new PluginGlobalsFactory();
         this._pluginCode = fs.readFileSync(this._pluginScriptPath, 'utf-8');
     }
+    // todo add a interval that cleans up old item sandboxes
     PluginRunner.prototype.cleanup = function () {
         this._sandbox.kill();
         this._sandboxScripts = null;
@@ -95,11 +96,13 @@ var PluginRunner = (function () {
     * @param {Function} onExit
     */
     PluginRunner.prototype._createAndRunItemSandbox = function (itemPath, stats, globals, methodName, callback, onExit) {
-        this._createSandbox(itemPath);
-        this._registerSandboxTimeoutHandler(itemPath, callback);
-        this._registerSandboxExitHandler(itemPath, callback, onExit);
+        var sandboxKey = itemPath + '_' + methodName;
 
-        this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
+        this._createSandbox(sandboxKey);
+        this._registerSandboxTimeoutHandler(sandboxKey, callback);
+        this._registerSandboxExitHandler(sandboxKey, callback, onExit);
+
+        this._sandboxScripts[sandboxKey].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
     };
 
     /**
@@ -145,8 +148,10 @@ var PluginRunner = (function () {
     * @param {Function} callback
     */
     PluginRunner.prototype._registerSandboxTimeoutHandler = function (itemPath, callback) {
+        var _this = this;
         if (this._sandboxScripts[itemPath]) {
-            this._sandboxScripts[itemPath].on('timeout', function (methodName) {
+            this._sandboxScripts[itemPath].once('timeout', function (methodName) {
+                _this._sandboxScripts[itemPath].reset();
                 return callback(new Error('PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call "' + methodName), null);
             });
         }
@@ -162,8 +167,11 @@ var PluginRunner = (function () {
     * @param {Function} onExit
     */
     PluginRunner.prototype._registerSandboxExitHandler = function (identifier, callback, onExit) {
+        var _this = this;
         if (this._sandboxScripts[identifier]) {
-            this._sandboxScripts[identifier].on('exit', function (err, output, methodName) {
+            this._sandboxScripts[identifier].once('exit', function (err, output, methodName) {
+                _this._sandboxScripts[identifier].reset();
+
                 if (err) {
                     return callback(err, null, methodName);
                 }

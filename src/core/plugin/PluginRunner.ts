@@ -26,7 +26,7 @@ class PluginRunner implements PluginRunnerInterface {
 
 	private _sandbox = null;
 
-	private _sandboxScripts = [];
+	private _sandboxScripts = {};
 
 	private _sandboxSocketPath:string = '';
 
@@ -61,6 +61,7 @@ class PluginRunner implements PluginRunnerInterface {
 		this._pluginCode = fs.readFileSync(this._pluginScriptPath, 'utf-8');
 	}
 
+	// todo add a interval that cleans up old item sandboxes
 	public cleanup ():void {
 		this._sandbox.kill();
 		this._sandboxScripts = null;
@@ -111,11 +112,13 @@ class PluginRunner implements PluginRunnerInterface {
 	 * @param {Function} onExit
 	 */
 	private _createAndRunItemSandbox (itemPath:string, stats:fs.Stats, globals:Object, methodName:string, callback:Function, onExit:(output:any) => void):void {
-		this._createSandbox(itemPath);
-		this._registerSandboxTimeoutHandler(itemPath, callback);
-		this._registerSandboxExitHandler(itemPath, callback, onExit);
+		var sandboxKey:string = itemPath + '_' + methodName;
 
-		this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
+		this._createSandbox(sandboxKey);
+		this._registerSandboxTimeoutHandler(sandboxKey, callback);
+		this._registerSandboxExitHandler(sandboxKey, callback, onExit);
+
+		this._sandboxScripts[sandboxKey].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
 	}
 
 	/**
@@ -162,7 +165,8 @@ class PluginRunner implements PluginRunnerInterface {
 	 */
 	private _registerSandboxTimeoutHandler (itemPath:string, callback:Function):void {
 		if (this._sandboxScripts[itemPath]) {
-			this._sandboxScripts[itemPath].on('timeout', function (methodName) {
+			this._sandboxScripts[itemPath].once('timeout', (methodName) => {
+				this._sandboxScripts[itemPath].reset();
 				return callback(new Error('PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call "' + methodName), null);
 			});
 		}
@@ -179,7 +183,9 @@ class PluginRunner implements PluginRunnerInterface {
 	 */
 	private _registerSandboxExitHandler (identifier:string, callback:Function, onExit:(output:any) => void):void {
 		if (this._sandboxScripts[identifier]) {
-			this._sandboxScripts[identifier].on('exit', function (err, output, methodName) {
+			this._sandboxScripts[identifier].once('exit', (err, output, methodName) => {
+				this._sandboxScripts[identifier].reset();
+
 				if (err) {
 					return callback(err, null, methodName);
 				}
