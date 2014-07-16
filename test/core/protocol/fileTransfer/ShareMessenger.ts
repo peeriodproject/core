@@ -186,6 +186,12 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> ShareMessenger', function () {
 		});
 	});
 
+	it('messenger1 should teardown its last circuit', function () {
+		messenger1.teardownLatestCircuit();
+
+		circuitManager1.tornDownCircuit.should.equal('bar');
+	});
+
 	before(function () {
 		sandbox = sinon.sandbox.create();
 
