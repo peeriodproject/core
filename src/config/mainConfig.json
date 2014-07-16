@@ -58,6 +58,10 @@
         },
         "response": {
             "waitForOwnResponseAsBroadcastInitiatorInSeconds": 2
+        },
+        "shareMessaging": {
+            "waitForResponseMessageInSeconds": 20,
+            "maximumNumberOfMessageTries": 2
         }
     },
     "hydra": {
