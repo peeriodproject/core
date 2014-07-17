@@ -97,7 +97,7 @@ describe('CORE --> SEARCH --> SearchManager @_joern', function () {
 		});
 	});
 
-	it('should correctly create a mapping for the given plugin identifier if it does not exists', function (done) {
+	it('should correctly create a mapping for the given plugin identifier if it does not exists @joern', function (done) {
 		var configStub:any = createConfig();
 		var pluginMapping:Object = {
 			properties: {
@@ -111,6 +111,12 @@ describe('CORE --> SEARCH --> SearchManager @_joern', function () {
 				itemPath: {
 					type : 'string',
 					store: 'yes'
+				}
+			},
+			_defaults_: {
+				_timestamp: {
+					enabled : true,
+					store : true
 				}
 			}
 		};

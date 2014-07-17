@@ -188,6 +188,16 @@ class SearchManager implements SearchManagerInterface {
 	private _updateMapping(mapping:Object):Object {
 		var source:Object = mapping['_source'] || {};
 		var properties:Object = mapping['properties'] || {};
+		var defaults:Object = mapping['_defaults_'] || {};
+
+		// add a timestamp to every item that will be indexed
+		// http://stackoverflow.com/a/17146144
+		mapping['_defaults_'] = ObjectUtils.extend(defaults, {
+			_timestamp : {
+				enabled : true,
+				store : true
+			}
+		});
 
 		// remove file content from source
 		// todo iterate over mapping and find attachment field by type

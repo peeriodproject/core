@@ -179,6 +179,16 @@ var SearchManager = (function () {
     SearchManager.prototype._updateMapping = function (mapping) {
         var source = mapping['_source'] || {};
         var properties = mapping['properties'] || {};
+        var defaults = mapping['_defaults_'] || {};
+
+        // add a timestamp to every item that will be indexed
+        // http://stackoverflow.com/a/17146144
+        mapping['_defaults_'] = ObjectUtils.extend(defaults, {
+            _timestamp: {
+                enabled: true,
+                store: true
+            }
+        });
 
         // remove file content from source
         // todo iterate over mapping and find attachment field by type
