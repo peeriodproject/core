@@ -190,6 +190,10 @@ class SearchFormManager implements SearchFormManagerInterface {
 		var internalCallback = callback || function (err:Error) {
 		};
 
+		if (identifier === this._currentFormIdentifier) {
+			return process.nextTick(internalCallback.bind(null, null));
+		}
+
 		this.getFormIdentifiers((identifiers) => {
 			var err = this._setForm(identifiers, identifier);
 

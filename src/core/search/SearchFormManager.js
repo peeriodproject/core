@@ -174,6 +174,10 @@ var SearchFormManager = (function () {
         var internalCallback = callback || function (err) {
         };
 
+        if (identifier === this._currentFormIdentifier) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+
         this.getFormIdentifiers(function (identifiers) {
             var err = _this._setForm(identifiers, identifier);
 
