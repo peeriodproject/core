@@ -22,6 +22,7 @@ import ReadableShareAbortMessageFactoryInterface = require('./messages/interface
 import WritableShareAbortMessageFactoryInterface = require('./messages/interfaces/WritableShareAbortMessageFactoryInterface');
 import ReadableDecryptedMessageFactoryInterface = require('../../hydra/messages/interfaces/ReadableDecryptedMessageFactoryInterface');
 import WritableEncryptedMessageFactoryInterface = require('../../hydra/messages/interfaces/WritableEncryptedMessageFactoryInterface');
+import WritableBlockRequestMessageFactoryInterface = require('./messages/interfaces/WritableBlockRequestMessageFactoryInterface');
 import ReadableDecryptedMessageInterface = require('../../hydra/messages/interfaces/ReadableDecryptedMessageInterface');
 
 class Download extends events.EventEmitter implements DownloadInterface {
@@ -40,6 +41,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 	private _readableShareAbortFactory:ReadableShareAbortMessageFactoryInterface = null;
 	private _readableShareRatifyFactory:ReadableShareRatifyMessageFactoryInterface = null;
 	private _writableShareAbortFactory:WritableShareAbortMessageFactoryInterface = null;
+	private _writableBlockRequestFactory:WritableBlockRequestMessageFactoryInterface = null;
 	private _readableBlockFactory:ReadableBlockMessageFactoryInterface = null;
 	private _decrypter:ReadableDecryptedMessageFactoryInterface = null;
 	private _encrypter:WritableEncryptedMessageFactoryInterface = null;
@@ -56,7 +58,8 @@ class Download extends events.EventEmitter implements DownloadInterface {
 		shareMessenger:ShareMessengerInterface, transferMessageCenter:TransferMessageCenterInterface, writableShareRequestFactory:WritableShareRequestMessageFactoryInterface,
 		writableEncryptedShareFactory:WritableEncryptedShareMessageFactoryInterface, readableEncryptedShareFactory:ReadableEncryptedShareMessageFactoryInterface,
 		readableShareAbortFactory:ReadableShareAbortMessageFactoryInterface, writableShareAbortFactory:WritableShareAbortMessageFactoryInterface,
-		readableBlockFactory:ReadableBlockMessageFactoryInterface, readableShareRatifyFactory:ReadableShareRatifyMessageFactoryInterface, decrypter:ReadableDecryptedMessageFactoryInterface, encrypter:WritableEncryptedMessageFactoryInterface) {
+		readableBlockFactory:ReadableBlockMessageFactoryInterface, readableShareRatifyFactory:ReadableShareRatifyMessageFactoryInterface, decrypter:ReadableDecryptedMessageFactoryInterface, encrypter:WritableEncryptedMessageFactoryInterface,
+		writableBlockRequestFactory:WritableBlockRequestMessageFactoryInterface) {
 
 		super();
 
@@ -72,6 +75,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 		this._readableEncryptedShareFactory = readableEncryptedShareFactory;
 		this._readableShareAbortFactory = readableShareAbortFactory;
 		this._writableShareAbortFactory = writableShareAbortFactory;
+		this._writableBlockRequestFactory = writableBlockRequestFactory;
 		this._readableBlockFactory = readableBlockFactory;
 		this._readableShareRatifyFactory = readableShareRatifyFactory;
 		this._decrypter = decrypter;
@@ -135,6 +139,128 @@ class Download extends events.EventEmitter implements DownloadInterface {
 
 	}
 
+	private _sendBlockRequest (bytePosition:number, transferIdentToUse:string, nodesToFeedBlock:Buffer, isLast:boolean = false):void {
+		this._prepareToImmediateShare((err:Error) => {
+			if (err && !isLast) {
+				this._kill(true, true, true, err.message, transferIdentToUse, nodesToFeedBlock);
+			}
+			else {
+				var nextTransferIdentifier:string = crypto.pseudoRandomBytes(16).toString('hex');
+				var blockRequestClear:Buffer = this._writableEncryptedShareFactory.constructMessage('BLOCK_REQUEST', this._writableBlockRequestFactory.constructMessage(this._feedingNodesBlockMaintainer.getBlock(), bytePosition, nextTransferIdentifier));
+
+				this._encrypter.encryptMessage(this._outgoingKey, true, blockRequestClear, (err:Error, encryptedBuffer:Buffer) => {
+					var sendableBuffer:Buffer = err ? null : this._transferMessageCenter.wrapTransferMessage('ENCRYPTED_SHARE', transferIdentToUse, encryptedBuffer);
+
+					if (isLast) {
+						if (sendableBuffer) {
+							// if this is the last message, i.e. last acknowledge message, ignore any abort, as we are done anyway
+							this._shareMessenger.pipeLastMessage(sendableBuffer, nodesToFeedBlock);
+						}
+						this._kill(false, true, false, 'Completed.');
+					}
+					else {
+						var errorMessage:string = err ? 'Encryption error.' : null;
+						errorMessage = this._manuallyAborted ? 'Manually aborted.' : errorMessage;
+
+						if (errorMessage) {
+							this._kill(true, true, true, errorMessage, transferIdentToUse, nodesToFeedBlock);
+						}
+						else {
+							this._shareMessenger.pipeMessageAndWaitForResponse(sendableBuffer, nodesToFeedBlock, 'ENCRYPTED_SHARE', nextTransferIdentifier, (err:Error, responsePayload:Buffer) => {
+								if (err) {
+									this._kill(true, true, false, err.message);
+								}
+								else {
+									this._handleBlockMessage(responsePayload, bytePosition);
+								}
+							});
+						}
+					}
+				});
+			}
+		});
+	}
+
+	private _handleBlockMessage (payload:Buffer, expectedBytePosition:number):void {
+		var decryptedMessage:ReadableDecryptedMessageInterface = null;
+		var malformedMessageErr:string = null;
+
+		try {
+			decryptedMessage = this._decrypter.create(payload, this._incomingKey);
+		}
+		catch (e) {
+			malformedMessageErr = 'Decryption error.';
+		}
+
+		if (decryptedMessage) {
+			var shareMessage:ReadableEncryptedShareMessageInterface = this._readableEncryptedShareFactory.create(decryptedMessage.getPayload());
+
+			if (!shareMessage) {
+				malformedMessageErr = 'Malformed share message.';
+			}
+			else {
+				if (shareMessage.getMessageType() === 'SHARE_ABORT') {
+					var shareAbortMessage:ReadableShareAbortMessageInterface = this._readableShareAbortFactory.create(shareMessage.getPayload());
+
+					if (!shareAbortMessage ) {
+						malformedMessageErr = 'Malformed abort message.';
+					}
+					else if (!(shareAbortMessage.getFileHash() === this._expectedHash && shareAbortMessage.getFilename() === this._filename && shareAbortMessage.getFilesize() === this._expectedSize)) {
+						malformedMessageErr = 'File properties do not match in abort message.';
+					}
+					else {
+						malformedMessageErr = 'Uploader aborted transfer.';
+					}
+
+				}
+				else if (shareMessage.getMessageType() === 'BLOCK') {
+					var blockMessage:ReadableBlockMessageInterface = this._readableBlockFactory.create(shareMessage.getPayload());
+
+					if (!blockMessage || blockMessage.getFirstBytePositionOfBlock() !== expectedBytePosition) {
+						malformedMessageErr = 'Malformed block message.';
+					}
+					else {
+						if (this._manuallyAborted) {
+							this._kill(true, true, true, 'Manually aborted.', blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
+						}
+						else {
+							// everything okay so for. pass to the file writer.
+							this._fileBlockWriter.writeBlock(blockMessage.getDataBlock(), (err:Error, fullCountOfWrittenBytes:number, isFinished:boolean) => {
+								if (isFinished) {
+									// finalize it
+									this._sendBlockRequest(fullCountOfWrittenBytes, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock(), true);
+
+									if (!this._manuallyAborted) {
+										this.emit('completed');
+									}
+								}
+								else {
+									var errorMessage:string = err ? err.message : null;
+									errorMessage = this._manuallyAborted ? 'Manually aborted.' : errorMessage;
+
+									if (errorMessage) {
+										this._kill(true, true, true, errorMessage, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
+									}
+									else {
+										this._sendBlockRequest(fullCountOfWrittenBytes, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
+									}
+								}
+							});
+						}
+					}
+				}
+				else {
+					malformedMessageErr = 'Prohibited message type.';
+				}
+			}
+		}
+
+		if (malformedMessageErr) {
+			this._kill(true, true, false, malformedMessageErr);
+			this._shareMessenger.teardownLatestCircuit();
+		}
+	}
+
 	private _handleRatifyMessage (payload:Buffer, prevTransferIdent:Buffer):void {
 		var ratifyMessage:ReadableShareRatifyMessageInterface = this._readableShareRatifyFactory.create(payload);
 		var malformedMessageErr:string = null;
@@ -195,6 +321,8 @@ class Download extends events.EventEmitter implements DownloadInterface {
 							}
 							else {
 								// fine until here, begin requesting the blocks
+								this.emit('startingTransfer');
+								this._sendBlockRequest(0, nextTransferIdentifier, nodesToFeedBlock);
 							}
 						}
 					}
@@ -213,14 +341,18 @@ class Download extends events.EventEmitter implements DownloadInterface {
 			callback(null);
 		}
 		else {
+
+			var nodeBatchLengthListener:Function = () => {
+				this.removeAllListeners('internalAbort');
+				callback(null);
+			};
+
 			this.once('internalAbort', () => {
+				this._feedingNodesBlockMaintainer.removeListener('nodeBatchLength', nodeBatchLengthListener);
 				callback(new Error('Manually aborted.'));
 			});
 
-			this._feedingNodesBlockMaintainer.once('nodeBatchLength', () => {
-				this.removeAllListeners('internalAbort');
-				callback(null);
-			});
+			this._feedingNodesBlockMaintainer.once('nodeBatchLength', nodeBatchLengthListener);
 		}
 	}
 
@@ -235,7 +367,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 				this._feedingNodesBlockMaintainer.cleanup();
 			}
 			if (sendLastAbortMessage) {
-				var lastMessageClearText:Buffer = this._writableShareAbortFactory.constructMessage(this._expectedSize, this._filename, this._expectedHash);
+				var lastMessageClearText:Buffer = this._writableEncryptedShareFactory.constructMessage('SHARE_ABORT', this._writableShareAbortFactory.constructMessage(this._expectedSize, this._filename, this._expectedHash));
 
 				this._encrypter.encryptMessage(this._outgoingKey, true, lastMessageClearText, (err:Error, encryptedPayload:Buffer) => {
 					if (!err) {
@@ -245,6 +377,11 @@ class Download extends events.EventEmitter implements DownloadInterface {
 				});
 			}
 
+			this.removeAllListeners('internalAbort');
+			this.removeAllListeners('abort');
+			this.removeAllListeners('startingTransfer');
+			this.removeAllListeners('requestingFile');
+			this.removeAllListeners('completed');
 			this.emit('killed', message);
 		}
 	}

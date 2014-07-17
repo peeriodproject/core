@@ -12,7 +12,7 @@ var Padding = require('../../../crypto/Padding');
 
 var Download = (function (_super) {
     __extends(Download, _super);
-    function Download(filename, expectedSize, expectedHash, initialFeedingNodesBlockBufferOfUploader, feedingNodesBlockMaintainer, fileBlockWriterFactory, shareMessenger, transferMessageCenter, writableShareRequestFactory, writableEncryptedShareFactory, readableEncryptedShareFactory, readableShareAbortFactory, writableShareAbortFactory, readableBlockFactory, readableShareRatifyFactory, decrypter, encrypter) {
+    function Download(filename, expectedSize, expectedHash, initialFeedingNodesBlockBufferOfUploader, feedingNodesBlockMaintainer, fileBlockWriterFactory, shareMessenger, transferMessageCenter, writableShareRequestFactory, writableEncryptedShareFactory, readableEncryptedShareFactory, readableShareAbortFactory, writableShareAbortFactory, readableBlockFactory, readableShareRatifyFactory, decrypter, encrypter, writableBlockRequestFactory) {
         _super.call(this);
         this._filename = null;
         this._expectedSize = 0;
@@ -28,6 +28,7 @@ var Download = (function (_super) {
         this._readableShareAbortFactory = null;
         this._readableShareRatifyFactory = null;
         this._writableShareAbortFactory = null;
+        this._writableBlockRequestFactory = null;
         this._readableBlockFactory = null;
         this._decrypter = null;
         this._encrypter = null;
@@ -49,6 +50,7 @@ var Download = (function (_super) {
         this._readableEncryptedShareFactory = readableEncryptedShareFactory;
         this._readableShareAbortFactory = readableShareAbortFactory;
         this._writableShareAbortFactory = writableShareAbortFactory;
+        this._writableBlockRequestFactory = writableBlockRequestFactory;
         this._readableBlockFactory = readableBlockFactory;
         this._readableShareRatifyFactory = readableShareRatifyFactory;
         this._decrypter = decrypter;
@@ -108,6 +110,116 @@ var Download = (function (_super) {
         });
     };
 
+    Download.prototype._sendBlockRequest = function (bytePosition, transferIdentToUse, nodesToFeedBlock, isLast) {
+        var _this = this;
+        if (typeof isLast === "undefined") { isLast = false; }
+        this._prepareToImmediateShare(function (err) {
+            if (err && !isLast) {
+                _this._kill(true, true, true, err.message, transferIdentToUse, nodesToFeedBlock);
+            } else {
+                var nextTransferIdentifier = crypto.pseudoRandomBytes(16).toString('hex');
+                var blockRequestClear = _this._writableEncryptedShareFactory.constructMessage('BLOCK_REQUEST', _this._writableBlockRequestFactory.constructMessage(_this._feedingNodesBlockMaintainer.getBlock(), bytePosition, nextTransferIdentifier));
+
+                _this._encrypter.encryptMessage(_this._outgoingKey, true, blockRequestClear, function (err, encryptedBuffer) {
+                    var sendableBuffer = err ? null : _this._transferMessageCenter.wrapTransferMessage('ENCRYPTED_SHARE', transferIdentToUse, encryptedBuffer);
+
+                    if (isLast) {
+                        if (sendableBuffer) {
+                            // if this is the last message, i.e. last acknowledge message, ignore any abort, as we are done anyway
+                            _this._shareMessenger.pipeLastMessage(sendableBuffer, nodesToFeedBlock);
+                        }
+                        _this._kill(false, true, false, 'Completed.');
+                    } else {
+                        var errorMessage = err ? 'Encryption error.' : null;
+                        errorMessage = _this._manuallyAborted ? 'Manually aborted.' : errorMessage;
+
+                        if (errorMessage) {
+                            _this._kill(true, true, true, errorMessage, transferIdentToUse, nodesToFeedBlock);
+                        } else {
+                            _this._shareMessenger.pipeMessageAndWaitForResponse(sendableBuffer, nodesToFeedBlock, 'ENCRYPTED_SHARE', nextTransferIdentifier, function (err, responsePayload) {
+                                if (err) {
+                                    _this._kill(true, true, false, err.message);
+                                } else {
+                                    _this._handleBlockMessage(responsePayload, bytePosition);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    };
+
+    Download.prototype._handleBlockMessage = function (payload, expectedBytePosition) {
+        var _this = this;
+        var decryptedMessage = null;
+        var malformedMessageErr = null;
+
+        try  {
+            decryptedMessage = this._decrypter.create(payload, this._incomingKey);
+        } catch (e) {
+            malformedMessageErr = 'Decryption error.';
+        }
+
+        if (decryptedMessage) {
+            var shareMessage = this._readableEncryptedShareFactory.create(decryptedMessage.getPayload());
+
+            if (!shareMessage) {
+                malformedMessageErr = 'Malformed share message.';
+            } else {
+                if (shareMessage.getMessageType() === 'SHARE_ABORT') {
+                    var shareAbortMessage = this._readableShareAbortFactory.create(shareMessage.getPayload());
+
+                    if (!shareAbortMessage) {
+                        malformedMessageErr = 'Malformed abort message.';
+                    } else if (!(shareAbortMessage.getFileHash() === this._expectedHash && shareAbortMessage.getFilename() === this._filename && shareAbortMessage.getFilesize() === this._expectedSize)) {
+                        malformedMessageErr = 'File properties do not match in abort message.';
+                    } else {
+                        malformedMessageErr = 'Uploader aborted transfer.';
+                    }
+                } else if (shareMessage.getMessageType() === 'BLOCK') {
+                    var blockMessage = this._readableBlockFactory.create(shareMessage.getPayload());
+
+                    if (!blockMessage || blockMessage.getFirstBytePositionOfBlock() !== expectedBytePosition) {
+                        malformedMessageErr = 'Malformed block message.';
+                    } else {
+                        if (this._manuallyAborted) {
+                            this._kill(true, true, true, 'Manually aborted.', blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
+                        } else {
+                            // everything okay so for. pass to the file writer.
+                            this._fileBlockWriter.writeBlock(blockMessage.getDataBlock(), function (err, fullCountOfWrittenBytes, isFinished) {
+                                if (isFinished) {
+                                    // finalize it
+                                    _this._sendBlockRequest(fullCountOfWrittenBytes, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock(), true);
+
+                                    if (!_this._manuallyAborted) {
+                                        _this.emit('completed');
+                                    }
+                                } else {
+                                    var errorMessage = err ? err.message : null;
+                                    errorMessage = _this._manuallyAborted ? 'Manually aborted.' : errorMessage;
+
+                                    if (errorMessage) {
+                                        _this._kill(true, true, true, errorMessage, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
+                                    } else {
+                                        _this._sendBlockRequest(fullCountOfWrittenBytes, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
+                                    }
+                                }
+                            });
+                        }
+                    }
+                } else {
+                    malformedMessageErr = 'Prohibited message type.';
+                }
+            }
+        }
+
+        if (malformedMessageErr) {
+            this._kill(true, true, false, malformedMessageErr);
+            this._shareMessenger.teardownLatestCircuit();
+        }
+    };
+
     Download.prototype._handleRatifyMessage = function (payload, prevTransferIdent) {
         var ratifyMessage = this._readableShareRatifyFactory.create(payload);
         var malformedMessageErr = null;
@@ -162,6 +274,8 @@ var Download = (function (_super) {
                                 this._kill(true, true, true, 'Manually aborted.', nextTransferIdentifier, nodesToFeedBlock);
                             } else {
                                 // fine until here, begin requesting the blocks
+                                this.emit('startingTransfer');
+                                this._sendBlockRequest(0, nextTransferIdentifier, nodesToFeedBlock);
                             }
                         }
                     }
@@ -180,14 +294,17 @@ var Download = (function (_super) {
         if (this._feedingNodesBlockMaintainer.getCurrentNodeBatch().length) {
             callback(null);
         } else {
+            var nodeBatchLengthListener = function () {
+                _this.removeAllListeners('internalAbort');
+                callback(null);
+            };
+
             this.once('internalAbort', function () {
+                _this._feedingNodesBlockMaintainer.removeListener('nodeBatchLength', nodeBatchLengthListener);
                 callback(new Error('Manually aborted.'));
             });
 
-            this._feedingNodesBlockMaintainer.once('nodeBatchLength', function () {
-                _this.removeAllListeners('internalAbort');
-                callback(null);
-            });
+            this._feedingNodesBlockMaintainer.once('nodeBatchLength', nodeBatchLengthListener);
         }
     };
 
@@ -203,7 +320,7 @@ var Download = (function (_super) {
                 this._feedingNodesBlockMaintainer.cleanup();
             }
             if (sendLastAbortMessage) {
-                var lastMessageClearText = this._writableShareAbortFactory.constructMessage(this._expectedSize, this._filename, this._expectedHash);
+                var lastMessageClearText = this._writableEncryptedShareFactory.constructMessage('SHARE_ABORT', this._writableShareAbortFactory.constructMessage(this._expectedSize, this._filename, this._expectedHash));
 
                 this._encrypter.encryptMessage(this._outgoingKey, true, lastMessageClearText, function (err, encryptedPayload) {
                     if (!err) {
@@ -213,6 +330,11 @@ var Download = (function (_super) {
                 });
             }
 
+            this.removeAllListeners('internalAbort');
+            this.removeAllListeners('abort');
+            this.removeAllListeners('startingTransfer');
+            this.removeAllListeners('requestingFile');
+            this.removeAllListeners('completed');
             this.emit('killed', message);
         }
     };
