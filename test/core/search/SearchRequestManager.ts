@@ -199,7 +199,7 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
 		});
 	});
 
-	it ('should correctly return an incoming response from the database and use the query cache for furtger calls @joern', function (done) {
+	it ('should correctly return an incoming response from the database and use the query cache for furtger calls', function (done) {
 		var manager = new SearchRequestManager(appQuitHandlerStub, 'searchqueries', searchClientStub, {
 			onOpenCallback: function () {
 				manager.addQuery({ foo: true }, function (err, queryId) {
