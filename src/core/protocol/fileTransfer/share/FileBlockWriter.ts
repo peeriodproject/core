@@ -240,18 +240,24 @@ class FileBlockWriter implements FileBlockWriterInterface {
 			fs.close(this._fileDescriptor, () => {
 				if (deleteFile) {
 					this.deleteFile(() => {
-						callback();
+						if (callback) {
+							callback();
+						}
 					});
 				}
 				else {
-					callback();
+					if (callback) {
+						callback();
+					}
 				}
 			});
 		}
 		else {
-			process.nextTick(function () {
-				callback();
-			});
+			if (callback) {
+				process.nextTick(function () {
+					callback();
+				});
+			}
 		}
 	}
 
