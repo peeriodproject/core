@@ -47,7 +47,7 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	 *
 	 * @param callback The arguments will be the `queryId` and the raw `queryBody` that was added.
 	 */
-	onQueryAdd (callback:Function):void;
+	onQueryAdd (callback:(queryId:string, queryBody:Object) => any):void;
 
 	/**
 	 * Adds a listener to the internal event emitter that triggers whenever a query ends after a specified timeframe expired
@@ -57,7 +57,7 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	 *
 	 * @param callback The first argument will be the `queryId` that ended.
 	 */
-	onQueryEnd (callback:Function):void;
+	onQueryEnd (callback:(queryId:string, reason:string) => any):void;
 
 	/**
 	 * Adds a listener to the internal event emitter that gets called whenever a new response matches a running query.
@@ -66,13 +66,16 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	 *
 	 * @param {Function} callback The first argument will be the `queryId` that matched the document.
 	 */
-	onQueryResultsChanged (callback:Function):void;
+	onQueryResultsChanged (callback:(queryId:string) => any):void;
 
 	/**
+	 * Adds a listener to the internal event emitter that gets called whenever a query was removed from the database.
 	 *
-	 * @param callback
+	 * @member core.search.SearchRequestManagerInterface#onQueryRemoved
+	 *
+	 * @param {Function} callback
 	 */
-	onQueryRemoved (callback:Function):void;
+	onQueryRemoved (callback:(queryId:string) => any):void;
 
 	/**
 	 * Adds a listener to the internal event emitter that triggers the function whenever a query was canceled.
@@ -81,7 +84,7 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	 *
 	 * @param {Function} callback The listener function. The first argument will be the `queryId` of the canceled query.
 	 */
-	onQueryCanceled (callback:Function):void;
+	onQueryCanceled (callback:(queryId:string, reason:string) => any):void;
 
 	/**
 	 * The query was canceled, aborted or timed out within the network layer.

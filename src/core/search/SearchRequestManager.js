@@ -207,6 +207,7 @@ var SearchRequestManager = (function () {
         });
     };
 
+    // todo add timestamp to query to fetch just the lastest results
     SearchRequestManager.prototype.getResponses = function (queryId, callback) {
         var _this = this;
         this._getQuery(queryId, function (err, queryBody) {

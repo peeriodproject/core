@@ -10,11 +10,11 @@ interface PluginRunnerInterface extends PluginInterface  {
 
 	cleanup():void;
 
-	getMapping(callback:Function):void;
+	getMapping(callback:(err:Error, mapping:Object) => any):void;
 
-	getQuery (query:Object, callback:Function):void;
+	getQuery (query:Object, callback:(err:Error, query:Object) => any):void;
 
-	getSearchFields(callback:Function):void;
+	getSearchFields(callback:(err:Error, searchFields:Object) => any):void;
 
 }
 
