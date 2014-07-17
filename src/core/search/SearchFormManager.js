@@ -103,14 +103,16 @@ var SearchFormManager = (function () {
             return process.nextTick(internalCallback.bind(null, null));
         }
 
-        this._stateHandler.save({ currentForm: this._currentFormIdentifier }, function (err) {
-            if (err) {
-                return internalCallback(err);
-            }
+        this.getState(function (state) {
+            _this._stateHandler.save(state, function (err) {
+                if (err) {
+                    return internalCallback(err);
+                }
 
-            _this._isOpen = false;
+                _this._isOpen = false;
 
-            return internalCallback(null);
+                return internalCallback(null);
+            });
         });
     };
 
@@ -120,6 +122,12 @@ var SearchFormManager = (function () {
 
     SearchFormManager.prototype.getCurrentFormIdentifier = function (callback) {
         return process.nextTick(callback.bind(null, this._currentFormIdentifier));
+    };
+
+    SearchFormManager.prototype.getState = function (callback) {
+        return process.nextTick(callback.bind(null, {
+            currentForm: this._currentFormIdentifier
+        }));
     };
 
     SearchFormManager.prototype.isOpen = function (callback) {
