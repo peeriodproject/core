@@ -409,6 +409,22 @@ class SearchClient implements SearchClientInterface {
 		});
 	}
 
+	public getOutgoingQuery (indexName:string, queryId:string, callback:(err:Error, queryBody:Object) => void):void {
+		this._client.getSource({
+			index: indexName.toLowerCase(),
+			type : '.percolator',
+			id: queryId
+		}, (err:Error, response:Object, status:number) => {
+			if (!this._isValidResponse(err, status, 'Not Found')) {
+				return callback(err, null);
+			}
+
+			response = response || null;
+
+			return callback(null, response);
+		});
+	}
+
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}

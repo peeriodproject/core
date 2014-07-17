@@ -311,7 +311,6 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 
     it('should correctly create a percolate index and check the item against the running query', function (done) {
         var queryBody = {
-            // This query will be run against documents sent to percolate
             query: {
                 match: {
                     message: "bonsai tree"
@@ -332,6 +331,25 @@ describe('CORE --> SEARCH --> SearchClient', function () {
                         _id: 'searchQueryId'
                     }
                 ]);
+
+                done();
+            });
+        });
+    });
+
+    it('should correctly return the corresponding query object for the specified queryId', function (done) {
+        var theQueryBody = {
+            query: {
+                match: {
+                    message: "bonsai tree"
+                }
+            }
+        };
+
+        searchClient.createOutgoingQuery('myindex', 'searchQueryId', theQueryBody, function (err) {
+            searchClient.getOutgoingQuery('myindex', 'searchQueryId', function (err, queryBody) {
+                (err === null).should.be.true;
+                queryBody.should.containDeep(theQueryBody);
 
                 done();
             });

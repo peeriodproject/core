@@ -122,6 +122,13 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 */
 	getItemByPath (itemPath:string, callback:(err:Error, item:SearchItemInterface) => any):void;
 
+	/**
+	 * Returns the corresponding queryBody to the given `queryId` from the database
+	 *
+	 * @param {string} queryId
+	 * @param {Function} callback
+	 */
+	getOutgoingQuery (indexName:string, queryId:string, callback:(err:Error, queryBody:Object) => void):void;
 	itemExists (pathToIndex:string, callback:(exists:boolean) => void):void;
 
 	itemExistsById (id:string, callback:(exists:boolean) => void):void;

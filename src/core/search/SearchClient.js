@@ -391,6 +391,23 @@ var SearchClient = (function () {
         });
     };
 
+    SearchClient.prototype.getOutgoingQuery = function (indexName, queryId, callback) {
+        var _this = this;
+        this._client.getSource({
+            index: indexName.toLowerCase(),
+            type: '.percolator',
+            id: queryId
+        }, function (err, response, status) {
+            if (!_this._isValidResponse(err, status, 'Not Found')) {
+                return callback(err, null);
+            }
+
+            response = response || null;
+
+            return callback(null, response);
+        });
+    };
+
     SearchClient.prototype.isOpen = function (callback) {
         return process.nextTick(callback.bind(null, null, this._isOpen));
     };
