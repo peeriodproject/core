@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">74.10</p>
+      <p class="stat">74.07</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">181</p>
+      <p class="stat">196</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">28.28</p>
+      <p class="stat">25.74</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.16</p>
+      <p class="stat">1.33</p>
     </div>
   </div>
 </div>
@@ -111,7 +111,7 @@ var PluginRunner = (function () {
     function PluginRunner(config, identifier, pluginScriptPath) {
         this._config = null;
         this._sandbox = null;
-        this._sandboxScripts = [];
+        this._sandboxScripts = {};
         this._sandboxSocketPath = &#039;&#039;;
         this._pluginCode = null;
         this._pluginGlobalsFactory = null;
@@ -138,6 +138,7 @@ var PluginRunner = (function () {
         this._pluginGlobalsFactory = new PluginGlobalsFactory();
         this._pluginCode = fs.readFileSync(this._pluginScriptPath, &#039;utf-8&#039;);
     }
+    // todo add a interval that cleans up old item sandboxes
     PluginRunner.prototype.cleanup = function () {
         this._sandbox.kill();
         this._sandboxScripts = null;
@@ -151,20 +152,26 @@ var PluginRunner = (function () {
     };
 
     PluginRunner.prototype.getMapping = function (callback) {
-        this._createAndRunStaticSandbox(&#039;main.getMapping&#039;, callback, function (output) {
-            callback(null, output);
+        this._createAndRunStaticSandbox(&#039;main.getMapping&#039;, {}, callback, function (output) {
+            return callback(null, output);
+        });
+    };
+
+    PluginRunner.prototype.getQuery = function (query, callback) {
+        this._createAndRunStaticSandbox(&#039;main.getQuery&#039;, { query: query }, callback, function (output) {
+            return callback(null, output);
         });
     };
 
     PluginRunner.prototype.getSearchFields = function (callback) {
-        this._createAndRunStaticSandbox(&#039;main.getSearchFields&#039;, callback, function (output) {
-            callback(null, output);
+        this._createAndRunStaticSandbox(&#039;main.getSearchFields&#039;, {}, callback, function (output) {
+            return callback(null, output);
         });
     };
 
     PluginRunner.prototype.onBeforeItemAdd = function (itemPath, stats, globals, callback) {
         this._createAndRunItemSandbox(itemPath, stats, globals, &#039;main.onBeforeItemAdd&#039;, callback, function (output) {
-            callback(null, output);
+            return callback(null, output);
         });
     };
 
@@ -181,11 +188,13 @@ var PluginRunner = (function () {
     * @param {Function} onExit
     */
     PluginRunner.prototype._createAndRunItemSandbox = function (itemPath, stats, globals, methodName, callback, onExit) {
-        this._createSandbox(itemPath);
-        this._registerSandboxTimeoutHandler(itemPath, callback);
-        this._registerSandboxExitHandler(itemPath, callback, onExit);
+        var sandboxKey = itemPath + &#039;_&#039; + methodName;
 
-        this._sandboxScripts[itemPath].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
+        this._createSandbox(sandboxKey);
+        this._registerSandboxTimeoutHandler(sandboxKey, callback);
+        this._registerSandboxExitHandler(sandboxKey, callback, onExit);
+
+        this._sandboxScripts[sandboxKey].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
     };
 
     /**
@@ -194,15 +203,16 @@ var PluginRunner = (function () {
     * @method core.plugin.PluginRunner~_createAndRunStaticSandbox
     *
     * @param {string} methodName
+    * @param {Object} globals
     * @param {Function} callback
     * @param {Function} onExit
     */
-    PluginRunner.prototype._createAndRunStaticSandbox = function (methodName, callback, onExit) {
+    PluginRunner.prototype._createAndRunStaticSandbox = function (methodName, globals, callback, onExit) {
         this._createSandbox(methodName);
         this._registerSandboxTimeoutHandler(methodName, callback);
         this._registerSandboxExitHandler(methodName, callback, onExit);
 
-        this._sandboxScripts[methodName].run(methodName);
+        this._sandboxScripts[methodName].run(methodName, globals);
     };
 
     /**
@@ -230,9 +240,11 @@ var PluginRunner = (function () {
     * @param {Function} callback
     */
     PluginRunner.prototype._registerSandboxTimeoutHandler = function (itemPath, callback) {
+        var _this = this;
         if (this._sandboxScripts[itemPath]) {
-            this._sandboxScripts[itemPath].on(&#039;timeout&#039;, function (methodName) {
-                callback(new Error(&#039;PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call &quot;&#039; + methodName), null);
+            this._sandboxScripts[itemPath].once(&#039;timeout&#039;, function (methodName) {
+                _this._sandboxScripts[itemPath].reset();
+                return callback(new Error(&#039;PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call &quot;&#039; + methodName), null);
             });
         }
     };
@@ -247,13 +259,16 @@ var PluginRunner = (function () {
     * @param {Function} onExit
     */
     PluginRunner.prototype._registerSandboxExitHandler = function (identifier, callback, onExit) {
+        var _this = this;
         if (this._sandboxScripts[identifier]) {
-            this._sandboxScripts[identifier].on(&#039;exit&#039;, function (err, output, methodName) {
+            this._sandboxScripts[identifier].once(&#039;exit&#039;, function (err, output, methodName) {
+                _this._sandboxScripts[identifier].reset();
+
                 if (err) {
                     return callback(err, null, methodName);
-                } else {
-                    return onExit(output);
                 }
+
+                return onExit(output);
             });
         }
     };

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">69.99</p>
+      <p class="stat">67.73</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">291</p>
+      <p class="stat">288</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">24.64</p>
+      <p class="stat">25.32</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.04</p>
+      <p class="stat">3.11</p>
     </div>
   </div>
 </div>
@@ -126,6 +126,7 @@ var SearchManager = require(&#039;./search/SearchManager&#039;);
 var SearchRequestManager = require(&#039;./search/SearchRequestManager&#039;);
 var SearchResponseManager = require(&#039;./search/SearchResponseManager&#039;);
 var SearchMessageBridge = require(&#039;./search/SearchMessageBridge&#039;);
+var SearchFormManager = require(&#039;./search/SearchFormManager&#039;);
 
 var PluginFinder = require(&#039;./plugin/PluginFinder&#039;);
 var PluginValidator = require(&#039;./plugin/PluginValidator&#039;);
@@ -143,6 +144,7 @@ var IndexManager = require(&#039;./search/IndexManager&#039;);
 var UiFolderWatcherManagerComponent = require(&#039;./ui/folder/UiFolderWatcherManagerComponent&#039;);
 var UiFolderDropzoneComponent = require(&#039;./ui/folder/UiFolderDropzoneComponent&#039;);
 
+var UiSearchFormManagerComponent = require(&#039;./ui/search/UiSearchFormManagerComponent&#039;);
 var UiManager = require(&#039;./ui/UiManager&#039;);
 
 // Testing purposes only
@@ -177,25 +179,13 @@ var App = {
             var searchRequestManager = new SearchRequestManager(_this.appQuitHandler, &#039;searchrequests&#039;, searchClient);
             var searchResponseManager = new SearchResponseManager(_this.appQuitHandler, searchClient);
 
-            searchResponseManager.onResultsFound(function (queryId, results) {
-            });
-
-            searchRequestManager.onQueryResultsChanged(function (queryId) {
-            });
-
-            searchRequestManager.onQueryEnd(function (queryId, reason) {
-            });
-
-            searchRequestManager.onQueryCanceled(function (queryId, reason) {
-            });
-
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
             if (!process.env.UI_ENABLED) {
                 _this.startTopology(dataPath, searchMessageBridge);
             }
 
-            _this.startIndexer(searchConfig, searchClient);
+            _this.startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager);
 
             _this._requestManager = searchRequestManager;
             _this._responseManager = searchResponseManager;
@@ -214,11 +204,13 @@ var App = {
         var queryBody = {
             &quot;query&quot;: {
                 &quot;match&quot;: {
+                    &quot;itemName&quot;: name,
                     &quot;file&quot;: name
                 }
             },
             &quot;highlight&quot;: {
                 &quot;fields&quot;: {
+                    &quot;itemName&quot;: {},
                     &quot;file&quot;: {}
                 }
             }
@@ -232,10 +224,11 @@ var App = {
             this.appQuitHandler.quit();
         }.bind(this));
     },
-    startIndexer: function (searchConfig, searchClient) {
+    startIndexer: function (searchConfig, searchClient, searchRequestManager, searchResponseManager) {
         var _this = this;
         var fsConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;fs&#039;]);
         var pluginConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;plugin&#039;]);
+        var searchAppConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;search&#039;]);
 
         var pluginFinder = new PluginFinder(pluginConfig);
         var pluginValidator = new PluginValidator();
@@ -248,6 +241,7 @@ var App = {
         var pathValidator = new PathValidator();
         var folderWatcherManager;
         var indexManager;
+        var searchFormManager;
 
         var pluginManager = new PluginManager(pluginConfig, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
@@ -256,6 +250,9 @@ var App = {
                     onOpenCallback: function () {
                         indexManager = new IndexManager(searchConfig, _this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
                         pluginManager.activatePluginState();
+
+                        searchFormManager = new SearchFormManager(searchAppConfig, _this.appQuitHandler, stateHandlerFactory, pluginManager, searchRequestManager);
+                        _this.addUiComponent(new UiSearchFormManagerComponent(searchFormManager, searchRequestManager));
 
                         console.log(&#039;started indexer&#039;);
 
@@ -267,7 +264,7 @@ var App = {
 
                 // register ui components
                 // ----------------------
-                _this.addUiComponent(new UiFolderWatcherManagerComponent(folderWatcherManager));
+                _this.addUiComponent(new UiFolderWatcherManagerComponent(_this._gui, folderWatcherManager));
                 //});
             }
         });

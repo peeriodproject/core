@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.81</p>
+      <p class="stat">70.93</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">616</p>
+      <p class="stat">664</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">72.85</p>
+      <p class="stat">78.21</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">5.00</p>
+      <p class="stat">5.38</p>
     </div>
   </div>
 </div>
@@ -206,10 +206,12 @@ var SearchClient = (function () {
 
         this._client.index({
             index: indexName.toLowerCase(),
-            type: &#039;response&#039; + type.toLowerCase(),
-            body: body
+            type: this._getResponseType(type),
+            body: body,
+            refresh: true
         }, function (err, response, status) {
             err = err || null;
+
             return internalCallback(err);
         });
     };
@@ -220,7 +222,7 @@ var SearchClient = (function () {
 
         this._client.percolate({
             index: indexName.toLowerCase(),
-            type: &#039;response-&#039; + type.toLowerCase(),
+            type: this._getResponseType(type),
             body: {
                 doc: responseBody
             }
@@ -228,8 +230,6 @@ var SearchClient = (function () {
             var matches = response &amp;&amp; response[&#039;total&#039;] ? response[&#039;matches&#039;] : [];
 
             err = err || null;
-
-            console.log(&#039;RESULT MATCHED&#039;, matches.length, &#039;RUNNING QUERIES&#039;);
 
             return internalCallback(err, matches);
         });
@@ -322,6 +322,7 @@ var SearchClient = (function () {
             body: queryBody
         }, function (err, response, status) {
             err = err || null;
+
             return internalCallback(err);
         });
     };
@@ -415,7 +416,7 @@ var SearchClient = (function () {
         // delete all responses for the queryId
         this._client.deleteByQuery({
             index: indexName,
-            type: &#039;response-&#039; + queryId.toLowerCase(),
+            type: this._getResponseType(queryId),
             body: {
                 query: {
                     bool: {
@@ -435,6 +436,24 @@ var SearchClient = (function () {
             responsesDeleted = true;
 
             return checkCallback(err);
+        });
+    };
+
+    SearchClient.prototype.getIncomingResponses = function (indexName, type, queryBody, callback) {
+        this._client.search({
+            index: indexName.toLowerCase(),
+            type: this._getResponseType(type),
+            body: queryBody
+        }, function (err, response, status) {
+            var hits = response &amp;&amp; response[&#039;hits&#039;] ? response[&#039;hits&#039;] : {};
+
+            err = err || null;
+
+            if (!(hits &amp;&amp; hits[&#039;total&#039;])) {
+                return callback(null, null);
+            }
+
+            return callback(null, hits);
         });
     };
 
@@ -482,6 +501,23 @@ var SearchClient = (function () {
             }
 
             return callback(null, _this._createSearchItemFromHits(hits[&#039;hits&#039;]));
+        });
+    };
+
+    SearchClient.prototype.getOutgoingQuery = function (indexName, queryId, callback) {
+        var _this = this;
+        this._client.getSource({
+            index: indexName.toLowerCase(),
+            type: &#039;.percolator&#039;,
+            id: queryId
+        }, function (err, response, status) {
+            if (!_this._isValidResponse(err, status, &#039;Not Found&#039;)) {
+                return callback(err, null);
+            }
+
+            response = response || null;
+
+            return callback(null, response);
         });
     };
 
@@ -657,6 +693,18 @@ var SearchClient = (function () {
         }
 
         return this._searchItemFactory.create([response]);
+    };
+
+    /**
+    * Returns the prefixed lowercase type
+    *
+    * @method core.search.SearchClient~_getResponseType
+    *
+    * @param type
+    * @returns {string}
+    */
+    SearchClient.prototype._getResponseType = function (type) {
+        return &#039;response&#039; + type.toLowerCase();
     };
 
     /**

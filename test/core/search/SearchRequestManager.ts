@@ -65,8 +65,15 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
 
 			deleteOutgoingQuery: function () {
 				return process.nextTick(arguments[2].bind(null, null));
-			}
+			},
 
+			getOutgoingQuery: function () {
+				return process.nextTick(arguments[2].bind(null, null, { query: true }));
+			},
+
+			getIncomingResponses: function () {
+				return process.nextTick(arguments[3].bind(null, null, { response: true }));
+			}
 		});
 	});
 
@@ -186,6 +193,48 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
 						});
 
 						closeAndDone(manager, done);
+					});
+				});
+			}
+		});
+	});
+
+	it ('should correctly return an incoming response from the database and use the query cache for furtger calls @joern', function (done) {
+		var manager = new SearchRequestManager(appQuitHandlerStub, 'searchqueries', searchClientStub, {
+			onOpenCallback: function () {
+				manager.addQuery({ foo: true }, function (err, queryId) {
+					// first call: get outgoing query from database
+					manager.getResponses(queryId, (err:Error, responses:Object) => {
+						(err === null).should.be.true;
+
+						searchClientStub.getOutgoingQuery.calledOnce.should.be.true;
+						searchClientStub.getOutgoingQuery.getCall(0).args[0].should.equal('searchqueries');
+						searchClientStub.getOutgoingQuery.getCall(0).args[1].should.equal(queryId);
+
+						searchClientStub.getIncomingResponses.calledOnce.should.be.true;
+						searchClientStub.getIncomingResponses.getCall(0).args[0].should.equal('searchqueries');
+						searchClientStub.getIncomingResponses.getCall(0).args[1].should.equal(queryId);
+						searchClientStub.getIncomingResponses.getCall(0).args[2].should.containDeep({
+							query: true
+						});
+
+						responses.should.containDeep({
+							response: true
+						});
+
+						// second call: get outgoing query from cache
+						manager.getResponses(queryId, (err:Error, responses:Object) => {
+							(err === null).should.be.true;
+
+							searchClientStub.getOutgoingQuery.calledOnce.should.be.true;
+							searchClientStub.getIncomingResponses.calledTwice.should.be.true;
+
+							responses.should.containDeep({
+								response: true
+							});
+
+							closeAndDone(manager, done);
+						});
 					});
 				});
 			}

@@ -114,10 +114,12 @@ var SearchClient = (function () {
 
         this._client.index({
             index: indexName.toLowerCase(),
-            type: 'response' + type.toLowerCase(),
-            body: body
+            type: this._getResponseType(type),
+            body: body,
+            refresh: true
         }, function (err, response, status) {
             err = err || null;
+
             return internalCallback(err);
         });
     };
@@ -128,7 +130,7 @@ var SearchClient = (function () {
 
         this._client.percolate({
             index: indexName.toLowerCase(),
-            type: 'response-' + type.toLowerCase(),
+            type: this._getResponseType(type),
             body: {
                 doc: responseBody
             }
@@ -228,6 +230,7 @@ var SearchClient = (function () {
             body: queryBody
         }, function (err, response, status) {
             err = err || null;
+
             return internalCallback(err);
         });
     };
@@ -321,7 +324,7 @@ var SearchClient = (function () {
         // delete all responses for the queryId
         this._client.deleteByQuery({
             index: indexName,
-            type: 'response-' + queryId.toLowerCase(),
+            type: this._getResponseType(queryId),
             body: {
                 query: {
                     bool: {
@@ -341,6 +344,24 @@ var SearchClient = (function () {
             responsesDeleted = true;
 
             return checkCallback(err);
+        });
+    };
+
+    SearchClient.prototype.getIncomingResponses = function (indexName, type, queryBody, callback) {
+        this._client.search({
+            index: indexName.toLowerCase(),
+            type: this._getResponseType(type),
+            body: queryBody
+        }, function (err, response, status) {
+            var hits = response && response['hits'] ? response['hits'] : {};
+
+            err = err || null;
+
+            if (!(hits && hits['total'])) {
+                return callback(null, null);
+            }
+
+            return callback(null, hits);
         });
     };
 
@@ -580,6 +601,18 @@ var SearchClient = (function () {
         }
 
         return this._searchItemFactory.create([response]);
+    };
+
+    /**
+    * Returns the prefixed lowercase type
+    *
+    * @method core.search.SearchClient~_getResponseType
+    *
+    * @param type
+    * @returns {string}
+    */
+    SearchClient.prototype._getResponseType = function (type) {
+        return 'response' + type.toLowerCase();
     };
 
     /**

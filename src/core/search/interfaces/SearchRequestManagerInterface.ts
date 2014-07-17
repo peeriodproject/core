@@ -29,6 +29,18 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 	addResponse (queryId:string, responseBody:Buffer, responseMeta:Object, callback?:(err:Error) => any):void;
 
 	/**
+	 * Gets the responses for the given `queryId` and returns them in the callback
+	 *
+	 * todo ts-definition
+	 *
+	 * @member core.search.SearchRequestManagerInterface#getResponses
+	 *
+	 * @param {string} queryId
+	 * @param {Function} callback
+	 */
+	getResponses (queryId:string, callback:(err:Error, responses:any) => any):void;
+
+	/**
 	 * Adds a listener to the internal event emitter that triggers whenever a new query is registered.
 	 *
 	 * @member core.search.SearchRequestManagerInterface#onQueryAdd

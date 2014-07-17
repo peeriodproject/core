@@ -56,6 +56,13 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	private _options:ClosableAsyncOptions = {}
 
 	/**
+	 * A map of currently running search query bodies. The identifier is the `queryId` and the value the [query body]{@link http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-request-body.html}
+	 *
+	 * @member {core.utils.ClosableAsyncOptions} core.search.SearchRequestManager~_runningQueries
+	 */
+	private _runningQueries:{ [queryId:string]:Object } = {};
+
+	/**
 	 * A map of currently running search queries. The identifier is the `queryId and the value is the amount of results
 	 * that already arrived.
 	 *
@@ -98,7 +105,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		var internalCallback = callback || function (err:Error) {
 		};
 
-		this._createAndStoreQueryId((queryId:string) => {
+		this._createAndStoreQueryId(queryBody, (queryId:string) => {
 			// add queryId to the query object
 			var extendedQueryBody:Object = ObjectUtils.extend(queryBody, {
 				queryId: queryId
@@ -134,7 +141,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		};
 
 		logger.log('search', 'received response', {
-			queryId: queryId,
+			queryId  : queryId,
 			eventName: 'RECEIVED_RESULTS'
 		});
 
@@ -147,7 +154,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 
 		if (!(response && response.hits && response.hits.length)) {
 			logger.log('search', 'SearchRequestManager#addResponse: invalid Response', {
-				queryId: queryId,
+				queryId : queryId,
 				response: response
 			});
 
@@ -212,6 +219,16 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		});
 	}
 
+	public getResponses (queryId:string, callback:(err:Error, responses:any) => any):void {
+		this._getQuery(queryId, (err:Error, queryBody:Object) => {
+			if (err) {
+				return callback(err, null);
+			}
+
+			this._searchClient.getIncomingResponses(this._indexName, queryId, queryBody, callback);
+		});
+	}
+
 	public onQueryAdd (callback:Function):void {
 		this._eventEmitter.addListener('queryAdd', callback);
 	}
@@ -268,7 +285,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	private _checkAndAddResponse (queryId:string, responseBody:Object, responseMeta:Object, callback:(err:Error) => any):void {
 		if (this._runningQueryIds[queryId] === undefined) {
 			logger.log('search', 'SearchRequestManager: no running query for the given queryId found', {
-				queryId: queryId,
+				queryId  : queryId,
 				eventName: 'QUERY_NOT_RUNNING'
 			});
 
@@ -296,7 +313,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 				for (var i = 0, l = matches.length; i < l; i++) {
 					var match = matches[i];
 
-					if (match['_id'] !== queryId) {
+					if (match['_id'] !== queryId) {
 						continue;
 					}
 
@@ -309,7 +326,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 					}
 					else {
 						logger.log('search', 'SearchRequestManager: query is not running anymore', {
-							queryId: queryId,
+							queryId  : queryId,
 							eventName: 'QUERY_NOT_RUNNING'
 						});
 					}
@@ -324,13 +341,21 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	/**
 	 * Returns the corresponding query object to the given `queryId` from the database
 	 *
-	 * todo add cache
-	 *
 	 * @param {string} queryId
 	 * @param {Function} callback
 	 */
 	private _getQuery (queryId:string, callback:(err:Error, queryBody:Object) => void):void {
-		this._searchClient.getOutgoingQuery(queryId, callback);
+		var cachedQueryBody:Object = this._runningQueries[queryId];
+
+		if (cachedQueryBody) {
+			return process.nextTick(callback.bind(null, null, cachedQueryBody));
+		}
+
+		this._searchClient.getOutgoingQuery(this._indexName, queryId, (err:Error, queryBody) => {
+			this._runningQueries[queryId] = queryBody;
+
+			return callback(err, queryBody);
+		});
 	}
 
 	/**
@@ -388,7 +413,10 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	 */
 	private _cleanupQueryLists (queryId:string):void {
 		this._runningQueryIds[queryId] = null;
-		delete this._runningQueryIds[queryId]
+		this._runningQueries[queryId] = null;
+
+		delete this._runningQueryIds[queryId];
+		delete this._runningQueries[queryId];
 	}
 
 	/**
@@ -399,11 +427,13 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	 *
 	 * @param {Function} callback The callback that will be called after the generation of the data with `queryId` as first argument.
 	 */
-	private _createAndStoreQueryId (callback:(id:string) => any):void {
+	private _createAndStoreQueryId (queryBody, callback:(id:string) => any):void {
 		crypto.randomBytes(16, (ex, buf) => {
 			var id = buf.toString('hex');
 
 			this._runningQueryIds[id] = 0;
+			// todo we could cache the query here and wouldn't need a single database call at all. But to prevent inconsistency the first request requires a database call.
+			//this._runningQueries[id] = queryBody;
 
 			return callback(id);
 		});
@@ -424,7 +454,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 			this._eventEmitter.emit('queryAdd', queryId, new Buffer(JSON.stringify(queryBody)));
 
 			logger.log('search', 'SearchRequestManager: Starting query', {
-				queryId: queryId,
+				queryId  : queryId,
 				queryBody: queryBody,
 				eventName: 'QUERY_ADD'
 			});
@@ -446,9 +476,9 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 			this._eventEmitter.emit('queryEnd', queryId, reason);
 
 			logger.log('search', 'SearchRequestManager: query end', {
-				queryId: queryId,
-				reason: reason,
-				eventName: 'QUERY_END',
+				queryId     : queryId,
+				reason      : reason,
+				eventName   : 'QUERY_END',
 				resultsCount: this._runningQueryIds[queryId]
 			});
 		}
@@ -470,7 +500,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 			this._eventEmitter.emit('queryRemoved', queryId);
 
 			logger.log('search', 'SearchRequestManager: query removed', {
-				queryId: queryId,
+				queryId  : queryId,
 				eventName: 'QUERY_REMOVED'
 			});
 		}
@@ -493,8 +523,8 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 			this._eventEmitter.emit('queryCanceled', queryId, reason);
 
 			logger.log('search', 'SearchRequestManager: query canceled', {
-				queryId: queryId,
-				reason: reason,
+				queryId  : queryId,
+				reason   : reason,
 				eventName: 'QUERY_CANCELED'
 			});
 		}
@@ -516,7 +546,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 			this._eventEmitter.emit('resultsChanged', queryId);
 
 			logger.log('search', 'SearchRequestManager: results changed', {
-				queryId: queryId,
+				queryId  : queryId,
 				eventName: 'RESULTS_CHANGED'
 			});
 		}

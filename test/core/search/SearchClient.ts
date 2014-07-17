@@ -29,8 +29,10 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 	this.timeout(0);
 
 	before(function (done) {
-		testUtils.deleteFolderRecursive(searchStoreLogsFolder);
-		testUtils.deleteFolderRecursive(searchStoreDataFolder);
+		try {
+			testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+			testUtils.deleteFolderRecursive(searchStoreDataFolder);
+		} catch (e) {}
 		testUtils.createFolder(searchStoreLogsFolder);
 		testUtils.createFolder(searchStoreDataFolder);
 
@@ -327,7 +329,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 		var queryBody = {
 			query: {
 				match: {
-					message: "bonsai tree"
+					message: 'bonsai tree'
 				}
 			}
 		};
@@ -340,22 +342,41 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 
 				matches.should.have.a.lengthOf(1);
 				matches.should.containDeep([
-						{
-							_index: 'myindex',
-							_id   : 'searchQueryId'
-						}
-					]);
+					{
+						_index: 'myindex',
+						_id   : 'searchQueryId'
+					}
+				]);
 
 				done();
 			});
 		});
 	});
 
-	it ('should correctly return the corresponding query object for the specified queryId', function (done) {
+	it('should correctly add a response to the database', function (done) {
+		var randomQueryId = 'searchQueryId' + Math.round(Math.random() * 100000000);
+		var queryBody = {
+			query: {
+				match: {
+					message: 'bonsai tree'
+				}
+			}
+		};
+
+		searchClient.createOutgoingQuery('myindex', randomQueryId, queryBody, function (err) {
+			searchClient.addIncomingResponse('myindex', randomQueryId, { message: 'A new bonsai tree in the office' }, { metadata: true }, function (err) {
+				(err === null).should.be.true;
+
+				done();
+			});
+		});
+	});
+
+	it('should correctly return the corresponding query object for the specified queryId', function (done) {
 		var theQueryBody = {
 			query: {
 				match: {
-					message: "bonsai tree"
+					message: 'bonsai tree'
 				}
 			}
 		};
@@ -366,6 +387,37 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 				queryBody.should.containDeep(theQueryBody);
 
 				done();
+			});
+		});
+	});
+
+	it('should correctly return the results for the given query', function (done) {
+		var randomQueryId = 'searchQueryId' + Math.round(Math.random() * 100000000);
+		var queryBody = {
+			query: {
+				match: {
+					message: 'bonsai tree'
+				}
+			}
+		};
+
+		searchClient.createOutgoingQuery('myindex', randomQueryId, queryBody, function (err) {
+			searchClient.addIncomingResponse('myindex', randomQueryId, { message: 'A new bonsai tree in the office' }, { metadata: true }, function () {
+				searchClient.getIncomingResponses('myindex', randomQueryId, queryBody, function (err:Error, responses:any) {
+					responses.total.should.equal(1);
+					responses.hits.should.have.a.lengthOf(1);
+
+					responses.hits[0].should.containDeep({
+						_source: {
+							message: 'A new bonsai tree in the office',
+							_meta  : {
+								metadata: true
+							}
+						}
+					});
+
+					done();
+				});
 			});
 		});
 	});
