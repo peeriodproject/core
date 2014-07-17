@@ -48,6 +48,12 @@ var SearchRequestManager = (function () {
         */
         this._options = {};
         /**
+        * A map of currently running search query bodies. The identifier is the `queryId` and the value the [query body]{@link http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-request-body.html}
+        *
+        * @member {core.utils.ClosableAsyncOptions} core.search.SearchRequestManager~_runningQueries
+        */
+        this._runningQueries = {};
+        /**
         * A map of currently running search queries. The identifier is the `queryId and the value is the amount of results
         * that already arrived.
         *
@@ -87,7 +93,7 @@ var SearchRequestManager = (function () {
         var internalCallback = callback || function (err) {
         };
 
-        this._createAndStoreQueryId(function (queryId) {
+        this._createAndStoreQueryId(queryBody, function (queryId) {
             // add queryId to the query object
             var extendedQueryBody = ObjectUtils.extend(queryBody, {
                 queryId: queryId
@@ -323,13 +329,22 @@ var SearchRequestManager = (function () {
     /**
     * Returns the corresponding query object to the given `queryId` from the database
     *
-    * todo add cache
-    *
     * @param {string} queryId
     * @param {Function} callback
     */
     SearchRequestManager.prototype._getQuery = function (queryId, callback) {
-        this._searchClient.getOutgoingQuery(queryId, callback);
+        var _this = this;
+        var cachedQueryBody = this._runningQueries[queryId];
+
+        if (cachedQueryBody) {
+            return process.nextTick(callback.bind(null, null, cachedQueryBody));
+        }
+
+        this._searchClient.getOutgoingQuery(this._indexName, queryId, function (err, queryBody) {
+            _this._runningQueries[queryId] = queryBody;
+
+            return callback(err, queryBody);
+        });
     };
 
     /**
@@ -387,7 +402,10 @@ var SearchRequestManager = (function () {
     */
     SearchRequestManager.prototype._cleanupQueryLists = function (queryId) {
         this._runningQueryIds[queryId] = null;
+        this._runningQueries[queryId] = null;
+
         delete this._runningQueryIds[queryId];
+        delete this._runningQueries[queryId];
     };
 
     /**
@@ -398,13 +416,15 @@ var SearchRequestManager = (function () {
     *
     * @param {Function} callback The callback that will be called after the generation of the data with `queryId` as first argument.
     */
-    SearchRequestManager.prototype._createAndStoreQueryId = function (callback) {
+    SearchRequestManager.prototype._createAndStoreQueryId = function (queryBody, callback) {
         var _this = this;
         crypto.randomBytes(16, function (ex, buf) {
             var id = buf.toString('hex');
 
             _this._runningQueryIds[id] = 0;
 
+            // todo we could cache the query here and wouldn't need a single database call at all. But to prevent inconsistency the first request requires a database call.
+            //this._runningQueries[id] = queryBody;
             return callback(id);
         });
     };
