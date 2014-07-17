@@ -129,6 +129,9 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 * @param {Function} callback
 	 */
 	getOutgoingQuery (indexName:string, queryId:string, callback:(err:Error, queryBody:Object) => void):void;
+
+	getIncomingResponses (indexName:string, type:string, queryBody:Object, callback:(err:Error, responses:any) => void):void;
+
 	itemExists (pathToIndex:string, callback:(exists:boolean) => void):void;
 
 	itemExistsById (id:string, callback:(exists:boolean) => void):void;

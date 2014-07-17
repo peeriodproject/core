@@ -344,6 +344,19 @@ var SearchClient = (function () {
         });
     };
 
+    SearchClient.prototype.getIncomingResponses = function (indexName, type, queryBody, callback) {
+        this._client.search({
+            index: indexName.toLowerCase(),
+            type: type.toLowerCase(),
+            body: queryBody
+        }, function (err, response, status) {
+            console.log(err);
+            console.log(response);
+
+            return callback(err, response);
+        });
+    };
+
     SearchClient.prototype.getItemById = function (id, callback) {
         var _this = this;
         this._client.get({

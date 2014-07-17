@@ -364,6 +364,19 @@ class SearchClient implements SearchClientInterface {
 
 	}
 
+	public getIncomingResponses (indexName:string, type:string, queryBody:Object, callback:(err:Error, responses:any) => void):void {
+		this._client.search({
+			index: indexName.toLowerCase(),
+			type: type.toLowerCase(),
+			body: queryBody
+		}, function (err, response:Object, status:number) {
+			console.log(err);
+			console.log(response);
+
+			return callback(err, response);
+		});
+	}
+
 	public getItemById (id:string, callback:(err:Error, item:SearchItemInterface) => any):void {
 		this._client.get({
 			index: this._indexName,
