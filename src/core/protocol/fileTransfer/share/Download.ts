@@ -216,13 +216,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 	 */
 	private _writableShareRequestFactory:WritableShareRequestMessageFactoryInterface = null;
 
-	public constructor (filename:string, expectedSize:number, expectedHash:string, initialFeedingNodesBlockBufferOfUploader:Buffer,
-		feedingNodesBlockMaintainer:FeedingNodesBlockMaintainerInterface, fileBlockWriterFactory:FileBlockWriterFactoryInterface,
-		shareMessenger:ShareMessengerInterface, transferMessageCenter:TransferMessageCenterInterface, writableShareRequestFactory:WritableShareRequestMessageFactoryInterface,
-		writableEncryptedShareFactory:WritableEncryptedShareMessageFactoryInterface, readableEncryptedShareFactory:ReadableEncryptedShareMessageFactoryInterface,
-		readableShareAbortFactory:ReadableShareAbortMessageFactoryInterface, writableShareAbortFactory:WritableShareAbortMessageFactoryInterface,
-		readableBlockFactory:ReadableBlockMessageFactoryInterface, readableShareRatifyFactory:ReadableShareRatifyMessageFactoryInterface, decrypter:ReadableDecryptedMessageFactoryInterface,
-		encrypter:WritableEncryptedMessageFactoryInterface, writableBlockRequestFactory:WritableBlockRequestMessageFactoryInterface) {
+	public constructor (filename:string, expectedSize:number, expectedHash:string, initialFeedingNodesBlockBufferOfUploader:Buffer, feedingNodesBlockMaintainer:FeedingNodesBlockMaintainerInterface, fileBlockWriterFactory:FileBlockWriterFactoryInterface, shareMessenger:ShareMessengerInterface, transferMessageCenter:TransferMessageCenterInterface, writableShareRequestFactory:WritableShareRequestMessageFactoryInterface, writableEncryptedShareFactory:WritableEncryptedShareMessageFactoryInterface, readableEncryptedShareFactory:ReadableEncryptedShareMessageFactoryInterface, readableShareAbortFactory:ReadableShareAbortMessageFactoryInterface, writableShareAbortFactory:WritableShareAbortMessageFactoryInterface, readableBlockFactory:ReadableBlockMessageFactoryInterface, readableShareRatifyFactory:ReadableShareRatifyMessageFactoryInterface, decrypter:ReadableDecryptedMessageFactoryInterface, encrypter:WritableEncryptedMessageFactoryInterface, writableBlockRequestFactory:WritableBlockRequestMessageFactoryInterface) {
 
 		super();
 
@@ -317,7 +311,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 				if (shareMessage.getMessageType() === 'SHARE_ABORT') {
 					var shareAbortMessage:ReadableShareAbortMessageInterface = this._readableShareAbortFactory.create(shareMessage.getPayload());
 
-					if (!shareAbortMessage ) {
+					if (!shareAbortMessage) {
 						malformedMessageErr = 'Malformed abort message.';
 					}
 					else if (!(shareAbortMessage.getFileHash() === this._expectedHash && shareAbortMessage.getFilename() === this._filename && shareAbortMessage.getFilesize() === this._expectedSize)) {
