@@ -30,6 +30,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 	private _filename:string = null;
 	private _expectedSize:number = 0;
 	private _expectedHash:string = null;
+
 	private _initialFeedingNodesBlockBufferOfUploader:Buffer = null;
 	private _feedingNodesBlockMaintainer:FeedingNodesBlockMaintainerInterface = null;
 	private _fileBlockWriter:FileBlockWriterInterface = null;
@@ -88,11 +89,11 @@ class Download extends events.EventEmitter implements DownloadInterface {
 		// prepare the file block writer
 		this._fileBlockWriter.prepareToWrite((err:Error) => {
 			if (err) {
-				this._kill(false, true, false, 'File cannot be written');
+				this._kill(false, true, false, 'File cannot be written.');
 			}
 			else {
 				if (this._manuallyAborted) {
-					this._kill(true, true, false, 'Manually aborted');
+					this._kill(true, true, false, 'Manually aborted.');
 				}
 				else {
 					this._sendShareRequest();
@@ -383,7 +384,10 @@ class Download extends events.EventEmitter implements DownloadInterface {
 			this.removeAllListeners('startingTransfer');
 			this.removeAllListeners('requestingFile');
 			this.removeAllListeners('completed');
+
 			this.emit('killed', message);
+
+			this.removeAllListeners('killed');
 		}
 	}
 

@@ -62,10 +62,10 @@ var Download = (function (_super) {
         // prepare the file block writer
         this._fileBlockWriter.prepareToWrite(function (err) {
             if (err) {
-                _this._kill(false, true, false, 'File cannot be written');
+                _this._kill(false, true, false, 'File cannot be written.');
             } else {
                 if (_this._manuallyAborted) {
-                    _this._kill(true, true, false, 'Manually aborted');
+                    _this._kill(true, true, false, 'Manually aborted.');
                 } else {
                     _this._sendShareRequest();
                 }
@@ -336,7 +336,10 @@ var Download = (function (_super) {
             this.removeAllListeners('startingTransfer');
             this.removeAllListeners('requestingFile');
             this.removeAllListeners('completed');
+
             this.emit('killed', message);
+
+            this.removeAllListeners('killed');
         }
     };
     return Download;
