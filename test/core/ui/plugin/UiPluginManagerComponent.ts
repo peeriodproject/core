@@ -9,7 +9,7 @@ import PluginManager = require('../../../../src/core/plugin/PluginManager');
 import PluginRunner = require('../../../../src/core/plugin/PluginRunner');
 import UiPluginManagerComponent = require('../../../../src/core/ui/plugin/UiPluginManagerComponent');
 
-describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent @joern', function () {
+describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent', function () {
 	var sandbox:SinonSandbox;
 	var component:UiPluginManagerComponent;
 	var eventListeners:{ [eventName:string]:Function };

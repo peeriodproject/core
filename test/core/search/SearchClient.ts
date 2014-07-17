@@ -395,7 +395,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 		});
 	});
 
-	it('should correctly return the results for the given query @joern', function (done) {
+	it('should correctly return the results for the given query', function (done) {
 		var randomQueryId = 'searchQueryId' + Math.round(Math.random() * 100000000);
 		var queryBody = {
 			query: {
