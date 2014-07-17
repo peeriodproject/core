@@ -216,16 +216,22 @@ var FileBlockWriter = (function () {
             fs.close(this._fileDescriptor, function () {
                 if (deleteFile) {
                     _this.deleteFile(function () {
-                        callback();
+                        if (callback) {
+                            callback();
+                        }
                     });
                 } else {
-                    callback();
+                    if (callback) {
+                        callback();
+                    }
                 }
             });
         } else {
-            process.nextTick(function () {
-                callback();
-            });
+            if (callback) {
+                process.nextTick(function () {
+                    callback();
+                });
+            }
         }
     };
     return FileBlockWriter;
