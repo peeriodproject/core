@@ -227,42 +227,42 @@ describe('CORE --> SEARCH --> SearchClient', function () {
     it('should correctly add an item to the datastore which uses the attachment mapper plugin', function (done) {
         var filePath = testUtils.getFixturePath('core/search/searchManager/Peeriod_Anonymous_decentralized_network.pdf');
         var mapping = {
-            "_source": {
-                "excludes": ["file"]
+            '_source': {
+                'excludes': ['file']
             },
-            "properties": {
-                "file": {
-                    "type": "attachment",
-                    "indexed_chars": -1,
-                    "detect_anguage": true,
-                    "fields": {
-                        "file": {
-                            "store": "yes",
-                            "term_vector": "with_positions_offsets",
-                            "analyzer": "english"
+            properties: {
+                file: {
+                    type: 'attachment',
+                    indexed_chars: -1,
+                    detect_anguage: true,
+                    fields: {
+                        file: {
+                            store: 'yes',
+                            term_vector: 'with_positions_offsets',
+                            analyzer: 'english'
                         },
-                        "author": {
-                            "store": "yes"
+                        author: {
+                            store: 'yes'
                         },
-                        "title": {
-                            "store": "yes",
-                            "analyzer": "english"
+                        title: {
+                            store: 'yes',
+                            analyzer: 'english'
                         },
-                        "date": {
-                            "store": "yes"
+                        date: {
+                            store: 'yes'
                         },
-                        "keywords": {
-                            "store": "yes",
-                            "analyzer": "keyword"
+                        keywords: {
+                            store: 'yes',
+                            analyzer: 'keyword'
                         },
-                        "content_type": {
-                            "store": "yes"
+                        content_type: {
+                            store: 'yes'
                         },
-                        "content_length": {
-                            "store": "yes"
+                        content_length: {
+                            store: 'yes'
                         },
-                        "language": {
-                            "store": "yes"
+                        language: {
+                            store: 'yes'
                         }
                     }
                 }
@@ -308,6 +308,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
         searchClient.createOutgoingQueryIndex('indexname', function (err) {
             (err === null).should.be.true;
 
+            // todo check index fields
             done();
         });
     });
@@ -388,22 +389,28 @@ describe('CORE --> SEARCH --> SearchClient', function () {
             }
         };
 
-        searchClient.createOutgoingQuery('myindex', randomQueryId, queryBody, function (err) {
-            searchClient.addIncomingResponse('myindex', randomQueryId, { message: 'A new bonsai tree in the office' }, { metadata: true }, function () {
-                searchClient.getIncomingResponses('myindex', randomQueryId, queryBody, function (err, responses) {
-                    responses.total.should.equal(1);
-                    responses.hits.should.have.a.lengthOf(1);
+        var timestamp = new Date().getTime();
 
-                    responses.hits[0].should.containDeep({
-                        _source: {
-                            message: 'A new bonsai tree in the office',
-                            _meta: {
-                                metadata: true
+        searchClient.createOutgoingQueryIndex('myindex', function (err) {
+            searchClient.createOutgoingQuery('myindex', randomQueryId, queryBody, function (err) {
+                searchClient.addIncomingResponse('myindex', randomQueryId, { message: 'A new bonsai tree in the office' }, { metadata: true }, function () {
+                    searchClient.getIncomingResponses('myindex', randomQueryId, queryBody, function (err, responses) {
+                        responses.total.should.equal(1);
+                        responses.hits.should.have.a.lengthOf(1);
+
+                        responses.hits[0].should.containDeep({
+                            _source: {
+                                message: 'A new bonsai tree in the office',
+                                _meta: {
+                                    metadata: true
+                                }
                             }
-                        }
-                    });
+                        });
 
-                    done();
+                        responses.hits[0].fields._timestamp.should.be.greaterThan(timestamp);
+
+                        done();
+                    });
                 });
             });
         });
@@ -434,7 +441,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
             searchClient.search({
                 query: {
                     match: {
-                        "pluginidentifier.foo": "bar"
+                        'pluginidentifier.foo': 'bar'
                     }
                 }
             }, function (err, results) {
@@ -447,13 +454,13 @@ describe('CORE --> SEARCH --> SearchClient', function () {
                             _index: 'mainindex',
                             _type: 'pluginidentifier',
                             _source: {
-                                itemHash: "fileHash",
+                                itemHash: 'fileHash',
                                 itemName: 'file.txt',
-                                itemPath: "../path/file.txt",
+                                itemPath: '../path/file.txt',
                                 itemStats: {
                                     stats: true
                                 },
-                                foo: "bar io"
+                                foo: 'bar io'
                             }
                         }
                     ]

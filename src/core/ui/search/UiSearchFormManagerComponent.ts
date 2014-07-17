@@ -58,10 +58,10 @@ class UiSearchFormManagerComponent extends UiComponent {
 		return ['addQuery', 'removeQuery'];
 	}
 
-	public getState ():Object {
-		return {
+	public getState (callback):void {
+		return process.nextTick(callback.bind(null, {
 			currentQuery: this._runningQuery
-		};
+		}));
 	}
 
 	/**
@@ -81,7 +81,7 @@ class UiSearchFormManagerComponent extends UiComponent {
 			this._runningQueryId = null;
 
 			return this.updateUi();
-		})
+		});
 	}
 
 	/**

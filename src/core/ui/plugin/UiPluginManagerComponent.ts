@@ -39,8 +39,8 @@ class UiPluginManagerComponent extends UiComponent {
 		return [];
 	}
 
-	public getState ():Object {
-		return this._state;
+	public getState (callback:(state) => any):void {
+		return process.nextTick(callback.bind(null, this._state));
 	}
 
 	private _setupPluginManagerEvents ():void {

@@ -28,9 +28,11 @@ interface UiComponentInterface extends NodeJS.EventEmitter {
 	 * Returns the state of the component at all times. The method get's called whenever a new client connects to the
 	 * channel and can/should be used to send data packets to the client.
 	 *
-	 * @returns {any}
+	 * __Use [process.nextTick]{@link http://nodejs.org/api/process.html#process_process_nexttick_callback} for API consistency whenever you return static values!__
+	 *
+	 * @param {Function} callback The callback with the state as the first argument
 	 */
-	getState ():any;
+	getState (callback:(state:any) => any):void;
 
 	/**
 	 * Calls the listener function whenever the state changed and the UI should update.

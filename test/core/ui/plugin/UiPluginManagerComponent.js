@@ -80,12 +80,12 @@ describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent', function () {
     it('should correctly return the state', function (done) {
         // waiting for pluginManager.open
         setImmediate(function () {
-            var state = component.getState();
+            component.getState(function (state) {
+                state.should.be.an.instanceof(Object);
+                state.should.containDeep({ identifier: { fields: 'foobar' } });
 
-            state.should.be.an.instanceof(Object);
-            state.should.containDeep({ identifier: { fields: 'foobar' } });
-
-            done();
+                done();
+            });
         });
     });
 
@@ -110,12 +110,14 @@ describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent', function () {
             // waiting for pluginManager.activatePluginState
             setImmediate(function () {
                 uiUpdateSpy.calledOnce.should.be.true;
-                component.getState().should.containDeep({
-                    identifier: { fields: 'foobar' },
-                    fooIdentifier: { fields: 'foobar' }
-                });
+                component.getState(function (state) {
+                    state.should.containDeep({
+                        identifier: { fields: 'foobar' },
+                        fooIdentifier: { fields: 'foobar' }
+                    });
 
-                done();
+                    done();
+                });
             });
         });
     });

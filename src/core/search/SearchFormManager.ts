@@ -120,14 +120,16 @@ class SearchFormManager implements SearchFormManagerInterface {
 			return process.nextTick(internalCallback.bind(null, null));
 		}
 
-		this._stateHandler.save({ currentForm: this._currentFormIdentifier }, (err:Error) => {
-			if (err) {
-				return internalCallback(err);
-			}
+		this.getState((state) => {
+			this._stateHandler.save(state, (err:Error) => {
+				if (err) {
+					return internalCallback(err);
+				}
 
-			this._isOpen = false;
+				this._isOpen = false;
 
-			return internalCallback(null);
+				return internalCallback(null);
+			});
 		});
 	}
 
@@ -137,6 +139,12 @@ class SearchFormManager implements SearchFormManagerInterface {
 
 	public getCurrentFormIdentifier (callback:(identifier:string) => any):void {
 		return process.nextTick(callback.bind(null, this._currentFormIdentifier));
+	}
+
+	public getState (callback:(state:Object) => any):void {
+		return process.nextTick(callback.bind(null, {
+			currentForm: this._currentFormIdentifier
+		}));
 	}
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {

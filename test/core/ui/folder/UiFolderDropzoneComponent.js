@@ -100,10 +100,13 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
         component.getChannelName().should.equal('folderdropzone');
     });
 
-    it('should correctly return the state', function () {
-        var state = component.getState();
-        state.should.be.an.instanceof(Array);
-        state.length.should.equal(0);
+    it('should correctly return the state', function (done) {
+        component.getState(function (state) {
+            state.should.be.an.instanceof(Array);
+            state.length.should.equal(0);
+
+            done();
+        });
     });
 
     /*it('should correctly save the given color object in localStorage', function () {
@@ -176,7 +179,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
         nwWindowStub._window.resizeTo.getCall(1).args[1].should.equal(853);
     });
 
-    it('should correctly set the path list, update the UI on drop and clean up the path list', function () {
+    it('should correctly set the path list, update the UI on drop and clean up the path list', function (done) {
         var uiUpdateSpy = sandbox.spy();
         component.onUiUpdate(uiUpdateSpy);
 
@@ -186,16 +189,20 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
 
         uiUpdateSpy.calledOnce.should.be.true;
 
-        var state = component.getState();
+        component.getState(function (state) {
+            // check paths
+            state[0].should.equal('/path/one');
+            state[1].should.equal('/path/two');
 
-        // check paths
-        state[0].should.equal('/path/one');
-        state[1].should.equal('/path/two');
+            component.onAfterUiUpdate();
 
-        component.onAfterUiUpdate();
+            // paths should be removed from the list
+            component.getState(function (state) {
+                state.should.have.a.lengthOf(0);
 
-        // paths should be removed from the list
-        component.getState().should.have.a.lengthOf(0);
+                done();
+            });
+        });
     });
 });
 //# sourceMappingURL=UiFolderDropzoneComponent.js.map

@@ -56,10 +56,10 @@ var UiSearchFormManagerComponent = (function (_super) {
         return ['addQuery', 'removeQuery'];
     };
 
-    UiSearchFormManagerComponent.prototype.getState = function () {
-        return {
+    UiSearchFormManagerComponent.prototype.getState = function (callback) {
+        return process.nextTick(callback.bind(null, {
             currentQuery: this._runningQuery
-        };
+        }));
     };
 
     /**

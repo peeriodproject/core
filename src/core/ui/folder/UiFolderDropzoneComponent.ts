@@ -43,8 +43,8 @@ class UiFolderDropzoneComponent extends UiComponent {
 		return ['background', 'open', 'close'];
 	}
 
-	public getState():PathListInterface {
-		return this._paths;
+	public getState(callback:(state:PathListInterface) => any):void {
+		return process.nextTick(callback.bind(null, this._paths));
 	}
 
 	public onAfterUiUpdate ():void {
