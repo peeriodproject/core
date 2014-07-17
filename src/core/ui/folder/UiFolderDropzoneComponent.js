@@ -37,8 +37,8 @@ var UiFolderDropzoneComponent = (function (_super) {
         return ['background', 'open', 'close'];
     };
 
-    UiFolderDropzoneComponent.prototype.getState = function () {
-        return this._paths;
+    UiFolderDropzoneComponent.prototype.getState = function (callback) {
+        return process.nextTick(callback.bind(null, this._paths));
     };
 
     UiFolderDropzoneComponent.prototype.onAfterUiUpdate = function () {

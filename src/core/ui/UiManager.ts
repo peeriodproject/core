@@ -249,11 +249,10 @@ class UiManager implements UiManagerInterface {
 		// map component to channel
 		this._channelComponentsMap[channelName] = component;
 		this._channelComponentsMap[channelName].onUiUpdate(() => {
-			var state = component.getState();
-
-			this._channelsMap[channelName].send('update', state);
-
-			this._channelComponentsMap[channelName].onAfterUiUpdate();
+			component.getState((state) => {
+				this._channelsMap[channelName].send('update', state);
+				this._channelComponentsMap[channelName].onAfterUiUpdate();
+			});
 		});
 	}
 
@@ -294,7 +293,7 @@ class UiManager implements UiManagerInterface {
 
 		// automagically getInitialState listener
 		spark.on('getInitialState', function (callback) {
-			callback(component.getState());
+			component.getState(callback);
 		});
 
 		/*spark.on('end', () => {

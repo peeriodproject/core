@@ -63,45 +63,55 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
         component.getEventNames().should.containDeep(['addFolder', 'removeFolder', 'showFolder', 'syncFolders']);
     });
 
-    it('should correctly return the state', function () {
-        var state = component.getState();
+    it('should correctly return the state', function (done) {
+        component.getState(function (state) {
+            state.should.be.an.instanceof(Array);
+            state.length.should.equal(0);
 
-        state.should.be.an.instanceof(Array);
-        state.length.should.equal(0);
+            done();
+        });
     });
 
     it('should correctly send a new folder to the ui', function (done) {
         // add a new folder
         component.onUiUpdate(function () {
-            component.getState().should.containDeep([{
-                    items: 0,
-                    name: 'Folder Name',
-                    path: '/path/to/the/Folder Name',
-                    status: 'active'
-                }]);
+            component.getState(function (state) {
+                state.should.containDeep([{
+                        items: 0,
+                        name: 'Folder Name',
+                        path: '/path/to/the/Folder Name',
+                        status: 'active'
+                    }]);
 
-            done();
+                done();
+            });
         });
 
         eventListeners['watcher.add']('/path/to/the/Folder Name');
     });
 
-    it('should correctly remove a folder from the ui', function () {
+    it('should correctly remove a folder from the ui', function (done) {
         var uiUpdateSpy = sandbox.spy();
         component.onUiUpdate(uiUpdateSpy);
 
         // add a new folder
         eventListeners['watcher.add']('/path/to/the/Folder Name');
         uiUpdateSpy.calledOnce.should.be.true;
-        component.getState().should.have.a.lengthOf(1);
+        component.getState(function (state) {
+            state.should.have.a.lengthOf(1);
 
-        eventListeners['watcher.remove']('/path/to/the/Folder Name');
+            eventListeners['watcher.remove']('/path/to/the/Folder Name');
 
-        uiUpdateSpy.calledTwice.should.be.true;
-        component.getState().should.have.a.lengthOf(0);
+            uiUpdateSpy.calledTwice.should.be.true;
+            component.getState(function (state) {
+                state.should.have.a.lengthOf(0);
+
+                done();
+            });
+        });
     });
 
-    it('should correctly remove a invalid folder from the ui', function () {
+    it('should correctly remove a invalid folder from the ui', function (done) {
         var uiUpdateSpy = sandbox.spy();
         component.onUiUpdate(uiUpdateSpy);
 
@@ -110,32 +120,42 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
         eventListeners['watcher.removeInvalid']('/path/to/the/Folder Name');
 
         uiUpdateSpy.calledTwice.should.be.true;
-        component.getState().should.have.a.lengthOf(0);
+        component.getState(function (state) {
+            state.should.have.a.lengthOf(0);
+
+            done();
+        });
     });
 
-    it('should correctly set the folder status', function () {
+    it('should correctly set the folder status', function (done) {
         var uiUpdateSpy = sandbox.spy();
         component.onUiUpdate(uiUpdateSpy);
 
         eventListeners['watcher.add']('/path/to/the/Folder Name');
-        component.getState()[0].should.containDeep({
-            items: 0,
-            name: 'Folder Name',
-            path: '/path/to/the/Folder Name',
-            status: 'active'
-        });
+        component.getState(function (state) {
+            state[0].should.containDeep({
+                items: 0,
+                name: 'Folder Name',
+                path: '/path/to/the/Folder Name',
+                status: 'active'
+            });
 
-        eventListeners['watcher.invalid']('/path/to/the/Folder Name');
-        uiUpdateSpy.calledTwice.should.be.true;
-        component.getState()[0].should.containDeep({
-            items: 0,
-            name: 'Folder Name',
-            path: '/path/to/the/Folder Name',
-            status: 'invalid'
+            eventListeners['watcher.invalid']('/path/to/the/Folder Name');
+            uiUpdateSpy.calledTwice.should.be.true;
+            component.getState(function (state) {
+                state[0].should.containDeep({
+                    items: 0,
+                    name: 'Folder Name',
+                    path: '/path/to/the/Folder Name',
+                    status: 'invalid'
+                });
+
+                done();
+            });
         });
     });
 
-    it('should correctly increment the item count', function () {
+    it('should correctly increment the item count', function (done) {
         var uiUpdateSpy = sandbox.spy();
         component.onUiUpdate(uiUpdateSpy);
 
@@ -149,20 +169,22 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
 
         uiUpdateSpy.callCount.should.equal(4);
 
-        var state = component.getState();
+        component.getState(function (state) {
+            for (var i in state) {
+                var folder = state[i];
 
-        for (var i in state) {
-            var folder = state[i];
-
-            if (folder.path === '/path/to/the/folder') {
-                folder.items.should.equal(1);
-            } else {
-                folder.items.should.equal(0);
+                if (folder.path === '/path/to/the/folder') {
+                    folder.items.should.equal(1);
+                } else {
+                    folder.items.should.equal(0);
+                }
             }
-        }
+
+            done();
+        });
     });
 
-    it('should correctly decrement the item count', function () {
+    it('should correctly decrement the item count', function (done) {
         var uiUpdateSpy = sandbox.spy();
         component.onUiUpdate(uiUpdateSpy);
 
@@ -177,10 +199,13 @@ describe('CORE --> UI --> FOLDER --> UiFolderWatcherManagerComponent', function 
 
         uiUpdateSpy.callCount.should.equal(5);
 
-        var state = component.getState();
-        for (var i in state) {
-            state[i].items.should.equal(0);
-        }
+        component.getState(function (state) {
+            for (var i in state) {
+                state[i].items.should.equal(0);
+            }
+        });
+
+        done();
     });
 
     it('should correctly call the FolderWatcherManager.addFolderWatcher method when the component recieves an "addFolder" event', function () {

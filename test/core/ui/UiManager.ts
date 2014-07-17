@@ -133,7 +133,7 @@ describe('CORE --> UI --> UiManager', function () {
 				return ['foo'];
 			},
 			getState:function () {
-				return { foo: 'bar' };
+				return process.nextTick(arguments[0].bind(null, { foo: 'bar' }));
 			},
 			emit: function () {
 				// callback(data)
@@ -173,7 +173,7 @@ describe('CORE --> UI --> UiManager', function () {
 				return ['foo'];
 			},
 			getState:function () {
-				return { foo: 'bar' };
+				return process.nextTick(arguments[0].bind(null, { foo: 'bar' }));
 			}
 		});
 
@@ -181,11 +181,13 @@ describe('CORE --> UI --> UiManager', function () {
 			// trigger the onUiUpdate listener
 			componentStub.onUiUpdate.getCall(0).args[0]();
 
-			componentStub.getState.callCount.should.equal(1);
-			componentStub.onAfterUiUpdate.callCount.should.equal(1);
-			componentStub.getState.calledBefore(componentStub.onAfterUiUpdate).should.be.true;
+			setImmediate(function () {
+				componentStub.getState.callCount.should.equal(1);
+				componentStub.onAfterUiUpdate.callCount.should.equal(1);
+				componentStub.getState.calledBefore(componentStub.onAfterUiUpdate).should.be.true;
 
-			done();
+				done();
+			});
 		});
 	});
 

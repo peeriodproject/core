@@ -24,8 +24,8 @@ var UiComponent = (function (_super) {
         return undefined;
     };
 
-    UiComponent.prototype.getState = function () {
-        return {};
+    UiComponent.prototype.getState = function (callback) {
+        return process.nextTick(callback.bind(null, {}));
     };
 
     UiComponent.prototype.onUiUpdate = function (listener) {

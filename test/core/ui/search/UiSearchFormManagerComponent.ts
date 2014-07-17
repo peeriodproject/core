@@ -51,7 +51,7 @@ describe('CORE --> UI --> SEARCH --> UiSearchFormManagerComponent', function () 
 		component.getEventNames().should.containDeep(['addQuery', 'removeQuery']);
 	});
 
-	it('should correctly add the specified query', function () {
+	it('should correctly add the specified query', function (done) {
 		var uiUpdateSpy = sandbox.spy();
 
 		component.onUiUpdate(uiUpdateSpy);
@@ -62,12 +62,16 @@ describe('CORE --> UI --> SEARCH --> UiSearchFormManagerComponent', function () 
 
 		uiUpdateSpy.calledOnce.should.be.true;
 
-		component.getState().should.containDeep({
-			currentQuery: 'raw query'
+		component.getState(function (state) {
+			state.should.containDeep({
+				currentQuery: 'raw query'
+			});
+
+			done();
 		});
 	});
 
-	it('should correctly remove a running query', function () {
+	it('should correctly remove a running query', function (done) {
 		var uiUpdateSpy = sandbox.spy();
 
 		component.emit('addQuery', 'raw query');
@@ -80,11 +84,14 @@ describe('CORE --> UI --> SEARCH --> UiSearchFormManagerComponent', function () 
 
 		uiUpdateSpy.calledOnce.should.be.true;
 
-		var state:any = component.getState();
-		(state.currentQuery === null).should.be.true;
+		component.getState(function (state) {
+			(state.currentQuery === null).should.be.true;
+
+			done();
+		});
 	});
 
-	it('should correctly remove the old query whenever a new query starts', function () {
+	it('should correctly remove the old query whenever a new query starts', function (done) {
 		var uiUpdateSpy = sandbox.spy();
 
 		component.onUiUpdate(uiUpdateSpy);
@@ -99,8 +106,12 @@ describe('CORE --> UI --> SEARCH --> UiSearchFormManagerComponent', function () 
 
 		uiUpdateSpy.calledTwice.should.be.true;
 
-		component.getState().should.containDeep({
-			currentQuery: 'second query'
+		component.getState(function (state) {
+			state.should.containDeep({
+				currentQuery: 'second query'
+			});
+
+			done();
 		});
 	});
 });

@@ -18,8 +18,8 @@ class UiComponent extends events.EventEmitter implements UiComponentInterface {
 		return undefined;
 	}
 
-	public getState ():Object {
-		return {};
+	public getState (callback:(state) => any):void {
+		return process.nextTick(callback.bind(null, {}));
 	}
 
 	public onUiUpdate (listener:() => any):void {

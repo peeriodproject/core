@@ -61,7 +61,7 @@ class UiFolderWatcherManagerComponent extends UiComponent {
 		return ['addFolder', 'removeFolder', 'showFolder', 'syncFolders'];
 	}
 
-	public getState():UiFolderListInterface {
+	public getState(callback:(state:UiFolderListInterface) => any):void {
 		var keys:Array<string> = Object.keys(this._folders);
 		var folders:UiFolderListInterface = [];
 
@@ -73,7 +73,7 @@ class UiFolderWatcherManagerComponent extends UiComponent {
 			}
 		}
 
-		return folders;
+		return process.nextTick(callback.bind(null, folders));
 	}
 
 	/**

@@ -229,11 +229,10 @@ var UiManager = (function () {
         // map component to channel
         this._channelComponentsMap[channelName] = component;
         this._channelComponentsMap[channelName].onUiUpdate(function () {
-            var state = component.getState();
-
-            _this._channelsMap[channelName].send('update', state);
-
-            _this._channelComponentsMap[channelName].onAfterUiUpdate();
+            component.getState(function (state) {
+                _this._channelsMap[channelName].send('update', state);
+                _this._channelComponentsMap[channelName].onAfterUiUpdate();
+            });
         });
     };
 
@@ -275,7 +274,7 @@ var UiManager = (function () {
 
         // automagically getInitialState listener
         spark.on('getInitialState', function (callback) {
-            callback(component.getState());
+            component.getState(callback);
         });
 
         /*spark.on('end', () => {

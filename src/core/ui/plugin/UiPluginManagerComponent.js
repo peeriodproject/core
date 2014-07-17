@@ -40,8 +40,8 @@ var UiPluginManagerComponent = (function (_super) {
         return [];
     };
 
-    UiPluginManagerComponent.prototype.getState = function () {
-        return this._state;
+    UiPluginManagerComponent.prototype.getState = function (callback) {
+        return process.nextTick(callback.bind(null, this._state));
     };
 
     UiPluginManagerComponent.prototype._setupPluginManagerEvents = function () {

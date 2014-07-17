@@ -55,7 +55,7 @@ var UiFolderWatcherManagerComponent = (function (_super) {
         return ['addFolder', 'removeFolder', 'showFolder', 'syncFolders'];
     };
 
-    UiFolderWatcherManagerComponent.prototype.getState = function () {
+    UiFolderWatcherManagerComponent.prototype.getState = function (callback) {
         var keys = Object.keys(this._folders);
         var folders = [];
 
@@ -67,7 +67,7 @@ var UiFolderWatcherManagerComponent = (function (_super) {
             }
         }
 
-        return folders;
+        return process.nextTick(callback.bind(null, folders));
     };
 
     /**
