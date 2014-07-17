@@ -4,9 +4,9 @@ var testUtils = require('../../../utils/testUtils');
 
 var SearchFormManager = require('../../../../src/core/search/SearchFormManager');
 var SearchRequestManager = require('../../../../src/core/search/SearchRequestManager');
-var UiSearchFormManagerComponent = require('../../../../src/core/ui/search/UiSearchFormManagerComponent');
+var UiSearchFormResultsManagerComponent = require('../../../../src/core/ui/search/UiSearchFormResultsManagerComponent');
 
-describe('CORE --> UI --> SEARCH --> UiSearchFormManagerComponent', function () {
+describe('CORE --> UI --> SEARCH --> UiSearchFormResultsManagerComponent', function () {
     var sandbox;
     var component;
     var searchFormManagerStub;
@@ -25,7 +25,7 @@ describe('CORE --> UI --> SEARCH --> UiSearchFormManagerComponent', function () 
             }
         });
 
-        component = new UiSearchFormManagerComponent(searchFormManagerStub, searchRequestManagerStub);
+        component = new UiSearchFormResultsManagerComponent(searchFormManagerStub, searchRequestManagerStub);
     });
 
     afterEach(function () {
@@ -37,7 +37,7 @@ describe('CORE --> UI --> SEARCH --> UiSearchFormManagerComponent', function () 
     });
 
     it('should correctly instantiate without error', function () {
-        component.should.be.an.instanceof(UiSearchFormManagerComponent);
+        component.should.be.an.instanceof(UiSearchFormResultsManagerComponent);
     });
 
     it('should correctly return the channel name', function () {
@@ -113,4 +113,4 @@ describe('CORE --> UI --> SEARCH --> UiSearchFormManagerComponent', function () 
         });
     });
 });
-//# sourceMappingURL=UiSearchFormManagerComponent.js.map
+//# sourceMappingURL=UiSearchFormResultsManagerComponent.js.map

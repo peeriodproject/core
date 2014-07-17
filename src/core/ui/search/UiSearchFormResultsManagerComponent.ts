@@ -10,7 +10,7 @@ import UiComponent = require('../UiComponent');
  * @param {core.search.SearchFormManagerInterface} searchFormManager
  * @param {core.search.SearchRequestManagerInterface} searchRequestManager
  */
-class UiSearchFormManagerComponent extends UiComponent {
+class UiSearchFormResultsManagerComponent extends UiComponent {
 
 	/**
 	 * The internally used SearchFormManagerInterface instance to start new queries
@@ -126,4 +126,4 @@ class UiSearchFormManagerComponent extends UiComponent {
 
 }
 
-export = UiSearchFormManagerComponent;
+export = UiSearchFormResultsManagerComponent;

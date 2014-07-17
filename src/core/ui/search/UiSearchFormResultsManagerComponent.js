@@ -13,9 +13,9 @@ var UiComponent = require('../UiComponent');
 * @param {core.search.SearchFormManagerInterface} searchFormManager
 * @param {core.search.SearchRequestManagerInterface} searchRequestManager
 */
-var UiSearchFormManagerComponent = (function (_super) {
-    __extends(UiSearchFormManagerComponent, _super);
-    function UiSearchFormManagerComponent(searchFormManager, searchRequestManager) {
+var UiSearchFormResultsManagerComponent = (function (_super) {
+    __extends(UiSearchFormResultsManagerComponent, _super);
+    function UiSearchFormResultsManagerComponent(searchFormManager, searchRequestManager) {
         _super.call(this);
         /**
         * The internally used SearchFormManagerInterface instance to start new queries
@@ -48,15 +48,15 @@ var UiSearchFormManagerComponent = (function (_super) {
 
         this._setupEventListeners();
     }
-    UiSearchFormManagerComponent.prototype.getChannelName = function () {
+    UiSearchFormResultsManagerComponent.prototype.getChannelName = function () {
         return 'search';
     };
 
-    UiSearchFormManagerComponent.prototype.getEventNames = function () {
+    UiSearchFormResultsManagerComponent.prototype.getEventNames = function () {
         return ['addQuery', 'removeQuery'];
     };
 
-    UiSearchFormManagerComponent.prototype.getState = function (callback) {
+    UiSearchFormResultsManagerComponent.prototype.getState = function (callback) {
         return process.nextTick(callback.bind(null, {
             currentQuery: this._runningQuery
         }));
@@ -67,7 +67,7 @@ var UiSearchFormManagerComponent = (function (_super) {
     *
     * @method core.ui.UiSearchFormManagerComponent~_setupEventListeners
     */
-    UiSearchFormManagerComponent.prototype._setupEventListeners = function () {
+    UiSearchFormResultsManagerComponent.prototype._setupEventListeners = function () {
         var _this = this;
         this.on('addQuery', function (rawQuery) {
             _this._removeRunningQuery();
@@ -89,7 +89,7 @@ var UiSearchFormManagerComponent = (function (_super) {
     *
     * @param rawQuery
     */
-    UiSearchFormManagerComponent.prototype._addQuery = function (rawQuery) {
+    UiSearchFormResultsManagerComponent.prototype._addQuery = function (rawQuery) {
         var _this = this;
         if (this._runningQuery === rawQuery) {
             return;
@@ -112,7 +112,7 @@ var UiSearchFormManagerComponent = (function (_super) {
     *
     * @method core.ui.UiSearchFormManagerComponent~_removeRunningQuery
     */
-    UiSearchFormManagerComponent.prototype._removeRunningQuery = function () {
+    UiSearchFormResultsManagerComponent.prototype._removeRunningQuery = function () {
         if (!this._runningQueryId) {
             return;
         }
@@ -123,8 +123,8 @@ var UiSearchFormManagerComponent = (function (_super) {
             }
         });
     };
-    return UiSearchFormManagerComponent;
+    return UiSearchFormResultsManagerComponent;
 })(UiComponent);
 
-module.exports = UiSearchFormManagerComponent;
-//# sourceMappingURL=UiSearchFormManagerComponent.js.map
+module.exports = UiSearchFormResultsManagerComponent;
+//# sourceMappingURL=UiSearchFormResultsManagerComponent.js.map
