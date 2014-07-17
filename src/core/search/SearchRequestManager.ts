@@ -322,6 +322,18 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	}
 
 	/**
+	 * Returns the corresponding query object to the given `queryId` from the database
+	 *
+	 * todo add cache
+	 *
+	 * @param {string} queryId
+	 * @param {Function} callback
+	 */
+	private _getQuery (queryId:string, callback:(err:Error, queryBody:Object) => void):void {
+		this._searchClient.getOutgoingQuery(queryId, callback);
+	}
+
+	/**
 	 * Transforms the given response from a hit object to a item that can be stored in the database.
 	 * Basically the `_source` key will be removed and all nested keys will be placed on the object root. Furthermore all
 	 * fields under the `highlight` key will be added to the object root if they do not exist yet.
