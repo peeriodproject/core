@@ -202,7 +202,7 @@ var Download = (function (_super) {
                                     if (errorMessage) {
                                         _this._kill(true, true, true, errorMessage, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
                                     } else {
-                                        _this.emit('writtenBytesAndPercentage', fullCountOfWrittenBytes, (fullCountOfWrittenBytes / _this._expectedSize) * 100);
+                                        _this.emit('writtenBytes', fullCountOfWrittenBytes);
                                         _this._sendBlockRequest(fullCountOfWrittenBytes, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
                                     }
                                 }
