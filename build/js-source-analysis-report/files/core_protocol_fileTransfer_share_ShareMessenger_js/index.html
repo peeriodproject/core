@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/fileTransfer/share/ShareMessenger.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/fileTransfer/share/ShareMessenger.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">68.33</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">231</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">44.17</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.18</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/**
+* ShareMessengerInterface implementation.
+*
+* @class core.protocol.fileTransfer.share.ShareMessenger
+* @interface core.protocol.fileTransfer.share.ShareMessengerInterface
+*
+* @param {core.config.ConfigInterface} fileTransferConfig File transfer configuration object.
+* @param {core.protocol.hydra.CircuitManagerInterface} circuitManager A working hydra circuit manager instance.
+* @param {core.protocol.fileTransfer.transferMessageCenter} transferMessageCenter The transfer message center instance used on this client.
+*/
+var ShareMessenger = (function () {
+    function ShareMessenger(fileTransferConfig, circuitManager, transferMessageCenter) {
+        /**
+        * Flag indicating whether a new message can be piped. This is false as long as the messenger is waiting
+        * for a response or when the last message has been piped.
+        *
+        * @member {boolean} core.protocol.fileTransfer.share.ShareMessenger~_canPipeNewMessage
+        */
+        this._canPipeNewMessage = false;
+        /**
+        * Stores the working hydra circuit manager instance.
+        *
+        * @member {core.protocol.hydra.CircuitManagerInterface} core.protocol.fileTransfer.share.ShareMessenger~_circuitManager
+        */
+        this._circuitManager = null;
+        /**
+        * Stores the working hydra circuit manager instance.
+        *
+        * @member {core.protocol.hydra.CircuitManagerInterface} core.protocol.fileTransfer.share.ShareMessenger~_circuitManager
+        */
+        this._currentCallback = null;
+        /**
+        * Stores the current listener on the expected response message in the transfer message center
+        *
+        * @member {Function} core.protocol.fileTransfer.share.ShareMessenger~_currentMessageListener
+        */
+        this._currentMessageListener = null;
+        /**
+        * Stores the current event key on the expected response message in the transfer message center
+        *
+        * @member {string} core.protocol.fileTransfer.share.ShareMessenger~_currentMessageListenerKey
+        */
+        this._currentMessageListenerKey = null;
+        /**
+        * This flag indicated whether a response has rolled in, for the timeout to check against before
+        * piping the message again.
+        *
+        * @member {boolean} core.protocol.fileTransfer.share.ShareMessenger~_hasResponded
+        */
+        this._hasResponded = false;
+        /**
+        * Stores the maximum number of tries sending a message and waiting for a response. Populated by config.
+        *
+        * @member {number} core.protocol.fileTransfer.share.ShareMessenger~_maximumNumberOfMessageTries
+        */
+        this._maximumNumberOfMessageTries = 0;
+        /**
+        * Stores the identifier of the circuit through which the latest response message came through, in order to be able
+        * to reuse the circuit when piping a new message.
+        *
+        * @member {string} core.protocol.fileTransfer.share.ShareMessenger~_messageReceivedThroughCircuitId
+        */
+        this._messageReceivedThroughCircuitId = null;
+        /**
+        * Keeps track of the number of tries sending a message and waiting for a response, for one message.
+        * Gets reset on every message piping cycle.
+        *
+        * @member {number} core.protocol.fileTransfer.share.ShareMessenger~_retryCount
+        */
+        this._retryCount = 0;
+        /**
+        * Stores the working transfer message center instance.
+        *
+        * @member {core.protocol.fileTransfer.TransferMessageCenterInterface} core.protocol.fileTransfer.share.ShareMessenger~_transferMessageCenter
+        */
+        this._transferMessageCenter = null;
+        /**
+        * Stores the number of ms used for the timeout when waiting for a response message. Populated by config.
+        *
+        * @member {number} core.protocol.fileTransfer.share.ShareMessenger~_waitForResponseMessageInMs
+        */
+        this._waitForResponseMessageInMs = 0;
+        /**
+        * Stores the current timeout when waiting for a response.
+        *
+        * @member {number} core.protocol.fileTransfer.share.ShareMessenger~_waitForResponseTimeout
+        */
+        this._waitForResponseTimeout = 0;
+        this._circuitManager = circuitManager;
+        this._transferMessageCenter = transferMessageCenter;
+        this._maximumNumberOfMessageTries = fileTransferConfig.get(&#039;fileTransfer.shareMessaging.maximumNumberOfMessageTries&#039;);
+        this._waitForResponseMessageInMs = fileTransferConfig.get(&#039;fileTransfer.shareMessaging.waitForResponseMessageInSeconds&#039;) * 1000;
+
+        this._canPipeNewMessage = true;
+    }
+    ShareMessenger.prototype.pipeLastMessage = function (payloadToFeed, nodesToFeedBlock) {
+        var _this = this;
+        if (!this._canPipeNewMessage) {
+            throw new Error(&#039;ShareMessenger: Cannot pipe message, still waiting for another response.&#039;);
+        }
+
+        this._canPipeNewMessage = false;
+
+        if (!this._transferMessageCenter.issueExternalFeedToCircuit(nodesToFeedBlock, payloadToFeed, this._messageReceivedThroughCircuitId)) {
+            this._circuitManager.once(&#039;circuitCount&#039;, function () {
+                _this._transferMessageCenter.issueExternalFeedToCircuit(nodesToFeedBlock, payloadToFeed);
+            });
+        }
+    };
+
+    ShareMessenger.prototype.manuallySetPreferredCircuitId = function (circuitId) {
+        this._messageReceivedThroughCircuitId = circuitId;
+    };
+
+    ShareMessenger.prototype.pipeMessageAndWaitForResponse = function (payloadToFeed, nodesToFeedBlock, expectedMessageType, expectedTransferIdentifier, callback) {
+        var _this = this;
+        if (!this._canPipeNewMessage) {
+            process.nextTick(function () {
+                callback(new Error(&#039;ShareMessenger: Cannot pipe message, still waiting for response.&#039;), null);
+            });
+            return;
+        }
+
+        this._canPipeNewMessage = false;
+        this._hasResponded = false;
+        this._currentCallback = callback;
+        this._retryCount = 0;
+
+        this._currentMessageListenerKey = expectedMessageType + &#039;_&#039; + expectedTransferIdentifier;
+        this._currentMessageListener = function (circuitId, responseMessagePayload) {
+            _this._hasResponded = true;
+            _this._messageReceivedThroughCircuitId = circuitId;
+            _this._currentMessageListener = null;
+            _this._currentMessageListenerKey = null;
+
+            if (_this._waitForResponseTimeout) {
+                global.clearTimeout(_this._waitForResponseTimeout);
+                _this._waitForResponseTimeout = 0;
+            }
+
+            _this._doCallback(null, responseMessagePayload);
+        };
+
+        this._transferMessageCenter.once(this._currentMessageListenerKey, this._currentMessageListener);
+
+        this._issueFeedAndSetTimeout(nodesToFeedBlock, payloadToFeed);
+    };
+
+    ShareMessenger.prototype.teardownLatestCircuit = function () {
+        if (this._messageReceivedThroughCircuitId) {
+            this._circuitManager.teardownCircuit(this._messageReceivedThroughCircuitId);
+            this._messageReceivedThroughCircuitId = null;
+        }
+    };
+
+    /**
+    * Calls the callback method of the current piping cycle, and cleans up the remaining response message listener
+    * (if still present). Sets the `canPipeNewMessage` flag back to true.
+    *
+    * @method core.protocol.fileTransfer.share.ShareMessenger~_doCallback
+    *
+    * @param {Error} err Error argument to pass to callback.
+    * @param {Buffer} responseMessagePayload Payload of the response message to pass to callback.
+    */
+    ShareMessenger.prototype._doCallback = function (err, responseMessagePayload) {
+        if (this._currentCallback) {
+            var cb = this._currentCallback;
+
+            if (this._currentMessageListener) {
+                this._transferMessageCenter.removeListener(this._currentMessageListenerKey, this._currentMessageListener);
+                this._currentMessageListener = null;
+                this._currentMessageListenerKey = null;
+            }
+
+            this._currentCallback = null;
+            this._canPipeNewMessage = true;
+
+            cb(err, responseMessagePayload);
+        }
+    };
+
+    /**
+    * Checks if a message can be sent again, and if yes, tries to send it again, else calls back with an error.
+    *
+    * @method core.protocol.fileTransfer.share.ShareMessenger~_increaseRetryCountAndIssueAgain
+    *
+    * @param {Buffer} nodesToFeedBlock Buffer representation of the nodes to feed
+    * @param {Buffer} payloadToFeed The message to feed
+    */
+    ShareMessenger.prototype._increaseRetryCountAndIssueAgain = function (nodesToFeedBlock, payloadToFeed) {
+        this._retryCount++;
+        if (this._retryCount &lt;= this._maximumNumberOfMessageTries) {
+            this._issueFeedAndSetTimeout(nodesToFeedBlock, payloadToFeed, false, true);
+        } else {
+            this._doCallback(new Error(&#039;Maximum tries exhausted.&#039;), null);
+        }
+    };
+
+    /**
+    * Self-explanatory multiliner.
+    *
+    * @method core.protocol.fileTransfer.share.ShareMessenger~_increaseRetryCountAndIssueAgain
+    *
+    * @param {Buffer} nodesToFeedBlock Buffer representation of the nodes to feed
+    * @param {Buffer} payloadToFeed The message to feed
+    * @param {boolean} skipCircuitListener If this is true, the issuing is not being tried again when the client has no
+    * working circuits and the circuit count changes (used when repeating function in the circuit count listener). Defaults to false.
+    * @param {boolean} useDifferentCircuit Indicates whether to skip trying to use the last circuit through which a response came through.
+    * @returns {boolean} True if the message could be sent through one circuit, false if no circuit could be used.
+    */
+    ShareMessenger.prototype._issueFeedAndSetTimeout = function (nodesToFeedBlock, payloadToFeed, skipCircuitListener, useDifferentCircuit) {
+        var _this = this;
+        if (typeof skipCircuitListener === &quot;undefined&quot;) { skipCircuitListener = false; }
+        if (typeof useDifferentCircuit === &quot;undefined&quot;) { useDifferentCircuit = false; }
+        var success = this._transferMessageCenter.issueExternalFeedToCircuit(nodesToFeedBlock, payloadToFeed, useDifferentCircuit ? null : this._messageReceivedThroughCircuitId);
+
+        if (success) {
+            this._waitForResponseTimeout = global.setTimeout(function () {
+                // it&#039;s important that this happens here and not after the other function, otherwise the timeout can get lost!
+                _this._waitForResponseTimeout = 0;
+
+                if (!_this._hasResponded) {
+                    _this._increaseRetryCountAndIssueAgain(nodesToFeedBlock, payloadToFeed);
+                }
+            }, this._waitForResponseMessageInMs);
+        } else {
+            if (!skipCircuitListener) {
+                this._circuitManager.once(&#039;circuitCount&#039;, function () {
+                    if (!_this._issueFeedAndSetTimeout(nodesToFeedBlock, payloadToFeed, true, useDifferentCircuit)) {
+                        _this._doCallback(new Error(&#039;Maximum tries exhausted.&#039;), null);
+                    }
+                });
+            }
+        }
+
+        return success;
+    };
+    return ShareMessenger;
+})();
+
+module.exports = ShareMessenger;
+//# sourceMappingURL=ShareMessenger.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.88</p>
+      <p class="stat">68.25</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">101</p>
+      <p class="stat">120</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">24.00</p>
+      <p class="stat">27.29</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.53</p>
+      <p class="stat">0.75</p>
     </div>
   </div>
 </div>
@@ -90,7 +90,15 @@
 
 <div class="container">
   <div class="row">
-    <textarea id="file-source" class="col-md-12">var FeedingNodesMessageBlock = require(&#039;../messages/FeedingNodesMessageBlock&#039;);
+    <textarea id="file-source" class="col-md-12">var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var events = require(&#039;events&#039;);
+
+var FeedingNodesMessageBlock = require(&#039;../messages/FeedingNodesMessageBlock&#039;);
 
 /**
 * FeedingNodesBlockMaintainerInterface implementation
@@ -100,9 +108,11 @@
 *
 * @param {core.protocol.hydra.CircuitManagerInterface} circuitManager Working hydra circuit manager.
 */
-var FeedingNodesBlockMaintainer = (function () {
+var FeedingNodesBlockMaintainer = (function (_super) {
+    __extends(FeedingNodesBlockMaintainer, _super);
     function FeedingNodesBlockMaintainer(circuitManager) {
         var _this = this;
+        _super.call(this);
         /**
         * Stores the feeding nodes byte buffer block constructed from the currently maintained node batch.
         *
@@ -127,6 +137,7 @@ var FeedingNodesBlockMaintainer = (function () {
         * @member {core.protocol.hydra.HydraNodeList} core.protocol.fileTransfer.share.FeedingNodesBlockMaintainer~_nodeBatch
         */
         this._nodeBatch = null;
+
         this._circuitManager = circuitManager;
 
         this._nodeBatch = this._circuitManager.getRandomFeedingNodesBatch() || [];
@@ -140,6 +151,7 @@ var FeedingNodesBlockMaintainer = (function () {
     }
     FeedingNodesBlockMaintainer.prototype.cleanup = function () {
         this._circuitManager.removeListener(&#039;circuitCount&#039;, this._countListener);
+        this.removeAllListeners(&#039;nodeBatchLength&#039;);
     };
 
     FeedingNodesBlockMaintainer.prototype.getBlock = function () {
@@ -185,10 +197,17 @@ var FeedingNodesBlockMaintainer = (function () {
         }
 
         this._nodeBatch = newBatch;
+
         this._block = FeedingNodesMessageBlock.constructBlock(this._nodeBatch);
+
+        var nodeBatchLength = this._nodeBatch.length;
+
+        if (nodeBatchLength) {
+            this.emit(&#039;nodeBatchLength&#039;, nodeBatchLength);
+        }
     };
     return FeedingNodesBlockMaintainer;
-})();
+})(events.EventEmitter);
 
 module.exports = FeedingNodesBlockMaintainer;
 //# sourceMappingURL=FeedingNodesBlockMaintainer.js.map</textarea>

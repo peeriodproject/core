@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/search/SearchFormManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/search/SearchFormManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">74.19</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">198</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">33.68</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.25</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../main.d.ts&#039; /&gt;
+var path = require(&#039;path&#039;);
+
+var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
+
+/**
+* @class core.search.SearchFormManager
+* @implements core.search.SearchFormManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
+* @param {core.utils.StateHandlerFactoryInterface} stateHandlerFactory
+* @param {core.plugin.PluginManagerInterface} pluginManager
+* @param {core.search.SearchRequestManagerInterface} searchRequestManager
+* @param {core.utils.ClosableAsyncOptions} [options]
+*/
+var SearchFormManager = (function () {
+    function SearchFormManager(config, appQuitHandler, stateHandlerFactory, pluginManager, searchRequestManager, options) {
+        if (typeof options === &quot;undefined&quot;) { options = {}; }
+        var _this = this;
+        /**
+        * The internally used config instance
+        *
+        * @member {core.config.ConfigInterface} core.search.SearchFormManager~_config
+        */
+        this._config = null;
+        /**
+        * The identifier of the currently activated plugin to process incoming queries with.
+        *
+        * @member {string} core.search.SearchFormManager~_currentFormIdentifier
+        */
+        this._currentFormIdentifier = null;
+        /**
+        * A flag indicates weather the manager is open or closed
+        *
+        * @member {boolean} core.search.SearchFormManager~_isOpen
+        */
+        this._isOpen = false;
+        /**
+        * The internally uses PluginManagerInterface instance
+        *
+        * @member {core.plugin.PluginManagerInterface} core.search.SearchFormManager~_pluginManager
+        */
+        this._pluginManager = null;
+        /**
+        * The internally used StateHandlerInterface instance to load and save the current form state
+        *
+        * @member {core.utils.StateHandlerInterface} core.search.SearchFormManager~_stateHandler
+        */
+        this._stateHandler = null;
+        /**
+        * The internally used SearchRequestManagerInterface instance to start queries
+        *
+        * @member {core.search.SearchRequestManagerInterface} core.search.SearchFormManager~_searchRequestManager
+        */
+        this._searchRequestManager = null;
+        this._options = {};
+        var defaults = {
+            closeOnProcessExit: true,
+            onCloseCallback: function (err) {
+            },
+            onOpenCallback: function (err) {
+            }
+        };
+
+        this._config = config;
+        this._stateHandler = stateHandlerFactory.create(path.join(this._config.get(&#039;app.dataPath&#039;), this._config.get(&#039;search.searchFormStateConfig&#039;)));
+        this._pluginManager = pluginManager;
+        this._searchRequestManager = searchRequestManager;
+
+        this._options = ObjectUtils.extend(defaults, options);
+
+        if (this._options.closeOnProcessExit) {
+            appQuitHandler.add(function (done) {
+                _this.close(done);
+            });
+        }
+
+        this.open(this._options.onOpenCallback);
+    }
+    SearchFormManager.prototype.addQuery = function (rawQuery, callback) {
+        var _this = this;
+        var internalCallback = callback || function (err, queryId) {
+        };
+
+        this._pluginManager.getActivePluginRunner(this._currentFormIdentifier, function (pluginRunner) {
+            pluginRunner.getQuery(rawQuery, function (err, query) {
+                if (err) {
+                    console.log(err);
+                    return internalCallback(err, null);
+                }
+
+                return _this._searchRequestManager.addQuery(query, internalCallback);
+            });
+        });
+    };
+
+    SearchFormManager.prototype.close = function (callback) {
+        var _this = this;
+        var internalCallback = callback || this._options.onCloseCallback;
+
+        if (!this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+
+        this._stateHandler.save({ currentForm: this._currentFormIdentifier }, function (err) {
+            if (err) {
+                return internalCallback(err);
+            }
+
+            _this._isOpen = false;
+
+            return internalCallback(null);
+        });
+    };
+
+    SearchFormManager.prototype.getFormIdentifiers = function (callback) {
+        this._pluginManager.getActivePluginRunnerIdentifiers(callback);
+    };
+
+    SearchFormManager.prototype.getCurrentFormIdentifier = function (callback) {
+        return process.nextTick(callback.bind(null, this._currentFormIdentifier));
+    };
+
+    SearchFormManager.prototype.isOpen = function (callback) {
+        return process.nextTick(callback.bind(null, null, this._isOpen));
+    };
+
+    SearchFormManager.prototype.open = function (callback) {
+        var _this = this;
+        var internalCallback = callback || this._options.onOpenCallback;
+
+        if (this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+
+        this._pluginManager.open(function (err) {
+            if (err) {
+                return internalCallback(err);
+            }
+
+            _this.getFormIdentifiers(function (identifiers) {
+                if (!identifiers.length) {
+                    return internalCallback(new Error(&#039;SearchFormManager#open: No identifiers to construct a search form found. Add a plugin or activate at least one.&#039;));
+                }
+
+                _this._stateHandler.load(function (err, state) {
+                    if (err || !state || !state[&#039;currentForm&#039;]) {
+                        _this._currentFormIdentifier = identifiers[0];
+                    } else {
+                        err = _this._setForm(identifiers, state[&#039;currentForm&#039;]);
+                    }
+
+                    if (!err) {
+                        _this._isOpen = true;
+                    }
+
+                    return internalCallback(err);
+                });
+            });
+        });
+    };
+
+    SearchFormManager.prototype.setForm = function (identifier, callback) {
+        var _this = this;
+        var internalCallback = callback || function (err) {
+        };
+
+        this.getFormIdentifiers(function (identifiers) {
+            var err = _this._setForm(identifiers, identifier);
+
+            return internalCallback(err);
+        });
+    };
+
+    /**
+    * Sets the given identifier as the new form processor and returns an error if the identifier is not available within the given identifiers list.
+    *
+    * @method core.search.SearchFormManager~_setForm
+    *
+    * todo ts-definition
+    *
+    * @param {Array} identifiers A list of all available identifiers
+    * @param {string} identifier The identifier to activate
+    * @returns {Error}
+    */
+    SearchFormManager.prototype._setForm = function (identifiers, identifier) {
+        if (identifiers.indexOf(identifier) === -1) {
+            return new Error(&#039;SearchFormManager#setForm: Could not activate the given identifier. The Identifier &quot;&#039; + identifier + &#039;&quot; is invalid&#039;);
+        }
+
+        this._currentFormIdentifier = identifier;
+
+        return null;
+    };
+    return SearchFormManager;
+})();
+
+module.exports = SearchFormManager;
+//# sourceMappingURL=SearchFormManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

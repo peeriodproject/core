@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">69.93</p>
+      <p class="stat">69.94</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">308</p>
+      <p class="stat">316</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">49.00</p>
+      <p class="stat">49.46</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.44</p>
+      <p class="stat">2.52</p>
     </div>
   </div>
 </div>
@@ -155,6 +155,7 @@ var TCPSocket = (function (_super) {
         this._socket = null;
         this._preventWrite = false;
         this._uuid = &#039;&#039;;
+        this._TESTisCircuit = false;
 
         if (!(socket &amp;&amp; socket instanceof net.Socket)) {
             throw new Error(&#039;TCPSocket.constructor: Invalid or no socket specified&#039;);
@@ -190,6 +191,10 @@ var TCPSocket = (function (_super) {
 
         logger.log(&#039;socket&#039;, &#039;Added socket&#039;);
     }
+    TCPSocket.prototype.TESTsetIsCircuit = function (flag) {
+        this._TESTisCircuit = flag;
+    };
+
     TCPSocket.prototype.end = function (data, encoding) {
         if (this.getSocket() &amp;&amp; !this._preventWrite) {
             this._preventWrite = true;
@@ -244,6 +249,9 @@ var TCPSocket = (function (_super) {
 
             if (this.getIdentifier().indexOf(&#039;hydra&#039;) &gt; -1) {
                 logger.log(&#039;hydra&#039;, &#039;Hydra socket timed out&#039;, { socketIdent: this.getIdentifier() });
+                if (this._TESTisCircuit) {
+                    logger.log(&#039;error&#039;, &#039;Timed out a hydra circuit socket&#039;);
+                }
             }
 
             this.end();
