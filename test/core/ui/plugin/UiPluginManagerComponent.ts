@@ -9,7 +9,7 @@ import PluginManager = require('../../../../src/core/plugin/PluginManager');
 import PluginRunner = require('../../../../src/core/plugin/PluginRunner');
 import UiPluginManagerComponent = require('../../../../src/core/ui/plugin/UiPluginManagerComponent');
 
-describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent', function () {
+describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent @joern', function () {
 	var sandbox:SinonSandbox;
 	var component:UiPluginManagerComponent;
 	var eventListeners:{ [eventName:string]:Function };
@@ -87,12 +87,12 @@ describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent', function () {
 	it('should correctly return the state', function (done) {
 		// waiting for pluginManager.open
 		setImmediate(function () {
-			var state = component.getState();
+			component.getState(function (state) {
+				state.should.be.an.instanceof(Object);
+				state.should.containDeep({ identifier: { fields: 'foobar' } });
 
-			state.should.be.an.instanceof(Object);
-			state.should.containDeep({ identifier: { fields: 'foobar' } });
-
-			done();
+				done();
+			});
 		});
 	});
 
@@ -117,12 +117,14 @@ describe('CORE --> UI --> FOLDER --> UiPluginManagerComponent', function () {
 			// waiting for pluginManager.activatePluginState
 			setImmediate(function () {
 				uiUpdateSpy.calledOnce.should.be.true;
-				component.getState().should.containDeep({
-					identifier   : { fields: 'foobar' },
-					fooIdentifier: { fields: 'foobar' }
-				});
+				component.getState(function (state) {
+					state.should.containDeep({
+						identifier   : { fields: 'foobar' },
+						fooIdentifier: { fields: 'foobar' }
+					});
 
-				done();
+					done();
+				});
 			});
 		});
 	});
