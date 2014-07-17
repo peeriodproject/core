@@ -244,6 +244,10 @@ var SearchClient = (function () {
                 meta: {
                     type: 'object',
                     index: 'no'
+                },
+                _timestamp: {
+                    enabled: true,
+                    store: true
                 }
             }
         };
@@ -351,7 +355,11 @@ var SearchClient = (function () {
         this._client.search({
             index: indexName.toLowerCase(),
             type: this._getResponseType(type),
-            body: queryBody
+            body: queryBody,
+            fields: [
+                '_source',
+                '_timestamp'
+            ]
         }, function (err, response, status) {
             var hits = response && response['hits'] ? response['hits'] : {};
 

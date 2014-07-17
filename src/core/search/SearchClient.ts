@@ -264,6 +264,10 @@ class SearchClient implements SearchClientInterface {
 				meta: {
 					type: 'object',
 					index: 'no'
+				},
+				_timestamp : {
+					enabled : true,
+					store : true
 				}
 			}
 		};
@@ -371,7 +375,11 @@ class SearchClient implements SearchClientInterface {
 		this._client.search({
 			index: indexName.toLowerCase(),
 			type: this._getResponseType(type),
-			body: queryBody
+			body: queryBody,
+			fields: [
+				'_source',
+				'_timestamp'
+			]
 		}, function (err, response:Object, status:number) {
 			var hits:Object = response && response['hits'] ? response['hits'] : {};
 
