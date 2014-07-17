@@ -201,6 +201,17 @@ var SearchRequestManager = (function () {
         });
     };
 
+    SearchRequestManager.prototype.getResponses = function (queryId, callback) {
+        var _this = this;
+        this._getQuery(queryId, function (err, queryBody) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            _this._searchClient.getIncomingResponses(_this._indexName, queryId, queryBody, callback);
+        });
+    };
+
     SearchRequestManager.prototype.onQueryAdd = function (callback) {
         this._eventEmitter.addListener('queryAdd', callback);
     };

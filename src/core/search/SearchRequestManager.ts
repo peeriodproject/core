@@ -212,6 +212,16 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		});
 	}
 
+	public getResponses (queryId:string, callback:(err:Error, responses:any) => any):void {
+		this._getQuery(queryId, (err:Error, queryBody:Object) => {
+			if (err) {
+				return callback(err, null);
+			}
+
+			this._searchClient.getIncomingResponses (this._indexName, queryId, queryBody, callback);
+		});
+	}
+
 	public onQueryAdd (callback:Function):void {
 		this._eventEmitter.addListener('queryAdd', callback);
 	}
