@@ -29,8 +29,10 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 	this.timeout(0);
 
 	before(function (done) {
-		testUtils.deleteFolderRecursive(searchStoreLogsFolder);
-		testUtils.deleteFolderRecursive(searchStoreDataFolder);
+		try {
+			testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+			testUtils.deleteFolderRecursive(searchStoreDataFolder);
+		} catch (e) {}
 		testUtils.createFolder(searchStoreLogsFolder);
 		testUtils.createFolder(searchStoreDataFolder);
 
@@ -351,6 +353,25 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 		});
 	});
 
+	it('should correctly add a response to the database', function (done) {
+		var randomQueryId = 'searchQueryId' + Math.round(Math.random() * 100000000);
+		var queryBody = {
+			query: {
+				match: {
+					message: 'bonsai tree'
+				}
+			}
+		};
+
+		searchClient.createOutgoingQuery('myindex', randomQueryId, queryBody, function (err) {
+			searchClient.addIncomingResponse('myindex', randomQueryId, { message: 'A new bonsai tree in the office' }, { metadata: true }, function (err) {
+				(err === null).should.be.true;
+
+				done();
+			});
+		});
+	});
+
 	it('should correctly return the corresponding query object for the specified queryId', function (done) {
 		var theQueryBody = {
 			query: {
@@ -370,7 +391,36 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 		});
 	});
 
-	//it ('should')
+	it('should correctly return the results for the given query', function (done) {
+		var randomQueryId = 'searchQueryId' + Math.round(Math.random() * 100000000);
+		var queryBody = {
+			query: {
+				match: {
+					message: 'bonsai tree'
+				}
+			}
+		};
+
+		searchClient.createOutgoingQuery('myindex', randomQueryId, queryBody, function (err) {
+			searchClient.addIncomingResponse('myindex', randomQueryId, { message: 'A new bonsai tree in the office' }, { metadata: true }, function () {
+				searchClient.getIncomingResponses('myindex', randomQueryId, queryBody, function (err:Error, responses:any) {
+					responses.total.should.equal(1);
+					responses.hits.should.have.a.lengthOf(1);
+
+					responses.hits[0].should.containDeep({
+						_source: {
+							message: 'A new bonsai tree in the office',
+							_meta  : {
+								metadata: true
+							}
+						}
+					});
+
+					done();
+				});
+			});
+		});
+	});
 
 	it('should correctly remove a outgoing query and all corresponding responses from the database', function (done) {
 		searchClient.deleteOutgoingQuery('myotherindex', 'searchQueryId', function (err) {

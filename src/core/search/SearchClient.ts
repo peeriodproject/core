@@ -135,10 +135,12 @@ class SearchClient implements SearchClientInterface {
 
 		this._client.index({
 			index: indexName.toLowerCase(),
-			type : 'response' + type.toLowerCase(),
-			body : body
+			type : this._getResponseType(type),
+			body : body,
+			refresh: true
 		}, function (err:Error, response:Object, status:number) {
 			err = err || null;
+
 			return internalCallback(err);
 		});
 	}
@@ -149,7 +151,7 @@ class SearchClient implements SearchClientInterface {
 
 		this._client.percolate({
 			index: indexName.toLowerCase(),
-			type : 'response-' + type.toLowerCase(),
+			type : this._getResponseType(type),
 			body : {
 				doc: responseBody
 			}
@@ -248,6 +250,7 @@ class SearchClient implements SearchClientInterface {
 			body : queryBody // todo add meta data ObjectUtils.extend(queryBody, queryMetas)
 		}, function (err:Error, response:Object, status:number) {
 			err = err || null;
+
 			return internalCallback(err);
 		});
 	}
@@ -340,7 +343,7 @@ class SearchClient implements SearchClientInterface {
 		// delete all responses for the queryId
 		this._client.deleteByQuery({
 			index: indexName,
-			type : 'response-' + queryId.toLowerCase(),
+			type : this._getResponseType(queryId),
 			body : {
 				query: {
 					bool: {
@@ -367,13 +370,18 @@ class SearchClient implements SearchClientInterface {
 	public getIncomingResponses (indexName:string, type:string, queryBody:Object, callback:(err:Error, responses:any) => void):void {
 		this._client.search({
 			index: indexName.toLowerCase(),
-			type: type.toLowerCase(),
+			type: this._getResponseType(type),
 			body: queryBody
 		}, function (err, response:Object, status:number) {
-			console.log(err);
-			console.log(response);
+			var hits:Object = response && response['hits'] ? response['hits'] : {};
 
-			return callback(err, response);
+			err = err || null;
+
+			if (!(hits && hits['total'])) {
+				return callback(null, null);
+			}
+
+			return callback(null, hits);
 		});
 	}
 
@@ -610,6 +618,18 @@ class SearchClient implements SearchClientInterface {
 		}
 
 		return this._searchItemFactory.create([response]);
+	}
+
+	/**
+	 * Returns the prefixed lowercase type
+	 *
+	 * @method core.search.SearchClient~_getResponseType
+	 *
+	 * @param type
+	 * @returns {string}
+	 */
+	private _getResponseType(type):string {
+		return 'response' + type.toLowerCase();
 	}
 
 	/**

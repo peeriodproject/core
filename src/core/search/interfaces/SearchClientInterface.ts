@@ -125,12 +125,24 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	/**
 	 * Returns the corresponding queryBody to the given `queryId` from the database
 	 *
+	 * @method core.search.SearchClientInterface#getOutgoingQuery
+	 *
 	 * @param {string} queryId
 	 * @param {Function} callback
 	 */
-	getOutgoingQuery (indexName:string, queryId:string, callback:(err:Error, queryBody:Object) => void):void;
+	getOutgoingQuery (indexName:string, queryId:string, callback:(err:Error, queryBody:Object) => any):void;
 
-	getIncomingResponses (indexName:string, type:string, queryBody:Object, callback:(err:Error, responses:any) => void):void;
+	/**
+	 * Returns the responses of the specified type that matches the given query.
+	 *
+	 * @method core.search.SearchClientInterface#getIncomingResponses
+	 *
+	 * @param {string} indexName
+	 * @param {string} type
+	 * @param {Object} queryBody
+	 * @param {Function} callback The callback that gets called with a possible error and the responses as arguments
+	 */
+	getIncomingResponses (indexName:string, type:string, queryBody:Object, callback:(err:Error, responses:any) => any):void;
 
 	itemExists (pathToIndex:string, callback:(exists:boolean) => void):void;
 
