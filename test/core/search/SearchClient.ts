@@ -327,7 +327,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 		var queryBody = {
 			query: {
 				match: {
-					message: "bonsai tree"
+					message: 'bonsai tree'
 				}
 			}
 		};
@@ -340,22 +340,22 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 
 				matches.should.have.a.lengthOf(1);
 				matches.should.containDeep([
-						{
-							_index: 'myindex',
-							_id   : 'searchQueryId'
-						}
-					]);
+					{
+						_index: 'myindex',
+						_id   : 'searchQueryId'
+					}
+				]);
 
 				done();
 			});
 		});
 	});
 
-	it ('should correctly return the corresponding query object for the specified queryId', function (done) {
+	it('should correctly return the corresponding query object for the specified queryId', function (done) {
 		var theQueryBody = {
 			query: {
 				match: {
-					message: "bonsai tree"
+					message: 'bonsai tree'
 				}
 			}
 		};
@@ -369,6 +369,8 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 			});
 		});
 	});
+
+	//it ('should')
 
 	it('should correctly remove a outgoing query and all corresponding responses from the database', function (done) {
 		searchClient.deleteOutgoingQuery('myotherindex', 'searchQueryId', function (err) {
