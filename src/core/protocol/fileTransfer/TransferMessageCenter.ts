@@ -221,6 +221,9 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 		else if (messageType === 'TEST_MESSAGE') {
 			this.emit('testMessage', null, msg.getPayload().toString());
 		}
+		else if (messageType === 'SHARE_REQUEST' || messageType === 'SHARE_RATIFY' || messageType === 'ENCRYPTED_SHARE') {
+			this.emit(messageType + '_' + msg.getTransferId(), circuitId, msg.getPayload());
+		}
 	}
 
 	/**
