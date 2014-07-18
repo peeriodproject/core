@@ -106,12 +106,12 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		};
 
 		this._createAndStoreQueryId(queryBody, (queryId:string) => {
-			// add queryId to the query object
+			/*// add queryId to the query object
 			var extendedQueryBody:Object = ObjectUtils.extend(queryBody, {
 				queryId: queryId
-			});
+			});*/
 
-			this._searchClient.createOutgoingQuery(this._indexName, queryId, extendedQueryBody, (err) => {
+			this._searchClient.createOutgoingQuery(this._indexName, queryId, queryBody, (err) => {
 				if (err) {
 					queryId = null;
 				}

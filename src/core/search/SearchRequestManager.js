@@ -94,12 +94,11 @@ var SearchRequestManager = (function () {
         };
 
         this._createAndStoreQueryId(queryBody, function (queryId) {
-            // add queryId to the query object
-            var extendedQueryBody = ObjectUtils.extend(queryBody, {
-                queryId: queryId
-            });
-
-            _this._searchClient.createOutgoingQuery(_this._indexName, queryId, extendedQueryBody, function (err) {
+            /*// add queryId to the query object
+            var extendedQueryBody:Object = ObjectUtils.extend(queryBody, {
+            queryId: queryId
+            });*/
+            _this._searchClient.createOutgoingQuery(_this._indexName, queryId, queryBody, function (err) {
                 if (err) {
                     queryId = null;
                 }
