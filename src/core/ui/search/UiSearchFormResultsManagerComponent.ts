@@ -1,28 +1,29 @@
-import SearchFormManagerInterface = require('../../search/interfaces/SearchFormManagerInterface');
+import SearchFormResultsManagerInterface = require('../../search/interfaces/SearchFormResultsManagerInterface');
 import SearchRequestManagerInterface = require('../../search/interfaces/SearchRequestManagerInterface');
 
 import UiComponent = require('../UiComponent');
 
 /**
- * @class core.ui.UiSearchFormManagerComponent
+ * @class core.ui.UiSearchFormResultsManagerComponent
  * @implements core.ui.UiComponentInterface
  *
- * @param {core.search.SearchFormManagerInterface} searchFormManager
+ * @param {core.search.SearchFormResultsManagerInterface} searchFormManager
  * @param {core.search.SearchRequestManagerInterface} searchRequestManager
  */
 class UiSearchFormResultsManagerComponent extends UiComponent {
 
+	private _currentResults:any = {};
 	/**
-	 * The internally used SearchFormManagerInterface instance to start new queries
+	 * The internally used.SearchFormResultsManagerInterface instance to start new queries
 	 *
-	 * @member {core.search.SearchFormManagerInterface} core.ui.UiSearchFormManagerComponent~_searchFormManager
+	 * @member {core.search.SearchFormResultsManagerInterface} core.ui.UiSearchFormResultsManagerComponent~_searchFormResultsManager
 	 */
-	private _searchFormManager:SearchFormManagerInterface = null;
+	private _searchFormResultsManager:SearchFormResultsManagerInterface = null;
 
 	/**
 	 * The internally used SearchRequestManagerInterface to remove old queries
 	 *
-	 * @member {core.search.SearchRequestManagerInterface} core.ui.UiSearchFormManagerComponent~_searchRequestManager
+	 * @member {core.search.SearchRequestManagerInterface} core.ui.UiSearchFormResultsManagerComponent~_searchRequestManager
 	 */
 	private _searchRequestManager:SearchRequestManagerInterface = null;
 
@@ -31,7 +32,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 	 *
 	 * todo add the ability to run multiple queries in parallel aka tabs
 	 *
-	 * @member {string} core.ui.UiSearchFormManagerComponent~_runningQueryId
+	 * @member {string} core.ui.UiSearchFormResultsManagerComponent~_runningQueryId
 	 */
 	private _runningQueryId:string = null;
 
@@ -41,10 +42,10 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 	 */
 	private _runningQuery:any = null;
 
-	constructor (searchFormManager:SearchFormManagerInterface, searchRequestManager:SearchRequestManagerInterface) {
+	constructor (searchFormResultsManager:SearchFormResultsManagerInterface, searchRequestManager:SearchRequestManagerInterface) {
 		super();
 
-		this._searchFormManager = searchFormManager;
+		this._searchFormResultsManager = searchFormResultsManager;
 		this._searchRequestManager = searchRequestManager;
 
 		this._setupEventListeners();
@@ -60,14 +61,15 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 
 	public getState (callback):void {
 		return process.nextTick(callback.bind(null, {
-			currentQuery: this._runningQuery
+			currentQuery: this._runningQuery,
+			currentResults: this._currentResults
 		}));
 	}
 
 	/**
 	 * Sets up the `addQuery` and `removeQuery` event listener
 	 *
-	 * @method core.ui.UiSearchFormManagerComponent~_setupEventListeners
+	 * @method core.ui.UiSearchFormResultsManagerComponent~_setupEventListeners
 	 */
 	private _setupEventListeners ():void {
 		this.on('addQuery', (rawQuery) => {
@@ -79,13 +81,44 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 			this._removeRunningQuery();
 			this._runningQuery = null;
 			this._runningQueryId = null;
+			this._currentResults = null;
 
 			return this.updateUi();
+		});
+
+		this._searchRequestManager.onQueryResultsChanged((queryId) => {
+
+			if (queryId !== this._runningQueryId) {
+				return;
+			}
+
+			this._searchRequestManager.getResponses(queryId, (err:Error, responses:any) => {
+				if (err || !responses || !responses.total) {
+					if (err) {
+						console.error(err);
+					}
+
+					return;
+				}
+
+				this._searchFormResultsManager.transformResponses(responses.hits, true, (err:Error, transformedResults) => {
+					if (err) {
+						console.error(err);
+
+						return;
+					}
+
+					responses.hits = transformedResults;
+
+					this._currentResults = responses;
+					this.updateUi();
+				});
+			});
 		});
 	}
 
 	/**
-	 * Creates a new query if it differs from the stored {@link core.ui.UiSearchFormManagerComponent~_runningQuery}
+	 * Creates a new query if it differs from the stored {@link core.ui.UiSearchFormResultsManagerComponent~_runningQuery}
 	 * and stores the `queryId` for further cleanup.
 	 *
 	 * @param rawQuery
@@ -95,7 +128,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 			return;
 		}
 
-		this._searchFormManager.addQuery(rawQuery, (err:Error, queryId:string) => {
+		this._searchFormResultsManager.addQuery(rawQuery, (err:Error, queryId:string) => {
 			if (err) {
 				console.error(err);
 			}
@@ -110,7 +143,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 	/**
 	 * Removes the running query from the database
 	 *
-	 * @method core.ui.UiSearchFormManagerComponent~_removeRunningQuery
+	 * @method core.ui.UiSearchFormResultsManagerComponent~_removeRunningQuery
 	 */
 	private _removeRunningQuery ():void {
 		if (!this._runningQueryId) {
