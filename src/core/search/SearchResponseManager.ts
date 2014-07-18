@@ -47,7 +47,7 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 	 */
 	private _searchClient:SearchClientInterface = null;
 
-	constructor(appQuitHandler:AppQuitHandlerInterface, searchClient:SearchClientInterface, options:ClosableAsyncOptions = {}) {
+	constructor (appQuitHandler:AppQuitHandlerInterface, searchClient:SearchClientInterface, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
 			onOpenCallback    : function () {
 			},
@@ -124,7 +124,8 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 	}
 
 	public validateQueryAndTriggerResults (queryId:string, queryBuffer:Buffer, callback?:(err:Error) => any):void {
-		var internalCallback = callback || function () {};
+		var internalCallback = callback || function () {
+		};
 
 		this._validateQuery(queryBuffer, (err:Error, queryObject:Object) => {
 			if (err) {
@@ -157,7 +158,7 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 	 * @param {Object} queryObject A valid elasticsearch query object. {@link http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-request-body.html}
 	 * @param callback The callback that gets called with a possible error and the results object as arguments after the database returned it's state.
 	 */
-	private _runQuery(queryObject:Object, callback:(err:Error, results:Object) => any):void {
+	private _runQuery (queryObject:Object, callback:(err:Error, results:Object) => any):void {
 		this._searchClient.search(queryObject, (err:Error, results:any) => {
 			var hits:Array<Object>;
 
@@ -211,7 +212,7 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 	private _triggerNoResultsFound (queryId:string):void {
 		if (this._isOpen) {
 			logger.log('search', 'SearchResponseManager: no results found', {
-				queryId: queryId,
+				queryId  : queryId,
 				eventName: 'RESULTS_NOT_FOUND'
 			});
 
@@ -232,9 +233,9 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 	private _triggerResultsFound (queryId:string, results:Object):void {
 		if (this._isOpen) {
 			logger.log('search', 'SearchResponseManager: Results found', {
-				queryId: queryId,
+				queryId  : queryId,
 				eventName: 'RESULTS_FOUND',
-				results: results
+				results  : results
 			});
 
 			this._eventEmitter.emit('resultsFound', queryId, new Buffer(JSON.stringify(results)));
@@ -246,7 +247,7 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 	 * It returns an error as the first argument if the validation failed.
 	 *
 	 * @method core.search.SearchResponseManager~_validateQuery
-	 * 
+	 *
 	 * @param {Buffer} queryBuffer
 	 * @param {Function} callback The callback that gets called after the validation finished with a possible validation error and the query object as arguments
 	 */
