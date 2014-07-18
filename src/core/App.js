@@ -34,7 +34,7 @@ var SearchManager = require('./search/SearchManager');
 var SearchRequestManager = require('./search/SearchRequestManager');
 var SearchResponseManager = require('./search/SearchResponseManager');
 var SearchMessageBridge = require('./search/SearchMessageBridge');
-var SearchFormManager = require('./search/SearchFormManager');
+var SearchFormResultsManager = require('./search/SearchFormResultsManager');
 
 var PluginFinder = require('./plugin/PluginFinder');
 var PluginValidator = require('./plugin/PluginValidator');
@@ -52,7 +52,7 @@ var IndexManager = require('./search/IndexManager');
 var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
 
-var UiSearchFormManagerComponent = require('./ui/search/UiSearchFormManagerComponent');
+var UiSearchFormResultsManagerComponent = require('./ui/search/UiSearchFormResultsManagerComponent');
 var UiManager = require('./ui/UiManager');
 
 // Testing purposes only
@@ -149,7 +149,7 @@ var App = {
         var pathValidator = new PathValidator();
         var folderWatcherManager;
         var indexManager;
-        var searchFormManager;
+        var searchFormResultsManager;
 
         var pluginManager = new PluginManager(pluginConfig, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
@@ -157,16 +157,20 @@ var App = {
                 folderWatcherManager = new FolderWatcherManager(fsConfig, _this.appQuitHandler, stateHandlerFactory, folderWatcherFactory, {
                     onOpenCallback: function () {
                         indexManager = new IndexManager(searchConfig, _this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
-                        pluginManager.activatePluginState();
+                        pluginManager.activatePluginState(function (err) {
+                            if (err) {
+                                logger.error(err);
+                            }
 
-                        searchFormManager = new SearchFormManager(searchAppConfig, _this.appQuitHandler, stateHandlerFactory, pluginManager, searchRequestManager);
-                        _this.addUiComponent(new UiSearchFormManagerComponent(searchFormManager, searchRequestManager));
+                            searchFormResultsManager = new SearchFormResultsManager(searchAppConfig, _this.appQuitHandler, stateHandlerFactory, pluginManager, searchRequestManager);
+                            _this.addUiComponent(new UiSearchFormResultsManagerComponent(searchFormResultsManager, searchRequestManager));
 
-                        console.log('started indexer');
+                            console.log('started indexer');
 
-                        if (process.env.UI_ENABLED) {
-                            _this.startUi();
-                        }
+                            if (process.env.UI_ENABLED) {
+                                _this.startUi();
+                            }
+                        });
                     }
                 });
 
