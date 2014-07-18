@@ -68,6 +68,8 @@ describe('CORE --> UI --> SEARCH --> UiSearchFormResultsManagerComponent', funct
 
 		component.onUiUpdate(uiUpdateSpy);
 		component.emit('addQuery', 'raw query');
+		// should ignore the second call
+		component.emit('addQuery', 'raw query');
 
 		searchFormResultsManagerStub.addQuery.calledOnce.should.be.true;
 		searchFormResultsManagerStub.addQuery.getCall(0).args[0].should.equal('raw query');
