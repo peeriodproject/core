@@ -303,17 +303,14 @@ class Download extends events.EventEmitter implements DownloadInterface {
 	 * @param {number} expectedBytePosition The expected first byte position of the next potential data block
 	 */
 	private _handleBlockMessage (payload:Buffer, expectedBytePosition:number):void {
-		var decryptedMessage:ReadableDecryptedMessageInterface = null;
+		var decryptedMessage:ReadableDecryptedMessageInterface = this._decrypter.create(payload, this._incomingKey);
 		var malformedMessageErr:string = null;
+		var teardownOnError:boolean = true;
 
-		try {
-			decryptedMessage = this._decrypter.create(payload, this._incomingKey);
-		}
-		catch (e) {
+		if (!decryptedMessage) {
 			malformedMessageErr = 'Decryption error.';
 		}
-
-		if (decryptedMessage) {
+		else {
 			var shareMessage:ReadableEncryptedShareMessageInterface = this._readableEncryptedShareFactory.create(decryptedMessage.getPayload());
 
 			if (!shareMessage) {
@@ -331,6 +328,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 					}
 					else {
 						malformedMessageErr = 'Uploader aborted transfer.';
+						teardownOnError = false;
 					}
 
 				}
@@ -377,7 +375,10 @@ class Download extends events.EventEmitter implements DownloadInterface {
 
 		if (malformedMessageErr) {
 			this._kill(true, true, false, malformedMessageErr);
-			this._shareMessenger.teardownLatestCircuit();
+
+			if (teardownOnError) {
+				this._shareMessenger.teardownLatestCircuit();
+			}
 		}
 	}
 
@@ -531,7 +532,6 @@ class Download extends events.EventEmitter implements DownloadInterface {
 			callback(null);
 		}
 		else {
-
 			var nodeBatchLengthListener:Function = () => {
 				this.removeAllListeners('internalAbort');
 				callback(null);
