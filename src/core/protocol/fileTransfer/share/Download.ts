@@ -240,6 +240,18 @@ class Download extends events.EventEmitter implements DownloadInterface {
 		this._fileBlockWriter = fileBlockWriterFactory.createWriter(this._filename, this._expectedSize, this._expectedHash);
 	}
 
+	/**
+	 * BEGIN TESTING PURPOSES
+	 */
+
+	public getFeedingNodesBlockMaintainer ():FeedingNodesBlockMaintainerInterface {
+		return this._feedingNodesBlockMaintainer;
+	}
+
+	/**
+	 * END TESTING PURPOSES
+	 */
+
 	public kickOff ():void {
 		// prepare the file block writer
 		this._fileBlockWriter.prepareToWrite((err:Error) => {
@@ -333,7 +345,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 							this._kill(true, true, true, 'Manually aborted.', blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
 						}
 						else {
-							// everything okay so for. pass to the file writer.
+							// everything okay so far. pass to the file writer.
 							this._fileBlockWriter.writeBlock(blockMessage.getDataBlock(), (err:Error, fullCountOfWrittenBytes:number, isFinished:boolean) => {
 								if (isFinished) {
 									// finalize it
@@ -618,7 +630,9 @@ class Download extends events.EventEmitter implements DownloadInterface {
 		var transferIdentifier:string = crypto.pseudoRandomBytes(16).toString('hex');
 
 		this._prepareToImmediateShare((err:Error) => {
+
 			if (err) {
+
 				this._kill(true, true, false, err.message);
 			}
 			else {

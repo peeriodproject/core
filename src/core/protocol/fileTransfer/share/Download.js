@@ -200,6 +200,16 @@ var Download = (function (_super) {
         this._encrypter = encrypter;
         this._fileBlockWriter = fileBlockWriterFactory.createWriter(this._filename, this._expectedSize, this._expectedHash);
     }
+    /**
+    * BEGIN TESTING PURPOSES
+    */
+    Download.prototype.getFeedingNodesBlockMaintainer = function () {
+        return this._feedingNodesBlockMaintainer;
+    };
+
+    /**
+    * END TESTING PURPOSES
+    */
     Download.prototype.kickOff = function () {
         var _this = this;
         // prepare the file block writer
@@ -286,7 +296,7 @@ var Download = (function (_super) {
                         if (this._manuallyAborted) {
                             this._kill(true, true, true, 'Manually aborted.', blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
                         } else {
-                            // everything okay so for. pass to the file writer.
+                            // everything okay so far. pass to the file writer.
                             this._fileBlockWriter.writeBlock(blockMessage.getDataBlock(), function (err, fullCountOfWrittenBytes, isFinished) {
                                 if (isFinished) {
                                     // finalize it
