@@ -17,6 +17,14 @@ exports.main = {
         });
     },
 
+    getResultFields: function () {
+        exit({
+            _template: 'text',
+            title   : 'title',
+            content : 'content'
+        });
+    },
+
     getSearchFields: function () {
         exit({
             "action": "index.html",

@@ -87,6 +87,12 @@ class PluginRunner implements PluginRunnerInterface {
 		});
 	}
 
+	public getResultFields (callback:(err:Error, fields:Object) => any):void {
+		this._createAndRunStaticSandbox('main.getResultFields', {}, callback, function (output:any) {
+			return callback(null, output);
+		});
+	}
+
 	public getSearchFields (callback:(err:Error, searchFields:Object) => any):void {
 		this._createAndRunStaticSandbox('main.getSearchFields', {}, callback, function (output:any) {
 			return callback(null, output);

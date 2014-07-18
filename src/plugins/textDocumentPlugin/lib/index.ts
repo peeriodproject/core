@@ -87,6 +87,14 @@ export var main = {
 		});
 	},
 
+	getResultFields: function () {
+		exit({
+			_template: 'text',
+			title: "itemName",
+			content: "file"
+		});
+	},
+
 	getSearchFields: function () {
 		exit({
 			"action": "index.html",

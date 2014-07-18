@@ -6,15 +6,17 @@ import PluginInterface = require('./PluginInterface');
  * @interface
  * @class core.plugin.PluginRunnerInterface
  */
-interface PluginRunnerInterface extends PluginInterface  {
+interface PluginRunnerInterface extends PluginInterface {
 
-	cleanup():void;
+	cleanup ():void;
 
-	getMapping(callback:(err:Error, mapping:Object) => any):void;
+	getMapping (callback:(err:Error, mapping:Object) => any):void;
 
 	getQuery (query:Object, callback:(err:Error, query:Object) => any):void;
 
-	getSearchFields(callback:(err:Error, searchFields:Object) => any):void;
+	getResultFields (callback:(err:Error, fields:Object) => any):void;
+
+	getSearchFields (callback:(err:Error, searchFields:Object) => any):void;
 
 }
 

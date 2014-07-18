@@ -157,6 +157,22 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
             });
         });
 
+        it('should correctly call the getResultFields method', function (done) {
+            var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
+
+            pluginRunner.getResultFields(function (err, fields) {
+                (err === null).should.be.true;
+
+                fields.should.containDeep({
+                    _template: 'text',
+                    title: 'title',
+                    content: 'content'
+                });
+
+                cleanupAndDone(pluginRunner, done);
+            });
+        });
+
         it('should correctly call the getSearchFields method', function (done) {
             var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
 
