@@ -358,7 +358,7 @@ var Download = (function (_super) {
             var sha1 = crypto.createHash('sha1').update(secret).digest('hex');
 
             if (sha1 !== ratifyMessage.getSecretHash().toString('hex')) {
-                malformedMessageErr = 'Hashes of secret do not match.';
+                malformedMessageErr = 'Hashes of shared secret do not match.';
             } else {
                 // derive keys and the identifier
                 var hkdf = new HKDF('sha256', secret);
@@ -370,15 +370,12 @@ var Download = (function (_super) {
                 var nextTransferIdentifier = keysConcat.slice(32).toString('hex');
 
                 // decrypt the encrypted part
-                var decryptedPart = null;
+                var decryptedPart = this._decrypter.create(ratifyMessage.getEncryptedPart(), this._incomingKey);
+                ;
 
-                try  {
-                    decryptedPart = this._decrypter.create(ratifyMessage.getEncryptedPart(), this._incomingKey);
-                } catch (e) {
+                if (!decryptedPart) {
                     malformedMessageErr = 'Decryption error.';
-                }
-
-                if (decryptedPart) {
+                } else {
                     var deformatted = false;
 
                     try  {

@@ -411,7 +411,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 			var sha1:string = crypto.createHash('sha1').update(secret).digest('hex');
 
 			if (sha1 !== ratifyMessage.getSecretHash().toString('hex')) {
-				malformedMessageErr = 'Hashes of secret do not match.';
+				malformedMessageErr = 'Hashes of shared secret do not match.';
 			}
 			else {
 				// derive keys and the identifier
@@ -424,16 +424,12 @@ class Download extends events.EventEmitter implements DownloadInterface {
 				var nextTransferIdentifier:string = keysConcat.slice(32).toString('hex');
 
 				// decrypt the encrypted part
-				var decryptedPart:ReadableDecryptedMessageInterface = null;
+				var decryptedPart:ReadableDecryptedMessageInterface = this._decrypter.create(ratifyMessage.getEncryptedPart(), this._incomingKey);;
 
-				try {
-					decryptedPart = this._decrypter.create(ratifyMessage.getEncryptedPart(), this._incomingKey);
-				}
-				catch (e) {
+				if (!decryptedPart) {
 					malformedMessageErr = 'Decryption error.';
 				}
-
-				if (decryptedPart) {
+				else {
 					var deformatted:boolean = false;
 
 					try {

@@ -2,11 +2,14 @@
 require('should');
 
 var events = require('events');
+var crypto = require('crypto');
 
 var sinon = require('sinon');
 
 var testUtils = require('../../../utils/testUtils');
 
+var HKDF = require('../../../../src/core/crypto/HKDF');
+var Padding = require('../../../../src/core/crypto/Padding');
 var Download = require('../../../../src/core/protocol/fileTransfer/share/Download');
 var ShareMessenger = require('../../../../src/core/protocol/fileTransfer/share/ShareMessenger');
 
@@ -17,6 +20,7 @@ var FileBlockWriterFactory = require('../../../../src/core/protocol/fileTransfer
 
 // Factories
 var WritableFileTransferMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/WritableFileTransferMessageFactory');
+var ReadableFileTransferMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/ReadableFileTransferMessageFactory');
 var WritableShareRequestMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableShareRequestMessageFactory');
 var WritableEncryptedShareMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableEncryptedShareMessageFactory');
 var ReadableEncryptedShareMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/ReadableEncryptedShareMessageFactory');
@@ -27,6 +31,8 @@ var ReadableShareRatifyMessageFactory = require('../../../../src/core/protocol/f
 var Aes128GcmReadableDecryptedMessageFactory = require('../../../../src/core/protocol/hydra/messages/Aes128GcmReadableDecryptedMessageFactory');
 var Aes128GcmWritableMessageFactory = require('../../../../src/core/protocol/hydra/messages/Aes128GcmWritableMessageFactory');
 var WritableBlockRequestMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableBlockRequestMessageFactory');
+var ReadableShareRequestMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/ReadableShareRequestMessageFactory');
+var WritableShareRatifyMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableShareRatifyMessageFactory');
 
 describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @current', function () {
     var sandbox = null;
@@ -45,6 +51,11 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @c
 
     // factories
     var writableTransferFactory = new WritableFileTransferMessageFactory();
+    var readableTransferFactory = new ReadableFileTransferMessageFactory();
+    var readableShareRequestFactory = new ReadableShareRequestMessageFactory();
+    var writableShareRatifyFactory = new WritableShareRatifyMessageFactory();
+    var remoteEncrypter = new Aes128GcmWritableMessageFactory();
+    var remoteDecrypter = new Aes128GcmReadableDecryptedMessageFactory();
 
     var writableShareRequestFactory = null;
     var writableEncryptedShareFactory = null;
@@ -68,6 +79,40 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @c
         decrypter = new Aes128GcmReadableDecryptedMessageFactory();
         encrypter = new Aes128GcmWritableMessageFactory();
         writableBlockRequestFactory = new WritableBlockRequestMessageFactory();
+    };
+
+    var createRatifyMessageFromRequest = function (payload, expectedIdentifier, messWithHash, messWithStats, messWithEncryption, messWithDecryptedPart, cb) {
+        // deformat the message
+        var readableMsg = readableShareRequestFactory.create(readableTransferFactory.create(payload).getPayload());
+        var dhPayload = readableMsg.getDHPayload();
+        var diffie = crypto.getDiffieHellman('modp14');
+        var dhPublic = Padding.pad(diffie.generateKeys(), 256);
+        var secret = diffie.computeSecret(dhPayload);
+        var hash = crypto.createHash('sha1').update(secret).digest();
+
+        var hkdf = new HKDF('sha256', secret);
+        var keysConcat = hkdf.derive(48, new Buffer(expectedIdentifier, 'hex'));
+        var incomingKey = keysConcat.slice(0, 16);
+        var outgoingKey = keysConcat.slice(16, 32);
+        var nextTransferIdent = keysConcat.slice(32).toString('hex');
+
+        if (messWithHash) {
+            hash[0]++;
+        }
+
+        var partToEncrypt = writableShareRatifyFactory.constructPartToEncrypt(initialBlock, expectedSize, messWithStats ? 'Foobar' : filename);
+
+        if (messWithDecryptedPart) {
+            partToEncrypt = partToEncrypt.slice(0, Math.ceil(partToEncrypt.length / 2));
+        }
+
+        remoteEncrypter.encryptMessage(outgoingKey, true, partToEncrypt, function (err, encryptedPart) {
+            if (messWithEncryption) {
+                encryptedPart[12] = encryptedPart[12] + 10;
+            }
+
+            cb(writableShareRatifyFactory.constructMessage(dhPublic, hash, encryptedPart), incomingKey, outgoingKey, nextTransferIdent);
+        });
     };
 
     var createDownload = function () {
@@ -208,6 +253,209 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @c
             });
 
             middleware.emit('res', null);
+        });
+
+        download.kickOff();
+    });
+
+    it('should kill the download when handling a malformed SHARE_RATIFY message', function (done) {
+        var download = createDownload();
+
+        middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+            expectedType.should.equal('SHARE_RATIFY');
+
+            download.once('killed', function (message) {
+                message.should.equal('Malformed message.');
+                done();
+            });
+
+            middleware.emit('res', new Buffer(2));
+        });
+
+        download.kickOff();
+    });
+
+    it('should kill the download when handling a SHARE_RATIFY message and the hashes of the shared secret do not match', function (done) {
+        var download = createDownload();
+
+        middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+            createRatifyMessageFromRequest(payload, expectedIdentifier, true, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+                middleware.emit('res', payload);
+            });
+        });
+
+        download.once('killed', function (message) {
+            message.should.equal('Hashes of shared secret do not match.');
+            done();
+        });
+
+        download.kickOff();
+    });
+
+    it('should kill the download when handling a SHARE_RATIFY message and the encrypted part cannot be properly decrypted', function (done) {
+        var download = createDownload();
+
+        middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+            createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, true, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+                middleware.emit('res', payload);
+            });
+        });
+
+        download.once('killed', function (message) {
+            message.should.equal('Decryption error.');
+            done();
+        });
+
+        download.kickOff();
+    });
+
+    it('should kill the download when handling a SHARE_RATIFY message and the decrypted part is malformed', function (done) {
+        var download = createDownload();
+
+        middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+            createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, true, function (payload, incomingKey, outgoingKey, expectedIdent) {
+                middleware.emit('res', payload);
+            });
+        });
+
+        download.once('killed', function (message) {
+            message.should.equal('Malformed decrypted message.');
+            done();
+        });
+
+        download.kickOff();
+    });
+
+    it('should kill the download when handling a SHARE_RATIFY message and the file stats do not match', function (done) {
+        var download = createDownload();
+
+        middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+            createRatifyMessageFromRequest(payload, expectedIdentifier, false, true, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+                middleware.emit('res', payload);
+            });
+        });
+
+        download.once('killed', function (message) {
+            message.should.equal('Filename and size do not match requested file.');
+            done();
+        });
+
+        download.kickOff();
+    });
+
+    it('should kill the download and send a SHARE_ABORT message if the download process is manually aborted while waiting for an answer', function (done) {
+        var download = createDownload();
+
+        middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+            download.manuallyAbort();
+
+            createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+                middleware.once('pipingLast', function (payload, nodesToFeedBlock) {
+                    var readableMsg = readableTransferFactory.create(payload);
+                    readableMsg.getTransferId().should.equal(expectedIdent);
+
+                    var decMsg = remoteDecrypter.create(readableMsg.getPayload(), incomingKey);
+
+                    var abortMsg = readableShareAbortFactory.create(readableEncryptedShareFactory.create(decMsg.getPayload()).getPayload());
+
+                    abortMsg.getFilename().should.equal(filename);
+                    abortMsg.getFilesize().should.equal(expectedSize);
+                    abortMsg.getFileHash().should.equal(expectedHash);
+                    middleware.emit('pipedIt');
+                });
+
+                middleware.emit('res', payload);
+            });
+        });
+
+        download.once('killed', function (message) {
+            middleware.once('pipedIt', function () {
+                message.should.equal('Manually aborted.');
+                done();
+            });
+        });
+
+        download.kickOff();
+    });
+
+    it('should correctly handle a SHARE_RATIFY message and try to send a block request, but kill the download when aborting while waiting for circuit', function (done) {
+        var download = createDownload();
+        var cameThrough = false;
+
+        middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+            createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+                middleware.emit('res', payload);
+            });
+        });
+
+        download.once('startingTransfer', function () {
+            cameThrough = true;
+            hasNodeBatch = false;
+
+            download.manuallyAbort();
+
+            setImmediate(function () {
+                download.getFeedingNodesBlockMaintainer().emit('nodeBatchLength');
+            });
+        });
+
+        download.once('killed', function (message) {
+            cameThrough.should.be.true;
+            message.should.equal('Manually aborted.');
+            done();
+        });
+        download.kickOff();
+    });
+
+    it('should format a BLOCK_REQUEST but kill the process when manually aborting during encryption', function (done) {
+        var download = createDownload();
+        var cameThrough = false;
+        hasNodeBatch = true;
+
+        middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+            createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+                middleware.emit('res', payload);
+            });
+        });
+
+        download.once('startingTransfer', function () {
+            cameThrough = true;
+            hasNodeBatch = false;
+
+            setImmediate(function () {
+                download.getFeedingNodesBlockMaintainer().emit('nodeBatchLength');
+                download.manuallyAbort();
+            });
+        });
+
+        download.once('killed', function (message) {
+            cameThrough.should.be.true;
+            message.should.equal('Manually aborted.');
+            done();
+        });
+
+        download.kickOff();
+    });
+
+    it('should send a BLOCK_REQUEST and kill the process when manually aborting while waiting for response', function (done) {
+        var download = createDownload();
+        hasNodeBatch = true;
+
+        middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+            middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+                expectedType.should.equal('ENCRYPTED_SHARE');
+
+                middleware.emit('res', null);
+            });
+
+            createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+                middleware.emit('res', payload);
+            });
+        });
+
+        download.once('killed', function (message) {
+            message.should.equal('Piper');
+            done();
         });
 
         download.kickOff();
