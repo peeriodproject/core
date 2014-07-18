@@ -171,6 +171,10 @@ class SearchFormManager implements SearchFormManagerInterface {
 				this._stateHandler.load((err:Error, state:Object) => {
 					if (err || !state || !state['currentForm']) {
 						this._currentFormIdentifier = identifiers[0];
+						// file not found. starting from a fresh state
+						if (err && err.message.indexOf('Cannot find state file') !== -1) {
+							err = null;
+						}
 					}
 					else {
 						err = this._setForm(identifiers, state['currentForm']);

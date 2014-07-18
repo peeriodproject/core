@@ -155,6 +155,11 @@ var SearchFormManager = (function () {
                 _this._stateHandler.load(function (err, state) {
                     if (err || !state || !state['currentForm']) {
                         _this._currentFormIdentifier = identifiers[0];
+
+                        // file not found. starting from a fresh state
+                        if (err && err.message.indexOf('Cannot find state file') !== -1) {
+                            err = null;
+                        }
                     } else {
                         err = _this._setForm(identifiers, state['currentForm']);
                     }
