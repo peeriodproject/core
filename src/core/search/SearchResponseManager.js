@@ -250,6 +250,13 @@ var SearchResponseManager = (function () {
             query = JSON.parse(queryBuffer.toString());
 
             // todo limit/check valid elasticsearch keys
+            if (query['highlight']) {
+                query['highlight'] = ObjectUtils.extend(query['highlight'], {
+                    pre_tags: [''],
+                    post_tags: ['']
+                });
+            }
+
             return callback(null, query);
         } catch (e) {
             return callback(new Error('SearchResponseManager~_validateQuery: Could not parse the incoming query.'), null);

@@ -106,12 +106,12 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		};
 
 		this._createAndStoreQueryId(queryBody, (queryId:string) => {
-			// add queryId to the query object
+			/*// add queryId to the query object
 			var extendedQueryBody:Object = ObjectUtils.extend(queryBody, {
 				queryId: queryId
-			});
+			});*/
 
-			this._searchClient.createOutgoingQuery(this._indexName, queryId, extendedQueryBody, (err) => {
+			this._searchClient.createOutgoingQuery(this._indexName, queryId, queryBody, (err) => {
 				if (err) {
 					queryId = null;
 				}
@@ -219,6 +219,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		});
 	}
 
+	// todo add timestamp to query to fetch just the lastest results
 	public getResponses (queryId:string, callback:(err:Error, responses:any) => any):void {
 		this._getQuery(queryId, (err:Error, queryBody:Object) => {
 			if (err) {
@@ -229,23 +230,23 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 		});
 	}
 
-	public onQueryAdd (callback:Function):void {
+	public onQueryAdd (callback:(queryId:string, queryBody:Object) => any):void {
 		this._eventEmitter.addListener('queryAdd', callback);
 	}
 
-	public onQueryEnd (callback:Function):void {
+	public onQueryEnd (callback:(queryId:string, reason:string) => any):void {
 		this._eventEmitter.addListener('queryEnd', callback);
 	}
 
-	public onQueryRemoved (callback:Function):void {
+	public onQueryRemoved (callback:(queryId:string) => any):void {
 		this._eventEmitter.addListener('queryRemoved', callback);
 	}
 
-	public onQueryResultsChanged (callback:Function):void {
+	public onQueryResultsChanged (callback:(queryId:string) => any):void {
 		this._eventEmitter.addListener('resultsChanged', callback);
 	}
 
-	public onQueryCanceled (callback:Function):void {
+	public onQueryCanceled (callback:(queryId:string, reason:string) => any):void {
 		this._eventEmitter.addListener('queryCanceled', callback);
 	}
 

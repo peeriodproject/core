@@ -138,7 +138,7 @@ describe('CORE --> SEARCH --> SearchRequestManager', function () {
 					searchClientStub.createOutgoingQuery.calledOnce.should.be.true;
 					searchClientStub.createOutgoingQuery.getCall(0).args[0].should.equal('searchqueries');
 					searchClientStub.createOutgoingQuery.getCall(0).args[1].should.equal(queryId);
-					searchClientStub.createOutgoingQuery.getCall(0).args[2].should.containDeep({ foo: true, queryId: queryId });
+					searchClientStub.createOutgoingQuery.getCall(0).args[2].should.containDeep({ foo: true });
 
 					closeAndDone(manager, done);
 				});

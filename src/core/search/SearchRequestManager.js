@@ -94,12 +94,11 @@ var SearchRequestManager = (function () {
         };
 
         this._createAndStoreQueryId(queryBody, function (queryId) {
-            // add queryId to the query object
-            var extendedQueryBody = ObjectUtils.extend(queryBody, {
-                queryId: queryId
-            });
-
-            _this._searchClient.createOutgoingQuery(_this._indexName, queryId, extendedQueryBody, function (err) {
+            /*// add queryId to the query object
+            var extendedQueryBody:Object = ObjectUtils.extend(queryBody, {
+            queryId: queryId
+            });*/
+            _this._searchClient.createOutgoingQuery(_this._indexName, queryId, queryBody, function (err) {
                 if (err) {
                     queryId = null;
                 }
@@ -207,6 +206,7 @@ var SearchRequestManager = (function () {
         });
     };
 
+    // todo add timestamp to query to fetch just the lastest results
     SearchRequestManager.prototype.getResponses = function (queryId, callback) {
         var _this = this;
         this._getQuery(queryId, function (err, queryBody) {

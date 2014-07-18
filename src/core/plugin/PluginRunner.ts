@@ -75,19 +75,25 @@ class PluginRunner implements PluginRunnerInterface {
 		}
 	}
 
-	public getMapping (callback:Function):void {
+	public getMapping (callback:(err:Error, mapping:Object) => any):void {
 		this._createAndRunStaticSandbox('main.getMapping', {}, callback, function (output:any) {
 			return callback(null, output);
 		});
 	}
 
-	public getQuery (query:Object, callback:Function):void {
+	public getQuery (query:Object, callback:(err:Error, query:Object) => any):void {
 		this._createAndRunStaticSandbox('main.getQuery', { query: query }, callback, function (output:any) {
 			return callback(null, output);
 		});
 	}
 
-	public getSearchFields (callback:Function):void {
+	public getResultFields (callback:(err:Error, fields:Object) => any):void {
+		this._createAndRunStaticSandbox('main.getResultFields', {}, callback, function (output:any) {
+			return callback(null, output);
+		});
+	}
+
+	public getSearchFields (callback:(err:Error, searchFields:Object) => any):void {
 		this._createAndRunStaticSandbox('main.getSearchFields', {}, callback, function (output:any) {
 			return callback(null, output);
 		});

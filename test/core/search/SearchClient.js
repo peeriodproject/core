@@ -25,8 +25,8 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 
     before(function (done) {
         try  {
-            testUtils.deleteFolderRecursive(searchStoreLogsFolder);
             testUtils.deleteFolderRecursive(searchStoreDataFolder);
+            testUtils.deleteFolderRecursive(searchStoreLogsFolder);
         } catch (e) {
         }
         testUtils.createFolder(searchStoreLogsFolder);
@@ -69,8 +69,8 @@ describe('CORE --> SEARCH --> SearchClient', function () {
         searchClient.close(function () {
             searchClient = null;
             try  {
-                //testUtils.deleteFolderRecursive(searchStoreLogsFolder);
                 testUtils.deleteFolderRecursive(searchStoreDataFolder);
+                testUtils.deleteFolderRecursive(searchStoreLogsFolder);
             } catch (e) {
                 console.log(e);
             }
@@ -322,16 +322,16 @@ describe('CORE --> SEARCH --> SearchClient', function () {
             }
         };
 
-        searchClient.createOutgoingQuery('myindex', 'searchQueryId', queryBody, function (err) {
+        searchClient.createOutgoingQuery('mainindex', 'searchQueryId', queryBody, function (err) {
             (err === null).should.be.true;
 
-            searchClient.checkIncomingResponse('myindex', 'searchQueryId', { message: 'A new bonsai tree in the office' }, function (err, matches) {
+            searchClient.checkIncomingResponse('mainindex', 'searchQueryId', { message: 'A new bonsai tree in the office' }, function (err, matches) {
                 (err === null).should.be.true;
 
                 matches.should.have.a.lengthOf(1);
                 matches.should.containDeep([
                     {
-                        _index: 'myindex',
+                        _index: 'mainindex',
                         _id: 'searchQueryId'
                     }
                 ]);
@@ -351,8 +351,8 @@ describe('CORE --> SEARCH --> SearchClient', function () {
             }
         };
 
-        searchClient.createOutgoingQuery('myindex', randomQueryId, queryBody, function (err) {
-            searchClient.addIncomingResponse('myindex', randomQueryId, { message: 'A new bonsai tree in the office' }, { metadata: true }, function (err) {
+        searchClient.createOutgoingQuery('mainindex', randomQueryId, queryBody, function (err) {
+            searchClient.addIncomingResponse('mainindex', randomQueryId, { message: 'A new bonsai tree in the office' }, { metadata: true }, function (err) {
                 (err === null).should.be.true;
 
                 done();
@@ -369,8 +369,8 @@ describe('CORE --> SEARCH --> SearchClient', function () {
             }
         };
 
-        searchClient.createOutgoingQuery('myindex', 'searchQueryId', theQueryBody, function (err) {
-            searchClient.getOutgoingQuery('myindex', 'searchQueryId', function (err, queryBody) {
+        searchClient.createOutgoingQuery('mainindex', 'searchQueryId', theQueryBody, function (err) {
+            searchClient.getOutgoingQuery('mainindex', 'searchQueryId', function (err, queryBody) {
                 (err === null).should.be.true;
                 queryBody.should.containDeep(theQueryBody);
 
@@ -391,10 +391,10 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 
         var timestamp = new Date().getTime();
 
-        searchClient.createOutgoingQueryIndex('myindex', function (err) {
-            searchClient.createOutgoingQuery('myindex', randomQueryId, queryBody, function (err) {
-                searchClient.addIncomingResponse('myindex', randomQueryId, { message: 'A new bonsai tree in the office' }, { metadata: true }, function () {
-                    searchClient.getIncomingResponses('myindex', randomQueryId, queryBody, function (err, responses) {
+        searchClient.createOutgoingQueryIndex('mainindex', function (err) {
+            searchClient.createOutgoingQuery('mainindex', randomQueryId, queryBody, function (err) {
+                searchClient.addIncomingResponse('mainindex', randomQueryId, { message: 'A new bonsai tree in the office' }, { metadata: true }, function () {
+                    searchClient.getIncomingResponses('mainindex', randomQueryId, queryBody, function (err, responses) {
                         responses.total.should.equal(1);
                         responses.hits.should.have.a.lengthOf(1);
 

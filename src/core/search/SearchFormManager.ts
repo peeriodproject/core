@@ -171,6 +171,10 @@ class SearchFormManager implements SearchFormManagerInterface {
 				this._stateHandler.load((err:Error, state:Object) => {
 					if (err || !state || !state['currentForm']) {
 						this._currentFormIdentifier = identifiers[0];
+						// file not found. starting from a fresh state
+						if (err && err.message.indexOf('Cannot find state file') !== -1) {
+							err = null;
+						}
 					}
 					else {
 						err = this._setForm(identifiers, state['currentForm']);
@@ -189,6 +193,10 @@ class SearchFormManager implements SearchFormManagerInterface {
 	public setForm (identifier:string, callback?:(err:Error) => any):void {
 		var internalCallback = callback || function (err:Error) {
 		};
+
+		if (identifier === this._currentFormIdentifier) {
+			return process.nextTick(internalCallback.bind(null, null));
+		}
 
 		this.getFormIdentifiers((identifiers) => {
 			var err = this._setForm(identifiers, identifier);

@@ -71,6 +71,12 @@ var PluginRunner = (function () {
         });
     };
 
+    PluginRunner.prototype.getResultFields = function (callback) {
+        this._createAndRunStaticSandbox('main.getResultFields', {}, callback, function (output) {
+            return callback(null, output);
+        });
+    };
+
     PluginRunner.prototype.getSearchFields = function (callback) {
         this._createAndRunStaticSandbox('main.getSearchFields', {}, callback, function (output) {
             return callback(null, output);

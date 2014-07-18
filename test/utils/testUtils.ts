@@ -35,6 +35,11 @@ module testUtils {
 
 			// look for public methods
 			if (typeof method === 'function' && key.charAt(0) !== '_') {
+				// restoring base class stub
+				if (stubbed[key] && stubbed[key].calledBefore) {
+					stubbed[key].restore();
+				}
+
 				if (apiMethodCallbacks[key]) {
 					stubbed[key] = sandbox.stub(proto, key, apiMethodCallbacks[key]);
 				}

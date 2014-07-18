@@ -35,7 +35,7 @@ import SearchManager = require('./search/SearchManager');
 import SearchRequestManager = require('./search/SearchRequestManager');
 import SearchResponseManager = require('./search/SearchResponseManager');
 import SearchMessageBridge = require('./search/SearchMessageBridge');
-import SearchFormManager = require('./search/SearchFormManager');
+import SearchFormResultsManager = require('./search/SearchFormResultsManager');
 
 import PluginFinder = require('./plugin/PluginFinder');
 import PluginValidator = require('./plugin/PluginValidator');
@@ -53,7 +53,7 @@ import IndexManager = require('./search/IndexManager');
 import UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 import UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
 import UiPluginManagerComponent = require('./ui/plugin/UiPluginManagerComponent');
-import UiSearchFormManagerComponent = require('./ui/search/UiSearchFormManagerComponent');
+import UiSearchFormResultsManagerComponent = require('./ui/search/UiSearchFormResultsManagerComponent');
 import UiManager = require('./ui/UiManager');
 
 // Testing purposes only
@@ -157,7 +157,7 @@ var App = {
 		var pathValidator = new PathValidator();
 		var folderWatcherManager;
 		var indexManager;
-		var searchFormManager;
+		var searchFormResultsManager;
 
 		var pluginManager = new PluginManager(pluginConfig, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
 			onOpenCallback: () => {
@@ -165,18 +165,20 @@ var App = {
 				folderWatcherManager = new FolderWatcherManager(fsConfig, this.appQuitHandler, stateHandlerFactory, folderWatcherFactory, {
 					onOpenCallback: () => {
 						indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
-						pluginManager.activatePluginState();
+						pluginManager.activatePluginState((err) => {
+							if (err) {
+								logger.error(err)
+							}
 
+							searchFormResultsManager = new SearchFormResultsManager(searchAppConfig, this.appQuitHandler, stateHandlerFactory, pluginManager, searchRequestManager);
+							this.addUiComponent(new UiSearchFormResultsManagerComponent(searchFormResultsManager, searchRequestManager));
 
-						searchFormManager = new SearchFormManager(searchAppConfig, this.appQuitHandler, stateHandlerFactory, pluginManager, searchRequestManager);
-						this.addUiComponent(new UiSearchFormManagerComponent(searchFormManager, searchRequestManager));
+							console.log('started indexer');
 
-						console.log('started indexer');
-
-						if (process.env.UI_ENABLED) {
-							this.startUi();
-						}
-
+							if (process.env.UI_ENABLED) {
+								this.startUi();
+							}
+						});
 					}
 				});
 

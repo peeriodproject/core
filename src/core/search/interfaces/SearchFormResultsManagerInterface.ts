@@ -7,6 +7,8 @@ import SearchFormManagerInterface = require('./SearchFormManagerInterface');
  */
 interface SearchFormResultsManagerInterface extends SearchFormManagerInterface {
 
+	transformResponses (responses:any, cleanupFields:boolean, callback:(err:Error, transformedResults:any) => any):void;
+
 }
 
 export = SearchFormResultsManagerInterface;
