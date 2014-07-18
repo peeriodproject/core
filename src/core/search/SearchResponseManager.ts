@@ -258,6 +258,13 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 
 			// todo limit/check valid elasticsearch keys
 
+			if (query['highlight']) {
+				query['highlight'] = ObjectUtils.extend(query['highlight'], {
+					pre_tags : [''],
+					post_tags: ['']
+				});
+			}
+
 			return callback(null, query);
 		}
 		catch (e) {
