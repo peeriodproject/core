@@ -14,7 +14,7 @@
  * - 'startingTransfer': This is emitted as soon as the symmetric encryption keys have been correctly negotiated
  * - 'abort': This event is fired as soon as the download process has been aborted manually. This event is followed by a 'killed'
  * event as soon as everything has been cleared up and a potential SHARE_ABORT message has been issued. This may not be immediately.
- * - 'writtenByres': Emits the number of bytes that have been successfully written to the file as argument
+ * - 'writtenBytes': Emits the number of bytes that have been successfully written to the file as argument
  * - 'completed': Indicates that the download process has successfully finished and the hashes of the files match. This is followed
  * by a 'killed' event cleaning up everything.
  * - 'killed': This event is fired as soon as the download process has ended and cleared up. After that the download is no longer usable.
