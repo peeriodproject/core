@@ -33,12 +33,12 @@ var DownloadManager = (function () {
                 var download = _this._downloadFactory.create(filename, filesize, filehash, locationMetadata);
 
                 if (!download) {
-                    _this._bridge.emit('error', identifier, 'BAD_METADATA');
+                    _this._bridge.emit('end', identifier, 'BAD_METADATA');
                 } else {
                     _this._addToActiveDownloads(identifier, download);
                 }
             } else {
-                _this._bridge.emit('error', identifier, reason);
+                _this._bridge.emit('end', identifier, reason);
             }
         });
 
@@ -52,7 +52,20 @@ var DownloadManager = (function () {
     };
 
     DownloadManager.prototype._addToActiveDownloads = function (identifier, download) {
+        var _this = this;
         this._activeDownloads[identifier] = download;
+
+        download.once('abort', function () {
+            _this._bridge.emit('manuallyAborted', identifier);
+        });
+
+        download.once('requestingFile', function () {
+            _this._bridge.emit('requestingFile', identifier);
+        });
+
+        download.once('completing', function () {
+            _this._bridge.emit('completed', identifier);
+        });
     };
     return DownloadManager;
 })();

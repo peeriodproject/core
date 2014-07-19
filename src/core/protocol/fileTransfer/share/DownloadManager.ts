@@ -45,14 +45,14 @@ class DownloadManager implements DownloadManagerInterface {
 				var download:DownloadInterface = this._downloadFactory.create(filename, filesize, filehash, locationMetadata);
 
 				if (!download) {
-					this._bridge.emit('error', identifier, 'BAD_METADATA');
+					this._bridge.emit('end', identifier, 'BAD_METADATA');
 				}
 				else {
 					this._addToActiveDownloads(identifier, download);
 				}
 			}
 			else {
-				this._bridge.emit('error', identifier, reason);
+				this._bridge.emit('end', identifier, reason);
 			}
 		});
 
@@ -68,7 +68,17 @@ class DownloadManager implements DownloadManagerInterface {
 	private _addToActiveDownloads (identifier:string, download:DownloadInterface):void {
 		this._activeDownloads[identifier] = download;
 
+		download.once('abort', () => {
+			this._bridge.emit('manuallyAborted', identifier);
+		});
 
+		download.once('requestingFile', () => {
+			this._bridge.emit('requestingFile', identifier);
+		});
+
+		download.once('completing', () => {
+			this._bridge.emit('completed', identifier);
+		});
 	}
 }
 
