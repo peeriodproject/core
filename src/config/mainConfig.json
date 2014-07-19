@@ -51,6 +51,7 @@
         }
     },
     "fileTransfer": {
+        "maximumNumberOfParallelDownloads": 10,
         "query": {
             "broadcastValidityInSeconds": 30,
             "minimumNumberOfReadyCircuits": 1,

@@ -510,6 +510,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 			this.removeAllListeners('startingTransfer');
 			this.removeAllListeners('requestingFile');
 			this.removeAllListeners('completed');
+			this.removeAllListeners('writtenBytes');
 
 			this.emit('killed', message);
 

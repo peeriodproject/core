@@ -454,6 +454,7 @@ var Download = (function (_super) {
             this.removeAllListeners('startingTransfer');
             this.removeAllListeners('requestingFile');
             this.removeAllListeners('completed');
+            this.removeAllListeners('writtenBytes');
 
             this.emit('killed', message);
 
