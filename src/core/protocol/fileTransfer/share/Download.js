@@ -262,16 +262,13 @@ var Download = (function (_super) {
     */
     Download.prototype._handleBlockMessage = function (payload, expectedBytePosition) {
         var _this = this;
-        var decryptedMessage = null;
+        var decryptedMessage = this._decrypter.create(payload, this._incomingKey);
         var malformedMessageErr = null;
+        var teardownOnError = true;
 
-        try  {
-            decryptedMessage = this._decrypter.create(payload, this._incomingKey);
-        } catch (e) {
+        if (!decryptedMessage) {
             malformedMessageErr = 'Decryption error.';
-        }
-
-        if (decryptedMessage) {
+        } else {
             var shareMessage = this._readableEncryptedShareFactory.create(decryptedMessage.getPayload());
 
             if (!shareMessage) {
@@ -286,6 +283,7 @@ var Download = (function (_super) {
                         malformedMessageErr = 'File properties do not match in abort message.';
                     } else {
                         malformedMessageErr = 'Uploader aborted transfer.';
+                        teardownOnError = false;
                     }
                 } else if (shareMessage.getMessageType() === 'BLOCK') {
                     var blockMessage = this._readableBlockFactory.create(shareMessage.getPayload());
@@ -325,7 +323,10 @@ var Download = (function (_super) {
 
         if (malformedMessageErr) {
             this._kill(true, true, false, malformedMessageErr);
-            this._shareMessenger.teardownLatestCircuit();
+
+            if (teardownOnError) {
+                this._shareMessenger.teardownLatestCircuit();
+            }
         }
     };
 

@@ -34,6 +34,7 @@ import Aes128GcmWritableMessageFactory = require('../../../../src/core/protocol/
 import WritableBlockRequestMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableBlockRequestMessageFactory');
 import ReadableShareRequestMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/ReadableShareRequestMessageFactory');
 import WritableShareRatifyMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableShareRatifyMessageFactory');
+import WritableBlockMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableBlockMessageFactory');
 
 
 
@@ -61,6 +62,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @c
 	var writableShareRatifyFactory = new WritableShareRatifyMessageFactory();
 	var remoteEncrypter = new Aes128GcmWritableMessageFactory();
 	var remoteDecrypter = new Aes128GcmReadableDecryptedMessageFactory();
+	var writableBlockFactory = new WritableBlockMessageFactory();
 
 	var writableShareRequestFactory:any = null;
 	var writableEncryptedShareFactory:any = null;
@@ -86,6 +88,47 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @c
 		writableBlockRequestFactory = new WritableBlockRequestMessageFactory();
 	};
 
+	var remoteIncomingKey = null;
+	var remoteOutgoingKey = null;
+	var nextIdent = null;
+
+	var createBlockMessage = function (messWithEncryption, messWithIndicatorByte, messWithDecryptedBlockMessage, cb) {
+		nextIdent = crypto.pseudoRandomBytes(16).toString('hex');
+		var blockMsgClear = writableBlockFactory.constructMessage(initialBlock, 0, nextIdent, new Buffer(1));
+
+		if (messWithDecryptedBlockMessage) {
+			blockMsgClear[17] = 0xff;
+		}
+
+		var shareMsg = writableEncryptedShareFactory.constructMessage('BLOCK', blockMsgClear);
+
+		if (messWithIndicatorByte) {
+			shareMsg[0] = 0xff;
+		}
+
+		remoteEncrypter.encryptMessage(remoteOutgoingKey, true, shareMsg, (err, encryptedPart) => {
+			if (messWithEncryption) {
+				encryptedPart[12] = encryptedPart[12] + 10;
+			}
+
+			cb(encryptedPart);
+		});
+	};
+
+	var createAbortMessage = function (messWithMessageFormat, messWithFileStats, cb) {
+		var abortMsgClear = writableShareAbortFactory.constructMessage(messWithFileStats ? 10 : expectedSize, filename, expectedHash);
+
+		if (messWithMessageFormat) {
+			abortMsgClear = new Buffer(1);
+		}
+
+		var shareMsg = writableEncryptedShareFactory.constructMessage('SHARE_ABORT', abortMsgClear);
+
+		remoteEncrypter.encryptMessage(remoteOutgoingKey, true, shareMsg, (err, encryptedPart) => {
+			cb(encryptedPart);
+		});
+	}
+
 	var createRatifyMessageFromRequest = function (payload, expectedIdentifier, messWithHash, messWithStats, messWithEncryption, messWithDecryptedPart, cb):void {
 		// deformat the message
 
@@ -99,7 +142,9 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @c
 		var hkdf = new HKDF('sha256', secret);
 		var keysConcat = hkdf.derive(48, new Buffer(expectedIdentifier, 'hex'));
 		var incomingKey = keysConcat.slice(0, 16);
+		remoteIncomingKey = incomingKey;
 		var outgoingKey = keysConcat.slice(16, 32);
+		remoteOutgoingKey = outgoingKey;
 		var nextTransferIdent = keysConcat.slice(32).toString('hex');
 
 		if (messWithHash) {
@@ -120,7 +165,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @c
 			cb(writableShareRatifyFactory.constructMessage(dhPublic, hash, encryptedPart), incomingKey, outgoingKey, nextTransferIdent);
 		});
 
-	}
+	};
 
 	var createDownload = function ():Download {
 		var shareMessenger:any = testUtils.stubPublicApi(sandbox, ShareMessenger, {
@@ -419,9 +464,8 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @c
 			cameThrough = true;
 			hasNodeBatch = false;
 
-			download.manuallyAbort();
-
 			setImmediate(function () {
+				download.manuallyAbort();
 				download.getFeedingNodesBlockMaintainer().emit('nodeBatchLength');
 			});
 		});
@@ -491,6 +535,351 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @c
 		download.kickOff();
 	});
 
+	it('should send a BLOCK_REQUEST and kill the process when no response comes back', function (done) {
+		var download = createDownload();
+		hasNodeBatch = true;
+
+		middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+			middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+				expectedType.should.equal('ENCRYPTED_SHARE');
+
+				middleware.emit('res', null);
+			});
+
+			createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+				middleware.emit('res', payload);
+			});
+
+		});
+
+		download.once('killed', function (message) {
+			message.should.equal('Piper');
+			done();
+		});
+
+		download.kickOff();
+	});
+
+	it('should receive a BLOCK and kill the process on decryption error', function (done) {
+		var download = createDownload();
+
+		var checker = false;
+
+
+		middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+			middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+				createBlockMessage(true, false, false, function (payload) {
+					checker = true;
+					middleware.emit('res', payload);
+				});
+			});
+
+			createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+				middleware.emit('res', payload);
+			});
+
+		});
+
+		download.once('killed', function (message) {
+			message.should.equal('Decryption error.');
+			checker.should.be.true;
+			done();
+		});
+
+		download.kickOff();
+	});
+
+	it('should receive a BLOCK and kill the process on a malformed share message', function (done) {
+		var download = createDownload();
+
+		middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+			middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+				createBlockMessage(false, true, false, function (payload) {
+					middleware.emit('res', payload);
+				});
+			});
+
+			createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+				middleware.emit('res', payload);
+			});
+
+		});
+
+		download.once('killed', function (message) {
+			message.should.equal('Malformed share message.');
+			done();
+		});
+
+		download.kickOff();
+	});
+
+	it('should receive a SHARE_ABORT message and kill the process on a malformed abort message', function (done) {
+		var download = createDownload();
+
+		middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+			middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+				createAbortMessage(true, false, function (payload) {
+					middleware.emit('res', payload);
+				})
+
+			});
+
+			createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+				middleware.emit('res', payload);
+			});
+
+		});
+
+		download.once('killed', function (message) {
+			message.should.equal('Malformed abort message.');
+			done();
+		});
+
+		download.kickOff();
+	});
+
+	it('should receive a SHARE_ABORT message and kill the process if the file properties do not match', function (done) {
+		var download = createDownload();
+
+		middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+			middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+				createAbortMessage(false, true, function (payload) {
+					middleware.emit('res', payload);
+				})
+
+			});
+
+			createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+				middleware.emit('res', payload);
+			});
+
+		});
+
+		download.once('killed', function (message) {
+			message.should.equal('File properties do not match in abort message.');
+			done();
+		});
+
+		download.kickOff();
+	});
+
+	it('should receive a perfectly fine SHARE_ABORT message kill the process', function (done) {
+		var download = createDownload();
+
+		middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+			middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+				createAbortMessage(false, false, function (payload) {
+					middleware.emit('res', payload);
+				})
+
+			});
+
+			createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+				middleware.emit('res', payload);
+			});
+
+		});
+
+		download.once('killed', function (message) {
+			message.should.equal('Uploader aborted transfer.');
+			done();
+		});
+
+		download.kickOff();
+	});
+
+	it('should receive a BLOCK and kill the process on a malformed block message', function (done) {
+		var download = createDownload();
+
+		middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+			middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+				createBlockMessage(false, false, true, function (payload) {
+					middleware.emit('res', payload);
+				});
+			});
+
+			createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+				middleware.emit('res', payload);
+			});
+
+		});
+
+		download.once('killed', function (message) {
+			message.should.equal('Malformed block message.');
+			done();
+		});
+
+		download.kickOff();
+	});
+
+	it('should receive a BLOCK and send a SHARE_ABORT message when the process was manually aborted while waiting for response', function (done) {
+		var download = createDownload();
+
+		middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+			middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+				middleware.once('pipingLast', function (payload, nodesToFeedBlock) {
+					var readableMsg = readableTransferFactory.create(payload);
+					readableMsg.getTransferId().should.equal(nextIdent);
+
+					var decMsg = remoteDecrypter.create(readableMsg.getPayload(), remoteIncomingKey);
+
+					var abortMsg = readableShareAbortFactory.create(readableEncryptedShareFactory.create(decMsg.getPayload()).getPayload());
+
+					abortMsg.getFilename().should.equal(filename);
+					abortMsg.getFilesize().should.equal(expectedSize);
+					abortMsg.getFileHash().should.equal(expectedHash);
+					middleware.emit('pipedIt');
+				});
+
+				download.manuallyAbort();
+
+				createBlockMessage(false, false, false, function (payload) {
+					middleware.emit('res', payload);
+				});
+			});
+
+			createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+				middleware.emit('res', payload);
+			});
+
+		});
+
+		download.once('killed', function (message) {
+			middleware.once('pipedIt', function () {
+				message.should.equal('Manually aborted.');
+				done();
+			});
+
+		});
+
+		download.kickOff();
+	});
+
+	it('should handle a BLOCK message and complete the download process if the file is finished', function (done) {
+		var download = createDownload();
+		var checker = false;
+
+		middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+			middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+				middleware.once('writerData', function () {
+					middleware.once('pipingLast', function () {
+						checker = true;
+					});
+
+					middleware.emit('writerRes', null, 1000, true);
+				});
+
+				createBlockMessage(false, false, false, function (payload) {
+					middleware.emit('res', payload);
+				});
+			});
+
+			createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+				middleware.emit('res', payload);
+			});
+
+		});
+
+		download.once('killed', function (message) {
+
+			checker.should.be.true;
+			message.should.equal('Completed.');
+			done();
+
+		});
+
+		download.kickOff();
+	});
+
+	it('should handle a BLOCK message and kill the download process and send a SHARE_ABORT message if the writer returns an error', function (done) {
+		var download = createDownload();
+
+		middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+			middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+				middleware.once('writerData', function () {
+
+					middleware.once('pipingLast', function () {
+						middleware.emit('piped');
+					});
+
+					middleware.emit('writerRes', new Error('Writer error.'), 10, false);
+				});
+
+				createBlockMessage(false, false, false, function (payload) {
+					middleware.emit('res', payload);
+				});
+			});
+
+			createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+				middleware.emit('res', payload);
+			});
+
+		});
+
+		download.once('killed', function (message) {
+
+			middleware.once('piped', function () {
+				message.should.equal('Writer error.');
+				done();
+			});
+
+
+		});
+
+		download.kickOff();
+	});
+
+	it('should correctly handle a BLOCK and send a new BLOCK_REQUEST as soon as the data is written to the file', function (done) {
+		var download = createDownload();
+
+		middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+			middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
+
+				middleware.once('writerData', function () {
+
+					download.once('writtenBytes', function () {
+						middleware.once('piping', function () {
+							done();
+						});
+					});
+
+
+					middleware.emit('writerRes', null, 10, false);
+				});
+
+				createBlockMessage(false, false, false, function (payload) {
+					middleware.emit('res', payload);
+				});
+			});
+
+			createRatifyMessageFromRequest(payload, expectedIdentifier, false, false, false, false, function (payload, incomingKey, outgoingKey, expectedIdent) {
+				middleware.emit('res', payload);
+			});
+
+		});
+
+		download.kickOff();
+	});
 
 	before(function () {
 		sandbox = sinon.sandbox.create();
