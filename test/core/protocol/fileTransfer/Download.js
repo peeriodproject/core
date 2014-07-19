@@ -35,7 +35,7 @@ var ReadableShareRequestMessageFactory = require('../../../../src/core/protocol/
 var WritableShareRatifyMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableShareRatifyMessageFactory');
 var WritableBlockMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableBlockMessageFactory');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration)', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @current', function () {
     var sandbox = null;
     var filename = 'A filename';
     var expectedSize = 1000;
@@ -748,6 +748,14 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration)', 
     it('should handle a BLOCK message and kill the download process and send a SHARE_ABORT message if the writer returns an error', function (done) {
         var download = createDownload();
 
+        download.on('killed', function () {
+        });
+        download.on('writtenBytes', function () {
+        });
+
+        download.listeners('killed').length.should.not.equal(0);
+        download.listeners('writtenBytes').length.should.not.equal(0);
+
         middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
             middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
                 middleware.once('writerData', function () {
@@ -772,6 +780,11 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration)', 
             middleware.once('piped', function () {
                 message.should.equal('Writer error.');
                 done();
+            });
+
+            setImmediate(function () {
+                download.listeners('killed').length.should.equal(0);
+                download.listeners('writtenBytes').length.should.equal(0);
             });
         });
 

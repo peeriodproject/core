@@ -12,7 +12,47 @@ var DownloadManager = (function () {
 
         this._setupListeners();
     }
+    DownloadManager.prototype._canDownload = function () {
+        var reason = null;
+
+        if (Object.keys(this._activeDownloads).length >= this._maximumNumberOfParallelDownloads) {
+            reason = 'MAX_DOWNLOADS_EXCEED';
+        } else if (!this._circuitManager.getReadyCircuits().length) {
+            reason = 'NO_ANON';
+        }
+
+        return reason;
+    };
+
     DownloadManager.prototype._setupListeners = function () {
+        var _this = this;
+        this._bridge.on('newDownload', function (identifier, filename, filesize, filehash, locationMetadata) {
+            var reason = _this._canDownload();
+
+            if (!reason) {
+                var download = _this._downloadFactory.create(filename, filesize, filehash, locationMetadata);
+
+                if (!download) {
+                    _this._bridge.emit('error', identifier, 'BAD_METADATA');
+                } else {
+                    _this._addToActiveDownloads(identifier, download);
+                }
+            } else {
+                _this._bridge.emit('error', identifier, reason);
+            }
+        });
+
+        this._bridge.on('abortDownload', function (identifier) {
+            var activeDownload = _this._activeDownloads[identifier];
+
+            if (activeDownload) {
+                activeDownload.manuallyAbort();
+            }
+        });
+    };
+
+    DownloadManager.prototype._addToActiveDownloads = function (identifier, download) {
+        this._activeDownloads[identifier] = download;
     };
     return DownloadManager;
 })();

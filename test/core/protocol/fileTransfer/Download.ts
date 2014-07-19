@@ -38,7 +38,7 @@ import WritableBlockMessageFactory = require('../../../../src/core/protocol/file
 
 
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration)', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @current', function () {
 
 	var sandbox:SinonSandbox = null;
 	var filename:string = 'A filename';
@@ -811,6 +811,12 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration)', 
 	it('should handle a BLOCK message and kill the download process and send a SHARE_ABORT message if the writer returns an error', function (done) {
 		var download = createDownload();
 
+		download.on('killed', function () {});
+		download.on('writtenBytes', function () {});
+
+		download.listeners('killed').length.should.not.equal(0);
+		download.listeners('writtenBytes').length.should.not.equal(0);
+
 		middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
 
 			middleware.once('piping', function (payload, nodesToFeedBlock, expectedType, expectedIdentifier) {
@@ -842,11 +848,16 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration)', 
 				done();
 			});
 
+			setImmediate(function () {
 
+				download.listeners('killed').length.should.equal(0);
+				download.listeners('writtenBytes').length.should.equal(0);
+			});
 		});
 
 		download.kickOff();
 	});
+
 
 	it('should correctly handle a BLOCK and send a new BLOCK_REQUEST as soon as the data is written to the file', function (done) {
 		var download = createDownload();
