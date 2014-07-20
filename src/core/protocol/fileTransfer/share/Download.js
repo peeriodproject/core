@@ -227,7 +227,7 @@ var Download = (function (_super) {
     };
 
     Download.prototype.manuallyAbort = function () {
-        if (!this._manuallyAborted) {
+        if (!this._manuallyAborted && !this._killed) {
             this._manuallyAborted = true;
 
             // only for internal stuff

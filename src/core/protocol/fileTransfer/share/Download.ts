@@ -270,7 +270,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 	}
 
 	public manuallyAbort ():void {
-		if (!this._manuallyAborted) {
+		if (!this._manuallyAborted && !this._killed) {
 			this._manuallyAborted = true;
 			// only for internal stuff
 			this.emit('internalAbort');
