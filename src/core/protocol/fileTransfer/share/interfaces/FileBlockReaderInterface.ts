@@ -2,7 +2,7 @@
 
 interface FileBlockReaderInterface {
 
-	abort (callback:Function):void;
+	abort (callback:(err:Error) => {}):void;
 
 	prepareToRead (callback:(err:Error) => any):void;
 
