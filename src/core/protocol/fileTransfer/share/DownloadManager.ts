@@ -71,6 +71,10 @@ class DownloadManager implements DownloadManagerInterface {
 		return this._activeDownloads;
 	}
 
+	public getMaximumNumberOfDownloads ():number {
+		return this._maximumNumberOfParallelDownloads;
+	}
+
 	/**
 	 * END TESTING PURPOSES
 	 */
@@ -138,7 +142,7 @@ class DownloadManager implements DownloadManagerInterface {
 
 			delete this._activeDownloads[identifier];
 
-			this._bridge.emit('end', identifier, reason);
+			this._bridge.emit('end', identifier, code);
 		});
 
 	}

@@ -55,6 +55,10 @@ var DownloadManager = (function () {
         return this._activeDownloads;
     };
 
+    DownloadManager.prototype.getMaximumNumberOfDownloads = function () {
+        return this._maximumNumberOfParallelDownloads;
+    };
+
     /**
     * END TESTING PURPOSES
     */
@@ -122,7 +126,7 @@ var DownloadManager = (function () {
 
             delete _this._activeDownloads[identifier];
 
-            _this._bridge.emit('end', identifier, reason);
+            _this._bridge.emit('end', identifier, code);
         });
     };
 
