@@ -6,14 +6,53 @@ import DownloadMap = require('./interfaces/DownloadMap');
 import CircuitManagerInterface = require('../../hydra/interfaces/CircuitManagerInterface');
 import DownloadBridgeInterface = require('../../../share/interfaces/DownloadBridgeInterface');
 
-
+/**
+ * DownloadManagerInterface implementation.
+ *
+ * @class core.protocol.fileTransfer.share.DownloadManager
+ * @implements core.protocol.fileTransfer.share.DownloadManagerInterface
+ *
+ * @param {core.config.ConfigInterface} File transfer configuration
+ * @param {core.protocol.hydra.CircuitManagerInterface} circuitManager Working hydra circuit manager instance
+ * @param {core.share.DownloadBridgeInterface} downloadBridge Bridge between network and frontend / database handling download issues.
+ * @oaram {core.protocol.fileTransfer.share.DownloadFactoryInterface} downloadFactory Factory for creating downloads.
+ */
 class DownloadManager implements DownloadManagerInterface {
 
-	private _downloadFactory:DownloadFactoryInterface = null;
-	private _maximumNumberOfParallelDownloads:number = 0;
+	/**
+	 * Stores the currently active downloads under a identifier received from the bridge.
+	 *
+	 * @member {core.protocol.fileTransfer.share.DownloadMap} core.protocol.fileTransfer.share.DownloadManager~_activeDownloads
+	 */
 	private _activeDownloads:DownloadMap = {};
+
+	/**
+	 * Stores the download bridge.
+	 *
+	 * @member {core.share.DownloadBridgeInterface} core.protocol.fileTransfer.share.DownloadManager~_bridge
+	 */
 	private _bridge:DownloadBridgeInterface = null;
+
+	/**
+	 * Stores the hydra circuit manager
+	 *
+	 * @member {core.protocol.hydra.CircuitManagerInterface} core.protocol.fileTransfer.share.DownloadManager~_circuitManager
+	 */
 	private _circuitManager:CircuitManagerInterface = null;
+
+	/**
+	 * Stores the download factory.
+	 *
+	 * @member {core.protocol.fileTransfer.share.DownloadFactoryInterface} core.protocol.fileTransfer.share.DownloadManager~_downloadFactory
+	 */
+	private _downloadFactory:DownloadFactoryInterface = null;
+
+	/**
+	 * Stores the maximum number of parallel downloads a client can have. Populated by config.
+	 *
+	 * @member {number} core.protocol.fileTransfer.share.DownloadManager~_maximumNumberOfParallelDownloads
+	 */
+	private _maximumNumberOfParallelDownloads:number = 0;
 
 	public constructor (transferConfig:ConfigInterface, circuitManager:CircuitManagerInterface, downloadBridge:DownloadBridgeInterface, downloadFactory:DownloadFactoryInterface) {
 		this._downloadFactory = downloadFactory;
@@ -24,47 +63,28 @@ class DownloadManager implements DownloadManagerInterface {
 		this._setupListeners();
 	}
 
-	private _canDownload ():string {
-		var reason:string = null;
+	/**
+	 * BEGIN TESTING PURPOSES
+	 */
 
-		if (Object.keys(this._activeDownloads).length >= this._maximumNumberOfParallelDownloads) {
-			reason = 'MAX_DOWNLOADS_EXCEED';
-		}
-		else if (!this._circuitManager.getReadyCircuits().length) {
-			reason = 'NO_ANON';
-		}
-
-		return reason;
+	public getActiveDownloads ():DownloadMap {
+		return this._activeDownloads;
 	}
 
-	private _setupListeners ():void {
-		this._bridge.on('newDownload', (identifier:string, filename:string, filesize:number, filehash:string, locationMetadata:any) => {
-			var reason:string = this._canDownload();
+	/**
+	 * END TESTING PURPOSES
+	 */
 
-			if (!reason) {
-				var download:DownloadInterface = this._downloadFactory.create(filename, filesize, filehash, locationMetadata);
-
-				if (!download) {
-					this._bridge.emit('end', identifier, 'BAD_METADATA');
-				}
-				else {
-					this._addToActiveDownloads(identifier, download);
-				}
-			}
-			else {
-				this._bridge.emit('end', identifier, reason);
-			}
-		});
-
-		this._bridge.on('abortDownload', (identifier:string) => {
-			var activeDownload:DownloadInterface = this._activeDownloads[identifier];
-
-			if (activeDownload) {
-				activeDownload.manuallyAbort();
-			}
-		});
-	}
-
+	/**
+	 * Adds a download the the currently active downloads list and binds the event listeners which propagate the
+	 * download status to the bridge. Note: The event listeners do not need to be unbound, as this is done by the
+	 * download in its private `_kill` method.
+	 *
+	 * @method core.protocol.fileTransfer.share.DownloadManager~_addToActiveDownloads
+	 *
+	 * @param {string} identifier The download's identifier received from the bridge.
+	 * @param {core.protocol.fileTransfer.share.DownloadInterface} download The download to add to the active list.
+	 */
 	private _addToActiveDownloads (identifier:string, download:DownloadInterface):void {
 		this._activeDownloads[identifier] = download;
 
@@ -122,6 +142,64 @@ class DownloadManager implements DownloadManagerInterface {
 		});
 
 	}
+
+	/**
+	 * Tells if a new download can be started. Requirements: New download may not exceed the maximum number of
+	 * parallel downloads. Node must maintain at least one hydra circuit.
+	 *
+	 * If no new download can be started, a string indicating the reason (which can be propagated to the bridge) is returned,
+	 * otherwise `null` is returned.
+	 *
+	 * @method core.protocol.fileTransfer.share.DownloadManager~_canDownload
+	 *
+	 * @returns {string} The reason for not being able to start a new download or `null` if a download can be started.
+	 */
+	private _canDownload ():string {
+		var reason:string = null;
+
+		if (Object.keys(this._activeDownloads).length >= this._maximumNumberOfParallelDownloads) {
+			reason = 'MAX_DOWNLOADS_EXCEED';
+		}
+		else if (!this._circuitManager.getReadyCircuits().length) {
+			reason = 'NO_ANON';
+		}
+
+		return reason;
+	}
+
+	/**
+	 * Sets up the listeners on the bridge.
+	 *
+	 * @method core.protocol.fielTransfer.share.DownloadManager~_setupListeners
+	 */
+	private _setupListeners ():void {
+		this._bridge.on('newDownload', (identifier:string, filename:string, filesize:number, filehash:string, locationMetadata:any) => {
+			var reason:string = this._canDownload();
+
+			if (!reason) {
+				var download:DownloadInterface = this._downloadFactory.create(filename, filesize, filehash, locationMetadata);
+
+				if (!download) {
+					this._bridge.emit('end', identifier, 'BAD_METADATA');
+				}
+				else {
+					this._addToActiveDownloads(identifier, download);
+				}
+			}
+			else {
+				this._bridge.emit('end', identifier, reason);
+			}
+		});
+
+		this._bridge.on('abortDownload', (identifier:string) => {
+			var activeDownload:DownloadInterface = this._activeDownloads[identifier];
+
+			if (activeDownload) {
+				activeDownload.manuallyAbort();
+			}
+		});
+	}
+
 }
 
 export = DownloadManager;
