@@ -20,18 +20,18 @@
  * - 'killed': This event is fired as soon as the download process has ended and cleared up. After that the download is no longer usable.
  * The event gets emitted with a message as argument. Possible messages are:
  *
- * 'File cannot be written.': The file desriptor could not be opened.
+ * 'File cannot be written.': The file descriptor could not be opened.
  * 'Manually aborted.': Killed after manual abortion.
  * 'Completed.': Killed after succcessful file transfer.
  * 'Encryption error.': A message could not be encrypted.
  * 'Decryption error.': A message could not be correctly decrypted.
  * 'Malformed (...) message.': The received bytes are incorrect for the expected message.
  * 'Prohibited message type.': The other end sent a message it was not supposed to send.
- * 'Upload aborted transfer.': The other end sent a SHARE_ABORT message.
+ * 'Uploader aborted transfer.': The other end sent a SHARE_ABORT message.
  * 'File properties do not match in abort message.': A SHARE_ABORT message was received that was correctly encrypted but
  * sported the wrong filename / hash / size.
  * 'Filename and size do not match requested file.': A SHARE_RATIFY message was received with an encrypted part that does not
- * matcht the expected filename and filesize.
+ * match the expected filename and filesize.
  *
  * @interface
  * @class core.protocol.fileTransfer.share.DownloadInterface

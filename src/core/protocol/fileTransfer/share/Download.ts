@@ -359,7 +359,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 										this._kill(true, true, true, errorMessage, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
 									}
 									else {
-										this.emit('writtenBytes', fullCountOfWrittenBytes);
+										this.emit('writtenBytes', fullCountOfWrittenBytes, this._expectedSize);
 										this._sendBlockRequest(fullCountOfWrittenBytes, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
 									}
 								}

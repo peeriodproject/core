@@ -76,9 +76,49 @@ class DownloadManager implements DownloadManagerInterface {
 			this._bridge.emit('requestingFile', identifier);
 		});
 
-		download.once('completing', () => {
+		download.once('startingTransfer', () => {
+			this._bridge.emit('startingTransfer', identifier);
+		});
+
+		download.once('completed', () => {
 			this._bridge.emit('completed', identifier);
 		});
+
+		download.on('writtenBytes', (numberOfWrittenBytes:number, fullCountOfExpectedBytes:number) => {
+			this._bridge.emit('writtenBytes', identifier, numberOfWrittenBytes, fullCountOfExpectedBytes);
+		});
+
+		download.once('killed', (reason:string) => {
+			var code:string = null;
+
+			switch (reason) {
+				case 'File cannot be written.':
+					code = 'FS_ERROR';
+					break;
+				case 'Manually aborted.':
+					code = 'MANUAL_ABORT';
+					break;
+				case 'Uploader aborted transfer.':
+					code = 'REMOTE_ABORT';
+					break;
+				case 'Completed.':
+					code = 'COMPLETED';
+					break;
+				case 'Maximum tries exhausted.':
+					code = 'TIMED_OUT';
+					break;
+				default:
+					if (reason.indexOf('FileBlockWriter') > -1) {
+						code = 'FS_ERROR';
+					}
+					else {
+						code = 'PROTOCOL_ERR';
+					}
+			};
+
+			this._bridge.emit('end', identifier, reason);
+		});
+
 	}
 }
 

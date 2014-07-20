@@ -63,8 +63,47 @@ var DownloadManager = (function () {
             _this._bridge.emit('requestingFile', identifier);
         });
 
-        download.once('completing', function () {
+        download.once('startingTransfer', function () {
+            _this._bridge.emit('startingTransfer', identifier);
+        });
+
+        download.once('completed', function () {
             _this._bridge.emit('completed', identifier);
+        });
+
+        download.on('writtenBytes', function (numberOfWrittenBytes, fullCountOfExpectedBytes) {
+            _this._bridge.emit('writtenBytes', identifier, numberOfWrittenBytes, fullCountOfExpectedBytes);
+        });
+
+        download.once('killed', function (reason) {
+            var code = null;
+
+            switch (reason) {
+                case 'File cannot be written.':
+                    code = 'FS_ERROR';
+                    break;
+                case 'Manually aborted.':
+                    code = 'MANUAL_ABORT';
+                    break;
+                case 'Uploader aborted transfer.':
+                    code = 'REMOTE_ABORT';
+                    break;
+                case 'Completed.':
+                    code = 'COMPLETED';
+                    break;
+                case 'Maximum tries exhausted.':
+                    code = 'TIMED_OUT';
+                    break;
+                default:
+                    if (reason.indexOf('FileBlockWriter') > -1) {
+                        code = 'FS_ERROR';
+                    } else {
+                        code = 'PROTOCOL_ERR';
+                    }
+            }
+            ;
+
+            _this._bridge.emit('end', identifier, reason);
         });
     };
     return DownloadManager;
