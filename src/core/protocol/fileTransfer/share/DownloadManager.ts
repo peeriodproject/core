@@ -116,6 +116,8 @@ class DownloadManager implements DownloadManagerInterface {
 					}
 			};
 
+			delete this._activeDownloads[identifier];
+
 			this._bridge.emit('end', identifier, reason);
 		});
 

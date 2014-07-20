@@ -103,6 +103,8 @@ var DownloadManager = (function () {
             }
             ;
 
+            delete _this._activeDownloads[identifier];
+
             _this._bridge.emit('end', identifier, reason);
         });
     };
