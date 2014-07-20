@@ -43,14 +43,21 @@ class FileBlockReader implements FileBlockReaderInterface {
 	}
 
 	public readBlock (fromPosition:number, callback:(err:Error, readBytes:Buffer) => any):void {
-		fs.read(this._fileDescriptor, new Buffer(this._blockSize), 0, this._blockSize, fromPosition, (err:Error, numOfReadBytes:number, buffer:Buffer) => {
-			if (err) {
-				callback(err, null);
-			}
-			else {
-				callback(null, numOfReadBytes < this._blockSize ? buffer.slice(0, numOfReadBytes) : buffer);
-			}
-		});
+		if (this._canBeRead) {
+			fs.read(this._fileDescriptor, new Buffer(this._blockSize), 0, this._blockSize, fromPosition, (err:Error, numOfReadBytes:number, buffer:Buffer) => {
+				if (err) {
+					callback(err, null);
+				}
+				else {
+					callback(null, numOfReadBytes < this._blockSize ? buffer.slice(0, numOfReadBytes) : buffer);
+				}
+			});
+		}
+		else {
+			process.nextTick(function () {
+				callback(new Error('FileBlockReader: Cannot read file.'), null);
+			});
+		}
 	}
 
 }

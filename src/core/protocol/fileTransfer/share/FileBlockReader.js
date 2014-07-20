@@ -38,13 +38,19 @@ var FileBlockReader = (function () {
 
     FileBlockReader.prototype.readBlock = function (fromPosition, callback) {
         var _this = this;
-        fs.read(this._fileDescriptor, new Buffer(this._blockSize), 0, this._blockSize, fromPosition, function (err, numOfReadBytes, buffer) {
-            if (err) {
-                callback(err, null);
-            } else {
-                callback(null, numOfReadBytes < _this._blockSize ? buffer.slice(0, numOfReadBytes) : buffer);
-            }
-        });
+        if (this._canBeRead) {
+            fs.read(this._fileDescriptor, new Buffer(this._blockSize), 0, this._blockSize, fromPosition, function (err, numOfReadBytes, buffer) {
+                if (err) {
+                    callback(err, null);
+                } else {
+                    callback(null, numOfReadBytes < _this._blockSize ? buffer.slice(0, numOfReadBytes) : buffer);
+                }
+            });
+        } else {
+            process.nextTick(function () {
+                callback(new Error('FileBlockReader: Cannot read file.'), null);
+            });
+        }
     };
     return FileBlockReader;
 })();
