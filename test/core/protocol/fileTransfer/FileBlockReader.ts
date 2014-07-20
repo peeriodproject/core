@@ -8,7 +8,7 @@ import testUtils = require('../../../utils/testUtils');
 
 import FileBlockReader = require('../../../../src/core/protocol/fileTransfer/share/FileBlockReader');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> FileBlockReader @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> FileBlockReader', function () {
 
 	var sha1Hash = '4dad5e4374038a14465f0c42fc150a36674b4bd8';
 	var path = testUtils.getFixturePath('core/fileTransfer/snowden_brighton.jpg');
