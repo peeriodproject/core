@@ -14,11 +14,15 @@ import ReadableShareRequestMessageInterface = require('./messages/interfaces/Rea
 import WritableShareRatifyMessageFactoryInterface = require('./messages/interfaces/WritableShareRatifyMessageFactoryInterface');
 import WritableEncryptedShareMessageFactoryInterface = require('./messages/interfaces/WritableEncryptedShareMessageFactoryInterface');
 import ReadableEncryptedShareMessageFactoryInterface = require('./messages/interfaces/ReadableEncryptedShareMessageFactoryInterface');
+import ReadableEncryptedShareMessageInterface = require('./messages/interfaces/ReadableEncryptedShareMessageInterface');
 import ReadableShareAbortMessageFactoryInterface = require('./messages/interfaces/ReadableShareAbortMessageFactoryInterface');
+import ReadableShareAbortMessageInterface = require('./messages/interfaces/ReadableShareAbortMessageInterface');
 import WritableShareAbortMessageFactoryInterface = require('./messages/interfaces/WritableShareAbortMessageFactoryInterface');
 import ReadableBlockRequestMessageFactoryInterface = require('./messages/interfaces/ReadableBlockRequestMessageFactoryInterface');
+import ReadableBlockRequestMessageInterface = require('./messages/interfaces/ReadableBlockRequestMessageInterface');
 import WritableBlockMessageFactoryInterface = require('./messages/interfaces/WritableBlockMessageFactoryInterface');
 import ReadableDecryptedMessageFactoryInterface = require('../../hydra/messages/interfaces/ReadableDecryptedMessageFactoryInterface');
+import ReadableDecryptedMessageInterface = require('../../hydra/messages/interfaces/ReadableDecryptedMessageInterface');
 import WritableEncryptedMessageFactoryInterface = require('../../hydra/messages/interfaces/WritableEncryptedMessageFactoryInterface');
 
 class Upload extends events.EventEmitter implements UploadInterface {
@@ -48,6 +52,7 @@ class Upload extends events.EventEmitter implements UploadInterface {
 
 	private _killed:boolean = false;
 	private _manuallyAborted:boolean = false;
+	private _fdOpen:boolean = false;
 
 	public constructor (requestTransferIdentifier:string, shareRequest:ReadableShareRequestMessageInterface, filename:string, filesize:number, filehash:string,
 		fileReader:FileBlockReaderInterface, shareMessenger:ShareMessengerInterface, feedingNodesBlockMaintainer:FeedingNodesBlockMaintainerInterface,
@@ -147,7 +152,131 @@ class Upload extends events.EventEmitter implements UploadInterface {
 	}
 
 	private _handleMessengerResponse (err:Error, responsePayload:Buffer):void {
+		if (err) {
+			this._kill(false, err.message);
+		}
+		else {
+			var decryptedMessage:ReadableDecryptedMessageInterface = this._decrypter.create(responsePayload, this._incomingKey);
+			var malformedMessageErr:string = null;
+			var teardownOnError:boolean = true;
 
+			if (!decryptedMessage) {
+				malformedMessageErr = 'Decryption error.';
+			}
+			else {
+				var shareMessage:ReadableEncryptedShareMessageInterface = this._readableEncryptedShareFactory.create(decryptedMessage.getPayload());
+
+				if (!shareMessage) {
+					malformedMessageErr = 'Malformed share message.';
+				}
+				else {
+					if (shareMessage.getMessageType() === 'SHARE_ABORT') {
+						var shareAbortMessage:ReadableShareAbortMessageInterface = this._readableShareAbortFactory.create(shareMessage.getPayload());
+
+						if (!shareAbortMessage) {
+							malformedMessageErr = 'Malformed abort message.'
+						}
+						else if (!(shareAbortMessage.getFileHash() === this._filehash && shareAbortMessage.getFilename() === this._filename && shareAbortMessage.getFilesize() === this._filesize)) {
+							malformedMessageErr = 'File properties do not match in abort message.'
+						}
+						else {
+							malformedMessageErr = 'Downloader aborted transfer.';
+							teardownOnError = false;
+						}
+					}
+					else if (shareMessage.getMessageType() === 'BLOCK_REQUEST') {
+						var blockRequest:ReadableBlockRequestMessageInterface = this._readableBlockRequestFactory.create(shareMessage.getPayload());
+
+						if (!blockRequest || blockRequest.getFirstBytePositionOfBlock() > this._filesize) {
+							malformedMessageErr = 'Malformed block request.';
+						}
+						else {
+							if (blockRequest.getFirstBytePositionOfBlock() === this._filesize) {
+								// we are done
+								this.emit('completed');
+
+								this._kill(false, 'Completed.');
+							}
+							else if (this._manuallyAborted) {
+								this._kill(true, 'Manually aborted.', blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+							}
+							else {
+
+								// everything okay so far. read from file.
+								if (!this._fdOpen) {
+									this._fileReader.prepareToRead((err:Error) => {
+										if (err) {
+											this._kill(true, err.message, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+										}
+										else {
+											this.emit('startingUpload');
+											this._fdOpen = true;
+											this._readBlockAndSendByRequest(blockRequest);
+										}
+									});
+								}
+								else {
+									this._readBlockAndSendByRequest(blockRequest);
+								}
+
+							}
+						}
+					}
+					else {
+						malformedMessageErr = 'Prohibited message type.';
+					}
+				}
+			}
+
+			if (malformedMessageErr) {
+				if (teardownOnError) {
+					this._shareMessenger.teardownLatestCircuit();
+				}
+
+				this._kill(false, malformedMessageErr);
+			}
+		}
+	}
+
+	private _readBlockAndSendByRequest (blockRequest:ReadableBlockRequestMessageInterface):void {
+		var firstByteOfBlock:number = blockRequest.getFirstBytePositionOfBlock();
+
+		this._fileReader.readBlock(firstByteOfBlock, (err:Error, readBytes:Buffer) => {
+			var errorMessage:string = err ? err.message : null;
+			errorMessage = this._manuallyAborted ? 'Manually aborted.' : errorMessage;
+
+			if (errorMessage) {
+				this._kill(true, errorMessage, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+			}
+			else {
+				this._prepareToImmediateShare((err:Error) => {
+					if (err) {
+						this._kill(true, err.message, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+					}
+					else {
+						this.emit('uploadingBytes', readBytes.length);
+
+						var nextTransferIdentifier:string = crypto.pseudoRandomBytes(16).toString('hex');
+						var blockClear:Buffer = this._writableBlockFactory.constructMessage(this._feedingNodesBlockMaintainer.getBlock(), firstByteOfBlock, nextTransferIdentifier, readBytes);
+
+						this._encrypter.encryptMessage(this._outgoingKey, true, blockClear, (err:Error, encryptedBuffer:Buffer) => {
+							var errorMessage:string = err ? 'Encryption error.' : null;
+							errorMessage = this._manuallyAborted ? 'Manually aborted.' : errorMessage;
+
+							if (errorMessage) {
+								this._kill(true, errorMessage, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+							}
+							else {
+								var sendableBuffer:Buffer = this._transferMessageCenter.wrapTransferMessage('ENCRYPTED_SHARE', blockRequest.getNextTransferIdentifier(), encryptedBuffer);
+								this._shareMessenger.pipeMessageAndWaitForResponse(sendableBuffer, blockRequest.getFeedingNodesBlock(), 'ENCRYPTED_SHARE', nextTransferIdentifier, (err:Error, responsePayload:Buffer) => {
+									this._handleMessengerResponse(err, responsePayload);
+								});
+							}
+						});
+					}
+				});
+			}
+		});
 	}
 
 	private _sendShareRatify ():void {
@@ -155,7 +284,7 @@ class Upload extends events.EventEmitter implements UploadInterface {
 
 		var diffieHellman:crypto.DiffieHellman = crypto.getDiffieHellman('modp14');
 		var dhPublic:Buffer = Padding.pad(diffieHellman.generateKeys(), 256);
-		var secret:Buffer = diffieHellman.generateKeys();
+		var secret:Buffer = diffieHellman.computeSecret(this._downloaderDHPayload);
 		var sha1:Buffer = crypto.createHash('sha1').update(secret).digest();
 
 		// so far, so good, now derive the keys

@@ -298,9 +298,9 @@ var Download = (function (_super) {
                             this._fileBlockWriter.writeBlock(blockMessage.getDataBlock(), function (err, fullCountOfWrittenBytes, isFinished) {
                                 if (isFinished) {
                                     // finalize it
-                                    _this._sendBlockRequest(fullCountOfWrittenBytes, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock(), true);
-
                                     _this.emit('completed');
+
+                                    _this._sendBlockRequest(fullCountOfWrittenBytes, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock(), true);
                                 } else {
                                     var errorMessage = err ? err.message : null;
                                     errorMessage = _this._manuallyAborted ? 'Manually aborted.' : errorMessage;
@@ -322,11 +322,11 @@ var Download = (function (_super) {
         }
 
         if (malformedMessageErr) {
-            this._kill(true, false, malformedMessageErr);
-
             if (teardownOnError) {
                 this._shareMessenger.teardownLatestCircuit();
             }
+
+            this._kill(true, false, malformedMessageErr);
         }
     };
 
