@@ -2,6 +2,8 @@
 
 interface UploadInterface extends NodeJS.EventEmitter {
 
+	kickOff ():void;
+
 	manuallyAbort ():void;
 }
 
