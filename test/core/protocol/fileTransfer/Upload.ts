@@ -197,7 +197,9 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Upload (integration with Downl
 		var downloadComplete = false;
 		var uploadComplete = false;
 		var check = function () {
-			if (downloadComplete && uploadComplete) done();
+			if (downloadComplete && uploadComplete) {
+				done();
+			}
 		}
 
 		theUpload.once('killed', function (reason) {

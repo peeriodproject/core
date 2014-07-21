@@ -42,7 +42,7 @@ var Aes128GcmUploadFactory = (function () {
         this._feedingNodesBlockMaintainerFactory = feedingNodesBlockMaintainerFactory;
     }
     Aes128GcmUploadFactory.prototype.create = function (circuitIdOfRequest, requestTransferIdentifier, shareRequest, filepath, filename, filesize, filehash) {
-        var fileReader = this._fileBlockReaderFactory.create(filepath, this._blockSize);
+        var fileReader = this._fileBlockReaderFactory.create(filepath, this._blockSize, true);
         var shareMessenger = this._shareMessengerFactory.createMessenger();
 
         shareMessenger.manuallySetPreferredCircuitId(circuitIdOfRequest);

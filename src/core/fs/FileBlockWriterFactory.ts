@@ -1,6 +1,7 @@
 import FileBlockWriterFactoryInterface = require('./interfaces/FileBlockWriterFactoryInterface');
 import FileBlockWriterInterface = require('./interfaces/FileBlockWriterInterface');
 import FileBlockWriter = require('./FileBlockWriter');
+import InflatingFileBlockWriter = require('./InflatingFileBlockWriter');
 
 /**
  * FileBlockWriterFactoryInterface implementation.
@@ -21,8 +22,13 @@ class FileBlockWriterFactory implements FileBlockWriterFactoryInterface {
 		this._downloadFolderPath = downloadFolderPath;
 	}
 
-	public createWriter (filename:string, expectedSize:number, expectedHash:string):FileBlockWriterInterface {
-		return new FileBlockWriter(filename, this._downloadFolderPath, expectedSize, expectedHash);
+	public createWriter (filename:string, expectedSize:number, expectedHash:string, useDecompression?:boolean):FileBlockWriterInterface {
+		if (useDecompression) {
+			return new InflatingFileBlockWriter(filename, this._downloadFolderPath, expectedSize, expectedHash);
+		}
+		else {
+			return new FileBlockWriter(filename, this._downloadFolderPath, expectedSize, expectedHash);
+		}
 	}
 
 	public getDownloadFolderPath ():string {

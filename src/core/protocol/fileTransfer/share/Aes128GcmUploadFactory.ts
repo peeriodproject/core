@@ -58,7 +58,7 @@ class Aes128GcmUploadFactory implements UploadFactoryInterface {
 	}
 
 	public create (circuitIdOfRequest:string, requestTransferIdentifier:string, shareRequest:ReadableShareRequestMessageInterface, filepath:string, filename:string, filesize:number, filehash:string):UploadInterface {
-		var fileReader:FileBlockReaderInterface = this._fileBlockReaderFactory.create(filepath, this._blockSize);
+		var fileReader:FileBlockReaderInterface = this._fileBlockReaderFactory.create(filepath, this._blockSize, true);
 		var shareMessenger:ShareMessengerInterface = this._shareMessengerFactory.createMessenger();
 
 		shareMessenger.manuallySetPreferredCircuitId(circuitIdOfRequest);

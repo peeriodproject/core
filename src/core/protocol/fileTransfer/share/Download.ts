@@ -237,7 +237,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 		this._readableShareRatifyFactory = readableShareRatifyFactory;
 		this._decrypter = decrypter;
 		this._encrypter = encrypter;
-		this._fileBlockWriter = fileBlockWriterFactory.createWriter(this._filename, this._expectedSize, this._expectedHash);
+		this._fileBlockWriter = fileBlockWriterFactory.createWriter(this._filename, this._expectedSize, this._expectedHash, true);
 	}
 
 	/**
