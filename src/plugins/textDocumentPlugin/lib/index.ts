@@ -1,3 +1,5 @@
+//declare var global:any;
+
 // sandbox exit callback
 declare function exit (output?:any):void;
 
@@ -125,10 +127,7 @@ export var main = {
 	},
 
 	onBeforeItemAdd: function () {
-		exit({
-			//name : fileName,
-			//stats: fileStats,
-			file: fileBuffer
-		});
+		exit();
+		//runTask('getFileBuffer');
 	}
 };

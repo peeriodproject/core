@@ -403,15 +403,13 @@ class IndexManager implements IndexManagerInterface {
 		this._getItemStatsFromSearchManager(pathToIndex, (searchManagerHash:string, searchManagerStats:fs.Stats) => {
 			// item exists
 			if (searchManagerHash && searchManagerStats) {
-				////console.log('validating item');
 				this._validateItem(pathToIndex, searchManagerHash, searchManagerStats, (err:Error, isValid:boolean, fileHash:string, fileStats:fs.Stats) => {
 					if (isValid) {
 						// todo check against the amount of plugins which indexed this file. Maybe some plugins are new
-						callback(new Error('IndexManager~_processPendingPathToIndex: The item at path "' + pathToIndex + '" is already indexed.'));
+						return callback(new Error('IndexManager~_processPendingPathToIndex: The item at path "' + pathToIndex + '" is already indexed.'));
 					}
-					else {
-						this._addItem(pathToIndex, stats, fileHash, callback);
-					}
+
+					this._addItem(pathToIndex, stats, fileHash, callback);
 				});
 			}
 			else {

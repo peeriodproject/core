@@ -1,3 +1,4 @@
+//declare var global:any;
 
 
 
@@ -105,11 +106,8 @@ exports.main = {
         });
     },
     onBeforeItemAdd: function () {
-        exit({
-            //name : fileName,
-            //stats: fileStats,
-            file: fileBuffer
-        });
+        exit();
+        //runTask('getFileBuffer');
     }
 };
 //# sourceMappingURL=index.js.map

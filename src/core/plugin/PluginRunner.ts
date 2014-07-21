@@ -6,6 +6,8 @@ import path = require('path');
 var SandCastle = require('sandcastle').SandCastle;
 
 import ConfigInterface = require('../config/interfaces/ConfigInterface');
+import FileBlockReaderFactoryInterface = require('../fs/interfaces/FileBlockReaderFactoryInterface');
+import FileBlockReaderInterface = require('../fs/interfaces/FileBlockReaderInterface');
 import PluginInterface = require('./interfaces/PluginInterface');
 import PluginRunnerInterface = require('./interfaces/PluginRunnerInterface');
 import PluginGlobalsFactoryInterface = require('./interfaces/PluginGlobalsFactoryInterface');
@@ -24,6 +26,8 @@ class PluginRunner implements PluginRunnerInterface {
 
 	private _config:ConfigInterface = null;
 
+	private _fileBlockReaderFactory:FileBlockReaderFactoryInterface = null;
+
 	private _sandbox = null;
 
 	private _sandboxScripts = {};
@@ -37,9 +41,10 @@ class PluginRunner implements PluginRunnerInterface {
 	private _pluginScriptPath:string = null;
 
 	// todo plugin-type PluginGlobalsFactory factory parameter
-	constructor (config, identifier:string, pluginScriptPath:string) {
+	constructor (config, identifier:string, pluginScriptPath:string, fileBlockReaderFactory:FileBlockReaderFactoryInterface) {
 		this._config = config;
 		this._pluginScriptPath = pluginScriptPath;
+		this._fileBlockReaderFactory = fileBlockReaderFactory;
 
 		// todo wait for node webkits child_process.spawn fix and remove own binary
 		// we're using our own node binary as a temporary fix here!
@@ -76,37 +81,84 @@ class PluginRunner implements PluginRunnerInterface {
 	}
 
 	public getMapping (callback:(err:Error, mapping:Object) => any):void {
-		this._createAndRunStaticSandbox('main.getMapping', {}, callback, function (output:any) {
+		this._createAndRunStaticSandbox('main.getMapping', {}, callback, function (output:any):void {
 			return callback(null, output);
 		});
 	}
 
 	public getQuery (query:Object, callback:(err:Error, query:Object) => any):void {
-		this._createAndRunStaticSandbox('main.getQuery', { query: query }, callback, function (output:any) {
+		this._createAndRunStaticSandbox('main.getQuery', { query: query }, callback, function (output:any):void {
 			return callback(null, output);
 		});
 	}
 
 	public getResultFields (callback:(err:Error, fields:Object) => any):void {
-		this._createAndRunStaticSandbox('main.getResultFields', {}, callback, function (output:any) {
+		this._createAndRunStaticSandbox('main.getResultFields', {}, callback, function (output:any):void {
 			return callback(null, output);
 		});
 	}
 
 	public getSearchFields (callback:(err:Error, searchFields:Object) => any):void {
-		this._createAndRunStaticSandbox('main.getSearchFields', {}, callback, function (output:any) {
+		this._createAndRunStaticSandbox('main.getSearchFields', {}, callback, function (output:any):void {
 			return callback(null, output);
 		});
 	}
 
 	public onBeforeItemAdd (itemPath:string, stats:fs.Stats, globals:Object, callback:Function):void {
-		this._createAndRunItemSandbox(itemPath, stats, globals, 'main.onBeforeItemAdd', callback, function (output:any) {
-			return callback(null, output);
+		var methodName:string = 'main.onBeforeItemAdd';
+		var sandboxKey:string = this._getSandboxKey(itemPath, methodName);
+		var fileBlockReader:FileBlockReaderInterface = this._fileBlockReaderFactory.create(itemPath, this._config.get('plugin.pluginRunnerChunkSize'));
+		var prevFileReadPosition:number = -1;
+		var fileReadPosition:number = 0;
+
+		var internalCallback = function (err:Error, output:any):void {
+			if (err) {
+				console.error(err);
+			}
+
+			fileBlockReader.abort(function (readerErr) {
+				err = err || readerErr;
+
+				return callback(err, output);
+			});
+		};
+
+		fileBlockReader.prepareToRead((err:Error):void => {
+			if (err) {
+				return internalCallback(err, null);
+			}
+
+			this._createItemSandbox(sandboxKey, internalCallback, function (output:any):void {
+				return internalCallback(null, output);
+			});
+
+			this._sandboxScripts[sandboxKey].on('task', function (taskErr:Error, taskName:string, options:Object, methodName:string, taskCallback:(data) => void):void {
+				if (err) {
+					return internalCallback(err, null);
+				}
+
+				if (taskName !== 'getFileBuffer' || prevFileReadPosition === fileReadPosition) { // wrong task or end of file
+					return;
+				}
+
+				fileBlockReader.readBlock(fileReadPosition, function (err:Error, readBytes:Buffer):void {
+					if (err) {
+						return internalCallback(err, null);
+					}
+
+					prevFileReadPosition = fileReadPosition;
+					fileReadPosition += readBytes.length;
+
+					return taskCallback(readBytes);
+				});
+			});
+
+			this._sandboxScripts[sandboxKey].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
 		});
 	}
 
 	/**
-	 * Creates a sandbox for a specified itemPath, registers a timeout handler, adds the onExit callback and runs the specified method name.
+	 * Creates a sandbox via {@link core.plugin.PluginRunner~_createItemSandbox} and runs the specified method name.
 	 *
 	 * @method core.plugin.PluginRunner~_createAndRunItemSandbox
 	 *
@@ -118,11 +170,9 @@ class PluginRunner implements PluginRunnerInterface {
 	 * @param {Function} onExit
 	 */
 	private _createAndRunItemSandbox (itemPath:string, stats:fs.Stats, globals:Object, methodName:string, callback:Function, onExit:(output:any) => void):void {
-		var sandboxKey:string = itemPath + '_' + methodName;
+		var sandboxKey:string = this._getSandboxKey(itemPath, methodName);
 
-		this._createSandbox(sandboxKey);
-		this._registerSandboxTimeoutHandler(sandboxKey, callback);
-		this._registerSandboxExitHandler(sandboxKey, callback, onExit);
+		this._createItemSandbox(sandboxKey, callback, onExit);
 
 		this._sandboxScripts[sandboxKey].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
 	}
@@ -146,6 +196,21 @@ class PluginRunner implements PluginRunnerInterface {
 	}
 
 	/**
+	 * Creates a sandbox for a specified key, registers a timeout handler and adds the onExit callback
+	 *
+	 * @method core.plugin.PluginRunner~_createItemSandbox
+	 *
+	 * @param {string} sandboxKey
+	 * @param {Function} callback
+	 * @param {Function} onExit
+	 */
+	private _createItemSandbox (sandboxKey:string, callback:Function, onExit:(output:any) => void):void {
+		this._createSandbox(sandboxKey);
+		this._registerSandboxTimeoutHandler(sandboxKey, callback);
+		this._registerSandboxExitHandler(sandboxKey, callback, onExit);
+	}
+
+	/**
 	 * Creates a sandbox for the given item path. Each sandbox provides a persistent state storage
 	 * between lookups as long as the PluginRunner is active.
 	 *
@@ -162,6 +227,19 @@ class PluginRunner implements PluginRunnerInterface {
 	}
 
 	/**
+	 * Returns the sandbox key for a specified item path & method name
+	 *
+	 * @method core.plugin.PluginRunner~_getSandboxKey
+	 *
+	 * @param {string} itemPath
+	 * @param {string} methodName
+	 * @returns {string}
+	 */
+	private _getSandboxKey (itemPath:string, methodName:string):string {
+		return itemPath + '_' + methodName;
+	}
+
+	/**
 	 * Registers a timeout handler for the sandbox which belongs to the given path
 	 *
 	 * @method core.plugin.PluginRunner~_registerSandboxTimeoutHandler
@@ -171,7 +249,7 @@ class PluginRunner implements PluginRunnerInterface {
 	 */
 	private _registerSandboxTimeoutHandler (itemPath:string, callback:Function):void {
 		if (this._sandboxScripts[itemPath]) {
-			this._sandboxScripts[itemPath].once('timeout', (methodName) => {
+			this._sandboxScripts[itemPath].once('timeout', (methodName):void => {
 				this._sandboxScripts[itemPath].reset();
 				return callback(new Error('PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call "' + methodName), null);
 			});
@@ -189,7 +267,7 @@ class PluginRunner implements PluginRunnerInterface {
 	 */
 	private _registerSandboxExitHandler (identifier:string, callback:Function, onExit:(output:any) => void):void {
 		if (this._sandboxScripts[identifier]) {
-			this._sandboxScripts[identifier].once('exit', (err, output, methodName) => {
+			this._sandboxScripts[identifier].once('exit', (err, output, methodName):void => {
 				this._sandboxScripts[identifier].reset();
 
 				if (err) {

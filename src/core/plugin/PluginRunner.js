@@ -16,8 +16,9 @@ var PluginGlobalsFactory = require('./PluginGlobalsFactory');
 */
 var PluginRunner = (function () {
     // todo plugin-type PluginGlobalsFactory factory parameter
-    function PluginRunner(config, identifier, pluginScriptPath) {
+    function PluginRunner(config, identifier, pluginScriptPath, fileBlockReaderFactory) {
         this._config = null;
+        this._fileBlockReaderFactory = null;
         this._sandbox = null;
         this._sandboxScripts = {};
         this._sandboxSocketPath = '';
@@ -26,6 +27,7 @@ var PluginRunner = (function () {
         this._pluginScriptPath = null;
         this._config = config;
         this._pluginScriptPath = pluginScriptPath;
+        this._fileBlockReaderFactory = fileBlockReaderFactory;
 
         // todo wait for node webkits child_process.spawn fix and remove own binary
         // we're using our own node binary as a temporary fix here!
@@ -84,13 +86,61 @@ var PluginRunner = (function () {
     };
 
     PluginRunner.prototype.onBeforeItemAdd = function (itemPath, stats, globals, callback) {
-        this._createAndRunItemSandbox(itemPath, stats, globals, 'main.onBeforeItemAdd', callback, function (output) {
-            return callback(null, output);
+        var _this = this;
+        var methodName = 'main.onBeforeItemAdd';
+        var sandboxKey = this._getSandboxKey(itemPath, methodName);
+        var fileBlockReader = this._fileBlockReaderFactory.create(itemPath, this._config.get('plugin.pluginRunnerChunkSize'));
+        var prevFileReadPosition = -1;
+        var fileReadPosition = 0;
+
+        var internalCallback = function (err, output) {
+            if (err) {
+                console.error(err);
+            }
+
+            fileBlockReader.abort(function (readerErr) {
+                err = err || readerErr;
+
+                return callback(err, output);
+            });
+        };
+
+        fileBlockReader.prepareToRead(function (err) {
+            if (err) {
+                return internalCallback(err, null);
+            }
+
+            _this._createItemSandbox(sandboxKey, internalCallback, function (output) {
+                return internalCallback(null, output);
+            });
+
+            _this._sandboxScripts[sandboxKey].on('task', function (taskErr, taskName, options, methodName, taskCallback) {
+                if (err) {
+                    return internalCallback(err, null);
+                }
+
+                if (taskName !== 'getFileBuffer' || prevFileReadPosition === fileReadPosition) {
+                    return;
+                }
+
+                fileBlockReader.readBlock(fileReadPosition, function (err, readBytes) {
+                    if (err) {
+                        return internalCallback(err, null);
+                    }
+
+                    prevFileReadPosition = fileReadPosition;
+                    fileReadPosition += readBytes.length;
+
+                    return taskCallback(readBytes);
+                });
+            });
+
+            _this._sandboxScripts[sandboxKey].run(methodName, _this._pluginGlobalsFactory.create(itemPath, stats, globals));
         });
     };
 
     /**
-    * Creates a sandbox for a specified itemPath, registers a timeout handler, adds the onExit callback and runs the specified method name.
+    * Creates a sandbox via {@link core.plugin.PluginRunner~_createItemSandbox} and runs the specified method name.
     *
     * @method core.plugin.PluginRunner~_createAndRunItemSandbox
     *
@@ -102,11 +152,9 @@ var PluginRunner = (function () {
     * @param {Function} onExit
     */
     PluginRunner.prototype._createAndRunItemSandbox = function (itemPath, stats, globals, methodName, callback, onExit) {
-        var sandboxKey = itemPath + '_' + methodName;
+        var sandboxKey = this._getSandboxKey(itemPath, methodName);
 
-        this._createSandbox(sandboxKey);
-        this._registerSandboxTimeoutHandler(sandboxKey, callback);
-        this._registerSandboxExitHandler(sandboxKey, callback, onExit);
+        this._createItemSandbox(sandboxKey, callback, onExit);
 
         this._sandboxScripts[sandboxKey].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
     };
@@ -130,6 +178,21 @@ var PluginRunner = (function () {
     };
 
     /**
+    * Creates a sandbox for a specified key, registers a timeout handler and adds the onExit callback
+    *
+    * @method core.plugin.PluginRunner~_createItemSandbox
+    *
+    * @param {string} sandboxKey
+    * @param {Function} callback
+    * @param {Function} onExit
+    */
+    PluginRunner.prototype._createItemSandbox = function (sandboxKey, callback, onExit) {
+        this._createSandbox(sandboxKey);
+        this._registerSandboxTimeoutHandler(sandboxKey, callback);
+        this._registerSandboxExitHandler(sandboxKey, callback, onExit);
+    };
+
+    /**
     * Creates a sandbox for the given item path. Each sandbox provides a persistent state storage
     * between lookups as long as the PluginRunner is active.
     *
@@ -143,6 +206,19 @@ var PluginRunner = (function () {
         if (!this._sandboxScripts[itemPath]) {
             this._sandboxScripts[itemPath] = this._sandbox.createScript(this._pluginCode);
         }
+    };
+
+    /**
+    * Returns the sandbox key for a specified item path & method name
+    *
+    * @method core.plugin.PluginRunner~_getSandboxKey
+    *
+    * @param {string} itemPath
+    * @param {string} methodName
+    * @returns {string}
+    */
+    PluginRunner.prototype._getSandboxKey = function (itemPath, methodName) {
+        return itemPath + '_' + methodName;
     };
 
     /**

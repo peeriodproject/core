@@ -245,41 +245,43 @@ var PluginManager = (function () {
             var mergedPluginData = {};
             var sendCallback = function () {
                 // trigger callback
-                callback(mergedPluginData);
+                return callback(mergedPluginData);
             };
             var checkAndSendCallback = function () {
-                if (counter == runnersLength) {
-                    sendCallback();
+                if (counter === runnersLength) {
+                    return sendCallback();
                 }
             };
-            var runPlugins = function (tikaGlobals) {
-                if (runnersLength) {
-                    _this._loadGlobals(itemPath, fileHash, function (err, globals) {
-                        if (err) {
-                            console.log(err);
-                            return sendCallback();
-                        }
+            var runPlugins = function (tikaData) {
+                if (!runnersLength) {
+                    return sendCallback();
+                }
 
-                        globals = ObjectUtils.extend(globals, tikaGlobals);
+                _this._loadGlobals(itemPath, fileHash, function (err, globals) {
+                    if (err) {
+                        console.log(err);
+                        return sendCallback();
+                    }
 
-                        for (var key in runners) {
-                            // call the plugin!
-                            runners[key].onBeforeItemAdd(itemPath, stats, globals, function (err, data) {
-                                counter++;
+                    for (var key in runners) {
+                        // call the plugin!
+                        runners[key].onBeforeItemAdd(itemPath, stats, globals, function (err, data) {
+                            counter++;
 
-                                if (err) {
-                                    console.log(err);
-                                } else if (data) {
-                                    mergedPluginData[key] = data;
+                            if (err) {
+                                console.error(err);
+                            } else if (data) {
+                                if (useApacheTika.indexOf(key) !== -1) {
+                                    data = ObjectUtils.extend(data, tikaData);
                                 }
 
-                                checkAndSendCallback();
-                            });
-                        }
-                    });
-                } else {
-                    sendCallback();
-                }
+                                mergedPluginData[key] = data;
+                            }
+
+                            return checkAndSendCallback();
+                        });
+                    }
+                });
             };
 
             for (var key in runners) {
@@ -291,18 +293,18 @@ var PluginManager = (function () {
                 }
             }
 
-            if (useApacheTika.length) {
-                _this._loadApacheTikaGlobals(itemPath, function (err, tikaGlobals) {
-                    if (err) {
-                        console.log('PluginManager.onBeforeItemAdd. MISSING CALLBACK');
-                        console.error(err);
-                    } else {
-                        runPlugins(tikaGlobals);
-                    }
-                });
-            } else {
-                runPlugins(null);
+            if (!useApacheTika.length) {
+                return runPlugins(null);
             }
+
+            _this._loadApacheTikaData(itemPath, function (err, tikaData) {
+                if (err) {
+                    console.log('PluginManager.onBeforeItemAdd. MISSING CALLBACK');
+                    console.error(err);
+                } else {
+                    return runPlugins(tikaData);
+                }
+            });
         });
     };
 
@@ -317,18 +319,17 @@ var PluginManager = (function () {
 
         this._loadPluginState(function (err, pluginState) {
             if (err) {
-                console.log(err);
-                internalCallback(err);
-            } else {
-                if (!_this._eventEmitter) {
-                    _this._eventEmitter = new events.EventEmitter();
-                }
-
-                _this._pluginState = pluginState;
-                _this._isOpen = true;
-
-                internalCallback(null);
+                console.error(err);
+                return internalCallback(err);
             }
+            if (!_this._eventEmitter) {
+                _this._eventEmitter = new events.EventEmitter();
+            }
+
+            _this._pluginState = pluginState;
+            _this._isOpen = true;
+
+            return internalCallback(null);
         });
     };
 
@@ -351,32 +352,32 @@ var PluginManager = (function () {
 
             if (err) {
                 return internalCallback(err);
-            } else {
-                // register plugin to mime type list
-                // todo create extensions list
-                var pluginLoader = _this._pluginLoaderFactory.create(_this._config, pluginState.path);
-                var mimeTypes = pluginLoader.getFileMimeTypes();
+            }
 
-                if (mimeTypes.length) {
-                    for (var i = 0, l = mimeTypes.length; i < l; i++) {
-                        var mimeType = mimeTypes[i];
+            // register plugin to mime type list
+            // todo create extensions list
+            var pluginLoader = _this._pluginLoaderFactory.create(_this._config, pluginState.path);
+            var mimeTypes = pluginLoader.getFileMimeTypes();
 
-                        if (!_this._mimeTypeMap[mimeType]) {
-                            _this._mimeTypeMap[mimeType] = [identifier];
-                        } else {
-                            _this._mimeTypeMap[mimeType].push(identifier);
-                        }
+            if (mimeTypes.length) {
+                for (var i = 0, l = mimeTypes.length; i < l; i++) {
+                    var mimeType = mimeTypes[i];
+
+                    if (!_this._mimeTypeMap[mimeType]) {
+                        _this._mimeTypeMap[mimeType] = [identifier];
+                    } else {
+                        _this._mimeTypeMap[mimeType].push(identifier);
                     }
                 }
-
-                _this._pluginLoaders[identifier] = pluginLoader;
-                _this._pluginRunners[identifier] = _this._pluginRunnerFactory.create(_this._config, pluginState.name, pluginLoader.getMain());
-
-                logger.debug('plugin added', { identifier: identifier });
-                _this._eventEmitter.emit('pluginAdded', identifier);
-
-                internalCallback(null);
             }
+
+            _this._pluginLoaders[identifier] = pluginLoader;
+            _this._pluginRunners[identifier] = _this._pluginRunnerFactory.create(_this._config, pluginState.name, pluginLoader.getMain());
+
+            logger.debug('plugin added', { identifier: identifier });
+            _this._eventEmitter.emit('pluginAdded', identifier);
+
+            return internalCallback(null);
         });
     };
 
@@ -422,9 +423,9 @@ var PluginManager = (function () {
 
             // no file or no plugins
             if (err && err.name === 'ENOENT' || !hasPlugins) {
-                callback(null, null);
+                return callback(null, null);
             } else if (hasPlugins) {
-                callback(null, data['plugins']);
+                return callback(null, data['plugins']);
             } else {
                 // check for syntax errors
                 console.warn(err);
@@ -469,34 +470,35 @@ var PluginManager = (function () {
     /**
     * Loads additional data for the specified path that are required for a plugin that uses `Apache Tika`.
     *
-    * @method core.plugin.PluginManagerInterface~_loadApacheTikaGlobals
+    * @method core.plugin.PluginManagerInterface~_loadApacheTikaData
     *
     * @param {string} itemPath
     * @param {Function} callback
     */
-    PluginManager.prototype._loadApacheTikaGlobals = function (itemPath, callback) {
-        var tikaGlobals = {};
+    PluginManager.prototype._loadApacheTikaData = function (itemPath, callback) {
+        var tikaData = {};
 
         fs.stat(itemPath, function (err, stats) {
             if (err) {
-                return callback(err, tikaGlobals);
-            } else if (stats.isFile()) {
+                console.error(err);
+
+                return callback(err, tikaData);
+            }
+
+            if (stats.isFile()) {
                 fs.readFile(itemPath, function (err, data) {
                     if (err) {
-                        return callback(err, null);
-                    } else {
-                        logger.log('plugin', 'loading file content', {
-                            path: itemPath,
-                            content: data.toString()
-                        });
-
-                        tikaGlobals['fileBuffer'] = data.toString('base64');
-                        return callback(null, tikaGlobals);
+                        return callback(err, tikaData);
                     }
+
+                    //tikaData['fileBuffer'] = 'foobar';
+                    tikaData.fileBuffer = data.toString('base64');
+
+                    return callback(null, tikaData);
                 });
             }
+            // todo add possible folder globals handling here
         });
-        //callback(null, tikaGlobals);
     };
 
     /**
@@ -514,7 +516,7 @@ var PluginManager = (function () {
             fileHash: fileHash
         };
 
-        callback(null, globals);
+        return callback(null, globals);
     };
     return PluginManager;
 })();

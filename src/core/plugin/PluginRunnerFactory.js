@@ -1,3 +1,4 @@
+var FileBlockReaderFactory = require('../fs/FileBlockReaderFactory');
 var PluginRunner = require('./PluginRunner');
 
 /**
@@ -6,9 +7,11 @@ var PluginRunner = require('./PluginRunner');
 */
 var PluginRunnerFactory = (function () {
     function PluginRunnerFactory() {
+        this._fileBlockReaderFactory = null;
+        this._fileBlockReaderFactory = new FileBlockReaderFactory();
     }
     PluginRunnerFactory.prototype.create = function (config, identifier, path) {
-        return new PluginRunner(config, identifier, path);
+        return new PluginRunner(config, identifier, path, this._fileBlockReaderFactory);
     };
     return PluginRunnerFactory;
 })();

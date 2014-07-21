@@ -123,6 +123,7 @@ class SearchItem implements SearchItemInterface {
 			}
 
 			if (!isValid) {
+				console.log(name, this[memberName], source);
 				throw new Error('SearchItem~_processItemMember: "_source.item' + name + '" must be equal in all plugin data!');
 			}
 		}
