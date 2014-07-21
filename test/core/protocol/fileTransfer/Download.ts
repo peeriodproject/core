@@ -38,7 +38,7 @@ import WritableBlockMessageFactory = require('../../../../src/core/protocol/file
 
 
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration)', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @current', function () {
 
 	var sandbox:SinonSandbox = null;
 	var filename:string = 'A filename';

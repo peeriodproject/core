@@ -347,9 +347,9 @@ class Download extends events.EventEmitter implements DownloadInterface {
 							this._fileBlockWriter.writeBlock(blockMessage.getDataBlock(), (err:Error, fullCountOfWrittenBytes:number, isFinished:boolean) => {
 								if (isFinished) {
 									// finalize it
-									this._sendBlockRequest(fullCountOfWrittenBytes, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock(), true);
-
 									this.emit('completed');
+
+									this._sendBlockRequest(fullCountOfWrittenBytes, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock(), true);
 								}
 								else {
 									var errorMessage:string = err ? err.message : null;
@@ -374,11 +374,11 @@ class Download extends events.EventEmitter implements DownloadInterface {
 		}
 
 		if (malformedMessageErr) {
-			this._kill(true, false, malformedMessageErr);
-
 			if (teardownOnError) {
 				this._shareMessenger.teardownLatestCircuit();
 			}
+
+			this._kill(true, false, malformedMessageErr);
 		}
 	}
 

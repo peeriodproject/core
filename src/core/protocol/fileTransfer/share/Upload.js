@@ -37,6 +37,7 @@ var Upload = (function (_super) {
         this._outgoingKey = null;
         this._killed = false;
         this._manuallyAborted = false;
+        this._fdOpen = false;
 
         this._filename = filename;
         this._filesize = filesize;
@@ -126,6 +127,116 @@ var Upload = (function (_super) {
     };
 
     Upload.prototype._handleMessengerResponse = function (err, responsePayload) {
+        var _this = this;
+        if (err) {
+            this._kill(false, err.message);
+        } else {
+            var decryptedMessage = this._decrypter.create(responsePayload, this._incomingKey);
+            var malformedMessageErr = null;
+            var teardownOnError = true;
+
+            if (!decryptedMessage) {
+                malformedMessageErr = 'Decryption error.';
+            } else {
+                var shareMessage = this._readableEncryptedShareFactory.create(decryptedMessage.getPayload());
+
+                if (!shareMessage) {
+                    malformedMessageErr = 'Malformed share message.';
+                } else {
+                    if (shareMessage.getMessageType() === 'SHARE_ABORT') {
+                        var shareAbortMessage = this._readableShareAbortFactory.create(shareMessage.getPayload());
+
+                        if (!shareAbortMessage) {
+                            malformedMessageErr = 'Malformed abort message.';
+                        } else if (!(shareAbortMessage.getFileHash() === this._filehash && shareAbortMessage.getFilename() === this._filename && shareAbortMessage.getFilesize() === this._filesize)) {
+                            malformedMessageErr = 'File properties do not match in abort message.';
+                        } else {
+                            malformedMessageErr = 'Downloader aborted transfer.';
+                            teardownOnError = false;
+                        }
+                    } else if (shareMessage.getMessageType() === 'BLOCK_REQUEST') {
+                        var blockRequest = this._readableBlockRequestFactory.create(shareMessage.getPayload());
+
+                        if (!blockRequest || blockRequest.getFirstBytePositionOfBlock() > this._filesize) {
+                            malformedMessageErr = 'Malformed block request.';
+                        } else {
+                            if (blockRequest.getFirstBytePositionOfBlock() === this._filesize) {
+                                // we are done
+                                this.emit('completed');
+
+                                this._kill(false, 'Completed.');
+                            } else if (this._manuallyAborted) {
+                                this._kill(true, 'Manually aborted.', blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+                            } else {
+                                // everything okay so far. read from file.
+                                if (!this._fdOpen) {
+                                    this._fileReader.prepareToRead(function (err) {
+                                        if (err) {
+                                            _this._kill(true, err.message, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+                                        } else {
+                                            _this.emit('startingUpload');
+                                            _this._fdOpen = true;
+                                            _this._readBlockAndSendByRequest(blockRequest);
+                                        }
+                                    });
+                                } else {
+                                    this._readBlockAndSendByRequest(blockRequest);
+                                }
+                            }
+                        }
+                    } else {
+                        malformedMessageErr = 'Prohibited message type.';
+                    }
+                }
+            }
+
+            if (malformedMessageErr) {
+                if (teardownOnError) {
+                    this._shareMessenger.teardownLatestCircuit();
+                }
+
+                this._kill(false, malformedMessageErr);
+            }
+        }
+    };
+
+    Upload.prototype._readBlockAndSendByRequest = function (blockRequest) {
+        var _this = this;
+        var firstByteOfBlock = blockRequest.getFirstBytePositionOfBlock();
+
+        this._fileReader.readBlock(firstByteOfBlock, function (err, readBytes) {
+            var errorMessage = err ? err.message : null;
+            errorMessage = _this._manuallyAborted ? 'Manually aborted.' : errorMessage;
+
+            if (errorMessage) {
+                _this._kill(true, errorMessage, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+            } else {
+                _this._prepareToImmediateShare(function (err) {
+                    if (err) {
+                        _this._kill(true, err.message, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+                    } else {
+                        _this.emit('uploadingBytes', readBytes.length);
+
+                        var nextTransferIdentifier = crypto.pseudoRandomBytes(16).toString('hex');
+                        var blockClear = _this._writableBlockFactory.constructMessage(_this._feedingNodesBlockMaintainer.getBlock(), firstByteOfBlock, nextTransferIdentifier, readBytes);
+
+                        _this._encrypter.encryptMessage(_this._outgoingKey, true, blockClear, function (err, encryptedBuffer) {
+                            var errorMessage = err ? 'Encryption error.' : null;
+                            errorMessage = _this._manuallyAborted ? 'Manually aborted.' : errorMessage;
+
+                            if (errorMessage) {
+                                _this._kill(true, errorMessage, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+                            } else {
+                                var sendableBuffer = _this._transferMessageCenter.wrapTransferMessage('ENCRYPTED_SHARE', blockRequest.getNextTransferIdentifier(), encryptedBuffer);
+                                _this._shareMessenger.pipeMessageAndWaitForResponse(sendableBuffer, blockRequest.getFeedingNodesBlock(), 'ENCRYPTED_SHARE', nextTransferIdentifier, function (err, responsePayload) {
+                                    _this._handleMessengerResponse(err, responsePayload);
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
     };
 
     Upload.prototype._sendShareRatify = function () {
@@ -134,7 +245,7 @@ var Upload = (function (_super) {
 
         var diffieHellman = crypto.getDiffieHellman('modp14');
         var dhPublic = Padding.pad(diffieHellman.generateKeys(), 256);
-        var secret = diffieHellman.generateKeys();
+        var secret = diffieHellman.computeSecret(this._downloaderDHPayload);
         var sha1 = crypto.createHash('sha1').update(secret).digest();
 
         // so far, so good, now derive the keys
