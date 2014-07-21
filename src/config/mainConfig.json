@@ -52,6 +52,8 @@
     },
     "fileTransfer": {
         "maximumNumberOfParallelDownloads": 10,
+        "maximumNumberOfParallelUploads": 10,
+        "uploadBlockSizeInBytes": 204800,
         "query": {
             "broadcastValidityInSeconds": 30,
             "minimumNumberOfReadyCircuits": 1,

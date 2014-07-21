@@ -3,6 +3,7 @@ import DownloadInterface = require('./interfaces/DownloadInterface');
 import Download = require('./Download');
 import TransferMessageCenterInterface = require('../interfaces/TransferMessageCenterInterface');
 import FeedingNodesBlockMaintainerInterface = require('./interfaces/FeedingNodesBlockMaintainerInterface');
+import FeedingNodesBlockMaintainerFactoryInterface = require('./interfaces/FeedingNodesBlockMaintainerFactoryInterface');
 import FeedingNodesBlockMaintainer = require('./FeedingNodesBlockMaintainer');
 import ShareMessengerFactoryInterface = require('./interfaces/ShareMessengerFactoryInterface');
 import FileBlockWriterFactoryInterface = require('../../../fs/interfaces/FileBlockWriterFactoryInterface');
@@ -36,6 +37,11 @@ class Aes128GcmDownloadFactory implements DownloadFactoryInterface {
 	 * @member {core.protocol.hydra.CircuitManagerInterface} core.protocol.fileTransfer.share.Aes128GcmDownloadFactory~_circuitManager
 	 */
 	private _circuitManager:CircuitManagerInterface = null;
+
+	/**
+	 * @member {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerFactoryInterface} core.protocol.fileTransfer.share.Aes128GcmDownloadFactory~_feedingNodesBlockMaintainerFactory
+	 */
+	private _feedingNodesBlockMaintainerFactory:FeedingNodesBlockMaintainerFactoryInterface = null;
 
 	/**
 	 * @member {core.fs.FileBlockWriterFactoryInterface} core.protocol.fileTransfer.share.Aes128GcmDownloadFactory~_fileBlockWriterFactory
@@ -92,8 +98,8 @@ class Aes128GcmDownloadFactory implements DownloadFactoryInterface {
 	 */
 	private _writableShareRequestMessageFactory:WritableShareRequestMessageFactory = null;
 
-	public constructor (circuitManager:CircuitManagerInterface, shareMessengerFactory:ShareMessengerFactoryInterface, fileBlockWriterFactory:FileBlockWriterFactoryInterface, transferMessageCenter:TransferMessageCenterInterface) {
-		this._circuitManager = circuitManager;
+	public constructor (feedingNodesBlockMaintainerFactory:FeedingNodesBlockMaintainerFactoryInterface, shareMessengerFactory:ShareMessengerFactoryInterface, fileBlockWriterFactory:FileBlockWriterFactoryInterface, transferMessageCenter:TransferMessageCenterInterface) {
+		this._feedingNodesBlockMaintainerFactory = feedingNodesBlockMaintainerFactory;
 		this._shareMessengerFactory = shareMessengerFactory;
 		this._fileBlockWriterFactory = fileBlockWriterFactory;
 		this._transferMessageCenter = transferMessageCenter;
@@ -117,9 +123,7 @@ class Aes128GcmDownloadFactory implements DownloadFactoryInterface {
 			return null;
 		}
 
-		var feedingNodesBlockMaintainer:FeedingNodesBlockMaintainerInterface = new FeedingNodesBlockMaintainer(this._circuitManager);
-
-		return new Download(filename, expectedSize, expectedHash, initialBlock, feedingNodesBlockMaintainer, this._fileBlockWriterFactory, this._shareMessengerFactory.createMessenger(), this._transferMessageCenter, this._writableShareRequestMessageFactory, this._writableEncryptedShareMessageFactory, this._readableEncryptedShareMessageFactory, this._readableShareAbortMessageFactory, this._writableShareAbortMessageFactory, this._readableBlockMessageFactory, this._readableShareRatifyMessageFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory(), this._writableBlockRequestMessageFactory);
+		return new Download(filename, expectedSize, expectedHash, initialBlock, this._feedingNodesBlockMaintainerFactory.create(), this._fileBlockWriterFactory, this._shareMessengerFactory.createMessenger(), this._transferMessageCenter, this._writableShareRequestMessageFactory, this._writableEncryptedShareMessageFactory, this._readableEncryptedShareMessageFactory, this._readableShareAbortMessageFactory, this._writableShareAbortMessageFactory, this._readableBlockMessageFactory, this._readableShareRatifyMessageFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory(), this._writableBlockRequestMessageFactory);
 	}
 
 }

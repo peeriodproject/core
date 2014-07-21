@@ -1,3 +1,2 @@
 /// <reference path='../../../../../../ts-definitions/node/node.d.ts' />
-
-//# sourceMappingURL=FileBlockWriterFactoryInterface.js.map
+//# sourceMappingURL=FeedingNodesBlockMaintainerFactoryInterface.js.map

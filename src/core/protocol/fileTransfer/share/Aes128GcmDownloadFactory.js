@@ -1,7 +1,5 @@
 var Download = require('./Download');
 
-var FeedingNodesBlockMaintainer = require('./FeedingNodesBlockMaintainer');
-
 var WritableShareRequestMessageFactory = require('./messages/WritableShareRequestMessageFactory');
 var WritableEncryptedShareMessageFactory = require('./messages/WritableEncryptedShareMessageFactory');
 var ReadableEncryptedShareMessageFactory = require('./messages/ReadableEncryptedShareMessageFactory');
@@ -26,11 +24,15 @@ var Aes128GcmReadableDecryptedMessageFactory = require('../../hydra/messages/Aes
 * @param {core.protocol.fileTransfer.TransferMessageCenterInterface} transferMessageCenter
 */
 var Aes128GcmDownloadFactory = (function () {
-    function Aes128GcmDownloadFactory(circuitManager, shareMessengerFactory, fileBlockWriterFactory, transferMessageCenter) {
+    function Aes128GcmDownloadFactory(feedingNodesBlockMaintainerFactory, shareMessengerFactory, fileBlockWriterFactory, transferMessageCenter) {
         /**
         * @member {core.protocol.hydra.CircuitManagerInterface} core.protocol.fileTransfer.share.Aes128GcmDownloadFactory~_circuitManager
         */
         this._circuitManager = null;
+        /**
+        * @member {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerFactoryInterface} core.protocol.fileTransfer.share.Aes128GcmDownloadFactory~_feedingNodesBlockMaintainerFactory
+        */
+        this._feedingNodesBlockMaintainerFactory = null;
         /**
         * @member {core.fs.FileBlockWriterFactoryInterface} core.protocol.fileTransfer.share.Aes128GcmDownloadFactory~_fileBlockWriterFactory
         */
@@ -75,7 +77,7 @@ var Aes128GcmDownloadFactory = (function () {
         * @member {core.protocol.fileTransfer.share.WritableShareRequestMessageFactory} core.protocol.fileTransfer.share.Aes128GcmDownloadFactory~_writableShareRequestMessageFactory
         */
         this._writableShareRequestMessageFactory = null;
-        this._circuitManager = circuitManager;
+        this._feedingNodesBlockMaintainerFactory = feedingNodesBlockMaintainerFactory;
         this._shareMessengerFactory = shareMessengerFactory;
         this._fileBlockWriterFactory = fileBlockWriterFactory;
         this._transferMessageCenter = transferMessageCenter;
@@ -96,9 +98,7 @@ var Aes128GcmDownloadFactory = (function () {
             return null;
         }
 
-        var feedingNodesBlockMaintainer = new FeedingNodesBlockMaintainer(this._circuitManager);
-
-        return new Download(filename, expectedSize, expectedHash, initialBlock, feedingNodesBlockMaintainer, this._fileBlockWriterFactory, this._shareMessengerFactory.createMessenger(), this._transferMessageCenter, this._writableShareRequestMessageFactory, this._writableEncryptedShareMessageFactory, this._readableEncryptedShareMessageFactory, this._readableShareAbortMessageFactory, this._writableShareAbortMessageFactory, this._readableBlockMessageFactory, this._readableShareRatifyMessageFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory(), this._writableBlockRequestMessageFactory);
+        return new Download(filename, expectedSize, expectedHash, initialBlock, this._feedingNodesBlockMaintainerFactory.create(), this._fileBlockWriterFactory, this._shareMessengerFactory.createMessenger(), this._transferMessageCenter, this._writableShareRequestMessageFactory, this._writableEncryptedShareMessageFactory, this._readableEncryptedShareMessageFactory, this._readableShareAbortMessageFactory, this._writableShareAbortMessageFactory, this._readableBlockMessageFactory, this._readableShareRatifyMessageFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory(), this._writableBlockRequestMessageFactory);
     };
     return Aes128GcmDownloadFactory;
 })();
