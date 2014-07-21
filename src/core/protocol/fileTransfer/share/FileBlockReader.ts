@@ -2,12 +2,45 @@ import fs = require('fs');
 
 import FileBlockReaderInterface = require('./interfaces/FileBlockReaderInterface');
 
+/**
+ * FileBlockReaderInterface implementation.
+ *
+ * @class core.protocol.fileTransfer.share.FileBlockReader
+ * @implements core.protocol.fileTransfer.share.FileBlockReaderInterface
+ *
+ * @param {string} filePath Full path of the file to read
+ * @param {number} blockSize Number of bytes to read in one block.
+ */
 class FileBlockReader implements FileBlockReaderInterface {
 
+	/**
+	 * Stores the number of bytes in a block.
+	 *
+	 * @member {number} core.protocol.fileTransfer.share.FileBlockReader~_blockSize
+	 */
 	private _blockSize:number = 0;
-	private _filePath:string = null;
-	private _fileDescriptor:number = 0;
+
+	/**
+	 * Indicates whether the file can be read or not.
+	 *
+	 * @member {boolean} core.protocol.fileTransfer.share.FileBlockReader~_canBeRead
+	 */
 	private _canBeRead:boolean = false;
+
+	/**
+	 * Stores the file descriptor to the opened file to read.
+	 *
+	 * @member {number} core.protocol.fileTransfer.share.FileBlockReader~_fileDescriptor
+	 */
+	private _fileDescriptor:number = 0;
+
+	/**
+	 * Stores the full path to the file to read
+	 *
+	 * @member {string} core.protocol.fileTransfer.share.FileBlockReader~_filePath
+	 */
+	private _filePath:string = null;
+
 
 	public constructor (filePath:string, blockSize:number) {
 		this._blockSize = blockSize;
@@ -22,7 +55,8 @@ class FileBlockReader implements FileBlockReaderInterface {
 			fs.close(this._fileDescriptor, () => {
 				callback(null);
 			});
-		} else {
+		}
+		else {
 			process.nextTick(function () {
 				callback(new Error('FileBlockReader: Cannot abort closed file block reader'));
 			});
