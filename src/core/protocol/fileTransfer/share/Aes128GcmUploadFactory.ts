@@ -2,8 +2,8 @@ import ConfigInterface = require('../../../config/interfaces/ConfigInterface');
 import UploadFactoryInterface = require('./interfaces/UploadFactoryInterface');
 import UploadInterface = require('./interfaces/UploadInterface');
 import Upload = require('./Upload');
-import FeedingNodesBlockMaintainer = require('./FeedingNodesBlockMaintainer');
 import FeedingNodesBlockMaintainerInterface = require('./interfaces/FeedingNodesBlockMaintainerInterface');
+import FeedingNodesBlockMaintainerFactoryInterface = require('./interfaces/FeedingNodesBlockMaintainerFactoryInterface');
 import ReadableShareRequestMessageInterface = require('./messages/interfaces/ReadableShareRequestMessageInterface');
 import ShareMessengerFactoryInterface = require('./interfaces/ShareMessengerFactoryInterface');
 import ShareMessengerInterface = require('./interfaces/ShareMessengerInterface');
@@ -39,10 +39,10 @@ class Aes128GcmUploadFactory implements UploadFactoryInterface {
 	private _writableShareAbortFactory:WritableShareAbortMessageFactory = null;
 	private _writableBlockFactory:WritableBlockMessageFactory = null;
 	private _readableBlockRequestFactory:ReadableBlockRequestMessageFactory = null;
+	private _feedingNodesBlockMaintainerFactory:FeedingNodesBlockMaintainerFactoryInterface = null;
 
-	public constructor (transferConfig:ConfigInterface, circuitManager:CircuitManagerInterface, shareMessengerFactory:ShareMessengerFactoryInterface, fileBlockReaderFactory:FileBlockReaderFactoryInterface, transferMessageCenter:TransferMessageCenterInterface) {
+	public constructor (transferConfig:ConfigInterface, feedingNodesBlockMaintainerFactory:FeedingNodesBlockMaintainerFactoryInterface, shareMessengerFactory:ShareMessengerFactoryInterface, fileBlockReaderFactory:FileBlockReaderFactoryInterface, transferMessageCenter:TransferMessageCenterInterface) {
 		this._blockSize = transferConfig.get('fileTransfer.uploadBlockSizeInBytes');
-		this._circuitManager = circuitManager;
 		this._shareMessengerFactory = shareMessengerFactory;
 		this._fileBlockReaderFactory = fileBlockReaderFactory;
 		this._transferMessageCenter = transferMessageCenter;
@@ -54,16 +54,16 @@ class Aes128GcmUploadFactory implements UploadFactoryInterface {
 		this._writableShareAbortFactory = new WritableShareAbortMessageFactory();
 		this._writableBlockFactory = new WritableBlockMessageFactory();
 		this._readableBlockRequestFactory = new ReadableBlockRequestMessageFactory();
+		this._feedingNodesBlockMaintainerFactory = feedingNodesBlockMaintainerFactory;
 	}
 
 	public create (circuitIdOfRequest:string, requestTransferIdentifier:string, shareRequest:ReadableShareRequestMessageInterface, filepath:string, filename:string, filesize:number, filehash:string):UploadInterface {
 		var fileReader:FileBlockReaderInterface = this._fileBlockReaderFactory.create(filepath, this._blockSize);
 		var shareMessenger:ShareMessengerInterface = this._shareMessengerFactory.createMessenger();
-		var feedingNodesBlockMaintainer:FeedingNodesBlockMaintainerInterface = new FeedingNodesBlockMaintainer(this._circuitManager);
 
 		shareMessenger.manuallySetPreferredCircuitId(circuitIdOfRequest);
 
-		return new Upload(requestTransferIdentifier, shareRequest, filename, filesize, filehash, fileReader, shareMessenger, feedingNodesBlockMaintainer, this._transferMessageCenter, this._writableShareRatifyFactory, this._writableEncryptedShareFactory, this._readableEncryptedShareFactory, this._readableShareAbortFactory, this._writableShareAbortFactory, this._readableBlockRequestFactory, this._writableBlockFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory());
+		return new Upload(requestTransferIdentifier, shareRequest, filename, filesize, filehash, fileReader, shareMessenger, this._feedingNodesBlockMaintainerFactory.create(), this._transferMessageCenter, this._writableShareRatifyFactory, this._writableEncryptedShareFactory, this._readableEncryptedShareFactory, this._readableShareAbortFactory, this._writableShareAbortFactory, this._readableBlockRequestFactory, this._writableBlockFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory());
 	}
 
 }

@@ -1,5 +1,4 @@
 var Upload = require('./Upload');
-var FeedingNodesBlockMaintainer = require('./FeedingNodesBlockMaintainer');
 
 var WritableShareRatifyMessageFactory = require('./messages/WritableShareRatifyMessageFactory');
 var ReadableShareRequestMessageFactory = require('./messages/ReadableShareRequestMessageFactory');
@@ -13,7 +12,7 @@ var Aes128GcmWritableMessageFactory = require('../../hydra/messages/Aes128GcmWri
 var Aes128GcmReadableDecryptedMessageFactory = require('../../hydra/messages/Aes128GcmReadableDecryptedMessageFactory');
 
 var Aes128GcmUploadFactory = (function () {
-    function Aes128GcmUploadFactory(transferConfig, circuitManager, shareMessengerFactory, fileBlockReaderFactory, transferMessageCenter) {
+    function Aes128GcmUploadFactory(transferConfig, feedingNodesBlockMaintainerFactory, shareMessengerFactory, fileBlockReaderFactory, transferMessageCenter) {
         this._blockSize = 0;
         this._circuitManager = null;
         this._shareMessengerFactory = null;
@@ -27,8 +26,8 @@ var Aes128GcmUploadFactory = (function () {
         this._writableShareAbortFactory = null;
         this._writableBlockFactory = null;
         this._readableBlockRequestFactory = null;
+        this._feedingNodesBlockMaintainerFactory = null;
         this._blockSize = transferConfig.get('fileTransfer.uploadBlockSizeInBytes');
-        this._circuitManager = circuitManager;
         this._shareMessengerFactory = shareMessengerFactory;
         this._fileBlockReaderFactory = fileBlockReaderFactory;
         this._transferMessageCenter = transferMessageCenter;
@@ -40,15 +39,15 @@ var Aes128GcmUploadFactory = (function () {
         this._writableShareAbortFactory = new WritableShareAbortMessageFactory();
         this._writableBlockFactory = new WritableBlockMessageFactory();
         this._readableBlockRequestFactory = new ReadableBlockRequestMessageFactory();
+        this._feedingNodesBlockMaintainerFactory = feedingNodesBlockMaintainerFactory;
     }
     Aes128GcmUploadFactory.prototype.create = function (circuitIdOfRequest, requestTransferIdentifier, shareRequest, filepath, filename, filesize, filehash) {
         var fileReader = this._fileBlockReaderFactory.create(filepath, this._blockSize);
         var shareMessenger = this._shareMessengerFactory.createMessenger();
-        var feedingNodesBlockMaintainer = new FeedingNodesBlockMaintainer(this._circuitManager);
 
         shareMessenger.manuallySetPreferredCircuitId(circuitIdOfRequest);
 
-        return new Upload(requestTransferIdentifier, shareRequest, filename, filesize, filehash, fileReader, shareMessenger, feedingNodesBlockMaintainer, this._transferMessageCenter, this._writableShareRatifyFactory, this._writableEncryptedShareFactory, this._readableEncryptedShareFactory, this._readableShareAbortFactory, this._writableShareAbortFactory, this._readableBlockRequestFactory, this._writableBlockFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory());
+        return new Upload(requestTransferIdentifier, shareRequest, filename, filesize, filehash, fileReader, shareMessenger, this._feedingNodesBlockMaintainerFactory.create(), this._transferMessageCenter, this._writableShareRatifyFactory, this._writableEncryptedShareFactory, this._readableEncryptedShareFactory, this._readableShareAbortFactory, this._writableShareAbortFactory, this._readableBlockRequestFactory, this._writableBlockFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory());
     };
     return Aes128GcmUploadFactory;
 })();
