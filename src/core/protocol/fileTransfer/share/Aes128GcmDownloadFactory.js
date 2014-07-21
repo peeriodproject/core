@@ -32,7 +32,7 @@ var Aes128GcmDownloadFactory = (function () {
         */
         this._circuitManager = null;
         /**
-        * @member {core.protocol.fileTransfer.share.FileBlockWriterFactoryInterface} core.protocol.fileTransfer.share.Aes128GcmDownloadFactory~_fileBlockWriterFactory
+        * @member {core.fs.FileBlockWriterFactoryInterface} core.protocol.fileTransfer.share.Aes128GcmDownloadFactory~_fileBlockWriterFactory
         */
         this._fileBlockWriterFactory = null;
         /**

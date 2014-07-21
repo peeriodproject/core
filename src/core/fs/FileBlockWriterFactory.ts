@@ -5,15 +5,15 @@ import FileBlockWriter = require('./FileBlockWriter');
 /**
  * FileBlockWriterFactoryInterface implementation.
  *
- * @class core.protocol.fileTransfer.share.FileBlockWriterFactory
- * @implements core.protocol.fileTransfer.share.FileBlockWriterFactoryInterface
+ * @class core.fs.FileBlockWriterFactory
+ * @implements core.fs.FileBlockWriterFactoryInterface
  *
  * @param {string} downloadFolderPath Destination folder path for all created file block writers
  */
 class FileBlockWriterFactory implements FileBlockWriterFactoryInterface {
 
 	/**
-	 * @member {string} core.protocol.fileTransfer.share.FileBlockWriterFactory~_downloadFolderPath
+	 * @member {string} core.fs.FileBlockWriterFactory~_downloadFolderPath
 	 */
 	private _downloadFolderPath:string = null;
 

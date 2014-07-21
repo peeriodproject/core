@@ -5,7 +5,7 @@ import TransferMessageCenterInterface = require('../interfaces/TransferMessageCe
 import FeedingNodesBlockMaintainerInterface = require('./interfaces/FeedingNodesBlockMaintainerInterface');
 import FeedingNodesBlockMaintainer = require('./FeedingNodesBlockMaintainer');
 import ShareMessengerFactoryInterface = require('./interfaces/ShareMessengerFactoryInterface');
-import FileBlockWriterFactoryInterface = require('./interfaces/FileBlockWriterFactoryInterface');
+import FileBlockWriterFactoryInterface = require('../../../fs/interfaces/FileBlockWriterFactoryInterface');
 import CircuitManagerInterface = require('../../hydra/interfaces/CircuitManagerInterface');
 import WritableShareRequestMessageFactory = require('./messages/WritableShareRequestMessageFactory');
 import WritableEncryptedShareMessageFactory = require('./messages/WritableEncryptedShareMessageFactory');
@@ -38,7 +38,7 @@ class Aes128GcmDownloadFactory implements DownloadFactoryInterface {
 	private _circuitManager:CircuitManagerInterface = null;
 
 	/**
-	 * @member {core.protocol.fileTransfer.share.FileBlockWriterFactoryInterface} core.protocol.fileTransfer.share.Aes128GcmDownloadFactory~_fileBlockWriterFactory
+	 * @member {core.fs.FileBlockWriterFactoryInterface} core.protocol.fileTransfer.share.Aes128GcmDownloadFactory~_fileBlockWriterFactory
 	 */
 	private _fileBlockWriterFactory:FileBlockWriterFactoryInterface = null;
 
