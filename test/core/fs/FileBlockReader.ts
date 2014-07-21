@@ -1,14 +1,14 @@
-/// <reference path='../../../test.d.ts' />
+/// <reference path='../../test.d.ts' />
 
 require('should');
 
 import fs = require('fs');
 import crypto = require('crypto');
-import testUtils = require('../../../utils/testUtils');
+import testUtils = require('../../utils/testUtils');
 
-import FileBlockReader = require('../../../../src/core/protocol/fileTransfer/share/FileBlockReader');
+import FileBlockReader = require('../../../src/core/fs/FileBlockReader');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> FileBlockReader', function () {
+describe('CORE --> FS --> FileBlockReader', function () {
 
 	var sha1Hash = '4dad5e4374038a14465f0c42fc150a36674b4bd8';
 	var path = testUtils.getFixturePath('core/fileTransfer/snowden_brighton.jpg');

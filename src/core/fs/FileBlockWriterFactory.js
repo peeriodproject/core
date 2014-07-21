@@ -3,15 +3,15 @@ var FileBlockWriter = require('./FileBlockWriter');
 /**
 * FileBlockWriterFactoryInterface implementation.
 *
-* @class core.protocol.fileTransfer.share.FileBlockWriterFactory
-* @implements core.protocol.fileTransfer.share.FileBlockWriterFactoryInterface
+* @class core.fs.FileBlockWriterFactory
+* @implements core.fs.FileBlockWriterFactoryInterface
 *
 * @param {string} downloadFolderPath Destination folder path for all created file block writers
 */
 var FileBlockWriterFactory = (function () {
     function FileBlockWriterFactory(downloadFolderPath) {
         /**
-        * @member {string} core.protocol.fileTransfer.share.FileBlockWriterFactory~_downloadFolderPath
+        * @member {string} core.fs.FileBlockWriterFactory~_downloadFolderPath
         */
         this._downloadFolderPath = null;
         this._downloadFolderPath = downloadFolderPath;

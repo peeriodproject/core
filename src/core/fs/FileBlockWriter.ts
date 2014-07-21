@@ -7,8 +7,8 @@ import FileBlockWriterInterface = require('./interfaces/FileBlockWriterInterface
 /**
  * FileBlockWriterInterface implementation.
  *
- * @class core.protocol.fileTransfer.share.FileBlockWriter
- * @implements core.protocol.fileTransfer.share.FileBlockWriterInterface
+ * @class core.fs.FileBlockWriter
+ * @implements core.fs.FileBlockWriterInterface
  *
  * @param {string} filename The name of the file to write
  * @param {string} toFolderPath The destination folder of the file to write
@@ -20,49 +20,49 @@ class FileBlockWriter implements FileBlockWriterInterface {
 	/**
 	 * Flag indicating whether the block writer has been aborted.
 	 *
-	 * @member {boolean} core.protocol.fileTransfer.share.FileBlockWriter~_aborted
+	 * @member {boolean} core.fs.FileBlockWriter~_aborted
 	 */
 	private _aborted:boolean = false;
 
 	/**
 	 * Flag indicating whether the hash stream has been digested or ended manually.
 	 *
-	 * @member {boolean} core.protocol.fileTransfer.share.FileBlockWriter~_hashEnded
+	 * @member {boolean} core.fs.FileBlockWriter~_hashEnded
 	 */
 	private _hashEnded:boolean = false;
 
 	/**
 	 * Flag indicating whether the file can be written to or not.
 	 *
-	 * @member {boolean} core.protocol.fileTransfer.share.FileBlockWriter~_canBeWritten
+	 * @member {boolean} core.fs.FileBlockWriter~_canBeWritten
 	 */
 	private _canBeWritten:boolean = false;
 
 	/**
 	 * Stores the expected SHA-1 hash of the file to write.
 	 *
-	 * @member {string} core.protocol.fileTransfer.share.FileBlockWriter~_expectedHash
+	 * @member {string} core.fs.FileBlockWriter~_expectedHash
 	 */
 	private _expectedHash:string = null;
 
 	/**
 	 * Stores the expected number of bytes of the file to write.
 	 *
-	 * @member {number} core.protocol.fileTransfer.share.FileBlockWriter~_expectedSize
+	 * @member {number} core.fs.FileBlockWriter~_expectedSize
 	 */
 	private _expectedSize:number = null;
 
 	/**
 	 * Flag indicating whether the destination file has been deleted or not.
 	 *
-	 * @member {boolean} core.protocol.fileTransfer.share.FileBlockWriter~_fileDeleted
+	 * @member {boolean} core.fs.FileBlockWriter~_fileDeleted
 	 */
 	private _fileDeleted:boolean = false;
 
 	/**
 	 * Stores the file descriptor of the file to write.
 	 *
-	 * @member {number} core.protocol.fileTransfer.share.FileBlockWriter~_fileDescriptor
+	 * @member {number} core.fs.FileBlockWriter~_fileDescriptor
 	 */
 	private _fileDescriptor:number = null;
 
@@ -70,21 +70,21 @@ class FileBlockWriter implements FileBlockWriterInterface {
 	 * Keeps track of the number of bytes that have already been written to the file and
 	 * thus indicates the position of the first byte of the next block.
 	 *
-	 * @member {number} core.protocol.fileTransfer.share.FileBlockWriter~_fullCountOfWrittenBytes
+	 * @member {number} core.fs.FileBlockWriter~_fullCountOfWrittenBytes
 	 */
 	private _fullCountOfWrittenBytes:number = 0;
 
 	/**
 	 * Stores the full path of the file to write.
 	 *
-	 * @member {string} core.protocol.fileTransfer.share.FileBlockWriter~_fullPath
+	 * @member {string} core.fs.FileBlockWriter~_fullPath
 	 */
 	private _fullPath:string = null;
 
 	/**
 	 * Stores the SHA-1 hash stream which gets written to from block to block.
 	 *
-	 * @member {crypto.Hash} core.protocol.fileTransfer.share.FileBlockWriter~_hashStream
+	 * @member {crypto.Hash} core.fs.FileBlockWriter~_hashStream
 	 */
 	private _hashStream:crypto.Hash = null;
 
@@ -221,7 +221,7 @@ class FileBlockWriter implements FileBlockWriterInterface {
 	 * Also sets the appropriate flags, so the file can no longer be written to.
 	 * If the block writer has already been aborted, immediately calls back and does nothing.
 	 *
-	 * @method core.protocol.fileTransfer.share.FileBlockWriter~_abort
+	 * @method core.fs.FileBlockWriter~_abort
 	 *
 	 * @param {boolean} deleteFile Flag indicating whether the destination file should be deleted.
 	 * @param {Function} callback Callback function when everything has been cleaned up.

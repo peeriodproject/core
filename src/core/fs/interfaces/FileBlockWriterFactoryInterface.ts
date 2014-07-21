@@ -1,29 +1,29 @@
-/// <reference path='../../../../../../ts-definitions/node/node.d.ts' />
+/// <reference path='../../../../ts-definitions/node/node.d.ts' />
 
 import FileBlockWriterInterface = require('./FileBlockWriterInterface');
 
 /**
  * @class
- * @interface core.protocol.fileTransfer.share.FileBlockWriterFactoryInterface
+ * @interface core.fs.FileBlockWriterFactoryInterface
  */
 interface FileBlockWriterFactoryInterface {
 
 	/**
 	 * Creates a file block writer with the provided parameters.
 	 *
-	 * @method core.protocol.fileTransfer.share.FileBlockWriterFactoryInterface#createWriter
+	 * @method core.fs.FileBlockWriterFactoryInterface#createWriter
 	 *
 	 * @param {string} filename
 	 * @param {number} expectedSize
 	 * @param {string} expectedHash
-	 * @returns {core.protocol.fileTransfer.share.FileBlockWriterInterface}
+	 * @returns {core.fs.FileBlockWriterInterface}
 	 */
 	createWriter (filename:string, expectedSize:number, expectedHash:string):FileBlockWriterInterface;
 
 	/**
 	 * Returns the destination folder path for all created file block writers.
 	 *
-	 * @method core.protocol.fileTransfer.share.FileBlockWriterFactoryInterface#getDownloadFolderPath
+	 * @method core.fs.FileBlockWriterFactoryInterface#getDownloadFolderPath
 	 *
 	 * @returns {string} Path to the download folder
 	 */
@@ -32,7 +32,7 @@ interface FileBlockWriterFactoryInterface {
 	/**
 	 * Sets the destination folder path for all created file block writers.
 	 *
-	 * @method core.protocol.fileTransfer.share.FileBlockWriterFactoryInterface#setDownloadFolderPath
+	 * @method core.fs.FileBlockWriterFactoryInterface#setDownloadFolderPath
 	 *
 	 * @param {string} path Path to the download folder
 	 */

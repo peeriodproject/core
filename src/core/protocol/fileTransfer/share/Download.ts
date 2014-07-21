@@ -5,8 +5,8 @@ import HKDF = require('../../../crypto/HKDF');
 import Padding = require('../../../crypto/Padding');
 import DownloadInterface = require('./interfaces/DownloadInterface');
 import FeedingNodesBlockMaintainerInterface = require('./interfaces/FeedingNodesBlockMaintainerInterface');
-import FileBlockWriterInterface = require('./interfaces/FileBlockWriterInterface');
-import FileBlockWriterFactoryInterface = require('./interfaces/FileBlockWriterFactoryInterface');
+import FileBlockWriterInterface = require('../../../fs/interfaces/FileBlockWriterInterface');
+import FileBlockWriterFactoryInterface = require('../../../fs/interfaces/FileBlockWriterFactoryInterface');
 import ShareMessengerInterface = require('./interfaces/ShareMessengerInterface');
 import TransferMessageCenterInterface = require('../interfaces/TransferMessageCenterInterface');
 import WritableShareRequestMessageFactoryInterface = require('./messages/interfaces/WritableShareRequestMessageFactoryInterface');
@@ -36,7 +36,7 @@ import ReadableDecryptedMessageInterface = require('../../hydra/messages/interfa
  * @param {string} expectedHash Hexadecimal string representation of the SHA-1 hash of the file to request
  * @param {Buffer} initialFeedingNodesBlockBufferOfUpload The feeding nodes block that came with the result of a query, indicating how the uploader can be reached.
  * @param {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface} feedingNodesBlockMaintainer Fresh feeding nodes block maintainer instance.
- * @param {core.protocol.fileTransfer.share.FileBlockWriterFactoryInterface} fileBlockWriterFactory Factory for creating file block writers.
+ * @param {core.fs.FileBlockWriterFactoryInterface} fileBlockWriterFactory Factory for creating file block writers.
  * @param {core.protocol.fileTransfer.share.ShareMessengerInterface} shareMessenger Fresh share messenger instance.
  * @param {core.protocol.fileTransfer.TransferMessageCenterInterface} transferMessageCenter Working transfer message center instance.
  * @param {core.protocol.fileTransfer.share.WritableShareRequestMessageFactoryInterface} writableShareRequestFactory
@@ -97,7 +97,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 	/**
 	 * Constructed with the factory in constructor, with the filename, expected size and expected hash.
 	 *
-	 * @member {core.protocol.fileTransfer.share.FileBlockWriterInterface} core.protocol.fileTransfer.share.Download~_fileBlockWriter
+	 * @member {core.fs.FileBlockWriterInterface} core.protocol.fileTransfer.share.Download~_fileBlockWriter
 	 */
 	private _fileBlockWriter:FileBlockWriterInterface = null;
 

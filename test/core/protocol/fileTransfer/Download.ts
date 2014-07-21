@@ -16,8 +16,8 @@ import ShareMessenger = require('../../../../src/core/protocol/fileTransfer/shar
 import FeedingNodesBlockMaintainer = require('../../../../src/core/protocol/fileTransfer/share/FeedingNodesBlockMaintainer');
 import TransferMessageCenter = require('../../../../src/core/protocol/fileTransfer/TransferMessageCenter');
 import FeedingNodesMessageBlock = require('../../../../src/core/protocol/fileTransfer/messages/FeedingNodesMessageBlock');
-import FileBlockWriter = require('../../../../src/core/protocol/fileTransfer/share/FileBlockWriter');
-import FileBlockWriterFactory = require('../../../../src/core/protocol/fileTransfer/share/FileBlockWriterFactory');
+import FileBlockWriter = require('../../../../src/core/fs/FileBlockWriter');
+import FileBlockWriterFactory = require('../../../../src/core/fs/FileBlockWriterFactory');
 
 // Factories
 import WritableFileTransferMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/WritableFileTransferMessageFactory');

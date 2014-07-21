@@ -1,13 +1,13 @@
-/// <reference path='../../../test.d.ts' />
+/// <reference path='../../test.d.ts' />
 
 require('should');
 
 import fs = require('fs');
-import testUtils = require('../../../utils/testUtils');
+import testUtils = require('../../utils/testUtils');
 
-import FileBlockWriter = require('../../../../src/core/protocol/fileTransfer/share/FileBlockWriter');
+import FileBlockWriter = require('../../../src/core/fs/FileBlockWriter');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> FileBlockWriter', function () {
+describe('CORE --> FS --> FileBlockWriter', function () {
 
 	var filename = 'snowden_brighton_2.jpg';
 	var sha1Hash = '4dad5e4374038a14465f0c42fc150a36674b4bd8';

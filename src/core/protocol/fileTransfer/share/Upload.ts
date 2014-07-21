@@ -5,7 +5,7 @@ import HKDF = require('../../../crypto/HKDF');
 import Padding = require('../../../crypto/Padding');
 
 import UploadInterface = require('./interfaces/UploadInterface');
-import FileBlockReaderInterface = require('./interfaces/FileBlockReaderInterface');
+import FileBlockReaderInterface = require('../../../fs/interfaces/FileBlockReaderInterface');
 import ShareMessengerInterface = require('./interfaces/ShareMessengerInterface');
 import FeedingNodesBlockMaintainerInterface = require('./interfaces/FeedingNodesBlockMaintainerInterface');
 import TransferMessageCenterInterface = require('../interfaces/TransferMessageCenterInterface');

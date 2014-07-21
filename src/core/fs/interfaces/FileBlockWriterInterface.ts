@@ -1,4 +1,4 @@
-/// <reference path='../../../../../../ts-definitions/node/node.d.ts' />
+/// <reference path='../../../../ts-definitions/node/node.d.ts' />
 
 /**
  * The file block writer forms an abstraction of continuously writing bytes to an open file descriptor.
@@ -9,7 +9,7 @@
  * Unmatching hashes render an error (and thus lead to the deletion of the file), matching hashes complete the process.
  *
  * @interface
- * @class core.protocol.fileTransfer.share.FileBlockWriterInterface
+ * @class core.fs.FileBlockWriterInterface
  */
 interface FileBlockWriterInterface {
 
@@ -17,7 +17,7 @@ interface FileBlockWriterInterface {
 	 * Manually aborts the file writing process.
 	 * Deletes the destination file and cleans up the file descriptor, as well as ends the SHA-1 Read-Write-Stream (if there is one)
 	 *
-	 * @method core.protocol.fileTransfer.share.FileBlockWriterInterface#abort
+	 * @method core.fs.FileBlockWriterInterface#abort
 	 *
 	 * @param {Function} callback Function that gets called (without arguments) when the file descriptor has been closed,
 	 * the file was deleted and the hashstream has been ended.
@@ -29,7 +29,7 @@ interface FileBlockWriterInterface {
 	 * nothing is done and the callback is called with `null` as error argument.
 	 * Otherwise node.js filesystem errors can be passed into the callback (e.g. file is not present)
 	 *
-	 * @method core.protocol.fileTransfer.share.FileBlockWriterInterface#deleteFile
+	 * @method core.fs.FileBlockWriterInterface#deleteFile
 	 *
 	 * @param {Function} callback Function that gets called when everything has been done.
 	 */
@@ -38,7 +38,7 @@ interface FileBlockWriterInterface {
 	/**
 	 * Returns the full path of the destination file being written.
 	 *
-	 * @method core.protocol.fileTransfer.share.FileBlockWriterInterface#getFilePath
+	 * @method core.fs.FileBlockWriterInterface#getFilePath
 	 *
 	 * @returns {string} The full path.
 	 */
@@ -48,7 +48,7 @@ interface FileBlockWriterInterface {
 	 * Opens a file descriptor to the destination path and prepares a writable hash stream. Calls back with an error
 	 * if the file descriptor could not be opened.
 	 *
-	 * @method core.protocol.fileTransfer.share.FileBlockWriterInterface#prepareToWrite
+	 * @method core.fs.FileBlockWriterInterface#prepareToWrite
 	 *
 	 * @param {Function} callback Function that gets called when everything has been prepared. Takes an error object as argument.
 	 */
@@ -61,7 +61,7 @@ interface FileBlockWriterInterface {
 	 * Finished is true, if the full count of written bytes equals the number of expected bytes of the file, plus if then
 	 * the calculated SHA-1 hash equals the expected hash.
 	 *
-	 * @method core.protocol.fileTransfer.share.FileBlockWriterInterface#writeBlock
+	 * @method core.fs.FileBlockWriterInterface#writeBlock
 	 *
 	 * @param {Buffer} byteBlock The bytes to write to the file
 	 * @param {Function} callback The callback function (see above)

@@ -1,12 +1,12 @@
-/// <reference path='../../../test.d.ts' />
+/// <reference path='../../test.d.ts' />
 require('should');
 
 var fs = require('fs');
-var testUtils = require('../../../utils/testUtils');
+var testUtils = require('../../utils/testUtils');
 
-var FileBlockWriter = require('../../../../src/core/protocol/fileTransfer/share/FileBlockWriter');
+var FileBlockWriter = require('../../../src/core/fs/FileBlockWriter');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> FileBlockWriter', function () {
+describe('CORE --> FS --> FileBlockWriter', function () {
     var filename = 'snowden_brighton_2.jpg';
     var sha1Hash = '4dad5e4374038a14465f0c42fc150a36674b4bd8';
     var filesize = 517880;

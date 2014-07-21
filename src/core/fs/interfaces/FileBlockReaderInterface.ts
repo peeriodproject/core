@@ -1,4 +1,4 @@
-/// <reference path='../../../../../../ts-definitions/node/node.d.ts' />
+/// <reference path='../../../../ts-definitions/node/node.d.ts' />
 
 /**
  * The FileBlockReader forms the opposite side of a file block writer - given a path, the reader reads byte blocks of
@@ -7,7 +7,7 @@
  * NOTE: The FileBlockReader does not abort itself, thus in order to close the file descriptor, `abort` MUST be called.
  *
  * @interface
- * @class core.protocol.fileTransfer.share.FileBlockReaderInterface
+ * @class core.fs.FileBlockReaderInterface
  */
 interface FileBlockReaderInterface {
 
@@ -17,7 +17,7 @@ interface FileBlockReaderInterface {
 	 *
 	 * NOTE: As opposed to the block writer, a block reader instance does not abort itself!
 	 *
-	 * @method core.protocol.fileTransfer.share.FileBlockReaderInterface#abort
+	 * @method core.fs.FileBlockReaderInterface#abort
 	 *
 	 * @param {Function} callback Method which gets called after the file descriptor has been closed, with an optional error as argument.
 	 */
@@ -26,7 +26,7 @@ interface FileBlockReaderInterface {
 	/**
 	 * Returns true if the file is open to read.
 	 *
-	 * @method core.protocol.fileTransfer.share.FileBlockReaderInterface#canBeRead
+	 * @method core.fs.FileBlockReaderInterface#canBeRead
 	 *
 	 * @returns {boolean}
 	 */
@@ -35,7 +35,7 @@ interface FileBlockReaderInterface {
 	/**
 	 * Opens the file.
 	 *
-	 * @method core.protocol.fileTransfer.share.FileBlockReaderInterface#prepareToRead
+	 * @method core.fs.FileBlockReaderInterface#prepareToRead
 	 *
 	 * @param {Function} callback Method which gets called after the file has been opened, with an error as argument if the file could
 	 * not be opened.
@@ -45,7 +45,7 @@ interface FileBlockReaderInterface {
 	/**
 	 * Reads a byte block of a given size from the file.
 	 *
-	 * @method core.protocol.fileTransfer.share.FileBlockReaderInterface#readBlock
+	 * @method core.fs.FileBlockReaderInterface#readBlock
 	 *
 	 * @param {number} fromPosition Position of first byte of the block to read.
 	 * @param {Function} callback Method which gets called after the block has been read, with an optional error as argument and the buffer

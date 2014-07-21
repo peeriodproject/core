@@ -3,8 +3,8 @@ var fs = require('fs');
 /**
 * FileBlockReaderInterface implementation.
 *
-* @class core.protocol.fileTransfer.share.FileBlockReader
-* @implements core.protocol.fileTransfer.share.FileBlockReaderInterface
+* @class core.fs.FileBlockReader
+* @implements core.fs.FileBlockReaderInterface
 *
 * @param {string} filePath Full path of the file to read
 * @param {number} blockSize Number of bytes to read in one block.
@@ -14,25 +14,25 @@ var FileBlockReader = (function () {
         /**
         * Stores the number of bytes in a block.
         *
-        * @member {number} core.protocol.fileTransfer.share.FileBlockReader~_blockSize
+        * @member {number} core.fs.FileBlockReader~_blockSize
         */
         this._blockSize = 0;
         /**
         * Indicates whether the file can be read or not.
         *
-        * @member {boolean} core.protocol.fileTransfer.share.FileBlockReader~_canBeRead
+        * @member {boolean} core.fs.FileBlockReader~_canBeRead
         */
         this._canBeRead = false;
         /**
         * Stores the file descriptor to the opened file to read.
         *
-        * @member {number} core.protocol.fileTransfer.share.FileBlockReader~_fileDescriptor
+        * @member {number} core.fs.FileBlockReader~_fileDescriptor
         */
         this._fileDescriptor = 0;
         /**
         * Stores the full path to the file to read
         *
-        * @member {string} core.protocol.fileTransfer.share.FileBlockReader~_filePath
+        * @member {string} core.fs.FileBlockReader~_filePath
         */
         this._filePath = null;
         this._blockSize = blockSize;
