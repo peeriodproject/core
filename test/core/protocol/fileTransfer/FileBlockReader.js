@@ -64,6 +64,8 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> FileBlockReader', function () 
             if (err)
                 throw err;
 
+            reader.canBeRead().should.be.true;
+
             reader.abort(function (err) {
                 (err === null).should.be.true;
 

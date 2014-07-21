@@ -24,6 +24,15 @@ interface FileBlockReaderInterface {
 	abort (callback:(err:Error) => {}):void;
 
 	/**
+	 * Returns true if the file is open to read.
+	 *
+	 * @method core.protocol.fileTransfer.share.FileBlockReaderInterface#canBeRead
+	 *
+	 * @returns {boolean}
+	 */
+	canBeRead ():boolean;
+
+	/**
 	 * Opens the file.
 	 *
 	 * @method core.protocol.fileTransfer.share.FileBlockReaderInterface#prepareToRead

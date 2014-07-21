@@ -52,6 +52,10 @@ var FileBlockReader = (function () {
         }
     };
 
+    FileBlockReader.prototype.canBeRead = function () {
+        return this._canBeRead;
+    };
+
     FileBlockReader.prototype.prepareToRead = function (callback) {
         var _this = this;
         fs.open(this._filePath, 'r', function (err, fd) {

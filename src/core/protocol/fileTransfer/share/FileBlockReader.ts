@@ -63,6 +63,10 @@ class FileBlockReader implements FileBlockReaderInterface {
 		}
 	}
 
+	public canBeRead ():boolean {
+		return this._canBeRead;
+	}
+
 	public prepareToRead (callback:(err:Error) => any):void {
 		fs.open(this._filePath, 'r', (err:Error, fd:number) => {
 			if (err) {
