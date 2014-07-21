@@ -6,6 +6,8 @@ require('should');
 var sinon = require('sinon');
 var testUtils = require('../../utils/testUtils');
 
+var FileBlockReader = require('../../../src/core/fs/FileBlockReader');
+var FileBlockReaderFactory = require('../../../src/core/fs/FileBlockReaderFactory');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 var PluginRunner = require('../../../src/core/plugin/PluginRunner');
 
@@ -22,6 +24,9 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
         pluginRunner.cleanup();
         done();
     };
+
+    var fileBlockReaderStub;
+    var fileBlockReaderFactoryStub;
 
     this.timeout(0);
 
@@ -45,12 +50,28 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
                 }
             }
         });
+        fileBlockReaderStub = testUtils.stubPublicApi(sandbox, FileBlockReader, {
+            abort: function () {
+                return process.nextTick(arguments[0].bind(null, null));
+            },
+            prepareToRead: function () {
+                return process.nextTick(arguments[0].bind(null, null));
+            }
+        });
+
+        fileBlockReaderFactoryStub = testUtils.stubPublicApi(sandbox, FileBlockReaderFactory, {
+            create: function () {
+                return fileBlockReaderStub;
+            }
+        });
     });
 
     afterEach(function () {
         sandbox.restore();
 
         configStub = null;
+        fileBlockReaderStub = null;
+        fileBlockReaderFactoryStub = null;
         sandbox = null;
     });
 
@@ -59,7 +80,7 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
     });
 
     it('should correctly instantiate without error', function (done) {
-        var pluginRunner = new PluginRunner(configStub, 'identifier', pluginFilePath);
+        var pluginRunner = new PluginRunner(configStub, 'identifier', pluginFilePath, fileBlockReaderFactoryStub);
         pluginRunner.should.be.an.instanceof(PluginRunner);
 
         setImmediate(function () {
@@ -92,7 +113,7 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
         it('should correctly return a "timed out" error', function (done) {
             this.timeout(0);
 
-            var pluginRunner = new PluginRunner(configStub, 'identifier', testUtils.getFixturePath('core/plugin/pluginRunner/timeoutPlugin.js'));
+            var pluginRunner = new PluginRunner(configStub, 'identifier', testUtils.getFixturePath('core/plugin/pluginRunner/timeoutPlugin.js'), fileBlockReaderFactoryStub);
 
             pluginRunner.onBeforeItemAdd(filePath, JSON.parse(statsJson), globals, function (err, output) {
                 // todo check message
@@ -104,7 +125,7 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
         });
 
         it('should correctly return the script error', function (done) {
-            var pluginRunner = new PluginRunner(configStub, 'identifier', testUtils.getFixturePath('core/plugin/pluginRunner/invalidPlugin.js'));
+            var pluginRunner = new PluginRunner(configStub, 'identifier', testUtils.getFixturePath('core/plugin/pluginRunner/invalidPlugin.js'), fileBlockReaderFactoryStub);
 
             pluginRunner.onBeforeItemAdd(filePath, JSON.parse(statsJson), globals, function (err, output) {
                 err.should.be.an.instanceof(Error);
@@ -116,7 +137,7 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
         });
 
         it('should correctly call the onNewItemWillBeAdded method', function (done) {
-            var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
+            var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath, fileBlockReaderFactoryStub);
 
             pluginRunner.onBeforeItemAdd(filePath, JSON.parse(statsJson), globals, function (err, output) {
                 (err === null).should.be.true;
@@ -131,7 +152,7 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
         });
 
         it('should correctly call the getMapping method', function (done) {
-            var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
+            var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath, fileBlockReaderFactoryStub);
 
             pluginRunner.getMapping(function (err, output) {
                 (err === null).should.be.true;
@@ -148,7 +169,7 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
         });
 
         it('should correctly call the getQuery method', function (done) {
-            var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
+            var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath, fileBlockReaderFactoryStub);
 
             pluginRunner.getQuery('foobario', function (err, output) {
                 output.should.containDeep({ term: { field: 'foobario' } });
@@ -158,7 +179,7 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
         });
 
         it('should correctly call the getResultFields method', function (done) {
-            var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
+            var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath, fileBlockReaderFactoryStub);
 
             pluginRunner.getResultFields(function (err, fields) {
                 (err === null).should.be.true;
@@ -174,7 +195,7 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
         });
 
         it('should correctly call the getSearchFields method', function (done) {
-            var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath);
+            var pluginRunner = new PluginRunner(configStub, 'identifier', pluginPath, fileBlockReaderFactoryStub);
 
             pluginRunner.getSearchFields(function (err, output) {
                 (err === null).should.be.true;

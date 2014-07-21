@@ -275,43 +275,44 @@ class PluginManager implements PluginManagerInterface {
 			var mergedPluginData = {};
 			var sendCallback:Function = function () {
 				// trigger callback
-				callback(mergedPluginData);
+				return callback(mergedPluginData);
 			};
 			var checkAndSendCallback:Function = function () {
-				if (counter == runnersLength) {
-					sendCallback();
+				if (counter === runnersLength) {
+					return sendCallback();
 				}
 			};
-			var runPlugins:Function = (tikaGlobals) => {
-				if (runnersLength) {
-					this._loadGlobals(itemPath, fileHash, (err:Error, globals:Object) => {
-						if (err) {
-							console.log(err);
-							return sendCallback();
-						}
-
-						globals = ObjectUtils.extend(globals, tikaGlobals);
-
-						for (var key in runners) {
-							// call the plugin!
-							runners[key].onBeforeItemAdd(itemPath, stats, globals, (err:Error, data:Object) => {
-								counter++;
-
-								if (err) {
-									console.log(err);
-								}
-								else if (data) {
-									mergedPluginData[key] = data;
-								}
-
-								checkAndSendCallback();
-							});
-						}
-					});
+			var runPlugins:Function = (tikaData) => {
+				if (!runnersLength) {
+					return sendCallback();
 				}
-				else {
-					sendCallback();
-				}
+
+				this._loadGlobals(itemPath, fileHash, (err:Error, globals:Object) => {
+					if (err) {
+						console.log(err);
+						return sendCallback();
+					}
+
+					for (var key in runners) {
+						// call the plugin!
+						runners[key].onBeforeItemAdd(itemPath, stats, globals, (err:Error, data:Object) => {
+							counter++;
+
+							if (err) {
+								console.error(err);
+							}
+							else if (data) {
+								if (useApacheTika.indexOf(key) !== -1) {
+									data = ObjectUtils.extend(data, tikaData);
+								}
+
+								mergedPluginData[key] = data;
+							}
+
+							return checkAndSendCallback();
+						});
+					}
+				});
 			};
 
 			// collect runners which depend on apache tika
@@ -325,20 +326,19 @@ class PluginManager implements PluginManagerInterface {
 
 			}
 
-			if (useApacheTika.length) {
-				this._loadApacheTikaGlobals(itemPath, (err:Error, tikaGlobals) => {
-					if (err) {
-						console.log('PluginManager.onBeforeItemAdd. MISSING CALLBACK');
-						console.error(err);
-					}
-					else {
-						runPlugins(tikaGlobals);
-					}
-				});
+			if (!useApacheTika.length) {
+				return runPlugins(null);
 			}
-			else {
-				runPlugins(null);
-			}
+
+			this._loadApacheTikaData(itemPath, (err:Error, tikaData) => {
+				if (err) {
+					console.log('PluginManager.onBeforeItemAdd. MISSING CALLBACK');
+					console.error(err);
+				}
+				else {
+					return runPlugins(tikaData);
+				}
+			});
 		});
 	}
 
@@ -352,19 +352,17 @@ class PluginManager implements PluginManagerInterface {
 
 		this._loadPluginState((err:Error, pluginState:any) => {
 			if (err) {
-				console.log(err);
-				internalCallback(err);
+				console.error(err);
+				return internalCallback(err);
 			}
-			else {
-				if (!this._eventEmitter) {
-					this._eventEmitter = new events.EventEmitter();
-				}
-
-				this._pluginState = pluginState;
-				this._isOpen = true;
-
-				internalCallback(null);
+			if (!this._eventEmitter) {
+				this._eventEmitter = new events.EventEmitter();
 			}
+
+			this._pluginState = pluginState;
+			this._isOpen = true;
+
+			return internalCallback(null);
 		});
 	}
 
@@ -387,33 +385,32 @@ class PluginManager implements PluginManagerInterface {
 			if (err) {
 				return internalCallback(err);
 			}
-			else {
-				// register plugin to mime type list
-				// todo create extensions list
-				var pluginLoader:PluginLoaderInterface = this._pluginLoaderFactory.create(this._config, pluginState.path);
-				var mimeTypes:Array<string> = pluginLoader.getFileMimeTypes();
 
-				if (mimeTypes.length) {
-					for (var i = 0, l = mimeTypes.length; i < l; i++) {
-						var mimeType:string = mimeTypes[i];
+			// register plugin to mime type list
+			// todo create extensions list
+			var pluginLoader:PluginLoaderInterface = this._pluginLoaderFactory.create(this._config, pluginState.path);
+			var mimeTypes:Array<string> = pluginLoader.getFileMimeTypes();
 
-						if (!this._mimeTypeMap[mimeType]) {
-							this._mimeTypeMap[mimeType] = [identifier];
-						}
-						else {
-							this._mimeTypeMap[mimeType].push(identifier);
-						}
+			if (mimeTypes.length) {
+				for (var i = 0, l = mimeTypes.length; i < l; i++) {
+					var mimeType:string = mimeTypes[i];
+
+					if (!this._mimeTypeMap[mimeType]) {
+						this._mimeTypeMap[mimeType] = [identifier];
+					}
+					else {
+						this._mimeTypeMap[mimeType].push(identifier);
 					}
 				}
-
-				this._pluginLoaders[identifier] = pluginLoader;
-				this._pluginRunners[identifier] = this._pluginRunnerFactory.create(this._config, pluginState.name, pluginLoader.getMain());
-
-				logger.debug('plugin added', { identifier: identifier });
-				this._eventEmitter.emit('pluginAdded', identifier);
-
-				internalCallback(null);
 			}
+
+			this._pluginLoaders[identifier] = pluginLoader;
+			this._pluginRunners[identifier] = this._pluginRunnerFactory.create(this._config, pluginState.name, pluginLoader.getMain());
+
+			logger.debug('plugin added', { identifier: identifier });
+			this._eventEmitter.emit('pluginAdded', identifier);
+
+			return internalCallback(null);
 		});
 	}
 
@@ -460,10 +457,10 @@ class PluginManager implements PluginManagerInterface {
 
 			// no file or no plugins
 			if (err && err.name === 'ENOENT' || !hasPlugins) {
-				callback(null, null);
+				return callback(null, null);
 			}
 			else if (hasPlugins) {
-				callback(null, data['plugins']);
+				return callback(null, data['plugins']);
 			}
 			else {
 				// check for syntax errors
@@ -510,37 +507,37 @@ class PluginManager implements PluginManagerInterface {
 	/**
 	 * Loads additional data for the specified path that are required for a plugin that uses `Apache Tika`.
 	 *
-	 * @method core.plugin.PluginManagerInterface~_loadApacheTikaGlobals
+	 * @method core.plugin.PluginManagerInterface~_loadApacheTikaData
 	 *
 	 * @param {string} itemPath
 	 * @param {Function} callback
 	 */
-	private _loadApacheTikaGlobals (itemPath:string, callback:Function):void {
-		var tikaGlobals = {
+	private _loadApacheTikaData (itemPath:string, callback:Function):void {
+		var tikaData:any = {
 		};
 
 		fs.stat(itemPath, function (err:Error, stats:fs.Stats) {
 			if (err) {
-				return callback(err, tikaGlobals);
+				console.error(err);
+
+				return callback(err, tikaData);
 			}
-			else if (stats.isFile()) {
+
+			if (stats.isFile()) {
 				fs.readFile(itemPath, function (err:Error, data:Buffer) {
 					if (err) {
-						return callback(err, null);
+						return callback(err, tikaData);
 					}
-					else {
-						logger.log('plugin', 'loading file content', {
-							path: itemPath,
-							content: data.toString()
-						});
 
-						tikaGlobals['fileBuffer'] = data.toString('base64');
-						return callback(null, tikaGlobals);
-					}
-				})
+					//tikaData['fileBuffer'] = 'foobar';
+					tikaData.fileBuffer = data.toString('base64');
+
+					return callback(null, tikaData);
+				});
 			}
+
+			// todo add possible folder globals handling here
 		});
-		//callback(null, tikaGlobals);
 	}
 
 	/**
@@ -558,7 +555,7 @@ class PluginManager implements PluginManagerInterface {
 			fileHash  : fileHash
 		};
 
-		callback(null, globals);
+		return callback(null, globals);
 	}
 
 }
