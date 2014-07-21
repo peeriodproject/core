@@ -380,14 +380,13 @@ var IndexManager = (function () {
         this._getItemStatsFromSearchManager(pathToIndex, function (searchManagerHash, searchManagerStats) {
             // item exists
             if (searchManagerHash && searchManagerStats) {
-                ////console.log('validating item');
                 _this._validateItem(pathToIndex, searchManagerHash, searchManagerStats, function (err, isValid, fileHash, fileStats) {
                     if (isValid) {
                         // todo check against the amount of plugins which indexed this file. Maybe some plugins are new
-                        callback(new Error('IndexManager~_processPendingPathToIndex: The item at path "' + pathToIndex + '" is already indexed.'));
-                    } else {
-                        _this._addItem(pathToIndex, stats, fileHash, callback);
+                        return callback(new Error('IndexManager~_processPendingPathToIndex: The item at path "' + pathToIndex + '" is already indexed.'));
                     }
+
+                    _this._addItem(pathToIndex, stats, fileHash, callback);
                 });
             } else {
                 // adding new item

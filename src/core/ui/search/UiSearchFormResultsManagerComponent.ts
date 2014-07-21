@@ -13,6 +13,7 @@ import UiComponent = require('../UiComponent');
 class UiSearchFormResultsManagerComponent extends UiComponent {
 
 	private _currentResults:any = {};
+
 	/**
 	 * The internally used.SearchFormResultsManagerInterface instance to start new queries
 	 *
