@@ -215,10 +215,10 @@ var Download = (function (_super) {
         // prepare the file block writer
         this._fileBlockWriter.prepareToWrite(function (err) {
             if (err) {
-                _this._kill(false, true, false, 'File cannot be written.');
+                _this._kill(false, false, 'File cannot be written.');
             } else {
                 if (_this._manuallyAborted) {
-                    _this._kill(true, true, false, 'Manually aborted.');
+                    _this._kill(true, false, 'Manually aborted.');
                 } else {
                     _this._sendShareRequest();
                 }
@@ -292,7 +292,7 @@ var Download = (function (_super) {
                         malformedMessageErr = 'Malformed block message.';
                     } else {
                         if (this._manuallyAborted) {
-                            this._kill(true, true, true, 'Manually aborted.', blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
+                            this._kill(true, true, 'Manually aborted.', blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
                         } else {
                             // everything okay so far. pass to the file writer.
                             this._fileBlockWriter.writeBlock(blockMessage.getDataBlock(), function (err, fullCountOfWrittenBytes, isFinished) {
@@ -306,7 +306,7 @@ var Download = (function (_super) {
                                     errorMessage = _this._manuallyAborted ? 'Manually aborted.' : errorMessage;
 
                                     if (errorMessage) {
-                                        _this._kill(true, true, true, errorMessage, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
+                                        _this._kill(true, true, errorMessage, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
                                     } else {
                                         _this.emit('writtenBytes', fullCountOfWrittenBytes, _this._expectedSize);
                                         _this._sendBlockRequest(fullCountOfWrittenBytes, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
@@ -322,7 +322,7 @@ var Download = (function (_super) {
         }
 
         if (malformedMessageErr) {
-            this._kill(true, true, false, malformedMessageErr);
+            this._kill(true, false, malformedMessageErr);
 
             if (teardownOnError) {
                 this._shareMessenger.teardownLatestCircuit();
@@ -396,7 +396,7 @@ var Download = (function (_super) {
                         } else {
                             // everything is well, now only check if shit has been aborted
                             if (this._manuallyAborted) {
-                                this._kill(true, true, true, 'Manually aborted.', nextTransferIdentifier, nodesToFeedBlock);
+                                this._kill(true, true, 'Manually aborted.', nextTransferIdentifier, nodesToFeedBlock);
                             } else {
                                 // fine until here, begin requesting the blocks
                                 this.emit('startingTransfer');
@@ -409,7 +409,7 @@ var Download = (function (_super) {
         }
 
         if (malformedMessageErr) {
-            this._kill(true, true, false, malformedMessageErr);
+            this._kill(true, false, malformedMessageErr);
             this._shareMessenger.teardownLatestCircuit();
         }
     };
@@ -427,7 +427,7 @@ var Download = (function (_super) {
     * @param {string} lastMessageIdentifier Optional. The transfer identifier for a last SHARE_ABORT message. This must be specified if `sendLastAbortMessage` is true.
     * @param {Buffer} lastMessageNodesToFeedBlock Optional. The nodes to feed block in its byte buffer representation. This must be specified if `sendLastAbortMessage` is true.
     */
-    Download.prototype._kill = function (abortFileWriter, abortBlockMaintainer, sendLastAbortMessage, message, lastMessageIdentifier, lastMessageNodesToFeedBlock) {
+    Download.prototype._kill = function (abortFileWriter, sendLastAbortMessage, message, lastMessageIdentifier, lastMessageNodesToFeedBlock) {
         var _this = this;
         if (!this._killed) {
             this._killed = true;
@@ -435,9 +435,9 @@ var Download = (function (_super) {
             if (abortFileWriter) {
                 this._fileBlockWriter.abort(null);
             }
-            if (abortBlockMaintainer) {
-                this._feedingNodesBlockMaintainer.cleanup();
-            }
+
+            this._feedingNodesBlockMaintainer.cleanup();
+
             if (sendLastAbortMessage) {
                 var lastMessageClearText = this._writableEncryptedShareFactory.constructMessage('SHARE_ABORT', this._writableShareAbortFactory.constructMessage(this._expectedSize, this._filename, this._expectedHash));
 
@@ -518,7 +518,7 @@ var Download = (function (_super) {
         if (typeof isLast === "undefined") { isLast = false; }
         this._prepareToImmediateShare(function (err) {
             if (err && !isLast) {
-                _this._kill(true, true, true, err.message, transferIdentToUse, nodesToFeedBlock);
+                _this._kill(true, true, err.message, transferIdentToUse, nodesToFeedBlock);
             } else {
                 var nextTransferIdentifier = crypto.pseudoRandomBytes(16).toString('hex');
                 var blockRequestClear = _this._writableEncryptedShareFactory.constructMessage('BLOCK_REQUEST', _this._writableBlockRequestFactory.constructMessage(_this._feedingNodesBlockMaintainer.getBlock(), bytePosition, nextTransferIdentifier));
@@ -531,17 +531,17 @@ var Download = (function (_super) {
                             // if this is the last message, i.e. last acknowledge message, ignore any abort, as we are done anyway
                             _this._shareMessenger.pipeLastMessage(sendableBuffer, nodesToFeedBlock);
                         }
-                        _this._kill(false, true, false, 'Completed.');
+                        _this._kill(false, false, 'Completed.');
                     } else {
                         var errorMessage = err ? 'Encryption error.' : null;
                         errorMessage = _this._manuallyAborted ? 'Manually aborted.' : errorMessage;
 
                         if (errorMessage) {
-                            _this._kill(true, true, true, errorMessage, transferIdentToUse, nodesToFeedBlock);
+                            _this._kill(true, true, errorMessage, transferIdentToUse, nodesToFeedBlock);
                         } else {
                             _this._shareMessenger.pipeMessageAndWaitForResponse(sendableBuffer, nodesToFeedBlock, 'ENCRYPTED_SHARE', nextTransferIdentifier, function (err, responsePayload) {
                                 if (err) {
-                                    _this._kill(true, true, false, err.message);
+                                    _this._kill(true, false, err.message);
                                 } else {
                                     _this._handleBlockMessage(responsePayload, bytePosition);
                                 }
@@ -571,13 +571,13 @@ var Download = (function (_super) {
 
         this._prepareToImmediateShare(function (err) {
             if (err) {
-                _this._kill(true, true, false, err.message);
+                _this._kill(true, false, err.message);
             } else {
                 var payload = _this._transferMessageCenter.wrapTransferMessage('SHARE_REQUEST', transferIdentifier, _this._writableShareRequestFactory.constructMessage(_this._feedingNodesBlockMaintainer.getBlock(), _this._expectedHash, dhPublicKey));
 
                 _this._shareMessenger.pipeMessageAndWaitForResponse(payload, _this._initialFeedingNodesBlockBufferOfUploader, 'SHARE_RATIFY', transferIdentifier, function (err, responsePayload) {
                     if (err) {
-                        _this._kill(true, true, false, err.message);
+                        _this._kill(true, false, err.message);
                     } else {
                         _this._handleRatifyMessage(responsePayload, new Buffer(transferIdentifier, 'hex'));
                     }

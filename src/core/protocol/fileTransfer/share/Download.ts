@@ -256,11 +256,11 @@ class Download extends events.EventEmitter implements DownloadInterface {
 		// prepare the file block writer
 		this._fileBlockWriter.prepareToWrite((err:Error) => {
 			if (err) {
-				this._kill(false, true, false, 'File cannot be written.');
+				this._kill(false, false, 'File cannot be written.');
 			}
 			else {
 				if (this._manuallyAborted) {
-					this._kill(true, true, false, 'Manually aborted.');
+					this._kill(true, false, 'Manually aborted.');
 				}
 				else {
 					this._sendShareRequest();
@@ -340,7 +340,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 					}
 					else {
 						if (this._manuallyAborted) {
-							this._kill(true, true, true, 'Manually aborted.', blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
+							this._kill(true, true, 'Manually aborted.', blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
 						}
 						else {
 							// everything okay so far. pass to the file writer.
@@ -356,7 +356,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 									errorMessage = this._manuallyAborted ? 'Manually aborted.' : errorMessage;
 
 									if (errorMessage) {
-										this._kill(true, true, true, errorMessage, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
+										this._kill(true, true, errorMessage, blockMessage.getNextTransferIdentifier(), blockMessage.getFeedingNodesBlock());
 									}
 									else {
 										this.emit('writtenBytes', fullCountOfWrittenBytes, this._expectedSize);
@@ -374,7 +374,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 		}
 
 		if (malformedMessageErr) {
-			this._kill(true, true, false, malformedMessageErr);
+			this._kill(true, false, malformedMessageErr);
 
 			if (teardownOnError) {
 				this._shareMessenger.teardownLatestCircuit();
@@ -452,7 +452,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 						else {
 							// everything is well, now only check if shit has been aborted
 							if (this._manuallyAborted) {
-								this._kill(true, true, true, 'Manually aborted.', nextTransferIdentifier, nodesToFeedBlock);
+								this._kill(true, true, 'Manually aborted.', nextTransferIdentifier, nodesToFeedBlock);
 							}
 							else {
 								// fine until here, begin requesting the blocks
@@ -466,7 +466,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 		}
 
 		if (malformedMessageErr) {
-			this._kill(true, true, false, malformedMessageErr);
+			this._kill(true, false, malformedMessageErr);
 			this._shareMessenger.teardownLatestCircuit();
 		}
 	}
@@ -484,16 +484,16 @@ class Download extends events.EventEmitter implements DownloadInterface {
 	 * @param {string} lastMessageIdentifier Optional. The transfer identifier for a last SHARE_ABORT message. This must be specified if `sendLastAbortMessage` is true.
 	 * @param {Buffer} lastMessageNodesToFeedBlock Optional. The nodes to feed block in its byte buffer representation. This must be specified if `sendLastAbortMessage` is true.
 	 */
-	private _kill (abortFileWriter:boolean, abortBlockMaintainer:boolean, sendLastAbortMessage:boolean, message:string, lastMessageIdentifier?:string, lastMessageNodesToFeedBlock?:Buffer):void {
+	private _kill (abortFileWriter:boolean, sendLastAbortMessage:boolean, message:string, lastMessageIdentifier?:string, lastMessageNodesToFeedBlock?:Buffer):void {
 		if (!this._killed) {
 			this._killed = true;
 
 			if (abortFileWriter) {
 				this._fileBlockWriter.abort(null);
 			}
-			if (abortBlockMaintainer) {
-				this._feedingNodesBlockMaintainer.cleanup();
-			}
+
+			this._feedingNodesBlockMaintainer.cleanup();
+
 			if (sendLastAbortMessage) {
 				var lastMessageClearText:Buffer = this._writableEncryptedShareFactory.constructMessage('SHARE_ABORT', this._writableShareAbortFactory.constructMessage(this._expectedSize, this._filename, this._expectedHash));
 
@@ -572,7 +572,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 	private _sendBlockRequest (bytePosition:number, transferIdentToUse:string, nodesToFeedBlock:Buffer, isLast:boolean = false):void {
 		this._prepareToImmediateShare((err:Error) => {
 			if (err && !isLast) {
-				this._kill(true, true, true, err.message, transferIdentToUse, nodesToFeedBlock);
+				this._kill(true, true, err.message, transferIdentToUse, nodesToFeedBlock);
 			}
 			else {
 				var nextTransferIdentifier:string = crypto.pseudoRandomBytes(16).toString('hex');
@@ -586,19 +586,19 @@ class Download extends events.EventEmitter implements DownloadInterface {
 							// if this is the last message, i.e. last acknowledge message, ignore any abort, as we are done anyway
 							this._shareMessenger.pipeLastMessage(sendableBuffer, nodesToFeedBlock);
 						}
-						this._kill(false, true, false, 'Completed.');
+						this._kill(false, false, 'Completed.');
 					}
 					else {
 						var errorMessage:string = err ? 'Encryption error.' : null;
 						errorMessage = this._manuallyAborted ? 'Manually aborted.' : errorMessage;
 
 						if (errorMessage) {
-							this._kill(true, true, true, errorMessage, transferIdentToUse, nodesToFeedBlock);
+							this._kill(true, true, errorMessage, transferIdentToUse, nodesToFeedBlock);
 						}
 						else {
 							this._shareMessenger.pipeMessageAndWaitForResponse(sendableBuffer, nodesToFeedBlock, 'ENCRYPTED_SHARE', nextTransferIdentifier, (err:Error, responsePayload:Buffer) => {
 								if (err) {
-									this._kill(true, true, false, err.message);
+									this._kill(true, false, err.message);
 								}
 								else {
 									this._handleBlockMessage(responsePayload, bytePosition);
@@ -630,14 +630,14 @@ class Download extends events.EventEmitter implements DownloadInterface {
 
 			if (err) {
 
-				this._kill(true, true, false, err.message);
+				this._kill(true, false, err.message);
 			}
 			else {
 				var payload:Buffer = this._transferMessageCenter.wrapTransferMessage('SHARE_REQUEST', transferIdentifier, this._writableShareRequestFactory.constructMessage(this._feedingNodesBlockMaintainer.getBlock(), this._expectedHash, dhPublicKey));
 
 				this._shareMessenger.pipeMessageAndWaitForResponse(payload, this._initialFeedingNodesBlockBufferOfUploader, 'SHARE_RATIFY', transferIdentifier, (err:Error, responsePayload:Buffer) => {
 					if (err) {
-						this._kill(true, true, false, err.message);
+						this._kill(true, false, err.message);
 					}
 					else {
 						this._handleRatifyMessage(responsePayload, new Buffer(transferIdentifier, 'hex'));
