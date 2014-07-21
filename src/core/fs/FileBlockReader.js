@@ -43,11 +43,15 @@ var FileBlockReader = (function () {
             this._canBeRead = false;
 
             fs.close(this._fileDescriptor, function () {
-                callback(null);
+                if (callback) {
+                    callback(null);
+                }
             });
         } else {
             process.nextTick(function () {
-                callback(new Error('FileBlockReader: Cannot abort closed file block reader'));
+                if (callback) {
+                    callback(new Error('FileBlockReader: Cannot abort closed file block reader'));
+                }
             });
         }
     };

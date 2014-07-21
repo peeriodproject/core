@@ -185,6 +185,7 @@ class Upload extends events.EventEmitter implements UploadInterface {
 						}
 					}
 					else if (shareMessage.getMessageType() === 'BLOCK_REQUEST') {
+
 						var blockRequest:ReadableBlockRequestMessageInterface = this._readableBlockRequestFactory.create(shareMessage.getPayload());
 
 						if (!blockRequest || blockRequest.getFirstBytePositionOfBlock() > this._filesize) {
@@ -241,6 +242,7 @@ class Upload extends events.EventEmitter implements UploadInterface {
 	private _readBlockAndSendByRequest (blockRequest:ReadableBlockRequestMessageInterface):void {
 		var firstByteOfBlock:number = blockRequest.getFirstBytePositionOfBlock();
 
+
 		this._fileReader.readBlock(firstByteOfBlock, (err:Error, readBytes:Buffer) => {
 			var errorMessage:string = err ? err.message : null;
 			errorMessage = this._manuallyAborted ? 'Manually aborted.' : errorMessage;
@@ -250,6 +252,7 @@ class Upload extends events.EventEmitter implements UploadInterface {
 			}
 			else {
 				this._prepareToImmediateShare((err:Error) => {
+
 					if (err) {
 						this._kill(true, err.message, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
 					}
@@ -257,7 +260,7 @@ class Upload extends events.EventEmitter implements UploadInterface {
 						this.emit('uploadingBytes', readBytes.length);
 
 						var nextTransferIdentifier:string = crypto.pseudoRandomBytes(16).toString('hex');
-						var blockClear:Buffer = this._writableBlockFactory.constructMessage(this._feedingNodesBlockMaintainer.getBlock(), firstByteOfBlock, nextTransferIdentifier, readBytes);
+						var blockClear:Buffer = this._writableEncryptedShareFactory.constructMessage('BLOCK', this._writableBlockFactory.constructMessage(this._feedingNodesBlockMaintainer.getBlock(), firstByteOfBlock, nextTransferIdentifier, readBytes));
 
 						this._encrypter.encryptMessage(this._outgoingKey, true, blockClear, (err:Error, encryptedBuffer:Buffer) => {
 							var errorMessage:string = err ? 'Encryption error.' : null;

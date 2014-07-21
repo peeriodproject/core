@@ -218,7 +218,7 @@ var Upload = (function (_super) {
                         _this.emit('uploadingBytes', readBytes.length);
 
                         var nextTransferIdentifier = crypto.pseudoRandomBytes(16).toString('hex');
-                        var blockClear = _this._writableBlockFactory.constructMessage(_this._feedingNodesBlockMaintainer.getBlock(), firstByteOfBlock, nextTransferIdentifier, readBytes);
+                        var blockClear = _this._writableEncryptedShareFactory.constructMessage('BLOCK', _this._writableBlockFactory.constructMessage(_this._feedingNodesBlockMaintainer.getBlock(), firstByteOfBlock, nextTransferIdentifier, readBytes));
 
                         _this._encrypter.encryptMessage(_this._outgoingKey, true, blockClear, function (err, encryptedBuffer) {
                             var errorMessage = err ? 'Encryption error.' : null;
