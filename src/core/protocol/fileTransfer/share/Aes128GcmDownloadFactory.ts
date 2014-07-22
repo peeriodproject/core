@@ -123,7 +123,7 @@ class Aes128GcmDownloadFactory implements DownloadFactoryInterface {
 			return null;
 		}
 
-		return new Download(filename, expectedSize, expectedHash, initialBlock, this._feedingNodesBlockMaintainerFactory.create(), this._fileBlockWriterFactory, this._shareMessengerFactory.createMessenger(), this._transferMessageCenter, this._writableShareRequestMessageFactory, this._writableEncryptedShareMessageFactory, this._readableEncryptedShareMessageFactory, this._readableShareAbortMessageFactory, this._writableShareAbortMessageFactory, this._readableBlockMessageFactory, this._readableShareRatifyMessageFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory(), this._writableBlockRequestMessageFactory);
+		return new Download(filename, expectedSize, expectedHash, initialBlock, this._feedingNodesBlockMaintainerFactory.create(), this._fileBlockWriterFactory.createWriter(filename, expectedSize, expectedHash, true), this._shareMessengerFactory.createMessenger(), this._transferMessageCenter, this._writableShareRequestMessageFactory, this._writableEncryptedShareMessageFactory, this._readableEncryptedShareMessageFactory, this._readableShareAbortMessageFactory, this._writableShareAbortMessageFactory, this._readableBlockMessageFactory, this._readableShareRatifyMessageFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory(), this._writableBlockRequestMessageFactory);
 	}
 
 }

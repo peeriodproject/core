@@ -21,7 +21,7 @@ var Padding = require('../../../crypto/Padding');
 * @param {string} expectedHash Hexadecimal string representation of the SHA-1 hash of the file to request
 * @param {Buffer} initialFeedingNodesBlockBufferOfUpload The feeding nodes block that came with the result of a query, indicating how the uploader can be reached.
 * @param {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface} feedingNodesBlockMaintainer Fresh feeding nodes block maintainer instance.
-* @param {core.fs.FileBlockWriterFactoryInterface} fileBlockWriterFactory Factory for creating file block writers.
+* @param {core.fs.FileBlockWriterInterface} fileBlockWriter Block Writer.
 * @param {core.protocol.fileTransfer.share.ShareMessengerInterface} shareMessenger Fresh share messenger instance.
 * @param {core.protocol.fileTransfer.TransferMessageCenterInterface} transferMessageCenter Working transfer message center instance.
 * @param {core.protocol.fileTransfer.share.WritableShareRequestMessageFactoryInterface} writableShareRequestFactory
@@ -37,7 +37,7 @@ var Padding = require('../../../crypto/Padding');
 */
 var Download = (function (_super) {
     __extends(Download, _super);
-    function Download(filename, expectedSize, expectedHash, initialFeedingNodesBlockBufferOfUploader, feedingNodesBlockMaintainer, fileBlockWriterFactory, shareMessenger, transferMessageCenter, writableShareRequestFactory, writableEncryptedShareFactory, readableEncryptedShareFactory, readableShareAbortFactory, writableShareAbortFactory, readableBlockFactory, readableShareRatifyFactory, decrypter, encrypter, writableBlockRequestFactory) {
+    function Download(filename, expectedSize, expectedHash, initialFeedingNodesBlockBufferOfUploader, feedingNodesBlockMaintainer, fileBlockWriter, shareMessenger, transferMessageCenter, writableShareRequestFactory, writableEncryptedShareFactory, readableEncryptedShareFactory, readableShareAbortFactory, writableShareAbortFactory, readableBlockFactory, readableShareRatifyFactory, decrypter, encrypter, writableBlockRequestFactory) {
         _super.call(this);
         /**
         * Provided in constructor. See above.
@@ -198,7 +198,7 @@ var Download = (function (_super) {
         this._readableShareRatifyFactory = readableShareRatifyFactory;
         this._decrypter = decrypter;
         this._encrypter = encrypter;
-        this._fileBlockWriter = fileBlockWriterFactory.createWriter(this._filename, this._expectedSize, this._expectedHash, true);
+        this._fileBlockWriter = fileBlockWriter;
     }
     /**
     * BEGIN TESTING PURPOSES
