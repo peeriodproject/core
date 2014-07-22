@@ -26,7 +26,7 @@ import FileBlockWriterFactory = require('../../../../src/core/fs/FileBlockWriter
 import FileBlockReaderFactory = require('../../../../src/core/fs/FileBlockReaderFactory');
 import ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> Upload (integration with Download) @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> Upload (integration with Download)', function () {
 
 	var sandbox:SinonSandbox = null;
 	var writableFileTransferMessageFactory = new WritableFileTransferMessageFactory();
@@ -452,7 +452,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Upload (integration with Downl
 			theUpload.kickOff();
 
 			theUpload.once('killed', function (reason) {
-				reason.indexOf('ENOENT').should.be.above(-1);
+				reason.should.equal('File cannot be read.');
 
 				theDownload.once('killed', function (reason) {
 					reason.should.equal('Uploader aborted transfer.');
@@ -495,7 +495,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Upload (integration with Downl
 			theUpload.kickOff();
 
 			theUpload.once('killed', function (reason) {
-				reason.indexOf('EBADF').should.be.above(-1);
+				reason.should.equal('Block cannot be read.');
 
 				theDownload.once('killed', function (reason) {
 					reason.should.equal('Uploader aborted transfer.');

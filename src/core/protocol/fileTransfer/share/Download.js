@@ -253,7 +253,7 @@ var Download = (function (_super) {
     * is present, the download process is killed and a last SHARE_ABORT message is sent to the other side.
     * Otherwise the complete amount of written bytes is emitted, before issuing a new BLOCK_REQUEST message.
     *
-    * On any problems decrypting or deformatting the message, or when a prohibited message type is used,
+    * On any problems decrypting or deformatting the message, or if a prohibited message type is used,
     * the download process is killed and the last circuit of the message torn down.
     *
     * @method core.protocol.fileTransfer.share.Download~_handleBlockMessage
@@ -422,7 +422,6 @@ var Download = (function (_super) {
     * @method core.protocol.fileTransfer.share.Download~_kill
     *
     * @param {boolean} abortFileWriter If true, cleans up the file writer and deletes the written file.
-    * @param {boolean} abortBlockMaintainer If true, cleans up the feeding nodes block maintainer.
     * @param {boolean} sendLastAbortMessage If true, a last SHARE_ABORT message is sent to the uploader. This can only be done if symmetric keys have been negotiated.
     * @param {string} message The reason for the killing. See {@link core.protocol.fileTransfer.share.DownloadInterface} for detailed information on the different reason types.
     * @param {string} lastMessageIdentifier Optional. The transfer identifier for a last SHARE_ABORT message. This must be specified if `sendLastAbortMessage` is true.
@@ -465,7 +464,7 @@ var Download = (function (_super) {
 
     /**
     * This method checks if the client has at least one circuit to write a feeding request through. If yes, the callback is
-    * IMMEDIATELY fired (not async!!). If no, a listener is set to wait for at least one circuit, before firing the callback.
+    * IMMEDIATELY fired (not async!!). If not, a listener is set to wait for at least one circuit, before firing the callback.
     * If it must be waited and in the meantime the download process has been manually aborted, the callback is fired with
     * an error as argument, indicating to kill the download process.
     *
