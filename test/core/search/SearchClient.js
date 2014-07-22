@@ -416,7 +416,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
         });
     });
 
-    it('should correctly return an incoming result by hash and by id @joern', function (done) {
+    it('should correctly return an incoming result by hash and by id', function (done) {
         var randomQueryId = 'searchQueryId' + Math.round(Math.random() * 100000000);
         var queryBody = {
             query: {
