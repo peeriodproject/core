@@ -14,7 +14,7 @@ import UploadManager = require('../../../../src/core/protocol/fileTransfer/share
 import ReadableShareRequestMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/ReadableShareRequestMessageFactory');
 import ReadableShareRequestMessage = require('../../../../src/core/protocol/fileTransfer/share/messages/ReadableShareRequestMessage');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> UploadManager @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> UploadManager', function () {
 
 	var sandbox:SinonSandbox = null;
 

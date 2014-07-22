@@ -13,7 +13,7 @@ var UploadManager = require('../../../../src/core/protocol/fileTransfer/share/Up
 var ReadableShareRequestMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/ReadableShareRequestMessageFactory');
 var ReadableShareRequestMessage = require('../../../../src/core/protocol/fileTransfer/share/messages/ReadableShareRequestMessage');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> UploadManager @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> UploadManager', function () {
     var sandbox = null;
 
     var configStub = null;
