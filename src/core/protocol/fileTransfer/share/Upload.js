@@ -100,6 +100,9 @@ var Upload = (function (_super) {
             this.removeAllListeners('internalAbort');
             this.removeAllListeners('abort');
             this.removeAllListeners('ratifyingRequest');
+            this.removeAllListeners('uploadingBytes');
+            this.removeAllListeners('completed');
+            this.removeAllListeners('startingUpload');
 
             this.emit('killed', message);
 
@@ -172,7 +175,7 @@ var Upload = (function (_super) {
                                 if (!this._fdOpen) {
                                     this._fileReader.prepareToRead(function (err) {
                                         if (err) {
-                                            _this._kill(true, err.message, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+                                            _this._kill(true, 'File cannot be read.', blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
                                         } else {
                                             _this.emit('startingUpload');
                                             _this._fdOpen = true;
@@ -209,7 +212,7 @@ var Upload = (function (_super) {
             errorMessage = _this._manuallyAborted ? 'Manually aborted.' : errorMessage;
 
             if (errorMessage) {
-                _this._kill(true, errorMessage, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+                _this._kill(true, 'Block cannot be read.', blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
             } else {
                 _this._prepareToImmediateShare(function (err) {
                     if (err) {

@@ -14,7 +14,6 @@ var Aes128GcmReadableDecryptedMessageFactory = require('../../hydra/messages/Aes
 var Aes128GcmUploadFactory = (function () {
     function Aes128GcmUploadFactory(transferConfig, feedingNodesBlockMaintainerFactory, shareMessengerFactory, fileBlockReaderFactory, transferMessageCenter) {
         this._blockSize = 0;
-        this._circuitManager = null;
         this._shareMessengerFactory = null;
         this._fileBlockReaderFactory = null;
         this._transferMessageCenter = null;

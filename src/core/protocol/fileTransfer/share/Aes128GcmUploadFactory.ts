@@ -26,7 +26,6 @@ class Aes128GcmUploadFactory implements UploadFactoryInterface {
 
 	private _blockSize:number = 0;
 
-	private _circuitManager:CircuitManagerInterface = null;
 	private _shareMessengerFactory:ShareMessengerFactoryInterface = null;
 	private _fileBlockReaderFactory:FileBlockReaderFactoryInterface = null;
 	private _transferMessageCenter:TransferMessageCenterInterface = null;

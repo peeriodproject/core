@@ -125,6 +125,9 @@ class Upload extends events.EventEmitter implements UploadInterface {
 			this.removeAllListeners('internalAbort');
 			this.removeAllListeners('abort');
 			this.removeAllListeners('ratifyingRequest');
+			this.removeAllListeners('uploadingBytes');
+			this.removeAllListeners('completed');
+			this.removeAllListeners('startingUpload');
 
 			this.emit('killed', message);
 
@@ -207,7 +210,7 @@ class Upload extends events.EventEmitter implements UploadInterface {
 								if (!this._fdOpen) {
 									this._fileReader.prepareToRead((err:Error) => {
 										if (err) {
-											this._kill(true, err.message, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+											this._kill(true, 'File cannot be read.', blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
 										}
 										else {
 											this.emit('startingUpload');
@@ -248,7 +251,7 @@ class Upload extends events.EventEmitter implements UploadInterface {
 			errorMessage = this._manuallyAborted ? 'Manually aborted.' : errorMessage;
 
 			if (errorMessage) {
-				this._kill(true, errorMessage, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
+				this._kill(true, 'Block cannot be read.', blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
 			}
 			else {
 				this._prepareToImmediateShare((err:Error) => {
