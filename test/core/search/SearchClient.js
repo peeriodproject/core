@@ -416,6 +416,63 @@ describe('CORE --> SEARCH --> SearchClient', function () {
         });
     });
 
+    it('should correctly return an incoming result by hash and by id @joern', function (done) {
+        var randomQueryId = 'searchQueryId' + Math.round(Math.random() * 100000000);
+        var queryBody = {
+            query: {
+                match: {
+                    message: 'foobar'
+                }
+            }
+        };
+        var responseBody = {
+            _type: "jj.core.documentanalyser",
+            _itemId: "1234567890abc",
+            itemName: "fileName.txt",
+            itemStats: {
+                stats: true
+            },
+            itemHash: "1234567890abc"
+        };
+
+        var item = {
+            _index: "mainindex",
+            _score: 1,
+            _source: {
+                _type: "jj.core.documentanalyser",
+                _itemId: "1234567890abc",
+                itemName: "fileName.txt",
+                itemStats: {
+                    stats: true
+                },
+                itemHash: "1234567890abc",
+                _meta: {
+                    metadata: true
+                }
+            }
+        };
+
+        searchClient.createOutgoingQueryIndex('mainindex', function (err) {
+            searchClient.createOutgoingQuery('mainindex', randomQueryId, queryBody, function (err) {
+                searchClient.addIncomingResponse('mainindex', randomQueryId, responseBody, { metadata: true }, function () {
+                    searchClient.getIncomingResponseByHash('mainindex', '_all', '1234567890abc', function (err, response) {
+                        (err === null).should.be.true;
+
+                        response.should.containDeep(item);
+
+                        searchClient.getIncomingResponseById('mainindex', '_all', response['_id'], function (err, response) {
+                            (err === null).should.be.true;
+
+                            response.should.containDeep(item._source);
+
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+    });
+
     it('should correctly remove a outgoing query and all corresponding responses from the database', function (done) {
         searchClient.deleteOutgoingQuery('myotherindex', 'searchQueryId', function (err) {
             (err === null).should.be.true;
