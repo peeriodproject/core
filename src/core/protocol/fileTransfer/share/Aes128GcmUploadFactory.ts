@@ -22,23 +22,85 @@ import ReadableBlockRequestMessageFactory = require('./messages/ReadableBlockReq
 import Aes128GcmWritableMessageFactory = require('../../hydra/messages/Aes128GcmWritableMessageFactory');
 import Aes128GcmReadableDecryptedMessageFactory = require('../../hydra/messages/Aes128GcmReadableDecryptedMessageFactory');
 
+/**
+ * UploadFactoryInterface implementation using AES-128 in Galois counter mode for encryption/decryption/authentication
+ * and zlib's compression for file reading.
+ *
+ * @class core.protocol.fileTransfer.share.Aes128GcmUploadFactory
+ * @implements core.protocol.fileTransfer.share.UploadFactoryInterface
+ *
+ * @param {core.config.ConfigInterface} transferConfig
+ * @param {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerFactoryInterface} feedingNodesBlockMaintainerFactory
+ * @param {core.protocol.fileTransfer.share.ShareMessengerFactoryInterface} shareMessengerFactory
+ * @param {core.fs.FileBlockReaderFactoryInterface} fileBlockReaderFactory
+ * @param {core.protocol.fileTransfer.TransferMessageCenterInterface} transferMessageCenter
+ */
 class Aes128GcmUploadFactory implements UploadFactoryInterface {
 
+	/**
+	 * @member {number} core.protocol.fileTransfer.share.Aes128GcmUploadFactory~_blockSize
+	 */
 	private _blockSize:number = 0;
 
-	private _shareMessengerFactory:ShareMessengerFactoryInterface = null;
+	/**
+	 * @member {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerFactoryInterface} core.protocol.fileTransfer.share.Aes128GcmUploadFactory~_feedingNodesBlockMaintainerFactory
+	 */
+	private _feedingNodesBlockMaintainerFactory:FeedingNodesBlockMaintainerFactoryInterface = null;
+
+	/**
+	 * @member {core.fs.FileBlockReaderFactoryInterface} core.protocol.fileTransfer.share.Aes128GcmUploadFactory~_fileBlockReaderFactory
+	 */
 	private _fileBlockReaderFactory:FileBlockReaderFactoryInterface = null;
+
+	/**
+	 * @member {core.protocol.fileTransfer.share.ReadableBlockRequestMessageFactory} core.protocol.fileTransfer.share.Aes128GcmUploadFactory~_readableBlockRequestFactory
+	 */
+	private _readableBlockRequestFactory:ReadableBlockRequestMessageFactory = null;
+
+	/**
+	 * @member {core.protocol.fileTransfer.share.ReadableEncryptedShareMessageFactory} core.protocol.fileTransfer.share.Aes128GcmUploadFactory~_readableEncryptedShareFactory
+	 */
+	private _readableEncryptedShareFactory:ReadableEncryptedShareMessageFactory = null;
+
+	/**
+	 * @member {core.protocol.fileTransfer.share.ReadableShareAbortMessageFactory} core.protocol.fileTransfer.share.Aes128GcmUploadFactory~_readableShareAbortFactory
+	 */
+	private _readableShareAbortFactory:ReadableShareAbortMessageFactory = null;
+
+	/**
+	 * @member {core.protocol.fileTransfer.share.ReadableShareRequestMessageFactory} core.protocol.fileTransfer.share.Aes128GcmUploadFactory~_readableShareRequestFactory
+	 */
+	private _readableShareRequestFactory:ReadableShareRequestMessageFactory = null;
+
+	/**
+	 * @member {core.protocol.fileTransfer.share.ShareMessengerFactoryInterface} core.protocol.fileTransfer.share.Aes128GcmUploadFactory~_shareMessengerFactory
+	 */
+	private _shareMessengerFactory:ShareMessengerFactoryInterface = null;
+
+	/**
+	 * @member {core.protocol.fileTransfer.TransferMessageCenterInterface} core.protocol.fileTransfer.share.Aes128GcmUploadFactory~_transferMessageCenter
+	 */
 	private _transferMessageCenter:TransferMessageCenterInterface = null;
 
-	private _writableShareRatifyFactory:WritableShareRatifyMessageFactory = null;
-	private _readableShareRequestFactory:ReadableShareRequestMessageFactory = null;
-	private _writableEncryptedShareFactory:WritableEncryptedShareMessageFactory = null;
-	private _readableEncryptedShareFactory:ReadableEncryptedShareMessageFactory = null;
-	private _readableShareAbortFactory:ReadableShareAbortMessageFactory = null;
-	private _writableShareAbortFactory:WritableShareAbortMessageFactory = null;
+	/**
+	 * @member {core.protocol.fileTransfer.share.WritableBlockMessageFactory} core.protocol.fileTransfer.share.Aes128GcmUploadFactory~_writableBlockFactory
+	 */
 	private _writableBlockFactory:WritableBlockMessageFactory = null;
-	private _readableBlockRequestFactory:ReadableBlockRequestMessageFactory = null;
-	private _feedingNodesBlockMaintainerFactory:FeedingNodesBlockMaintainerFactoryInterface = null;
+
+	/**
+	 * @member {core.protocol.fileTransfer.share.WritableEncryptedShareMessageFactory} core.protocol.fileTransfer.share.Aes128GcmUploadFactory~_writableEncryptedShareFactory
+	 */
+	private _writableEncryptedShareFactory:WritableEncryptedShareMessageFactory = null;
+
+	/**
+	 * @member {core.protocol.fileTransfer.share.WritableShareAbortMessageFactory} core.protocol.fileTransfer.share.Aes128GcmUploadFactory~_writableShareAbortFactory
+	 */
+	private _writableShareAbortFactory:WritableShareAbortMessageFactory = null;
+
+	/**
+	 * @member {core.protocol.fileTransfer.share.WritableShareRatifyMessageFactory} core.protocol.fileTransfer.share.Aes128GcmUploadFactory~_writableShareRatifyFactory
+	 */
+	private _writableShareRatifyFactory:WritableShareRatifyMessageFactory = null;
 
 	public constructor (transferConfig:ConfigInterface, feedingNodesBlockMaintainerFactory:FeedingNodesBlockMaintainerFactoryInterface, shareMessengerFactory:ShareMessengerFactoryInterface, fileBlockReaderFactory:FileBlockReaderFactoryInterface, transferMessageCenter:TransferMessageCenterInterface) {
 		this._blockSize = transferConfig.get('fileTransfer.uploadBlockSizeInBytes');
