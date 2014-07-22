@@ -266,6 +266,8 @@ var PluginManager = (function () {
                     for (var key in runners) {
                         // call the plugin!
                         runners[key].onBeforeItemAdd(itemPath, stats, globals, function (err, data) {
+                            data = data || {};
+
                             counter++;
 
                             if (err) {
@@ -492,7 +494,7 @@ var PluginManager = (function () {
                     }
 
                     //tikaData['fileBuffer'] = 'foobar';
-                    tikaData.fileBuffer = data.toString('base64');
+                    tikaData.file = data.toString('base64');
 
                     return callback(null, tikaData);
                 });
