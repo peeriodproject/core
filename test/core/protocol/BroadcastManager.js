@@ -189,11 +189,11 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
                     broadcastManager.getKnownBroadcastIds().length.should.equal(1);
                     broadcastManager.getKnownBroadcastIds()[0].should.equal('broadcastId1');
                     done();
-                }, 600);
+                }, 400);
             });
         });
 
-        emitMessage('10000000', 'broadcastId2', Date.now() - 500);
+        emitMessage('10000000', 'broadcastId2', Date.now() - 700);
     });
 
     it('should finally clear the last known broadcast id', function (done) {
