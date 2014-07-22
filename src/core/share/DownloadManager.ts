@@ -14,16 +14,46 @@ import ObjectUtils = require('../utils/ObjectUtils');
  */
 class DownloadManager implements DownloadManagerInterface {
 
+	/**
+	 * The search index where the query responses are stored.
+	 *
+	 * @member {string} core.share.DownloadManager~_indexName
+	 */
 	private _indexName:string = '';
 
+	/**
+	 * A flag indicates weateher the manager is open or closed.
+	 *
+	 * @member {boolean} core.share.DownloadManager~_isOpen
+	 */
 	private _isOpen:boolean = false;
 
+	/**
+	 * The internally used event emitter to emit download updates
+	 *
+	 * @member {string} core.share.DownloadManager~_eventEmitter
+	 */
 	private _eventEmitter:events.EventEmitter = null;
 
+	/**
+	 * The options object.
+	 *
+	 * @member {core.utils.ClosableAsyncOptions} core.share.DownloadManager~_options
+	 */
 	private _options:ClosableAsyncOptions = {};
 
+	/**
+	 * The internally used search client to get the response data that are required to start a new download
+	 *
+	 * @member {core.search.SearchClientInterface} core.share.DownloadManager~_searchClient
+	 */
 	private _searchClient:SearchClientInterface = null;
 
+	/**
+	 * A list of running download ids.
+	 *
+	 * @member {Array} core.share.DownloadManager~_runningDownloadIds
+	 */
 	private _runningDownloadIds:Array<string> = [];
 
 	constructor (appQuitHandler:AppQuitHandlerInterface, searchClient:SearchClientInterface, indexName:string, options = {}) {
@@ -175,6 +205,14 @@ class DownloadManager implements DownloadManagerInterface {
 		}
 	}
 
+	/**
+	 * Returns `true` if the given download id already exists
+	 *
+	 * @method core.share.DownloadManager~_downloadExists
+	 *
+	 * @param {string} downloadId
+	 * @returns {boolean}
+	 */
 	private _downloadExists (downloadId):boolean {
 		return this._runningDownloadIds.indexOf(downloadId) !== -1;
 	}

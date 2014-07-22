@@ -10,11 +10,41 @@ var DownloadManager = (function () {
     function DownloadManager(appQuitHandler, searchClient, indexName, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
+        /**
+        * The search index where the query responses are stored.
+        *
+        * @member {string} core.share.DownloadManager~_indexName
+        */
         this._indexName = '';
+        /**
+        * A flag indicates weateher the manager is open or closed.
+        *
+        * @member {boolean} core.share.DownloadManager~_isOpen
+        */
         this._isOpen = false;
+        /**
+        * The internally used event emitter to emit download updates
+        *
+        * @member {string} core.share.DownloadManager~_eventEmitter
+        */
         this._eventEmitter = null;
+        /**
+        * The options object.
+        *
+        * @member {core.utils.ClosableAsyncOptions} core.share.DownloadManager~_options
+        */
         this._options = {};
+        /**
+        * The internally used search client to get the response data that are required to start a new download
+        *
+        * @member {core.search.SearchClientInterface} core.share.DownloadManager~_searchClient
+        */
         this._searchClient = null;
+        /**
+        * A list of running download ids.
+        *
+        * @member {Array} core.share.DownloadManager~_runningDownloadIds
+        */
         this._runningDownloadIds = [];
         var defaults = {
             closeOnProcessExit: true,
@@ -166,6 +196,14 @@ var DownloadManager = (function () {
         }
     };
 
+    /**
+    * Returns `true` if the given download id already exists
+    *
+    * @method core.share.DownloadManager~_downloadExists
+    *
+    * @param {string} downloadId
+    * @returns {boolean}
+    */
     DownloadManager.prototype._downloadExists = function (downloadId) {
         return this._runningDownloadIds.indexOf(downloadId) !== -1;
     };
