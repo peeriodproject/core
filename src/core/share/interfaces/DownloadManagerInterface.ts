@@ -30,11 +30,18 @@ interface DownloadManagerInterface extends ClosableAsyncInterface {
 	downloadEnded (downloadId:string, reason:string):void;
 
 	/**
+	 * Returns the download destination path or an error if no path is set or the current path is invalid
+	 *
+	 * @param {Function} callback The callback that gets called with a possible error and the destination path as arguments
+	 */
+	getDownloadDestination (callback:(err:Error, destinationPath:string) => any):void;
+
+	/**
 	 * A download was added and can be processed from the network layer
 	 *
 	 * @param {Function} listener
 	 */
-	onDownloadAdded (listener:(downloadId:string, fileName:string, fileSize:number, fileHash:string, metadata:Object) => any):void;
+	onDownloadAdded (listener:(downloadId:string, fileName:string, fileSize:number, fileHash:string, destination:string, metadata:Object) => any):void;
 
 	/**
 	 * Registers a listener that gets called whenever a download was canceled
@@ -63,6 +70,14 @@ interface DownloadManagerInterface extends ClosableAsyncInterface {
 	 * @param {Function} listener
 	 */
 	onDownloadEnded (listener:(downloadId:string, reason:string) => any):void;
+
+	/**
+	 * Sets the download destination folder.
+	 *
+	 * @param {string} destinationPath An absolute path to the download destination folder
+	 * @param {Fuction} callback
+	 */
+	setDownloadDestination (destinationPath:string, callback?:(err:Error) => any):void;
 
 	/**
 	 * Updates the progress of the specified download
