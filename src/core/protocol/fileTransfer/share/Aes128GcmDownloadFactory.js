@@ -86,7 +86,7 @@ var Aes128GcmDownloadFactory = (function () {
         this._readableShareRatifyMessageFactory = new ReadableShareRatifyMessageFactory();
         this._writableBlockRequestMessageFactory = new WritableBlockRequestMessageFactory();
     }
-    Aes128GcmDownloadFactory.prototype.create = function (filename, expectedSize, expectedHash, locationMetadata) {
+    Aes128GcmDownloadFactory.prototype.create = function (downloadFolder, filename, expectedSize, expectedHash, locationMetadata) {
         var initialBlock = null;
         try  {
             initialBlock = FeedingNodesMessageBlock.constructBlock(locationMetadata);
@@ -94,7 +94,7 @@ var Aes128GcmDownloadFactory = (function () {
             return null;
         }
 
-        return new Download(filename, expectedSize, expectedHash, initialBlock, this._feedingNodesBlockMaintainerFactory.create(), this._fileBlockWriterFactory.createWriter(filename, expectedSize, expectedHash, true), this._shareMessengerFactory.createMessenger(), this._transferMessageCenter, this._writableShareRequestMessageFactory, this._writableEncryptedShareMessageFactory, this._readableEncryptedShareMessageFactory, this._readableShareAbortMessageFactory, this._writableShareAbortMessageFactory, this._readableBlockMessageFactory, this._readableShareRatifyMessageFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory(), this._writableBlockRequestMessageFactory);
+        return new Download(filename, expectedSize, expectedHash, initialBlock, this._feedingNodesBlockMaintainerFactory.create(), this._fileBlockWriterFactory.createWriter(downloadFolder, filename, expectedSize, expectedHash, true), this._shareMessengerFactory.createMessenger(), this._transferMessageCenter, this._writableShareRequestMessageFactory, this._writableEncryptedShareMessageFactory, this._readableEncryptedShareMessageFactory, this._readableShareAbortMessageFactory, this._writableShareAbortMessageFactory, this._readableBlockMessageFactory, this._readableShareRatifyMessageFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory(), this._writableBlockRequestMessageFactory);
     };
     return Aes128GcmDownloadFactory;
 })();

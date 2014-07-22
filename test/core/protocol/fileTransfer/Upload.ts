@@ -26,7 +26,7 @@ import FileBlockWriterFactory = require('../../../../src/core/fs/FileBlockWriter
 import FileBlockReaderFactory = require('../../../../src/core/fs/FileBlockReaderFactory');
 import ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> Upload (integration with Download)', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> Upload (integration with Download) @current', function () {
 
 	var sandbox:SinonSandbox = null;
 	var writableFileTransferMessageFactory = new WritableFileTransferMessageFactory();
@@ -157,7 +157,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Upload (integration with Downl
 		uploaderMiddleware.removeAllListeners('canSend');
 		uploaderMiddleware.removeAllListeners('message');
 
-		theDownload = downloadFactory.create(filename, filesize, sha1Hash, [{ip:'1.1.1.1', port: 80, feedingIdentifier:'cafebabecafebabecafebabecafebabe'}]);
+		theDownload = downloadFactory.create(downloadFolder, filename, filesize, sha1Hash, [{ip:'1.1.1.1', port: 80, feedingIdentifier:'cafebabecafebabecafebabecafebabe'}]);
 
 		downloaderMiddleware.once('sending', function (type, ident) {
 			downloaderMiddleware.emit('canSend', true);
@@ -182,7 +182,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Upload (integration with Downl
 	}
 
 	it('should correctly build up the factories', function () {
-		downloadFactory = new Aes128GcmDownloadFactory(createFeedingNodesBlockMaintainerFactory('download'), createShareMessengerFactory('download'), new FileBlockWriterFactory(downloadFolder), transferMessageCenterStub);
+		downloadFactory = new Aes128GcmDownloadFactory(createFeedingNodesBlockMaintainerFactory('download'), createShareMessengerFactory('download'), new FileBlockWriterFactory(), transferMessageCenterStub);
 		uploadFactory = new Aes128GcmUploadFactory(configStub, createFeedingNodesBlockMaintainerFactory('upload'), createShareMessengerFactory('upload'), new FileBlockReaderFactory(), transferMessageCenterStub);
 
 		downloadFactory.should.be.instanceof(Aes128GcmDownloadFactory);

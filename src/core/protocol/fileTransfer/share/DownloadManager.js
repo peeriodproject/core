@@ -160,11 +160,11 @@ var DownloadManager = (function () {
     */
     DownloadManager.prototype._setupListeners = function () {
         var _this = this;
-        this._bridge.on('newDownload', function (identifier, filename, filesize, filehash, locationMetadata) {
+        this._bridge.on('newDownload', function (identifier, filename, filesize, filehash, downloadFolder, locationMetadata) {
             var reason = _this._canDownload();
 
             if (!reason) {
-                var download = _this._downloadFactory.create(filename, filesize, filehash, locationMetadata);
+                var download = _this._downloadFactory.create(downloadFolder, filename, filesize, filehash, locationMetadata);
 
                 if (!download) {
                     _this._bridge.emit('end', identifier, 'BAD_METADATA');
