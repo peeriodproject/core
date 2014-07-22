@@ -296,6 +296,8 @@ class PluginManager implements PluginManagerInterface {
 					for (var key in runners) {
 						// call the plugin!
 						runners[key].onBeforeItemAdd(itemPath, stats, globals, (err:Error, data:Object) => {
+							data = data || {};
+
 							counter++;
 
 							if (err) {
@@ -530,7 +532,7 @@ class PluginManager implements PluginManagerInterface {
 					}
 
 					//tikaData['fileBuffer'] = 'foobar';
-					tikaData.fileBuffer = data.toString('base64');
+					tikaData.file = data.toString('base64');
 
 					return callback(null, tikaData);
 				});

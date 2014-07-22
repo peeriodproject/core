@@ -73,7 +73,7 @@ class SearchFormManager implements SearchFormManagerInterface {
 	private _options:ClosableAsyncOptions = {};
 
 	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, stateHandlerFactory:StateHandlerFactoryInterface, pluginManager:PluginManagerInterface, searchRequestManager:SearchRequestManagerInterface, options:ClosableAsyncOptions = {}) {
-		var defaults = {
+		var defaults:ClosableAsyncOptions = {
 			closeOnProcessExit: true,
 			onCloseCallback   : function (err:Error) {
 			},

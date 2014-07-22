@@ -371,6 +371,47 @@ class SearchClient implements SearchClientInterface {
 
 	}
 
+	public getIncomingResponseByHash (indexName:string, type:string, hash:string, callback:(err:Error, response:Object) => any):void {
+		// todo limit query to 1
+		var searchQuery:Object = {
+			query: {
+				match: {
+					itemHash: hash
+				}
+			}
+		};
+
+		this._client.search({
+			index: indexName.toLowerCase(),
+			type: (!type || type === '_all') ? '' : this._getResponseType(type),
+			body: searchQuery
+		}, (err:Error, response:Object, status:number) => {
+			return this._checkHitsAndCallCallback(err, response, status, function (err:Error, data:any) {
+				if (err || !data) {
+					return callback(err, data);
+				}
+
+				return callback(null, data.hits[0]);
+			});
+		});
+	}
+
+	public getIncomingResponseById (indexName:string, type:string, id:string, callback:(err:Error, response:Object) => any):void {
+		this._client.getSource({
+			index: indexName,
+			type : (!type || type === '_all') ? '_all' : this._getResponseType(type),
+			id   : id
+		}, (err:Error, response:Object, status:number) => {
+			err = err || null;
+
+			if (!this._isValidResponse(err, status, 'IndexMissingException')) {
+				return callback(err, null);
+			}
+
+			return callback(null, response);
+		});
+	}
+
 	public getIncomingResponses (indexName:string, type:string, queryBody:Object, callback:(err:Error, responses:any) => void):void {
 		this._client.search({
 			index: indexName.toLowerCase(),
@@ -380,16 +421,8 @@ class SearchClient implements SearchClientInterface {
 				'_source',
 				'_timestamp'
 			]
-		}, function (err, response:Object, status:number) {
-			var hits:Object = response && response['hits'] ? response['hits'] : {};
-
-			err = err || null;
-
-			if (!(hits && hits['total'])) {
-				return callback(null, null);
-			}
-
-			return callback(null, hits);
+		}, (err, response:Object, status:number) => {
+			return this._checkHitsAndCallCallback(err, response, status, callback);
 		});
 	}
 
@@ -410,6 +443,7 @@ class SearchClient implements SearchClientInterface {
 	}
 
 	public getItemByPath (itemPath:string, callback:(err:Error, item:SearchItemInterface) => any):void {
+		// todo limit query to 1
 		var searchQuery:Object = {
 			query: {
 				match: {
@@ -580,6 +614,28 @@ class SearchClient implements SearchClientInterface {
 	}
 
 	/**
+	 * Checks if the specified response contains any hits or errors and calls the callback accordingly.
+	 *
+	 * @method core.search.SearchClient~_checkHitsAnCallCallback
+	 *
+	 * @param {Error} err
+	 * @param {Object} response
+	 * @param {status} status
+	 * @param {Function} callback
+	 */
+	private _checkHitsAndCallCallback (err:Error, response:Object, status:number, callback:(err:Error, response:any) => any):void {
+		var hits:Object = response && response['hits'] ? response['hits'] : {};
+
+		err = err || null;
+
+		if (!(hits && hits['total'])) {
+			return callback(err, null);
+		}
+
+		return callback(null, hits);
+	}
+
+	/**
 	 * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
 	 *
 	 * @method core.search.SearchClient~_createIndex
@@ -637,7 +693,7 @@ class SearchClient implements SearchClientInterface {
 	 * @returns {string}
 	 */
 	private _getResponseType(type):string {
-		return 'response' + type.toLowerCase();
+		return type[0] === '_' ? type : 'response' + type.toLowerCase();
 	}
 
 	/**

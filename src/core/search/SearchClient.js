@@ -351,7 +351,51 @@ var SearchClient = (function () {
         });
     };
 
+    SearchClient.prototype.getIncomingResponseByHash = function (indexName, type, hash, callback) {
+        var _this = this;
+        // todo limit query to 1
+        var searchQuery = {
+            query: {
+                match: {
+                    itemHash: hash
+                }
+            }
+        };
+
+        this._client.search({
+            index: indexName.toLowerCase(),
+            type: (!type || type === '_all') ? '' : this._getResponseType(type),
+            body: searchQuery
+        }, function (err, response, status) {
+            return _this._checkHitsAndCallCallback(err, response, status, function (err, data) {
+                if (err || !data) {
+                    return callback(err, data);
+                }
+
+                return callback(null, data.hits[0]);
+            });
+        });
+    };
+
+    SearchClient.prototype.getIncomingResponseById = function (indexName, type, id, callback) {
+        var _this = this;
+        this._client.getSource({
+            index: indexName,
+            type: (!type || type === '_all') ? '_all' : this._getResponseType(type),
+            id: id
+        }, function (err, response, status) {
+            err = err || null;
+
+            if (!_this._isValidResponse(err, status, 'IndexMissingException')) {
+                return callback(err, null);
+            }
+
+            return callback(null, response);
+        });
+    };
+
     SearchClient.prototype.getIncomingResponses = function (indexName, type, queryBody, callback) {
+        var _this = this;
         this._client.search({
             index: indexName.toLowerCase(),
             type: this._getResponseType(type),
@@ -361,15 +405,7 @@ var SearchClient = (function () {
                 '_timestamp'
             ]
         }, function (err, response, status) {
-            var hits = response && response['hits'] ? response['hits'] : {};
-
-            err = err || null;
-
-            if (!(hits && hits['total'])) {
-                return callback(null, null);
-            }
-
-            return callback(null, hits);
+            return _this._checkHitsAndCallCallback(err, response, status, callback);
         });
     };
 
@@ -392,6 +428,7 @@ var SearchClient = (function () {
 
     SearchClient.prototype.getItemByPath = function (itemPath, callback) {
         var _this = this;
+        // todo limit query to 1
         var searchQuery = {
             query: {
                 match: {
@@ -563,6 +600,28 @@ var SearchClient = (function () {
     };
 
     /**
+    * Checks if the specified response contains any hits or errors and calls the callback accordingly.
+    *
+    * @method core.search.SearchClient~_checkHitsAnCallCallback
+    *
+    * @param {Error} err
+    * @param {Object} response
+    * @param {status} status
+    * @param {Function} callback
+    */
+    SearchClient.prototype._checkHitsAndCallCallback = function (err, response, status, callback) {
+        var hits = response && response['hits'] ? response['hits'] : {};
+
+        err = err || null;
+
+        if (!(hits && hits['total'])) {
+            return callback(err, null);
+        }
+
+        return callback(null, hits);
+    };
+
+    /**
     * Creates an index with the specified name. It will handle 'Already exists' errors gracefully.
     *
     * @method core.search.SearchClient~_createIndex
@@ -620,7 +679,7 @@ var SearchClient = (function () {
     * @returns {string}
     */
     SearchClient.prototype._getResponseType = function (type) {
-        return 'response' + type.toLowerCase();
+        return type[0] === '_' ? type : 'response' + type.toLowerCase();
     };
 
     /**

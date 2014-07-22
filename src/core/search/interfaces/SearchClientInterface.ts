@@ -133,6 +133,26 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	getOutgoingQuery (indexName:string, queryId:string, callback:(err:Error, queryBody:Object) => any):void;
 
 	/**
+	 * Finds the incoming response by hash and retuns it as the second argument in the callback
+	 *
+	 * @param {string} indexName
+	 * @param {string} type
+	 * @param {string} hash
+	 * @param {Function} callback
+	 */
+	getIncomingResponseByHash (indexName:string, type:string, hash:string, callback:(err:Error, response:Object) => any):void;
+
+	/**
+	 * Finds the incoming response by id and retuns it as the second argument in the callback
+	 *
+	 * @param {string} indexName
+	 * @param {string} type
+	 * @param {string} hash
+	 * @param {Function} callback
+	 */
+	getIncomingResponseById (indexName:string, type:string, id:string, callback:(err:Error, response:Object) => any):void;
+
+	/**
 	 * Returns the responses of the specified type that matches the given query.
 	 *
 	 * @method core.search.SearchClientInterface#getIncomingResponses
