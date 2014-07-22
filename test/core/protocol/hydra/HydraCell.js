@@ -28,7 +28,7 @@ var WritableCellCreatedRejectedMessageFactory = require('../../../../src/core/pr
 var WritableAdditiveSharingMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableAdditiveSharingMessageFactory');
 var WritableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraCell @current', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraCell', function () {
     var sandbox = null;
 
     // STUBS

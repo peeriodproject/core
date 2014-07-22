@@ -200,7 +200,7 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
         setTimeout(function () {
             broadcastManager.getKnownBroadcastIds().length.should.equal(0);
             done();
-        }, 500);
+        }, 700);
     });
 
     before(function () {

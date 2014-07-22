@@ -67,11 +67,24 @@ var QueryManager = require('./fileTransfer/query/QueryManager');
 
 var ResponseManager = require('./fileTransfer/query/ResponseManager');
 
+var FeedingNodesBlockMaintainerFactory = require('./fileTransfer/share/FeedingNodesBlockMaintainerFactory');
+var ShareMessengerFactory = require('./fileTransfer/share/ShareMessengerFactory');
+var FileBlockWriterFactory = require('../fs/FileBlockWriterFactory');
+var FileBlockReaderFactory = require('../fs/FileBlockReaderFactory');
+
+var Aes128GcmDownloadFactory = require('./fileTransfer/share/Aes128GcmDownloadFactory');
+var DownloadManager = require('./fileTransfer/share/DownloadManager');
+
+var Aes128GcmUploadFactory = require('./fileTransfer/share/Aes128GcmUploadFactory');
+var UploadManager = require('./fileTransfer/share/UploadManager');
+
+var ReadableShareRequestMessageFactory = require('./fileTransfer/share/messages/ReadableShareRequestMessageFactory');
+
 var logger = require('../utils/logger/LoggerFactory').create();
 
 var ProtocolGateway = (function (_super) {
     __extends(ProtocolGateway, _super);
-    function ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchBridge) {
+    function ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchBridge, downloadBridge, uploadBridge) {
         var _this = this;
         _super.call(this);
         this._myNode = null;
@@ -99,6 +112,10 @@ var ProtocolGateway = (function (_super) {
         this._queryManager = null;
         this._responseManager = null;
         this._searchBridge = null;
+        this._downloadBridge = null;
+        this._uploadBridge = null;
+        this._downlodManager = null;
+        this._uploadManager = null;
 
         this._appConfig = appConfig;
         this._protocolConfig = protocolConfig;
@@ -111,6 +128,8 @@ var ProtocolGateway = (function (_super) {
         this._routingTable = routingTable;
 
         this._searchBridge = searchBridge;
+        this._downloadBridge = downloadBridge;
+        this._uploadBridge = uploadBridge;
 
         // build up the ProtocolConnectionManager
         this._protocolConnectionManager = new ProtocolConnectionManager(this._protocolConfig, this._myNode, this._tcpSocketHandler);
@@ -184,6 +203,19 @@ var ProtocolGateway = (function (_super) {
         this._queryManager = new QueryManager(this._transferConfig, queryFactory, this._hydraCircuitManager, this._searchBridge);
 
         this._responseManager = new ResponseManager(this._transferConfig, this._hydraCellManager, this._transferMessageCenter, this._searchBridge, this._broadcastManager, this._hydraCircuitManager, writableQueryResponseMessageFactory);
+
+        // Upload/Download things
+        var feedingNodesBlockMaintainerFactory = new FeedingNodesBlockMaintainerFactory(this._hydraCircuitManager);
+        var shareMessengerFactory = new ShareMessengerFactory(this._transferConfig, this._hydraCircuitManager, this._transferMessageCenter);
+        var fileBlockWriterFactory = new FileBlockWriterFactory();
+        var fileBlockReaderFactory = new FileBlockReaderFactory();
+
+        var downloadFactory = new Aes128GcmDownloadFactory(feedingNodesBlockMaintainerFactory, shareMessengerFactory, fileBlockWriterFactory, this._transferMessageCenter);
+        var uploadFactory = new Aes128GcmUploadFactory(this._transferConfig, feedingNodesBlockMaintainerFactory, shareMessengerFactory, fileBlockReaderFactory, this._transferMessageCenter);
+        var readableShareRequestMessageFactory = new ReadableShareRequestMessageFactory();
+
+        this._downlodManager = new DownloadManager(this._transferConfig, this._hydraCircuitManager, this._downloadBridge, downloadFactory);
+        this._uploadManager = new UploadManager(this._transferConfig, this._transferMessageCenter, uploadFactory, readableShareRequestMessageFactory, this._uploadBridge);
     }
     ProtocolGateway.prototype.start = function () {
         /**
