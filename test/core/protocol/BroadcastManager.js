@@ -20,7 +20,7 @@ var BroadcastReadableMessageFactory = require('../../../src/core/protocol/broadc
 var BroadcastReadableMessage = require('../../../src/core/protocol/broadcast/messages/BroadcastReadableMessage');
 var BroadcastWritableMessageFactory = require('../../../src/core/protocol/broadcast/messages/BroadcastWritableMessageFactory');
 
-describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
+describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager @current', function () {
     var sandbox = null;
 
     var myId = '01010101';
@@ -200,7 +200,7 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
         setTimeout(function () {
             broadcastManager.getKnownBroadcastIds().length.should.equal(0);
             done();
-        }, 500);
+        }, 700);
     });
 
     before(function () {

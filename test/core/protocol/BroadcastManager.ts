@@ -22,7 +22,7 @@ import BroadcastReadableMessageFactory = require('../../../src/core/protocol/bro
 import BroadcastReadableMessage = require('../../../src/core/protocol/broadcast/messages/BroadcastReadableMessage');
 import BroadcastWritableMessageFactory = require('../../../src/core/protocol/broadcast/messages/BroadcastWritableMessageFactory');
 
-describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager @prio', function () {
+describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager @current', function () {
 
 	var sandbox:SinonSandbox = null;
 
@@ -203,7 +203,7 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager @prio', function 
 		setTimeout(function () {
 			broadcastManager.getKnownBroadcastIds().length.should.equal(0);
 			done();
-		}, 500);
+		}, 700);
 	});
 
 	before(function () {
