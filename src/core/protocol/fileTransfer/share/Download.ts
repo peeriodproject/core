@@ -89,12 +89,12 @@ class Download extends events.EventEmitter implements DownloadInterface {
 	/**
 	 * Provided in constructor. See above.
 	 *
-	 * @member {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface} core.protocol.fileTransfer.share.Download~_feedingNodesBlockMaintainerInterface
+	 * @member {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface} core.protocol.fileTransfer.share.Download~_feedingNodesBlockMaintainer
 	 */
 	private _feedingNodesBlockMaintainer:FeedingNodesBlockMaintainerInterface = null;
 
 	/**
-	 * Constructed with the factory in constructor, with the filename, expected size and expected hash.
+	 * Provided in constructor. See above.
 	 *
 	 * @member {core.fs.FileBlockWriterInterface} core.protocol.fileTransfer.share.Download~_fileBlockWriter
 	 */

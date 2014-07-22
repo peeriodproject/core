@@ -25,34 +25,205 @@ import ReadableDecryptedMessageFactoryInterface = require('../../hydra/messages/
 import ReadableDecryptedMessageInterface = require('../../hydra/messages/interfaces/ReadableDecryptedMessageInterface');
 import WritableEncryptedMessageFactoryInterface = require('../../hydra/messages/interfaces/WritableEncryptedMessageFactoryInterface');
 
+
+/**
+ * UploadInterface implementation.
+ *
+ * @class core.protocol.fileTransfer.share.Upload
+ * @implements core.protocol.fileTransfer.share.UploadInterface
+ *
+ * @param {string} requestTransferIdentifier The transfer identifier of the SHARE_REQUEST message the upload bases upon. This identifier will be used for the SHARE_RATIFY message.
+ * @param {core.protocol.fileTransfer.share.ReadableShareRequestMessageInterface} The SHARE_REQUEST message the upload bases upon.
+ * @param {string} filename The name of the requested file.
+ * @param {number} filesize The number of bytes of the requested file.
+ * @param {string} filehash Hexadecimal string representation of the SHA-1 hash of the requested file.
+ * @param {core.fs.FileBlockReaderInterface} fileBlockReader Block reader of the requested file.
+ * @param {core.protocol.fileTransfer.share.ShareMessengerInterface} shareMessenger Fresh share messenger instance.
+ * @param {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface} feedingNodesBlockMaintainer Fresh feeding nodes block maintainer instance.
+ * @param {core.protocol.fileTransfer.TransferMessageCenterInterface} transferMessageCenter Working transfer message center instance.
+ * @param {core.protocol.fileTransfer.share.WritableShareRatifyMessageFactoryInterface} writableShareRatifyFactory
+ * @param {core.protocol.fileTransfer.share.WritableEncryptedShareMessageFactoryInterface} writableEncryptedShareFactory
+ * @param {core.protocol.fileTransfer.share.ReadableEncryptedShareMessageFactoryInterface} readableEncryptedShareFactory
+ * @param {core.protocol.fileTransfer.share.ReadableShareAbortMessageFactoryInterface} readableShareAbortFactory
+ * @param {core.protocol.fileTransfer.share.WritableShareAbortMessageFactoryInterface} writableShareAbortFactory
+ * @param {core.protocol.fileTransfer.share.ReadableBlockRequestMessageFactoryInterface} readableBlockRequestFactory
+ * @param {core.protocol.fileTransfer.share.WritableBlockMessageFactoryInterface} writableBlockFactory
+ * @param {core.protocol.hydra.ReadableDecryptedMessageFactory} decrypter Factory for decrypting messages (e.g. AES-128-GCM factory)
+ * @param {core.protocol.hydra.WritableEncryptedMessageFactory} encrypter Factory for encrypting messages (e.g. AES-128-GCM factory)
+ */
 class Upload extends events.EventEmitter implements UploadInterface {
 
-	private _filename:string = null;
-	private _filesize:number = 0;
-	private _filehash:string = null;
-	private _initialFeedingNodesBlockOfDownloader:Buffer = null;
-	private _fileReader:FileBlockReaderInterface = null;
-	private _shareMessenger:ShareMessengerInterface = null;
-	private _downloaderDHPayload:Buffer = null;
-	private _feedingNodesBlockMaintainer:FeedingNodesBlockMaintainerInterface = null;
-	private _transferMessageCenter:TransferMessageCenterInterface = null;
-	private _writableShareRatifyFactory:WritableShareRatifyMessageFactoryInterface = null;
-	private _writableEncryptedShareFactory:WritableEncryptedShareMessageFactoryInterface = null;
-	private _readableEncryptedShareFactory:ReadableEncryptedShareMessageFactoryInterface = null;
-	private _readableShareAbortFactory:ReadableShareAbortMessageFactoryInterface = null;
-	private _writableShareAbortFactory:WritableShareAbortMessageFactoryInterface = null;
-	private _readableBlockRequestFactory:ReadableBlockRequestMessageFactoryInterface = null;
-	private _writableBlockFactory:WritableBlockMessageFactoryInterface = null;
+	/**
+	 * Provided in constructor. See above.
+	 *
+	 * @member {core.protocol.hydra.ReadableDecryptedMessageFactoryInterface} core.protocol.fileTransfer.share.Upload~_decrypter
+	 */
 	private _decrypter:ReadableDecryptedMessageFactoryInterface = null;
-	private _encrypter:WritableEncryptedMessageFactoryInterface = null;
-	private _requestTransferIdentifier:string = null;
 
+	/**
+	 * Stores the Diffie-Hellman public key of the downloader received with the SHARE_REQUEST message.
+	 *
+	 * @member {Buffer} core.protocol.fileTransfer.share.Upload~_downloaderDHPayload
+	 */
+	private _downloaderDHPayload:Buffer = null;
+
+	/**
+	 * Provided in constructor. See above.
+	 *
+	 * @member {core.protocol.hydra.WritableEncryptedMessageFactoryInterface} core.protocol.fileTransfer.share.Upload~_encrypter
+	 */
+	private _encrypter:WritableEncryptedMessageFactoryInterface = null;
+
+	/**
+	 * Indicates whether the file to be read has been open or not. This is to ensure that the file block reader is only
+	 * cleaned up when necessary.
+	 *
+	 * @member {boolean} core.protocol.fileTransfer.share.Upload~_fdOpen
+	 */
+	private _fdOpen:boolean = false;
+
+	/**
+	 * Provided in constructor. See above.
+	 *
+	 * @member {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface} core.protocol.fileTransfer.share.Upload~_feedingNodesBlockMaintainer
+	 */
+	private _feedingNodesBlockMaintainer:FeedingNodesBlockMaintainerInterface = null;
+
+	/**
+	 * Stores the SHA-1 hash of the requested file.
+	 *
+	 * @member {string} core.protocol.fileTransfer.share.Upload~_filehash
+	 */
+	private _filehash:string = null;
+
+	/**
+	 * Stores the name of the requested file.
+	 *
+	 * @member {string} core.protocol.fileTransfer.share.Upload~_filename
+	 */
+	private _filename:string = null;
+
+	/**
+	 * Provided in constructor. See above.
+	 *
+	 * @member {core.fs.FileBlockReaderInterface} core.protocol.fileTransfer.share.Uploader~_fileReader
+	 */
+	private _fileReader:FileBlockReaderInterface = null;
+
+	/**
+	 * Stores the number of bytes of the requested file.
+	 *
+	 * @member {number} core.protocol.fileTransfer.share.Upload~_filesize
+	 */
+	private _filesize:number = 0;
+
+	/**
+	 * Stores the negotiated key for decrypting incoming messages
+	 *
+	 * @member {Buffer} core.protocol.fileTransfer.share.Upload~_incomingKey
+	 */
 	private _incomingKey:Buffer = null;
+
+	/**
+	 * The feeding nodes block provided in the underlying SHARE_REQUEST message.
+	 *
+	 * @member {Buffer} core.protocol.fileTransfer.share.Upload~_initialFeedingNodesBlockOfDownloader
+	 */
+	private _initialFeedingNodesBlockOfDownloader:Buffer = null;
+
+	/**
+	 * Flag indicating whether the upload process is still active / valid, or has been killed.
+	 * Also used to prevent killing the same upload multiple times.
+	 *
+	 * @member {boolean} core.protocol.fileTransfer.share.Upload~_killed
+	 */
+	private _killed:boolean = false;
+
+	/**
+	 * This flag indicates whether the upload has been manually aborted. In many cases, the real aborting process can only
+	 * be fulfilled when something has happened – a message has rolled in, or an event has triggered, so this is used to
+	 * check if to abort the process or not at some point.
+	 *
+	 * @member {boolean} core.protocol.fileTransfer.share.Upload~_manuallyAborted
+	 */
+	private _manuallyAborted:boolean = false;
+
+	/**
+	 * Stores the negotiated key for encrypting outgoing messages
+	 *
+	 * @member {Buffer} core.protocol.fileTransfer.share.Upload~_outgoingKey
+	 */
 	private _outgoingKey:Buffer = null;
 
-	private _killed:boolean = false;
-	private _manuallyAborted:boolean = false;
-	private _fdOpen:boolean = false;
+	/**
+	 * Provided in constructor. See above.
+	 *
+	 * @member {core.protocol.fileTransfer.share.ReadableBlockRequestMessageFactoryInterface} core.protocol.fileTransfer.share.Upload~_readableBlockRequestFactory
+	 */
+	private _readableBlockRequestFactory:ReadableBlockRequestMessageFactoryInterface = null;
+
+	/**
+	 * Provided in constructor. See above.
+	 *
+	 * @member {core.protocol.fileTransfer.share.ReadableEncryptedShareMessageFactoryInterface} core.protocol.fileTransfer.share.Upload~_readableEncryptedShareFactory
+	 */
+	private _readableEncryptedShareFactory:ReadableEncryptedShareMessageFactoryInterface = null;
+
+	/**
+	 * Provided in constructor. See above.
+	 *
+	 * @member {core.protocol.fileTransfer.share.ReadableShareAbortMessageFactoryInterface} core.protocol.fileTransfer.share.Upload~_readableShareAbortFactory
+	 */
+	private _readableShareAbortFactory:ReadableShareAbortMessageFactoryInterface = null;
+
+	/**
+	 * Stores the transfer identifier of the upload's underlying SHARE_REQUEST message. Used for SHARE_RATIFY message.
+	 *
+	 * @member {string} core.protocol.fileTransfer.share.Upload~_requestTransferIdentifier
+	 */
+	private _requestTransferIdentifier:string = null;
+
+	/**
+	 * Provided in constructor. See above.
+	 *
+	 * @member {core.protocol.fileTransfer.share.ShareMessengerInterface} core.protocol.fileTransfer.share.Upload~_shareMessenger
+	 */
+	private _shareMessenger:ShareMessengerInterface = null;
+
+	/**
+	 * Provided in constructor. See above.
+	 *
+	 * @member {core.protocol.fileTransfer.TransferMessageCenterInterface} core.protocol.fileTransfer.share.Upload~_transferMessageCenter
+	 */
+	private _transferMessageCenter:TransferMessageCenterInterface = null;
+
+	/**
+	 * Provided in constructor. See above.
+	 *
+	 * @member {core.protocol.fileTransfer.share.WritableBlockMessageFactoryInterface} core.protocol.fileTransfer.share.Download~_writableBlockFactory
+	 */
+	private _writableBlockFactory:WritableBlockMessageFactoryInterface = null;
+
+	/**
+	 * Provided in constructor. See above.
+	 *
+	 * @member {core.protocol.fileTransfer.share.WritableEncryptedShareMessageFactoryInterface} core.protocol.fileTransfer.share.Upload~_writableEncryptedShareFactory
+	 */
+	private _writableEncryptedShareFactory:WritableEncryptedShareMessageFactoryInterface = null;
+
+	/**
+	 * Provided in constructor. See above.
+	 *
+	 * @member {core.protocol.fileTransfer.share.WritableShareAbortMessageFactoryInterface} core.protocol.fileTransfer.share.Upload~_writableShareAbortFactory
+	 */
+	private _writableShareAbortFactory:WritableShareAbortMessageFactoryInterface = null;
+
+	/**
+	 * Provided in constructor. See above.
+	 *
+	 * @member {core.protocol.fileTransfer.share.WritableShareRatifyMessageFactoryInterface} core.protocol.fileTransfer.share.Upload~_writableShareRatifyFactory
+	 */
+	private _writableShareRatifyFactory:WritableShareRatifyMessageFactoryInterface = null;
 
 	public constructor (requestTransferIdentifier:string, shareRequest:ReadableShareRequestMessageInterface, filename:string, filesize:number, filehash:string,
 		fileReader:FileBlockReaderInterface, shareMessenger:ShareMessengerInterface, feedingNodesBlockMaintainer:FeedingNodesBlockMaintainerInterface,
