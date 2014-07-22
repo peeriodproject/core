@@ -215,7 +215,6 @@ var Download = (function (_super) {
         // prepare the file block writer
         this._fileBlockWriter.prepareToWrite(function (err) {
             if (err) {
-                console.log(err);
                 _this._kill(false, false, 'File cannot be written.');
             } else {
                 if (_this._manuallyAborted) {

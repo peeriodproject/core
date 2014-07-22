@@ -35,7 +35,7 @@ var ReadableShareRequestMessageFactory = require('../../../../src/core/protocol/
 var WritableShareRatifyMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableShareRatifyMessageFactory');
 var WritableBlockMessageFactory = require('../../../../src/core/protocol/fileTransfer/share/messages/WritableBlockMessageFactory');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration)', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration) @current', function () {
     var sandbox = null;
     var filename = 'A filename';
     var expectedSize = 1000;

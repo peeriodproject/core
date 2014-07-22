@@ -9,7 +9,22 @@ var UploadManager = (function () {
         this._transferMessageCenter = transferMessageCenter;
         this._uploadFactory = uploadFactory;
         this._readableShareRequestFactory = readableShareRequestMessageFactory;
+
+        this._setupListeners();
     }
+    UploadManager.prototype._setupUploadByRequest = function (transferIdentifier, circuitIdOfRequest, requestMessage) {
+    };
+
+    UploadManager.prototype._setupListeners = function () {
+        var _this = this;
+        this._transferMessageCenter.on('SHARE_REQUEST', function (transferIdentifier, circuitIdOfMessage, msgPayload) {
+            var requestMessage = _this._readableShareRequestFactory.create(msgPayload);
+
+            if (requestMessage) {
+                _this._setupUploadByRequest(transferIdentifier, circuitIdOfMessage, requestMessage);
+            }
+        });
+    };
     return UploadManager;
 })();
 

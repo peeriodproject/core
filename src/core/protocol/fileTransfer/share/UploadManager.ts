@@ -20,6 +20,22 @@ class UploadManager implements UploadManagerInterface {
 		this._transferMessageCenter = transferMessageCenter;
 		this._uploadFactory = uploadFactory;
 		this._readableShareRequestFactory = readableShareRequestMessageFactory;
+
+		this._setupListeners();
+	}
+
+	private _setupUploadByRequest (transferIdentifier:string, circuitIdOfRequest:string, requestMessage:ReadableShareRequestMessageInterface):void {
+
+	}
+
+	private _setupListeners ():void {
+		this._transferMessageCenter.on('SHARE_REQUEST', (transferIdentifier:string, circuitIdOfMessage:string, msgPayload:Buffer) => {
+			var requestMessage:ReadableShareRequestMessageInterface = this._readableShareRequestFactory.create(msgPayload);
+
+			if (requestMessage) {
+				this._setupUploadByRequest(transferIdentifier, circuitIdOfMessage, requestMessage);
+			}
+		});
 	}
 }
 

@@ -6,31 +6,16 @@ var InflatingFileBlockWriter = require('./InflatingFileBlockWriter');
 *
 * @class core.fs.FileBlockWriterFactory
 * @implements core.fs.FileBlockWriterFactoryInterface
-*
-* @param {string} downloadFolderPath Destination folder path for all created file block writers
 */
 var FileBlockWriterFactory = (function () {
-    function FileBlockWriterFactory(downloadFolderPath) {
-        /**
-        * @member {string} core.fs.FileBlockWriterFactory~_downloadFolderPath
-        */
-        this._downloadFolderPath = null;
-        this._downloadFolderPath = downloadFolderPath;
+    function FileBlockWriterFactory() {
     }
-    FileBlockWriterFactory.prototype.createWriter = function (filename, expectedSize, expectedHash, useDecompression) {
+    FileBlockWriterFactory.prototype.createWriter = function (toFolderPath, filename, expectedSize, expectedHash, useDecompression) {
         if (useDecompression) {
-            return new InflatingFileBlockWriter(filename, this._downloadFolderPath, expectedSize, expectedHash);
+            return new InflatingFileBlockWriter(filename, toFolderPath, expectedSize, expectedHash);
         } else {
-            return new FileBlockWriter(filename, this._downloadFolderPath, expectedSize, expectedHash);
+            return new FileBlockWriter(filename, toFolderPath, expectedSize, expectedHash);
         }
-    };
-
-    FileBlockWriterFactory.prototype.getDownloadFolderPath = function () {
-        return this._downloadFolderPath;
-    };
-
-    FileBlockWriterFactory.prototype.setDownloadFolderPath = function (path) {
-        this._downloadFolderPath = path;
     };
     return FileBlockWriterFactory;
 })();

@@ -255,7 +255,6 @@ class Download extends events.EventEmitter implements DownloadInterface {
 		// prepare the file block writer
 		this._fileBlockWriter.prepareToWrite((err:Error) => {
 			if (err) {
-				console.log(err);
 				this._kill(false, false, 'File cannot be written.');
 			}
 			else {

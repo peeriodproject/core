@@ -177,11 +177,11 @@ class DownloadManager implements DownloadManagerInterface {
 	 * @method core.protocol.fielTransfer.share.DownloadManager~_setupListeners
 	 */
 	private _setupListeners ():void {
-		this._bridge.on('newDownload', (identifier:string, filename:string, filesize:number, filehash:string, locationMetadata:any) => {
+		this._bridge.on('newDownload', (identifier:string, filename:string, filesize:number, filehash:string, downloadFolder:string, locationMetadata:any) => {
 			var reason:string = this._canDownload();
 
 			if (!reason) {
-				var download:DownloadInterface = this._downloadFactory.create(filename, filesize, filehash, locationMetadata);
+				var download:DownloadInterface = this._downloadFactory.create(downloadFolder, filename, filesize, filehash, locationMetadata);
 
 				if (!download) {
 					this._bridge.emit('end', identifier, 'BAD_METADATA');
