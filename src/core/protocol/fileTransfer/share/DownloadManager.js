@@ -128,6 +128,8 @@ var DownloadManager = (function () {
 
             _this._bridge.emit('end', identifier, code);
         });
+
+        download.kickOff();
     };
 
     /**

@@ -49,6 +49,16 @@ var UploadManager = (function () {
         this._setupListeners();
     }
     /**
+    * BEGIN TESTING PURPOSES ONLY
+    */
+    UploadManager.prototype.getActiveUploads = function () {
+        return this._activeUploads;
+    };
+
+    /**
+    * END TESTING PURPOSES ONLY
+    */
+    /**
     * Tries to get the file info from the database by the SHA-1 hash provided in the SHARE_REQUEST message.
     * If there is a file, a new upload is created and the correct listeners hooked to the upload, which are then
     * propagated to the bridge.

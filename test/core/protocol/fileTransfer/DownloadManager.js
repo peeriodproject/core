@@ -12,7 +12,7 @@ var ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 var DownloadFactory = require('../../../../src/core/protocol/fileTransfer/share/Aes128GcmDownloadFactory');
 var DownloadManager = require('../../../../src/core/protocol/fileTransfer/share/DownloadManager');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> DownloadManager @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> DownloadManager', function () {
     var sandbox = null;
     var configStub = null;
     var factoryStub = null;
@@ -245,6 +245,9 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> DownloadManager @current', fun
 
                 download.manuallyAbort = function () {
                     this.emit('abort');
+                };
+
+                download.kickOff = function () {
                 };
 
                 return download;

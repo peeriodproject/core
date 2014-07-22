@@ -145,6 +145,8 @@ class DownloadManager implements DownloadManagerInterface {
 			this._bridge.emit('end', identifier, code);
 		});
 
+		download.kickOff();
+
 	}
 
 	/**

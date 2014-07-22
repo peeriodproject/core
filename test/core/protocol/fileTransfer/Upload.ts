@@ -26,7 +26,7 @@ import FileBlockWriterFactory = require('../../../../src/core/fs/FileBlockWriter
 import FileBlockReaderFactory = require('../../../../src/core/fs/FileBlockReaderFactory');
 import ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> Upload (integration with Download) @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> Upload (integration with Download)', function () {
 
 	var sandbox:SinonSandbox = null;
 	var writableFileTransferMessageFactory = new WritableFileTransferMessageFactory();

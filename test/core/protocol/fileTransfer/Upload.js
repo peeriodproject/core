@@ -25,7 +25,7 @@ var FileBlockWriterFactory = require('../../../../src/core/fs/FileBlockWriterFac
 var FileBlockReaderFactory = require('../../../../src/core/fs/FileBlockReaderFactory');
 var ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 
-describe('CORE --> PROTOCOL --> FILE TRANSFER --> Upload (integration with Download) @current', function () {
+describe('CORE --> PROTOCOL --> FILE TRANSFER --> Upload (integration with Download)', function () {
     var sandbox = null;
     var writableFileTransferMessageFactory = new WritableFileTransferMessageFactory();
     var readableFileTransferMessageFactory = new ReadableFileTransferMessageFactory();
