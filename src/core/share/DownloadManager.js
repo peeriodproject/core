@@ -1,4 +1,6 @@
 var events = require('events');
+var fs = require('fs');
+var path = require('path');
 
 var ObjectUtils = require('../utils/ObjectUtils');
 
@@ -7,9 +9,21 @@ var ObjectUtils = require('../utils/ObjectUtils');
 * @implements core.share.DownloadManagerInterface
 */
 var DownloadManager = (function () {
-    function DownloadManager(appQuitHandler, searchClient, indexName, options) {
+    function DownloadManager(config, appQuitHandler, stateHandlerFactory, searchClient, indexName, options) {
         if (typeof options === "undefined") { options = {}; }
         var _this = this;
+        /**
+        * The internally used config instance
+        *
+        * @member {core.config.ConfigInterface} core.share.DownloadManager~_config
+        */
+        this._config = null;
+        /**
+        * The absolute path where new downloads should be stored
+        *
+        * @member {string} core.share.DownloadManager~_downloadDestination
+        */
+        this._downloadDestination = '';
         /**
         * The search index where the query responses are stored.
         *
@@ -41,6 +55,12 @@ var DownloadManager = (function () {
         */
         this._searchClient = null;
         /**
+        * The state handler that manages the {@link core.share.DownloadManager~_downloadDestination}
+        *
+        * @member {core.utils.StateHandlerInterface} core.share.DownloadManager~_stateHandler
+        */
+        this._stateHandler = null;
+        /**
         * A list of running download ids.
         *
         * @member {Array} core.share.DownloadManager~_runningDownloadIds
@@ -54,6 +74,8 @@ var DownloadManager = (function () {
             }
         };
 
+        this._config = config;
+        this._stateHandler = stateHandlerFactory.create(path.join(this._config.get('app.dataPath'), this._config.get('share.downloadManagerStateConfig')));
         this._searchClient = searchClient;
         this._indexName = indexName;
         this._options = ObjectUtils.extend(defaults, options);
@@ -82,7 +104,7 @@ var DownloadManager = (function () {
             return process.nextTick(internalCallback.bind(null, null));
         }
 
-        this._searchClient.close(function (err) {
+        this._stateHandler.save({ destination: this._downloadDestination }, function (stateErr) {
             _this._isOpen = false;
 
             _this._eventEmitter.removeAllListeners();
@@ -91,7 +113,11 @@ var DownloadManager = (function () {
             _this._runningDownloadIds = null;
             _this._runningDownloadIds = [];
 
-            return internalCallback(null);
+            _this._searchClient.close(function (err) {
+                err = stateErr || err;
+
+                return internalCallback(err);
+            });
         });
     };
 
@@ -119,12 +145,18 @@ var DownloadManager = (function () {
                 return internalCallback(new Error('DownloadManager#createDownload: Could not create download. No or empty file size provided.'));
             }
 
-            if (_this._isOpen) {
-                _this._runningDownloadIds.push(responseId);
-                _this._eventEmitter.emit('downloadAdded', responseId, response.itemName, response.itemStats.size, response.itemHash, response._meta);
-            }
+            _this.getDownloadDestination(function (err, destination) {
+                if (err) {
+                    return internalCallback(err);
+                }
 
-            return internalCallback(null);
+                if (_this._isOpen) {
+                    _this._runningDownloadIds.push(responseId);
+                    _this._eventEmitter.emit('downloadAdded', responseId, response.itemName, response.itemStats.size, response.itemHash, destination, response._meta);
+                }
+
+                return internalCallback(null);
+            });
         });
     };
 
@@ -133,6 +165,17 @@ var DownloadManager = (function () {
             this._runningDownloadIds.splice(this._runningDownloadIds.indexOf(downloadId), 1);
             this._eventEmitter.emit('downloadEnded', downloadId, reason);
         }
+    };
+
+    DownloadManager.prototype.getDownloadDestination = function (callback) {
+        var _this = this;
+        fs.exists(this._downloadDestination, function (exists) {
+            if (!exists) {
+                return callback(new Error('DownloadManager#getDownloadDestination: The download destination does not exists: ' + _this._downloadDestination), null);
+            }
+
+            return callback(null, _this._downloadDestination);
+        });
     };
 
     DownloadManager.prototype.isOpen = function (callback) {
@@ -176,7 +219,29 @@ var DownloadManager = (function () {
                 _this._eventEmitter = new events.EventEmitter();
             }
 
-            _this._isOpen = true;
+            _this._stateHandler.load(function (err, state) {
+                _this._isOpen = true;
+
+                if (state && state['destination']) {
+                    _this._downloadDestination = state['destination'];
+                }
+
+                return internalCallback(null);
+            });
+        });
+    };
+
+    DownloadManager.prototype.setDownloadDestination = function (destinationPath, callback) {
+        var _this = this;
+        var internalCallback = callback || function () {
+        };
+
+        fs.exists(destinationPath, function (exists) {
+            if (!exists) {
+                return internalCallback(new Error('DownloadManager#setDownloadDestination: Cannot set the download destination. The path is does not exists: ' + _this._downloadDestination));
+            }
+
+            _this._downloadDestination = destinationPath;
 
             return internalCallback(null);
         });

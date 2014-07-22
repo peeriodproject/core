@@ -8,39 +8,49 @@ import sinon = require('sinon');
 import testUtils = require('../../utils/testUtils');
 
 import AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
-import SearchClient = require('../../../src/core/search/SearchClient');
 import DownloadManager = require('../../../src/core/share/DownloadManager');
+import JSONStateHandler = require('../../../src/core/utils/JSONStateHandler');
+import JSONStateHandlerFactory = require('../../../src/core/utils/JSONStateHandlerFactory');
+import ObjectConfig = require('../../../src/core/config/ObjectConfig');
+import SearchClient = require('../../../src/core/search/SearchClient');
 
 describe('CORE --> SHARE--> DownloadManager @joern', function () {
 	var sandbox:SinonSandbox;
+	var configStub:any;
+	var stateHandlerFactoryStub:any;
+	var stateHandlerStub:any;
 	var appQuitHandlerStub:any;
 	var searchClientStub:any;
+
+	var appDataPath = testUtils.getFixturePath('core/share/DownloadManager');
 	var response = null;
 
+	var state = null;
+
 	var validResponse = {
-		_type: "jj.core.documentanalyser",
-		_itemId: "3c45b5405c817c047a0759d7f3249d19a0aa58d9",
-		itemName: "LoremIpsum.txt",
+		_type    : "jj.core.documentanalyser",
+		_itemId  : "3c45b5405c817c047a0759d7f3249d19a0aa58d9",
+		itemName : "LoremIpsum.txt",
 		itemStats: {
-			uid: 501,
-			atime: "2014-07-21T15:58:48.000Z",
-			ino: 47882983,
-			dev: 16777218,
+			uid    : 501,
+			atime  : "2014-07-21T15:58:48.000Z",
+			ino    : 47882983,
+			dev    : 16777218,
 			blksize: 4096,
-			mtime: "2014-07-13T15:02:41.000Z",
-			gid: 0,
-			nlink: 1,
-			blocks: 8,
-			rdev: 0,
-			ctime: "2014-07-13T15:02:41.000Z",
-			size: 308,
-			mode: 33188
+			mtime  : "2014-07-13T15:02:41.000Z",
+			gid    : 0,
+			nlink  : 1,
+			blocks : 8,
+			rdev   : 0,
+			ctime  : "2014-07-13T15:02:41.000Z",
+			size   : 308,
+			mode   : 33188
 		},
-		itemHash: "3c45b5405c817c047a0759d7f3249d19a0aa58d9",
-		file: [
+		itemHash : "3c45b5405c817c047a0759d7f3249d19a0aa58d9",
+		file     : [
 			"vel augue laoreet rutrum faucibus dolor auctor. Lorem ipsum dolor sit amet, consectetur adipiscing elit"
 		],
-		_meta: {
+		_meta    : {
 			additional: "metadata"
 		}
 	};
@@ -52,8 +62,36 @@ describe('CORE --> SHARE--> DownloadManager @joern', function () {
 	};
 
 	beforeEach(function () {
+		testUtils.createFolder(appDataPath);
+
 		sandbox = sinon.sandbox.create();
+		configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+			get: function (key) {
+				if (key === 'app.dataPath') {
+					return appDataPath;
+				}
+				else if (key === 'share.downloadManagerStateConfig') {
+					return 'downloadManager.json';
+				}
+			}
+		});
 		appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
+		stateHandlerStub = testUtils.stubPublicApi(sandbox, JSONStateHandler, {
+			load: function () {
+				return process.nextTick(arguments[0].bind(null, null, state));
+			},
+			save: function () {
+				return process.nextTick(arguments[1].bind(null, null));
+			}
+		});
+
+		stateHandlerFactoryStub = testUtils.stubPublicApi(sandbox, JSONStateHandlerFactory, {
+			create: function () {
+				arguments[0].should.equal(appDataPath + '/downloadManager.json');
+
+				return stateHandlerStub;
+			}
+		})
 		searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
 
 			close: function (callback) {
@@ -81,21 +119,24 @@ describe('CORE --> SHARE--> DownloadManager @joern', function () {
 		appQuitHandlerStub = null;
 		searchClientStub = null;
 		response = null;
+
+		testUtils.deleteFolderRecursive(appDataPath);
 	});
 
-	it ('should correctly instantiate the DownloadManager', function (done) {
-		var manager = new DownloadManager(appQuitHandlerStub, searchClientStub, 'searchresponses');
+	it('should correctly instantiate the DownloadManager', function (done) {
+		var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, 'searchresponses');
 
 		manager.should.be.an.instanceof(DownloadManager);
 
 		closeAndDone(manager, done);
 	});
 
-	it ('should correctly open and close the manager', function (done) {
-		var manager = new DownloadManager(appQuitHandlerStub, searchClientStub, 'searchresponses', {
+	it('should correctly open and close the manager', function (done) {
+		var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, 'searchresponses', {
 			onOpenCallback: function () {
 				manager.open(function () {
 					searchClientStub.open.called.should.be.true;
+					stateHandlerStub.load.called.should.be.true;
 
 					manager.isOpen(function (err:Error, isOpen:boolean) {
 						(err === null).should.be.true;
@@ -103,6 +144,7 @@ describe('CORE --> SHARE--> DownloadManager @joern', function () {
 
 						manager.close(function () {
 							searchClientStub.close.called.should.be.true;
+							stateHandlerStub.save.called.should.be.true;
 
 							manager.isOpen(function (err:Error, isOpen:boolean) {
 								(err === null).should.be.true;
@@ -117,26 +159,31 @@ describe('CORE --> SHARE--> DownloadManager @joern', function () {
 		});
 	});
 
-	it ('should correctly create a new download', function (done) {
+	it('should correctly create a new download', function (done) {
 		response = validResponse;
 
 		var addedSpy = sandbox.spy();
 
-		var manager = new DownloadManager(appQuitHandlerStub, searchClientStub, 'searchresponses', {
+		var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, 'searchresponses', {
 			onOpenCallback: function () {
-				manager.createDownload('QqGNZv7rSrGJzBzs5Ya2XQ', function (err) {
+				manager.setDownloadDestination(appDataPath, function (err:Error) {
 					(err === null).should.be.true;
 
-					addedSpy.calledOnce.should.be.true;
-					addedSpy.getCall(0).args[0].should.equal('QqGNZv7rSrGJzBzs5Ya2XQ');
-					addedSpy.getCall(0).args[1].should.equal('LoremIpsum.txt');
-					addedSpy.getCall(0).args[2].should.equal(308);
-					addedSpy.getCall(0).args[3].should.equal('3c45b5405c817c047a0759d7f3249d19a0aa58d9');
-					addedSpy.getCall(0).args[4].should.containDeep({
-						additional: 'metadata'
-					})
+					manager.createDownload('QqGNZv7rSrGJzBzs5Ya2XQ', function (err) {
+						(err === null).should.be.true;
 
-					closeAndDone(manager, done);
+						addedSpy.calledOnce.should.be.true;
+						addedSpy.getCall(0).args[0].should.equal('QqGNZv7rSrGJzBzs5Ya2XQ');
+						addedSpy.getCall(0).args[1].should.equal('LoremIpsum.txt');
+						addedSpy.getCall(0).args[2].should.equal(308);
+						addedSpy.getCall(0).args[3].should.equal('3c45b5405c817c047a0759d7f3249d19a0aa58d9');
+						addedSpy.getCall(0).args[4].should.equal(appDataPath);
+						addedSpy.getCall(0).args[5].should.containDeep({
+							additional: 'metadata'
+						})
+
+						closeAndDone(manager, done);
+					});
 				});
 			}
 		});
@@ -144,11 +191,12 @@ describe('CORE --> SHARE--> DownloadManager @joern', function () {
 		manager.onDownloadAdded(addedSpy);
 	});
 
-	describe ('should correclty prevent the creation of a new download', function () {
+	describe('should correclty prevent the creation of a new download', function () {
 		var manager = null;
 
 		beforeEach(function (done) {
-			manager = new DownloadManager(appQuitHandlerStub, searchClientStub, 'searchresponses', {
+			state = { destination: appDataPath };
+			manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, 'searchresponses', {
 				onOpenCallback: function () {
 					done();
 				}
@@ -159,7 +207,35 @@ describe('CORE --> SHARE--> DownloadManager @joern', function () {
 			closeAndDone(manager, done);
 		});
 
-		it ('if no response was found', function (done) {
+		it('if the current download destination does not exists', function (done) {
+			var onAddedSpy = sandbox.spy();
+
+			response = validResponse;
+
+			// close the manager and load an invalid path from state
+			manager.close(function () {
+				state = { destination: 'invalid/destination' };
+				manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, 'searchresponses', {
+					onOpenCallback: function (err) {
+						(err === null).should.be.true;
+
+						// create the download
+						manager.createDownload('randomId', function (err) {
+							err.should.be.an.instanceof(Error);
+							err.message.should.equal('DownloadManager#getDownloadDestination: The download destination does not exists: invalid/destination')
+
+							onAddedSpy.called.should.be.false;
+
+							done();
+						});
+
+						manager.onDownloadAdded(onAddedSpy);
+					}
+				});
+			});
+		});
+
+		it('if no response was found', function (done) {
 			var onAddedSpy = sandbox.spy();
 
 			manager.createDownload('randomId', function (err) {
@@ -174,7 +250,7 @@ describe('CORE --> SHARE--> DownloadManager @joern', function () {
 			manager.onDownloadAdded(onAddedSpy);
 		});
 
-		it ('if a download with the given id is already running', function (done) {
+		it('if a download with the given id is already running', function (done) {
 			var onAddedSpy = sandbox.spy();
 
 			response = validResponse;
@@ -195,7 +271,7 @@ describe('CORE --> SHARE--> DownloadManager @joern', function () {
 			manager.onDownloadAdded(onAddedSpy);
 		});
 
-		it ('if the download size is empty', function (done) {
+		it('if the download size is empty', function (done) {
 			var onAddedSpy = sandbox.spy();
 
 			response = validResponse;
@@ -214,11 +290,12 @@ describe('CORE --> SHARE--> DownloadManager @joern', function () {
 		});
 	});
 
-	it ('should correctly cancel the download', function (done) {
+	it('should correctly cancel the download', function (done) {
 		response = validResponse;
+		state = { destination: appDataPath };
 
 		var id:string = 'QqGNZv7rSrGJzBzs5Ya2XQ';
-		var manager = new DownloadManager(appQuitHandlerStub, searchClientStub, 'searchresponses', {
+		var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, 'searchresponses', {
 			onOpenCallback: function () {
 				manager.createDownload(id);
 			}
@@ -237,14 +314,15 @@ describe('CORE --> SHARE--> DownloadManager @joern', function () {
 		});
 	});
 
-	it ('should correctly end a download', function (done) {
+	it('should correctly end a download', function (done) {
 		response = validResponse;
+		state = { destination: appDataPath };
 
 		var id:string = 'QqGNZv7rSrGJzBzs5Ya2XQ';
 		// prevent recursion flag
 		var removed:boolean = false;
 
-		var manager = new DownloadManager(appQuitHandlerStub, searchClientStub, 'searchresponses', {
+		var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, 'searchresponses', {
 			onOpenCallback: function () {
 				manager.createDownload(id);
 			}
@@ -270,12 +348,13 @@ describe('CORE --> SHARE--> DownloadManager @joern', function () {
 		});
 	});
 
-	it ('should correctly update the status', function (done) {
+	it('should correctly update the status', function (done) {
 		response = validResponse;
+		state = { destination: appDataPath };
 
 		var id:string = 'QqGNZv7rSrGJzBzs5Ya2XQ';
 
-		var manager = new DownloadManager(appQuitHandlerStub, searchClientStub, 'searchresponses', {
+		var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, 'searchresponses', {
 			onOpenCallback: function () {
 				manager.createDownload(id);
 			}
@@ -293,12 +372,13 @@ describe('CORE --> SHARE--> DownloadManager @joern', function () {
 		});
 	});
 
-	it ('should correctly update the progress', function (done) {
+	it('should correctly update the progress', function (done) {
 		response = validResponse;
+		state = { destination: appDataPath };
 
 		var id:string = 'QqGNZv7rSrGJzBzs5Ya2XQ';
 
-		var manager = new DownloadManager(appQuitHandlerStub, searchClientStub, 'searchresponses', {
+		var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, 'searchresponses', {
 			onOpenCallback: function () {
 				manager.createDownload(id);
 			}

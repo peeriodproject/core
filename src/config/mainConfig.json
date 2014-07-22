@@ -104,6 +104,9 @@
     "app"     : {
         "dataPath": "appDataFolder"
     },
+    "share" : {
+        "downloadManagerStateConfig": "downloadManager.json"
+    },
     "search"  : {
         "host"             : "localhost",
         "port"             : 9200,
