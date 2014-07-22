@@ -233,7 +233,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Download (semi-integration)', 
 			}
 		});
 
-		return new Download(filename, expectedSize, expectedHash, initialBlock, feedingNodesBlockMaintainer, fileBlockWriterFactory, shareMessenger, transferMessageCenter,
+		return new Download(filename, expectedSize, expectedHash, initialBlock, feedingNodesBlockMaintainer, fileBlockWriterFactory.createWriter(), shareMessenger, transferMessageCenter,
 		writableShareRequestFactory, writableEncryptedShareFactory, readableEncryptedShareFactory, readableShareAbortFactory, writableShareAbortFactory, readableBlockFactory, readableShareRatifyFactory, decrypter, encrypter, writableBlockRequestFactory);
 	};
 
