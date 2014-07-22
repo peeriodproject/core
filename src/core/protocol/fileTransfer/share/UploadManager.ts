@@ -1,5 +1,4 @@
 import UploadManagerInterface = require('./interfaces/UploadManagerInterface');
-
 import ConfigInterface = require('../../../config/interfaces/ConfigInterface');
 import TransferMessageCenterInterface = require('../interfaces/TransferMessageCenterInterface');
 import UploadFactoryInterface = require('./interfaces/UploadFactoryInterface');
@@ -9,14 +8,53 @@ import ReadableShareRequestMessageFactoryInterface = require('./messages/interfa
 import ReadableShareRequestMessageInterface = require('./messages/interfaces/ReadableShareRequestMessageInterface');
 import UploadBridgeInterface = require('../../../share/interfaces/UploadBridgeInterface');
 
+/**
+ * UploadManagerInterface implementation.
+ *
+ * @class core.protocol.fileTransfer.share.UploadManager
+ * @implements core.protocol.fileTransfer.share.UploadManagerInterface
+ *
+ * @param {core.config.ConfigInterface} transferConfig
+ * @param {core.protocol.fileTransfer.TransferMessageCenterInterface} transferMessageCenter
+ * @param {core.protocol.fileTransfer.share.UploadFactoryInterface} uploadFactory
+ * @param {core.protocol.fileTransfer.share.ReadableShareRequestMessageFactoryInterface} readableShareRequestFactory
+ * @param {core.share.UploadBridge} UploadBridgeInterface
+ */
 class UploadManager implements UploadManagerInterface {
 
-	private _maximumNumberOfParallelUploads:number = 0;
-	private _transferMessageCenter:TransferMessageCenterInterface = null;
-	private _uploadFactory:UploadFactoryInterface = null;
+	/**
+	 * The list keeping track of the currently active uploads.
+	 *
+	 * @member {core.protocol.fileTransfer.share.UploadMap} core.protocol.fileTransfer.share.UploadManager~_activeUploads
+	 */
 	private _activeUploads:UploadMap = {};
-	private _readableShareRequestFactory:ReadableShareRequestMessageFactoryInterface = null;
+
+	/**
+	 * @member {core.share.UploadBridge} core.protocol.fileTransfer.share.UploadManager~_bridge
+	 */
 	private _bridge:UploadBridgeInterface = null;
+
+	/**
+	 * Propulated by config.
+	 *
+	 * @member {number} core.protocol.fileTransfer.share.UploadManager~_maximumNumberOfParallelUploads
+	 */
+	private _maximumNumberOfParallelUploads:number = 0;
+
+	/**
+	 * @member {core.protocol.fileTransfer.share.ReadableShareRequestMessageFactoryInterface} core.protocol.fileTransfer.share.UploadManager~_readableShareRequestFactory
+	 */
+	private _readableShareRequestFactory:ReadableShareRequestMessageFactoryInterface = null;
+
+	/**
+	 * @member {core.protocol.fileTransfer.TransferMessageCenterInterface} core.protocol.fileTransfer.share.UploadManager~_transferMessageCenter
+	 */
+	private _transferMessageCenter:TransferMessageCenterInterface = null;
+
+	/**
+	 * @member {core.protocol.fileTransfer.share.UploadFactoryInterface} core.protocol.fileTransfer.share.UploadManager~_uploadFactory
+	 */
+	private _uploadFactory:UploadFactoryInterface = null;
 
 	public constructor (transferConfig:ConfigInterface, transferMessageCenter:TransferMessageCenterInterface, uploadFactory:UploadFactoryInterface, readableShareRequestMessageFactory:ReadableShareRequestMessageFactoryInterface, uploadBridge:UploadBridgeInterface) {
 		this._maximumNumberOfParallelUploads = transferConfig.get('fileTransfer.maximumNumberOfParallelUploads');
@@ -28,6 +66,19 @@ class UploadManager implements UploadManagerInterface {
 		this._setupListeners();
 	}
 
+	/**
+	 * Tries to get the file info from the database by the SHA-1 hash provided in the SHARE_REQUEST message.
+	 * If there is a file, a new upload is created and the correct listeners hooked to the upload, which are then
+	 * propagated to the bridge.
+	 *
+	 * NOTE: Only when an upload is finally killed is it removed from the active list.
+	 *
+	 * @method core.protocol.fileTransfer.share.UploadManager~_constructUploadByRequest
+	 *
+	 * @param {string} transferIdentifier The transfer identifier of the received SHARE_REQUEST message. This is also used to identify the different uploads.
+	 * @param {string} circuitIdOfRequest The identifier of the circuit the SHARE_REQUEST message came through. Preferred circuit for SHARE_RATIFY message.
+	 * @param {core.protocol.fileTransfer.share.ReadableShareRequestMessageInterface} requestMessage The SHARE_REQUEST message
+	 */
 	private _constructUploadByRequest (transferIdentifier:string, circuitIdOfRequest:string, requestMessage:ReadableShareRequestMessageInterface):void {
 		this._bridge.getFileInfoByHash(requestMessage.getFileHash(), (err:Error, fullFilePath:string, filename:string, filesize:number) => {
 			if (!err && fullFilePath) {
@@ -93,6 +144,12 @@ class UploadManager implements UploadManagerInterface {
 		});
 	}
 
+	/**
+	 * Sets up the listeners for the message center's SHARE_REQUEST event and on the bridge's 'abortUpload' event for manually
+	 * aborting active uploads.
+	 *
+	 * @method core.protocol.fileTransfer.share.UploadManager~_setupListeners
+	 */
 	private _setupListeners ():void {
 		this._transferMessageCenter.on('SHARE_REQUEST', (transferIdentifier:string, circuitIdOfMessage:string, msgPayload:Buffer) => {
 			if ((Object.keys(this._activeUploads).length < this._maximumNumberOfParallelUploads) && !this._activeUploads[transferIdentifier]) {
