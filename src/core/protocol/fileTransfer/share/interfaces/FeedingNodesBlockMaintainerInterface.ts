@@ -11,8 +11,8 @@ import HydraNodeList = require('../../../hydra/interfaces/HydraNodeList');
  *
  * This class is to ensure that any working feeding connections can be reused as long as the underlying circuits are valid.
  *
- * @class
- * @interface core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface
+ * @interface
+ * @class core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface
  */
 interface FeedingNodesBlockMaintainerInterface extends NodeJS.EventEmitter {
 
