@@ -28,7 +28,7 @@ var WritableCellCreatedRejectedMessageFactory = require('../../../../src/core/pr
 var WritableAdditiveSharingMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableAdditiveSharingMessageFactory');
 var WritableCreateCellAdditiveMessageFactory = require('../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory');
 
-describe('CORE --> PROTOCOL --> HYDRA --> HydraCell', function () {
+describe('CORE --> PROTOCOL --> HYDRA --> HydraCell @current', function () {
     var sandbox = null;
 
     // STUBS
@@ -111,7 +111,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraCell', function () {
             cell.getExtensionTimeout().should.not.equal(0);
 
             done();
-        }, 50);
+        }, 200);
     });
 
     it('should handle the rejection', function (done) {
@@ -124,7 +124,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraCell', function () {
             cell.getExtensionTimeout().should.equal(0);
 
             done();
-        }, 50);
+        }, 200);
     });
 
     it('should handle the acceptance of an extension', function (done) {
@@ -140,8 +140,8 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraCell', function () {
                 lastMessageSent.type.should.equal('ENCRYPTED_DIGEST');
                 cell.getExtensionTimeout().should.equal(0);
                 done();
-            }, 50);
-        }, 50);
+            }, 200);
+        }, 200);
     });
 
     it('should tear down the circuit on a socket termination', function (done) {
@@ -169,7 +169,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraCell', function () {
                 messageCenter.listeners('CELL_CREATED_REJECTED_' + succ.circuitId).length.should.equal(0);
                 done();
             });
-        }, 50);
+        }, 20);
     });
 
     it('should teardown the circuit when extending the cell on mismatching uuids', function (done) {
@@ -190,7 +190,7 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraCell', function () {
             });
 
             sendExtensionResponse(false, true);
-        }, 100);
+        }, 200);
     });
 
     before(function () {
