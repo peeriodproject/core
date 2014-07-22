@@ -67,6 +67,21 @@ import QueryManager = require('./fileTransfer/query/QueryManager');
 import ResponseManagerInterface = require('./fileTransfer/query/interfaces/ResponseManagerInterface');
 import ResponseManager = require('./fileTransfer/query/ResponseManager');
 import SearchMessageBridgeInterface = require('../search/interfaces/SearchMessageBridgeInterface');
+import UploadBridgeInterface = require('../share/interfaces/UploadBridgeInterface');
+import DownloadBridgeInterface = require('../share/interfaces/DownloadBridgeInterface');
+import FeedingNodesBlockMaintainerFactory = require('./fileTransfer/share/FeedingNodesBlockMaintainerFactory');
+import ShareMessengerFactory = require('./fileTransfer/share/ShareMessengerFactory');
+import FileBlockWriterFactory = require('../fs/FileBlockWriterFactory');
+import FileBlockReaderFactory = require('../fs/FileBlockReaderFactory');
+import DownloadFactoryInterface = require('./fileTransfer/share/interfaces/DownloadFactoryInterface');
+import Aes128GcmDownloadFactory = require('./fileTransfer/share/Aes128GcmDownloadFactory');
+import DownloadManager = require('./fileTransfer/share/DownloadManager');
+import DownloadManagerInterface = require('./fileTransfer/share/interfaces/DownloadManagerInterface');
+import UploadFactoryInterface = require('./fileTransfer/share/interfaces/UploadFactoryInterface');
+import Aes128GcmUploadFactory = require('./fileTransfer/share/Aes128GcmUploadFactory');
+import UploadManager = require('./fileTransfer/share/UploadManager');
+import UploadManagerInterface = require('./fileTransfer/share/interfaces/UploadManagerInterface');
+import ReadableShareRequestMessageFactory = require('./fileTransfer/share/messages/ReadableShareRequestMessageFactory');
 
 var logger = require('../utils/logger/LoggerFactory').create();
 
@@ -97,8 +112,13 @@ class ProtocolGateway extends events.EventEmitter implements ProtocolGatewayInte
 	private _queryManager:QueryManagerInterface = null;
 	private _responseManager:ResponseManagerInterface = null;
 	private _searchBridge:SearchMessageBridgeInterface = null;
+	private _downloadBridge:DownloadBridgeInterface = null;
+	private _uploadBridge:UploadBridgeInterface = null;
+	private _downlodManager:DownloadManagerInterface = null;
+	private _uploadManager:UploadManagerInterface = null;
 
-	constructor (appConfig:ConfigInterface, protocolConfig:ConfigInterface, topologyConfig:ConfigInterface, hydraConfig:ConfigInterface, transferConfig:ConfigInterface, myNode:MyNodeInterface, tcpSocketHandler:TCPSocketHandlerInterface, routingTable:RoutingTableInterface, searchBridge:SearchMessageBridgeInterface) {
+
+	constructor (appConfig:ConfigInterface, protocolConfig:ConfigInterface, topologyConfig:ConfigInterface, hydraConfig:ConfigInterface, transferConfig:ConfigInterface, myNode:MyNodeInterface, tcpSocketHandler:TCPSocketHandlerInterface, routingTable:RoutingTableInterface, searchBridge:SearchMessageBridgeInterface, downloadBridge:DownloadBridgeInterface, uploadBridge:UploadBridgeInterface) {
 		super();
 
 		this._appConfig = appConfig;
@@ -112,6 +132,8 @@ class ProtocolGateway extends events.EventEmitter implements ProtocolGatewayInte
 		this._routingTable = routingTable;
 
 		this._searchBridge = searchBridge;
+		this._downloadBridge = downloadBridge;
+		this._uploadBridge = uploadBridge;
 
 		// build up the ProtocolConnectionManager
 		this._protocolConnectionManager = new ProtocolConnectionManager(this._protocolConfig, this._myNode, this._tcpSocketHandler);
@@ -187,6 +209,20 @@ class ProtocolGateway extends events.EventEmitter implements ProtocolGatewayInte
 		this._queryManager = new QueryManager(this._transferConfig, queryFactory, this._hydraCircuitManager, this._searchBridge);
 
 		this._responseManager = new ResponseManager(this._transferConfig, this._hydraCellManager, this._transferMessageCenter, this._searchBridge, this._broadcastManager, this._hydraCircuitManager, writableQueryResponseMessageFactory);
+
+		// Upload/Download things
+		var feedingNodesBlockMaintainerFactory = new FeedingNodesBlockMaintainerFactory(this._hydraCircuitManager);
+		var shareMessengerFactory = new ShareMessengerFactory(this._transferConfig, this._hydraCircuitManager, this._transferMessageCenter);
+		var fileBlockWriterFactory = new FileBlockWriterFactory();
+		var fileBlockReaderFactory = new FileBlockReaderFactory();
+
+		var downloadFactory:DownloadFactoryInterface = new Aes128GcmDownloadFactory(feedingNodesBlockMaintainerFactory, shareMessengerFactory, fileBlockWriterFactory, this._transferMessageCenter);
+		var uploadFactory:UploadFactoryInterface = new Aes128GcmUploadFactory(this._transferConfig, feedingNodesBlockMaintainerFactory, shareMessengerFactory, fileBlockReaderFactory, this._transferMessageCenter);
+		var readableShareRequestMessageFactory = new ReadableShareRequestMessageFactory();
+
+		this._downlodManager = new DownloadManager(this._transferConfig, this._hydraCircuitManager, this._downloadBridge, downloadFactory);
+		this._uploadManager = new UploadManager(this._transferConfig, this._transferMessageCenter, uploadFactory, readableShareRequestMessageFactory, this._uploadBridge);
+
 	}
 
 	public start ():void {
