@@ -1,17 +1,18 @@
 import fs = require('fs');
+import zlib = require('zlib');
 
 import FileBlockReaderInterface = require('./interfaces/FileBlockReaderInterface');
 
 /**
- * FileBlockReaderInterface implementation.
+ * FileBlockReaderInterface implementation using zlib's deflate for compressing the read bytes.
  *
- * @class core.fs.FileBlockReader
+ * @class core.fs.DeflatingFileBlockReader
  * @implements core.fs.FileBlockReaderInterface
  *
  * @param {string} filePath Full path of the file to read
  * @param {number} blockSize Number of bytes to read in one block.
  */
-class FileBlockReader implements FileBlockReaderInterface {
+class DeflatingFileBlockReader implements FileBlockReaderInterface {
 
 	/**
 	 * Stores the number of bytes in a block.
@@ -91,7 +92,16 @@ class FileBlockReader implements FileBlockReaderInterface {
 					callback(err, null);
 				}
 				else {
-					callback(null, numOfReadBytes < this._blockSize ? buffer.slice(0, numOfReadBytes) : buffer);
+					var rawBuffer:Buffer = numOfReadBytes < this._blockSize ? buffer.slice(0, numOfReadBytes) : buffer;
+
+					zlib.deflateRaw(rawBuffer, (err:Error, compressedBuffer:Buffer) => {
+						if (err) {
+							callback(err, null);
+						}
+						else {
+							callback(null, compressedBuffer);
+						}
+					});
 				}
 			});
 		}
@@ -104,4 +114,4 @@ class FileBlockReader implements FileBlockReaderInterface {
 
 }
 
-export = FileBlockReader;
+export = DeflatingFileBlockReader;

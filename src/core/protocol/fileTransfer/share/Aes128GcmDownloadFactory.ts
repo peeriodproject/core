@@ -21,22 +21,17 @@ import Aes128GcmWritableMessageFactory = require('../../hydra/messages/Aes128Gcm
 import Aes128GcmReadableDecryptedMessageFactory = require('../../hydra/messages/Aes128GcmReadableDecryptedMessageFactory');
 
 /**
- * DownloadFactoryInterface implementation using AES-128 in Galois counter mode for encryption/decryption/authentication.
+ * DownloadFactoryInterface implementation using AES-128 in Galois counter mode for encryption/decryption/authentication
+ * and zlib's compression for file writing.
  *
  * @class core.protocol.fileTransfer.share.Aes128GcmDownloadFactory
  * @implements core.protocol.fileTransfer.share.DownloadFactoryInterface
  *
- * @param {core.protocol.hydra.CircuitManagerInterface} circuitManager
  * @param {core.protocol.fileTransfer.share.ShareMessengerFactoryInterface} shareMessengerFactory
- * @param {core.protocol.fileTransfer.share.FileBlockWriterFactoryInterface} fileBlockWriterFactory
+ * @param {core.fs.FileBlockWriterFactoryInterface} fileBlockWriterFactory
  * @param {core.protocol.fileTransfer.TransferMessageCenterInterface} transferMessageCenter
  */
 class Aes128GcmDownloadFactory implements DownloadFactoryInterface {
-
-	/**
-	 * @member {core.protocol.hydra.CircuitManagerInterface} core.protocol.fileTransfer.share.Aes128GcmDownloadFactory~_circuitManager
-	 */
-	private _circuitManager:CircuitManagerInterface = null;
 
 	/**
 	 * @member {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerFactoryInterface} core.protocol.fileTransfer.share.Aes128GcmDownloadFactory~_feedingNodesBlockMaintainerFactory
@@ -123,7 +118,7 @@ class Aes128GcmDownloadFactory implements DownloadFactoryInterface {
 			return null;
 		}
 
-		return new Download(filename, expectedSize, expectedHash, initialBlock, this._feedingNodesBlockMaintainerFactory.create(), this._fileBlockWriterFactory, this._shareMessengerFactory.createMessenger(), this._transferMessageCenter, this._writableShareRequestMessageFactory, this._writableEncryptedShareMessageFactory, this._readableEncryptedShareMessageFactory, this._readableShareAbortMessageFactory, this._writableShareAbortMessageFactory, this._readableBlockMessageFactory, this._readableShareRatifyMessageFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory(), this._writableBlockRequestMessageFactory);
+		return new Download(filename, expectedSize, expectedHash, initialBlock, this._feedingNodesBlockMaintainerFactory.create(), this._fileBlockWriterFactory.createWriter(filename, expectedSize, expectedHash, true), this._shareMessengerFactory.createMessenger(), this._transferMessageCenter, this._writableShareRequestMessageFactory, this._writableEncryptedShareMessageFactory, this._readableEncryptedShareMessageFactory, this._readableShareAbortMessageFactory, this._writableShareAbortMessageFactory, this._readableBlockMessageFactory, this._readableShareRatifyMessageFactory, new Aes128GcmReadableDecryptedMessageFactory(), new Aes128GcmWritableMessageFactory(), this._writableBlockRequestMessageFactory);
 	}
 
 }

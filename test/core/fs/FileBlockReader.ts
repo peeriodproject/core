@@ -95,7 +95,7 @@ describe('CORE --> FS --> FileBlockReader', function () {
 
 			var fd = (<any> reader)._fileDescriptor;
 
-			(<any> reader)._fileDescriptor = 10;
+			(<any> reader)._fileDescriptor = -1;
 
 			reader.readBlock(0, function (err) {
 				(err == null).should.be.false;

@@ -6,7 +6,6 @@ import Padding = require('../../../crypto/Padding');
 import DownloadInterface = require('./interfaces/DownloadInterface');
 import FeedingNodesBlockMaintainerInterface = require('./interfaces/FeedingNodesBlockMaintainerInterface');
 import FileBlockWriterInterface = require('../../../fs/interfaces/FileBlockWriterInterface');
-import FileBlockWriterFactoryInterface = require('../../../fs/interfaces/FileBlockWriterFactoryInterface');
 import ShareMessengerInterface = require('./interfaces/ShareMessengerInterface');
 import TransferMessageCenterInterface = require('../interfaces/TransferMessageCenterInterface');
 import WritableShareRequestMessageFactoryInterface = require('./messages/interfaces/WritableShareRequestMessageFactoryInterface');
@@ -36,7 +35,7 @@ import ReadableDecryptedMessageInterface = require('../../hydra/messages/interfa
  * @param {string} expectedHash Hexadecimal string representation of the SHA-1 hash of the file to request
  * @param {Buffer} initialFeedingNodesBlockBufferOfUpload The feeding nodes block that came with the result of a query, indicating how the uploader can be reached.
  * @param {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface} feedingNodesBlockMaintainer Fresh feeding nodes block maintainer instance.
- * @param {core.fs.FileBlockWriterFactoryInterface} fileBlockWriterFactory Factory for creating file block writers.
+ * @param {core.fs.FileBlockWriterInterface} fileBlockWriter Block Writer.
  * @param {core.protocol.fileTransfer.share.ShareMessengerInterface} shareMessenger Fresh share messenger instance.
  * @param {core.protocol.fileTransfer.TransferMessageCenterInterface} transferMessageCenter Working transfer message center instance.
  * @param {core.protocol.fileTransfer.share.WritableShareRequestMessageFactoryInterface} writableShareRequestFactory
@@ -90,12 +89,12 @@ class Download extends events.EventEmitter implements DownloadInterface {
 	/**
 	 * Provided in constructor. See above.
 	 *
-	 * @member {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface} core.protocol.fileTransfer.share.Download~_feedingNodesBlockMaintainerInterface
+	 * @member {core.protocol.fileTransfer.share.FeedingNodesBlockMaintainerInterface} core.protocol.fileTransfer.share.Download~_feedingNodesBlockMaintainer
 	 */
 	private _feedingNodesBlockMaintainer:FeedingNodesBlockMaintainerInterface = null;
 
 	/**
-	 * Constructed with the factory in constructor, with the filename, expected size and expected hash.
+	 * Provided in constructor. See above.
 	 *
 	 * @member {core.fs.FileBlockWriterInterface} core.protocol.fileTransfer.share.Download~_fileBlockWriter
 	 */
@@ -216,7 +215,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 	 */
 	private _writableShareRequestFactory:WritableShareRequestMessageFactoryInterface = null;
 
-	public constructor (filename:string, expectedSize:number, expectedHash:string, initialFeedingNodesBlockBufferOfUploader:Buffer, feedingNodesBlockMaintainer:FeedingNodesBlockMaintainerInterface, fileBlockWriterFactory:FileBlockWriterFactoryInterface, shareMessenger:ShareMessengerInterface, transferMessageCenter:TransferMessageCenterInterface, writableShareRequestFactory:WritableShareRequestMessageFactoryInterface, writableEncryptedShareFactory:WritableEncryptedShareMessageFactoryInterface, readableEncryptedShareFactory:ReadableEncryptedShareMessageFactoryInterface, readableShareAbortFactory:ReadableShareAbortMessageFactoryInterface, writableShareAbortFactory:WritableShareAbortMessageFactoryInterface, readableBlockFactory:ReadableBlockMessageFactoryInterface, readableShareRatifyFactory:ReadableShareRatifyMessageFactoryInterface, decrypter:ReadableDecryptedMessageFactoryInterface, encrypter:WritableEncryptedMessageFactoryInterface, writableBlockRequestFactory:WritableBlockRequestMessageFactoryInterface) {
+	public constructor (filename:string, expectedSize:number, expectedHash:string, initialFeedingNodesBlockBufferOfUploader:Buffer, feedingNodesBlockMaintainer:FeedingNodesBlockMaintainerInterface, fileBlockWriter:FileBlockWriterInterface, shareMessenger:ShareMessengerInterface, transferMessageCenter:TransferMessageCenterInterface, writableShareRequestFactory:WritableShareRequestMessageFactoryInterface, writableEncryptedShareFactory:WritableEncryptedShareMessageFactoryInterface, readableEncryptedShareFactory:ReadableEncryptedShareMessageFactoryInterface, readableShareAbortFactory:ReadableShareAbortMessageFactoryInterface, writableShareAbortFactory:WritableShareAbortMessageFactoryInterface, readableBlockFactory:ReadableBlockMessageFactoryInterface, readableShareRatifyFactory:ReadableShareRatifyMessageFactoryInterface, decrypter:ReadableDecryptedMessageFactoryInterface, encrypter:WritableEncryptedMessageFactoryInterface, writableBlockRequestFactory:WritableBlockRequestMessageFactoryInterface) {
 
 		super();
 
@@ -237,7 +236,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 		this._readableShareRatifyFactory = readableShareRatifyFactory;
 		this._decrypter = decrypter;
 		this._encrypter = encrypter;
-		this._fileBlockWriter = fileBlockWriterFactory.createWriter(this._filename, this._expectedSize, this._expectedHash);
+		this._fileBlockWriter = fileBlockWriter;
 	}
 
 	/**
@@ -256,6 +255,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 		// prepare the file block writer
 		this._fileBlockWriter.prepareToWrite((err:Error) => {
 			if (err) {
+				console.log(err);
 				this._kill(false, false, 'File cannot be written.');
 			}
 			else {
@@ -294,7 +294,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 	 * is present, the download process is killed and a last SHARE_ABORT message is sent to the other side.
 	 * Otherwise the complete amount of written bytes is emitted, before issuing a new BLOCK_REQUEST message.
 	 *
-	 * On any problems decrypting or deformatting the message, or when a prohibited message type is used,
+	 * On any problems decrypting or deformatting the message, or if a prohibited message type is used,
 	 * the download process is killed and the last circuit of the message torn down.
 	 *
 	 * @method core.protocol.fileTransfer.share.Download~_handleBlockMessage
@@ -478,7 +478,6 @@ class Download extends events.EventEmitter implements DownloadInterface {
 	 * @method core.protocol.fileTransfer.share.Download~_kill
 	 *
 	 * @param {boolean} abortFileWriter If true, cleans up the file writer and deletes the written file.
-	 * @param {boolean} abortBlockMaintainer If true, cleans up the feeding nodes block maintainer.
 	 * @param {boolean} sendLastAbortMessage If true, a last SHARE_ABORT message is sent to the uploader. This can only be done if symmetric keys have been negotiated.
 	 * @param {string} message The reason for the killing. See {@link core.protocol.fileTransfer.share.DownloadInterface} for detailed information on the different reason types.
 	 * @param {string} lastMessageIdentifier Optional. The transfer identifier for a last SHARE_ABORT message. This must be specified if `sendLastAbortMessage` is true.
@@ -520,7 +519,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 
 	/**
 	 * This method checks if the client has at least one circuit to write a feeding request through. If yes, the callback is
-	 * IMMEDIATELY fired (not async!!). If no, a listener is set to wait for at least one circuit, before firing the callback.
+	 * IMMEDIATELY fired (not async!!). If not, a listener is set to wait for at least one circuit, before firing the callback.
 	 * If it must be waited and in the meantime the download process has been manually aborted, the callback is fired with
 	 * an error as argument, indicating to kill the download process.
 	 *

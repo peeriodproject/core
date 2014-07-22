@@ -1,16 +1,17 @@
 var fs = require('fs');
+var zlib = require('zlib');
 
 /**
-* FileBlockReaderInterface implementation.
+* FileBlockReaderInterface implementation using zlib's deflate for compressing the read bytes.
 *
-* @class core.fs.FileBlockReader
+* @class core.fs.DeflatingFileBlockReader
 * @implements core.fs.FileBlockReaderInterface
 *
 * @param {string} filePath Full path of the file to read
 * @param {number} blockSize Number of bytes to read in one block.
 */
-var FileBlockReader = (function () {
-    function FileBlockReader(filePath, blockSize) {
+var DeflatingFileBlockReader = (function () {
+    function DeflatingFileBlockReader(filePath, blockSize) {
         /**
         * Stores the number of bytes in a block.
         *
@@ -38,7 +39,7 @@ var FileBlockReader = (function () {
         this._blockSize = blockSize;
         this._filePath = filePath;
     }
-    FileBlockReader.prototype.abort = function (callback) {
+    DeflatingFileBlockReader.prototype.abort = function (callback) {
         if (this._canBeRead) {
             this._canBeRead = false;
 
@@ -56,11 +57,11 @@ var FileBlockReader = (function () {
         }
     };
 
-    FileBlockReader.prototype.canBeRead = function () {
+    DeflatingFileBlockReader.prototype.canBeRead = function () {
         return this._canBeRead;
     };
 
-    FileBlockReader.prototype.prepareToRead = function (callback) {
+    DeflatingFileBlockReader.prototype.prepareToRead = function (callback) {
         var _this = this;
         fs.open(this._filePath, 'r', function (err, fd) {
             if (err) {
@@ -73,14 +74,22 @@ var FileBlockReader = (function () {
         });
     };
 
-    FileBlockReader.prototype.readBlock = function (fromPosition, callback) {
+    DeflatingFileBlockReader.prototype.readBlock = function (fromPosition, callback) {
         var _this = this;
         if (this._canBeRead) {
             fs.read(this._fileDescriptor, new Buffer(this._blockSize), 0, this._blockSize, fromPosition, function (err, numOfReadBytes, buffer) {
                 if (err) {
                     callback(err, null);
                 } else {
-                    callback(null, numOfReadBytes < _this._blockSize ? buffer.slice(0, numOfReadBytes) : buffer);
+                    var rawBuffer = numOfReadBytes < _this._blockSize ? buffer.slice(0, numOfReadBytes) : buffer;
+
+                    zlib.deflateRaw(rawBuffer, function (err, compressedBuffer) {
+                        if (err) {
+                            callback(err, null);
+                        } else {
+                            callback(null, compressedBuffer);
+                        }
+                    });
                 }
             });
         } else {
@@ -89,8 +98,8 @@ var FileBlockReader = (function () {
             });
         }
     };
-    return FileBlockReader;
+    return DeflatingFileBlockReader;
 })();
 
-module.exports = FileBlockReader;
-//# sourceMappingURL=FileBlockReader.js.map
+module.exports = DeflatingFileBlockReader;
+//# sourceMappingURL=DeflatingFileBlockReader.js.map

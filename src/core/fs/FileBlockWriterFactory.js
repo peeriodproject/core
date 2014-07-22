@@ -1,4 +1,5 @@
 var FileBlockWriter = require('./FileBlockWriter');
+var InflatingFileBlockWriter = require('./InflatingFileBlockWriter');
 
 /**
 * FileBlockWriterFactoryInterface implementation.
@@ -16,8 +17,12 @@ var FileBlockWriterFactory = (function () {
         this._downloadFolderPath = null;
         this._downloadFolderPath = downloadFolderPath;
     }
-    FileBlockWriterFactory.prototype.createWriter = function (filename, expectedSize, expectedHash) {
-        return new FileBlockWriter(filename, this._downloadFolderPath, expectedSize, expectedHash);
+    FileBlockWriterFactory.prototype.createWriter = function (filename, expectedSize, expectedHash, useDecompression) {
+        if (useDecompression) {
+            return new InflatingFileBlockWriter(filename, this._downloadFolderPath, expectedSize, expectedHash);
+        } else {
+            return new FileBlockWriter(filename, this._downloadFolderPath, expectedSize, expectedHash);
+        }
     };
 
     FileBlockWriterFactory.prototype.getDownloadFolderPath = function () {

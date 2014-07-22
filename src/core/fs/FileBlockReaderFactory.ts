@@ -2,6 +2,7 @@ import FileBlockReaderFactoryInterface = require('./interfaces/FileBlockReaderFa
 import FileBlockReaderInterface = require('./interfaces/FileBlockReaderInterface');
 
 import FileBlockReader = require('./FileBlockReader');
+import DeflatingFileBlockReader = require('./DeflatingFileBlockReader');
 
 /**
  * @class core.fs.FileBlockReaderFactory
@@ -9,8 +10,13 @@ import FileBlockReader = require('./FileBlockReader');
  */
 class FileBlockReaderFactory implements FileBlockReaderFactoryInterface {
 
-	create (filePath:string, blockSize:number):FileBlockReaderInterface {
-		return new FileBlockReader(filePath, blockSize);
+	create (filePath:string, blockSize:number, useCompression?:boolean):FileBlockReaderInterface {
+		if (useCompression) {
+			return new DeflatingFileBlockReader(filePath, blockSize);
+		}
+		else {
+			return new FileBlockReader(filePath, blockSize);
+		}
 	}
 }
 
