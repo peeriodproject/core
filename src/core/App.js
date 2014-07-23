@@ -48,7 +48,11 @@ var PathValidator = require('./fs/PathValidator');
 
 var IndexManager = require('./search/IndexManager');
 
+// Share import
+var DownloadManager = require('./share/DownloadManager');
+
 // ui imports
+var UiShareManagerComponent = require('./ui/share/UiShareManagerComponent');
 var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
 
@@ -64,9 +68,18 @@ var App = {
     _uiComponents: [],
     _requestManager: null,
     _responseManager: null,
+    _started: [],
+    _stateHandlerFactory: null,
     _queryInterval: null,
     addUiComponent: function (component) {
         this._uiComponents.push(component);
+    },
+    getStateHandlerFactory: function () {
+        if (!this._stateHandlerFactory) {
+            this._stateHandlerFactory = new JSONStateHandlerFactory();
+        }
+
+        return this._stateHandlerFactory;
     },
     start: function (gui, nwApp, dataPath, win) {
         var _this = this;
@@ -84,7 +97,9 @@ var App = {
         }
 
         this.startSearchClient(function (searchConfig, searchClient) {
-            var searchRequestManager = new SearchRequestManager(_this.appQuitHandler, 'searchrequests', searchClient);
+            var searchRequestsIndexName = 'searchrequests';
+
+            var searchRequestManager = new SearchRequestManager(_this.appQuitHandler, searchRequestsIndexName, searchClient);
             var searchResponseManager = new SearchResponseManager(_this.appQuitHandler, searchClient);
 
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
@@ -93,7 +108,17 @@ var App = {
                 _this.startTopology(dataPath, searchMessageBridge);
             }
 
-            _this.startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager);
+            _this.startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager, function () {
+                _this._started.push('indexer');
+
+                _this.startUi();
+            });
+
+            _this.startSharing(searchClient, searchRequestsIndexName, function () {
+                _this._started.push('share');
+
+                _this.startUi();
+            });
 
             _this._requestManager = searchRequestManager;
             _this._responseManager = searchResponseManager;
@@ -132,7 +157,15 @@ var App = {
             this.appQuitHandler.quit();
         }.bind(this));
     },
-    startIndexer: function (searchConfig, searchClient, searchRequestManager, searchResponseManager) {
+    startSharing: function (searchClient, searchRequestsIndexName, callback) {
+        var shareConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'share']);
+        var downloadManager = new DownloadManager(shareConfig, this.appQuitHandler, this.getStateHandlerFactory(), searchClient, searchRequestsIndexName);
+
+        this.addUiComponent(new UiShareManagerComponent(downloadManager));
+
+        return callback();
+    },
+    startIndexer: function (searchConfig, searchClient, searchRequestManager, searchResponseManager, callback) {
         var _this = this;
         var fsConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'fs']);
         var pluginConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'plugin']);
@@ -144,7 +177,6 @@ var App = {
         var pluginRunnerFactory = new PluginRunnerFactory();
 
         var searchManager;
-        var stateHandlerFactory = new JSONStateHandlerFactory();
         var folderWatcherFactory = new FolderWatcherFactory();
         var pathValidator = new PathValidator();
         var folderWatcherManager;
@@ -154,7 +186,7 @@ var App = {
         var pluginManager = new PluginManager(pluginConfig, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
                 searchManager = new SearchManager(searchConfig, pluginManager, searchClient);
-                folderWatcherManager = new FolderWatcherManager(fsConfig, _this.appQuitHandler, stateHandlerFactory, folderWatcherFactory, {
+                folderWatcherManager = new FolderWatcherManager(fsConfig, _this.appQuitHandler, _this.getStateHandlerFactory(), folderWatcherFactory, {
                     onOpenCallback: function () {
                         indexManager = new IndexManager(searchConfig, _this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
                         pluginManager.activatePluginState(function (err) {
@@ -162,14 +194,12 @@ var App = {
                                 logger.error(err);
                             }
 
-                            searchFormResultsManager = new SearchFormResultsManager(searchAppConfig, _this.appQuitHandler, stateHandlerFactory, pluginManager, searchRequestManager);
+                            searchFormResultsManager = new SearchFormResultsManager(searchAppConfig, _this.appQuitHandler, _this.getStateHandlerFactory(), pluginManager, searchRequestManager);
                             _this.addUiComponent(new UiSearchFormResultsManagerComponent(searchFormResultsManager, searchRequestManager));
 
                             console.log('started indexer');
 
-                            if (process.env.UI_ENABLED) {
-                                _this.startUi();
-                            }
+                            return callback();
                         });
                     }
                 });
@@ -195,6 +225,26 @@ var App = {
         });
     },
     startUi: function () {
+        if (!process.env.UI_ENABLED) {
+            return;
+        }
+
+        console.log('started:', this._started);
+
+        var dependencies = ['indexer', 'share'];
+        var loaded = true;
+
+        for (var i in dependencies) {
+            if (this._started.indexOf(dependencies[i]) === -1) {
+                loaded = false;
+                break;
+            }
+        }
+
+        if (!loaded) {
+            return;
+        }
+
         var uiConfig = new JSONConfig('../../config/mainConfig.json', ['ui']);
 
         this.addUiComponent(new UiFolderDropzoneComponent(this._gui.Window));
