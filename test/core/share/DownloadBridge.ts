@@ -118,10 +118,10 @@ describe('CORE --> SHARE --> DownloadBridge @joern', function () {
 		it ('should correctly forward the `end` event', function () {
 			bridge.emit('end', 'downloadId', 'reason');
 
-			downloadManagerStub.updateDownloadStatus.calledOnce.should.be.true;
+			downloadManagerStub.downloadEnded.calledOnce.should.be.true;
 
-			downloadManagerStub.updateDownloadStatus.getCall(0).args[0].should.equal('downloadId');
-			downloadManagerStub.updateDownloadStatus.getCall(0).args[1].should.equal('reason');
+			downloadManagerStub.downloadEnded.getCall(0).args[0].should.equal('downloadId');
+			downloadManagerStub.downloadEnded.getCall(0).args[1].should.equal('reason');
 		});
 
 	});

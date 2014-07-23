@@ -41,7 +41,7 @@ class DownloadBridge extends events.EventEmitter implements DownloadBridgeInterf
 		});
 
 		this.on('end', function (downloadId:string, reason:string) {
-			downloadManager.updateDownloadStatus(downloadId, reason);
+			downloadManager.downloadEnded(downloadId, reason);
 		});
 	}
 }

@@ -43,7 +43,7 @@ var DownloadBridge = (function (_super) {
         });
 
         this.on('end', function (downloadId, reason) {
-            downloadManager.updateDownloadStatus(downloadId, reason);
+            downloadManager.downloadEnded(downloadId, reason);
         });
     }
     return DownloadBridge;
