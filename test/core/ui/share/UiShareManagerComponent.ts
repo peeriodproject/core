@@ -8,7 +8,7 @@ import testUtils = require('../../../utils/testUtils');
 import DownloadManager = require('../../../../src/core/share/DownloadManager');
 import UiShareManagerComponent = require('../../../../src/core/ui/share/UiShareManagerComponent');
 
-describe('CORE --> UI --> SHARE --> UiShareManagerComponent @joern', function () {
+describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
 	var sandbox:SinonSandbox;
 	var component:UiShareManagerComponent;
 	var downloadManagerStub:any;

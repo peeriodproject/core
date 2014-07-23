@@ -14,7 +14,7 @@ import JSONStateHandlerFactory = require('../../../src/core/utils/JSONStateHandl
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchClient = require('../../../src/core/search/SearchClient');
 
-describe('CORE --> SHARE--> DownloadManager @joern', function () {
+describe('CORE --> SHARE --> DownloadManager', function () {
 	var sandbox:SinonSandbox;
 	var configStub:any;
 	var stateHandlerFactoryStub:any;

@@ -5,7 +5,7 @@ var testUtils = require('../../../utils/testUtils');
 var DownloadManager = require('../../../../src/core/share/DownloadManager');
 var UiShareManagerComponent = require('../../../../src/core/ui/share/UiShareManagerComponent');
 
-describe('CORE --> UI --> SHARE --> UiShareManagerComponent @joern', function () {
+describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
     var sandbox;
     var component;
     var downloadManagerStub;
