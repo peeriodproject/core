@@ -50,7 +50,7 @@ class UiShareManagerComponent extends UiComponent {
 				created: new Date().getTime(),
 				id: downloadId,
 				hash: fileHash,
-				loaded: Math.round(fileSize * Math.random()),
+				loaded: 0,
 				name: fileName,
 				size: fileSize,
 				status: 'created'
@@ -79,13 +79,24 @@ class UiShareManagerComponent extends UiComponent {
 		});
 
 		this._downloadManager.onDownloadEnded((downloadId:string, reason:string) => {
+			if (!this._runningDownloads[downloadId]) {
+				return;
+			}
+
 			this._runningDownloads[downloadId].status = reason;
+			this.updateUi();
+
 		});
 	}
 
 	private _setupUiEvents () {
-		this.on('addDownload', (responseId:string) => {
-			this._downloadManager.createDownload(responseId);
+		this.on('addDownload', (responseId:string, callback:Function) => {
+			this._downloadManager.createDownload(responseId, (err) => {
+				// todo clean up error message and add error codes
+				var errMessage = err ? err.message : null;
+
+				return callback(errMessage);
+			});
 		});
 
 		this.on('cancelDownload', (downloadId:string) => {

@@ -49,7 +49,7 @@ var UiShareManagerComponent = (function (_super) {
                 created: new Date().getTime(),
                 id: downloadId,
                 hash: fileHash,
-                loaded: Math.round(fileSize * Math.random()),
+                loaded: 0,
                 name: fileName,
                 size: fileSize,
                 status: 'created'
@@ -78,14 +78,24 @@ var UiShareManagerComponent = (function (_super) {
         });
 
         this._downloadManager.onDownloadEnded(function (downloadId, reason) {
+            if (!_this._runningDownloads[downloadId]) {
+                return;
+            }
+
             _this._runningDownloads[downloadId].status = reason;
+            _this.updateUi();
         });
     };
 
     UiShareManagerComponent.prototype._setupUiEvents = function () {
         var _this = this;
-        this.on('addDownload', function (responseId) {
-            _this._downloadManager.createDownload(responseId);
+        this.on('addDownload', function (responseId, callback) {
+            _this._downloadManager.createDownload(responseId, function (err) {
+                // todo clean up error message and add error codes
+                var errMessage = err ? err.message : null;
+
+                return callback(errMessage);
+            });
         });
 
         this.on('cancelDownload', function (downloadId) {
