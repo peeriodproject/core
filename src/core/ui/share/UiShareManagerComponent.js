@@ -6,6 +6,12 @@ var __extends = this.__extends || function (d, b) {
 };
 var UiComponent = require('../UiComponent');
 
+/**
+* @class core.ui.UiShareManagerComponent
+* @extends core.ui.UiComponent
+*
+* @param {core.share.DownloadManagerInterface} downloadManager
+*/
 var UiShareManagerComponent = (function (_super) {
     __extends(UiShareManagerComponent, _super);
     function UiShareManagerComponent(downloadManager) {

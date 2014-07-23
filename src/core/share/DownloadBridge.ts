@@ -5,6 +5,13 @@ import events = require('events');
 import DownloadBridgeInterface = require('./interfaces/DownloadBridgeInterface');
 import DownloadManagerInterface = require('./interfaces/DownloadManagerInterface');
 
+/**
+ * @class core.share.DownloadBridge
+ * @extends events.EventEmitter
+ * @implements core.share.DownloadBridgeInterface
+ *
+ * @param {core.share.DownloadManagerInterface} downloadManager
+ */
 class DownloadBridge extends events.EventEmitter implements DownloadBridgeInterface {
 
 	constructor (downloadManager:DownloadManagerInterface) {

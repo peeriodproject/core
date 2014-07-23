@@ -17,6 +17,11 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
     __extends(UiSearchFormResultsManagerComponent, _super);
     function UiSearchFormResultsManagerComponent(searchFormResultsManager, searchRequestManager) {
         _super.call(this);
+        /**
+        * todo docs
+        *
+        * @member {string} core.ui.UiSearchFormResultsManagerComponent~_runningQueryId
+        */
         this._currentResults = {};
         /**
         * The internally used.SearchFormResultsManagerInterface instance to start new queries
@@ -39,8 +44,9 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
         */
         this._runningQueryId = null;
         /**
-        * todo ts-definition
+        * todo ts-definition, docs
         *
+        * @member {any} core.ui.UiSearchFormResultsManagerComponent~_runningQuery
         */
         this._runningQuery = null;
 
@@ -118,6 +124,8 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
     /**
     * Creates a new query if it differs from the stored {@link core.ui.UiSearchFormResultsManagerComponent~_runningQuery}
     * and stores the `queryId` for further cleanup.
+    *
+    * @method core.ui.UiSearchFormResultsManagerComponent~_addQuery
     *
     * @param rawQuery
     */

@@ -16,6 +16,13 @@ import ObjectUtils = require('../utils/ObjectUtils');
 /**
  * @class core.share.DownloadManager
  * @implements core.share.DownloadManagerInterface
+  *
+ * @param {core.config.ConfigInterface} config
+ * @param {core.utils.AppQuitHandlerInterface} appQuitHandler
+ * @param {core.utils.StateHandlerFactoryInterface} stateHandlerFactory
+ * @param {core.search.SearchClientInterface} searchClient
+ * @param {string} indexName
+ * @param {core.utils.ClosableAsyncOptions} options
  */
 class DownloadManager implements DownloadManagerInterface {
 
@@ -82,7 +89,7 @@ class DownloadManager implements DownloadManagerInterface {
 	 */
 	private _runningDownloadIds:Array<string> = [];
 
-	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, stateHandlerFactory:StateHandlerFactoryInterface, searchClient:SearchClientInterface, indexName:string, options = {}) {
+	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, stateHandlerFactory:StateHandlerFactoryInterface, searchClient:SearchClientInterface, indexName:string, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
 			closeOnProcessExit: true,
 			onCloseCallback   : function (err:Error) {
@@ -151,7 +158,6 @@ class DownloadManager implements DownloadManagerInterface {
 				err = stateErr || err;
 
 				searchClientClosed = true;
-
 
 				return checkAndReturn(err);
 			});

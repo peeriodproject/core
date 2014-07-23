@@ -4,6 +4,12 @@ import UiDownloadInterface = require('./interfaces/UiDownloadInterface');
 
 import UiComponent = require('../UiComponent');
 
+/**
+ * @class core.ui.UiShareManagerComponent
+ * @extends core.ui.UiComponent
+ *
+ * @param {core.share.DownloadManagerInterface} downloadManager
+ */
 class UiShareManagerComponent extends UiComponent {
 
 	private _downloadManager:DownloadManagerInterface = null;
@@ -13,6 +19,7 @@ class UiShareManagerComponent extends UiComponent {
 	private _progressUpdated:boolean = null;
 
 	private _runningDownloads:{ [identifier:string]:UiDownloadInterface; } = {};
+
 	private _unmergedDownloadsWrittenBytes:{ [identifier:string]:number; } = {};
 
 	constructor (downloadManager:DownloadManagerInterface) {

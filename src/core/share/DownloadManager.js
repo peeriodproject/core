@@ -7,6 +7,13 @@ var ObjectUtils = require('../utils/ObjectUtils');
 /**
 * @class core.share.DownloadManager
 * @implements core.share.DownloadManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
+* @param {core.utils.StateHandlerFactoryInterface} stateHandlerFactory
+* @param {core.search.SearchClientInterface} searchClient
+* @param {string} indexName
+* @param {core.utils.ClosableAsyncOptions} options
 */
 var DownloadManager = (function () {
     function DownloadManager(config, appQuitHandler, stateHandlerFactory, searchClient, indexName, options) {

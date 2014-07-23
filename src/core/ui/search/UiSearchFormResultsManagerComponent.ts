@@ -12,6 +12,11 @@ import UiComponent = require('../UiComponent');
  */
 class UiSearchFormResultsManagerComponent extends UiComponent {
 
+	/**
+	 * todo docs
+	 *
+	 * @member {string} core.ui.UiSearchFormResultsManagerComponent~_runningQueryId
+	 */
 	private _currentResults:any = {};
 
 	/**
@@ -38,8 +43,9 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 	private _runningQueryId:string = null;
 
 	/**
-	 * todo ts-definition
+	 * todo ts-definition, docs
 	 *
+	 * @member {any} core.ui.UiSearchFormResultsManagerComponent~_runningQuery
 	 */
 	private _runningQuery:any = null;
 
@@ -121,6 +127,8 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 	/**
 	 * Creates a new query if it differs from the stored {@link core.ui.UiSearchFormResultsManagerComponent~_runningQuery}
 	 * and stores the `queryId` for further cleanup.
+	 *
+	 * @method core.ui.UiSearchFormResultsManagerComponent~_addQuery
 	 *
 	 * @param rawQuery
 	 */

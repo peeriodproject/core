@@ -7,6 +7,13 @@ var __extends = this.__extends || function (d, b) {
 };
 var events = require('events');
 
+/**
+* @class core.share.DownloadBridge
+* @extends events.EventEmitter
+* @implements core.share.DownloadBridgeInterface
+*
+* @param {core.share.DownloadManagerInterface} downloadManager
+*/
 var DownloadBridge = (function (_super) {
     __extends(DownloadBridge, _super);
     function DownloadBridge(downloadManager) {
