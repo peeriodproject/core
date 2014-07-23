@@ -116,6 +116,17 @@ class DownloadManager implements DownloadManagerInterface {
 
 	public close (callback?:(err:Error) => any):void {
 		var internalCallback = callback || this._options.onCloseCallback;
+		var searchClientClosed:boolean = false;
+		var downloadsEnded:boolean = false;
+		var checkAndReturn:Function = function (err:Error) {
+			if (err) {
+				console.error(err);
+			}
+
+			if (searchClientClosed && downloadsEnded) {
+				return internalCallback(err);
+			}
+		};
 
 		if (!this._isOpen) {
 			return process.nextTick(internalCallback.bind(null, null));
@@ -124,16 +135,25 @@ class DownloadManager implements DownloadManagerInterface {
 		this._stateHandler.save({ destination: this._downloadDestination }, (stateErr:Error) => {
 			this._isOpen = false;
 
-			this._eventEmitter.removeAllListeners();
-			this._eventEmitter = null;
+			this._cancelAllRunningDownloads(() => {
+				this._eventEmitter.removeAllListeners();
+				this._eventEmitter = null;
 
-			this._runningDownloadIds = null;
-			this._runningDownloadIds = [];
+				this._runningDownloadIds = null;
+				this._runningDownloadIds = [];
+
+				downloadsEnded = true;
+
+				return checkAndReturn(null);
+			});
 
 			this._searchClient.close((err:Error) => {
 				err = stateErr || err;
 
-				return internalCallback(err);
+				searchClientClosed = true;
+
+
+				return checkAndReturn(err);
 			});
 		});
 	}
@@ -191,6 +211,10 @@ class DownloadManager implements DownloadManagerInterface {
 
 			return callback(null, this._downloadDestination);
 		});
+	}
+
+	public getRunningDownloadIds (callback:(downloadIdList:Array<string>) => any):void {
+		return process.nextTick(callback.bind(null, this._runningDownloadIds.slice()));
 	}
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
@@ -285,6 +309,34 @@ class DownloadManager implements DownloadManagerInterface {
 	 */
 	private _downloadExists (downloadId):boolean {
 		return this._runningDownloadIds.indexOf(downloadId) !== -1;
+	}
+
+	private _cancelAllRunningDownloads (callback:Function):void {
+		var idsToWaitFor:Array<string> = [];
+
+		if (!this._runningDownloadIds.length) {
+			return callback();
+		}
+
+		// register extra listener
+		this._eventEmitter.addListener('downloadEnded', (downloadId:string) => {
+			var index = idsToWaitFor.indexOf(downloadId)
+
+			if (index !== -1) {
+				idsToWaitFor.splice(index, 1);
+			}
+
+			if (!idsToWaitFor.length) {
+				return callback();
+			}
+		});
+
+		for (var i = 0, l = this._runningDownloadIds.length; i < l; i++) {
+			var id:string = this._runningDownloadIds[i];
+
+			idsToWaitFor.push(id);
+			this.cancelDownload(id);
+		}
 	}
 
 }

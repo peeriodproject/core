@@ -99,6 +99,17 @@ var DownloadManager = (function () {
     DownloadManager.prototype.close = function (callback) {
         var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
+        var searchClientClosed = false;
+        var downloadsEnded = false;
+        var checkAndReturn = function (err) {
+            if (err) {
+                console.error(err);
+            }
+
+            if (searchClientClosed && downloadsEnded) {
+                return internalCallback(err);
+            }
+        };
 
         if (!this._isOpen) {
             return process.nextTick(internalCallback.bind(null, null));
@@ -107,16 +118,24 @@ var DownloadManager = (function () {
         this._stateHandler.save({ destination: this._downloadDestination }, function (stateErr) {
             _this._isOpen = false;
 
-            _this._eventEmitter.removeAllListeners();
-            _this._eventEmitter = null;
+            _this._cancelAllRunningDownloads(function () {
+                _this._eventEmitter.removeAllListeners();
+                _this._eventEmitter = null;
 
-            _this._runningDownloadIds = null;
-            _this._runningDownloadIds = [];
+                _this._runningDownloadIds = null;
+                _this._runningDownloadIds = [];
+
+                downloadsEnded = true;
+
+                return checkAndReturn(null);
+            });
 
             _this._searchClient.close(function (err) {
                 err = stateErr || err;
 
-                return internalCallback(err);
+                searchClientClosed = true;
+
+                return checkAndReturn(err);
             });
         });
     };
@@ -176,6 +195,10 @@ var DownloadManager = (function () {
 
             return callback(null, _this._downloadDestination);
         });
+    };
+
+    DownloadManager.prototype.getRunningDownloadIds = function (callback) {
+        return process.nextTick(callback.bind(null, this._runningDownloadIds.slice()));
     };
 
     DownloadManager.prototype.isOpen = function (callback) {
@@ -273,6 +296,34 @@ var DownloadManager = (function () {
     */
     DownloadManager.prototype._downloadExists = function (downloadId) {
         return this._runningDownloadIds.indexOf(downloadId) !== -1;
+    };
+
+    DownloadManager.prototype._cancelAllRunningDownloads = function (callback) {
+        var idsToWaitFor = [];
+
+        if (!this._runningDownloadIds.length) {
+            return callback();
+        }
+
+        // register extra listener
+        this._eventEmitter.addListener('downloadEnded', function (downloadId) {
+            var index = idsToWaitFor.indexOf(downloadId);
+
+            if (index !== -1) {
+                idsToWaitFor.splice(index, 1);
+            }
+
+            if (!idsToWaitFor.length) {
+                return callback();
+            }
+        });
+
+        for (var i = 0, l = this._runningDownloadIds.length; i < l; i++) {
+            var id = this._runningDownloadIds[i];
+
+            idsToWaitFor.push(id);
+            this.cancelDownload(id);
+        }
     };
     return DownloadManager;
 })();

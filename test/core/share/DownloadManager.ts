@@ -14,7 +14,7 @@ import JSONStateHandlerFactory = require('../../../src/core/utils/JSONStateHandl
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchClient = require('../../../src/core/search/SearchClient');
 
-describe('CORE --> SHARE --> DownloadManager', function () {
+describe('CORE --> SHARE --> DownloadManager @joern', function () {
 	var sandbox:SinonSandbox;
 	var configStub:any;
 	var stateHandlerFactoryStub:any;
@@ -56,8 +56,14 @@ describe('CORE --> SHARE --> DownloadManager', function () {
 	};
 
 	var closeAndDone = function (downloadManager, done) {
-		downloadManager.close(function () {
-			done();
+		downloadManager.getRunningDownloadIds(function (ids) {
+			downloadManager.close(function () {
+				done();
+			});
+
+			ids.forEach(function (id) {
+				downloadManager.downloadEnded(id, 'MANUAL_ABORT');
+			});
 		});
 	};
 
@@ -395,6 +401,35 @@ describe('CORE --> SHARE --> DownloadManager', function () {
 			expected.should.equal(100);
 
 			done();
+		});
+	});
+
+	it ('should correctly stop all running downloads, wait for the `end` event and close down the manager afterwards.', function (done) {
+		response = validResponse;
+		state = { destination: appDataPath };
+
+		var id:string = 'QqGNZv7rSrGJzBzs5Ya2XQ';
+
+		var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, 'searchresponses', {
+			onOpenCallback: function () {
+				manager.createDownload(id);
+			}
+		});
+
+		manager.onDownloadAdded(function (id) {
+			var endedSpy = sandbox.spy();
+
+			manager.onDownloadEnded(endedSpy);
+			manager.onDownloadCanceled(function (id) {
+				manager.downloadEnded(id, 'MANUAL_ABORT');
+			});
+
+			manager.close(function () {
+				endedSpy.calledOnce.should.be.true;
+				endedSpy.getCall(0).args[0].should.equal(id);
+
+				done();
+			});
 		});
 	});
 });
