@@ -426,6 +426,18 @@ class SearchClient implements SearchClientInterface {
 		});
 	}
 
+	public getItemByHash (itemHash:string, callback:(err:Error, item:SearchItemInterface) => any):void {
+		var searchQuery:Object = {
+			query: {
+				match: {
+					itemHash: itemHash
+				}
+			}
+		};
+
+		return this._getItemByQuery(searchQuery, callback);
+	}
+
 	public getItemById (id:string, callback:(err:Error, item:SearchItemInterface) => any):void {
 		this._client.get({
 			index: this._indexName,
@@ -452,24 +464,7 @@ class SearchClient implements SearchClientInterface {
 			}
 		};
 
-		this._client.search({
-			index: this._indexName,
-			body : searchQuery
-		}, (err:Error, response:Object, status:number) => {
-			var hits:Object = response && response['hits'] ? response['hits'] : {};
-
-			err = err || null;
-
-			if (!this._isValidResponse(err, status, 'IndexMissingException')) {
-				return callback(err, null);
-			}
-
-			if (!(hits && hits['total'])) {
-				return callback(null, null);
-			}
-
-			return callback(null, this._createSearchItemFromHits(hits['hits']));
-		});
+		return this._getItemByQuery(searchQuery, callback);
 	}
 
 	public getOutgoingQuery (indexName:string, queryId:string, callback:(err:Error, queryBody:Object) => void):void {
@@ -673,15 +668,52 @@ class SearchClient implements SearchClientInterface {
 			return null;
 		}
 
+		//console.log('_createSearchItemFromHits', hits);
+
 		return this._searchItemFactory.create(hits);
 	}
 
+	/**
+	 * todo docs
+	 *
+	 * @param response
+	 * @returns {*}
+	 */
 	private _createSearchItemFromResponse (response):SearchItemInterface {
 		if (!response) {
 			return null;
 		}
 
+		//console.log('_createSearchItemFromResponse', response);
+
 		return this._searchItemFactory.create([response]);
+	}
+
+	/**
+	 * todo docs
+	 *
+	 * @param searchQuery
+	 * @param callback
+	 */
+	private _getItemByQuery (searchQuery, callback):void {
+		this._client.search({
+			index: this._indexName,
+			body : searchQuery
+		}, (err:Error, response:Object, status:number) => {
+			var hits:Object = response && response['hits'] ? response['hits'] : {};
+
+			err = err || null;
+
+			if (!this._isValidResponse(err, status, 'IndexMissingException')) {
+				return callback(err, null);
+			}
+
+			if (!(hits && hits['total'])) {
+				return callback(null, null);
+			}
+
+			return callback(null, this._createSearchItemFromHits(hits['hits']));
+		});
 	}
 
 	/**

@@ -100,10 +100,18 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 * @param {string} queryId
 	 * @param callback
 	 */
-	deleteOutgoingQuery (indexName:string, queryId:string, callback?:(err:Error) => any):void
+	deleteOutgoingQuery (indexName:string, queryId:string, callback?:(err:Error) => any):void;
 
 	/**
-	 * Returns the first item which matches the specified id accross all types (plugin identifiers)
+	 * Returns the first item which matches the specified fileHash across all types (plugin identifiers)
+	 *
+	 * @param {string} itemHash
+	 * @param {Function} callback
+	 */
+	getItemByHash (itemHash:string, callback:(err:Error, item:SearchItemInterface) => any):void;
+
+	/**
+	 * Returns the first item which matches the specified id across all types (plugin identifiers)
 	 *
 	 * @method core.search.SearchClientInterface#getItemById
 	 *
@@ -113,7 +121,7 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	getItemById (id:string, callback:(err:Error, item:SearchItemInterface) => any):void;
 
 	/**
-	 * Returns the first item which matches the specified itemPath accross all types (plugin identifiers)
+	 * Returns the first item which matches the specified itemPath across all types (plugin identifiers)
 	 *
 	 * @method core.search.SearchClientInterface#getItemByPath
 	 *

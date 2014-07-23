@@ -154,6 +154,43 @@ describe('CORE --> SEARCH --> SearchClient', function () {
         });
     });
 
+    it('should correctly return the added item by hash', function (done) {
+        var dataToIndex = {
+            itemHash: 'fileHash',
+            itemName: 'file.txt',
+            itemPath: '../path/file.txt',
+            itemStats: {
+                stats: true
+            },
+            foo: 'bar'
+        };
+
+        var pluginDataToIndex = {
+            pluginidentifier: dataToIndex,
+            pluginidentifier2: dataToIndex
+        };
+        searchClient.getItemByHash('fileHash', function (err, items) {
+            (err === null).should.be.true;
+            (items === null).should.be.true;
+
+            searchClient.addItem(pluginDataToIndex, function (err, ids) {
+                searchClient.getItemByHash('fileHash', function (err, item) {
+                    var identifiers = item.getPluginIdentifiers();
+
+                    identifiers.length.should.equal(2);
+
+                    for (var i in identifiers) {
+                        var identifier = identifiers[i];
+
+                        item.getPluginData(identifier).should.containDeep({ foo: 'bar' });
+                    }
+
+                    done();
+                });
+            });
+        });
+    });
+
     it('should correctly return the added item by id', function (done) {
         var dataToIndex = {
             itemHash: 'fileHash',

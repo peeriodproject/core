@@ -409,6 +409,18 @@ var SearchClient = (function () {
         });
     };
 
+    SearchClient.prototype.getItemByHash = function (itemHash, callback) {
+        var searchQuery = {
+            query: {
+                match: {
+                    itemHash: itemHash
+                }
+            }
+        };
+
+        return this._getItemByQuery(searchQuery, callback);
+    };
+
     SearchClient.prototype.getItemById = function (id, callback) {
         var _this = this;
         this._client.get({
@@ -427,7 +439,6 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.getItemByPath = function (itemPath, callback) {
-        var _this = this;
         // todo limit query to 1
         var searchQuery = {
             query: {
@@ -437,24 +448,7 @@ var SearchClient = (function () {
             }
         };
 
-        this._client.search({
-            index: this._indexName,
-            body: searchQuery
-        }, function (err, response, status) {
-            var hits = response && response['hits'] ? response['hits'] : {};
-
-            err = err || null;
-
-            if (!_this._isValidResponse(err, status, 'IndexMissingException')) {
-                return callback(err, null);
-            }
-
-            if (!(hits && hits['total'])) {
-                return callback(null, null);
-            }
-
-            return callback(null, _this._createSearchItemFromHits(hits['hits']));
-        });
+        return this._getItemByQuery(searchQuery, callback);
     };
 
     SearchClient.prototype.getOutgoingQuery = function (indexName, queryId, callback) {
@@ -659,15 +653,51 @@ var SearchClient = (function () {
             return null;
         }
 
+        //console.log('_createSearchItemFromHits', hits);
         return this._searchItemFactory.create(hits);
     };
 
+    /**
+    * todo docs
+    *
+    * @param response
+    * @returns {*}
+    */
     SearchClient.prototype._createSearchItemFromResponse = function (response) {
         if (!response) {
             return null;
         }
 
+        //console.log('_createSearchItemFromResponse', response);
         return this._searchItemFactory.create([response]);
+    };
+
+    /**
+    * todo docs
+    *
+    * @param searchQuery
+    * @param callback
+    */
+    SearchClient.prototype._getItemByQuery = function (searchQuery, callback) {
+        var _this = this;
+        this._client.search({
+            index: this._indexName,
+            body: searchQuery
+        }, function (err, response, status) {
+            var hits = response && response['hits'] ? response['hits'] : {};
+
+            err = err || null;
+
+            if (!_this._isValidResponse(err, status, 'IndexMissingException')) {
+                return callback(err, null);
+            }
+
+            if (!(hits && hits['total'])) {
+                return callback(null, null);
+            }
+
+            return callback(null, _this._createSearchItemFromHits(hits['hits']));
+        });
     };
 
     /**
