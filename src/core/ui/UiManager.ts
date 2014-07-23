@@ -296,12 +296,6 @@ class UiManager implements UiManagerInterface {
 			component.getState(callback);
 		});
 
-		/*spark.on('end', () => {
-			this._sparkCount--;
-
-			console.log('spark ended', this._sparkCount);
-		});*/
-
 		// register component events
 		var events:Array<string> = component.getEventNames();
 
