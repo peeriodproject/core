@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/ui/share/UiShareManagerComponent.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/ui/share/UiShareManagerComponent.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">73.27</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">152</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">34.24</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.27</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var UiComponent = require(&#039;../UiComponent&#039;);
+
+var UiShareManagerComponent = (function (_super) {
+    __extends(UiShareManagerComponent, _super);
+    function UiShareManagerComponent(downloadManager) {
+        _super.call(this);
+        this._downloadManager = null;
+        this._progressRunnerTimeout = null;
+        this._progressUpdated = null;
+        this._runningDownloads = {};
+        this._unmergedDownloadsWrittenBytes = {};
+
+        this._downloadManager = downloadManager;
+
+        this._setupDownloadManagerEvents();
+        this._setupUiEvents();
+    }
+    UiShareManagerComponent.prototype.getEventNames = function () {
+        return [&#039;addDownload&#039;, &#039;cancelDownload&#039;, &#039;removeDownload&#039;, &#039;updateDownloadDestination&#039;];
+    };
+
+    UiShareManagerComponent.prototype.getChannelName = function () {
+        return &#039;share&#039;;
+    };
+
+    UiShareManagerComponent.prototype.getState = function (callback) {
+        var _this = this;
+        this._downloadManager.getDownloadDestination(function (err, destination) {
+            return callback({
+                downloads: _this._runningDownloads,
+                destination: {
+                    path: destination,
+                    error: (err ? { message: err.message, code: &#039;INVALID_PATH&#039; } : null)
+                }
+            });
+        });
+    };
+
+    UiShareManagerComponent.prototype._setupDownloadManagerEvents = function () {
+        var _this = this;
+        this._downloadManager.onDownloadAdded(function (downloadId, fileName, fileSize, fileHash, metadata) {
+            _this._runningDownloads[downloadId] = {
+                created: new Date().getTime(),
+                id: downloadId,
+                hash: fileHash,
+                loaded: 0,
+                name: fileName,
+                size: fileSize,
+                status: &#039;created&#039;
+            };
+
+            _this._startProgressRunner();
+            _this.updateUi();
+        });
+
+        this._downloadManager.onDownloadProgressUpdate(function (downloadId, writtenBytes) {
+            if (!_this._runningDownloads[downloadId]) {
+                return;
+            }
+
+            _this._unmergedDownloadsWrittenBytes[downloadId] = writtenBytes;
+            _this._progressUpdated = true;
+        });
+
+        this._downloadManager.onDownloadStatusChanged(function (downloadId, status) {
+            if (!_this._runningDownloads[downloadId]) {
+                return;
+            }
+
+            _this._runningDownloads[downloadId].status = status;
+            _this.updateUi();
+        });
+
+        this._downloadManager.onDownloadEnded(function (downloadId, reason) {
+            if (!_this._runningDownloads[downloadId]) {
+                return;
+            }
+
+            _this._runningDownloads[downloadId].status = reason;
+            _this.updateUi();
+        });
+    };
+
+    UiShareManagerComponent.prototype._setupUiEvents = function () {
+        var _this = this;
+        this.on(&#039;addDownload&#039;, function (responseId, callback) {
+            _this._downloadManager.createDownload(responseId, function (err) {
+                // todo clean up error message and add error codes
+                var errMessage = err ? err.message : null;
+
+                return callback(errMessage);
+            });
+        });
+
+        this.on(&#039;cancelDownload&#039;, function (downloadId) {
+            if (_this._runningDownloads[downloadId]) {
+                _this._downloadManager.cancelDownload(downloadId);
+            }
+        });
+
+        this.on(&#039;removeDownload&#039;, function (downloadId) {
+            if (_this._runningDownloads[downloadId]) {
+                delete _this._runningDownloads[downloadId];
+                delete _this._unmergedDownloadsWrittenBytes[downloadId];
+
+                _this.updateUi();
+            }
+        });
+
+        this.on(&#039;updateDownloadDestination&#039;, function (destination) {
+            _this._downloadManager.setDownloadDestination(destination, function (err) {
+                _this.updateUi();
+            });
+        });
+    };
+
+    UiShareManagerComponent.prototype._startProgressRunner = function () {
+        var _this = this;
+        if (this._progressRunnerTimeout) {
+            return;
+        }
+
+        this._progressRunnerTimeout = setTimeout(function () {
+            var ids;
+
+            if (!_this._progressUpdated) {
+                return;
+            }
+
+            ids = Object.keys(_this._unmergedDownloadsWrittenBytes);
+
+            for (var i = 0, l = ids.length; i &lt; l; i++) {
+                var id = ids[i];
+
+                _this._runningDownloads[id].loaded = _this._unmergedDownloadsWrittenBytes[id];
+            }
+
+            _this._progressUpdated = false;
+            _this.updateUi();
+            _this._startProgressRunner();
+        }, 500);
+    };
+    return UiShareManagerComponent;
+})(UiComponent);
+
+module.exports = UiShareManagerComponent;
+//# sourceMappingURL=UiShareManagerComponent.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

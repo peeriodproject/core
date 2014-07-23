@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">74.07</p>
+      <p class="stat">74.12</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">196</p>
+      <p class="stat">278</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">25.74</p>
+      <p class="stat">37.53</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.33</p>
+      <p class="stat">1.96</p>
     </div>
   </div>
 </div>
@@ -108,8 +108,9 @@ var PluginGlobalsFactory = require(&#039;./PluginGlobalsFactory&#039;);
 */
 var PluginRunner = (function () {
     // todo plugin-type PluginGlobalsFactory factory parameter
-    function PluginRunner(config, identifier, pluginScriptPath) {
+    function PluginRunner(config, identifier, pluginScriptPath, fileBlockReaderFactory) {
         this._config = null;
+        this._fileBlockReaderFactory = null;
         this._sandbox = null;
         this._sandboxScripts = {};
         this._sandboxSocketPath = &#039;&#039;;
@@ -118,6 +119,7 @@ var PluginRunner = (function () {
         this._pluginScriptPath = null;
         this._config = config;
         this._pluginScriptPath = pluginScriptPath;
+        this._fileBlockReaderFactory = fileBlockReaderFactory;
 
         // todo wait for node webkits child_process.spawn fix and remove own binary
         // we&#039;re using our own node binary as a temporary fix here!
@@ -163,6 +165,12 @@ var PluginRunner = (function () {
         });
     };
 
+    PluginRunner.prototype.getResultFields = function (callback) {
+        this._createAndRunStaticSandbox(&#039;main.getResultFields&#039;, {}, callback, function (output) {
+            return callback(null, output);
+        });
+    };
+
     PluginRunner.prototype.getSearchFields = function (callback) {
         this._createAndRunStaticSandbox(&#039;main.getSearchFields&#039;, {}, callback, function (output) {
             return callback(null, output);
@@ -170,13 +178,61 @@ var PluginRunner = (function () {
     };
 
     PluginRunner.prototype.onBeforeItemAdd = function (itemPath, stats, globals, callback) {
-        this._createAndRunItemSandbox(itemPath, stats, globals, &#039;main.onBeforeItemAdd&#039;, callback, function (output) {
-            return callback(null, output);
+        var _this = this;
+        var methodName = &#039;main.onBeforeItemAdd&#039;;
+        var sandboxKey = this._getSandboxKey(itemPath, methodName);
+        var fileBlockReader = this._fileBlockReaderFactory.create(itemPath, this._config.get(&#039;plugin.pluginRunnerChunkSize&#039;));
+        var prevFileReadPosition = -1;
+        var fileReadPosition = 0;
+
+        var internalCallback = function (err, output) {
+            if (err) {
+                console.error(err);
+            }
+
+            fileBlockReader.abort(function (readerErr) {
+                err = err || readerErr;
+
+                return callback(err, output);
+            });
+        };
+
+        fileBlockReader.prepareToRead(function (err) {
+            if (err) {
+                return internalCallback(err, null);
+            }
+
+            _this._createItemSandbox(sandboxKey, internalCallback, function (output) {
+                return internalCallback(null, output);
+            });
+
+            _this._sandboxScripts[sandboxKey].on(&#039;task&#039;, function (taskErr, taskName, options, methodName, taskCallback) {
+                if (err) {
+                    return internalCallback(err, null);
+                }
+
+                if (taskName !== &#039;getFileBuffer&#039; || prevFileReadPosition === fileReadPosition) {
+                    return;
+                }
+
+                fileBlockReader.readBlock(fileReadPosition, function (err, readBytes) {
+                    if (err) {
+                        return internalCallback(err, null);
+                    }
+
+                    prevFileReadPosition = fileReadPosition;
+                    fileReadPosition += readBytes.length;
+
+                    return taskCallback(readBytes);
+                });
+            });
+
+            _this._sandboxScripts[sandboxKey].run(methodName, _this._pluginGlobalsFactory.create(itemPath, stats, globals));
         });
     };
 
     /**
-    * Creates a sandbox for a specified itemPath, registers a timeout handler, adds the onExit callback and runs the specified method name.
+    * Creates a sandbox via {@link core.plugin.PluginRunner~_createItemSandbox} and runs the specified method name.
     *
     * @method core.plugin.PluginRunner~_createAndRunItemSandbox
     *
@@ -188,11 +244,9 @@ var PluginRunner = (function () {
     * @param {Function} onExit
     */
     PluginRunner.prototype._createAndRunItemSandbox = function (itemPath, stats, globals, methodName, callback, onExit) {
-        var sandboxKey = itemPath + &#039;_&#039; + methodName;
+        var sandboxKey = this._getSandboxKey(itemPath, methodName);
 
-        this._createSandbox(sandboxKey);
-        this._registerSandboxTimeoutHandler(sandboxKey, callback);
-        this._registerSandboxExitHandler(sandboxKey, callback, onExit);
+        this._createItemSandbox(sandboxKey, callback, onExit);
 
         this._sandboxScripts[sandboxKey].run(methodName, this._pluginGlobalsFactory.create(itemPath, stats, globals));
     };
@@ -216,6 +270,21 @@ var PluginRunner = (function () {
     };
 
     /**
+    * Creates a sandbox for a specified key, registers a timeout handler and adds the onExit callback
+    *
+    * @method core.plugin.PluginRunner~_createItemSandbox
+    *
+    * @param {string} sandboxKey
+    * @param {Function} callback
+    * @param {Function} onExit
+    */
+    PluginRunner.prototype._createItemSandbox = function (sandboxKey, callback, onExit) {
+        this._createSandbox(sandboxKey);
+        this._registerSandboxTimeoutHandler(sandboxKey, callback);
+        this._registerSandboxExitHandler(sandboxKey, callback, onExit);
+    };
+
+    /**
     * Creates a sandbox for the given item path. Each sandbox provides a persistent state storage
     * between lookups as long as the PluginRunner is active.
     *
@@ -229,6 +298,19 @@ var PluginRunner = (function () {
         if (!this._sandboxScripts[itemPath]) {
             this._sandboxScripts[itemPath] = this._sandbox.createScript(this._pluginCode);
         }
+    };
+
+    /**
+    * Returns the sandbox key for a specified item path &amp; method name
+    *
+    * @method core.plugin.PluginRunner~_getSandboxKey
+    *
+    * @param {string} itemPath
+    * @param {string} methodName
+    * @returns {string}
+    */
+    PluginRunner.prototype._getSandboxKey = function (itemPath, methodName) {
+        return itemPath + &#039;_&#039; + methodName;
     };
 
     /**

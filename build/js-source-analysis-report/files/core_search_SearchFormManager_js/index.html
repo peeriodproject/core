@@ -49,7 +49,7 @@
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">198</p>
+      <p class="stat">215</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">33.68</p>
+      <p class="stat">39.97</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.25</p>
+      <p class="stat">1.40</p>
     </div>
   </div>
 </div>
@@ -195,14 +195,16 @@ var SearchFormManager = (function () {
             return process.nextTick(internalCallback.bind(null, null));
         }
 
-        this._stateHandler.save({ currentForm: this._currentFormIdentifier }, function (err) {
-            if (err) {
-                return internalCallback(err);
-            }
+        this.getState(function (state) {
+            _this._stateHandler.save(state, function (err) {
+                if (err) {
+                    return internalCallback(err);
+                }
 
-            _this._isOpen = false;
+                _this._isOpen = false;
 
-            return internalCallback(null);
+                return internalCallback(null);
+            });
         });
     };
 
@@ -212,6 +214,12 @@ var SearchFormManager = (function () {
 
     SearchFormManager.prototype.getCurrentFormIdentifier = function (callback) {
         return process.nextTick(callback.bind(null, this._currentFormIdentifier));
+    };
+
+    SearchFormManager.prototype.getState = function (callback) {
+        return process.nextTick(callback.bind(null, {
+            currentForm: this._currentFormIdentifier
+        }));
     };
 
     SearchFormManager.prototype.isOpen = function (callback) {
@@ -239,6 +247,11 @@ var SearchFormManager = (function () {
                 _this._stateHandler.load(function (err, state) {
                     if (err || !state || !state[&#039;currentForm&#039;]) {
                         _this._currentFormIdentifier = identifiers[0];
+
+                        // file not found. starting from a fresh state
+                        if (err &amp;&amp; err.message.indexOf(&#039;Cannot find state file&#039;) !== -1) {
+                            err = null;
+                        }
                     } else {
                         err = _this._setForm(identifiers, state[&#039;currentForm&#039;]);
                     }
@@ -257,6 +270,10 @@ var SearchFormManager = (function () {
         var _this = this;
         var internalCallback = callback || function (err) {
         };
+
+        if (identifier === this._currentFormIdentifier) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
 
         this.getFormIdentifiers(function (identifiers) {
             var err = _this._setForm(identifiers, identifier);

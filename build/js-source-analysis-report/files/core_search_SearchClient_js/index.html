@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.93</p>
+      <p class="stat">70.84</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">664</p>
+      <p class="stat">731</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">78.21</p>
+      <p class="stat">81.31</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">5.38</p>
+      <p class="stat">6.02</p>
     </div>
   </div>
 </div>
@@ -336,6 +336,10 @@ var SearchClient = (function () {
                 meta: {
                     type: &#039;object&#039;,
                     index: &#039;no&#039;
+                },
+                _timestamp: {
+                    enabled: true,
+                    store: true
                 }
             }
         };
@@ -439,21 +443,61 @@ var SearchClient = (function () {
         });
     };
 
+    SearchClient.prototype.getIncomingResponseByHash = function (indexName, type, hash, callback) {
+        var _this = this;
+        // todo limit query to 1
+        var searchQuery = {
+            query: {
+                match: {
+                    itemHash: hash
+                }
+            }
+        };
+
+        this._client.search({
+            index: indexName.toLowerCase(),
+            type: (!type || type === &#039;_all&#039;) ? &#039;&#039; : this._getResponseType(type),
+            body: searchQuery
+        }, function (err, response, status) {
+            return _this._checkHitsAndCallCallback(err, response, status, function (err, data) {
+                if (err || !data) {
+                    return callback(err, data);
+                }
+
+                return callback(null, data.hits[0]);
+            });
+        });
+    };
+
+    SearchClient.prototype.getIncomingResponseById = function (indexName, type, id, callback) {
+        var _this = this;
+        this._client.getSource({
+            index: indexName,
+            type: (!type || type === &#039;_all&#039;) ? &#039;_all&#039; : this._getResponseType(type),
+            id: id
+        }, function (err, response, status) {
+            err = err || null;
+
+            if (!_this._isValidResponse(err, status, &#039;IndexMissingException&#039;)) {
+                return callback(err, null);
+            }
+
+            return callback(null, response);
+        });
+    };
+
     SearchClient.prototype.getIncomingResponses = function (indexName, type, queryBody, callback) {
+        var _this = this;
         this._client.search({
             index: indexName.toLowerCase(),
             type: this._getResponseType(type),
-            body: queryBody
+            body: queryBody,
+            fields: [
+                &#039;_source&#039;,
+                &#039;_timestamp&#039;
+            ]
         }, function (err, response, status) {
-            var hits = response &amp;&amp; response[&#039;hits&#039;] ? response[&#039;hits&#039;] : {};
-
-            err = err || null;
-
-            if (!(hits &amp;&amp; hits[&#039;total&#039;])) {
-                return callback(null, null);
-            }
-
-            return callback(null, hits);
+            return _this._checkHitsAndCallCallback(err, response, status, callback);
         });
     };
 
@@ -476,6 +520,7 @@ var SearchClient = (function () {
 
     SearchClient.prototype.getItemByPath = function (itemPath, callback) {
         var _this = this;
+        // todo limit query to 1
         var searchQuery = {
             query: {
                 match: {
@@ -647,6 +692,28 @@ var SearchClient = (function () {
     };
 
     /**
+    * Checks if the specified response contains any hits or errors and calls the callback accordingly.
+    *
+    * @method core.search.SearchClient~_checkHitsAnCallCallback
+    *
+    * @param {Error} err
+    * @param {Object} response
+    * @param {status} status
+    * @param {Function} callback
+    */
+    SearchClient.prototype._checkHitsAndCallCallback = function (err, response, status, callback) {
+        var hits = response &amp;&amp; response[&#039;hits&#039;] ? response[&#039;hits&#039;] : {};
+
+        err = err || null;
+
+        if (!(hits &amp;&amp; hits[&#039;total&#039;])) {
+            return callback(err, null);
+        }
+
+        return callback(null, hits);
+    };
+
+    /**
     * Creates an index with the specified name. It will handle &#039;Already exists&#039; errors gracefully.
     *
     * @method core.search.SearchClient~_createIndex
@@ -704,7 +771,7 @@ var SearchClient = (function () {
     * @returns {string}
     */
     SearchClient.prototype._getResponseType = function (type) {
-        return &#039;response&#039; + type.toLowerCase();
+        return type[0] === &#039;_&#039; ? type : &#039;response&#039; + type.toLowerCase();
     };
 
     /**

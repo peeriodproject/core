@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/fileTransfer/share/UploadManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/fileTransfer/share/UploadManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">71.52</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">158</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">25.30</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.88</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/**
+* UploadManagerInterface implementation.
+*
+* @class core.protocol.fileTransfer.share.UploadManager
+* @implements core.protocol.fileTransfer.share.UploadManagerInterface
+*
+* @param {core.config.ConfigInterface} transferConfig
+* @param {core.protocol.fileTransfer.TransferMessageCenterInterface} transferMessageCenter
+* @param {core.protocol.fileTransfer.share.UploadFactoryInterface} uploadFactory
+* @param {core.protocol.fileTransfer.share.ReadableShareRequestMessageFactoryInterface} readableShareRequestFactory
+* @param {core.share.UploadBridge} UploadBridgeInterface
+*/
+var UploadManager = (function () {
+    function UploadManager(transferConfig, transferMessageCenter, uploadFactory, readableShareRequestMessageFactory, uploadBridge) {
+        /**
+        * The list keeping track of the currently active uploads.
+        *
+        * @member {core.protocol.fileTransfer.share.UploadMap} core.protocol.fileTransfer.share.UploadManager~_activeUploads
+        */
+        this._activeUploads = {};
+        /**
+        * @member {core.share.UploadBridge} core.protocol.fileTransfer.share.UploadManager~_bridge
+        */
+        this._bridge = null;
+        /**
+        * Propulated by config.
+        *
+        * @member {number} core.protocol.fileTransfer.share.UploadManager~_maximumNumberOfParallelUploads
+        */
+        this._maximumNumberOfParallelUploads = 0;
+        /**
+        * @member {core.protocol.fileTransfer.share.ReadableShareRequestMessageFactoryInterface} core.protocol.fileTransfer.share.UploadManager~_readableShareRequestFactory
+        */
+        this._readableShareRequestFactory = null;
+        /**
+        * @member {core.protocol.fileTransfer.TransferMessageCenterInterface} core.protocol.fileTransfer.share.UploadManager~_transferMessageCenter
+        */
+        this._transferMessageCenter = null;
+        /**
+        * @member {core.protocol.fileTransfer.share.UploadFactoryInterface} core.protocol.fileTransfer.share.UploadManager~_uploadFactory
+        */
+        this._uploadFactory = null;
+        this._maximumNumberOfParallelUploads = transferConfig.get(&#039;fileTransfer.maximumNumberOfParallelUploads&#039;);
+        this._transferMessageCenter = transferMessageCenter;
+        this._uploadFactory = uploadFactory;
+        this._readableShareRequestFactory = readableShareRequestMessageFactory;
+        this._bridge = uploadBridge;
+
+        this._setupListeners();
+    }
+    /**
+    * BEGIN TESTING PURPOSES ONLY
+    */
+    UploadManager.prototype.getActiveUploads = function () {
+        return this._activeUploads;
+    };
+
+    /**
+    * END TESTING PURPOSES ONLY
+    */
+    /**
+    * Tries to get the file info from the database by the SHA-1 hash provided in the SHARE_REQUEST message.
+    * If there is a file, a new upload is created and the correct listeners hooked to the upload, which are then
+    * propagated to the bridge.
+    *
+    * NOTE: Only when an upload is finally killed is it removed from the active list.
+    *
+    * @method core.protocol.fileTransfer.share.UploadManager~_constructUploadByRequest
+    *
+    * @param {string} transferIdentifier The transfer identifier of the received SHARE_REQUEST message. This is also used to identify the different uploads.
+    * @param {string} circuitIdOfRequest The identifier of the circuit the SHARE_REQUEST message came through. Preferred circuit for SHARE_RATIFY message.
+    * @param {core.protocol.fileTransfer.share.ReadableShareRequestMessageInterface} requestMessage The SHARE_REQUEST message
+    */
+    UploadManager.prototype._constructUploadByRequest = function (transferIdentifier, circuitIdOfRequest, requestMessage) {
+        var _this = this;
+        this._bridge.getFileInfoByHash(requestMessage.getFileHash(), function (err, fullFilePath, filename, filesize) {
+            if (!err &amp;&amp; fullFilePath) {
+                var upload = _this._uploadFactory.create(circuitIdOfRequest, transferIdentifier, requestMessage, fullFilePath, filename, filesize, requestMessage.getFileHash());
+
+                _this._activeUploads[transferIdentifier] = upload;
+
+                upload.once(&#039;abort&#039;, function () {
+                    _this._bridge.emit(&#039;manuallyAborted&#039;, transferIdentifier);
+                });
+
+                upload.once(&#039;completed&#039;, function () {
+                    _this._bridge.emit(&#039;completed&#039;, transferIdentifier);
+                });
+
+                upload.once(&#039;ratifyingRequest&#039;, function () {
+                    _this._bridge.emit(&#039;ratifyingRequest&#039;, transferIdentifier);
+                });
+
+                upload.once(&#039;startingUpload&#039;, function () {
+                    _this._bridge.emit(&#039;startingUpload&#039;, transferIdentifier);
+                });
+
+                upload.on(&#039;uploadingBytes&#039;, function (numberOfBytes) {
+                    _this._bridge.emit(&#039;uploadingBytes&#039;, transferIdentifier, numberOfBytes);
+                });
+
+                upload.once(&#039;killed&#039;, function (reason) {
+                    var code = null;
+
+                    switch (reason) {
+                        case &#039;File cannot be read.&#039;:
+                            code = &#039;FS_ERROR&#039;;
+                            break;
+                        case &#039;Block cannot be read.&#039;:
+                            code = &#039;FS_ERROR&#039;;
+                            break;
+                        case &#039;Manually aborted.&#039;:
+                            code = &#039;MANUAL_ABORT&#039;;
+                            break;
+                        case &#039;Downloader aborted transfer.&#039;:
+                            code = &#039;REMOTE_ABORT&#039;;
+                            break;
+                        case &#039;Completed.&#039;:
+                            code = &#039;COMPLETED&#039;;
+                            break;
+                        case &#039;Maximum tries exhausted.&#039;:
+                            code = &#039;TIMED_OUT&#039;;
+                            break;
+                        default:
+                            code = &#039;PROTOCOL_ERR&#039;;
+                    }
+                    ;
+
+                    delete _this._activeUploads[transferIdentifier];
+
+                    _this._bridge.emit(&#039;end&#039;, transferIdentifier, code);
+                });
+
+                _this._bridge.emit(&#039;newUpload&#039;, transferIdentifier, fullFilePath, filename, filesize);
+
+                upload.kickOff();
+            }
+        });
+    };
+
+    /**
+    * Sets up the listeners for the message center&#039;s SHARE_REQUEST event and on the bridge&#039;s &#039;abortUpload&#039; event for manually
+    * aborting active uploads.
+    *
+    * @method core.protocol.fileTransfer.share.UploadManager~_setupListeners
+    */
+    UploadManager.prototype._setupListeners = function () {
+        var _this = this;
+        this._transferMessageCenter.on(&#039;SHARE_REQUEST&#039;, function (transferIdentifier, circuitIdOfMessage, msgPayload) {
+            if ((Object.keys(_this._activeUploads).length &lt; _this._maximumNumberOfParallelUploads) &amp;&amp; !_this._activeUploads[transferIdentifier]) {
+                var requestMessage = _this._readableShareRequestFactory.create(msgPayload);
+
+                if (requestMessage) {
+                    _this._constructUploadByRequest(transferIdentifier, circuitIdOfMessage, requestMessage);
+                }
+            }
+        });
+
+        this._bridge.on(&#039;abortUpload&#039;, function (identifier) {
+            var activeUpload = _this._activeUploads[identifier];
+
+            if (activeUpload) {
+                activeUpload.manuallyAbort();
+            }
+        });
+    };
+    return UploadManager;
+})();
+
+module.exports = UploadManager;
+//# sourceMappingURL=UploadManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

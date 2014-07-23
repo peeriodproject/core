@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">72.60</p>
+      <p class="stat">72.65</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">514</p>
+      <p class="stat">513</p>
     </div>
   </div>
   <div class="row historical">
@@ -472,14 +472,13 @@ var IndexManager = (function () {
         this._getItemStatsFromSearchManager(pathToIndex, function (searchManagerHash, searchManagerStats) {
             // item exists
             if (searchManagerHash &amp;&amp; searchManagerStats) {
-                ////console.log(&#039;validating item&#039;);
                 _this._validateItem(pathToIndex, searchManagerHash, searchManagerStats, function (err, isValid, fileHash, fileStats) {
                     if (isValid) {
                         // todo check against the amount of plugins which indexed this file. Maybe some plugins are new
-                        callback(new Error(&#039;IndexManager~_processPendingPathToIndex: The item at path &quot;&#039; + pathToIndex + &#039;&quot; is already indexed.&#039;));
-                    } else {
-                        _this._addItem(pathToIndex, stats, fileHash, callback);
+                        return callback(new Error(&#039;IndexManager~_processPendingPathToIndex: The item at path &quot;&#039; + pathToIndex + &#039;&quot; is already indexed.&#039;));
                     }
+
+                    _this._addItem(pathToIndex, stats, fileHash, callback);
                 });
             } else {
                 // adding new item

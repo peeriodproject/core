@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/share/DownloadManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/share/DownloadManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">73.29</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">280</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">45.96</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.12</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var events = require(&#039;events&#039;);
+var fs = require(&#039;fs&#039;);
+var path = require(&#039;path&#039;);
+
+var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
+
+/**
+* @class core.share.DownloadManager
+* @implements core.share.DownloadManagerInterface
+*/
+var DownloadManager = (function () {
+    function DownloadManager(config, appQuitHandler, stateHandlerFactory, searchClient, indexName, options) {
+        if (typeof options === &quot;undefined&quot;) { options = {}; }
+        var _this = this;
+        /**
+        * The internally used config instance
+        *
+        * @member {core.config.ConfigInterface} core.share.DownloadManager~_config
+        */
+        this._config = null;
+        /**
+        * The absolute path where new downloads should be stored
+        *
+        * @member {string} core.share.DownloadManager~_downloadDestination
+        */
+        this._downloadDestination = &#039;&#039;;
+        /**
+        * The search index where the query responses are stored.
+        *
+        * @member {string} core.share.DownloadManager~_indexName
+        */
+        this._indexName = &#039;&#039;;
+        /**
+        * A flag indicates weateher the manager is open or closed.
+        *
+        * @member {boolean} core.share.DownloadManager~_isOpen
+        */
+        this._isOpen = false;
+        /**
+        * The internally used event emitter to emit download updates
+        *
+        * @member {string} core.share.DownloadManager~_eventEmitter
+        */
+        this._eventEmitter = null;
+        /**
+        * The options object.
+        *
+        * @member {core.utils.ClosableAsyncOptions} core.share.DownloadManager~_options
+        */
+        this._options = {};
+        /**
+        * The internally used search client to get the response data that are required to start a new download
+        *
+        * @member {core.search.SearchClientInterface} core.share.DownloadManager~_searchClient
+        */
+        this._searchClient = null;
+        /**
+        * The state handler that manages the {@link core.share.DownloadManager~_downloadDestination}
+        *
+        * @member {core.utils.StateHandlerInterface} core.share.DownloadManager~_stateHandler
+        */
+        this._stateHandler = null;
+        /**
+        * A list of running download ids.
+        *
+        * @member {Array} core.share.DownloadManager~_runningDownloadIds
+        */
+        this._runningDownloadIds = [];
+        var defaults = {
+            closeOnProcessExit: true,
+            onCloseCallback: function (err) {
+            },
+            onOpenCallback: function (err) {
+            }
+        };
+
+        this._config = config;
+        this._stateHandler = stateHandlerFactory.create(path.join(this._config.get(&#039;app.dataPath&#039;), this._config.get(&#039;share.downloadManagerStateConfig&#039;)));
+        this._searchClient = searchClient;
+        this._indexName = indexName;
+        this._options = ObjectUtils.extend(defaults, options);
+
+        this._eventEmitter = new events.EventEmitter();
+
+        if (this._options.closeOnProcessExit) {
+            appQuitHandler.add(function (done) {
+                _this.close(done);
+            });
+        }
+
+        this.open(this._options.onOpenCallback);
+    }
+    DownloadManager.prototype.cancelDownload = function (downloadId) {
+        if (this._downloadExists(downloadId)) {
+            this._eventEmitter.emit(&#039;downloadCanceled&#039;, downloadId);
+        }
+    };
+
+    DownloadManager.prototype.close = function (callback) {
+        var _this = this;
+        var internalCallback = callback || this._options.onCloseCallback;
+
+        if (!this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+
+        this._stateHandler.save({ destination: this._downloadDestination }, function (stateErr) {
+            _this._isOpen = false;
+
+            _this._eventEmitter.removeAllListeners();
+            _this._eventEmitter = null;
+
+            _this._runningDownloadIds = null;
+            _this._runningDownloadIds = [];
+
+            _this._searchClient.close(function (err) {
+                err = stateErr || err;
+
+                return internalCallback(err);
+            });
+        });
+    };
+
+    DownloadManager.prototype.createDownload = function (responseId, callback) {
+        var _this = this;
+        var internalCallback = callback || function () {
+        };
+
+        if (this._downloadExists(responseId)) {
+            return process.nextTick(internalCallback.bind(null, new Error(&#039;DownloadManager#createDownload: Download is already in progress.&#039;)));
+        }
+
+        this._searchClient.getIncomingResponseById(this._indexName, &#039;&#039;, responseId, function (err, response) {
+            var itemSize;
+
+            if (err) {
+                return internalCallback(err);
+            } else if (!response) {
+                return internalCallback(new Error(&#039;DownloadManager#createDownload: Could not find a response with the given id.&#039;));
+            }
+
+            itemSize = response.itemStats ? response.itemStats.size : 0;
+
+            if (!itemSize) {
+                return internalCallback(new Error(&#039;DownloadManager#createDownload: Could not create download. No or empty file size provided.&#039;));
+            }
+
+            _this.getDownloadDestination(function (err, destination) {
+                if (err) {
+                    return internalCallback(err);
+                }
+
+                if (_this._isOpen) {
+                    _this._runningDownloadIds.push(responseId);
+                    _this._eventEmitter.emit(&#039;downloadAdded&#039;, responseId, response.itemName, response.itemStats.size, response.itemHash, destination, response._meta);
+                }
+
+                return internalCallback(null);
+            });
+        });
+    };
+
+    DownloadManager.prototype.downloadEnded = function (downloadId, reason) {
+        if (this._downloadExists(downloadId)) {
+            this._runningDownloadIds.splice(this._runningDownloadIds.indexOf(downloadId), 1);
+            this._eventEmitter.emit(&#039;downloadEnded&#039;, downloadId, reason);
+        }
+    };
+
+    DownloadManager.prototype.getDownloadDestination = function (callback) {
+        var _this = this;
+        fs.exists(this._downloadDestination, function (exists) {
+            if (!exists) {
+                return callback(new Error(&#039;DownloadManager#getDownloadDestination: The download destination does not exists: &#039; + _this._downloadDestination), null);
+            }
+
+            return callback(null, _this._downloadDestination);
+        });
+    };
+
+    DownloadManager.prototype.isOpen = function (callback) {
+        return process.nextTick(callback.bind(null, null, this._isOpen));
+    };
+
+    DownloadManager.prototype.onDownloadAdded = function (listener) {
+        this._eventEmitter.addListener(&#039;downloadAdded&#039;, listener);
+    };
+
+    DownloadManager.prototype.onDownloadCanceled = function (listener) {
+        this._eventEmitter.addListener(&#039;downloadCanceled&#039;, listener);
+    };
+
+    DownloadManager.prototype.onDownloadStatusChanged = function (listener) {
+        this._eventEmitter.addListener(&#039;downloadStatusChanged&#039;, listener);
+    };
+
+    DownloadManager.prototype.onDownloadProgressUpdate = function (listener) {
+        this._eventEmitter.addListener(&#039;downloadProgressUpdate&#039;, listener);
+    };
+
+    DownloadManager.prototype.onDownloadEnded = function (listener) {
+        this._eventEmitter.addListener(&#039;downloadEnded&#039;, listener);
+    };
+
+    DownloadManager.prototype.open = function (callback) {
+        var _this = this;
+        var internalCallback = callback || this._options.onOpenCallback;
+
+        if (this._isOpen) {
+            return process.nextTick(internalCallback.bind(null, null));
+        }
+
+        this._searchClient.open(function (err) {
+            if (err) {
+                return internalCallback(err);
+            }
+
+            if (!_this._eventEmitter) {
+                _this._eventEmitter = new events.EventEmitter();
+            }
+
+            _this._stateHandler.load(function (err, state) {
+                _this._isOpen = true;
+
+                if (state &amp;&amp; state[&#039;destination&#039;]) {
+                    _this._downloadDestination = state[&#039;destination&#039;];
+                }
+
+                return internalCallback(null);
+            });
+        });
+    };
+
+    DownloadManager.prototype.setDownloadDestination = function (destinationPath, callback) {
+        var _this = this;
+        var internalCallback = callback || function () {
+        };
+
+        destinationPath = path.resolve(destinationPath);
+
+        fs.exists(destinationPath, function (exists) {
+            if (!exists) {
+                return internalCallback(new Error(&#039;DownloadManager#setDownloadDestination: Cannot set the download destination. The path is does not exists: &#039; + _this._downloadDestination));
+            }
+
+            _this._downloadDestination = destinationPath;
+
+            return internalCallback(null);
+        });
+    };
+
+    // todo check previous status
+    DownloadManager.prototype.updateDownloadStatus = function (downloadId, status) {
+        if (this._downloadExists(downloadId)) {
+            this._eventEmitter.emit(&#039;downloadStatusChanged&#039;, downloadId, status);
+        }
+    };
+
+    // todo check previous progress
+    DownloadManager.prototype.updateDownloadProgress = function (downloadId, writtenBytes, fullCountOfExpectedBytes) {
+        if (this._downloadExists(downloadId)) {
+            this._eventEmitter.emit(&#039;downloadProgressUpdate&#039;, downloadId, writtenBytes, fullCountOfExpectedBytes);
+        }
+    };
+
+    /**
+    * Returns `true` if the given download id already exists
+    *
+    * @method core.share.DownloadManager~_downloadExists
+    *
+    * @param {string} downloadId
+    * @returns {boolean}
+    */
+    DownloadManager.prototype._downloadExists = function (downloadId) {
+        return this._runningDownloadIds.indexOf(downloadId) !== -1;
+    };
+    return DownloadManager;
+})();
+
+module.exports = DownloadManager;
+//# sourceMappingURL=DownloadManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>
