@@ -236,6 +236,8 @@ var DownloadManager = (function () {
         var internalCallback = callback || function () {
         };
 
+        destinationPath = path.resolve(destinationPath);
+
         fs.exists(destinationPath, function (exists) {
             if (!exists) {
                 return internalCallback(new Error('DownloadManager#setDownloadDestination: Cannot set the download destination. The path is does not exists: ' + _this._downloadDestination));

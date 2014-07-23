@@ -248,6 +248,8 @@ class DownloadManager implements DownloadManagerInterface {
 	public setDownloadDestination (destinationPath:string, callback?:(err:Error) => any):void {
 		var internalCallback = callback || function () {};
 
+		destinationPath = path.resolve(destinationPath);
+
 		fs.exists(destinationPath, (exists:boolean) => {
 			if (!exists) {
 				return internalCallback(new Error('DownloadManager#setDownloadDestination: Cannot set the download destination. The path is does not exists: ' + this._downloadDestination));
