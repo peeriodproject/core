@@ -26,7 +26,7 @@ interface DownloadManagerInterface extends ClosableAsyncInterface {
 	createDownload (responseId:string, callback?:(err:Error) => any):void;
 
 	/**
-	 * Triggers the download `end event
+	 * Triggers the download `end` event
 	 *
 	 * @method core.share.DownloadManagerInterface#downloadEnded
 	 *
@@ -120,7 +120,7 @@ interface DownloadManagerInterface extends ClosableAsyncInterface {
 	updateDownloadProgress (downloadId:string, writtenBytes:number, fullCountOfExpectedBytes:number):void;
 
 	/**
-	 * Updates the status of the specified download
+	 * Updates the status of the specified download id
 	 *
 	 * @method core.share.DownloadManagerInterface#updateDownloadStatus
 	 *
