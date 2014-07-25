@@ -55,14 +55,16 @@ var UiShareManagerComponent = (function (_super) {
     UiShareManagerComponent.prototype.getState = function (callback) {
         var _this = this;
         this._downloadManager.getDownloadDestination(function (err, destination) {
-            return callback({
+            var share = {
                 downloads: _this._runningDownloads,
                 uploads: _this._runningUploads,
                 destination: {
                     path: destination,
                     error: (err ? { message: err.message, code: 'INVALID_PATH' } : null)
                 }
-            });
+            };
+
+            return callback(share);
         });
     };
 
@@ -83,13 +85,15 @@ var UiShareManagerComponent = (function (_super) {
             _this.updateUi();
         });
 
-        this._downloadManager.onDownloadProgressUpdate(function (downloadId, writtenBytes) {
+        this._downloadManager.onDownloadProgressUpdate(function (downloadId, writtenBytes, fullCountOfExpectedBytes) {
             if (!_this._runningDownloads[downloadId]) {
                 return;
             }
 
             _this._unmergedDownloadsWrittenBytes[downloadId] = writtenBytes;
             _this._progressUpdated = true;
+
+            _this._startProgressRunner();
         });
 
         this._downloadManager.onDownloadStatusChanged(function (downloadId, status) {
@@ -98,6 +102,7 @@ var UiShareManagerComponent = (function (_super) {
             }
 
             _this._runningDownloads[downloadId].status = status;
+
             _this.updateUi();
         });
 
@@ -107,6 +112,11 @@ var UiShareManagerComponent = (function (_super) {
             }
 
             _this._runningDownloads[downloadId].status = reason;
+
+            if (reason === 'COMPLETED') {
+                _this._runningDownloads[downloadId].loaded = _this._runningDownloads[downloadId].size;
+            }
+
             _this.updateUi();
         });
     };
@@ -191,35 +201,36 @@ var UiShareManagerComponent = (function (_super) {
             }
 
             _this._runningUploads[uploadId].status = reason;
+
             _this.updateUi();
         });
     };
 
     UiShareManagerComponent.prototype._startProgressRunner = function () {
-        var _this = this;
         if (this._progressRunnerTimeout) {
+            //clearTimeout(this._progressRunnerTimeout);
             return;
         }
 
-        this._progressRunnerTimeout = setTimeout(function () {
-            var ids;
+        //this._progressRunnerTimeout = setTimeout(() => {
+        var ids;
 
-            if (!_this._progressUpdated) {
-                return;
-            }
+        if (!this._progressUpdated) {
+            return;
+        }
 
-            ids = Object.keys(_this._unmergedDownloadsWrittenBytes);
+        ids = Object.keys(this._unmergedDownloadsWrittenBytes);
 
-            for (var i = 0, l = ids.length; i < l; i++) {
-                var id = ids[i];
+        for (var i = 0, l = ids.length; i < l; i++) {
+            var id = ids[i];
 
-                _this._runningDownloads[id].loaded = _this._unmergedDownloadsWrittenBytes[id];
-            }
+            this._runningDownloads[id].loaded = this._unmergedDownloadsWrittenBytes[id];
+        }
 
-            _this._progressUpdated = false;
-            _this.updateUi();
-            _this._startProgressRunner();
-        }, 500); // todo move interval delay to config
+        this._progressUpdated = false;
+        this.updateUi();
+        this._startProgressRunner();
+        //}, 500); // todo move interval delay to config
     };
     return UiShareManagerComponent;
 })(UiComponent);

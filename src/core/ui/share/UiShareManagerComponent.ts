@@ -61,14 +61,16 @@ class UiShareManagerComponent extends UiComponent {
 
 	public getState (callback:(state:Object) => any):void {
 		this._downloadManager.getDownloadDestination((err:Error, destination:string) => {
-			return callback({
+			var share = {
 				downloads  : this._runningDownloads,
 				uploads    : this._runningUploads,
 				destination: {
 					path : destination,
 					error: (err ? { message: err.message, code: 'INVALID_PATH' } : null)
 				}
-			});
+			};
+
+			return callback(share);
 		});
 	}
 
@@ -88,13 +90,15 @@ class UiShareManagerComponent extends UiComponent {
 			this.updateUi();
 		});
 
-		this._downloadManager.onDownloadProgressUpdate((downloadId:string, writtenBytes:number) => {
+		this._downloadManager.onDownloadProgressUpdate((downloadId:string, writtenBytes:number, fullCountOfExpectedBytes:number) => {
 			if (!this._runningDownloads[downloadId]) {
 				return;
 			}
 
 			this._unmergedDownloadsWrittenBytes[downloadId] = writtenBytes;
 			this._progressUpdated = true;
+
+			this._startProgressRunner();
 		});
 
 		this._downloadManager.onDownloadStatusChanged((downloadId:string, status:string) => {
@@ -103,6 +107,7 @@ class UiShareManagerComponent extends UiComponent {
 			}
 
 			this._runningDownloads[downloadId].status = status;
+
 			this.updateUi();
 		});
 
@@ -112,8 +117,12 @@ class UiShareManagerComponent extends UiComponent {
 			}
 
 			this._runningDownloads[downloadId].status = reason;
-			this.updateUi();
 
+			if (reason === 'COMPLETED') {
+				this._runningDownloads[downloadId].loaded = this._runningDownloads[downloadId].size;
+			}
+
+			this.updateUi();
 		});
 	}
 
@@ -195,16 +204,20 @@ class UiShareManagerComponent extends UiComponent {
 			}
 
 			this._runningUploads[uploadId].status = reason;
+
 			this.updateUi();
 		});
 	}
 
 	private _startProgressRunner ():void {
 		if (this._progressRunnerTimeout) {
+			//clearTimeout(this._progressRunnerTimeout);
 			return;
 		}
 
-		this._progressRunnerTimeout = setTimeout(() => {
+
+		//this._progressRunnerTimeout = setTimeout(() => {
+
 			var ids:Array<string>;
 
 			if (!this._progressUpdated) {
@@ -222,7 +235,7 @@ class UiShareManagerComponent extends UiComponent {
 			this._progressUpdated = false;
 			this.updateUi();
 			this._startProgressRunner();
-		}, 500); // todo move interval delay to config
+		//}, 500); // todo move interval delay to config
 	}
 
 }
