@@ -133,6 +133,8 @@ var UploadManager = (function () {
         this._searchClient.getItemByHash(fileHash, function (err, item) {
             if (err) {
                 return callback(err, null, null, null);
+            } else if (!item) {
+                return callback(null, null, null, null);
             }
 
             return callback(null, item.getPath(), item.getName(), item.getStats().size);
@@ -148,7 +150,11 @@ var UploadManager = (function () {
     };
 
     UploadManager.prototype.onUploadAdded = function (listener) {
-        this._eventEmitter.addListener('downloadAdded', listener);
+        this._eventEmitter.addListener('uploadAdded', listener);
+    };
+
+    UploadManager.prototype.onUploadEnded = function (listener) {
+        this._eventEmitter.addListener('uploadEnded', listener);
     };
 
     UploadManager.prototype.onUploadCanceled = function (listener) {
@@ -175,6 +181,8 @@ var UploadManager = (function () {
             if (!_this._eventEmitter) {
                 _this._eventEmitter = new events.EventEmitter();
             }
+
+            _this._isOpen = true;
 
             return internalCallback(null);
         });

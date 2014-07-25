@@ -145,6 +145,9 @@ class UploadManager implements UploadManagerInterface {
 			if (err) {
 				return callback(err, null, null, null);
 			}
+			else if (!item) {
+				return callback(null, null, null, null);
+			}
 
 			return callback(null, item.getPath(), item.getName(), item.getStats().size);
 		});
@@ -159,9 +162,12 @@ class UploadManager implements UploadManagerInterface {
 	}
 
 	public onUploadAdded (listener:(uploadId:string, filePath:string, fileName:string, fileSize:number) => any):void {
-		this._eventEmitter.addListener('downloadAdded', listener);
+		this._eventEmitter.addListener('uploadAdded', listener);
 	}
 
+	public onUploadEnded (listener:(uploadId:string, reason:string) => any):void {
+		this._eventEmitter.addListener('uploadEnded', listener);
+	}
 
 	public onUploadCanceled (listener:(uploadId:string) => any):void {
 		this._eventEmitter.addListener('uploadCanceled', listener);
@@ -186,6 +192,8 @@ class UploadManager implements UploadManagerInterface {
 			if (!this._eventEmitter) {
 				this._eventEmitter = new events.EventEmitter();
 			}
+
+			this._isOpen = true;
 
 			return internalCallback(null);
 		});
