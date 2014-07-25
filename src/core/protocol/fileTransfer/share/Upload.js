@@ -285,6 +285,8 @@ var Upload = (function (_super) {
                             } else if (this._manuallyAborted) {
                                 this._kill(true, 'Manually aborted.', blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
                             } else {
+                                console.log('Received block request. Byte pos: ' + blockRequest.getFirstBytePositionOfBlock());
+
                                 // everything okay so far. read from file.
                                 if (!this._fdOpen) {
                                     this._fileReader.prepareToRead(function (err) {
@@ -360,6 +362,7 @@ var Upload = (function (_super) {
             this.removeAllListeners('completed');
             this.removeAllListeners('startingUpload');
 
+            console.log('Upload killed due to: ' + message);
             this.emit('killed', message);
 
             this.removeAllListeners('killed');
@@ -435,6 +438,7 @@ var Upload = (function (_super) {
                             if (errorMessage) {
                                 _this._kill(true, errorMessage, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
                             } else {
+                                console.log('Sending block.');
                                 var sendableBuffer = _this._transferMessageCenter.wrapTransferMessage('ENCRYPTED_SHARE', blockRequest.getNextTransferIdentifier(), encryptedBuffer);
                                 _this._shareMessenger.pipeMessageAndWaitForResponse(sendableBuffer, blockRequest.getFeedingNodesBlock(), 'ENCRYPTED_SHARE', nextTransferIdentifier, function (err, responsePayload) {
                                     _this._handleMessengerResponse(err, responsePayload);

@@ -455,6 +455,7 @@ var Download = (function (_super) {
             this.removeAllListeners('completed');
             this.removeAllListeners('writtenBytes');
 
+            console.log('Download killed due to: ' + message);
             this.emit('killed', message);
 
             this.removeAllListeners('killed');
@@ -538,10 +539,12 @@ var Download = (function (_super) {
                         if (errorMessage) {
                             _this._kill(true, true, errorMessage, transferIdentToUse, nodesToFeedBlock);
                         } else {
+                            console.log('Sending block request. Position:' + bytePosition);
                             _this._shareMessenger.pipeMessageAndWaitForResponse(sendableBuffer, nodesToFeedBlock, 'ENCRYPTED_SHARE', nextTransferIdentifier, function (err, responsePayload) {
                                 if (err) {
                                     _this._kill(true, false, err.message);
                                 } else {
+                                    console.log('Received a block message');
                                     _this._handleBlockMessage(responsePayload, bytePosition);
                                 }
                             });
