@@ -14,7 +14,7 @@ import JSONStateHandlerFactory = require('../../../src/core/utils/JSONStateHandl
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 import SearchClient = require('../../../src/core/search/SearchClient');
 
-describe('CORE --> SHARE --> DownloadManager @joern', function () {
+describe('CORE --> SHARE --> DownloadManager', function () {
 	var sandbox:SinonSandbox;
 	var configStub:any;
 	var stateHandlerFactoryStub:any;
@@ -97,7 +97,7 @@ describe('CORE --> SHARE --> DownloadManager @joern', function () {
 
 				return stateHandlerStub;
 			}
-		})
+		});
 		searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
 
 			close: function (callback) {
@@ -293,6 +293,45 @@ describe('CORE --> SHARE --> DownloadManager @joern', function () {
 			});
 
 			manager.onDownloadAdded(onAddedSpy);
+		});
+	});
+
+	describe ('should correclty return the running download ids', function () {
+
+		it ('it should correctly return an empty array', function (done) {
+			var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, 'searchresponses', {
+				onOpenCallback: function () {
+					manager.getRunningDownloadIds(function (ids) {
+						ids.should.be.an.instanceof(Array);
+						ids.should.have.a.lengthOf(0);
+
+						done();
+					});
+				}
+			});
+		});
+
+		it ('should correctly return the upload id', function (done) {
+			response = validResponse;
+			state = { destination: appDataPath };
+
+			var id:string = 'QqGNZv7rSrGJzBzs5Ya2XQ';
+
+			var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, 'searchresponses', {
+				onOpenCallback: function () {
+					manager.createDownload(id);
+					manager.createDownload(id);
+
+					setImmediate(function () {
+						manager.getRunningDownloadIds(function (ids) {
+							ids.should.have.a.lengthOf(1);
+							ids[0].should.equal(id);
+
+							done();
+						});
+					});
+				}
+			});
 		});
 	});
 
