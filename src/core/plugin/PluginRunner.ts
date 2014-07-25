@@ -111,9 +111,14 @@ class PluginRunner implements PluginRunnerInterface {
 		var prevFileReadPosition:number = -1;
 		var fileReadPosition:number = 0;
 
-		var internalCallback = function (err:Error, output:any):void {
+		var internalCallback = (err:Error, output:any):void => {
 			if (err) {
 				console.error(err);
+			}
+
+			if (this._sandboxScripts[sandboxKey]) {
+				this._sandboxScripts[sandboxKey].removeAllListeners();
+				this._sandboxScripts[sandboxKey] = null;
 			}
 
 			fileBlockReader.abort(function (readerErr) {

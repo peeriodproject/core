@@ -98,6 +98,11 @@ var PluginRunner = (function () {
                 console.error(err);
             }
 
+            if (_this._sandboxScripts[sandboxKey]) {
+                _this._sandboxScripts[sandboxKey].removeAllListeners();
+                _this._sandboxScripts[sandboxKey] = null;
+            }
+
             fileBlockReader.abort(function (readerErr) {
                 err = err || readerErr;
 
