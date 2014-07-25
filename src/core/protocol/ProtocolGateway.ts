@@ -237,24 +237,33 @@ class ProtocolGateway extends events.EventEmitter implements ProtocolGatewayInte
 
 		if (this._proxyManager.needsAdditionalProxy()) {
 			this._networkMaintainer.once('initialContactQueryCompleted', () => {
+				console.log('Needs proxy...');
 				this._proxyManager.kickOff();
 			});
 		}
 		else {
+			console.log('No proxy needed.');
 			this._proxyManager.kickOff();
 		}
 
 		this._networkMaintainer.once('initialContactQueryCompleted', () => {
+			console.log('Initial nodes found!');
 			logger.log('topology', 'Initial contact query completed. Kicking off proxy manager...', {id: this._myNode.getId().toHexString()});
 		});
 
 		this._networkMaintainer.once('joinedNetwork', () => {
+			console.log('Successfully joined the network, prepared hydras.');
 			logger.log('topology', 'Successfully joined the network.', {id: this._myNode.getId().toHexString()});
 
 			// start the hydra things
 			this._hydraCircuitManager.kickOff();
 
+			this._hydraCircuitManager.on('circuitCount', (count:number) => {
+				console.log('Maintaining currently %d circuits', count);
+			});
+
 			this._hydraCircuitManager.once('desiredCircuitAmountReached', () => {
+				console.log('Desired number of hydra circuits reached, ready to search.');
 				logger.log('hydraSuccess', 'Hydra circuits constructed.', {id: this._myNode.getId().toHexString()});
 				this.emit('readyToSearch');
 			});

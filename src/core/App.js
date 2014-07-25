@@ -336,12 +336,11 @@ var App = {
                         protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
 
                         protocolGateway.start();
-
-                        protocolGateway.once('readyToSearch', function () {
-                            _this._queryInterval = setInterval(function () {
-                                _this.startQuery();
-                            }, 15000);
-                        });
+                        /*protocolGateway.once('readyToSearch',  ()=> {
+                        this._queryInterval = setInterval(() => {
+                        this.startQuery();
+                        }, 15000);
+                        });*/
                     }
                 });
             });

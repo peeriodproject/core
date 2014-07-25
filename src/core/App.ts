@@ -355,11 +355,11 @@ var App = {
 
 						protocolGateway.start();
 
-						protocolGateway.once('readyToSearch',  ()=> {
+						/*protocolGateway.once('readyToSearch',  ()=> {
 							this._queryInterval = setInterval(() => {
 								this.startQuery();
 							}, 15000);
-						});
+						});*/
 					}
 				});
 			});

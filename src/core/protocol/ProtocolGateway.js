@@ -229,23 +229,32 @@ var ProtocolGateway = (function (_super) {
 
         if (this._proxyManager.needsAdditionalProxy()) {
             this._networkMaintainer.once('initialContactQueryCompleted', function () {
+                console.log('Needs proxy...');
                 _this._proxyManager.kickOff();
             });
         } else {
+            console.log('No proxy needed.');
             this._proxyManager.kickOff();
         }
 
         this._networkMaintainer.once('initialContactQueryCompleted', function () {
+            console.log('Initial nodes found!');
             logger.log('topology', 'Initial contact query completed. Kicking off proxy manager...', { id: _this._myNode.getId().toHexString() });
         });
 
         this._networkMaintainer.once('joinedNetwork', function () {
+            console.log('Successfully joined the network, prepared hydras.');
             logger.log('topology', 'Successfully joined the network.', { id: _this._myNode.getId().toHexString() });
 
             // start the hydra things
             _this._hydraCircuitManager.kickOff();
 
+            _this._hydraCircuitManager.on('circuitCount', function (count) {
+                console.log('Maintaining currently %d circuits', count);
+            });
+
             _this._hydraCircuitManager.once('desiredCircuitAmountReached', function () {
+                console.log('Desired number of hydra circuits reached, ready to search.');
                 logger.log('hydraSuccess', 'Hydra circuits constructed.', { id: _this._myNode.getId().toHexString() });
                 _this.emit('readyToSearch');
             });
