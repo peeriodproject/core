@@ -50,6 +50,10 @@ var IndexManager = require('./search/IndexManager');
 
 // Share import
 var DownloadManager = require('./share/DownloadManager');
+var UploadManager = require('./share/UploadManager');
+
+var DownloadBridge = require('./share/DownloadBridge');
+var UploadBridge = require('./share/UploadBridge');
 
 // ui imports
 var UiShareManagerComponent = require('./ui/share/UiShareManagerComponent');
@@ -104,18 +108,22 @@ var App = {
 
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
-            if (!process.env.UI_ENABLED) {
-                _this.startTopology(dataPath, searchMessageBridge);
-            }
-
             _this.startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager, function () {
                 _this._started.push('indexer');
 
                 _this.startUi();
             });
 
-            _this.startSharing(searchClient, searchRequestsIndexName, function () {
+            _this.startSharing(searchClient, searchRequestsIndexName, function (downloadManager, uploadManager) {
                 _this._started.push('share');
+
+                var downloadBridge = new DownloadBridge(downloadManager);
+                var uploadBridge = new UploadBridge(uploadManager);
+
+                // disables the network layer for testing purposes
+                if (!process.env.DISABLE_TOPOLOGY) {
+                    _this.startTopology(dataPath, searchMessageBridge, downloadBridge, uploadBridge);
+                }
 
                 _this.startUi();
             });
@@ -160,10 +168,11 @@ var App = {
     startSharing: function (searchClient, searchRequestsIndexName, callback) {
         var shareConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'share']);
         var downloadManager = new DownloadManager(shareConfig, this.appQuitHandler, this.getStateHandlerFactory(), searchClient, searchRequestsIndexName);
+        var uploadManager = new UploadManager(this.appQuitHandler, searchClient, searchRequestsIndexName);
 
-        this.addUiComponent(new UiShareManagerComponent(downloadManager));
+        this.addUiComponent(new UiShareManagerComponent(downloadManager, uploadManager));
 
-        return callback();
+        return callback(downloadManager, uploadManager);
     },
     startIndexer: function (searchConfig, searchClient, searchRequestManager, searchResponseManager, callback) {
         var _this = this;
@@ -225,6 +234,7 @@ var App = {
         });
     },
     startUi: function () {
+        // disables the UI for testing purposes
         if (!process.env.UI_ENABLED) {
             return;
         }
@@ -251,7 +261,7 @@ var App = {
 
         var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
     },
-    startTopology: function (dataPath, searchMessageBridge) {
+    startTopology: function (dataPath, searchMessageBridge, downloadBridge, uploadBridge) {
         var _this = this;
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
@@ -323,7 +333,7 @@ var App = {
                             console.error(err);
                         }
 
-                        protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge);
+                        protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
 
                         protocolGateway.start();
 
