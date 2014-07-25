@@ -1,6 +1,7 @@
 import DownloadManagerInterface = require('../../share/interfaces/DownloadManagerInterface');
-
 import UiDownloadInterface = require('./interfaces/UiDownloadInterface');
+import UiUploadInterface = require('./interfaces/UiUploadInterface');
+import UploadManagerInterface = require('../../share/interfaces/UploadManagerInterface');
 
 import UiComponent = require('../UiComponent');
 
@@ -12,6 +13,11 @@ import UiComponent = require('../UiComponent');
  */
 class UiShareManagerComponent extends UiComponent {
 
+	/**
+	 * The internally used download manger instance
+	 *
+	 * @member {core.share.DownloadManagerInterface} core.ui.UiShareManagerComponent~_downloadManager
+	 */
 	private _downloadManager:DownloadManagerInterface = null;
 
 	private _progressRunnerTimeout:number = null;
@@ -20,19 +26,33 @@ class UiShareManagerComponent extends UiComponent {
 
 	private _runningDownloads:{ [identifier:string]:UiDownloadInterface; } = {};
 
+	private _runningUploads:{ [identifier:string]:UiUploadInterface } = {};
+
 	private _unmergedDownloadsWrittenBytes:{ [identifier:string]:number; } = {};
 
-	constructor (downloadManager:DownloadManagerInterface) {
+	private _uploadManager:UploadManagerInterface = null;
+
+	constructor (downloadManager:DownloadManagerInterface, uploadManager:UploadManagerInterface) {
 		super();
 
 		this._downloadManager = downloadManager;
+		this._uploadManager = uploadManager;
 
 		this._setupDownloadManagerEvents();
-		this._setupUiEvents();
+		this._setupUploadManagerEvents();
+		this._setupUiDownloadEvents();
+		this._setupUiUploadEvents();
 	}
 
 	public getEventNames ():Array<string> {
-		return ['addDownload', 'cancelDownload', 'removeDownload', 'updateDownloadDestination'];
+		return [
+			'addDownload',
+			'cancelDownload',
+			'cancelUpload',
+			'removeDownload',
+			'removeUpload',
+			'updateDownloadDestination'
+		];
 	}
 
 	public getChannelName ():string {
@@ -42,9 +62,10 @@ class UiShareManagerComponent extends UiComponent {
 	public getState (callback:(state:Object) => any):void {
 		this._downloadManager.getDownloadDestination((err:Error, destination:string) => {
 			return callback({
-				downloads: this._runningDownloads,
+				downloads  : this._runningDownloads,
+				uploads    : this._runningUploads,
 				destination: {
-					path: destination,
+					path : destination,
 					error: (err ? { message: err.message, code: 'INVALID_PATH' } : null)
 				}
 			});
@@ -55,12 +76,12 @@ class UiShareManagerComponent extends UiComponent {
 		this._downloadManager.onDownloadAdded((downloadId:string, fileName:string, fileSize:number, fileHash:string, metadata:Object) => {
 			this._runningDownloads[downloadId] = {
 				created: new Date().getTime(),
-				id: downloadId,
-				hash: fileHash,
-				loaded: 0,
-				name: fileName,
-				size: fileSize,
-				status: 'created'
+				id     : downloadId,
+				hash   : fileHash,
+				loaded : 0,
+				name   : fileName,
+				size   : fileSize,
+				status : 'created'
 			};
 
 			this._startProgressRunner();
@@ -96,7 +117,7 @@ class UiShareManagerComponent extends UiComponent {
 		});
 	}
 
-	private _setupUiEvents () {
+	private _setupUiDownloadEvents () {
 		this.on('addDownload', (responseId:string, callback:Function) => {
 			this._downloadManager.createDownload(responseId, (err) => {
 				// todo clean up error message and add error codes
@@ -129,6 +150,55 @@ class UiShareManagerComponent extends UiComponent {
 		});
 	}
 
+	private _setupUiUploadEvents ():void {
+		this.on('cancelUpload', (uploadId:string) => {
+			if (this._runningUploads[uploadId]) {
+				this._uploadManager.cancelUpload(uploadId);
+			}
+		});
+
+		this.on('removeUpload', (uploadId:string) => {
+			if (this._runningUploads[uploadId]) {
+				delete this._runningUploads[uploadId];
+
+				this.updateUi();
+			}
+		});
+	}
+
+	private _setupUploadManagerEvents ():void {
+		this._uploadManager.onUploadAdded((uploadId:string, filePath:string, fileName:string, fileSize:number) => {
+			this._runningUploads[uploadId] = {
+				created: new Date().getTime(),
+				id     : uploadId,
+				path   : filePath,
+				name   : fileName,
+				size   : fileSize,
+				status : 'created'
+			};
+
+			this.updateUi();
+		});
+
+		this._uploadManager.onUploadStatusChanged((uploadId:string, status:string) => {
+			if (!this._runningUploads[uploadId]) {
+				return;
+			}
+
+			this._runningUploads[uploadId].status = status;
+			this.updateUi();
+		});
+
+		this._uploadManager.onUploadEnded((uploadId:string, reason:string) => {
+			if (!this._runningUploads[uploadId]) {
+				return;
+			}
+
+			this._runningUploads[uploadId].status = reason;
+			this.updateUi();
+		});
+	}
+
 	private _startProgressRunner ():void {
 		if (this._progressRunnerTimeout) {
 			return;
@@ -152,7 +222,7 @@ class UiShareManagerComponent extends UiComponent {
 			this._progressUpdated = false;
 			this.updateUi();
 			this._startProgressRunner();
-		}, 500);
+		}, 500); // todo move interval delay to config
 	}
 
 }

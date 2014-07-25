@@ -3,12 +3,15 @@ var sinon = require('sinon');
 var testUtils = require('../../../utils/testUtils');
 
 var DownloadManager = require('../../../../src/core/share/DownloadManager');
+var UploadManager = require('../../../../src/core/share/UploadManager');
+
 var UiShareManagerComponent = require('../../../../src/core/ui/share/UiShareManagerComponent');
 
 describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
     var sandbox;
     var component;
     var downloadManagerStub;
+    var uploadManagerStub;
 
     var uiUpdateSpy;
 
@@ -27,7 +30,9 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
             }
         });
 
-        component = new UiShareManagerComponent(downloadManagerStub);
+        uploadManagerStub = testUtils.stubPublicApi(sandbox, UploadManager, {});
+
+        component = new UiShareManagerComponent(downloadManagerStub, uploadManagerStub);
         uiUpdateSpy = sandbox.spy();
 
         component.onUiUpdate(uiUpdateSpy);
@@ -37,6 +42,8 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
         sandbox.restore();
 
         downloadManagerStub = null;
+        uploadManagerStub = null;
+
         component = null;
         uiUpdateSpy = null;
     });
@@ -70,7 +77,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
                 return process.nextTick(arguments[1].bind(null, new Error('Error Message')));
             }
         });
-        component = new UiShareManagerComponent(downloadManagerStub);
+        component = new UiShareManagerComponent(downloadManagerStub, uploadManagerStub);
 
         component.emit('addDownload', 'responseId', function (err) {
             err.should.equal('Error Message');
@@ -107,7 +114,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
         });
     });
 
-    it('should correctly forward the cancel event', function (done) {
+    it('should correctly forward the download cancel event', function (done) {
         downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', { metadata: true });
 
         setImmediate(function () {
@@ -213,6 +220,83 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
                 done();
             });
         }, 1300);
+    });
+
+    it('should correctly add a new upload', function (done) {
+        uploadManagerStub.onUploadAdded.getCall(0).args[0]('uploadId', '/path/to/file.ext', 'file.ext', 123);
+
+        uiUpdateSpy.calledOnce.should.be.true;
+
+        component.getState(function (state) {
+            state.uploads.uploadId.should.containDeep({
+                id: 'uploadId',
+                path: '/path/to/file.ext',
+                name: 'file.ext',
+                size: 123,
+                status: 'created'
+            });
+
+            state.uploads.uploadId.created.should.be.an.instanceof(Number);
+
+            done();
+        });
+    });
+
+    it('should correctly update the upload status and update the UI', function (done) {
+        uploadManagerStub.onUploadStatusChanged.getCall(0).args[0]('uploadId', 'status');
+
+        uploadManagerStub.onUploadAdded.getCall(0).args[0]('uploadId', '/path/to/file.ext', 'file.ext', 123);
+        uploadManagerStub.onUploadStatusChanged.getCall(0).args[0]('uploadId', 'status');
+
+        uiUpdateSpy.calledTwice.should.be.true;
+
+        component.getState(function (state) {
+            state.uploads.uploadId.status.should.equal('status');
+
+            done();
+        });
+    });
+
+    it('should correctly update the upload on end and update the UI', function (done) {
+        uploadManagerStub.onUploadEnded.getCall(0).args[0]('uploadId', 'reason');
+
+        uploadManagerStub.onUploadAdded.getCall(0).args[0]('uploadId', '/path/to/file.ext', 'file.ext', 123);
+        uploadManagerStub.onUploadEnded.getCall(0).args[0]('uploadId', 'reason');
+
+        uiUpdateSpy.calledTwice.should.be.true;
+
+        component.getState(function (state) {
+            state.uploads.uploadId.status.should.equal('reason');
+
+            done();
+        });
+    });
+
+    it('should correctly cancel a running upload', function () {
+        component.emit('cancelUpload', 'uploadId');
+        uploadManagerStub.cancelUpload.called.should.be.false;
+
+        uploadManagerStub.onUploadAdded.getCall(0).args[0]('uploadId', '/path/to/file.ext', 'file.ext', 123);
+        component.emit('cancelUpload', 'uploadId');
+        uploadManagerStub.cancelUpload.calledOnce.should.be.true;
+        uploadManagerStub.cancelUpload.getCall(0).args[0].should.equal('uploadId');
+    });
+
+    it('should correctly remove all related data to the given upload id from the UI', function (done) {
+        component.emit('removeUpload', 'uploadId');
+        uiUpdateSpy.called.should.be.false;
+
+        uploadManagerStub.onUploadAdded.getCall(0).args[0]('uploadId', '/path/to/file.ext', 'file.ext', 123);
+
+        component.emit('removeUpload', 'uploadId');
+        uiUpdateSpy.calledTwice.should.be.true;
+
+        component.getState(function (state) {
+            state.uploads.should.be.an.instanceof(Object);
+            Object.keys(state.uploads).should.have.a.lengthOf(0);
+
+            done();
+        });
     });
 });
 //# sourceMappingURL=UiShareManagerComponent.js.map

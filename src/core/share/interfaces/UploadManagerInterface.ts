@@ -61,9 +61,9 @@ interface UploadManagerInterface extends ClosableAsyncInterface {
 	 *
 	 * @method core.share.UploadManagerInterface#onUploadEnded
 	 *
-	 * @param listener
+	 * @param {Function} listener
 	 */
-	onUploadEnded (listener:(uploadId:string) => any):void;
+	onUploadEnded (listener:(uploadId:string, reason:string) => any):void;
 
 	/**
 	 * Registers a listener that gets called whenever a status of a running upload changed.

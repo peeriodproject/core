@@ -14,21 +14,38 @@ var UiComponent = require('../UiComponent');
 */
 var UiShareManagerComponent = (function (_super) {
     __extends(UiShareManagerComponent, _super);
-    function UiShareManagerComponent(downloadManager) {
+    function UiShareManagerComponent(downloadManager, uploadManager) {
         _super.call(this);
+        /**
+        * The internally used download manger instance
+        *
+        * @member {core.share.DownloadManagerInterface} core.ui.UiShareManagerComponent~_downloadManager
+        */
         this._downloadManager = null;
         this._progressRunnerTimeout = null;
         this._progressUpdated = null;
         this._runningDownloads = {};
+        this._runningUploads = {};
         this._unmergedDownloadsWrittenBytes = {};
+        this._uploadManager = null;
 
         this._downloadManager = downloadManager;
+        this._uploadManager = uploadManager;
 
         this._setupDownloadManagerEvents();
-        this._setupUiEvents();
+        this._setupUploadManagerEvents();
+        this._setupUiDownloadEvents();
+        this._setupUiUploadEvents();
     }
     UiShareManagerComponent.prototype.getEventNames = function () {
-        return ['addDownload', 'cancelDownload', 'removeDownload', 'updateDownloadDestination'];
+        return [
+            'addDownload',
+            'cancelDownload',
+            'cancelUpload',
+            'removeDownload',
+            'removeUpload',
+            'updateDownloadDestination'
+        ];
     };
 
     UiShareManagerComponent.prototype.getChannelName = function () {
@@ -40,6 +57,7 @@ var UiShareManagerComponent = (function (_super) {
         this._downloadManager.getDownloadDestination(function (err, destination) {
             return callback({
                 downloads: _this._runningDownloads,
+                uploads: _this._runningUploads,
                 destination: {
                     path: destination,
                     error: (err ? { message: err.message, code: 'INVALID_PATH' } : null)
@@ -93,7 +111,7 @@ var UiShareManagerComponent = (function (_super) {
         });
     };
 
-    UiShareManagerComponent.prototype._setupUiEvents = function () {
+    UiShareManagerComponent.prototype._setupUiDownloadEvents = function () {
         var _this = this;
         this.on('addDownload', function (responseId, callback) {
             _this._downloadManager.createDownload(responseId, function (err) {
@@ -126,6 +144,57 @@ var UiShareManagerComponent = (function (_super) {
         });
     };
 
+    UiShareManagerComponent.prototype._setupUiUploadEvents = function () {
+        var _this = this;
+        this.on('cancelUpload', function (uploadId) {
+            if (_this._runningUploads[uploadId]) {
+                _this._uploadManager.cancelUpload(uploadId);
+            }
+        });
+
+        this.on('removeUpload', function (uploadId) {
+            if (_this._runningUploads[uploadId]) {
+                delete _this._runningUploads[uploadId];
+
+                _this.updateUi();
+            }
+        });
+    };
+
+    UiShareManagerComponent.prototype._setupUploadManagerEvents = function () {
+        var _this = this;
+        this._uploadManager.onUploadAdded(function (uploadId, filePath, fileName, fileSize) {
+            _this._runningUploads[uploadId] = {
+                created: new Date().getTime(),
+                id: uploadId,
+                path: filePath,
+                name: fileName,
+                size: fileSize,
+                status: 'created'
+            };
+
+            _this.updateUi();
+        });
+
+        this._uploadManager.onUploadStatusChanged(function (uploadId, status) {
+            if (!_this._runningUploads[uploadId]) {
+                return;
+            }
+
+            _this._runningUploads[uploadId].status = status;
+            _this.updateUi();
+        });
+
+        this._uploadManager.onUploadEnded(function (uploadId, reason) {
+            if (!_this._runningUploads[uploadId]) {
+                return;
+            }
+
+            _this._runningUploads[uploadId].status = reason;
+            _this.updateUi();
+        });
+    };
+
     UiShareManagerComponent.prototype._startProgressRunner = function () {
         var _this = this;
         if (this._progressRunnerTimeout) {
@@ -150,7 +219,7 @@ var UiShareManagerComponent = (function (_super) {
             _this._progressUpdated = false;
             _this.updateUi();
             _this._startProgressRunner();
-        }, 500);
+        }, 500); // todo move interval delay to config
     };
     return UiShareManagerComponent;
 })(UiComponent);
