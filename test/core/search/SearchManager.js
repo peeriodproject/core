@@ -13,7 +13,7 @@ var SearchItem = require('../../../src/core/search/SearchItem');
 var SearchManager = require('../../../src/core/search/SearchManager');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> SEARCH --> SearchManager @_joern', function () {
+describe('CORE --> SEARCH --> SearchManager', function () {
     var sandbox;
     var createConfig = function () {
         return testUtils.stubPublicApi(sandbox, ObjectConfig, {

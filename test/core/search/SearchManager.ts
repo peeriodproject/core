@@ -16,7 +16,7 @@ import SearchItem = require('../../../src/core/search/SearchItem');
 import SearchManager = require('../../../src/core/search/SearchManager');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> SEARCH --> SearchManager @_joern', function () {
+describe('CORE --> SEARCH --> SearchManager', function () {
 	var sandbox:SinonSandbox;
 	var createConfig:any = function ():any {
 		return testUtils.stubPublicApi(sandbox, ObjectConfig, {

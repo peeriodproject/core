@@ -11,7 +11,7 @@ import AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 import UploadManager = require('../../../src/core/share/UploadManager');
 import SearchClient = require('../../../src/core/search/SearchClient');
 
-describe('CORE --> SHARE --> UploadManager @joern', function () {
+describe('CORE --> SHARE --> UploadManager', function () {
 	var sandbox:SinonSandbox;
 	var appQuitHandlerStub:any;
 	var searchClientStub:any;

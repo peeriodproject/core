@@ -6,7 +6,7 @@
  */
 interface UploadBridgeInterface extends NodeJS.EventEmitter {
 
-	getFileInfoByHash (fileHash:string, callback:(err:Error, fullFilePath:string, filename:string, filesize:number) => any):void;
+	getFileInfoByHash (fileHash:string, callback:(err:Error, fullFilePath:string, fileName:string, fileSize:number) => any):void;
 
 }
 

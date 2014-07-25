@@ -8,7 +8,7 @@ var AppQuitHandler = require('../../../src/core/utils/AppQuitHandler');
 var UploadManager = require('../../../src/core/share/UploadManager');
 var SearchClient = require('../../../src/core/search/SearchClient');
 
-describe('CORE --> SHARE --> UploadManager @joern', function () {
+describe('CORE --> SHARE --> UploadManager', function () {
     var sandbox;
     var appQuitHandlerStub;
     var searchClientStub;

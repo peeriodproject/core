@@ -8,7 +8,7 @@ import testUtils = require('../../utils/testUtils');
 import DownloadBridge = require('../../../src/core/share/DownloadBridge');
 import DownloadManager = require('../../../src/core/share/DownloadManager');
 
-describe('CORE --> SHARE --> DownloadBridge @joern', function () {
+describe('CORE --> SHARE --> DownloadBridge', function () {
 	var sandbox:SinonSandbox;
 	var downloadManagerStub:any;
 
@@ -52,7 +52,7 @@ describe('CORE --> SHARE --> DownloadBridge @joern', function () {
 			args[3].should.equal('hash');
 			args[4].should.equal('/destination');
 			args[5].should.containDeep({ metadata: true });
-		})
+		});
 
 		it ('download was removed', function () {
 			var abortDownloadSpy = sandbox.spy();

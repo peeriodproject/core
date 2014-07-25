@@ -7,7 +7,7 @@ var testUtils = require('../../utils/testUtils');
 var DownloadBridge = require('../../../src/core/share/DownloadBridge');
 var DownloadManager = require('../../../src/core/share/DownloadManager');
 
-describe('CORE --> SHARE --> DownloadBridge @joern', function () {
+describe('CORE --> SHARE --> DownloadBridge', function () {
     var sandbox;
     var downloadManagerStub;
 

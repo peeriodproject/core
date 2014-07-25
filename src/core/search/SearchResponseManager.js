@@ -134,6 +134,7 @@ var SearchResponseManager = (function () {
 
                 if (results && results['total']) {
                     // todo add the ability to manipulate results via plugins before the event will be triggered
+                    // todo check if the file is currently present in the filesystem
                     return _this._triggerResultsFound(queryId, results);
                 } else {
                     return _this._triggerNoResultsFound(queryId);
