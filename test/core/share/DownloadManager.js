@@ -24,33 +24,7 @@ describe('CORE --> SHARE --> DownloadManager', function () {
 
     var state = null;
 
-    var validResponse = {
-        _type: "jj.core.documentanalyser",
-        _itemId: "3c45b5405c817c047a0759d7f3249d19a0aa58d9",
-        itemName: "LoremIpsum.txt",
-        itemStats: {
-            uid: 501,
-            atime: "2014-07-21T15:58:48.000Z",
-            ino: 47882983,
-            dev: 16777218,
-            blksize: 4096,
-            mtime: "2014-07-13T15:02:41.000Z",
-            gid: 0,
-            nlink: 1,
-            blocks: 8,
-            rdev: 0,
-            ctime: "2014-07-13T15:02:41.000Z",
-            size: 308,
-            mode: 33188
-        },
-        itemHash: "3c45b5405c817c047a0759d7f3249d19a0aa58d9",
-        file: [
-            "vel augue laoreet rutrum faucibus dolor auctor. Lorem ipsum dolor sit amet, consectetur adipiscing elit"
-        ],
-        _meta: {
-            additional: "metadata"
-        }
-    };
+    var validResponse;
 
     var closeAndDone = function (downloadManager, done) {
         downloadManager.getRunningDownloadIds(function (ids) {
@@ -111,6 +85,34 @@ describe('CORE --> SHARE --> DownloadManager', function () {
                 return process.nextTick(callback.bind(null, null));
             }
         });
+
+        validResponse = {
+            _type: "jj.core.documentanalyser",
+            _itemId: "3c45b5405c817c047a0759d7f3249d19a0aa58d9",
+            itemName: "LoremIpsum.txt",
+            itemStats: {
+                uid: 501,
+                atime: "2014-07-21T15:58:48.000Z",
+                ino: 47882983,
+                dev: 16777218,
+                blksize: 4096,
+                mtime: "2014-07-13T15:02:41.000Z",
+                gid: 0,
+                nlink: 1,
+                blocks: 8,
+                rdev: 0,
+                ctime: "2014-07-13T15:02:41.000Z",
+                size: 308,
+                mode: 33188
+            },
+            itemHash: "3c45b5405c817c047a0759d7f3249d19a0aa58d9",
+            file: [
+                "vel augue laoreet rutrum faucibus dolor auctor. Lorem ipsum dolor sit amet, consectetur adipiscing elit"
+            ],
+            _meta: {
+                additional: "metadata"
+            }
+        };
     });
 
     afterEach(function () {
@@ -297,13 +299,13 @@ describe('CORE --> SHARE --> DownloadManager', function () {
                         ids.should.be.an.instanceof(Array);
                         ids.should.have.a.lengthOf(0);
 
-                        done();
+                        closeAndDone(manager, done);
                     });
                 }
             });
         });
 
-        it('should correctly return the upload id', function (done) {
+        it('should correctly return the download id', function (done) {
             response = validResponse;
             state = { destination: appDataPath };
 
@@ -312,17 +314,16 @@ describe('CORE --> SHARE --> DownloadManager', function () {
             var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, 'searchresponses', {
                 onOpenCallback: function () {
                     manager.createDownload(id);
-                    manager.createDownload(id);
-
-                    setImmediate(function () {
-                        manager.getRunningDownloadIds(function (ids) {
-                            ids.should.have.a.lengthOf(1);
-                            ids[0].should.equal(id);
-
-                            done();
-                        });
-                    });
                 }
+            });
+
+            manager.onDownloadAdded(function () {
+                manager.getRunningDownloadIds(function (ids) {
+                    ids.should.have.a.lengthOf(1);
+                    ids[0].should.equal(id);
+
+                    closeAndDone(manager, done);
+                });
             });
         });
     });
