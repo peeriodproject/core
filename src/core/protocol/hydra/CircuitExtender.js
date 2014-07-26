@@ -75,7 +75,7 @@ var CircuitExtender = (function () {
         */
         this._encDecHandler = null;
         /**
-        * Stores the event listener which is set on the message center for CELL_CREATED_REJECT_{circuitId} messages.
+        * Stores the event listener which is set on the message center for CELL_CREATED_REJECTED_{circuitId} messages.
         * Normally this listener doesn't change, but it gets detached if an error occurs or the first node to extend with
         * rejects the request (and thus the circuitId changes)
         *
@@ -191,6 +191,11 @@ var CircuitExtender = (function () {
                 _this._extensionError('Timed out');
             }, _this._reactionTimeInMs * Math.pow(_this._reactionTimeFactor, _this._nodes.length));
         });
+    };
+
+    CircuitExtender.prototype.setAsFinished = function () {
+        this._removeMessageListener();
+        this._removeTerminationListener();
     };
 
     /**

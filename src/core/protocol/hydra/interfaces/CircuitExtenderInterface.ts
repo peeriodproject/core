@@ -36,6 +36,14 @@ interface CircuitExtenderInterface {
 	 * received keys and was added to the layered encryption/decryption handler
 	 */
 	extend (nodeToExtendWith:HydraNode, additiveNodes:HydraNodeList, callback:(err:Error, isRejection:boolean, newNode:HydraNode) => any):void;
+
+	/**
+	 * Tells the extender that the hydra circuit has been completely extended so it can clean up
+	 * remnants.
+	 *
+	 * @method core.protocol.hydra.CircuitExtenderInterface#setAsFinished
+	 */
+	setAsFinished ():void;
 }
 
 export = CircuitExtenderInterface;

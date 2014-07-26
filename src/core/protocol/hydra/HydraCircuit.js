@@ -219,6 +219,7 @@ var HydraCircuit = (function (_super) {
 
                         // all done, finalize
                         _this._constructed = true;
+                        _this._circuitExtender.setAsFinished();
                         _this._setupFileTransferListener();
                         _this.emit('isConstructed');
                     } else {

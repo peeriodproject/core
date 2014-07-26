@@ -251,6 +251,7 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 
 						// all done, finalize
 						this._constructed = true;
+						this._circuitExtender.setAsFinished();
 						this._setupFileTransferListener();
 						this.emit('isConstructed');
 					}

@@ -91,7 +91,7 @@ class CircuitExtender implements CircuitExtenderInterface {
 	private _encDecHandler:LayeredEncDecHandlerInterface = null;
 
 	/**
-	 * Stores the event listener which is set on the message center for CELL_CREATED_REJECT_{circuitId} messages.
+	 * Stores the event listener which is set on the message center for CELL_CREATED_REJECTED_{circuitId} messages.
 	 * Normally this listener doesn't change, but it gets detached if an error occurs or the first node to extend with
 	 * rejects the request (and thus the circuitId changes)
 	 *
@@ -220,6 +220,11 @@ class CircuitExtender implements CircuitExtenderInterface {
 				this._extensionError('Timed out');
 			}, this._reactionTimeInMs * Math.pow(this._reactionTimeFactor, this._nodes.length));
 		});
+	}
+
+	public setAsFinished ():void {
+		this._removeMessageListener();
+		this._removeTerminationListener();
 	}
 
 	/**
