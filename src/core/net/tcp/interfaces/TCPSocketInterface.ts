@@ -25,16 +25,6 @@ interface TCPSocketInterface extends NodeJS.EventEmitter {
 	end (data?:any, encoding?:string):void;
 
 	/**
-	 *
-	 * @deprecated
-	 *
-	 * Closes the socket, unbinds all listeners to it, drops reference to it and unbinds listeners to itself.
-	 *
-	 * @method core.net.tcp.TCPSocketInterface#forceDestroy
-	 */
-	forceDestroy ():void;
-
-	/**
 	 * Returns the identification string.
 	 *
 	 * @method core.net.tcp.TCPSocketInterface#getIdentifier
@@ -142,8 +132,6 @@ interface TCPSocketInterface extends NodeJS.EventEmitter {
 	 * @returns {boolean} True if flushed to kernel buffer, false if all or part was queued in memory.
 	 */
 	writeString (message:string, encoding?:string, callback?:Function):boolean;
-
-	TESTsetIsCircuit (flag:boolean):void;
 
 }
 

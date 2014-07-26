@@ -5,7 +5,6 @@ import TCPSocketInterface = require('./interfaces/TCPSocketInterface');
 import TCPSocketOptions = require('./interfaces/TCPSocketOptions');
 
 var logger = require('../../utils/logger/LoggerFactory').create();
-var stackTrace = require('stack-trace');
 
 /**
  * TCP Socket implementation.
@@ -64,15 +63,6 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	private _preventWrite:boolean = false;
 
-	private _uuid:string = '';
-
-	private _TESTisCircuit:boolean = false;
-
-
-	public TESTsetIsCircuit (flag:boolean):void {
-		this._TESTisCircuit = flag;
-	}
-
 	public constructor (socket:net.Socket, opts:TCPSocketOptions) {
 		super();
 
@@ -101,46 +91,16 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		}
 
 		this.setupListeners();
-
-		function s4() {
-			return Math.floor((1 + Math.random()) * 0x10000)
-				.toString(16)
-				.substring(1);
-		}
-
-		this._uuid = s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
-
-		logger.log('socket', 'Added socket');
 	}
 
 	public end (data?:any, encoding?:string):void {
 
 		if (this.getSocket() && !this._preventWrite) {
 			this._preventWrite = true;
-			logger.log('socket', 'Socket ending...', {ident: this.getIdentifier()});
 
 			this.getSocket().end(data, encoding);
 
 		}
-	}
-
-	public forceDestroy():void {
-		/*if (this._socket) {
-			logger.info('destroying socket');
-
-			this._closeOnTimeout = false;
-
-			try {
-				//this.getSocket().removeAllListeners();
-				this.getSocket().end();
-				this.getSocket().destroy();
-			}
-			catch (e) {}
-			this._socket = null;
-			this.emit('destroy');
-			this.removeAllListeners();
-		}*/
-		logger.error('Force destroy is deprecated.');
 	}
 
 	public getIdentifier ():string {
@@ -165,15 +125,6 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	public onTimeout ():void {
 		if (this._closeOnTimeout) {
-			logger.log('socket', 'Timing out socket', {ident: this.getIdentifier(), sockid: this._uuid});
-
-			if (this.getIdentifier().indexOf('hydra') > -1) {
-				logger.log('hydra', 'Hydra socket timed out', {socketIdent: this.getIdentifier()});
-				if (this._TESTisCircuit) {
-					logger.log('error', 'Timed out a hydra circuit socket');
-				}
-			}
-
 			this.end();
 		}
 	}
@@ -204,7 +155,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		socket.on('timeout', () => this.onTimeout());
 
 		socket.on('error', (err) => {
-			//var trace = stackTrace.parse(err);
+
 			logger.error('THIS IS A SOCKET ERROR!', {
 				emsg: err.message,
 				stack:err.stack,
@@ -214,13 +165,9 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 					fileName: trace.getFileName(),
 					line    : trace.getLineNumber()
 				},*/
-				ident: this.getIdentifier(),
-				sockid: this._uuid
+				ident: this.getIdentifier()
 			});
 
-			if (!this._preventWrite) {
-				logger.log('socket', 'preventing write', {ident: this.getIdentifier(), sockid: this._uuid});
-			}
 			this._preventWrite = true;
 
 			try {
@@ -230,13 +177,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		});
 
 		socket.on('close', (had_error:boolean) => {
-			if (!this._preventWrite) {
-				logger.log('socket', 'preventing write', {ident: this.getIdentifier(), sockid: this._uuid});
-			}
 			this._preventWrite = true;
 			this._socket = null;
-
-			logger.log('socket', 'socket closed', {ident: this.getIdentifier(), had_error:had_error, sockid: this._uuid});
 
 			this.emit('destroy');
 
@@ -246,9 +188,6 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		});
 
 		socket.on('end', () => {
-			if (!this._preventWrite) {
-				logger.log('socket', 'preventing write', {ident: this.getIdentifier(), sockid: this._uuid});
-			}
 			this._preventWrite = true;
 		});
 
@@ -293,10 +232,15 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		var success:boolean = false;
 
-		try {
-			success = this.getSocket().write(message, encoding, callback);
+		if (!this._preventWrite && this.getSocket().writable) {
+
+			try {
+				success = this.getSocket().write(message, encoding, callback);
+			}
+			catch (e) {
+			}
+
 		}
-		catch (e) {}
 
 		return success;
 	}

@@ -8,7 +8,6 @@ var events = require('events');
 var net = require('net');
 
 var logger = require('../../utils/logger/LoggerFactory').create();
-var stackTrace = require('stack-trace');
 
 /**
 * TCP Socket implementation.
@@ -62,8 +61,6 @@ var TCPSocket = (function (_super) {
         */
         this._socket = null;
         this._preventWrite = false;
-        this._uuid = '';
-        this._TESTisCircuit = false;
 
         if (!(socket && socket instanceof net.Socket)) {
             throw new Error('TCPSocket.constructor: Invalid or no socket specified');
@@ -90,45 +87,13 @@ var TCPSocket = (function (_super) {
         }
 
         this.setupListeners();
-
-        function s4() {
-            return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-        }
-
-        this._uuid = s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
-
-        logger.log('socket', 'Added socket');
     }
-    TCPSocket.prototype.TESTsetIsCircuit = function (flag) {
-        this._TESTisCircuit = flag;
-    };
-
     TCPSocket.prototype.end = function (data, encoding) {
         if (this.getSocket() && !this._preventWrite) {
             this._preventWrite = true;
-            logger.log('socket', 'Socket ending...', { ident: this.getIdentifier() });
 
             this.getSocket().end(data, encoding);
         }
-    };
-
-    TCPSocket.prototype.forceDestroy = function () {
-        /*if (this._socket) {
-        logger.info('destroying socket');
-        
-        this._closeOnTimeout = false;
-        
-        try {
-        //this.getSocket().removeAllListeners();
-        this.getSocket().end();
-        this.getSocket().destroy();
-        }
-        catch (e) {}
-        this._socket = null;
-        this.emit('destroy');
-        this.removeAllListeners();
-        }*/
-        logger.error('Force destroy is deprecated.');
     };
 
     TCPSocket.prototype.getIdentifier = function () {
@@ -153,15 +118,6 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.onTimeout = function () {
         if (this._closeOnTimeout) {
-            logger.log('socket', 'Timing out socket', { ident: this.getIdentifier(), sockid: this._uuid });
-
-            if (this.getIdentifier().indexOf('hydra') > -1) {
-                logger.log('hydra', 'Hydra socket timed out', { socketIdent: this.getIdentifier() });
-                if (this._TESTisCircuit) {
-                    logger.log('error', 'Timed out a hydra circuit socket');
-                }
-            }
-
             this.end();
         }
     };
@@ -195,7 +151,6 @@ var TCPSocket = (function (_super) {
         });
 
         socket.on('error', function (err) {
-            //var trace = stackTrace.parse(err);
             logger.error('THIS IS A SOCKET ERROR!', {
                 emsg: err.message,
                 stack: err.stack,
@@ -205,13 +160,9 @@ var TCPSocket = (function (_super) {
                 fileName: trace.getFileName(),
                 line    : trace.getLineNumber()
                 },*/
-                ident: _this.getIdentifier(),
-                sockid: _this._uuid
+                ident: _this.getIdentifier()
             });
 
-            if (!_this._preventWrite) {
-                logger.log('socket', 'preventing write', { ident: _this.getIdentifier(), sockid: _this._uuid });
-            }
             _this._preventWrite = true;
 
             try  {
@@ -221,13 +172,8 @@ var TCPSocket = (function (_super) {
         });
 
         socket.on('close', function (had_error) {
-            if (!_this._preventWrite) {
-                logger.log('socket', 'preventing write', { ident: _this.getIdentifier(), sockid: _this._uuid });
-            }
             _this._preventWrite = true;
             _this._socket = null;
-
-            logger.log('socket', 'socket closed', { ident: _this.getIdentifier(), had_error: had_error, sockid: _this._uuid });
 
             _this.emit('destroy');
 
@@ -237,9 +183,6 @@ var TCPSocket = (function (_super) {
         });
 
         socket.on('end', function () {
-            if (!_this._preventWrite) {
-                logger.log('socket', 'preventing write', { ident: _this.getIdentifier(), sockid: _this._uuid });
-            }
             _this._preventWrite = true;
         });
 
@@ -284,9 +227,11 @@ var TCPSocket = (function (_super) {
 
         var success = false;
 
-        try  {
-            success = this.getSocket().write(message, encoding, callback);
-        } catch (e) {
+        if (!this._preventWrite && this.getSocket().writable) {
+            try  {
+                success = this.getSocket().write(message, encoding, callback);
+            } catch (e) {
+            }
         }
 
         return success;

@@ -339,7 +339,6 @@ var ProtocolConnectionManager = (function (_super) {
         var socket = this._hydraSockets[identifier];
 
         if (socket) {
-            socket.TESTsetIsCircuit(false);
             socket.setCloseOnTimeout(true);
         }
     };
@@ -348,7 +347,6 @@ var ProtocolConnectionManager = (function (_super) {
         var socket = this._hydraSockets[identifier];
 
         if (socket) {
-            socket.TESTsetIsCircuit(true);
             socket.setCloseOnTimeout(false);
         }
     };

@@ -379,7 +379,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		var socket:TCPSocketInterface = this._hydraSockets[identifier];
 
 		if (socket) {
-			socket.TESTsetIsCircuit(false);
 			socket.setCloseOnTimeout(true);
 		}
 	}
@@ -388,7 +387,6 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		var socket:TCPSocketInterface = this._hydraSockets[identifier];
 
 		if (socket) {
-			socket.TESTsetIsCircuit(true);
 			socket.setCloseOnTimeout(false);
 		}
 	}
