@@ -1,4 +1,5 @@
 import events = require('events');
+import fs = require('fs');
 
 import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
 import ClosableAsyncOptions = require('../utils/interfaces/ClosableAsyncOptions');
@@ -29,7 +30,7 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 	private _eventEmitter:events.EventEmitter = null;
 
 	/**
-	 * A flag indicates weather the SearchResponseManager is open or not.
+	 * A flag indicates whether the SearchResponseManager is open or not.
 	 *
 	 * @member {boolean} core.search.SearchResponseManager~_isOpen
 	 */
@@ -171,25 +172,39 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 				return callback(err, null);
 			}
 
-			results.hits = this._cleanupHits(hits);
+			this._cleanupHits(hits, function (cleanedHits) {
+				if (!cleanedHits.length) {
+					return callback(null, null);
+				}
 
-			delete results.max_score;
+				results.hits = cleanedHits;
+				results.total = cleanedHits.length;
 
-			return callback(null, results);
+				delete results.max_score;
+
+				return callback(null, results);
+			});
 		});
 	}
 
 	/**
-	 * Removes unused fields from the result list before returning it.
+	 * Prepares a single database hit to be returned to the broadcaster. Fields that contain data about your environment
+	 * will be stripped out after the file location was confimed. Should the item contain an invalid path or the file is not
+	 * present at the moment the method will return `null` for further clean up.
 	 *
-	 * @method core.search.SearchResponseManager~_cleanupHits
-	 *
-	 * @param {Array} hits The array of hits returned from elasticsearch. {@link http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#api-search}
-	 * @returns {Array}
+	 * @param {number} index The position in the hits list
+	 * @param {any} hit The hit that should be cleaned.
+	 * @param {Function} callback The callback with the `index` and the `cleanedHit` as arguments
 	 */
-	private _cleanupHits (hits:Array<Object>):Array<Object> {
-		for (var i = 0, l = hits.length; i < l; i++) {
-			var hit:any = hits[i];
+	private _cleanupHit (index:number, hit:any, callback:(index:number, cleanedHit:any) => any):void {
+		if (!hit || !hit._source || !hit._source.itemPath || !hit._source.itemHash) {
+			return process.nextTick(callback.bind(null, index, null));
+		}
+
+		fs.exists(hit._source.itemPath, function (exists:boolean) {
+			if (!exists) {
+				return callback(index, null);
+			}
 
 			hit._itemId = hit._source.itemHash;
 
@@ -205,9 +220,46 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 			}
 			catch (e) {
 			}
+
+			return callback(index, hit);
+		});
+	}
+
+	/**
+	 * Removes unused fields from the result list before returning it.
+	 *
+	 * @method core.search.SearchResponseManager~_cleanupHits
+	 *
+	 * @param {Array} hits The array of hits returned from elasticsearch. {@link http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#api-search}
+	 * @param {Function} callback
+	 * @returns {Array}
+	 */
+	private _cleanupHits (hits:Array<Object>, callback:(cleanedHits:Array<Object>) => any):void {
+		var hitsLength = hits.length;
+		var cleanedHits:Array<Object> = [];
+		var returned = 0;
+		var checkAncCallCallback = function () {
+			returned++;
+			if (returned === hitsLength) {
+				returned = -1;
+
+				// clean up empty array items http://stackoverflow.com/a/2843625
+				cleanedHits = cleanedHits.filter(function (n) { return n != undefined });
+
+				return callback(cleanedHits);
+			}
+		};
+
+		for (var i = 0, l = hitsLength; i < l; i++) {
+			this._cleanupHit(i, hits[i], function(index:number, cleanedHit:any) {
+				cleanedHits[index] = cleanedHit;
+
+				return checkAncCallCallback();
+			});
+			//var hit:any = hits[i];
 		}
 
-		return hits;
+		//return hits;
 	}
 
 	private _triggerNoResultsFound (queryId:string):void {
@@ -258,7 +310,7 @@ class SearchResponseManager implements SearchResponseManagerInterface {
 		try {
 			query = JSON.parse(queryBuffer.toString());
 
-			// todo limit/check valid elasticsearch keys
+			// todo limit/check valid elasticsearch keys, (injections tricks?) etc.
 
 			if (query['highlight']) {
 				query['highlight'] = ObjectUtils.extend(query['highlight'], {

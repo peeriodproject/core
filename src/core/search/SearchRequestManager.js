@@ -38,7 +38,7 @@ var SearchRequestManager = (function () {
         */
         this._indexName = '';
         /**
-        * A flag indicates weather the SearchRequestManager is open or not.
+        * A flag indicates whether the SearchRequestManager is open or not.
         *
         * @member {boolean} core.search.SearchRequestManager~_isOpen
         */

@@ -59,7 +59,7 @@ class PluginManager implements PluginManagerInterface {
 	private _eventEmitter:events.EventEmitter = null;
 
 	/**
-	 * A flag indicates weather the store is open or closed
+	 * A flag indicates whether the store is open or closed
 	 *
 	 * @member {boolean} core.plugin.PluginManager~_isOpen
 	 */
@@ -118,7 +118,7 @@ class PluginManager implements PluginManagerInterface {
 	private _pluginState:PluginStateInterface = null;
 
 	/**
-	 * Indicates weather the state is just loaded from the storage or already processed
+	 * Indicates whether the state is just loaded from the storage or already processed
 	 *
 	 * @member {boolean} core.plugin.PluginManager~_pluginStateIsActive
 	 */

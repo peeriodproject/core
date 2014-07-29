@@ -50,7 +50,7 @@ class IndexManager implements IndexManagerInterface {
 	private _folderWatcherManager:FolderWatcherManagerInterface = null;
 
 	/**
-	 * A flag indicates weather the IndexManager is currently indexing or paused
+	 * A flag indicates whether the IndexManager is currently indexing or paused
 	 *
 	 * @member {boolean} core.search.IndexManager~_isIndexing
 	 */
@@ -85,7 +85,7 @@ class IndexManager implements IndexManagerInterface {
 	private _indexRunnersInParallelRunning:number = 0;
 
 	/**
-	 * A flag indicates weather the IndexManager is open or closed
+	 * A flag indicates whether the IndexManager is open or closed
 	 *
 	 * @member {boolean} core.search.IndexManager~_isOpen
 	 */
@@ -387,7 +387,7 @@ class IndexManager implements IndexManagerInterface {
 
 	/**
 	 * Processes an item from the {@link core.search.IndexManager~_currentPendingPathToIndex} list.
-	 * It checkes weather the item exists in the searchManager by using {@link core.search.IndexManager~_getItemFromSearchManager}
+	 * It checkes whether the item exists in the searchManager by using {@link core.search.IndexManager~_getItemFromSearchManager}
 	 * and validates the returned state via {@link core.search.IndexManager~_validateItem}. If the item does not exists yet
 	 * or needs reindexing it is passed to the {@link core.search.IndexManager~_addItem} method.
 	 *

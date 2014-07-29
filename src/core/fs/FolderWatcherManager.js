@@ -28,7 +28,7 @@ var FolderWatcherManager = (function () {
         */
         this._appQuitHandler = null;
         /**
-        * Returns weather the FolderWatcherManager is already closing or not
+        * Returns whether the FolderWatcherManager is already closing or not
         *
         * @member {core.utils.AppQuitHandler} core ~_isClosing
         */

@@ -43,7 +43,7 @@ class SearchFormManager implements SearchFormManagerInterface {
 	private _currentFormIdentifier:string = null;
 
 	/**
-	 * A flag indicates weather the manager is open or closed
+	 * A flag indicates whether the manager is open or closed
 	 *
 	 * @member {boolean} core.search.SearchFormManager~_isOpen
 	 */

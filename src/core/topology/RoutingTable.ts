@@ -71,7 +71,7 @@ class RoutingTable implements RoutingTableInterface {
 	private _id:IdInterface = null;
 
 	/**
-	 * A flag indicates weather the store is open or closed
+	 * A flag indicates whether the store is open or closed
 	 *
 	 * @member {boolean} core.topology.RoutingTable~_isOpen
 	 */

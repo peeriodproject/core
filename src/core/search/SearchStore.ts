@@ -52,7 +52,7 @@ class SearchStore implements SearchStoreInterface {
 	private _databaseServerProcessId:number = -1;
 
 	/**
-	 * A flag indicates weather the store is closed or open
+	 * A flag indicates whether the store is closed or open
 	 *
 	 * @member {boolean} core.search.SearchStore~_isOpen
 	 */

@@ -34,7 +34,7 @@ interface IndexManagerInterface extends ClosableAsyncInterface {
 	forceIndex (callback?:(err:Error) => any):void;
 
 	/**
-	 * Returnes weather the indexing process is paused or active.
+	 * Returnes whether the indexing process is paused or active.
 	 *
 	 * @method core.search.IndexManagerInterface#isPaused
 	 *

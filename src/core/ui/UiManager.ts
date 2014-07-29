@@ -74,7 +74,7 @@ class UiManager implements UiManagerInterface {
 	private _httpSockets:Array<net.Socket> = [];
 
 	/**
-	 * A flag inidcates weather the UiManager is open and the server is running or not.
+	 * A flag inidcates whether the UiManager is open and the server is running or not.
 	 *
 	 * @member {boolean} core.ui.UiManager~_isOpen
 	 */

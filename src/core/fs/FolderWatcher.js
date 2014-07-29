@@ -49,7 +49,7 @@ var FolderWatcher = (function () {
         */
         this._eventEmitter = null;
         /**
-        * A flag indicates weather the watcher is open (active) or closed (inactive)
+        * A flag indicates whether the watcher is open (active) or closed (inactive)
         *
         * @member {boolean} core.fs.FolderWatcher~_isOpen
         */
