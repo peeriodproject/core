@@ -336,6 +336,8 @@ var CellManager = (function (_super) {
             };
 
             this._connectionManager.on('circuitTermination', pending.terminationListener);
+        } else {
+            this._connectionManager.closeSocketByIdentifier(socketIdentifier);
         }
 
         if (pending.additivePayloads.length === this._additiveSharingMsgAmount && pending.initiator) {

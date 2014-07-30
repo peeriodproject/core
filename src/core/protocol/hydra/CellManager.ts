@@ -356,6 +356,9 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 
 			this._connectionManager.on('circuitTermination', pending.terminationListener);
 		}
+		else {
+			this._connectionManager.closeSocketByIdentifier(socketIdentifier);
+		}
 
 		if (pending.additivePayloads.length === this._additiveSharingMsgAmount && pending.initiator) {
 			logger.log('hydraCell', 'Complete batch.');
