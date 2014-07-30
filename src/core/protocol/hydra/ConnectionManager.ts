@@ -88,6 +88,10 @@ class ConnectionManager extends events.EventEmitter implements ConnectionManager
 		}
 	}
 
+	public closeSocketByIdentifier (socketIdentifier:string):void {
+		this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
+	}
+
 	public pipeCircuitMessageTo (node:HydraNode, messageType:string, payload:Buffer, skipCircIdOnConstruction?:boolean):void {
 		var sendableBuffer:Buffer = null;
 		var circuitId:string = node.circuitId;

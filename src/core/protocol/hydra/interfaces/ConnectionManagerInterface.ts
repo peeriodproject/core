@@ -30,6 +30,16 @@ interface ConnectionManagerInterface extends NodeJS.EventEmitter {
 	addToCircuitNodes (socketIdentifier:string, node:HydraNode):void;
 
 	/**
+	 * Merely sends on to the ProtocolConnectionManager the instruction to close the hydra socket stored
+	 * under the provided identifier.
+	 *
+	 * @method core.protocol.hydra.ConnectionManager#closeSocketByIdentifier
+	 *
+	 * @param {string} socketIdentifier Identifier of the hydra socket to close
+	 */
+	closeSocketByIdentifier (socketIdentifier:string):void;
+
+	/**
 	 * Pipes a message to the provided node.
 	 * If the node already is assigned to a specific socket, this is used. If not, a new connection is obtained
 	 * and the socket's identifier set on the node.

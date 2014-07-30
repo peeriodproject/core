@@ -314,6 +314,8 @@ class HydraMessageCenter extends events.EventEmitter implements HydraMessageCent
 			if (msg) {
 				this._connectionManager.pipeMessageTo({ ip: msg.getIp(), port: msg.getPort() }, 'CREATE_CELL_ADDITIVE', msg.getPayload());
 			}
+
+			this._connectionManager.closeSocketByIdentifier(identifier);
 		}
 		else if (message.getMessageType() === 'CREATE_CELL_ADDITIVE') {
 			this._emitMessage(message, identifier, this._readableCreateCellAdditiveFactory);

@@ -74,6 +74,10 @@ var ConnectionManager = (function (_super) {
         }
     };
 
+    ConnectionManager.prototype.closeSocketByIdentifier = function (socketIdentifier) {
+        this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
+    };
+
     ConnectionManager.prototype.pipeCircuitMessageTo = function (node, messageType, payload, skipCircIdOnConstruction) {
         var _this = this;
         var sendableBuffer = null;
