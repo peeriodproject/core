@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">69.94</p>
+      <p class="stat">72.14</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">316</p>
+      <p class="stat">261</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">49.46</p>
+      <p class="stat">45.05</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.52</p>
+      <p class="stat">1.80</p>
     </div>
   </div>
 </div>
@@ -100,7 +100,6 @@ var events = require(&#039;events&#039;);
 var net = require(&#039;net&#039;);
 
 var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
-var stackTrace = require(&#039;stack-trace&#039;);
 
 /**
 * TCP Socket implementation.
@@ -154,8 +153,6 @@ var TCPSocket = (function (_super) {
         */
         this._socket = null;
         this._preventWrite = false;
-        this._uuid = &#039;&#039;;
-        this._TESTisCircuit = false;
 
         if (!(socket &amp;&amp; socket instanceof net.Socket)) {
             throw new Error(&#039;TCPSocket.constructor: Invalid or no socket specified&#039;);
@@ -182,45 +179,13 @@ var TCPSocket = (function (_super) {
         }
 
         this.setupListeners();
-
-        function s4() {
-            return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-        }
-
-        this._uuid = s4() + s4() + &#039;-&#039; + s4() + &#039;-&#039; + s4() + &#039;-&#039; + s4() + &#039;-&#039; + s4() + s4() + s4();
-
-        logger.log(&#039;socket&#039;, &#039;Added socket&#039;);
     }
-    TCPSocket.prototype.TESTsetIsCircuit = function (flag) {
-        this._TESTisCircuit = flag;
-    };
-
     TCPSocket.prototype.end = function (data, encoding) {
         if (this.getSocket() &amp;&amp; !this._preventWrite) {
             this._preventWrite = true;
-            logger.log(&#039;socket&#039;, &#039;Socket ending...&#039;, { ident: this.getIdentifier() });
 
             this.getSocket().end(data, encoding);
         }
-    };
-
-    TCPSocket.prototype.forceDestroy = function () {
-        /*if (this._socket) {
-        logger.info(&#039;destroying socket&#039;);
-        
-        this._closeOnTimeout = false;
-        
-        try {
-        //this.getSocket().removeAllListeners();
-        this.getSocket().end();
-        this.getSocket().destroy();
-        }
-        catch (e) {}
-        this._socket = null;
-        this.emit(&#039;destroy&#039;);
-        this.removeAllListeners();
-        }*/
-        logger.error(&#039;Force destroy is deprecated.&#039;);
     };
 
     TCPSocket.prototype.getIdentifier = function () {
@@ -245,15 +210,6 @@ var TCPSocket = (function (_super) {
 
     TCPSocket.prototype.onTimeout = function () {
         if (this._closeOnTimeout) {
-            logger.log(&#039;socket&#039;, &#039;Timing out socket&#039;, { ident: this.getIdentifier(), sockid: this._uuid });
-
-            if (this.getIdentifier().indexOf(&#039;hydra&#039;) &gt; -1) {
-                logger.log(&#039;hydra&#039;, &#039;Hydra socket timed out&#039;, { socketIdent: this.getIdentifier() });
-                if (this._TESTisCircuit) {
-                    logger.log(&#039;error&#039;, &#039;Timed out a hydra circuit socket&#039;);
-                }
-            }
-
             this.end();
         }
     };
@@ -287,7 +243,6 @@ var TCPSocket = (function (_super) {
         });
 
         socket.on(&#039;error&#039;, function (err) {
-            //var trace = stackTrace.parse(err);
             logger.error(&#039;THIS IS A SOCKET ERROR!&#039;, {
                 emsg: err.message,
                 stack: err.stack,
@@ -297,13 +252,9 @@ var TCPSocket = (function (_super) {
                 fileName: trace.getFileName(),
                 line    : trace.getLineNumber()
                 },*/
-                ident: _this.getIdentifier(),
-                sockid: _this._uuid
+                ident: _this.getIdentifier()
             });
 
-            if (!_this._preventWrite) {
-                logger.log(&#039;socket&#039;, &#039;preventing write&#039;, { ident: _this.getIdentifier(), sockid: _this._uuid });
-            }
             _this._preventWrite = true;
 
             try  {
@@ -313,13 +264,8 @@ var TCPSocket = (function (_super) {
         });
 
         socket.on(&#039;close&#039;, function (had_error) {
-            if (!_this._preventWrite) {
-                logger.log(&#039;socket&#039;, &#039;preventing write&#039;, { ident: _this.getIdentifier(), sockid: _this._uuid });
-            }
             _this._preventWrite = true;
             _this._socket = null;
-
-            logger.log(&#039;socket&#039;, &#039;socket closed&#039;, { ident: _this.getIdentifier(), had_error: had_error, sockid: _this._uuid });
 
             _this.emit(&#039;destroy&#039;);
 
@@ -329,9 +275,6 @@ var TCPSocket = (function (_super) {
         });
 
         socket.on(&#039;end&#039;, function () {
-            if (!_this._preventWrite) {
-                logger.log(&#039;socket&#039;, &#039;preventing write&#039;, { ident: _this.getIdentifier(), sockid: _this._uuid });
-            }
             _this._preventWrite = true;
         });
 
@@ -376,9 +319,11 @@ var TCPSocket = (function (_super) {
 
         var success = false;
 
-        try  {
-            success = this.getSocket().write(message, encoding, callback);
-        } catch (e) {
+        if (!this._preventWrite &amp;&amp; this.getSocket().writable) {
+            try  {
+                success = this.getSocket().write(message, encoding, callback);
+            } catch (e) {
+            }
         }
 
         return success;

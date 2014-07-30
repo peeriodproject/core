@@ -44,7 +44,7 @@ class SearchRequestManager implements SearchRequestManagerInterface {
 	private _indexName:string = '';
 
 	/**
-	 * A flag indicates weather the SearchRequestManager is open or not.
+	 * A flag indicates whether the SearchRequestManager is open or not.
 	 *
 	 * @member {boolean} core.search.SearchRequestManager~_isOpen
 	 */

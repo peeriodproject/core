@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.27</p>
+      <p class="stat">72.12</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">152</p>
+      <p class="stat">238</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">34.24</p>
+      <p class="stat">42.87</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.27</p>
+      <p class="stat">1.82</p>
     </div>
   </div>
 </div>
@@ -98,23 +98,46 @@
 };
 var UiComponent = require(&#039;../UiComponent&#039;);
 
+/**
+* @class core.ui.UiShareManagerComponent
+* @extends core.ui.UiComponent
+*
+* @param {core.share.DownloadManagerInterface} downloadManager
+*/
 var UiShareManagerComponent = (function (_super) {
     __extends(UiShareManagerComponent, _super);
-    function UiShareManagerComponent(downloadManager) {
+    function UiShareManagerComponent(downloadManager, uploadManager) {
         _super.call(this);
+        /**
+        * The internally used download manger instance
+        *
+        * @member {core.share.DownloadManagerInterface} core.ui.UiShareManagerComponent~_downloadManager
+        */
         this._downloadManager = null;
         this._progressRunnerTimeout = null;
         this._progressUpdated = null;
         this._runningDownloads = {};
+        this._runningUploads = {};
         this._unmergedDownloadsWrittenBytes = {};
+        this._uploadManager = null;
 
         this._downloadManager = downloadManager;
+        this._uploadManager = uploadManager;
 
         this._setupDownloadManagerEvents();
-        this._setupUiEvents();
+        this._setupUploadManagerEvents();
+        this._setupUiDownloadEvents();
+        this._setupUiUploadEvents();
     }
     UiShareManagerComponent.prototype.getEventNames = function () {
-        return [&#039;addDownload&#039;, &#039;cancelDownload&#039;, &#039;removeDownload&#039;, &#039;updateDownloadDestination&#039;];
+        return [
+            &#039;addDownload&#039;,
+            &#039;cancelDownload&#039;,
+            &#039;cancelUpload&#039;,
+            &#039;removeDownload&#039;,
+            &#039;removeUpload&#039;,
+            &#039;updateDownloadDestination&#039;
+        ];
     };
 
     UiShareManagerComponent.prototype.getChannelName = function () {
@@ -124,13 +147,16 @@ var UiShareManagerComponent = (function (_super) {
     UiShareManagerComponent.prototype.getState = function (callback) {
         var _this = this;
         this._downloadManager.getDownloadDestination(function (err, destination) {
-            return callback({
+            var share = {
                 downloads: _this._runningDownloads,
+                uploads: _this._runningUploads,
                 destination: {
                     path: destination,
                     error: (err ? { message: err.message, code: &#039;INVALID_PATH&#039; } : null)
                 }
-            });
+            };
+
+            return callback(share);
         });
     };
 
@@ -151,13 +177,15 @@ var UiShareManagerComponent = (function (_super) {
             _this.updateUi();
         });
 
-        this._downloadManager.onDownloadProgressUpdate(function (downloadId, writtenBytes) {
+        this._downloadManager.onDownloadProgressUpdate(function (downloadId, writtenBytes, fullCountOfExpectedBytes) {
             if (!_this._runningDownloads[downloadId]) {
                 return;
             }
 
             _this._unmergedDownloadsWrittenBytes[downloadId] = writtenBytes;
             _this._progressUpdated = true;
+
+            _this._startProgressRunner();
         });
 
         this._downloadManager.onDownloadStatusChanged(function (downloadId, status) {
@@ -166,6 +194,7 @@ var UiShareManagerComponent = (function (_super) {
             }
 
             _this._runningDownloads[downloadId].status = status;
+
             _this.updateUi();
         });
 
@@ -175,11 +204,16 @@ var UiShareManagerComponent = (function (_super) {
             }
 
             _this._runningDownloads[downloadId].status = reason;
+
+            if (reason === &#039;COMPLETED&#039;) {
+                _this._runningDownloads[downloadId].loaded = _this._runningDownloads[downloadId].size;
+            }
+
             _this.updateUi();
         });
     };
 
-    UiShareManagerComponent.prototype._setupUiEvents = function () {
+    UiShareManagerComponent.prototype._setupUiDownloadEvents = function () {
         var _this = this;
         this.on(&#039;addDownload&#039;, function (responseId, callback) {
             _this._downloadManager.createDownload(responseId, function (err) {
@@ -212,31 +246,83 @@ var UiShareManagerComponent = (function (_super) {
         });
     };
 
-    UiShareManagerComponent.prototype._startProgressRunner = function () {
+    UiShareManagerComponent.prototype._setupUiUploadEvents = function () {
         var _this = this;
-        if (this._progressRunnerTimeout) {
-            return;
-        }
+        this.on(&#039;cancelUpload&#039;, function (uploadId) {
+            if (_this._runningUploads[uploadId]) {
+                _this._uploadManager.cancelUpload(uploadId);
+            }
+        });
 
-        this._progressRunnerTimeout = setTimeout(function () {
-            var ids;
+        this.on(&#039;removeUpload&#039;, function (uploadId) {
+            if (_this._runningUploads[uploadId]) {
+                delete _this._runningUploads[uploadId];
 
-            if (!_this._progressUpdated) {
+                _this.updateUi();
+            }
+        });
+    };
+
+    UiShareManagerComponent.prototype._setupUploadManagerEvents = function () {
+        var _this = this;
+        this._uploadManager.onUploadAdded(function (uploadId, filePath, fileName, fileSize) {
+            _this._runningUploads[uploadId] = {
+                created: new Date().getTime(),
+                id: uploadId,
+                path: filePath,
+                name: fileName,
+                size: fileSize,
+                status: &#039;created&#039;
+            };
+
+            _this.updateUi();
+        });
+
+        this._uploadManager.onUploadStatusChanged(function (uploadId, status) {
+            if (!_this._runningUploads[uploadId]) {
                 return;
             }
 
-            ids = Object.keys(_this._unmergedDownloadsWrittenBytes);
+            _this._runningUploads[uploadId].status = status;
+            _this.updateUi();
+        });
 
-            for (var i = 0, l = ids.length; i &lt; l; i++) {
-                var id = ids[i];
-
-                _this._runningDownloads[id].loaded = _this._unmergedDownloadsWrittenBytes[id];
+        this._uploadManager.onUploadEnded(function (uploadId, reason) {
+            if (!_this._runningUploads[uploadId]) {
+                return;
             }
 
-            _this._progressUpdated = false;
+            _this._runningUploads[uploadId].status = reason;
+
             _this.updateUi();
-            _this._startProgressRunner();
-        }, 500);
+        });
+    };
+
+    UiShareManagerComponent.prototype._startProgressRunner = function () {
+        if (this._progressRunnerTimeout) {
+            //clearTimeout(this._progressRunnerTimeout);
+            return;
+        }
+
+        //this._progressRunnerTimeout = setTimeout(() =&gt; {
+        var ids;
+
+        if (!this._progressUpdated) {
+            return;
+        }
+
+        ids = Object.keys(this._unmergedDownloadsWrittenBytes);
+
+        for (var i = 0, l = ids.length; i &lt; l; i++) {
+            var id = ids[i];
+
+            this._runningDownloads[id].loaded = this._unmergedDownloadsWrittenBytes[id];
+        }
+
+        this._progressUpdated = false;
+        this.updateUi();
+        this._startProgressRunner();
+        //}, 500); // todo move interval delay to config
     };
     return UiShareManagerComponent;
 })(UiComponent);

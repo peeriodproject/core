@@ -45,7 +45,7 @@ var SearchStore = (function () {
         */
         this._databaseServerProcessId = -1;
         /**
-        * A flag indicates weather the store is closed or open
+        * A flag indicates whether the store is closed or open
         *
         * @member {boolean} core.search.SearchStore~_isOpen
         */

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.29</p>
+      <p class="stat">72.60</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">280</p>
+      <p class="stat">338</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">45.96</p>
+      <p class="stat">54.84</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.12</p>
+      <p class="stat">2.57</p>
     </div>
   </div>
 </div>
@@ -99,6 +99,13 @@ var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
 /**
 * @class core.share.DownloadManager
 * @implements core.share.DownloadManagerInterface
+*
+* @param {core.config.ConfigInterface} config
+* @param {core.utils.AppQuitHandlerInterface} appQuitHandler
+* @param {core.utils.StateHandlerFactoryInterface} stateHandlerFactory
+* @param {core.search.SearchClientInterface} searchClient
+* @param {string} indexName
+* @param {core.utils.ClosableAsyncOptions} options
 */
 var DownloadManager = (function () {
     function DownloadManager(config, appQuitHandler, stateHandlerFactory, searchClient, indexName, options) {
@@ -191,6 +198,17 @@ var DownloadManager = (function () {
     DownloadManager.prototype.close = function (callback) {
         var _this = this;
         var internalCallback = callback || this._options.onCloseCallback;
+        var searchClientClosed = false;
+        var downloadsEnded = false;
+        var checkAndReturn = function (err) {
+            if (err) {
+                console.error(err);
+            }
+
+            if (searchClientClosed &amp;&amp; downloadsEnded) {
+                return internalCallback(err);
+            }
+        };
 
         if (!this._isOpen) {
             return process.nextTick(internalCallback.bind(null, null));
@@ -199,16 +217,24 @@ var DownloadManager = (function () {
         this._stateHandler.save({ destination: this._downloadDestination }, function (stateErr) {
             _this._isOpen = false;
 
-            _this._eventEmitter.removeAllListeners();
-            _this._eventEmitter = null;
+            _this._cancelAllRunningDownloads(function () {
+                _this._eventEmitter.removeAllListeners();
+                _this._eventEmitter = null;
 
-            _this._runningDownloadIds = null;
-            _this._runningDownloadIds = [];
+                _this._runningDownloadIds = null;
+                _this._runningDownloadIds = [];
+
+                downloadsEnded = true;
+
+                return checkAndReturn(null);
+            });
 
             _this._searchClient.close(function (err) {
                 err = stateErr || err;
 
-                return internalCallback(err);
+                searchClientClosed = true;
+
+                return checkAndReturn(err);
             });
         });
     };
@@ -268,6 +294,10 @@ var DownloadManager = (function () {
 
             return callback(null, _this._downloadDestination);
         });
+    };
+
+    DownloadManager.prototype.getRunningDownloadIds = function (callback) {
+        return process.nextTick(callback.bind(null, this._runningDownloadIds.slice()));
     };
 
     DownloadManager.prototype.isOpen = function (callback) {
@@ -365,6 +395,34 @@ var DownloadManager = (function () {
     */
     DownloadManager.prototype._downloadExists = function (downloadId) {
         return this._runningDownloadIds.indexOf(downloadId) !== -1;
+    };
+
+    DownloadManager.prototype._cancelAllRunningDownloads = function (callback) {
+        var idsToWaitFor = [];
+
+        if (!this._runningDownloadIds.length) {
+            return callback();
+        }
+
+        // register extra listener
+        this._eventEmitter.addListener(&#039;downloadEnded&#039;, function (downloadId) {
+            var index = idsToWaitFor.indexOf(downloadId);
+
+            if (index !== -1) {
+                idsToWaitFor.splice(index, 1);
+            }
+
+            if (!idsToWaitFor.length) {
+                return callback();
+            }
+        });
+
+        for (var i = 0, l = this._runningDownloadIds.length; i &lt; l; i++) {
+            var id = this._runningDownloadIds[i];
+
+            idsToWaitFor.push(id);
+            this.cancelDownload(id);
+        }
     };
     return DownloadManager;
 })();

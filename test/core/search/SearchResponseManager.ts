@@ -150,14 +150,25 @@ describe('CORE --> SEARCH --> SearchResponseManager', function () {
 		});
 	});
 
-	it ('should correctly call listeners registered for the `onResultsFound` event', function (done) {
+	it ('should correctly call listeners registered for the `onResultsFound` event and remove invalid hits from the results list', function (done) {
 		searchResults = {
-			total: 1,
+			total: 2,
 			hits: [{
 				_index: 'mainindex',
 				_type: 'pluginidentifier',
 				_source: {
-					itemHash: "fileHash",
+					itemHash: "validHash",
+					itemPath: testUtils.getFixturePath('core/search/searchResponseManager/file.txt'),
+					itemStats: {
+						stats: true
+					},
+					foo: "bar io"
+				}
+			},{
+				_index: 'mainindex',
+				_type: 'pluginidentifier',
+				_source: {
+					itemHash: "invalidHash",
 					itemPath: "../path/file.txt",
 					itemStats: {
 						stats: true
@@ -182,7 +193,7 @@ describe('CORE --> SEARCH --> SearchResponseManager', function () {
 			queryId.should.equal('queryId');
 			results.should.be.an.instanceof(Buffer);
 
-			results.toString().should.equal('{"total":1,"hits":[{"_type":"pluginidentifier","_source":{"itemHash":"fileHash","itemStats":{"stats":true},"foo":"bar io"},"_itemId":"fileHash"}]}');
+			results.toString().should.equal('{"total":1,"hits":[{"_type":"pluginidentifier","_source":{"itemHash":"validHash","itemStats":{"stats":true},"foo":"bar io"},"_itemId":"validHash"}]}');
 
 			closeAndDone(manager, done);
 		});

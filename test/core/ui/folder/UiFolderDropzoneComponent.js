@@ -102,8 +102,8 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
 
     it('should correctly return the state', function (done) {
         component.getState(function (state) {
-            state.should.be.an.instanceof(Array);
-            state.length.should.equal(0);
+            state.should.be.an.instanceof(Object);
+            Object.keys(state).length.should.equal(0);
 
             done();
         });
@@ -183,7 +183,7 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
         var uiUpdateSpy = sandbox.spy();
         component.onUiUpdate(uiUpdateSpy);
 
-        component.emit('open');
+        component.emit('open', 'pathKey');
 
         triggerListeners(windowOnListeners['drop'], ['/path/one', '/path/two']);
 
@@ -191,14 +191,15 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
 
         component.getState(function (state) {
             // check paths
-            state[0].should.equal('/path/one');
-            state[1].should.equal('/path/two');
+            state['pathKey'][0].should.equal('/path/one');
+            state['pathKey'][1].should.equal('/path/two');
 
             component.onAfterUiUpdate();
 
             // paths should be removed from the list
             component.getState(function (state) {
-                state.should.have.a.lengthOf(0);
+                state.should.be.an.instanceof(Object);
+                Object.keys(state).should.have.a.lengthOf(0);
 
                 done();
             });

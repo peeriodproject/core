@@ -88,7 +88,7 @@ interface SearchRequestManagerInterface extends ClosableAsyncInterface {
 
 	/**
 	 * The query was canceled, aborted or timed out within the network layer.
-	 * Checks weather the query for the given `queryId` got any results yet and calls the listeners {@link core.search.SearchRequestManagerInterface#onQueryEnd}
+	 * Checks whether the query for the given `queryId` got any results yet and calls the listeners {@link core.search.SearchRequestManagerInterface#onQueryEnd}
 	 * if it got some results. If no results have arrived the query will be deleted from the database and the {@link core.search.SearchRequestManagerInterface#onQueryCancel}
 	 * method will be called afterwards.
 	 *

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.22</p>
+      <p class="stat">67.26</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">342</p>
+      <p class="stat">351</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">32.49</p>
+      <p class="stat">32.67</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.62</p>
+      <p class="stat">3.72</p>
     </div>
   </div>
 </div>
@@ -142,6 +142,10 @@ var IndexManager = require(&#039;./search/IndexManager&#039;);
 
 // Share import
 var DownloadManager = require(&#039;./share/DownloadManager&#039;);
+var UploadManager = require(&#039;./share/UploadManager&#039;);
+
+var DownloadBridge = require(&#039;./share/DownloadBridge&#039;);
+var UploadBridge = require(&#039;./share/UploadBridge&#039;);
 
 // ui imports
 var UiShareManagerComponent = require(&#039;./ui/share/UiShareManagerComponent&#039;);
@@ -196,18 +200,22 @@ var App = {
 
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
-            if (!process.env.UI_ENABLED) {
-                _this.startTopology(dataPath, searchMessageBridge);
-            }
-
             _this.startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager, function () {
                 _this._started.push(&#039;indexer&#039;);
 
                 _this.startUi();
             });
 
-            _this.startSharing(searchClient, searchRequestsIndexName, function () {
+            _this.startSharing(searchClient, searchRequestsIndexName, function (downloadManager, uploadManager) {
                 _this._started.push(&#039;share&#039;);
+
+                var downloadBridge = new DownloadBridge(downloadManager);
+                var uploadBridge = new UploadBridge(uploadManager);
+
+                // disables the network layer for testing purposes
+                if (!process.env.DISABLE_TOPOLOGY) {
+                    _this.startTopology(dataPath, searchMessageBridge, downloadBridge, uploadBridge);
+                }
 
                 _this.startUi();
             });
@@ -252,10 +260,11 @@ var App = {
     startSharing: function (searchClient, searchRequestsIndexName, callback) {
         var shareConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;share&#039;]);
         var downloadManager = new DownloadManager(shareConfig, this.appQuitHandler, this.getStateHandlerFactory(), searchClient, searchRequestsIndexName);
+        var uploadManager = new UploadManager(this.appQuitHandler, searchClient, searchRequestsIndexName);
 
-        this.addUiComponent(new UiShareManagerComponent(downloadManager));
+        this.addUiComponent(new UiShareManagerComponent(downloadManager, uploadManager));
 
-        return callback();
+        return callback(downloadManager, uploadManager);
     },
     startIndexer: function (searchConfig, searchClient, searchRequestManager, searchResponseManager, callback) {
         var _this = this;
@@ -317,6 +326,7 @@ var App = {
         });
     },
     startUi: function () {
+        // disables the UI for testing purposes
         if (!process.env.UI_ENABLED) {
             return;
         }
@@ -343,7 +353,7 @@ var App = {
 
         var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
     },
-    startTopology: function (dataPath, searchMessageBridge) {
+    startTopology: function (dataPath, searchMessageBridge, downloadBridge, uploadBridge) {
         var _this = this;
         var appConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;]);
         var netConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;net&#039;]);
@@ -415,15 +425,14 @@ var App = {
                             console.error(err);
                         }
 
-                        protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge);
+                        protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
 
                         protocolGateway.start();
-
-                        protocolGateway.once(&#039;readyToSearch&#039;, function () {
-                            _this._queryInterval = setInterval(function () {
-                                _this.startQuery();
-                            }, 15000);
-                        });
+                        /*protocolGateway.once(&#039;readyToSearch&#039;,  ()=&gt; {
+                        this._queryInterval = setInterval(() =&gt; {
+                        this.startQuery();
+                        }, 15000);
+                        });*/
                     }
                 });
             });

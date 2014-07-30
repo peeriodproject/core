@@ -1,4 +1,5 @@
 var events = require('events');
+var fs = require('fs');
 
 var ObjectUtils = require('../utils/ObjectUtils');
 
@@ -25,7 +26,7 @@ var SearchResponseManager = (function () {
         */
         this._eventEmitter = null;
         /**
-        * A flag indicates weather the SearchResponseManager is open or not.
+        * A flag indicates whether the SearchResponseManager is open or not.
         *
         * @member {boolean} core.search.SearchResponseManager~_isOpen
         */
@@ -164,25 +165,39 @@ var SearchResponseManager = (function () {
                 return callback(err, null);
             }
 
-            results.hits = _this._cleanupHits(hits);
+            _this._cleanupHits(hits, function (cleanedHits) {
+                if (!cleanedHits.length) {
+                    return callback(null, null);
+                }
 
-            delete results.max_score;
+                results.hits = cleanedHits;
+                results.total = cleanedHits.length;
 
-            return callback(null, results);
+                delete results.max_score;
+
+                return callback(null, results);
+            });
         });
     };
 
     /**
-    * Removes unused fields from the result list before returning it.
+    * Prepares a single database hit to be returned to the broadcaster. Fields that contain data about your environment
+    * will be stripped out after the file location was confimed. Should the item contain an invalid path or the file is not
+    * present at the moment the method will return `null` for further clean up.
     *
-    * @method core.search.SearchResponseManager~_cleanupHits
-    *
-    * @param {Array} hits The array of hits returned from elasticsearch. {@link http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#api-search}
-    * @returns {Array}
+    * @param {number} index The position in the hits list
+    * @param {any} hit The hit that should be cleaned.
+    * @param {Function} callback The callback with the `index` and the `cleanedHit` as arguments
     */
-    SearchResponseManager.prototype._cleanupHits = function (hits) {
-        for (var i = 0, l = hits.length; i < l; i++) {
-            var hit = hits[i];
+    SearchResponseManager.prototype._cleanupHit = function (index, hit, callback) {
+        if (!hit || !hit._source || !hit._source.itemPath || !hit._source.itemHash) {
+            return process.nextTick(callback.bind(null, index, null));
+        }
+
+        fs.exists(hit._source.itemPath, function (exists) {
+            if (!exists) {
+                return callback(index, null);
+            }
 
             hit._itemId = hit._source.itemHash;
 
@@ -197,9 +212,47 @@ var SearchResponseManager = (function () {
                 });
             } catch (e) {
             }
-        }
 
-        return hits;
+            return callback(index, hit);
+        });
+    };
+
+    /**
+    * Removes unused fields from the result list before returning it.
+    *
+    * @method core.search.SearchResponseManager~_cleanupHits
+    *
+    * @param {Array} hits The array of hits returned from elasticsearch. {@link http://www.elasticsearch.org/guide/en/elasticsearch/client/javascript-api/current/api-reference.html#api-search}
+    * @param {Function} callback
+    * @returns {Array}
+    */
+    SearchResponseManager.prototype._cleanupHits = function (hits, callback) {
+        var hitsLength = hits.length;
+        var cleanedHits = [];
+        var returned = 0;
+        var checkAncCallCallback = function () {
+            returned++;
+            if (returned === hitsLength) {
+                returned = -1;
+
+                // clean up empty array items http://stackoverflow.com/a/2843625
+                cleanedHits = cleanedHits.filter(function (n) {
+                    return n != undefined;
+                });
+
+                return callback(cleanedHits);
+            }
+        };
+
+        for (var i = 0, l = hitsLength; i < l; i++) {
+            this._cleanupHit(i, hits[i], function (index, cleanedHit) {
+                cleanedHits[index] = cleanedHit;
+
+                return checkAncCallCallback();
+            });
+            //var hit:any = hits[i];
+        }
+        //return hits;
     };
 
     SearchResponseManager.prototype._triggerNoResultsFound = function (queryId) {
@@ -250,7 +303,7 @@ var SearchResponseManager = (function () {
         try  {
             query = JSON.parse(queryBuffer.toString());
 
-            // todo limit/check valid elasticsearch keys
+            // todo limit/check valid elasticsearch keys, (injections tricks?) etc.
             if (query['highlight']) {
                 query['highlight'] = ObjectUtils.extend(query['highlight'], {
                     pre_tags: [''],

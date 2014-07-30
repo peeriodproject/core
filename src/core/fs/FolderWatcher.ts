@@ -62,7 +62,7 @@ class FolderWatcher implements FolderWatcherInterface {
 	private _eventEmitter:events.EventEmitter = null;
 
 	/**
-	 * A flag indicates weather the watcher is open (active) or closed (inactive)
+	 * A flag indicates whether the watcher is open (active) or closed (inactive)
 	 *
 	 * @member {boolean} core.fs.FolderWatcher~_isOpen
 	 */

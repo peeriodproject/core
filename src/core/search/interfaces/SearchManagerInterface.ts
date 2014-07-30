@@ -35,7 +35,7 @@ interface SearchManagerInterface extends ClosableAsyncInterface {
 	getItem (pathToIndex:string, callback:(hash:string, stats:fs.Stats) => any):void;
 
 	/**
-	 * Returns weather an item with the given path exists in the store
+	 * Returns whether an item with the given path exists in the store
 	 *
 	 * @method core.search.SearchManagerInterface#itemExists
 	 *

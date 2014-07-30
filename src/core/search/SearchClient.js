@@ -48,7 +48,7 @@ var SearchClient = (function () {
         */
         this._indexName = null;
         /**
-        * A flag indicates weather the client is closed or open
+        * A flag indicates whether the client is closed or open
         *
         * @member {boolean} core.search.SearchClient~_isOpen
         */

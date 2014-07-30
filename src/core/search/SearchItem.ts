@@ -28,47 +28,31 @@ class SearchItem implements SearchItemInterface {
 		// quick array copy
 		data = data.slice();
 
-		var calcScoreAverage:boolean = false;
+		//var calcScoreAverage:boolean = false;
+		var scoreDivider:number = 0;
+		var testError:boolean = false;
 
 		for (var i = 0, l = data.length; i < l; i++) {
-			var item = data[i];
-			var source:Object = item['_source'];
+			try {
+				var addToScoreAverage:boolean = this._processItem(data[i]);
 
-			if (!source) {
-				continue;
+				if (addToScoreAverage) {
+					scoreDivider++;
+				}
+			}
+			catch (e) {
+				testError = true;
+				console.error(e);
 			}
 
-			var identifier:string = item['_type'];
-
-			// todo check identifier existence and throw error
-			this._pluginIdentifiers.push(identifier);
-			var score:number = item['_score'];
-
-			// hits: calc average score
-			if (!isNaN(score)) {
-				calcScoreAverage = true;
-				this._score += score;
-			}
-			// single response
-			else {
-				this._score = 1;
-			}
-
-			if (source) {
-				this._processItemMember('Hash', source);
-				this._processItemMember('Name', source);
-				this._processItemMember('Path', source);
-				this._processItemMember('Stats', source);
-			}
-
-			// add plugin data
-			if (Object.keys(source).length) {
-				this._pluginData[identifier] = source;
-			}
+			//var item = data[i];
 		}
 
-		if (calcScoreAverage) {
-			this._score = this._score / this._pluginIdentifiers.length;
+		if (scoreDivider) {
+			this._score = this._score / scoreDivider;
+		}
+		else {
+			this._score = 1;
 		}
 	}
 
@@ -98,6 +82,54 @@ class SearchItem implements SearchItemInterface {
 
 	public getStats ():fs.Stats {
 		return this._stats;
+	}
+
+	/**
+	 * Processes a single hit and check whether it can be added to the item or not.
+	 * It pushes the identifier to the {@link core.search.SearchItem~_pluginIdentifiers} list and adds it's source to the
+	 * {@link core.search.SearchItem~_pluginData} Map as well as updating the {@link core.search.SearchItem~_score} field
+	 * and returning an indicator that the source update should be considered while calculating the average score.
+	 *
+	 * @method core.search.SearchItem~_processItem
+	 *
+	 * @param {Object} item The item that should be processed
+	 * @returns {boolean} A flag indicates whether the item updated the score or not.
+	 */
+	private _processItem (item:Object):boolean {
+		var source:Object = item['_source'];
+		var addToScoreAverage:boolean = false;
+
+		if (!source) {
+			return addToScoreAverage;
+		}
+
+		this._processItemMember('Hash', source);
+		this._processItemMember('Name', source);
+		this._processItemMember('Path', source);
+		this._processItemMember('Stats', source);
+
+		var identifier:string = item['_type'];
+
+		// todo check identifier existence and throw error
+		this._pluginIdentifiers.push(identifier);
+		var score:number = item['_score'];
+
+		// hits: calc average score
+		if (!isNaN(score)) {
+			addToScoreAverage = true;
+			this._score += score;
+		}
+		// single response
+		else {
+			this._score = 1;
+		}
+
+		// add plugin data
+		if (Object.keys(source).length) {
+			this._pluginData[identifier] = source;
+		}
+
+		return addToScoreAverage;
 	}
 
 	/**
