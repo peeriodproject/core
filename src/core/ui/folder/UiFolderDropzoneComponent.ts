@@ -24,6 +24,8 @@ class UiFolderDropzoneComponent extends UiComponent {
 
 	private _paths:PathListInterface = [];
 
+	private _currentPathKey:string = '';
+
 	constructor(window) {
 		super();
 
@@ -40,16 +42,22 @@ class UiFolderDropzoneComponent extends UiComponent {
 	}
 
 	public getEventNames ():Array<string> {
-		return ['background', 'open', 'close'];
+		return ['open', 'close'];
 	}
 
 	public getState(callback:(state:PathListInterface) => any):void {
-		return process.nextTick(callback.bind(null, this._paths));
+		var state = {};
+
+		if (this._currentPathKey) {
+			state[this._currentPathKey] = this._paths;
+		}
+		return process.nextTick(callback.bind(null, state));
 	}
 
 	public onAfterUiUpdate ():void {
 		this._paths = null;
 		this._paths = [];
+		this._currentPathKey = '';
 	}
 
 	private _setupEventListeners ():void {
@@ -62,7 +70,8 @@ class UiFolderDropzoneComponent extends UiComponent {
 			localStorage.setItem('invertedBackgroundColor', background.invertedBackgroundColor);
 		});
 
-		this.on('open', () => {
+		this.on('open', (key) => {
+			this._currentPathKey = key || '';
 			this._getWindow().focus();
 		});
 

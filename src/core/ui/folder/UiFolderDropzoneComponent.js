@@ -21,6 +21,7 @@ var UiFolderDropzoneComponent = (function (_super) {
         this._windowDimensions = {};
         this._windowPosition = {};
         this._paths = [];
+        this._currentPathKey = '';
 
         this._guiWindow = window;
 
@@ -34,16 +35,22 @@ var UiFolderDropzoneComponent = (function (_super) {
     };
 
     UiFolderDropzoneComponent.prototype.getEventNames = function () {
-        return ['background', 'open', 'close'];
+        return ['open', 'close'];
     };
 
     UiFolderDropzoneComponent.prototype.getState = function (callback) {
-        return process.nextTick(callback.bind(null, this._paths));
+        var state = {};
+
+        if (this._currentPathKey) {
+            state[this._currentPathKey] = this._paths;
+        }
+        return process.nextTick(callback.bind(null, state));
     };
 
     UiFolderDropzoneComponent.prototype.onAfterUiUpdate = function () {
         this._paths = null;
         this._paths = [];
+        this._currentPathKey = '';
     };
 
     UiFolderDropzoneComponent.prototype._setupEventListeners = function () {
@@ -57,7 +64,8 @@ var UiFolderDropzoneComponent = (function (_super) {
             localStorage.setItem('invertedBackgroundColor', background.invertedBackgroundColor);
         });
 
-        this.on('open', function () {
+        this.on('open', function (key) {
+            _this._currentPathKey = key || '';
             _this._getWindow().focus();
         });
 
