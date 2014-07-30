@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.84</p>
+      <p class="stat">70.90</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">731</p>
+      <p class="stat">761</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">81.31</p>
+      <p class="stat">82.24</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">6.02</p>
+      <p class="stat">6.16</p>
     </div>
   </div>
 </div>
@@ -140,7 +140,7 @@ var SearchClient = (function () {
         */
         this._indexName = null;
         /**
-        * A flag indicates weather the client is closed or open
+        * A flag indicates whether the client is closed or open
         *
         * @member {boolean} core.search.SearchClient~_isOpen
         */
@@ -501,6 +501,18 @@ var SearchClient = (function () {
         });
     };
 
+    SearchClient.prototype.getItemByHash = function (itemHash, callback) {
+        var searchQuery = {
+            query: {
+                match: {
+                    itemHash: itemHash
+                }
+            }
+        };
+
+        return this._getItemByQuery(searchQuery, callback);
+    };
+
     SearchClient.prototype.getItemById = function (id, callback) {
         var _this = this;
         this._client.get({
@@ -519,7 +531,6 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.getItemByPath = function (itemPath, callback) {
-        var _this = this;
         // todo limit query to 1
         var searchQuery = {
             query: {
@@ -529,24 +540,7 @@ var SearchClient = (function () {
             }
         };
 
-        this._client.search({
-            index: this._indexName,
-            body: searchQuery
-        }, function (err, response, status) {
-            var hits = response &amp;&amp; response[&#039;hits&#039;] ? response[&#039;hits&#039;] : {};
-
-            err = err || null;
-
-            if (!_this._isValidResponse(err, status, &#039;IndexMissingException&#039;)) {
-                return callback(err, null);
-            }
-
-            if (!(hits &amp;&amp; hits[&#039;total&#039;])) {
-                return callback(null, null);
-            }
-
-            return callback(null, _this._createSearchItemFromHits(hits[&#039;hits&#039;]));
-        });
+        return this._getItemByQuery(searchQuery, callback);
     };
 
     SearchClient.prototype.getOutgoingQuery = function (indexName, queryId, callback) {
@@ -751,15 +745,51 @@ var SearchClient = (function () {
             return null;
         }
 
+        //console.log(&#039;_createSearchItemFromHits&#039;, hits);
         return this._searchItemFactory.create(hits);
     };
 
+    /**
+    * todo docs
+    *
+    * @param response
+    * @returns {*}
+    */
     SearchClient.prototype._createSearchItemFromResponse = function (response) {
         if (!response) {
             return null;
         }
 
+        //console.log(&#039;_createSearchItemFromResponse&#039;, response);
         return this._searchItemFactory.create([response]);
+    };
+
+    /**
+    * todo docs
+    *
+    * @param searchQuery
+    * @param callback
+    */
+    SearchClient.prototype._getItemByQuery = function (searchQuery, callback) {
+        var _this = this;
+        this._client.search({
+            index: this._indexName,
+            body: searchQuery
+        }, function (err, response, status) {
+            var hits = response &amp;&amp; response[&#039;hits&#039;] ? response[&#039;hits&#039;] : {};
+
+            err = err || null;
+
+            if (!_this._isValidResponse(err, status, &#039;IndexMissingException&#039;)) {
+                return callback(err, null);
+            }
+
+            if (!(hits &amp;&amp; hits[&#039;total&#039;])) {
+                return callback(null, null);
+            }
+
+            return callback(null, _this._createSearchItemFromHits(hits[&#039;hits&#039;]));
+        });
     };
 
     /**

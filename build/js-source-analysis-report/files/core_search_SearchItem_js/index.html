@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">65.26</p>
+      <p class="stat">65.39</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">119</p>
+      <p class="stat">148</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">43.80</p>
+      <p class="stat">44.57</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.91</p>
+      <p class="stat">1.01</p>
     </div>
   </div>
 </div>
@@ -111,45 +111,28 @@ var SearchItem = (function () {
         // quick array copy
         data = data.slice();
 
-        var calcScoreAverage = false;
+        //var calcScoreAverage:boolean = false;
+        var scoreDivider = 0;
+        var testError = false;
 
         for (var i = 0, l = data.length; i &lt; l; i++) {
-            var item = data[i];
-            var source = item[&#039;_source&#039;];
+            try  {
+                var addToScoreAverage = this._processItem(data[i]);
 
-            if (!source) {
-                continue;
+                if (addToScoreAverage) {
+                    scoreDivider++;
+                }
+            } catch (e) {
+                testError = true;
+                console.error(e);
             }
-
-            var identifier = item[&#039;_type&#039;];
-
-            // todo check identifier existence and throw error
-            this._pluginIdentifiers.push(identifier);
-            var score = item[&#039;_score&#039;];
-
-            // hits: calc average score
-            if (!isNaN(score)) {
-                calcScoreAverage = true;
-                this._score += score;
-            } else {
-                this._score = 1;
-            }
-
-            if (source) {
-                this._processItemMember(&#039;Hash&#039;, source);
-                this._processItemMember(&#039;Name&#039;, source);
-                this._processItemMember(&#039;Path&#039;, source);
-                this._processItemMember(&#039;Stats&#039;, source);
-            }
-
-            // add plugin data
-            if (Object.keys(source).length) {
-                this._pluginData[identifier] = source;
-            }
+            //var item = data[i];
         }
 
-        if (calcScoreAverage) {
-            this._score = this._score / this._pluginIdentifiers.length;
+        if (scoreDivider) {
+            this._score = this._score / scoreDivider;
+        } else {
+            this._score = 1;
         }
     }
     SearchItem.prototype.getHash = function () {
@@ -178,6 +161,52 @@ var SearchItem = (function () {
 
     SearchItem.prototype.getStats = function () {
         return this._stats;
+    };
+
+    /**
+    * Processes a single hit and check whether it can be added to the item or not.
+    * It pushes the identifier to the {@link core.search.SearchItem~_pluginIdentifiers} list and adds it&#039;s source to the
+    * {@link core.search.SearchItem~_pluginData} Map as well as updating the {@link core.search.SearchItem~_score} field
+    * and returning an indicator that the source update should be considered while calculating the average score.
+    *
+    * @method core.search.SearchItem~_processItem
+    *
+    * @param {Object} item The item that should be processed
+    * @returns {boolean} A flag indicates whether the item updated the score or not.
+    */
+    SearchItem.prototype._processItem = function (item) {
+        var source = item[&#039;_source&#039;];
+        var addToScoreAverage = false;
+
+        if (!source) {
+            return addToScoreAverage;
+        }
+
+        this._processItemMember(&#039;Hash&#039;, source);
+        this._processItemMember(&#039;Name&#039;, source);
+        this._processItemMember(&#039;Path&#039;, source);
+        this._processItemMember(&#039;Stats&#039;, source);
+
+        var identifier = item[&#039;_type&#039;];
+
+        // todo check identifier existence and throw error
+        this._pluginIdentifiers.push(identifier);
+        var score = item[&#039;_score&#039;];
+
+        // hits: calc average score
+        if (!isNaN(score)) {
+            addToScoreAverage = true;
+            this._score += score;
+        } else {
+            this._score = 1;
+        }
+
+        // add plugin data
+        if (Object.keys(source).length) {
+            this._pluginData[identifier] = source;
+        }
+
+        return addToScoreAverage;
     };
 
     /**

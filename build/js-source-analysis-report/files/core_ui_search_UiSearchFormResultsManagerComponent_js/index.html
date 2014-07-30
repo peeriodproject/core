@@ -49,7 +49,7 @@
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">161</p>
+      <p class="stat">169</p>
     </div>
   </div>
   <div class="row historical">
@@ -109,6 +109,11 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
     __extends(UiSearchFormResultsManagerComponent, _super);
     function UiSearchFormResultsManagerComponent(searchFormResultsManager, searchRequestManager) {
         _super.call(this);
+        /**
+        * todo docs
+        *
+        * @member {string} core.ui.UiSearchFormResultsManagerComponent~_runningQueryId
+        */
         this._currentResults = {};
         /**
         * The internally used.SearchFormResultsManagerInterface instance to start new queries
@@ -131,8 +136,9 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
         */
         this._runningQueryId = null;
         /**
-        * todo ts-definition
+        * todo ts-definition, docs
         *
+        * @member {any} core.ui.UiSearchFormResultsManagerComponent~_runningQuery
         */
         this._runningQuery = null;
 
@@ -210,6 +216,8 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
     /**
     * Creates a new query if it differs from the stored {@link core.ui.UiSearchFormResultsManagerComponent~_runningQuery}
     * and stores the `queryId` for further cleanup.
+    *
+    * @method core.ui.UiSearchFormResultsManagerComponent~_addQuery
     *
     * @param rawQuery
     */

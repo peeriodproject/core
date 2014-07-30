@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">62.02</p>
+      <p class="stat">61.85</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">590</p>
+      <p class="stat">593</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">36.52</p>
+      <p class="stat">38.13</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.92</p>
+      <p class="stat">3.98</p>
     </div>
   </div>
 </div>
@@ -547,6 +547,7 @@ var Download = (function (_super) {
             this.removeAllListeners(&#039;completed&#039;);
             this.removeAllListeners(&#039;writtenBytes&#039;);
 
+            console.log(&#039;Download killed due to: &#039; + message);
             this.emit(&#039;killed&#039;, message);
 
             this.removeAllListeners(&#039;killed&#039;);
@@ -630,10 +631,12 @@ var Download = (function (_super) {
                         if (errorMessage) {
                             _this._kill(true, true, errorMessage, transferIdentToUse, nodesToFeedBlock);
                         } else {
+                            console.log(&#039;Sending block request. Position:&#039; + bytePosition);
                             _this._shareMessenger.pipeMessageAndWaitForResponse(sendableBuffer, nodesToFeedBlock, &#039;ENCRYPTED_SHARE&#039;, nextTransferIdentifier, function (err, responsePayload) {
                                 if (err) {
                                     _this._kill(true, false, err.message);
                                 } else {
+                                    console.log(&#039;Received a block message&#039;);
                                     _this._handleBlockMessage(responsePayload, bytePosition);
                                 }
                             });
