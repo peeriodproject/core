@@ -3,7 +3,7 @@
 /**
  * The NetworkMaintainer is used to join the network. It also handles the refreshing of unaccessed buckets, after
  * a provided number of seconds.
- * If an answer of a node rolls in and the appropriate bucket is updatetd (in whatever fashion), the same bucket is seen
+ * If an answer of a node rolls in and the appropriate bucket is updated (in whatever fashion), the same bucket is seen
  * as "accessed" and the timeout to refresh the bucket is renewed.
  *
  * When MyNode joins the network, it tries to find a contact node with a NodeSeekerManager. As soon as one is found, a

@@ -25,7 +25,7 @@
  * nodes), it is removed from the requested list and added to the ignore list.
  *
  * The ProxyManager listens to the `message` event of the ProtocolConnectionManager. If a message rolls in, it checks
- * whether the received message is intented for itself. If the message is of PROXY_REJECT or PROXY_ACCEPT type it acts
+ * whether the received message is intended for itself. If the message is of PROXY_REJECT or PROXY_ACCEPT type it acts
  * accordingly (see above). If the message is a PROXY_REQUEST, it checks if it can be a proxy for the node (see above)
  * and either rejects or accepts the request.
  * If a message is of PROXY_THROUGH type it means that the sender of the message is one of the node's own proxies. It
