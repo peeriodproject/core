@@ -155,9 +155,11 @@ var ProtocolGateway = (function (_super) {
         // build up the NodePublishers
         var nodePublisherFactory = new NodePublisherFactory(appConfig, protocolConfig, this._myNode);
 
-        nodePublisherFactory.createPublisherList(function (list) {
-            _this._nodePublishers = list;
-        });
+        if (this._tcpSocketHandler.getOpenServerPortsArray().length) {
+            nodePublisherFactory.createPublisherList(function (list) {
+                _this._nodePublishers = list;
+            });
+        }
 
         // build up the NetworkMaintainer
         this._networkMaintainer = new NetworkMaintainer(this._topologyConfig, this._protocolConfig, this._myNode, this._nodeSeekerManager, this._findClosestNodesManager, this._proxyManager);
