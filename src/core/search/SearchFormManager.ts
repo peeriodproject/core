@@ -102,6 +102,10 @@ class SearchFormManager implements SearchFormManagerInterface {
 		};
 
 		this._pluginManager.getActivePluginRunner(this._currentFormIdentifier, (pluginRunner:PluginRunnerInterface) => {
+			if (!pluginRunner) {
+				return process.nextTick(internalCallback.bind(null, new Error('SearchFormManager#addQuery: No active pluginRunner for "' + this._currentFormIdentifier + '"found.'), null));
+			}
+
 			pluginRunner.getQuery(rawQuery, (err:Error, query:Object) => {
 				if (err) {
 					console.log(err);

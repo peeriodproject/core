@@ -84,6 +84,10 @@ var SearchFormManager = (function () {
         };
 
         this._pluginManager.getActivePluginRunner(this._currentFormIdentifier, function (pluginRunner) {
+            if (!pluginRunner) {
+                return process.nextTick(internalCallback.bind(null, new Error('SearchFormManager#addQuery: No active pluginRunner for "' + _this._currentFormIdentifier + '"found.'), null));
+            }
+
             pluginRunner.getQuery(rawQuery, function (err, query) {
                 if (err) {
                     console.log(err);

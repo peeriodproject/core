@@ -354,6 +354,7 @@ class PluginManager implements PluginManagerInterface {
 
 		this._loadPluginState((err:Error, pluginState:any) => {
 			if (err) {
+				console.log('plugin state:', pluginState);
 				console.error(err);
 				return internalCallback(err);
 			}
@@ -362,6 +363,8 @@ class PluginManager implements PluginManagerInterface {
 			}
 
 			this._pluginState = pluginState;
+
+			console.log('plugin state:', pluginState);
 			this._isOpen = true;
 
 			return internalCallback(null);

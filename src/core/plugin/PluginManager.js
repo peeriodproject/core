@@ -321,6 +321,7 @@ var PluginManager = (function () {
 
         this._loadPluginState(function (err, pluginState) {
             if (err) {
+                console.log('plugin state:', pluginState);
                 console.error(err);
                 return internalCallback(err);
             }
@@ -329,6 +330,8 @@ var PluginManager = (function () {
             }
 
             _this._pluginState = pluginState;
+
+            console.log('plugin state:', pluginState);
             _this._isOpen = true;
 
             return internalCallback(null);
