@@ -237,9 +237,12 @@ class ProtocolGateway extends events.EventEmitter implements ProtocolGatewayInte
 
 		logger.log('topology', 'New node joining the network', {id: this._myNode.getId().toHexString()});
 
+		console.log('trying to join the network');
+
 		if (this._proxyManager.needsAdditionalProxy()) {
+			console.log('needing proxy');
 			this._networkMaintainer.once('initialContactQueryCompleted', () => {
-				console.log('Needs proxy...');
+				console.log('Kicking off proxy search...');
 				this._proxyManager.kickOff();
 			});
 		}

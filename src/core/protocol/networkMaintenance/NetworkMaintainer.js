@@ -196,14 +196,16 @@ var NetworkMaintainer = (function (_super) {
     */
     NetworkMaintainer.prototype._findEntryNodeAndJoin = function (avoidNode) {
         var _this = this;
+        console.log('finding entry node and join');
         this._nodeSeekerManager.forceFindActiveNode(avoidNode, function (node) {
             logger.log('topology', 'Found an entry node, starting search for own id...', { with: node.getId().toHexString() });
-
+            console.log('Found an entry node, starting search for own id...');
             _this._findClosestNodesManager.startCycleFor(_this._myIdToSearchFor, [node]);
 
             _this._findClosestNodesManager.once('foundClosestNodes', function (searchForId, resultingList) {
                 //logger.info('Find closest nodes cycle finished', {for: searchForId.toHexString(), resultLen: resultingList.length});
                 if (!resultingList.length) {
+                    console.log('Resulting list is empty, trying to find another node');
                     logger.log('topology', 'Resulting list is empty, trying to find another node.');
                     setImmediate(function () {
                         _this._findEntryNodeAndJoin(node);

@@ -55,6 +55,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 		var index:number = -1;
 		var increaseAndQuery = () => {
 			if (++index <= this._serverListLength - 1) {
+
 				this._queryServerForNode(this._serverList[index], function (node:ContactNodeInterface) {
 					if (node) {
 						callback(node);
@@ -93,7 +94,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 				callback(node);
 			}
 		};
-
+		console.log(remoteServer);
 		var request = http.request({
 			method  : 'GET',
 			hostname: remoteServer.hostname,

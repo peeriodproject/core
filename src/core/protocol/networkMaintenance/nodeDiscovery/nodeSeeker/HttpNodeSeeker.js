@@ -89,7 +89,7 @@ var HttpNodeSeeker = (function (_super) {
                 callback(node);
             }
         };
-
+        console.log(remoteServer);
         var request = http.request({
             method: 'GET',
             hostname: remoteServer.hostname,

@@ -122,14 +122,14 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	}
 
 	private _TESTstartSocketInterval ():void {
-		global.setInterval(() => {
+		/*global.setInterval(() => {
 			var now:number = Math.floor(Date.now() / 1000);
 
 			if (now !== this._socketSecond) {
 				this._socketSecond = now;
 				logger.log('socketCount', '', {count: this._socketCount, when: new Date(now * 1000)});
 			}
-		}, 1000);
+		}, 1000);*/
 	}
 
 	constructor (socketFactory:TCPSocketFactoryInterface, opts:TCPSocketHandlerOptions) {

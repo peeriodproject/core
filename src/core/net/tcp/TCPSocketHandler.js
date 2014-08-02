@@ -129,15 +129,14 @@ var TCPSocketHandler = (function (_super) {
     };
 
     TCPSocketHandler.prototype._TESTstartSocketInterval = function () {
-        var _this = this;
-        global.setInterval(function () {
-            var now = Math.floor(Date.now() / 1000);
-
-            if (now !== _this._socketSecond) {
-                _this._socketSecond = now;
-                logger.log('socketCount', '', { count: _this._socketCount, when: new Date(now * 1000) });
-            }
-        }, 1000);
+        /*global.setInterval(() => {
+        var now:number = Math.floor(Date.now() / 1000);
+        
+        if (now !== this._socketSecond) {
+        this._socketSecond = now;
+        logger.log('socketCount', '', {count: this._socketCount, when: new Date(now * 1000)});
+        }
+        }, 1000);*/
     };
 
     TCPSocketHandler.prototype.autoBootstrap = function (callback) {

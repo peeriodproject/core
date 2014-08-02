@@ -155,20 +155,20 @@ var IrcLoggerBackend = (function () {
                 level: 'debug'
             });
         } else {
-            this._logger.add(winston.transports.File, {
-                silent: false,
-                timestamp: true,
-                filename: path.resolve('/Users/jj/Desktop/logs/a' + Math.round(Math.random() * 1000000000000) + '.log'),
-                //filename : this._basePath + '/logs/a' + Math.round(Math.random() * 10000000000000),
-                level: 'debug',
-                handleExceptions: true
-            });
-            /*this._logger.add(winston.transports.Console, {
+            /*this._logger.add(winston.transports.File, {
             silent   : false,
             timestamp: true,
+            filename: path.resolve('/Users/jj/Desktop/logs/a' + Math.round(Math.random() * 1000000000000) + '.log'),
+            //filename : this._basePath + '/logs/a' + Math.round(Math.random() * 10000000000000),
             level    : 'debug',
             handleExceptions: true
             });*/
+            this._logger.add(winston.transports.Console, {
+                silent: false,
+                timestamp: false,
+                level: 'debug',
+                handleExceptions: true
+            });
         }
     };
 

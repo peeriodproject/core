@@ -91,7 +91,7 @@ var NodeSeekerManager = (function () {
     }
     NodeSeekerManager.prototype.forceFindActiveNode = function (avoidNode, callback) {
         var _this = this;
-        logger.log('nodeSeeker', 'Force find active node initiated.');
+        console.log('Force find active node initiated.');
         this._avoidNode = avoidNode;
 
         if (!this._nodeSeekerList) {
@@ -102,24 +102,23 @@ var NodeSeekerManager = (function () {
         this._forceSearchActive = true;
 
         this._proxyManager.once('contactNodeInformation', function (node) {
-            logger.log('nodeSeeker', 'NodeSeeker: on contact node!');
-
+            //console.log('NodeSeeker: on contact node!');
             _this._forceSearchActive = false;
 
             if (_this._iterativeSeekTimeout) {
-                logger.log('nodeSeeker', 'clearing iterative seek timeout');
+                //console.log('clearing iterative seek timeout');
                 global.clearTimeout(_this._iterativeSeekTimeout);
                 _this._iterativeSeekTimeout = 0;
             }
 
             if (_this._avoidNode && _this._avoidNode.getId().equals(node.getId())) {
-                logger.log('nodeSeeker', 'Force finding again on nex event loop');
+                //console.log('Force finding again on nex event loop');
                 setImmediate(function () {
-                    logger.log('nodeSeeker', 'Force finding again, as the node should be avoided.');
+                    //console.log('Force finding again, as the node should be avoided.');
                     _this.forceFindActiveNode(_this._avoidNode, callback);
                 });
             } else {
-                logger.log('nodeSeeker', 'Found a node, calling back');
+                //console.log('Found a node, calling back');
                 _this._avoidNode = null;
                 callback(node);
             }
@@ -138,12 +137,10 @@ var NodeSeekerManager = (function () {
     NodeSeekerManager.prototype._iterativeSeekAndPing = function (avoidNode) {
         var _this = this;
         if (this._forceSearchActive) {
-            logger.log('nodeSeeker', 'Doing iterative seek.');
-
+            //console.log('Doing iterative seek.');
             setImmediate(function () {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {
                     _this._nodeSeekerList[i].seek(function (node) {
-                        logger.info('a seeker found a node.');
                         if (node && !node.getId().equals(_this._myNode.getId()) && !(avoidNode && node.getId().equals(avoidNode.getId()))) {
                             _this._pingNodeIfActive(node);
                         }
@@ -151,12 +148,12 @@ var NodeSeekerManager = (function () {
                 }
 
                 _this._iterativeSeekTimeout = global.setTimeout(function () {
-                    logger.log('nodeSeeker', 'setting new iterative seek timeout');
+                    //console.log('setting new iterative seek timeout');
                     _this._iterativeSeekAndPing(avoidNode);
                 }, _this._iterativeSeekTimeoutMs);
             });
         } else {
-            logger.log('nodeSeeker', 'do not seek again.');
+            //console.log('do not seek again.');
         }
     };
 
