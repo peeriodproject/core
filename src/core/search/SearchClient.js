@@ -512,6 +512,8 @@ var SearchClient = (function () {
                 }
             });
 
+            console.log('added elasticsearch client');
+
             _this._waitForDatabaseServer(function (err) {
                 if (err) {
                     logger.error(err);

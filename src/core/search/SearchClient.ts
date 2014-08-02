@@ -525,6 +525,8 @@ class SearchClient implements SearchClientInterface {
 				}
 			});
 
+			console.log('added elasticsearch client');
+
 			this._waitForDatabaseServer((err:Error) => {
 				if (err) {
 					logger.error(err);
