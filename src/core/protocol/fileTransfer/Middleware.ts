@@ -106,6 +106,7 @@ class Middleware implements MiddlewareInterface {
 	}
 
 	public feedNode (feedingNodes:HydraNodeList, associatedCircuitId:string, payloadToFeed:Buffer):void {
+		console.log('Trying to feed hydra');
 		logger.log('middleware', 'Trying to feed hydra');
 
 		var fed:boolean = false;
@@ -160,6 +161,7 @@ class Middleware implements MiddlewareInterface {
 		}
 
 		if (bufferToSend) {
+			console.log('Actually feeding hydra socket');
 			logger.log('middleware', 'Actually feeding hydra socket');
 
 			this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
@@ -202,12 +204,17 @@ class Middleware implements MiddlewareInterface {
 						this._feedSocket(identifier, node.feedingIdentifier, payloadToFeed);
 					}
 					else {
+						console.log('Cannot connect to node. ' + node.ip + ':' + node.port);
+
 						logger.log('middleware', 'Cannot connect to node');
 
 						this._obtainConnectionAndFeed(feedingNodes, associatedCircuitId, payloadToFeed, usedIndices);
 					}
 				});
 			}
+		}
+		else {
+			console.log('All nodes exhausted. Cannot feed %o', feedingNodes);
 		}
 	}
 

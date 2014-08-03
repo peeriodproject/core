@@ -87,6 +87,7 @@ var Middleware = (function () {
     };
 
     Middleware.prototype.feedNode = function (feedingNodes, associatedCircuitId, payloadToFeed) {
+        console.log('Trying to feed hydra');
         logger.log('middleware', 'Trying to feed hydra');
 
         var fed = false;
@@ -140,6 +141,7 @@ var Middleware = (function () {
         }
 
         if (bufferToSend) {
+            console.log('Actually feeding hydra socket');
             logger.log('middleware', 'Actually feeding hydra socket');
 
             this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
@@ -180,12 +182,16 @@ var Middleware = (function () {
 
                         _this._feedSocket(identifier, node.feedingIdentifier, payloadToFeed);
                     } else {
+                        console.log('Cannot connect to node. ' + node.ip + ':' + node.port);
+
                         logger.log('middleware', 'Cannot connect to node');
 
                         _this._obtainConnectionAndFeed(feedingNodes, associatedCircuitId, payloadToFeed, usedIndices);
                     }
                 });
             }
+        } else {
+            console.log('All nodes exhausted. Cannot feed %o', feedingNodes);
         }
     };
 
