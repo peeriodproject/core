@@ -25,8 +25,8 @@ var UiFolderDropzoneComponent = (function (_super) {
 
         this._guiWindow = window;
 
-        this._windowDimensions.height = 300;
-        this._windowDimensions.width = 300;
+        this._windowDimensions.height = 400;
+        this._windowDimensions.width = 400;
 
         this._setupEventListeners();
     }
@@ -64,9 +64,33 @@ var UiFolderDropzoneComponent = (function (_super) {
             localStorage.setItem('invertedBackgroundColor', background.invertedBackgroundColor);
         });
 
-        this.on('open', function (key) {
+        this.on('open', function (key, backgroundSource, button) {
+            var w = _this._getWindow();
+
             _this._currentPathKey = key || '';
-            _this._getWindow().focus();
+
+            backgroundSource = backgroundSource || '';
+
+            //buttonSource = buttonSource || '';
+            //title  = title || '__Title__';
+            //description = description || '__Description__';
+            w.once('loaded', function () {
+                if (backgroundSource) {
+                    w.window.document.getElementById('background-wrapper').style.backgroundImage = _this._getBackgroundUrl(backgroundSource);
+                }
+
+                if (button) {
+                    var buttonEl = w.window.document.getElementById('close-button');
+
+                    buttonEl.style.backgroundImage = _this._getBackgroundUrl(button.source);
+                    buttonEl.style.height = button.height + 'px';
+                    buttonEl.style.width = button.width + 'px';
+                    buttonEl.style.marginLeft = (button.width / -2) + 'px';
+                }
+
+                w.focus();
+                //w.showDevTools();
+            });
         });
 
         this.on('close', function () {
@@ -74,6 +98,20 @@ var UiFolderDropzoneComponent = (function (_super) {
                 _this._window.close();
             }
         });
+    };
+
+    /**
+    * Adds the image metadata to the base64 data png string to prevent base64 content attacks.
+    *
+    * @param {string} source
+    * @returns {string}
+    */
+    UiFolderDropzoneComponent.prototype._getBackgroundUrl = function (source) {
+        if (!source) {
+            return '';
+        }
+
+        return 'url("data:image/png;base64,' + source.replace('data:image/png;base64,', '') + '")';
     };
 
     /**

@@ -83,7 +83,7 @@ class UiShareManagerComponent extends UiComponent {
 				loaded : 0,
 				name   : fileName,
 				size   : fileSize,
-				status : 'created'
+				status : 'CREATED'
 			};
 
 			this._startProgressRunner();
@@ -183,7 +183,7 @@ class UiShareManagerComponent extends UiComponent {
 				path   : filePath,
 				name   : fileName,
 				size   : fileSize,
-				status : 'created'
+				status : 'CREATED'
 			};
 
 			this.updateUi();
@@ -216,7 +216,7 @@ class UiShareManagerComponent extends UiComponent {
 		}
 
 
-		//this._progressRunnerTimeout = setTimeout(() => {
+		this._progressRunnerTimeout = setTimeout(() => {
 
 			var ids:Array<string>;
 
@@ -235,7 +235,7 @@ class UiShareManagerComponent extends UiComponent {
 			this._progressUpdated = false;
 			this.updateUi();
 			this._startProgressRunner();
-		//}, 500); // todo move interval delay to config
+		}, 500); // todo move interval delay to config
 	}
 
 }

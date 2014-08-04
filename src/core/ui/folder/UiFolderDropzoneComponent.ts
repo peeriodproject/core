@@ -31,8 +31,8 @@ class UiFolderDropzoneComponent extends UiComponent {
 
 		this._guiWindow = window;
 
-		this._windowDimensions.height = 300;
-		this._windowDimensions.width = 300;
+		this._windowDimensions.height = 400;
+		this._windowDimensions.width = 400;
 
 		this._setupEventListeners();
 	}
@@ -70,9 +70,33 @@ class UiFolderDropzoneComponent extends UiComponent {
 			localStorage.setItem('invertedBackgroundColor', background.invertedBackgroundColor);
 		});
 
-		this.on('open', (key) => {
+		this.on('open', (key:string, backgroundSource:string, button:{ source:string; width:number; height:number; }) => {
+			var w = this._getWindow();
+
 			this._currentPathKey = key || '';
-			this._getWindow().focus();
+
+			backgroundSource = backgroundSource || '';
+			//buttonSource = buttonSource || '';
+			//title  = title || '__Title__';
+			//description = description || '__Description__';
+
+			w.once('loaded', () => {
+				if (backgroundSource) {
+					w.window.document.getElementById('background-wrapper').style.backgroundImage = this._getBackgroundUrl(backgroundSource);
+				}
+
+				if (button) {
+					var buttonEl = w.window.document.getElementById('close-button');
+
+					buttonEl.style.backgroundImage = this._getBackgroundUrl(button.source);
+					buttonEl.style.height = button.height + 'px';
+					buttonEl.style.width = button.width + 'px';
+					buttonEl.style.marginLeft = (button.width/-2) + 'px';
+				}
+
+				w.focus();
+				//w.showDevTools();
+			});
 		});
 
 		this.on('close', () => {
@@ -80,6 +104,20 @@ class UiFolderDropzoneComponent extends UiComponent {
 				this._window.close();
 			}
 		});
+	}
+
+	/**
+	 * Adds the image metadata to the base64 data png string to prevent base64 content attacks.
+	 *
+	 * @param {string} source
+	 * @returns {string}
+	 */
+	private _getBackgroundUrl (source:string):string {
+		if (!source) {
+			return '';
+		}
+
+		return 'url("data:image/png;base64,' + source.replace('data:image/png;base64,', '') + '")';
 	}
 
 	/**
