@@ -204,6 +204,7 @@ var TCPSocket = (function (_super) {
             try  {
                 success = this.getSocket().write(buffer, callback);
             } catch (e) {
+                this.getSocket().end();
             }
 
             buffer = null;
@@ -231,6 +232,7 @@ var TCPSocket = (function (_super) {
             try  {
                 success = this.getSocket().write(message, encoding, callback);
             } catch (e) {
+                this.getSocket().end();
             }
         }
 

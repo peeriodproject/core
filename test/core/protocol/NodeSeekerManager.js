@@ -115,7 +115,7 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function 
 
         setTimeout(function () {
             emitActiveNode(createNode('ef'));
-        }, 10);
+        }, 100);
     });
 
     it('should cache the callback and find the node later', function (done) {
@@ -130,7 +130,7 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function 
 
         setTimeout(function () {
             emitActiveNode(createNode('ef'));
-        }, 10);
+        }, 100);
     });
 
     it('should not ping another node as soon as one is found', function (done) {
@@ -148,7 +148,7 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function 
 
         setTimeout(function () {
             emitActiveNode(createNode('ef'));
-        }, 10);
+        }, 100);
     });
 
     it('should avoid a node', function (done) {
@@ -165,8 +165,8 @@ describe('CORE --> PROTOCOL --> NODE DISCOVERY --> NodeSeekerManager', function 
             emitActiveNode(createNode('ef'));
             setTimeout(function () {
                 emitActiveNode(createNode('af'));
-            }, 10);
-        }, 10);
+            }, 100);
+        }, 100);
     });
 
     after(function () {

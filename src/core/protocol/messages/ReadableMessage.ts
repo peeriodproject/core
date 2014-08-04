@@ -132,11 +132,11 @@ class ReadableMessage implements ReadableMessageInterface {
 	 * @method core.protocol.messages.ReadableMessage~_deformat
 	 */
 	private _deformat ():void {
-		if (!this._isProtocolMessage()) {
+		/*if (!this._isProtocolMessage()) {
 			throw new Error('ReadableMessage~_deformat: Buffer is not protocol compliant.');
-		}
+		}*/
 
-		this._lastPosRead = MessageByteCheatsheet.messageBegin.length;
+		//this._lastPosRead = MessageByteCheatsheet.messageBegin.length;
 
 		this._lastPosRead = this._extractReceiverId(this._lastPosRead);
 
@@ -178,7 +178,8 @@ class ReadableMessage implements ReadableMessageInterface {
 	 * @returns {number} Index of last byte read.
 	 */
 	private _extractPayload (from:number):number {
-		this._payload = this._buffer.slice(from, this._buffer.length - MessageByteCheatsheet.messageEnd.length);
+		//this._payload = this._buffer.slice(from, this._buffer.length - MessageByteCheatsheet.messageEnd.length);
+		this._payload = this._buffer.slice(from, this._buffer.length);
 		return from + this._payload.length;
 	}
 
@@ -264,6 +265,8 @@ class ReadableMessage implements ReadableMessageInterface {
 	}
 
 	/**
+	 * @deprecated
+	 *
 	 * Checks whether the message buffer starts and ends with the expected 6 byte-identifiers.
 	 *
 	 * @method core.protocol.message.ReadableMessage~_isProtocolMessage

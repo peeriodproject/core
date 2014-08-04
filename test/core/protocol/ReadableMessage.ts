@@ -19,8 +19,7 @@ describe('CORE --> PROTOCOL --> ReadableMessage', function () {
 	var nodeFactoryStub:any;
 
 	var createWorkingMessage = function():Buffer {
-		var begin = new Buffer([0x50, 0x52, 0x44, 0x42, 0x47, 0x4e]),
-			end = new Buffer([0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]),
+		var
 			// f3ec6b952992bb07f34862a411bb1f833f636288
 			receiverId = new Buffer([0xf3, 0xec, 0x6b, 0x95, 0x29, 0x92, 0xbb, 0x07, 0xf3, 0x48, 0x62, 0xa4, 0x11, 0xbb, 0x1f, 0x83, 0x3f, 0x63, 0x62, 0x88 ]),
 			// fe3626caca6c84fa4e5d323b6a26b897582c57f9
@@ -36,19 +35,18 @@ describe('CORE --> PROTOCOL --> ReadableMessage', function () {
 			// foobar
 			payload = new Buffer('foobar', 'utf8'),
 
-			list = [begin, receiverId, senderId, ipv4Address, ipv6Address, addressEnd, messageType, payload, end];
+			list = [receiverId, senderId, ipv4Address, ipv6Address, addressEnd, messageType, payload];
 
 		return Buffer.concat(list);
 	};
 
 	var createHydraMessage = function ():Buffer {
-		var begin = new Buffer([0x50, 0x52, 0x44, 0x42, 0x47, 0x4e]),
-			end = new Buffer([0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]),
+		var
 			receiverId = new Buffer(20),
 			payload = new Buffer('foobar', 'utf8');
 
 		receiverId.fill(0x00);
-		var list = [begin, receiverId, payload, end];
+		var list = [receiverId, payload];
 		return Buffer.concat(list);
 	}
 
@@ -116,23 +114,9 @@ describe('CORE --> PROTOCOL --> ReadableMessage', function () {
 		readable.isHydra().should.be.false;
 	});
 
-	it('should not recognize it as a protocol message', function () {
-		var msg = createWorkingMessage();
-		msg[0] = 0x00;
-		(function () {
-			new ReadableMessage(msg, nodeFactoryStub, addressFactoryStub);
-		}).should.throw('ReadableMessage~_deformat: Buffer is not protocol compliant.')
-
-		msg = createWorkingMessage();
-		msg[msg.length - 1] = 0x00;
-		(function () {
-			new ReadableMessage(msg, nodeFactoryStub, addressFactoryStub);
-		}).should.throw('ReadableMessage~_deformat: Buffer is not protocol compliant.')
-	});
-
 	it('should not recognize the message type', function () {
 		var msg = createWorkingMessage();
-		msg[73] = 0x00;
+		msg[67] = 0x00;
 		(function () {
 			new ReadableMessage(msg, nodeFactoryStub, addressFactoryStub);
 		}).should.throw('ReadableMessage~_extractMessageType: Unknown message type.');
@@ -140,7 +124,7 @@ describe('CORE --> PROTOCOL --> ReadableMessage', function () {
 
 	it('should not recognize the IP version', function () {
 		var msg = createWorkingMessage();
-		msg[72] = 0x00;
+		msg[66] = 0x00;
 		(function () {
 			new ReadableMessage(msg, nodeFactoryStub, addressFactoryStub);
 		}).should.throw('ContactNodeAddressExtractor~_extractAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.');

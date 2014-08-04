@@ -111,12 +111,10 @@ var ReadableMessage = (function () {
     * @method core.protocol.messages.ReadableMessage~_deformat
     */
     ReadableMessage.prototype._deformat = function () {
-        if (!this._isProtocolMessage()) {
-            throw new Error('ReadableMessage~_deformat: Buffer is not protocol compliant.');
-        }
-
-        this._lastPosRead = MessageByteCheatsheet.messageBegin.length;
-
+        /*if (!this._isProtocolMessage()) {
+        throw new Error('ReadableMessage~_deformat: Buffer is not protocol compliant.');
+        }*/
+        //this._lastPosRead = MessageByteCheatsheet.messageBegin.length;
         this._lastPosRead = this._extractReceiverId(this._lastPosRead);
 
         if (this._isHydra) {
@@ -156,7 +154,8 @@ var ReadableMessage = (function () {
     * @returns {number} Index of last byte read.
     */
     ReadableMessage.prototype._extractPayload = function (from) {
-        this._payload = this._buffer.slice(from, this._buffer.length - MessageByteCheatsheet.messageEnd.length);
+        //this._payload = this._buffer.slice(from, this._buffer.length - MessageByteCheatsheet.messageEnd.length);
+        this._payload = this._buffer.slice(from, this._buffer.length);
         return from + this._payload.length;
     };
 
@@ -241,6 +240,8 @@ var ReadableMessage = (function () {
     };
 
     /**
+    * @deprecated
+    *
     * Checks whether the message buffer starts and ends with the expected 6 byte-identifiers.
     *
     * @method core.protocol.message.ReadableMessage~_isProtocolMessage

@@ -173,7 +173,6 @@ class ResponseManager implements ResponseManagerInterface {
 			logger.log('query', 'Received broadcast query results from bridge', {broadcastId: identifier});
 
 			if (this._externalQueryHandlers[identifier]) {
-
 				// we call the callback no matter what. if the results are empty, it must be handled externally
 				this._externalQueryHandlers[identifier](identifier, results);
 				delete this._externalQueryHandlers[identifier];
@@ -191,6 +190,9 @@ class ResponseManager implements ResponseManagerInterface {
 					if (msg) {
 						var result = this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
 						logger.log('query', 'Issuing external feed to circuit', {broadcastId: identifier, result: result, queryCount:'issuenext'});
+					}
+					else {
+						console.log('no message');
 					}
 				}
 			}
@@ -213,9 +215,11 @@ class ResponseManager implements ResponseManagerInterface {
 					if (msg) {
 						logger.log('query', 'Issuing result back through circuit', {broadcastId: identifier, queryCount:'issueback'});
 
+						var waitingTime:number = Math.round(Math.random() * this._waitForOwnResponseAsBroadcastInitiatorInMs);
+
 						setTimeout(() => {
 							this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg);
-						}, Math.random() * this._waitForOwnResponseAsBroadcastInitiatorInMs);
+						}, waitingTime);
 					}
 				}
 			});

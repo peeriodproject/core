@@ -1,6 +1,7 @@
 /// <reference path='../../test.d.ts' />
 
 import net = require('net');
+import crypto = require('crypto');
 
 require('should');
 
@@ -31,6 +32,7 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
 
 	var sockOpts = {doKeepAlive: true, idleConnectionKillTimeout: 0};
 
+	var suppressMessageError = false;
 
 	// we use a null byte at the beginning to indicate that a message cannot be parsed.
 
@@ -40,10 +42,10 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
 		// build up readable message factory stub
 		readableMessageFactoryStub = testUtils.stubPublicApi(sandbox, ReadableMessageFactory, {
 			"create": function (buffer:Buffer) {
-				if (buffer[0] === 0x00) throw new Error('Message not readable yo.');
+				if (buffer[0] === 0x00 && !suppressMessageError) throw new Error('Message not readable yo.');
 				var foo:any = {
 					isHydra: function () { return false; },
-					payload: 'foobar'
+					payload: buffer
 				}
 
 				return foo;
@@ -52,6 +54,7 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
 
 		// build up our server
 		server = net.createServer(function (socket) {
+			socket.setNoDelay(true);
 			currentConnection = socket;
 		});
 
@@ -84,19 +87,18 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
 	});
 
 	it('should emit a message event with a complete message', function (done) {
-		var msg = new Buffer([0x01, 0x02, 0x03, 0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]);
+		var message = new Buffer([0,0,0,6, 0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72]);
 
 		pipe.once('message', function (identifier, msg) {
-			if (msg.payload === 'foobar') {
-				done();
-			}
+			msg.payload.toString().should.equal('foobar');
+			done();
 		});
 
-		currentConnection.write(msg);
+		currentConnection.write(message);
 	});
 
 	it('should not be able to read the message', function (done) {
-		var msg = new Buffer([0x00, 0x02, 0x03, 0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]);
+		var msg = new Buffer([0,0,0,8, 0x00, 0x02, 0x03, 0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]);
 
 		pipe.once('unreadableMessage', function (identifier) {
 			done();
@@ -105,26 +107,54 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
 		currentConnection.write(msg);
 	});
 
-	it('should be able to finalize data with end bytes split', function (done) {
-		var msg1 = new Buffer([0x01]);
-		var msg2 = new Buffer([0x02, 0x03, 0x50, 0x52, 0x44, 0x45]);
-		var msg3 = new Buffer([0x4e, 0x44]);
+	it('should be able to extract messages split over many parts', function (done) {
+		suppressMessageError = true;
 
-		pipe.once('message', function (identifier, message) {
-			if (message.payload === 'foobar') done();
+		var msgs = [];
+		var stringToSend = '';
+
+		var checkIndex = -1;
+
+		pipe.on('message', function (identifier, msg) {
+			checkIndex++;
+
+			msg.payload.toString('hex').should.equal(msgs[checkIndex]);
+
+
+			if (checkIndex === msgs.length -1) {
+				pipe.removeAllListeners('message');
+				done();
+			}
 		});
 
-		setTimeout(function () {
-			currentConnection.write(msg1);
-		}, 20);
+		pipe.once('unreadableMessage', function () {
+			throw new Error('Cannot read message');
+		});
 
-		setTimeout(function () {
-			currentConnection.write(msg2);
-		}, 40);
+		for (var i=0; i<100; i++) {
+			if (Math.round(Math.random())) {
+				var buff = crypto.pseudoRandomBytes(Math.ceil(Math.random() * 200));
+				var sizeBuff = new Buffer(4);
+				sizeBuff.writeUInt32BE(buff.length, 0);
 
-		setTimeout(function () {
-			currentConnection.write(msg3);
-		}, 60);
+				var stringRep = buff.toString('hex');
+				msgs.push(stringRep);
+				stringToSend += sizeBuff.toString('hex');
+				stringToSend += stringRep;
+
+			} else {
+				stringToSend += '00000000';
+			}
+		}
+
+		while (stringToSend.length) {
+			var to = Math.ceil(Math.random() * 100) * 2;
+			var chunk = stringToSend.substr(0, to);
+			stringToSend = stringToSend.substr(to);
+
+			currentConnection.write(chunk, 'hex');
+		}
+
 
 	});
 
@@ -133,12 +163,11 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
 		var largeBuffer = new Buffer(len);
 
 		largeBuffer.fill(1);
-		for (var i=0; i<6; i++) {
-			largeBuffer[len - 1 - i] = messageEndBytes[5 - i];
-		}
+		largeBuffer.writeUInt32BE(maxByteLength -4, 0);
 
 		pipe.once('message', function (identifier, message) {
-			if (message.payload === 'foobar') done();
+			message.payload.toString('hex').should.equal(largeBuffer.slice(4).toString('hex'));
+			done();
 		});
 
 		currentConnection.write(largeBuffer);
@@ -148,6 +177,7 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
 	it('should free memory when the limit has exceeded', function (done) {
 		var largeBuffer = new Buffer(maxByteLength + 1);
 		largeBuffer.fill(1);
+		largeBuffer.writeUInt32BE(0xffffffff, 0);
 
 		currentConnection.write(largeBuffer, function () {
 			// give a second of time

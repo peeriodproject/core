@@ -259,6 +259,8 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', func
 			return {ip: ip, port: 80};
 		};
 
+		protocolConnectionManager.closeHydraSocket = function () {};
+
 		protocolConnectionManager.writeMessageTo = function (node:any, messageType:string, payload:Buffer) {
 			var msg:any = testUtils.stubPublicApi(sandbox, ReadableMessage, {
 				getMessageType: function () {
