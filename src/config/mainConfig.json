@@ -11,6 +11,7 @@
         "allowHalfOpenSockets"     : false,
         "connectionRetrySeconds"   : 4,
         "idleConnectionKillTimeout": 5,
+        "heartbeatTimeout"         : 2,
         "outboundConnectionTimeout": 2000,
         "myOpenPorts"              : [],
 
