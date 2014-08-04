@@ -46,7 +46,8 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () 
         myOpenPorts: [protoPort],
         doKeepAlive: true,
         idleConnectionKillTimeout: 1.2,
-        outboundConnectionTimeout: 500
+        outboundConnectionTimeout: 500,
+        heartbeatTimeout: 0.5
     };
 
     var tcpSocketFactory = new TCPSocketFactory();
@@ -56,6 +57,8 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () 
     var myNode = new MyNode(new Id(Id.byteBufferByHexString('0a0000000000000078f406020100000005000000', 20), 160), [addressFactory.create('127.0.0.1', 10)]);
 
     var currentHydraIdentifer = null;
+
+    var doEcho = true;
 
     before(function (done) {
         sandbox = sinon.sandbox.create();
@@ -80,6 +83,13 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () 
             server_built = true;
             if (server_built && handler_built)
                 done();
+        });
+
+        remoteServer.on('connection', function (socket) {
+            socket.on('data', function (data) {
+                if (doEcho)
+                    socket.write(data);
+            });
         });
 
         // build our tcp socket handler
@@ -178,6 +188,11 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () 
         var sock = net.createConnection(protoPort, 'localhost', function () {
             // is connected
             sock.write(message_a);
+
+            // echoing
+            sock.on('data', function (data) {
+                sock.write(data);
+            });
         });
     });
 
@@ -300,6 +315,7 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () 
     it('should obtain an outbound connection, write the buffer successfully and keep it open', function (done) {
         var ident = '1e3626caca6c84fa4e5d323b6a26b897582c57f9';
         var id = new Id(Id.byteBufferByHexString(ident, 20), 160);
+
         var goodContactNode = nodeFactory.create(id, [addressFactory.create('14.213.160.0', 1111), addressFactory.create('127.0.0.1', remotePort)]);
 
         manager.keepSocketsOpenFromNode(goodContactNode);

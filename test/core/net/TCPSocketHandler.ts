@@ -15,7 +15,8 @@ var net = require('net');
 
 var defaultHandlerOpts:TCPSocketHandlerOptions = {
 	myExternalIp: '127.0.0.1',
-	idleConnectionKillTimeout: 0
+	idleConnectionKillTimeout: 0,
+	heartbeatTimeout: 0.5
 };
 
 describe('CORE --> NET --> TCP --> TCPSocketHandler', function () {
@@ -30,7 +31,8 @@ describe('CORE --> NET --> TCP --> TCPSocketHandler', function () {
 	it('should throw an error when creating handler with invalid IP', function () {
 		var opts:TCPSocketHandlerOptions = {
 			myExternalIp             : 'muschi',
-			idleConnectionKillTimeout: 0
+			idleConnectionKillTimeout: 0,
+			heartbeatTimeout: 0.5
 		};
 		(function () {
 			new TCPSocketHandler(new TCPSocketFactory(), opts);
