@@ -18,16 +18,16 @@ describe('CORE --> PROTOCOL --> ReadableMessage', function () {
     var nodeFactoryStub;
 
     var createWorkingMessage = function () {
-        var begin = new Buffer([0x50, 0x52, 0x44, 0x42, 0x47, 0x4e]), end = new Buffer([0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]), receiverId = new Buffer([0xf3, 0xec, 0x6b, 0x95, 0x29, 0x92, 0xbb, 0x07, 0xf3, 0x48, 0x62, 0xa4, 0x11, 0xbb, 0x1f, 0x83, 0x3f, 0x63, 0x62, 0x88]), senderId = new Buffer([0xfe, 0x36, 0x26, 0xca, 0xca, 0x6c, 0x84, 0xfa, 0x4e, 0x5d, 0x32, 0x3b, 0x6a, 0x26, 0xb8, 0x97, 0x58, 0x2c, 0x57, 0xf9]), ipv4Address = new Buffer([0x04, 44, 123, 255, 7, 0xd9, 0x03]), ipv6Address = new Buffer([0x06, 0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x42, 0x83, 0x29, 0xd9, 0x03]), addressEnd = new Buffer([0x05]), messageType = new Buffer([0x50, 0x49]), payload = new Buffer('foobar', 'utf8'), list = [begin, receiverId, senderId, ipv4Address, ipv6Address, addressEnd, messageType, payload, end];
+        var receiverId = new Buffer([0xf3, 0xec, 0x6b, 0x95, 0x29, 0x92, 0xbb, 0x07, 0xf3, 0x48, 0x62, 0xa4, 0x11, 0xbb, 0x1f, 0x83, 0x3f, 0x63, 0x62, 0x88]), senderId = new Buffer([0xfe, 0x36, 0x26, 0xca, 0xca, 0x6c, 0x84, 0xfa, 0x4e, 0x5d, 0x32, 0x3b, 0x6a, 0x26, 0xb8, 0x97, 0x58, 0x2c, 0x57, 0xf9]), ipv4Address = new Buffer([0x04, 44, 123, 255, 7, 0xd9, 0x03]), ipv6Address = new Buffer([0x06, 0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x42, 0x83, 0x29, 0xd9, 0x03]), addressEnd = new Buffer([0x05]), messageType = new Buffer([0x50, 0x49]), payload = new Buffer('foobar', 'utf8'), list = [receiverId, senderId, ipv4Address, ipv6Address, addressEnd, messageType, payload];
 
         return Buffer.concat(list);
     };
 
     var createHydraMessage = function () {
-        var begin = new Buffer([0x50, 0x52, 0x44, 0x42, 0x47, 0x4e]), end = new Buffer([0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]), receiverId = new Buffer(20), payload = new Buffer('foobar', 'utf8');
+        var receiverId = new Buffer(20), payload = new Buffer('foobar', 'utf8');
 
         receiverId.fill(0x00);
-        var list = [begin, receiverId, payload, end];
+        var list = [receiverId, payload];
         return Buffer.concat(list);
     };
 
@@ -95,23 +95,9 @@ describe('CORE --> PROTOCOL --> ReadableMessage', function () {
         readable.isHydra().should.be.false;
     });
 
-    it('should not recognize it as a protocol message', function () {
-        var msg = createWorkingMessage();
-        msg[0] = 0x00;
-        (function () {
-            new ReadableMessage(msg, nodeFactoryStub, addressFactoryStub);
-        }).should.throw('ReadableMessage~_deformat: Buffer is not protocol compliant.');
-
-        msg = createWorkingMessage();
-        msg[msg.length - 1] = 0x00;
-        (function () {
-            new ReadableMessage(msg, nodeFactoryStub, addressFactoryStub);
-        }).should.throw('ReadableMessage~_deformat: Buffer is not protocol compliant.');
-    });
-
     it('should not recognize the message type', function () {
         var msg = createWorkingMessage();
-        msg[73] = 0x00;
+        msg[67] = 0x00;
         (function () {
             new ReadableMessage(msg, nodeFactoryStub, addressFactoryStub);
         }).should.throw('ReadableMessage~_extractMessageType: Unknown message type.');
@@ -119,7 +105,7 @@ describe('CORE --> PROTOCOL --> ReadableMessage', function () {
 
     it('should not recognize the IP version', function () {
         var msg = createWorkingMessage();
-        msg[72] = 0x00;
+        msg[66] = 0x00;
         (function () {
             new ReadableMessage(msg, nodeFactoryStub, addressFactoryStub);
         }).should.throw('ContactNodeAddressExtractor~_extractAddressesAndBytesReadAsArray: Address does not seem to be protocol compliant.');

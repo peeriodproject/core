@@ -4,7 +4,7 @@ import TCPSocketInterface = require('../../../net/tcp/interfaces/TCPSocketInterf
 import ReadableMessageInterface = require('./ReadableMessageInterface');
 
 /**
- * IncomingDataPipeline has one objective: emitting out full protcol messages.
+ * IncomingDataPipeline has one objective: emitting out full protocol messages.
  * Thus a TCPSocket can be hooked to the pipeline. The pipeline will listen to the `data` event and try to make a
  * ReadableMessage out of the buffers. It handles memory issues and trys to avoid memory congestion by dereferencing the
  * buffers if a possible message exceeds a certain limit.

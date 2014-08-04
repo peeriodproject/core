@@ -921,6 +921,10 @@ var ProtocolConnectionManager = (function (_super) {
             _this._onHydraMessage(identifier, message);
         });
 
+        this._incomingDataPipeline.on('memoryExcess', function (identifier) {
+            _this._destroyConnectionByIdentifier(identifier);
+        });
+
         this._tcpSocketHandler.on('connected', function (socket, direction) {
             if (direction === 'incoming') {
                 _this._onIncomingConnection(socket);

@@ -22,8 +22,7 @@ describe('CORE --> PROTOCOL --> MESSAGES --> GeneralWritableMessageFactory', fun
 	var factory:GeneralWritableMessageFactory;
 
 	var createWorkingMessage = function():Buffer {
-		var begin = new Buffer([0x50, 0x52, 0x44, 0x42, 0x47, 0x4e]),
-			end = new Buffer([0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]),
+		var
 			// f3ec6b952992bb07f34862a411bb1f833f636288
 			receiverId = new Buffer([0xf3, 0xec, 0x6b, 0x95, 0x29, 0x92, 0xbb, 0x07, 0xf3, 0x48, 0x62, 0xa4, 0x11, 0xbb, 0x1f, 0x83, 0x3f, 0x63, 0x62, 0x88 ]),
 			// fe3626caca6c84fa4e5d323b6a26b897582c57f9
@@ -39,20 +38,24 @@ describe('CORE --> PROTOCOL --> MESSAGES --> GeneralWritableMessageFactory', fun
 			// foobar
 			payload = new Buffer('foobar', 'utf8'),
 
-			list = [begin, receiverId, senderId, ipv4Address, ipv6Address, addressEnd, messageType, payload, end];
+			list = [receiverId, senderId, ipv4Address, ipv6Address, addressEnd, messageType, payload];
 
-		return Buffer.concat(list);
+		var buff = Buffer.concat(list);
+		var retBuff = new Buffer(buff.length + 4);
+		retBuff.writeUInt32BE(buff.length, 0);
+		buff.copy(retBuff, 4, 0);
+
+		return retBuff;
 	};
 
 	var createWorkingHydraMessage = function ():Buffer {
-		var begin = new Buffer([0x50, 0x52, 0x44, 0x42, 0x47, 0x4e]),
-			end = new Buffer([0x50, 0x52, 0x44, 0x45, 0x4e, 0x44]),
+		var begin = new Buffer([0, 0, 0, 26]),
 			receiverId = new Buffer(20),
 			payload = new Buffer('foobar', 'utf8');
 		receiverId.fill(0x00);
 
 
-		return Buffer.concat([begin, receiverId, payload, end]);
+		return Buffer.concat([begin, receiverId, payload]);
 	};
 
 	before(function () {

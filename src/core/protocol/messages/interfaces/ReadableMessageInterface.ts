@@ -8,7 +8,7 @@ import ContactNodeInterface = require('../../../topology/interfaces/ContactNodeI
  * a specific pattern. A ReadableMessage must deconstruct a raw buffer into its parts.
  *
  * Roughly, a protocol message is structured into the following parts:
- * - 6 Bytes for indicating it is a protocol message
+ * - 4 bytes for indicating the length of the following message
  * - 20 Bytes for the ID of the intended receiver
  * - 20 Bytes for the ID of the sender
  * - The address block, constituted by lists of IP/PORT combinations, each beginning with an indicator byte which tells if:
@@ -17,7 +17,6 @@ import ContactNodeInterface = require('../../../topology/interfaces/ContactNodeI
  * - One indicator byte for the termination of the address block
  * - Two bytes for the type of protocol message (e.g. PING)
  * - The payload
- * - 6 Bytes for indicating the end of the protocol message
  *
  * If the 20 Bytes reserved for the ID of the intended receiver are all null-bytes, the message is marked as a hydra
  * message and the payload is expected to follow right after (without addresses, sender etc.)

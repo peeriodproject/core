@@ -210,7 +210,9 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			try {
 				success = this.getSocket().write(buffer, callback);
 			}
-			catch (e) {}
+			catch (e) {
+				this.getSocket().end();
+			}
 
 			buffer = null;
 
@@ -238,6 +240,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 				success = this.getSocket().write(message, encoding, callback);
 			}
 			catch (e) {
+				this.getSocket().end();
 			}
 
 		}

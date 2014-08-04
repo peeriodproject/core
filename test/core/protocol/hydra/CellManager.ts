@@ -241,6 +241,8 @@ describe('CORE --> PROTOCOL --> HYDRA --> CellManager', function () {
 			}
 		};
 
+		connectionManagerStub.closeSocketByIdentifier = function () {};
+
 
 	});
 

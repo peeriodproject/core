@@ -127,7 +127,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> ResponseManager', function () 
             pipedThroughCirc.circuitId.should.equal('predecessorCirc');
             pipedThroughCirc.payload.toString().should.equal('cafebabe');
             done();
-        }, 30);
+        }, 100);
     });
 
     before(function () {

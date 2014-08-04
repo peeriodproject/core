@@ -165,6 +165,8 @@ var ResponseManager = (function () {
                     if (msg) {
                         var result = _this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
                         logger.log('query', 'Issuing external feed to circuit', { broadcastId: identifier, result: result, queryCount: 'issuenext' });
+                    } else {
+                        console.log('no message');
                     }
                 }
             }
@@ -185,9 +187,11 @@ var ResponseManager = (function () {
                     if (msg) {
                         logger.log('query', 'Issuing result back through circuit', { broadcastId: identifier, queryCount: 'issueback' });
 
+                        var waitingTime = Math.round(Math.random() * _this._waitForOwnResponseAsBroadcastInitiatorInMs);
+
                         setTimeout(function () {
                             _this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg);
-                        }, Math.random() * _this._waitForOwnResponseAsBroadcastInitiatorInMs);
+                        }, waitingTime);
                     }
                 }
             });

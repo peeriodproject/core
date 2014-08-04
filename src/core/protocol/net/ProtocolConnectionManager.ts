@@ -965,6 +965,10 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			this._onHydraMessage(identifier, message);
 		});
 
+		this._incomingDataPipeline.on('memoryExcess', (identifier:string) => {
+			this._destroyConnectionByIdentifier(identifier);
+		});
+
 		this._tcpSocketHandler.on('connected', (socket:TCPSocketInterface, direction:string) => {
 			if (direction === 'incoming') {
 				this._onIncomingConnection(socket);

@@ -107,22 +107,22 @@ class GeneralWritableMessageFactory implements GeneralWritableMessageFactoryInte
 		var bufferLength:number = (payloadLength === undefined) ? payload.length : payloadLength;
 		var bufferList:BufferListInterface = [];
 
-		// add the beginning bytes
-		bufferList.push(new Buffer(MessageByteCheatsheet.messageBegin));
-		bufferLength += MessageByteCheatsheet.messageBegin.length;
+
+		// add the beginning bytes indicating the length
+		var sizeBuffer = new Buffer(4);
+		sizeBuffer.writeUInt32BE(bufferLength + 20, 0);
+
+		bufferList.push(sizeBuffer);
+		//bufferLength += MessageByteCheatsheet.messageBegin.length;
 
 		// add 20 null bytes
 		var nullBuf = new Buffer(20);
 		nullBuf.fill(0x00);
 		bufferList.push(nullBuf);
-		bufferLength += 20;
+		bufferLength += 24;
 
 		// add the payload
 		bufferList.push(payload);
-
-		// add the ending bytes
-		bufferList.push(new Buffer(MessageByteCheatsheet.messageEnd));
-		bufferLength += MessageByteCheatsheet.messageEnd.length;
 
 		return Buffer.concat(bufferList, bufferLength);
 	}
@@ -135,9 +135,8 @@ class GeneralWritableMessageFactory implements GeneralWritableMessageFactoryInte
 		var bufferLength:number = (payloadLength === undefined) ? payload.length : payloadLength;
 		var bufferList:BufferListInterface = [];
 
-		// add the beginning bytes
-		bufferList.push(new Buffer(MessageByteCheatsheet.messageBegin));
-		bufferLength += MessageByteCheatsheet.messageBegin.length;
+		// add the beginning bytes indicating the size, but don't write the size yet
+		bufferList.push(new Buffer(4));
 
 		// add the receiver ID
 		bufferList.push(this._receiver.getId().getBuffer());
@@ -162,15 +161,13 @@ class GeneralWritableMessageFactory implements GeneralWritableMessageFactoryInte
 		// add the payload
 		bufferList.push(payload);
 
-		// add the ending bytes
-		bufferList.push(new Buffer(MessageByteCheatsheet.messageEnd));
-		bufferLength += MessageByteCheatsheet.messageEnd.length;
+		bufferList[0].writeUInt32BE(bufferLength, 0);
 
 		// cleanup, sender can stay the same
 		this._receiver = null;
 		this._messageType = null;
 
-		return Buffer.concat(bufferList, bufferLength);
+		return Buffer.concat(bufferList, bufferLength + 4);
 	}
 
 	/**
