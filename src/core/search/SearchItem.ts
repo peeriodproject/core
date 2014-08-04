@@ -151,6 +151,7 @@ class SearchItem implements SearchItemInterface {
 			}
 			// JSON.stringify for objects
 			else {
+				// todo use correct stringify with sorted keys
 				isValid = JSON.stringify(this[memberName]) === JSON.stringify(source['item' + name]);
 			}
 
