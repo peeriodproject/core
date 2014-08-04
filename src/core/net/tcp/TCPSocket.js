@@ -24,11 +24,17 @@ var TCPSocket = (function (_super) {
     function TCPSocket(socket, opts) {
         _super.call(this);
         /**
-        * Flag which indicates if an idle socket will be closed on a `timeout` event.
+        * Flag which indicates if an idle socket will be closed. This is true by default and only set to `false` if
+        * otherwise stated in the constructor options.
         *
-        * @member {boolean} core.net.tcp.TCPSocket~_closeOnTimeout
+        * @member {boolean} core.net.tcp.TCPSocket~_closeWhenIdle
         */
-        this._closeOnTimeout = false;
+        this._closeWhenIdle = true;
+        this._closeAfterLastDataReceivedInMs = 0;
+        this._idleTimeout = 0;
+        this._heartbeatTimeout = 0;
+        this._sendHeartbeatAfterLastDataInMs = 0;
+        this._doKeepOpen = false;
         /**
         * The options passed in the constructor (for reference)
         *
@@ -81,12 +87,18 @@ var TCPSocket = (function (_super) {
         this._simulatorRTT = opts.simulatorRTT || 0;
 
         // set the timeout
-        if (opts.idleConnectionKillTimeout > 0) {
-            this._closeOnTimeout = true;
-            this.getSocket().setTimeout(opts.idleConnectionKillTimeout * 1000);
+        if (opts.idleConnectionKillTimeout === 0) {
+            this._closeWhenIdle = false;
+        } else {
+            this._closeAfterLastDataReceivedInMs = opts.idleConnectionKillTimeout * 1000;
         }
 
-        this.setupListeners();
+        this._sendHeartbeatAfterLastDataInMs = opts.heartbeatTimeout * 1000;
+
+        this._setupListeners();
+
+        this._resetIdleTimeout();
+        this._resetHeartbeatTimeout();
     }
     TCPSocket.prototype.end = function (data, encoding) {
         if (this.getSocket() && !this._preventWrite) {
@@ -116,18 +128,8 @@ var TCPSocket = (function (_super) {
         return this._socket;
     };
 
-    TCPSocket.prototype.onTimeout = function () {
-        if (this._closeOnTimeout) {
-            this.end();
-        }
-    };
-
-    TCPSocket.prototype.setCloseOnTimeout = function (flag) {
-        if (!this._closeOnTimeout && flag) {
-            this.getSocket().setTimeout(this._constructorOpts.idleConnectionKillTimeout * 1000);
-        }
-
-        this._closeOnTimeout = flag;
+    TCPSocket.prototype.setKeepOpen = function (state) {
+        this._doKeepOpen = state;
     };
 
     TCPSocket.prototype.setIdentifier = function (identifier) {
@@ -142,13 +144,9 @@ var TCPSocket = (function (_super) {
         this._socket = socket;
     };
 
-    TCPSocket.prototype.setupListeners = function () {
+    TCPSocket.prototype._setupListeners = function () {
         var _this = this;
         var socket = this.getSocket();
-
-        socket.on('timeout', function () {
-            return _this.onTimeout();
-        });
 
         socket.on('error', function (err) {
             logger.error('THIS IS A SOCKET ERROR!', {
@@ -177,6 +175,16 @@ var TCPSocket = (function (_super) {
 
             _this.emit('destroy');
 
+            if (_this._idleTimeout) {
+                global.clearTimeout(_this._idleTimeout);
+                _this._heartbeatTimeout = null;
+            }
+
+            if (_this._heartbeatTimeout) {
+                global.clearTimeout(_this._heartbeatTimeout);
+                _this._heartbeatTimeout = null;
+            }
+
             process.nextTick(function () {
                 _this.removeAllListeners();
             });
@@ -186,7 +194,43 @@ var TCPSocket = (function (_super) {
             _this._preventWrite = true;
         });
 
+        socket.on('data', function () {
+            _this._resetIdleTimeout();
+        });
+
         this._propagateEvents(this._eventsToPropagate);
+    };
+
+    TCPSocket.prototype._resetIdleTimeout = function () {
+        var _this = this;
+        if (this._idleTimeout) {
+            global.clearTimeout(this._idleTimeout);
+        }
+
+        this._idleTimeout = global.setTimeout(function () {
+            _this._idleTimeout = null;
+
+            if (_this._closeWhenIdle) {
+                _this.end();
+            }
+        }, this._closeAfterLastDataReceivedInMs);
+    };
+
+    TCPSocket.prototype._resetHeartbeatTimeout = function () {
+        var _this = this;
+        if (this._heartbeatTimeout) {
+            global.clearTimeout(this._heartbeatTimeout);
+        }
+
+        this._heartbeatTimeout = global.setTimeout(function () {
+            _this._heartbeatTimeout = null;
+
+            if (_this._doKeepOpen) {
+                _this.writeBuffer(new Buffer([0x00, 0x00, 0x00, 0x00]));
+            } else {
+                _this._resetHeartbeatTimeout();
+            }
+        });
     };
 
     TCPSocket.prototype.writeBuffer = function (buffer, callback, forceAvoidSimulation) {
@@ -203,6 +247,7 @@ var TCPSocket = (function (_super) {
         if (!this._preventWrite && this.getSocket().writable) {
             try  {
                 success = this.getSocket().write(buffer, callback);
+                this._resetHeartbeatTimeout();
             } catch (e) {
                 this.getSocket().end();
             }
@@ -231,6 +276,7 @@ var TCPSocket = (function (_super) {
         if (!this._preventWrite && this.getSocket().writable) {
             try  {
                 success = this.getSocket().write(message, encoding, callback);
+                this._resetHeartbeatTimeout();
             } catch (e) {
                 this.getSocket().end();
             }

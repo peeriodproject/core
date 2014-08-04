@@ -40,6 +40,8 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	 */
 	private _connectionRetry:number = 0;
 
+	private _heartbeatTimeout:number = 0;
+
 	/**
 	 * For a "regular" connection (i.e. not a connection which serves as a proxy), how many seconds should be waited
 	 * after the last activity until the socket connection is killed from this side.
@@ -147,6 +149,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2000;
 		this._simulatorRTT = opts.simulatorRTT || 0;
 		this._maxReachableTries = opts.maxReachableTries || 3;
+		this._heartbeatTimeout = opts.heartbeatTimeout;
 
 		this._TESTstartSocketInterval();
 	}
@@ -373,6 +376,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	public getDefaultSocketOptions ():TCPSocketOptions {
 		return <TCPSocketOptions> {
 			idleConnectionKillTimeout	: this._idleConnectionKillTimeout,
+			heartbeatTimeout			: this._heartbeatTimeout,
 			simulatorRTT				: this._simulatorRTT,
 			doKeepAlive					: true
 		};

@@ -19,11 +19,22 @@ var logger = require('../../utils/logger/LoggerFactory').create();
 class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	/**
-	 * Flag which indicates if an idle socket will be closed on a `timeout` event.
+	 * Flag which indicates if an idle socket will be closed. This is true by default and only set to `false` if
+	 * otherwise stated in the constructor options.
 	 *
-	 * @member {boolean} core.net.tcp.TCPSocket~_closeOnTimeout
+	 * @member {boolean} core.net.tcp.TCPSocket~_closeWhenIdle
 	 */
-	private _closeOnTimeout:boolean = false;
+	private _closeWhenIdle:boolean = true;
+
+	private _closeAfterLastDataReceivedInMs:number = 0;
+
+	private _idleTimeout:number = 0;
+
+	private _heartbeatTimeout:number = 0;
+
+	private _sendHeartbeatAfterLastDataInMs:number = 0;
+
+	private _doKeepOpen:boolean = false;
 
 	/**
 	 * The options passed in the constructor (for reference)
@@ -85,12 +96,19 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		this._simulatorRTT = opts.simulatorRTT || 0;
 
 		// set the timeout
-		if (opts.idleConnectionKillTimeout > 0) {
-			this._closeOnTimeout = true;
-			this.getSocket().setTimeout(opts.idleConnectionKillTimeout * 1000);
+		if (opts.idleConnectionKillTimeout === 0) {
+			this._closeWhenIdle = false;
+		}
+		else {
+			this._closeAfterLastDataReceivedInMs = opts.idleConnectionKillTimeout * 1000;
 		}
 
-		this.setupListeners();
+		this._sendHeartbeatAfterLastDataInMs = opts.heartbeatTimeout * 1000;
+
+		this._setupListeners();
+
+		this._resetIdleTimeout();
+		this._resetHeartbeatTimeout();
 	}
 
 	public end (data?:any, encoding?:string):void {
@@ -114,7 +132,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	}
 
 	public getIPPortString ():string {
-		var socket = this.getSocket();
+		var socket = this.getSocket();//
 
 		return socket.remoteAddress + ':' + socket.remotePort;
 	}
@@ -123,18 +141,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		return this._socket;
 	}
 
-	public onTimeout ():void {
-		if (this._closeOnTimeout) {
-			this.end();
-		}
-	}
-
-	public setCloseOnTimeout (flag:boolean):void {
-		if (!this._closeOnTimeout && flag) {
-			this.getSocket().setTimeout(this._constructorOpts.idleConnectionKillTimeout * 1000);
-		}
-
-		this._closeOnTimeout = flag;
+	public setKeepOpen (state:boolean):void {
+		this._doKeepOpen = state;
 	}
 
 	public setIdentifier (identifier:string):void {
@@ -149,10 +157,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		this._socket = socket;
 	}
 
-	public setupListeners ():void {
+	private _setupListeners ():void {
 		var socket = this.getSocket();
-
-		socket.on('timeout', () => this.onTimeout());
 
 		socket.on('error', (err) => {
 
@@ -182,6 +188,16 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 			this.emit('destroy');
 
+			if (this._idleTimeout) {
+				global.clearTimeout(this._idleTimeout);
+				this._heartbeatTimeout = null;
+			}
+
+			if (this._heartbeatTimeout) {
+				global.clearTimeout(this._heartbeatTimeout);
+				this._heartbeatTimeout = null;
+			}
+
 			process.nextTick(() => {
 				this.removeAllListeners();
 			});
@@ -191,7 +207,43 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			this._preventWrite = true;
 		});
 
+		socket.on('data', () => {
+			this._resetIdleTimeout();
+		});
+
 		this._propagateEvents(this._eventsToPropagate);
+	}
+
+	private _resetIdleTimeout ():void {
+		if (this._idleTimeout) {
+			global.clearTimeout(this._idleTimeout);
+		}
+
+		this._idleTimeout = global.setTimeout(() => {
+			this._idleTimeout = null;
+
+			if (this._closeWhenIdle) {
+				this.end();
+			}
+
+		}, this._closeAfterLastDataReceivedInMs);
+	}
+
+	private _resetHeartbeatTimeout ():void {
+		if (this._heartbeatTimeout) {
+			global.clearTimeout(this._heartbeatTimeout);
+		}
+
+		this._heartbeatTimeout = global.setTimeout(() => {
+			this._heartbeatTimeout = null;
+
+			if (this._doKeepOpen) {
+				this.writeBuffer(new Buffer([0x00, 0x00, 0x00, 0x00]));
+			}
+			else {
+				this._resetHeartbeatTimeout();
+			}
+		});
 	}
 
 	public writeBuffer (buffer:NodeBuffer, callback?:Function, forceAvoidSimulation?:boolean):boolean {
@@ -209,6 +261,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 			try {
 				success = this.getSocket().write(buffer, callback);
+				this._resetHeartbeatTimeout();
 			}
 			catch (e) {
 				this.getSocket().end();
@@ -238,6 +291,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 			try {
 				success = this.getSocket().write(message, encoding, callback);
+				this._resetHeartbeatTimeout();
 			}
 			catch (e) {
 				this.getSocket().end();

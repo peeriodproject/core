@@ -115,6 +115,7 @@ var NetworkBootstrapper = (function () {
             allowHalfOpenSockets: this._config.get('net.allowHalfOpenSockets'),
             connectionRetry: this._config.get('net.connectionRetrySeconds'),
             idleConnectionKillTimeout: this._config.get('net.idleConnectionKillTimeout'),
+            heartbeatTimeout: this._config.get('net.heartbeatTimeout'),
             myExternalIp: this._externalIp,
             myOpenPorts: this._config.get('net.myOpenPorts'),
             outboundConnectionTimeout: this._config.get('net.outboundConnectionTimeout'),

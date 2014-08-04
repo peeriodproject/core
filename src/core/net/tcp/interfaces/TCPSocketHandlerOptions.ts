@@ -30,6 +30,12 @@ interface TCPSocketHandlerOptions {
 	idleConnectionKillTimeout:number;
 
 	/**
+	 * Number of seconds to wait on from the last sent data
+	 * until a heartbeat is sent.
+	 */
+	heartbeatTimeout:number;
+
+	/**
 	 * The external IP address of the computer.
 	 */
 	myExternalIp:string;

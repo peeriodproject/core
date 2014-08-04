@@ -16,6 +16,12 @@ interface TCPSocketOptions {
 	idleConnectionKillTimeout:number;
 
 	/**
+	 * Number of seconds to wait on from the last sent data
+	 * until a heartbeat is sent.
+	 */
+	heartbeatTimeout:number;
+
+	/**
 	 * Delay between last data packet received and the first keepalive probe. 0 leaves the value unchanged
 	 * from default (or previous) setting.
 	 */

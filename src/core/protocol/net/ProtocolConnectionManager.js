@@ -339,7 +339,7 @@ var ProtocolConnectionManager = (function (_super) {
         var socket = this._hydraSockets[identifier];
 
         if (socket) {
-            socket.setCloseOnTimeout(true);
+            socket.setKeepOpen(false);
         }
     };
 
@@ -347,7 +347,7 @@ var ProtocolConnectionManager = (function (_super) {
         var socket = this._hydraSockets[identifier];
 
         if (socket) {
-            socket.setCloseOnTimeout(false);
+            socket.setKeepOpen(true);
         }
     };
 
@@ -358,7 +358,7 @@ var ProtocolConnectionManager = (function (_super) {
         if (i > -1) {
             var existing = this._confirmedSockets[identifier];
             if (existing) {
-                existing.socket.setCloseOnTimeout(true);
+                existing.socket.setKeepOpen(false);
             }
             this._keepSocketOpenList.splice(i, 1);
         }
@@ -373,7 +373,7 @@ var ProtocolConnectionManager = (function (_super) {
             this._keepSocketOpenList.push(identifier);
             var existing = this._confirmedSockets[identifier];
             if (existing) {
-                existing.socket.setCloseOnTimeout(false);
+                existing.socket.setKeepOpen(true);
             }
         }
     };
@@ -451,7 +451,7 @@ var ProtocolConnectionManager = (function (_super) {
         this._hookDestroyOnCloseToSocket(socket);
 
         if (this._keepSocketOpenList.indexOf(identifier) > -1) {
-            socket.setCloseOnTimeout(false);
+            socket.setKeepOpen(true);
         }
 
         this._confirmedSockets[identifier] = newConfirmedSocket;

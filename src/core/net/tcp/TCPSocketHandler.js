@@ -39,6 +39,7 @@ var TCPSocketHandler = (function (_super) {
         * @member {number} TCPSocketHandler~_connectionRetry
         */
         this._connectionRetry = 0;
+        this._heartbeatTimeout = 0;
         /**
         * For a "regular" connection (i.e. not a connection which serves as a proxy), how many seconds should be waited
         * after the last activity until the socket connection is killed from this side.
@@ -116,6 +117,7 @@ var TCPSocketHandler = (function (_super) {
         this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2000;
         this._simulatorRTT = opts.simulatorRTT || 0;
         this._maxReachableTries = opts.maxReachableTries || 3;
+        this._heartbeatTimeout = opts.heartbeatTimeout;
 
         this._TESTstartSocketInterval();
     }
@@ -353,6 +355,7 @@ var TCPSocketHandler = (function (_super) {
     TCPSocketHandler.prototype.getDefaultSocketOptions = function () {
         return {
             idleConnectionKillTimeout: this._idleConnectionKillTimeout,
+            heartbeatTimeout: this._heartbeatTimeout,
             simulatorRTT: this._simulatorRTT,
             doKeepAlive: true
         };

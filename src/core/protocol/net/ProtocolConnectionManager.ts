@@ -379,7 +379,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		var socket:TCPSocketInterface = this._hydraSockets[identifier];
 
 		if (socket) {
-			socket.setCloseOnTimeout(true);
+			socket.setKeepOpen(false);
 		}
 	}
 
@@ -387,7 +387,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		var socket:TCPSocketInterface = this._hydraSockets[identifier];
 
 		if (socket) {
-			socket.setCloseOnTimeout(false);
+			socket.setKeepOpen(true);
 		}
 	}
 
@@ -398,7 +398,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		if (i > -1) {
 			var existing:ConfirmedSocket = this._confirmedSockets[identifier];
 			if (existing) {
-				existing.socket.setCloseOnTimeout(true);
+				existing.socket.setKeepOpen(false);
 			}
 			this._keepSocketOpenList.splice(i, 1);
 		}
@@ -414,7 +414,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			this._keepSocketOpenList.push(identifier);
 			var existing:ConfirmedSocket = this._confirmedSockets[identifier];
 			if (existing) {
-				existing.socket.setCloseOnTimeout(false);
+				existing.socket.setKeepOpen(true);
 			}
 		}
 	}
@@ -494,7 +494,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._hookDestroyOnCloseToSocket(socket);
 
 		if (this._keepSocketOpenList.indexOf(identifier) > -1) {
-			socket.setCloseOnTimeout(false);
+			socket.setKeepOpen(true);
 		}
 
 		this._confirmedSockets[identifier] = newConfirmedSocket;

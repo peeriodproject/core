@@ -61,20 +61,14 @@ interface TCPSocketInterface extends NodeJS.EventEmitter {
 	getSocket ():net.Socket;
 
 	/**
-	 * Function that gets called when a `timeout` event is emitted on an idle socket.
+	 * Specifies if the socket sends heartbeats after a while of not sending any messages.
+	 * By default this is `false`.
 	 *
-	 * @method core.net.tcp.TCPSocketInterface#onTimeout
+	 * @method core.net.tcp.TCPSocketInterface#setKeepOpen
+	 *
+	 * @param {boolean} state
 	 */
-	onTimeout ():void;
-
-	/**
-	 * Specify if an idle socket should be closed on a `timeout` event.
-	 *
-	 * @method core.net.tcp.TCPSocketInterface#setCloseOnTimeout
-	 *
-	 * @param {boolean} flag
-	 */
-	setCloseOnTimeout (flag:boolean):void;
+	setKeepOpen (state:boolean):void;
 
 	/**
 	 * Sets an identification string on the socket object. Useful when trying to quickly pair a socket and some
@@ -94,14 +88,6 @@ interface TCPSocketInterface extends NodeJS.EventEmitter {
 	 * @param {net.Socket} socket
 	 */
 	setSocket (socket:net.Socket):void;
-
-	/**
-	 * Sets up the listeners on the raw socket's events and specifies the reaction.
-	 * Some socket events are also propagated, like 'data', 'close', 'error', 'end'
-	 *
-	 * @method core.net.tcp.TCPSocketInterface#setupListeners
-	 */
-	setupListeners ():void;
 
 	/**
 	 * Sends a byte buffer on the socket.
