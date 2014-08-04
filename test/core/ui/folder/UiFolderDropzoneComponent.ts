@@ -8,7 +8,7 @@ import testUtils = require('../../../utils/testUtils');
 
 import UiFolderDropzoneComponent = require('../../../../src/core/ui/folder/UiFolderDropzoneComponent');
 
-describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
+describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent @prio', function () {
 	var sandbox:SinonSandbox;
 	var component:UiFolderDropzoneComponent;
 	//var eventListeners:{ [eventName:string]:Function };
@@ -53,6 +53,13 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
 				show: sandbox.spy(),
 				setAlwaysOnTop: sandbox.spy(),
 				on: function (eventName, listener) {
+					if (!windowOnListeners[eventName]) {
+						windowOnListeners[eventName] = [];
+					}
+
+					windowOnListeners[eventName].push(listener);
+				},
+				once: function (eventName, listener) {
 					if (!windowOnListeners[eventName]) {
 						windowOnListeners[eventName] = [];
 					}
@@ -140,7 +147,6 @@ describe('CORE --> UI --> FOLDER --> UiFolderDropzoneComponent', function () {
 
 		nwWindowStub._window.show.calledOnce.should.be.true;
 		nwWindowStub._window.setAlwaysOnTop.calledOnce.should.be.true;
-		nwWindowStub._window.focus.calledOnce.should.be.true;
 	});
 
 	it('should correctly call the internal window close method on close', function () {

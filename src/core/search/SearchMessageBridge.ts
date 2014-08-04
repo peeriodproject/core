@@ -119,7 +119,13 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 			setTimeout(() => {
 				console.log('--- 4. INCOMING RESULTS ---');
 				console.log(results.toString());
-				this._searchRequestManager.addResponse(queryId, results, { additional: 'metadata' });
+				for (var i = 0; i < Math.round(Math.random() * 20); i++) {
+					setTimeout(() => {
+						setImmediate(() => {
+							this._searchRequestManager.addResponse(queryId, results, { additional: 'metadata' });
+						});
+					}, Math.max(500, Math.round(Math.random() * 5000)));
+				}
 			}, 1000);*/
 
 			this._compressBuffer(results, (err:Error, compressedResults:Buffer) => {

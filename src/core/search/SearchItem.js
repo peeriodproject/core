@@ -134,6 +134,7 @@ var SearchItem = (function () {
             if (typeof this[memberName] !== 'object') {
                 isValid = this[memberName] === source['item' + name];
             } else {
+                // todo use correct stringify with sorted keys
                 isValid = JSON.stringify(this[memberName]) === JSON.stringify(source['item' + name]);
             }
 

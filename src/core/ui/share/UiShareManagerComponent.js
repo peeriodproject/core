@@ -78,7 +78,7 @@ var UiShareManagerComponent = (function (_super) {
                 loaded: 0,
                 name: fileName,
                 size: fileSize,
-                status: 'created'
+                status: 'CREATED'
             };
 
             _this._startProgressRunner();
@@ -180,7 +180,7 @@ var UiShareManagerComponent = (function (_super) {
                 path: filePath,
                 name: fileName,
                 size: fileSize,
-                status: 'created'
+                status: 'CREATED'
             };
 
             _this.updateUi();
@@ -207,30 +207,31 @@ var UiShareManagerComponent = (function (_super) {
     };
 
     UiShareManagerComponent.prototype._startProgressRunner = function () {
+        var _this = this;
         if (this._progressRunnerTimeout) {
             //clearTimeout(this._progressRunnerTimeout);
             return;
         }
 
-        //this._progressRunnerTimeout = setTimeout(() => {
-        var ids;
+        this._progressRunnerTimeout = setTimeout(function () {
+            var ids;
 
-        if (!this._progressUpdated) {
-            return;
-        }
+            if (!_this._progressUpdated) {
+                return;
+            }
 
-        ids = Object.keys(this._unmergedDownloadsWrittenBytes);
+            ids = Object.keys(_this._unmergedDownloadsWrittenBytes);
 
-        for (var i = 0, l = ids.length; i < l; i++) {
-            var id = ids[i];
+            for (var i = 0, l = ids.length; i < l; i++) {
+                var id = ids[i];
 
-            this._runningDownloads[id].loaded = this._unmergedDownloadsWrittenBytes[id];
-        }
+                _this._runningDownloads[id].loaded = _this._unmergedDownloadsWrittenBytes[id];
+            }
 
-        this._progressUpdated = false;
-        this.updateUi();
-        this._startProgressRunner();
-        //}, 500); // todo move interval delay to config
+            _this._progressUpdated = false;
+            _this.updateUi();
+            _this._startProgressRunner();
+        }, 500); // todo move interval delay to config
     };
     return UiShareManagerComponent;
 })(UiComponent);

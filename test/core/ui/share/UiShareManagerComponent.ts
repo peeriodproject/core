@@ -10,7 +10,7 @@ import UploadManager = require('../../../../src/core/share/UploadManager');
 
 import UiShareManagerComponent = require('../../../../src/core/ui/share/UiShareManagerComponent');
 
-describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
+describe('CORE --> UI --> SHARE --> UiShareManagerComponent @prio', function () {
 	var sandbox:SinonSandbox;
 	var component:UiShareManagerComponent;
 	var downloadManagerStub:any;
@@ -107,7 +107,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
 						hash  : 'hash',
 						loaded: 0,
 						name  : 'foobar.txt',
-						status: 'created'
+						status: 'CREATED'
 					}
 				},
 				destination: {
@@ -238,7 +238,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
 				path: '/path/to/file.ext',
 				name: 'file.ext',
 				size: 123,
-				status: 'created'
+				status: 'CREATED'
 			});
 
 			state.uploads.uploadId.created.should.be.an.instanceof(Number);
