@@ -116,7 +116,13 @@ var SearchMessageBridge = (function (_super) {
             setTimeout(() => {
             console.log('--- 4. INCOMING RESULTS ---');
             console.log(results.toString());
+            for (var i = 0; i < Math.round(Math.random() * 20); i++) {
+            setTimeout(() => {
+            setImmediate(() => {
             this._searchRequestManager.addResponse(queryId, results, { additional: 'metadata' });
+            });
+            }, Math.max(500, Math.round(Math.random() * 5000)));
+            }
             }, 1000);*/
             _this._compressBuffer(results, function (err, compressedResults) {
                 if (!err) {
