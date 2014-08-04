@@ -243,7 +243,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			else {
 				this._resetHeartbeatTimeout();
 			}
-		});
+		}, this._sendHeartbeatAfterLastDataInMs);
 	}
 
 	public writeBuffer (buffer:NodeBuffer, callback?:Function, forceAvoidSimulation?:boolean):boolean {

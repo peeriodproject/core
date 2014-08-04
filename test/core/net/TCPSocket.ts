@@ -8,16 +8,19 @@ var net = require('net');
 
 var socket_opts = {
 	"idleConnectionKillTimeout":2,
+	"heartbeatTimeout": 0.5,
 	"doKeepAlive": true,
 	"simulatorRTT": 1
 };
+
+var doEcho:boolean = true;
 
 // echoing server
 var server = net.createServer(function (socket) {
 	socket.setKeepAlive(true, 0);
 
 	socket.on('data', function (data) {
-		socket.write(data);
+		if (doEcho) socket.write(data);
 	});
 });
 
@@ -93,7 +96,7 @@ describe('CORE --> NET --> TCP --> TCPSocket', function () {
 		socket.writeString(theString);
 	});
 
-	it('should successfully timeout close the socket', function (done) {
+	it('should successfully close an idle socket', function (done) {
 		this.timeout(0);
 		socket.once('close', function () {
 			done();
@@ -101,7 +104,7 @@ describe('CORE --> NET --> TCP --> TCPSocket', function () {
 
 	});
 
-	it('should not close the socket when dynamically setting closeOnTimeout to false', function (done) {
+	it('should not close the socket when dynamically setting keepOpen to true', function (done) {
 		this.timeout(0);
 		var sock_b = net.createConnection(9002, 'localhost');
 		var socket_b = null;
@@ -109,7 +112,7 @@ describe('CORE --> NET --> TCP --> TCPSocket', function () {
 		sock_b.on('connect', function () {
 			socket_b = new TCPSocket(sock_b, socket_opts);
 
-			socket_b.setCloseOnTimeout(false);
+			socket_b.setKeepOpen(true);
 
 			socket_b.once('close', function () {
 				all_good = false;
@@ -120,7 +123,52 @@ describe('CORE --> NET --> TCP --> TCPSocket', function () {
 					socket_b.end();
 					done();
 				}
-			}, 4000);
+			}, 4300);
+		});
+	});
+
+	it('should close the socket when heartbeating but the other side does not heartbeat', function (done) {
+		this.timeout(0);
+		doEcho = false;
+		var sock_c = net.createConnection(9002, 'localhost');
+
+		sock_c.on('connect', function () {
+			var socket = new TCPSocket(sock_c, socket_opts);
+
+			socket.setKeepOpen(true);
+
+			socket.once('close', function () {
+				doEcho = true;
+				done();
+			});
+		});
+	});
+
+	it('should close the socket keeping the socket open but then keeping it no longer open', function (done) {
+		this.timeout(0);
+
+		var sock = net.createConnection(9002, 'localhost');
+
+		sock.on('connect', function () {
+			var socket = new TCPSocket(sock, socket_opts);
+
+			var closeList1 = function () {
+				throw new Error('Should not close socket');
+			};
+
+			socket.once('close', closeList1);
+
+			socket.setKeepOpen(true);
+
+			setTimeout(function () {
+				socket.removeListener('close', closeList1);
+
+				socket.once('close', function () {
+					done();
+				});
+
+				socket.setKeepOpen(false);
+			}, 3000);
 		});
 	});
 

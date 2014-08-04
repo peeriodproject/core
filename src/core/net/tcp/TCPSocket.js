@@ -230,7 +230,7 @@ var TCPSocket = (function (_super) {
             } else {
                 _this._resetHeartbeatTimeout();
             }
-        });
+        }, this._sendHeartbeatAfterLastDataInMs);
     };
 
     TCPSocket.prototype.writeBuffer = function (buffer, callback, forceAvoidSimulation) {
