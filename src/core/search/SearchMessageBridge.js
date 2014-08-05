@@ -69,13 +69,16 @@ var SearchMessageBridge = (function (_super) {
         var _this = this;
         // query added
         this._searchRequestManager.onQueryAdd(function (queryId, queryBody) {
-            /*console.log('--- 1. QUERY ADDED ---');
-            console.log(queryId, queryBody.toString());
-            
-            setTimeout(() => {
-            console.log('--- 2. INCOMING QUERY ---');
-            this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
-            }, 1000);*/
+            if (process.env.UI_ENABLED && process.env.DISABLE_TOPOLOGY) {
+                console.log('--- 1. QUERY ADDED ---');
+                console.log(queryId, queryBody.toString());
+
+                setTimeout(function () {
+                    console.log('--- 2. INCOMING QUERY ---');
+                    _this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
+                }, Math.min(3000, Math.round(Math.random() * 19000)));
+            }
+
             _this._compressBuffer(queryBody, function (err, compressedBody) {
                 if (!err) {
                     _this.emit('newBroadcastQuery', queryId, compressedBody);
@@ -112,18 +115,21 @@ var SearchMessageBridge = (function (_super) {
     SearchMessageBridge.prototype._setupOutgoingResults = function () {
         var _this = this;
         this._searchResponseManager.onResultsFound(function (queryId, results) {
-            /*console.log('--- 3. RESULTS FOUND ---');
-            setTimeout(() => {
-            console.log('--- 4. INCOMING RESULTS ---');
-            console.log(results.toString());
-            for (var i = 0; i < Math.round(Math.random() * 20); i++) {
-            setTimeout(() => {
-            setImmediate(() => {
-            this._searchRequestManager.addResponse(queryId, results, { additional: 'metadata' });
-            });
-            }, Math.max(500, Math.round(Math.random() * 5000)));
+            if (process.env.UI_ENABLED && process.env.DISABLE_TOPOLOGY) {
+                console.log('--- 3. RESULTS FOUND ---');
+                setTimeout(function () {
+                    console.log('--- 4. INCOMING RESULTS ---');
+                    console.log(results.toString());
+                    for (var i = 0; i < Math.round(Math.random() * 20); i++) {
+                        setTimeout(function () {
+                            setImmediate(function () {
+                                _this._searchRequestManager.addResponse(queryId, results, { additional: 'metadata' });
+                            });
+                        }, Math.max(500, Math.round(Math.random() * 5000)));
+                    }
+                }, 1000);
             }
-            }, 1000);*/
+
             _this._compressBuffer(results, function (err, compressedResults) {
                 if (!err) {
                     _this.emit('broadcastQueryResults', queryId, compressedResults);
