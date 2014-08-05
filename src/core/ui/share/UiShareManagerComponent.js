@@ -209,12 +209,13 @@ var UiShareManagerComponent = (function (_super) {
     UiShareManagerComponent.prototype._startProgressRunner = function () {
         var _this = this;
         if (this._progressRunnerTimeout) {
-            //clearTimeout(this._progressRunnerTimeout);
             return;
         }
 
         this._progressRunnerTimeout = setTimeout(function () {
             var ids;
+
+            _this._progressRunnerTimeout = null;
 
             if (!_this._progressUpdated) {
                 return;
@@ -229,6 +230,7 @@ var UiShareManagerComponent = (function (_super) {
             }
 
             _this._progressUpdated = false;
+
             _this.updateUi();
             _this._startProgressRunner();
         }, 500); // todo move interval delay to config

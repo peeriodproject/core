@@ -10,7 +10,7 @@ import UploadManager = require('../../../../src/core/share/UploadManager');
 
 import UiShareManagerComponent = require('../../../../src/core/ui/share/UiShareManagerComponent');
 
-describe('CORE --> UI --> SHARE --> UiShareManagerComponent @prio', function () {
+describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
 	var sandbox:SinonSandbox;
 	var component:UiShareManagerComponent;
 	var downloadManagerStub:any;
@@ -206,7 +206,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent @prio', function () 
 		});
 	});
 
-	it ('should update the UI in the specified interval', function (done) {
+	it ('should update the UI in the specified interval @prio', function (done) {
 		downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', { metadata: true });
 
 		var bytes = 0;
@@ -217,7 +217,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent @prio', function () 
 		setTimeout(function () {
 			clearInterval(interval);
 
-			uiUpdateSpy.calledTwice.should.be.true;
+			uiUpdateSpy.callCount.should.be.greaterThan(1);
 
 			component.getState(function (state:any) {
 				state.downloads.downloadId.loaded.should.be.greaterThan(0);
