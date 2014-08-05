@@ -81,6 +81,8 @@ describe('CORE --> UI --> SEARCH --> UiSearchFormResultsManagerComponent', funct
 				currentQuery: 'raw query'
 			});
 
+			(state.currentResults === null).should.be.true;
+
 			done();
 		});
 	});

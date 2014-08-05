@@ -142,6 +142,7 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
 
             _this._runningQuery = rawQuery;
             _this._runningQueryId = queryId;
+            _this._currentResults = null;
 
             return _this.updateUi();
         });

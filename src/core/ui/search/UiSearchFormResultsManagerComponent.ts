@@ -144,6 +144,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 
 			this._runningQuery = rawQuery;
 			this._runningQueryId = queryId;
+			this._currentResults = null;
 
 			return this.updateUi();
 		});
