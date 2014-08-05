@@ -211,14 +211,14 @@ class UiShareManagerComponent extends UiComponent {
 
 	private _startProgressRunner ():void {
 		if (this._progressRunnerTimeout) {
-			//clearTimeout(this._progressRunnerTimeout);
 			return;
 		}
 
 
 		this._progressRunnerTimeout = setTimeout(() => {
-
 			var ids:Array<string>;
+
+			this._progressRunnerTimeout = null;
 
 			if (!this._progressUpdated) {
 				return;
@@ -233,6 +233,7 @@ class UiShareManagerComponent extends UiComponent {
 			}
 
 			this._progressUpdated = false;
+
 			this.updateUi();
 			this._startProgressRunner();
 		}, 500); // todo move interval delay to config
