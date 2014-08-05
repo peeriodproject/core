@@ -10,9 +10,9 @@
     "net"     : {
         "allowHalfOpenSockets"     : false,
         "connectionRetrySeconds"   : 4,
-        "idleConnectionKillTimeout": 5,
-        "heartbeatTimeout"         : 1.7,
-        "outboundConnectionTimeout": 2000,
+        "idleConnectionKillTimeout": 10,
+        "heartbeatTimeout"         : 3,
+        "outboundConnectionTimeout": 3000,
         "myOpenPorts"              : [],
 
         "simulator": {
@@ -20,12 +20,12 @@
         }
     },
     "protocol": {
-        "waitForNodeReactionInSeconds": 2,
+        "waitForNodeReactionInSeconds": 3,
         "messages"                    : {
             "maxByteLengthPerMessage"      : 1048576,
             "msToKeepNonAddressableMemory" : 10000,
-            "msToWaitForIncomingMessage"   : 2000,
-            "maxSecondsToWaitForConnection": 2.5
+            "msToWaitForIncomingMessage"   : 3000,
+            "maxSecondsToWaitForConnection": 2.8
         },
         "proxy"                       : {
             "maxNumberOfProxies"                   : 2,
@@ -37,10 +37,10 @@
             "maxWaitingListSize": 20
         },
         "broadcast": {
-            "broadcastLifetimeInSeconds": 30
+            "broadcastLifetimeInSeconds": 60
         },
         "findClosestNodes"            : {
-            "cycleExpirationInSeconds" : 2,
+            "cycleExpirationInSeconds" : 3,
             "parallelismDelayInSeconds": 1.5
         },
         "networkMaintenance"          : {
@@ -56,7 +56,7 @@
         "maximumNumberOfParallelUploads": 10,
         "uploadBlockSizeInBytes": 1024000,
         "query": {
-            "broadcastValidityInSeconds": 30,
+            "broadcastValidityInSeconds": 60,
             "minimumNumberOfReadyCircuits": 1,
             "maximumNumberOfParallelQueries": 10
         },
@@ -64,8 +64,8 @@
             "waitForOwnResponseAsBroadcastInitiatorInSeconds": 2
         },
         "shareMessaging": {
-            "waitForResponseMessageInSeconds": 20,
-            "maximumNumberOfMessageTries": 2
+            "waitForResponseMessageInSeconds": 60,
+            "maximumNumberOfMessageTries": 3
         }
     },
     "hydra": {
