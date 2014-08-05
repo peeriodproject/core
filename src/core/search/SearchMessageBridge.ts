@@ -71,13 +71,15 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 	private _setupOutgoingQuery ():void {
 		// query added
 		this._searchRequestManager.onQueryAdd((queryId:string, queryBody:Buffer) => {
-			/*console.log('--- 1. QUERY ADDED ---');
-			console.log(queryId, queryBody.toString());
+			if (process.env.UI_ENABLED && process.env.DISABLE_TOPOLOGY) {
+				console.log('--- 1. QUERY ADDED ---');
+				console.log(queryId, queryBody.toString());
 
-			setTimeout(() => {
-				console.log('--- 2. INCOMING QUERY ---');
-				this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
-			}, 1000);*/
+				setTimeout(() => {
+					console.log('--- 2. INCOMING QUERY ---');
+					this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
+				}, Math.min(3000, Math.round(Math.random() * 19000)));
+			}
 
 			this._compressBuffer(queryBody, (err:Error, compressedBody:Buffer) => {
 				if (!err) {
@@ -115,18 +117,20 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 
 	private _setupOutgoingResults ():void {
 		this._searchResponseManager.onResultsFound((queryId:string, results:Buffer) => {
-			/*console.log('--- 3. RESULTS FOUND ---');
-			setTimeout(() => {
-				console.log('--- 4. INCOMING RESULTS ---');
-				console.log(results.toString());
-				for (var i = 0; i < Math.round(Math.random() * 20); i++) {
-					setTimeout(() => {
-						setImmediate(() => {
-							this._searchRequestManager.addResponse(queryId, results, { additional: 'metadata' });
-						});
-					}, Math.max(500, Math.round(Math.random() * 5000)));
-				}
-			}, 1000);*/
+			if (process.env.UI_ENABLED && process.env.DISABLE_TOPOLOGY) {
+				console.log('--- 3. RESULTS FOUND ---');
+				setTimeout(() => {
+					console.log('--- 4. INCOMING RESULTS ---');
+					console.log(results.toString());
+					for (var i = 0; i < Math.round(Math.random() * 20); i++) {
+						setTimeout(() => {
+							setImmediate(() => {
+								this._searchRequestManager.addResponse(queryId, results, { additional: 'metadata' });
+							});
+						}, Math.max(500, Math.round(Math.random() * 5000)));
+					}
+				}, 1000);
+			}
 
 			this._compressBuffer(results, (err:Error, compressedResults:Buffer) => {
 				if (!err) {
