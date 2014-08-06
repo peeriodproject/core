@@ -524,6 +524,7 @@ var ProxyManager = (function (_super) {
                 } else if (message.getMessageType() === 'ADDRESS_CHANGE') {
                     // we can safely call this, as if we would be proxying for this node, we would always communicate
                     // with this node via incoming connections
+                    console.log('handling ADDRESS_CHANGE message');
                     _this._protocolConnectionManager.invalidateOutgoingConnectionsTo(message.getSender());
                 } else {
                     _this.emit('message', message);

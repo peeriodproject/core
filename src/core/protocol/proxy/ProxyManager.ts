@@ -557,6 +557,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 				else if (message.getMessageType() === 'ADDRESS_CHANGE') {
 					// we can safely call this, as if we would be proxying for this node, we would always communicate
 					// with this node via incoming connections
+					console.log('handling ADDRESS_CHANGE message');
 					this._protocolConnectionManager.invalidateOutgoingConnectionsTo(message.getSender());
 				}
 				else {
@@ -606,7 +607,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 
 		this._myNode.onAddressChange((info?:string) => {
 			console.log('address has changed');
-			
+
 			if (this._addressChangeTimeout) {
 				global.clearTimeout(this._addressChangeTimeout);
 				this._addressChangeTimeout = 0;
