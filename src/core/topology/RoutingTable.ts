@@ -131,6 +131,56 @@ class RoutingTable implements RoutingTableInterface {
 		return process.nextTick(internalCallback.bind(null, null));
 	}
 
+	public getAllContactNodes (callback:(err:Error, contacts:ContactNodeListInterface) => any):void {
+		var contactLastSeenMap:{ [lastSeen:number]:ContactNodeInterface } = {};
+		var allContactsList:ContactNodeListInterface = [];
+		var bucketAmount:number = this._getBucketAmount();
+		var bucketsReturned:number = 0;
+		var checkAndCallback = function (err:Error, bucketContacts:ContactNodeListInterface) {
+			bucketsReturned++;
+
+			if (err) {
+				bucketsReturned = -1;
+
+				return callback(err, []);
+			}
+
+			if (bucketContacts) {
+				for (var i = 0, l = bucketContacts.length; i < l; i++) {
+					var contact:ContactNodeInterface = bucketContacts[i];
+
+					contactLastSeenMap[contact.getLastSeen()] = contact;
+				}
+			}
+
+			if (bucketsReturned === bucketAmount) {
+				var lastSeenKeys = Object.keys(contactLastSeenMap);
+
+				if (!lastSeenKeys) {
+					return callback(null, []);
+				}
+
+				lastSeenKeys.sort();
+
+				for (var i = 0, l = lastSeenKeys.length; i < l; i++) {
+					allContactsList.push(contactLastSeenMap[lastSeenKeys[i]]);
+				}
+
+				return callback(null, allContactsList);
+			}
+		};
+
+		if (!this._isOpen) {
+			return process.nextTick(callback.bind(null, null, []));
+		}
+
+		for (var i = 0; i < bucketAmount; i++) {
+			this._getBucket(i).getAll((err:Error, contacts:ContactNodeListInterface) => {
+				return checkAndCallback(err, contacts);
+			});
+		}
+	}
+
 	public getAllContactNodesSize (callback:(err:Error, count:number) => any):void {
 		if (!this._isOpen) {
 			return process.nextTick(callback.bind(null, null, 0));

@@ -19,6 +19,18 @@ import ContactNodeListInterface = require('./ContactNodeListInterface');
 interface RoutingTableInterface extends ClosableAsyncInterface {
 
 	/**
+	 * Returns all contact nodes stored in the routing table sorted by the last seen property
+	 *
+	 * @method core.topology.RoutingTableInterface#getAllContactNodes
+	 *
+	 * @param {Function} callback The callback with a possible error as the first and the contact nodes list as the second argument
+	 */
+	getAllContactNodes (callback:(err:Error, count:ContactNodeListInterface) => any):void;
+
+	/**
+	 * Returns the total amount of contact nodes stored in the routing table
+	 *
+	 * @method core.topology.RoutingTableInterface#getAllContactNodesSize
 	 *
 	 * @param {Function} callback
 	 */

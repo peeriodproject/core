@@ -14,7 +14,7 @@ var ContactNode = require('../../../src/core/topology/ContactNode');
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 var ObjectConfig = require('../../../src/core/config/ObjectConfig');
 
-describe('CORE --> TOPOLOGY --> RoutingTable', function () {
+describe('CORE --> TOPOLOGY --> RoutingTable @joern', function () {
     var sandbox;
     var configStub;
     var appQuitHandlerStub;
@@ -271,6 +271,17 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
             routingTable = null;
         });
 
+        it('`getAllContactNodes` should correctly return an empty array', function (done) {
+            routingTable.getAllContactNodes(function (err, contacts) {
+                (err === null).should.be.true;
+
+                contacts.should.be.an.instanceof(Array);
+                contacts.should.have.a.lengthOf(0);
+
+                done();
+            });
+        });
+
         it('`getAllContactNodesSize` should correctly return 0', function (done) {
             routingTable.getAllContactNodesSize(function (err, size) {
                 (err === null).should.be.true;
@@ -455,6 +466,52 @@ describe('CORE --> TOPOLOGY --> RoutingTable', function () {
                             });
                         });
                     });
+                });
+            });
+        });
+
+        describe('should correctly return all contact nodes', function () {
+            it('should not fail if the routing table is empty', function (done) {
+                var routingTable;
+
+                routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
+                    onOpenCallback: function () {
+                        routingTable.getAllContactNodes(function (err, contacts) {
+                            (err === null).should.be.true;
+                            contacts.should.be.an.instanceof(Array);
+                            contacts.should.have.a.lengthOf(0);
+
+                            closeRtAndDone(routingTable, done);
+                        });
+                    }
+                });
+            });
+
+            it('should correctly return all contact nodes', function (done) {
+                var routingTable;
+                var lastSeen = 0;
+
+                routingTable = new RoutingTable(configStub, appQuitHandlerStub, me.getId(), bucketFactory, bucketStore, contactNodeFactory, {
+                    onOpenCallback: function () {
+                        createContactNodes(routingTable, 100, function () {
+                            routingTable.getAllContactNodes(function (err, contacts) {
+                                (err === null).should.be.true;
+
+                                contacts.should.be.an.instanceof(Array);
+                                contacts.should.have.a.lengthOf(100);
+
+                                for (var i = 0, l = contacts.length; i < l; i++) {
+                                    var contactLastSeen = contacts[i].getLastSeen();
+
+                                    contactLastSeen.should.be.greaterThan(lastSeen);
+
+                                    lastSeen = contactLastSeen;
+                                }
+
+                                closeRtAndDone(routingTable, done);
+                            });
+                        });
+                    }
                 });
             });
         });

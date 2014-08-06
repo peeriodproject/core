@@ -108,6 +108,56 @@ var RoutingTable = (function () {
         return process.nextTick(internalCallback.bind(null, null));
     };
 
+    RoutingTable.prototype.getAllContactNodes = function (callback) {
+        var contactLastSeenMap = {};
+        var allContactsList = [];
+        var bucketAmount = this._getBucketAmount();
+        var bucketsReturned = 0;
+        var checkAndCallback = function (err, bucketContacts) {
+            bucketsReturned++;
+
+            if (err) {
+                bucketsReturned = -1;
+
+                return callback(err, []);
+            }
+
+            if (bucketContacts) {
+                for (var i = 0, l = bucketContacts.length; i < l; i++) {
+                    var contact = bucketContacts[i];
+
+                    contactLastSeenMap[contact.getLastSeen()] = contact;
+                }
+            }
+
+            if (bucketsReturned === bucketAmount) {
+                var lastSeenKeys = Object.keys(contactLastSeenMap);
+
+                if (!lastSeenKeys) {
+                    return callback(null, []);
+                }
+
+                lastSeenKeys.sort();
+
+                for (var i = 0, l = lastSeenKeys.length; i < l; i++) {
+                    allContactsList.push(contactLastSeenMap[lastSeenKeys[i]]);
+                }
+
+                return callback(null, allContactsList);
+            }
+        };
+
+        if (!this._isOpen) {
+            return process.nextTick(callback.bind(null, null, []));
+        }
+
+        for (var i = 0; i < bucketAmount; i++) {
+            this._getBucket(i).getAll(function (err, contacts) {
+                return checkAndCallback(err, contacts);
+            });
+        }
+    };
+
     RoutingTable.prototype.getAllContactNodesSize = function (callback) {
         if (!this._isOpen) {
             return process.nextTick(callback.bind(null, null, 0));
