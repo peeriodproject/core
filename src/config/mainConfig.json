@@ -31,7 +31,8 @@
             "maxNumberOfProxies"                   : 2,
             "proxyForMaxNumberOfNodes"             : 2,
             "maxUnsuccessfulProxyTries"            : 4,
-            "unsuccessfulProxyTryWaitTimeInSeconds": 20
+            "unsuccessfulProxyTryWaitTimeInSeconds": 20,
+            "addressChangeTimeoutBeforeNotifyInSeconds": 10
         },
         "pingpong"                    : {
             "maxWaitingListSize": 20
