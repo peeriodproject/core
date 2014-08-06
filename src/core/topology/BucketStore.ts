@@ -203,10 +203,15 @@ class BucketStore implements BucketStoreInterface {
 		lastSeen = contact.lastSeen;
 
 		txn = this._beginTransaction();
-		// remove shortcut
-		txn.del(this._databaseInstance, this._getLastSeenKey(bucketKey, lastSeen));
-		// remove object
-		txn.del(this._databaseInstance, this._getIdKey(id));
+		try {
+			// remove shortcut
+			txn.del(this._databaseInstance, this._getLastSeenKey(bucketKey, lastSeen));
+			// remove object
+			txn.del(this._databaseInstance, this._getIdKey(id));
+		}
+		catch (e) {
+			console.error(e);
+		}
 		txn.commit();
 
 		return true;

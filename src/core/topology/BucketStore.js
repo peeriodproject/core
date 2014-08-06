@@ -188,12 +188,15 @@ var BucketStore = (function () {
         lastSeen = contact.lastSeen;
 
         txn = this._beginTransaction();
+        try  {
+            // remove shortcut
+            txn.del(this._databaseInstance, this._getLastSeenKey(bucketKey, lastSeen));
 
-        // remove shortcut
-        txn.del(this._databaseInstance, this._getLastSeenKey(bucketKey, lastSeen));
-
-        // remove object
-        txn.del(this._databaseInstance, this._getIdKey(id));
+            // remove object
+            txn.del(this._databaseInstance, this._getIdKey(id));
+        } catch (e) {
+            console.error(e);
+        }
         txn.commit();
 
         return true;
