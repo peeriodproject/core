@@ -43,6 +43,13 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 	private _runningQueryId:string = null;
 
 	/**
+	 * Stores the status of the currently running query.
+	 *
+	 * @member {string}
+	 */
+	private _runningQueryStatus:string = null;
+
+	/**
 	 * todo ts-definition, docs
 	 *
 	 * @member {any} core.ui.UiSearchFormResultsManagerComponent~_runningQuery
@@ -69,6 +76,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 	public getState (callback):void {
 		return process.nextTick(callback.bind(null, {
 			currentQuery: this._runningQuery,
+			currentQueryStatus: this._runningQueryStatus,
 			currentResults: this._currentResults
 		}));
 	}
@@ -88,6 +96,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 			this._removeRunningQuery();
 			this._runningQuery = null;
 			this._runningQueryId = null;
+			this._runningQueryStatus = null;
 			this._currentResults = null;
 
 			return this.updateUi();
@@ -118,9 +127,19 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 					responses.hits = transformedResults;
 
 					this._currentResults = responses;
+					this._updateQueryStatus('GOT_RESULTS');
+
 					this.updateUi();
 				});
 			});
+		});
+
+		this._searchRequestManager.onQueryEnd((queryId, reason) => {
+			if (queryId !== this._runningQueryId) {
+				return;
+			}
+
+			this._updateQueryStatus(reason);
 		});
 	}
 
@@ -144,6 +163,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 
 			this._runningQuery = rawQuery;
 			this._runningQueryId = queryId;
+			this._updateQueryStatus('CREATED');
 			this._currentResults = null;
 
 			return this.updateUi();
@@ -165,6 +185,11 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 				console.error(err);
 			}
 		});
+	}
+
+	private _updateQueryStatus (status:string):void {
+		this._runningQueryStatus = status;
+		console.log('query status', status);
 	}
 
 }

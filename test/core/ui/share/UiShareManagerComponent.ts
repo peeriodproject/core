@@ -206,7 +206,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
 		});
 	});
 
-	it ('should update the UI in the specified interval @prio', function (done) {
+	it ('should update the UI in the specified interval', function (done) {
 		downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', { metadata: true });
 
 		var bytes = 0;

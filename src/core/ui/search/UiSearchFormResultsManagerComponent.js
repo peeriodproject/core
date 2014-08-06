@@ -44,6 +44,12 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
         */
         this._runningQueryId = null;
         /**
+        * Stores the status of the currently running query.
+        *
+        * @member {string}
+        */
+        this._runningQueryStatus = null;
+        /**
         * todo ts-definition, docs
         *
         * @member {any} core.ui.UiSearchFormResultsManagerComponent~_runningQuery
@@ -66,6 +72,7 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
     UiSearchFormResultsManagerComponent.prototype.getState = function (callback) {
         return process.nextTick(callback.bind(null, {
             currentQuery: this._runningQuery,
+            currentQueryStatus: this._runningQueryStatus,
             currentResults: this._currentResults
         }));
     };
@@ -86,6 +93,7 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
             _this._removeRunningQuery();
             _this._runningQuery = null;
             _this._runningQueryId = null;
+            _this._runningQueryStatus = null;
             _this._currentResults = null;
 
             return _this.updateUi();
@@ -115,9 +123,19 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
                     responses.hits = transformedResults;
 
                     _this._currentResults = responses;
+                    _this._updateQueryStatus('GOT_RESULTS');
+
                     _this.updateUi();
                 });
             });
+        });
+
+        this._searchRequestManager.onQueryEnd(function (queryId, reason) {
+            if (queryId !== _this._runningQueryId) {
+                return;
+            }
+
+            _this._updateQueryStatus(reason);
         });
     };
 
@@ -142,6 +160,7 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
 
             _this._runningQuery = rawQuery;
             _this._runningQueryId = queryId;
+            _this._updateQueryStatus('CREATED');
             _this._currentResults = null;
 
             return _this.updateUi();
@@ -163,6 +182,11 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
                 console.error(err);
             }
         });
+    };
+
+    UiSearchFormResultsManagerComponent.prototype._updateQueryStatus = function (status) {
+        this._runningQueryStatus = status;
+        console.log('query status', status);
     };
     return UiSearchFormResultsManagerComponent;
 })(UiComponent);
