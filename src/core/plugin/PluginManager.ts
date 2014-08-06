@@ -371,7 +371,7 @@ class PluginManager implements PluginManagerInterface {
 
 	/**
 	 * The PluginManager is going to activate the plugin. But before we're going to run thirdparty code within
-	 * the app we validate the plugin using a {@link core.plugin.PluginValidatorInterface}.
+	 * the app we're going to validate the plugin using a {@link core.plugin.PluginValidatorInterface}.
 	 *
 	 * @member {core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_activatePlugin
 	 *
@@ -467,24 +467,9 @@ class PluginManager implements PluginManagerInterface {
 			}
 			else {
 				// check for syntax errors
-				console.warn(err);
+				console.error(err);
+				return callback(null, null)
 			}
-
-			/*if (err) {
-
-			 console.log(err);
-			 if (err.code === 'ENOENT') {
-
-			 }
-			 }
-			 else {
-			 if (data.hasOwnProperty('plugins')) {
-			 callback(null, data['plugins']);
-			 }
-			 else {
-			 callback(null, null);
-			 }
-			 }*/
 		});
 	}
 
@@ -516,23 +501,28 @@ class PluginManager implements PluginManagerInterface {
 	 * @param {Function} callback
 	 */
 	private _loadApacheTikaData (itemPath:string, callback:Function):void {
+		var maxFileBufferLength:number = this._config.get('plugin.pluginManagerMaxFileBufferInMegaBytes');
 		var tikaData:any = {
 		};
 
-		fs.stat(itemPath, function (err:Error, stats:fs.Stats) {
+		fs.stat(itemPath, (err:Error, stats:fs.Stats) => {
 			if (err) {
 				console.error(err);
 
 				return callback(err, tikaData);
 			}
 
-			if (stats.isFile()) {
+			if (!stats.isFile() || maxFileBufferLength <  stats.size / 1048576) {
+				console.log('PluginManager~_loadApacheTikaData: file', itemPath, 'is not a file or does not fit into the maxFileBufferLength limit.', stats.size / 1048576, maxFileBufferLength, 'MB');
+
+				return callback(null, {});
+			}
+			else {
 				fs.readFile(itemPath, function (err:Error, data:Buffer) {
 					if (err) {
 						return callback(err, tikaData);
 					}
 
-					//tikaData['fileBuffer'] = 'foobar';
 					tikaData.file = data.toString('base64');
 
 					return callback(null, tikaData);
