@@ -158,6 +158,8 @@ var IncomingDataPipeline = (function (_super) {
     };
 
     /**
+    * @deprecated
+    *
     * Concatenates the temporary memory to one buffer object. As the bytes are copied, references to the segments are dropped.
     *
     * @method core.protocol.messages.IncomingDataPipeline~_concatBufferAndFree
@@ -214,6 +216,11 @@ var IncomingDataPipeline = (function (_super) {
         for (var i = 0; i < 4; i++) {
             var toUse = dataArray[bufferIndex];
 
+            if (!toUse) {
+                console.log('LENGTH ERROR!!!');
+                console.log(dataArray);
+            }
+
             if (toUse.length === ++byteIndex) {
                 toUse = dataArray[++bufferIndex];
                 byteIndex = 0;
@@ -259,6 +266,7 @@ var IncomingDataPipeline = (function (_super) {
 
                 if (tempMessageMemory.length > this._maxTemporaryBytes) {
                     this._freeMemory(identifier, tempMessageMemory);
+                    console.log('memory excess!');
                     this.emit('memoryExcess', identifier);
                 } else {
                     // get sliced message here
@@ -446,10 +454,10 @@ var IncomingDataPipeline = (function (_super) {
                 // buffer with the four size bytes already sliced away
                 if (unignoredBuff) {
                     if (bytesToCopy) {
-                        var l = unignoredBuff.length;
-                        if (bytesToCopy >= l) {
+                        var l2 = unignoredBuff.length;
+                        if (bytesToCopy >= l2) {
                             msgDataArray.push(unignoredBuff);
-                            bytesToCopy -= l;
+                            bytesToCopy -= l2;
                         } else {
                             msgDataArray.push(unignoredBuff.slice(0, bytesToCopy));
                             newDataArray.push(unignoredBuff.slice(bytesToCopy));
