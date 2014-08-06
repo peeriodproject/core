@@ -183,6 +183,8 @@ class SearchClient implements SearchClientInterface {
 			return process.nextTick(callback.bind(null, new Error('SearchClient.addItem: No item data specified! Preventing item creation.'), null));
 		}
 
+		// todo get data from plugin indexes. check each plugin individual and update or add data
+
 		for (var i = 0, l = pluginIdentifiers.length; i < l; i++) {
 			var identifier:string = pluginIdentifiers[i];
 
@@ -518,9 +520,10 @@ class SearchClient implements SearchClientInterface {
 			this._client = elasticsearch.Client({
 				apiVersion: this._config.get('search.apiVersion', '1.1'),
 				host      : this._config.get('search.host') + ':' + this._config.get('search.port'),
+				requestTimeout: this._config.get('search.requestTimeoutInSeconds') * 1000,
 				log       : {
 					type : 'file',
-					level: 'trace',
+					level: ['error', 'warning'],//'trace',
 					path : path.join(this._options.logsPath, this._options.logsFileName)
 				}
 			});

@@ -505,9 +505,10 @@ var SearchClient = (function () {
             _this._client = elasticsearch.Client({
                 apiVersion: _this._config.get('search.apiVersion', '1.1'),
                 host: _this._config.get('search.host') + ':' + _this._config.get('search.port'),
+                requestTimeout: _this._config.get('search.requestTimeoutInSeconds') * 1000,
                 log: {
                     type: 'file',
-                    level: 'trace',
+                    level: ['error', 'warning'],
                     path: path.join(_this._options.logsPath, _this._options.logsFileName)
                 }
             });
