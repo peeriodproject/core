@@ -127,7 +127,6 @@ export var main = {
 	},
 
 	onBeforeItemAdd: function () {
-		exit();
-		//runTask('getFileBuffer');
+		exit(); // everything is done by elasticsearchs attachment mapper
 	}
 };
