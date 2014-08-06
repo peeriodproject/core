@@ -170,6 +170,8 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 	}
 
 	/**
+	 * @deprecated
+	 *
 	 * Concatenates the temporary memory to one buffer object. As the bytes are copied, references to the segments are dropped.
 	 *
 	 * @method core.protocol.messages.IncomingDataPipeline~_concatBufferAndFree
@@ -226,6 +228,11 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 		for (var i=0; i<4; i++) {
 			var toUse:Buffer = dataArray[bufferIndex];
 
+			if (!toUse) {
+				console.log('LENGTH ERROR!!!');
+				console.log(dataArray);
+			}
+
 			if (toUse.length === ++byteIndex) {
 				toUse = dataArray[++bufferIndex];
 				byteIndex = 0;
@@ -272,6 +279,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 
 				if (tempMessageMemory.length > this._maxTemporaryBytes) {
 					this._freeMemory(identifier, tempMessageMemory);
+					console.log('memory excess!');
 					this.emit('memoryExcess', identifier);
 				}
 				else {
@@ -468,10 +476,10 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 				// buffer with the four size bytes already sliced away
 				if (unignoredBuff) {
 					if (bytesToCopy) {
-						var l = unignoredBuff.length;
-						if (bytesToCopy >= l) {
+						var l2 = unignoredBuff.length;
+						if (bytesToCopy >= l2) {
 							msgDataArray.push(unignoredBuff);
-							bytesToCopy -= l;
+							bytesToCopy -= l2;
 						}
 						else {
 							msgDataArray.push(unignoredBuff.slice(0, bytesToCopy));

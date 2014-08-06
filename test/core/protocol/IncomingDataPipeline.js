@@ -12,7 +12,7 @@ var IncomingDataPipeline = require('../../../src/core/protocol/messages/Incoming
 var TCPSocket = require('../../../src/core/net/tcp/TCPSocket');
 var ReadableMessageFactory = require('../../../src/core/protocol/messages/ReadableMessageFactory');
 
-describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () {
+describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline @current', function () {
     this.timeout(0);
 
     var sandbox;
@@ -26,7 +26,7 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
     var maxByteLength = 1024 * 1024;
     var messageEndBytes = [0x50, 0x52, 0x44, 0x45, 0x4e, 0x44];
 
-    var sockOpts = { doKeepAlive: true, idleConnectionKillTimeout: 0 };
+    var sockOpts = { doKeepAlive: true, idleConnectionKillTimeout: 0, heartbeatTimeout: 1 };
 
     var suppressMessageError = false;
 
@@ -129,7 +129,7 @@ describe('CORE --> PROTOCOL --> MESSAGES --> IncomingDataPipeline', function () 
             throw new Error('Cannot read message');
         });
 
-        for (var i = 0; i < 100; i++) {
+        for (var i = 0; i < 1000; i++) {
             if (Math.round(Math.random())) {
                 var buff = crypto.pseudoRandomBytes(Math.ceil(Math.random() * 200));
                 var sizeBuff = new Buffer(4);
