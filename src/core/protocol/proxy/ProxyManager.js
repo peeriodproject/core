@@ -302,6 +302,7 @@ var ProxyManager = (function (_super) {
                 if (msgType === 'PROXY_ACCEPT' && Object.keys(this._confirmedProxies).length < this._maxNumberOfProxies) {
                     this._addToConfirmedProxies(identifier, sender);
                     this.emit('newProxy', sender);
+                    console.log('Got new proxy %o', { id: sender.getId().toHexString(), proxyNow: Object.keys(this._confirmedProxies).length });
                     logger.log('proxy', 'Got new proxy', { id: sender.getId().toHexString(), lengthNow: Object.keys(this._confirmedProxies).length });
                 } else {
                     this.emit('proxyReject', sender);
@@ -516,6 +517,7 @@ var ProxyManager = (function (_super) {
                     delete _this._confirmedProxies[identifier];
                     _this._updateMyNodeAddresses();
                     _this.emit('lostProxy', confirmedProxy);
+                    console.log('Lost proxy %o', confirmedProxy.getId().toHexString());
                     logger.log('proxy', 'Lost proxy', { id: confirmedProxy.getId().toHexString() });
                 }
                 if (proxyingFor) {

@@ -157,10 +157,12 @@ var BroadcastManager = (function (_super) {
             var timeElapsed = Date.now() - message.getTimestamp();
             var broadcastId = message.getBroadcastId();
 
-            if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1 && this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
-                logger.log('query', 'Broadcast that must be processed', { broadcastId: broadcastId });
+            if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1) {
+                if (this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
+                    logger.log('query', 'Broadcast that must be processed', { broadcastId: broadcastId });
 
-                this.emit(msg.getMessageType(), message.getPayload(), message.getBroadcastId());
+                    this.emit(msg.getMessageType(), message.getPayload(), message.getBroadcastId());
+                }
 
                 var differsInBit = msg.getSender().getId().differsInHighestBit(this._myNode.getId());
 

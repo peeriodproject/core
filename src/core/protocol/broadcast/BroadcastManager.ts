@@ -175,11 +175,14 @@ class BroadcastManager extends events.EventEmitter implements BroadcastManagerIn
 			var timeElapsed:number = Date.now() - message.getTimestamp();
 			var broadcastId:string = message.getBroadcastId();
 
-			if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1 && this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
+			if (timeElapsed < this._broadcastLifetimeInMs && this._knownBroadcastIds.indexOf(broadcastId) === -1) {
 
-				logger.log('query', 'Broadcast that must be processed', {broadcastId: broadcastId});
+				if (this._ignoreBroadcastIds.indexOf(broadcastId) === -1) {
 
-				this.emit(msg.getMessageType(), message.getPayload(), message.getBroadcastId());
+					logger.log('query', 'Broadcast that must be processed', {broadcastId: broadcastId});
+
+					this.emit(msg.getMessageType(), message.getPayload(), message.getBroadcastId());
+				}
 
 				var differsInBit:number = msg.getSender().getId().differsInHighestBit(this._myNode.getId());
 
