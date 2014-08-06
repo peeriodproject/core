@@ -6,6 +6,7 @@ import RoutingTableInterface = require('../../topology/interfaces/RoutingTableIn
 import ContactNodeAddressListInterface = require('../../topology/interfaces/ContactNodeAddressListInterface');
 import ContactNodeAddressInterface = require('../../topology/interfaces/ContactNodeAddressInterface');
 import ContactNodeInterface = require('../../topology/interfaces/ContactNodeInterface');
+import ContactNodeListInterface = require('../../topology/interfaces/ContactNodeListInterface');
 import ProxyList = require('./interfaces/ProxyList');
 import MyNodeInterface = require('../../topology/interfaces/MyNodeInterface');
 import ReadableMessageInterface = require('../messages/interfaces/ReadableMessageInterface');
@@ -19,13 +20,29 @@ var logger = require('../../utils/logger/LoggerFactory').create();
  *
  * @class core.protocol.proxy.ProxyManager
  * @extends NodeJS.EventEmitter
- * @implements core.protocl.proxy.ProxyManagerInterface
+ * @implements core.protocol.proxy.ProxyManagerInterface
  *
  * @param {core.config.ConfigInterface} config The configuration object
  * @apram {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager A running connection manager.
  * @param {core.topology.RoutingTableInterface} routingTable The routing table of the node.
  */
 class ProxyManager extends events.EventEmitter implements ProxyManagerInterface {
+
+	/**
+	 * Stores a timeout which gets reset when my node's address changes, so address changes need to be valid for a given time
+	 * until all known nodes are notified. This is to ensure that a node doesn't send too many messages if it e.g. loses a proxy
+	 * and immediately finds a new one.
+	 *
+	 * @member {number} core.protocol.proxy.ProxyManager~_addressChangeTimeout
+	 */
+	private _addressChangeTimeout:number = 0;
+
+	/**
+	 * The number of milliseconds to wait for another new address change before notifying all known nodes.
+	 *
+	 * @member {number} core.protocol.proxy.ProxyManager~_addressChangeTimeoutBeforeNotifyInMs
+	 */
+	private _addressChangeTimeoutBeforeNotifyInMs:number = 0;
 
 	/**
 	 * A flag indicating if a potential new proxy request can be fired off.
@@ -161,6 +178,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		this._reactionTime = config.get('protocol.waitForNodeReactionInSeconds') * 1000;
 		this._maxUnsuccessfulProxyTries = config.get('protocol.proxy.maxUnsuccessfulProxyTries');
 		this._unsuccessfulProxyTryWaitTime = config.get('protocol.proxy.unsuccessfulProxyTryWaitTimeInSeconds') * 1000;
+		this._addressChangeTimeoutBeforeNotifyInMs = config.get('protocol.proxy.addressChangeTimeoutBeforeNotifyInSeconds') * 1000;
 
 		this._protocolConnectionManager = protocolConnectionManager;
 		this._routingTable = routingTable;
@@ -503,7 +521,22 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	}
 
 	/**
-	 * Sets the `message` and `terminatedConnection` listeners on the ProtocolConnectionManagerInterface
+	 * Sends an ADDRESS_CHANGE message to all known nodes to notify them of the address change.
+	 *
+	 * @method core.protocol.proxy.ProxyManager~_sendAddressChangeToAllKnownNodes
+	 */
+	private _sendAddressChangeToAllKnownNodes ():void {
+		console.log('sending ADDRESS_CHANGE to all known nodes');
+		this._routingTable.getAllContactNodes((err:Error, allNodes:ContactNodeListInterface) => {
+			for (var i=0, l=allNodes.length; i<l; i++) {
+				this._protocolConnectionManager.writeMessageTo(allNodes[i], 'ADDRESS_CHANGE', new Buffer(0));
+			}
+		});
+	}
+
+	/**
+	 * Sets the `message` and `terminatedConnection` listeners on the ProtocolConnectionManagerInterface.
+	 * Furthermore sends an ADDRESS_CHANGE message to all known nodes if the address of the node changes.
 	 *
 	 * @method core.protocol.proxy.ProxyManager~_setupListeners
 	 */
@@ -520,6 +553,11 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 			if (this._messageIsIntendedForMyNode(message)) {
 				if (this._messageIsProxyAffine(message)) {
 					this._handleProxyMessage(message);
+				}
+				else if (message.getMessageType() === 'ADDRESS_CHANGE') {
+					// we can safely call this, as if we would be proxying for this node, we would always communicate
+					// with this node via incoming connections
+					this._protocolConnectionManager.invalidateOutgoingConnectionsTo(message.getSender());
 				}
 				else {
 					this.emit('message', message);
@@ -564,7 +602,23 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 					this._proxyCycleOnNextTick();
 				}
 			}
-		})
+		});
+
+		this._myNode.onAddressChange((info?:string) => {
+			console.log('address has changed');
+			
+			if (this._addressChangeTimeout) {
+				global.clearTimeout(this._addressChangeTimeout);
+				this._addressChangeTimeout = 0;
+			}
+
+			if (info !== 'initial') {
+				this._addressChangeTimeout = global.setTimeout(() => {
+					this._sendAddressChangeToAllKnownNodes();
+					this._addressChangeTimeout = 0;
+				}, this._addressChangeTimeoutBeforeNotifyInMs);
+			}
+		});
 	}
 
 	/**
@@ -580,7 +634,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 			addressList = addressList.concat(this._confirmedProxies[keys[i]].getAddresses());
 		}
 
-		this._myNode.updateAddresses(addressList);
+		this._myNode.updateAddresses(addressList, 'fromProxy');
 	}
 
 }

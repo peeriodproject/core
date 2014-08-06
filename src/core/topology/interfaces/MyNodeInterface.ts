@@ -40,14 +40,14 @@ interface MyNodeInterface {
 	 *
 	 * @param {Function} callback
 	 */
-	onAddressChange (callback:() => any):void;
+	onAddressChange (callback:(emitInfo?:string) => any):void;
 
 	/**
 	 * Remove a function from the `addressChange` hook.
 	 *
 	 * @param {Function) callback Function to unbind.
 	 */
-	removeOnAddressChange (callback:() => any):void;
+	removeOnAddressChange (callback:Function):void;
 
 	/**
 	 * Updates the addresses of the node.
@@ -55,8 +55,9 @@ interface MyNodeInterface {
 	 * @method core.topology.MyNodeInterface#updateAddresses
 	 *
 	 * @param {core.topology.ContactNodeAddressListInterface} addressList
+	 * @param {string} emitInfo Optional additional info stromg that will be passed in to the `address` change event
 	 */
-	updateAddresses (addressList:ContactNodeAddressListInterface):void;
+	updateAddresses (addressList:ContactNodeAddressListInterface, emitInfo?:string):void;
 
 }
 

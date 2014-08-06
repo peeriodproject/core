@@ -144,6 +144,16 @@ interface ProtocolConnectionManagerInterface extends NodeJS.EventEmitter {
 	hydraWriteMessageTo (identifier:string, payload:Buffer, callback?:(err:Error) => any):void;
 
 	/**
+	 * This function is used when a node has sent an ADDRESS_CHANGE message and all outgoing
+	 * (confirmed or pending) connections that might be still in use to this node must be ended.
+	 *
+	 * @method core.protocol.net.ProtocolConnectionManagerInterface#invalidateOutgoingConnectionsTo
+	 *
+	 * @param {core.topology.ContactNodeInterface} node
+	 */
+	invalidateOutgoingConnectionsTo (node:ContactNodeInterface):void;
+
+	/**
 	 * Returns a confirmed socket by the speicifed contact node. Returns `null` if tehre is none.
 	 *
 	 * @method core.protocol.net.ProtocolConnectionManagerInterface#getConfirmedSocketById

@@ -55,16 +55,16 @@ class MyNode implements MyNodeInterface {
 		return this._id;
 	}
 
-	public updateAddresses (addressList:ContactNodeAddressListInterface):void {
+	public updateAddresses (addressList:ContactNodeAddressListInterface, emitInfo?:string):void {
 		this._addresses = addressList;
-		this._eventEmitter.emit('addressChange');
+		this._eventEmitter.emit('addressChange', emitInfo);
 	}
 
-	public onAddressChange (callback:() => any):void {
+	public onAddressChange (callback:(emitInfo?:string) => any):void {
 		this._eventEmitter.on('addressChange', callback);
 	}
 
-	public removeOnAddressChange (callback:() => any):void {
+	public removeOnAddressChange (callback:Function):void {
 		this._eventEmitter.removeListener('addressChange', callback);
 	}
 }

@@ -15,7 +15,7 @@ var logger = require('../../utils/logger/LoggerFactory').create();
 *
 * @class core.protocol.proxy.ProxyManager
 * @extends NodeJS.EventEmitter
-* @implements core.protocl.proxy.ProxyManagerInterface
+* @implements core.protocol.proxy.ProxyManagerInterface
 *
 * @param {core.config.ConfigInterface} config The configuration object
 * @apram {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager A running connection manager.
@@ -25,6 +25,20 @@ var ProxyManager = (function (_super) {
     __extends(ProxyManager, _super);
     function ProxyManager(config, protocolConnectionManager, routingTable) {
         _super.call(this);
+        /**
+        * Stores a timeout which gets reset when my node's address changes, so address changes need to be valid for a given time
+        * until all known nodes are notified. This is to ensure that a node doesn't send too many messages if it e.g. loses a proxy
+        * and immediately finds a new one.
+        *
+        * @member {number} core.protocol.proxy.ProxyManager~_addressChangeTimeout
+        */
+        this._addressChangeTimeout = 0;
+        /**
+        * The number of milliseconds to wait for another new address change before notifying all known nodes.
+        *
+        * @member {number} core.protocol.proxy.ProxyManager~_addressChangeTimeoutBeforeNotifyInMs
+        */
+        this._addressChangeTimeoutBeforeNotifyInMs = 0;
         /**
         * A flag indicating if a potential new proxy request can be fired off.
         *
@@ -139,6 +153,7 @@ var ProxyManager = (function (_super) {
         this._reactionTime = config.get('protocol.waitForNodeReactionInSeconds') * 1000;
         this._maxUnsuccessfulProxyTries = config.get('protocol.proxy.maxUnsuccessfulProxyTries');
         this._unsuccessfulProxyTryWaitTime = config.get('protocol.proxy.unsuccessfulProxyTryWaitTimeInSeconds') * 1000;
+        this._addressChangeTimeoutBeforeNotifyInMs = config.get('protocol.proxy.addressChangeTimeoutBeforeNotifyInSeconds') * 1000;
 
         this._protocolConnectionManager = protocolConnectionManager;
         this._routingTable = routingTable;
@@ -472,7 +487,23 @@ var ProxyManager = (function (_super) {
     };
 
     /**
-    * Sets the `message` and `terminatedConnection` listeners on the ProtocolConnectionManagerInterface
+    * Sends an ADDRESS_CHANGE message to all known nodes to notify them of the address change.
+    *
+    * @method core.protocol.proxy.ProxyManager~_sendAddressChangeToAllKnownNodes
+    */
+    ProxyManager.prototype._sendAddressChangeToAllKnownNodes = function () {
+        var _this = this;
+        console.log('sending ADDRESS_CHANGE to all known nodes');
+        this._routingTable.getAllContactNodes(function (err, allNodes) {
+            for (var i = 0, l = allNodes.length; i < l; i++) {
+                _this._protocolConnectionManager.writeMessageTo(allNodes[i], 'ADDRESS_CHANGE', new Buffer(0));
+            }
+        });
+    };
+
+    /**
+    * Sets the `message` and `terminatedConnection` listeners on the ProtocolConnectionManagerInterface.
+    * Furthermore sends an ADDRESS_CHANGE message to all known nodes if the address of the node changes.
     *
     * @method core.protocol.proxy.ProxyManager~_setupListeners
     */
@@ -490,6 +521,10 @@ var ProxyManager = (function (_super) {
             if (_this._messageIsIntendedForMyNode(message)) {
                 if (_this._messageIsProxyAffine(message)) {
                     _this._handleProxyMessage(message);
+                } else if (message.getMessageType() === 'ADDRESS_CHANGE') {
+                    // we can safely call this, as if we would be proxying for this node, we would always communicate
+                    // with this node via incoming connections
+                    _this._protocolConnectionManager.invalidateOutgoingConnectionsTo(message.getSender());
                 } else {
                     _this.emit('message', message);
                 }
@@ -532,6 +567,22 @@ var ProxyManager = (function (_super) {
                 }
             }
         });
+
+        this._myNode.onAddressChange(function (info) {
+            console.log('address has changed');
+
+            if (_this._addressChangeTimeout) {
+                global.clearTimeout(_this._addressChangeTimeout);
+                _this._addressChangeTimeout = 0;
+            }
+
+            if (info !== 'initial') {
+                _this._addressChangeTimeout = global.setTimeout(function () {
+                    _this._sendAddressChangeToAllKnownNodes();
+                    _this._addressChangeTimeout = 0;
+                }, _this._addressChangeTimeoutBeforeNotifyInMs);
+            }
+        });
     };
 
     /**
@@ -547,7 +598,7 @@ var ProxyManager = (function (_super) {
             addressList = addressList.concat(this._confirmedProxies[keys[i]].getAddresses());
         }
 
-        this._myNode.updateAddresses(addressList);
+        this._myNode.updateAddresses(addressList, 'fromProxy');
     };
     return ProxyManager;
 })(events.EventEmitter);

@@ -42,9 +42,9 @@ var MyNode = (function () {
         return this._id;
     };
 
-    MyNode.prototype.updateAddresses = function (addressList) {
+    MyNode.prototype.updateAddresses = function (addressList, emitInfo) {
         this._addresses = addressList;
-        this._eventEmitter.emit('addressChange');
+        this._eventEmitter.emit('addressChange', emitInfo);
     };
 
     MyNode.prototype.onAddressChange = function (callback) {

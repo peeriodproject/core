@@ -185,7 +185,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this._addressFactory = new ContactNodeAddressFactory();
 
 		if (!this._myNode.getAddresses()) {
-			this._myNode.updateAddresses(this.getExternalAddressList());
+			this._myNode.updateAddresses(this.getExternalAddressList(), 'initially');
 		}
 
 		this._incomingDataPipeline = new IncomingDataPipeline(
@@ -380,6 +380,19 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 		if (socket) {
 			socket.setKeepOpen(false);
+		}
+	}
+
+	public invalidateOutgoingConnectionsTo (node:ContactNodeInterface):void {
+		var identifier:string = this._nodeToIdentifier(node);
+		var outgoingPending:OutgoingPendingSocket = this._outgoingPendingSockets[identifier];
+		var confirmed:ConfirmedSocket = this._confirmedSockets[identifier];
+
+		if (outgoingPending) {
+			outgoingPending.closeAtOnce = true;
+		}
+		else if (confirmed && confirmed.direction === 'outgoing') {
+			this._destroyConnection(confirmed.socket);
 		}
 	}
 

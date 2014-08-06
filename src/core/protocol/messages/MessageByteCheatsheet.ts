@@ -14,7 +14,8 @@ var sheet = {
 		"PROXY_THROUGH": [0x50, 0x04],
 		"FIND_CLOSEST_NODES": [0x46, 0x49],
 		"FOUND_CLOSEST_NODES": [0x46, 0x4f],
-		"BROADCAST_QUERY": [0x42, 0x52]
+		"BROADCAST_QUERY": [0x42, 0x52],
+		"ADDRESS_CHANGE": [0x50, 0x05]
 	}
 };
 

@@ -155,7 +155,7 @@ var ProtocolConnectionManager = (function (_super) {
         this._addressFactory = new ContactNodeAddressFactory();
 
         if (!this._myNode.getAddresses()) {
-            this._myNode.updateAddresses(this.getExternalAddressList());
+            this._myNode.updateAddresses(this.getExternalAddressList(), 'initially');
         }
 
         this._incomingDataPipeline = new IncomingDataPipeline(config.get('protocol.messages.maxByteLengthPerMessage'), MessageByteCheatsheet.messageEnd, config.get('protocol.messages.msToKeepNonAddressableMemory'), new ReadableMessageFactory());
@@ -340,6 +340,18 @@ var ProtocolConnectionManager = (function (_super) {
 
         if (socket) {
             socket.setKeepOpen(false);
+        }
+    };
+
+    ProtocolConnectionManager.prototype.invalidateOutgoingConnectionsTo = function (node) {
+        var identifier = this._nodeToIdentifier(node);
+        var outgoingPending = this._outgoingPendingSockets[identifier];
+        var confirmed = this._confirmedSockets[identifier];
+
+        if (outgoingPending) {
+            outgoingPending.closeAtOnce = true;
+        } else if (confirmed && confirmed.direction === 'outgoing') {
+            this._destroyConnection(confirmed.socket);
         }
     };
 
