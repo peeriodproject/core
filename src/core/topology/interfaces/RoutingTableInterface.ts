@@ -25,7 +25,7 @@ interface RoutingTableInterface extends ClosableAsyncInterface {
 	 *
 	 * @param {Function} callback The callback with a possible error as the first and the contact nodes list as the second argument
 	 */
-	getAllContactNodes (callback:(err:Error, count:ContactNodeListInterface) => any):void;
+	getAllContactNodes (callback:(err:Error, contacts:ContactNodeListInterface) => any):void;
 
 	/**
 	 * Returns the total amount of contact nodes stored in the routing table
