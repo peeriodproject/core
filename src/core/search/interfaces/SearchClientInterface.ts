@@ -172,8 +172,23 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 */
 	getIncomingResponses (indexName:string, type:string, queryBody:Object, callback:(err:Error, responses:any) => any):void;
 
-	itemExists (pathToIndex:string, callback:(exists:boolean) => void):void;
+	/**
+	 * Checks whether an item with the given path exists across all plugin indicies. In addition to the existence it returns
+	 * the possible [SearchItem]{@link core.search.SearchItemInterface} as the second argument.
+	 *
+	 * @method core.search.SearchClientInterface#itemExists
+	 *
+	 * @param {string} pathToIndex
+	 * @param {Function} callback
+	 */
+	itemExists (pathToIndex:string, callback:(exists:boolean, item:SearchItemInterface) => void):void;
 
+	/**
+	 * Returns whether the id exists across all plugin indicies or not.
+	 *
+	 * @param {string} id
+	 * @param {Function} callback
+	 */
 	itemExistsById (id:string, callback:(exists:boolean) => void):void;
 
 	/**
