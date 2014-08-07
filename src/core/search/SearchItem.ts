@@ -125,9 +125,8 @@ class SearchItem implements SearchItemInterface {
 		}
 
 		// add plugin data
-		if (Object.keys(source).length) {
-			this._pluginData[identifier] = source;
-		}
+		this._pluginData[identifier] = Object.keys(source).length ? source : {};
+		this._pluginData[identifier]['_id'] = item['_id'];
 
 		return addToScoreAverage;
 	}
