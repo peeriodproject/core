@@ -7,7 +7,7 @@ var testUtils = require('../../utils/testUtils');
 var UploadBridge = require('../../../src/core/share/UploadBridge');
 var UploadManager = require('../../../src/core/share/UploadManager');
 
-describe('CORE --> SHARE --> UploadBridge @joern', function () {
+describe('CORE --> SHARE --> UploadBridge', function () {
     var sandbox;
     var uploadManagerStub;
 
