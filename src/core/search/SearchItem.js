@@ -19,11 +19,7 @@ var SearchItem = (function () {
         // quick array copy
         data = data.slice();
 
-        console.log(data);
-
-        //var calcScoreAverage:boolean = false;
         var scoreDivider = 0;
-        var testError = false;
 
         for (var i = 0, l = data.length; i < l; i++) {
             try  {
@@ -33,10 +29,8 @@ var SearchItem = (function () {
                     scoreDivider++;
                 }
             } catch (e) {
-                testError = true;
                 console.error(e);
             }
-            //var item = data[i];
         }
 
         if (scoreDivider) {

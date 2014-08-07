@@ -28,9 +28,7 @@ class SearchItem implements SearchItemInterface {
 		// quick array copy
 		data = data.slice();
 
-		//var calcScoreAverage:boolean = false;
 		var scoreDivider:number = 0;
-		var testError:boolean = false;
 
 		for (var i = 0, l = data.length; i < l; i++) {
 			try {
@@ -41,11 +39,8 @@ class SearchItem implements SearchItemInterface {
 				}
 			}
 			catch (e) {
-				testError = true;
 				console.error(e);
 			}
-
-			//var item = data[i];
 		}
 
 		if (scoreDivider) {
