@@ -44,7 +44,7 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
                 } else if (key === 'plugin.api.pluginApiName') {
                     return 'PluginApi.js';
                 } else if (key === 'plugin.binaryPath') {
-                    return './core/plugin/pluginRunner/node';
+                    return './core/plugin/pluginRunner/node_v0_10_30';
                 } else if (key === 'plugin.timeoutInSeconds') {
                     return 5;
                 }
@@ -111,7 +111,7 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
         });
 
         it('should correctly return a "timed out" error', function (done) {
-            this.timeout(0);
+            this.timeout(10000);
 
             var pluginRunner = new PluginRunner(configStub, 'identifier', testUtils.getFixturePath('core/plugin/pluginRunner/timeoutPlugin.js'), fileBlockReaderFactoryStub);
 

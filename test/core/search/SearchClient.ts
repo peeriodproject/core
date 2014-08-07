@@ -259,6 +259,8 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 			(items === null).should.be.true;
 
 			searchClient.addItem(pluginDataToIndex, function (err:Error, ids:SearchItemIdListInterface) {
+				ids.should.have.a.lengthOf(2);
+
 				searchClient.getItemByPath('../path/file.txt', function (err, item:SearchItemInterface) {
 					var identifiers = item.getPluginIdentifiers();
 
