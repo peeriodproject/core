@@ -18,6 +18,13 @@ import HydraNodeList = require('../../hydra/interfaces/HydraNodeList');
  * If there is one, it is used. If there is none, a random node from the list is taken and connected to until a valid connection
  * could be opened or all nodes have been probed.
  *
+ * Before the payload that should be fed to one of the nodes is transferred, the middleware node asks for a 'feeding permission'
+ * by sending a FEED_REQUEST to the node, using the node's feedingIdentifier as transfer identifier for the message.
+ * This request tries to ensure that the other node is still part of the circuit it should pipe the message through: if it is, it
+ * responds with a FEED_REQUEST_ACCEPT message, otherwise with a FEED_REQUEST_REJECT message. If the feeding request is rejected (or
+ * no response is received in a given time frame), the middleware node tries to connect to another node of the feeding nodes batch.
+ * If the request is accepted, it sends the whole payload to the node.
+ *
  * Feeding sockets are used in a one-direction manner, that is that data is only sent if an outgoing connection has been established
  * to one of the nodes. Incoming sockets are stored as well, but only to assign them to the circuit the message need be piped back through,
  * so that the socket can be closed as soon as the underlying circuit is terminated. This is only for cleanup and receiving data, no
@@ -40,18 +47,10 @@ interface MiddlewareInterface {
 	addIncomingSocket (circuitId:string, socketIdentifier:string):void;
 
 	/**
-	 * Issues an instruction to end the TCP hydra socket stored under the provided identifier to the protcol connection manager.
-	 *
-	 * @method core.protocol.fileTransfer.MiddlewareInterface#closeSocketByIdentifier
-	 *
-	 * @param {string} socketIdentifier Identifier of the hydra socket to close.
-	 */
-	closeSocketByIdentifier (socketIdentifier:string):void;
-
-	/**
 	 * This is the main function which opens a TCP connection to one of the given nodes and pipes the payload - wrapped
 	 * in a GOT_FED message which again is wrapped in a FILE_TRANSFER message, though the opened socket.
-	 * The opened socket is assigned to a concatenation of node IP, node port, circuitID through which the instruction came,
+	 * Before this is done, the feeding process is requested with a FEED_REQUEST message. If the request is accepted,
+	 * the opened socket is assigned to a concatenation of node IP, node port, circuitID through which the instruction came,
 	 * feedingIdentifier of the node.
 	 *
 	 * Which node / socket is used is determined in the following way:

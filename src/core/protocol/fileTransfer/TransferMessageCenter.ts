@@ -257,14 +257,19 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 				this._middleware.addIncomingSocket(predecessorCircuitId, socketIdentifier);
 			}
 			else {
-				this._middleware.closeSocketByIdentifier(socketIdentifier);
+				this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
 			}
 		}
 		else if (msg.getMessageType() === 'FEED_REQUEST') {
-			var msgType:string = this._cellManager.getCircuitIdByFeedingIdentifier(msg.getTransferId()) ? 'FEED_REQUEST_ACCEPT' : 'FEED_REQUEST_REJECT';
+			var accept:boolean = !!this._cellManager.getCircuitIdByFeedingIdentifier(msg.getTransferId());
+			var msgType:string = accept ? 'FEED_REQUEST_ACCEPT' : 'FEED_REQUEST_REJECT';
 			var bufferToSend:Buffer = this._hydraMessageCenter.wrapFileTransferMessage(this._writableFileTransferMessageFactory.constructMessage(msg.getTransferId(), msgType, new Buffer(0)));
 
 			this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
+
+			if (!accept) {
+				this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
+			}
 		}
 		else if (msg.getMessageType() === 'FEED_REQUEST_ACCEPT') {
 			this.emit('FEEDING_REQUEST_RESPONSE_' + socketIdentifier + '_' + msg.getTransferId(), true);

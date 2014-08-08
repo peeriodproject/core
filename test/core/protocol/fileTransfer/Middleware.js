@@ -233,7 +233,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware', function () {
     it('should correctly externally close a socket', function () {
         openSockets.push('foobar1');
 
-        middleware.closeSocketByIdentifier('foobar1');
+        protocolConnectionManagerStub.closeHydraSocket('foobar1');
 
         openSockets.length.should.equal(0);
     });
