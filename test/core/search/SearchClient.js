@@ -244,6 +244,8 @@ describe('CORE --> SEARCH --> SearchClient', function () {
             (items === null).should.be.true;
 
             searchClient.addItem(pluginDataToIndex, function (err, ids) {
+                ids.should.have.a.lengthOf(2);
+
                 searchClient.getItemByPath('../path/file.txt', function (err, item) {
                     var identifiers = item.getPluginIdentifiers();
 

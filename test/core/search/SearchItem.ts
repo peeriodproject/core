@@ -35,7 +35,7 @@ describe('CORE --> SEARCH --> SearchItem', function () {
 		});
 
 		it ('should correctly return the plugin data', function () {
-			searchItem.getPluginData('pluginidentifier').should.eql({ foo: 'bar' });
+			searchItem.getPluginData('pluginidentifier').should.eql({ _id: "DzEnMrJGROujWKZUC5hZNg", foo: 'bar' });
 		});
 
 		it ('should correctly return the stats', function () {

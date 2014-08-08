@@ -281,7 +281,7 @@ var FolderWatcherManager = (function () {
     FolderWatcherManager.prototype.removeFolderWatcher = function (pathToWatch, callback) {
         var internalCallback = callback || function () {
         };
-        var removed = false;
+        var removed;
 
         removed = this._removeFolderWatcher(pathToWatch);
 

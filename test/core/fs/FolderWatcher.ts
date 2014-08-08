@@ -101,6 +101,7 @@ describe('CORE --> FS --> FolderWatcher', function () {
 
 			path.should.equal(filePath);
 			stats.isFile().should.be.true;
+			(stats.atime === undefined).should.be.true;
 
 			done();
 		});

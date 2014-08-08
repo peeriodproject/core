@@ -302,7 +302,7 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 	public removeFolderWatcher (pathToWatch:string, callback?:(err:Error) => any):void {
 		var internalCallback:Function = callback || function () {
 		};
-		var removed:boolean = false;
+		var removed:boolean;
 
 		removed = this._removeFolderWatcher(pathToWatch);
 

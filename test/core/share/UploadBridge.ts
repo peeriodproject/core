@@ -8,7 +8,7 @@ import testUtils = require('../../utils/testUtils');
 import UploadBridge = require('../../../src/core/share/UploadBridge');
 import UploadManager = require('../../../src/core/share/UploadManager');
 
-describe('CORE --> SHARE --> UploadBridge @joern', function () {
+describe('CORE --> SHARE --> UploadBridge', function () {
 	var sandbox:SinonSandbox;
 	var uploadManagerStub:any;
 

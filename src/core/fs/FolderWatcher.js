@@ -275,6 +275,10 @@ var FolderWatcher = (function () {
             var fileSize = err ? -1 : stats.size;
             stats = stats || null;
 
+            if (stats) {
+                delete stats.atime;
+            }
+
             callback(fileSize, stats);
         });
     };

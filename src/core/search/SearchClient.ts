@@ -134,9 +134,9 @@ class SearchClient implements SearchClientInterface {
 		});
 
 		this._client.index({
-			index: indexName.toLowerCase(),
-			type : this._getResponseType(type),
-			body : body,
+			index  : indexName.toLowerCase(),
+			type   : this._getResponseType(type),
+			body   : body,
 			refresh: true
 		}, function (err:Error, response:Object, status:number) {
 			err = err || null;
@@ -175,7 +175,7 @@ class SearchClient implements SearchClientInterface {
 			}
 
 			if (itemIds.length === amount) {
-				callback(null, itemIds);
+				return callback(null, itemIds);
 			}
 		};
 
@@ -183,15 +183,28 @@ class SearchClient implements SearchClientInterface {
 			return process.nextTick(callback.bind(null, new Error('SearchClient.addItem: No item data specified! Preventing item creation.'), null));
 		}
 
-		for (var i = 0, l = pluginIdentifiers.length; i < l; i++) {
-			var identifier:string = pluginIdentifiers[i];
+		// todo get data from plugin indexes. check each plugin individual and update or add data
+		this.itemExists(objectToIndex[pluginIdentifiers[0]].itemPath, (exists:boolean, item:SearchItemInterface) => {
+			var existingIdentifiers:Array<string> = item ? item.getPluginIdentifiers() : [];
+			var existingIdentifiersLength:number = existingIdentifiers.length;
 
-			this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
-				itemIds.push(id);
+			for (var i = 0, l = pluginIdentifiers.length; i < l; i++) {
+				var identifier:string = pluginIdentifiers[i];
+				var lowercasedIdentifier:string = identifier.toLowerCase();
 
-				return checkCallback(err);
-			});
-		}
+				// checks if the existing item contains the current identifier and adds the current id to the object to force
+				// the database to update the old item instead of creating a new one.
+				if (existingIdentifiersLength && existingIdentifiers.indexOf(lowercasedIdentifier) !== -1) {
+					objectToIndex[identifier]['_id'] = item.getPluginData(lowercasedIdentifier)['_id'];
+				}
+
+				this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
+					itemIds.push(id);
+
+					return checkCallback(err);
+				});
+			}
+		});
 	}
 
 	public addMapping (type:string, mapping:Object, callback?:(err:Error) => any):void {
@@ -261,13 +274,13 @@ class SearchClient implements SearchClientInterface {
 
 		var mapping = {
 			_default_: {
-				meta: {
-					type: 'object',
+				meta      : {
+					type : 'object',
 					index: 'no'
 				},
-				_timestamp : {
-					enabled : true,
-					store : true
+				_timestamp: {
+					enabled: true,
+					store  : true
 				}
 			}
 		};
@@ -383,8 +396,8 @@ class SearchClient implements SearchClientInterface {
 
 		this._client.search({
 			index: indexName.toLowerCase(),
-			type: (!type || type === '_all') ? '' : this._getResponseType(type),
-			body: searchQuery
+			type : (!type || type === '_all') ? '' : this._getResponseType(type),
+			body : searchQuery
 		}, (err:Error, response:Object, status:number) => {
 			return this._checkHitsAndCallCallback(err, response, status, function (err:Error, data:any) {
 				if (err || !data) {
@@ -414,9 +427,9 @@ class SearchClient implements SearchClientInterface {
 
 	public getIncomingResponses (indexName:string, type:string, queryBody:Object, callback:(err:Error, responses:any) => void):void {
 		this._client.search({
-			index: indexName.toLowerCase(),
-			type: this._getResponseType(type),
-			body: queryBody,
+			index : indexName.toLowerCase(),
+			type  : this._getResponseType(type),
+			body  : queryBody,
 			fields: [
 				'_source',
 				'_timestamp'
@@ -455,7 +468,6 @@ class SearchClient implements SearchClientInterface {
 	}
 
 	public getItemByPath (itemPath:string, callback:(err:Error, item:SearchItemInterface) => any):void {
-		// todo limit query to 1
 		var searchQuery:Object = {
 			query: {
 				match: {
@@ -471,7 +483,7 @@ class SearchClient implements SearchClientInterface {
 		this._client.getSource({
 			index: indexName.toLowerCase(),
 			type : '.percolator',
-			id: queryId
+			id   : queryId
 		}, (err:Error, response:Object, status:number) => {
 			if (!this._isValidResponse(err, status, 'Not Found')) {
 				return callback(err, null);
@@ -487,10 +499,29 @@ class SearchClient implements SearchClientInterface {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
-	public itemExists (pathToIndex:string, callback:(exists:boolean) => void):void {
-		console.log('todo SearchClient#itemExists');
-		// todo iplementation
-		return process.nextTick(callback.bind(null, null, null));
+	public itemExists (pathToIndex:string, callback:(exists:boolean, item:SearchItemInterface) => void):void {
+		var query = {
+			query  : {
+				match: {
+					itemPath: pathToIndex
+				}
+			},
+			_source: {
+				include: ['itemPath', 'itemHash', 'itemName', 'itemStats']
+			}
+		};
+
+		this._getItemByQuery(query, function (err:Error, item:SearchItemInterface) {
+			var exists:boolean;
+
+			item = err ? null : item;
+
+			exists = item !== null ? true : false;
+
+			return callback(exists, item);
+		});
+
+		//return process.nextTick(callback.bind(null, null, null));
 	}
 
 	public itemExistsById (id:string, callback:(exists:boolean) => void):void {
@@ -516,11 +547,12 @@ class SearchClient implements SearchClientInterface {
 			}
 
 			this._client = elasticsearch.Client({
-				apiVersion: this._config.get('search.apiVersion', '1.1'),
-				host      : this._config.get('search.host') + ':' + this._config.get('search.port'),
-				log       : {
+				apiVersion    : this._config.get('search.apiVersion', '1.1'),
+				host          : this._config.get('search.host') + ':' + this._config.get('search.port'),
+				requestTimeout: this._config.get('search.requestTimeoutInSeconds') * 1000,
+				log           : {
 					type : 'file',
-					level: 'trace',
+					level: ['error', 'warning'],//'trace',
 					path : path.join(this._options.logsPath, this._options.logsFileName)
 				}
 			});
@@ -557,8 +589,8 @@ class SearchClient implements SearchClientInterface {
 	public search (queryObject:Object, callback:(err:Error, results:any) => any):void {
 		this._client.search({
 			index: this._indexName,
-			body: queryObject
-		}, function(err, response, status) {
+			body : queryObject
+		}, function (err, response, status) {
 			var hits:Object = response && response['hits'] ? response['hits'] : null;
 
 			err = err || null;
@@ -587,6 +619,7 @@ class SearchClient implements SearchClientInterface {
 
 	/**
 	 * Creates a new `type` item and stores the given data within the {@link core.search.SearchClient~_indexName} index.
+	 * Should the the data object contains a `_id` key an existing item will be updated.
 	 *
 	 * @method core.search.SearchClient~_addItemToPluginIndex
 	 *
@@ -595,9 +628,14 @@ class SearchClient implements SearchClientInterface {
 	 * @param {Function} callback
 	 */
 	private _addItemToPluginIndex (type:string, data:Object, callback:(err:Error, id:string) => any):void {
+		var id = data['_id'] || null;
+
+		delete data['_id'];
+
 		this._client.index({
 			index  : this._indexName,
 			type   : type,
+			id     : id,
 			refresh: true,
 			body   : data
 		}, function (err:Error, response, status) {
@@ -670,34 +708,34 @@ class SearchClient implements SearchClientInterface {
 			return null;
 		}
 
-		//console.log('_createSearchItemFromHits', hits);
-
 		return this._searchItemFactory.create(hits);
 	}
 
 	/**
-	 * todo docs
+	 * Transforms an incoming response into a {@link core.search.SearchItemInterface} by using the {@link core.search.SearchClient~_searchItemFactory}
 	 *
-	 * @param response
-	 * @returns {*}
+	 * @method core.search.SearchClient~_createSearchItemFromResponse
+	 *
+	 * @param {Object} response
+	 * @returns core.search.SearchItemInterface
 	 */
-	private _createSearchItemFromResponse (response):SearchItemInterface {
+	private _createSearchItemFromResponse (response:Object):SearchItemInterface {
 		if (!response) {
 			return null;
 		}
-
-		//console.log('_createSearchItemFromResponse', response);
 
 		return this._searchItemFactory.create([response]);
 	}
 
 	/**
-	 * todo docs
+	 * Internal helper method that transforms the results of the given search query into a {@link core.search.SearchItemInterface}
 	 *
-	 * @param searchQuery
-	 * @param callback
+	 * @method core.search.SearchClient~_getItemByQuery
+	 *
+	 * @param {Object} searchQuery
+	 * @param {Function} callback
 	 */
-	private _getItemByQuery (searchQuery, callback):void {
+	private _getItemByQuery (searchQuery:Object, callback:(err:Error, item:SearchItemInterface) => any):void {
 		this._client.search({
 			index: this._indexName,
 			body : searchQuery
@@ -723,10 +761,10 @@ class SearchClient implements SearchClientInterface {
 	 *
 	 * @method core.search.SearchClient~_getResponseType
 	 *
-	 * @param type
+	 * @param {string} type
 	 * @returns {string}
 	 */
-	private _getResponseType(type):string {
+	private _getResponseType (type:string):string {
 		return type[0] === '_' ? type : 'response' + type.toLowerCase();
 	}
 

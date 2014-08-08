@@ -95,7 +95,8 @@
         "folderPath"              : "plugin",
         "pluginConfigName"        : "plugin.json",
         "pluginManagerStateConfig": "pluginManager.json",
-        "binaryPath"              : "core/plugin/pluginRunner/node",
+        "pluginManagerMaxFileBufferInMegaBytes": 50,
+        "binaryPath"              : "core/plugin/pluginRunner/node_v0_10_30",
         "timeoutInSeconds": 30,
         "pluginRunnerChunkSize": 512,
         "api"                     : {
@@ -112,6 +113,7 @@
     "search"  : {
         "host"             : "localhost",
         "port"             : 9200,
+        "requestTimeoutInSeconds"   : 60,
         "binaryPath"       : "core/search/elasticsearch",
         "databasePath"     : "db/searchStore",
         "searchStoreConfig": "./config/searchStore.json",

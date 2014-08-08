@@ -296,6 +296,10 @@ class FolderWatcher implements FolderWatcherInterface {
 			var fileSize:number = err ? -1 : stats.size;
 			stats = stats || null;
 
+			if (stats) {
+				delete stats.atime;
+			}
+
 			callback(fileSize, stats);
 		});
 	}

@@ -97,6 +97,7 @@ describe('CORE --> FS --> FolderWatcher', function () {
         folderWatcher.on('add', function (path, stats) {
             path.should.equal(filePath);
             stats.isFile().should.be.true;
+            (stats.atime === undefined).should.be.true;
 
             done();
         });

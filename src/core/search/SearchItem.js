@@ -19,9 +19,7 @@ var SearchItem = (function () {
         // quick array copy
         data = data.slice();
 
-        //var calcScoreAverage:boolean = false;
         var scoreDivider = 0;
-        var testError = false;
 
         for (var i = 0, l = data.length; i < l; i++) {
             try  {
@@ -31,10 +29,8 @@ var SearchItem = (function () {
                     scoreDivider++;
                 }
             } catch (e) {
-                testError = true;
                 console.error(e);
             }
-            //var item = data[i];
         }
 
         if (scoreDivider) {
@@ -110,9 +106,8 @@ var SearchItem = (function () {
         }
 
         // add plugin data
-        if (Object.keys(source).length) {
-            this._pluginData[identifier] = source;
-        }
+        this._pluginData[identifier] = Object.keys(source).length ? source : {};
+        this._pluginData[identifier]['_id'] = item['_id'];
 
         return addToScoreAverage;
     };

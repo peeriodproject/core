@@ -124,7 +124,8 @@ var IrcLogger = (function () {
             _caller: functionName,
             _uuid: this._uuid,
             process: {
-                pid: process.pid
+                pid: process.pid,
+                memory: process.memoryUsage()
             }
         };
 

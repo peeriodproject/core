@@ -106,8 +106,7 @@ exports.main = {
         });
     },
     onBeforeItemAdd: function () {
-        exit();
-        //runTask('getFileBuffer');
+        exit(); // everything is done by elasticsearchs attachment mapper
     }
 };
 //# sourceMappingURL=index.js.map
