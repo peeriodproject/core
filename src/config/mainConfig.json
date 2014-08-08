@@ -65,7 +65,7 @@
             "waitForOwnResponseAsBroadcastInitiatorInSeconds": 2
         },
         "shareMessaging": {
-            "waitForResponseMessageInSeconds": 60,
+            "waitForResponseMessageInSeconds": 20,
             "maximumNumberOfMessageTries": 3
         }
     },
