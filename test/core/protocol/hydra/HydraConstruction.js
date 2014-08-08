@@ -323,9 +323,9 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', func
 
         var cellManager = new CellManager(config, connectionManager, messageCenter, cellFactory);
 
-        var middleware = new Middleware(cellManager, protocolConnectionManager, messageCenter, new WritableFileTransferMessageFactory());
-
-        var transferMessageCenter = new TransferMessageCenter(protocolConnectionManager, middleware, circuitManager, cellManager, messageCenter, new ReadableFileTransferMessageFactory(), new WritableFileTransferMessageFactory(), new ReadableQueryResponseMessageFactory(), new WritableQueryResponseMessageFactory());
+        var transferMessageCenter = new TransferMessageCenter(protocolConnectionManager, circuitManager, cellManager, messageCenter, new ReadableFileTransferMessageFactory(), new WritableFileTransferMessageFactory(), new ReadableQueryResponseMessageFactory(), new WritableQueryResponseMessageFactory());
+        var middleware = new Middleware(config, transferMessageCenter, cellManager, protocolConnectionManager, messageCenter, new WritableFileTransferMessageFactory());
+        transferMessageCenter.setMiddleware(middleware);
 
         var routingTable = testUtils.stubPublicApi(sandbox, RoutingTable, {
             getRandomContactNodesFromBucket: function (a, b, callback) {
@@ -392,6 +392,8 @@ describe('CORE --> PROTOCOL --> HYDRA --> HydraConstruction (integration)', func
                     return 1;
                 if (what === 'protocol.broadcast.broadcastLifetimeInSeconds')
                     return 10;
+                if (what === 'protocol.waitForNodeReactionInSeconds')
+                    return 3;
                 if (what === 'fileTransfer.query.broadcastValidityInSeconds')
                     return 30;
                 if (what === 'hydra.desiredNumberOfCircuits')
