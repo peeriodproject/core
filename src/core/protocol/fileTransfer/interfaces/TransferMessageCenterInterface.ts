@@ -1,5 +1,7 @@
 /// <reference path='../../../../../ts-definitions/node/node.d.ts' />
 
+import MiddlewareInterface = require('./MiddlewareInterface');
+
 /**
  * The TransferMessageCenter lives on the line between the hydra circuits and all messages related to file transfers,
  * e.g. query, broadcasts, the relaying of message between circuits (that is, the 'connecting' of two unrelated circuits)
@@ -29,6 +31,15 @@ interface TransferMessageCenterInterface extends NodeJS.EventEmitter {
 	 * @returns {boolean} `true` if the EXTERNAL_FEED message could be piped through a circuit, else `false`
 	 */
 	issueExternalFeedToCircuit (nodesToFeedBlock:Buffer, payload:Buffer, circuitId?:string):boolean;
+
+	/**
+	 * Sets the middleware instance on the transfer message center.
+	 *
+	 * @method core.protocol.fileTransfer.TransferMessageCenterInterface#setMiddleware
+	 *
+	 * @param {core.protocol.fileTransfer.MiddlewareInterface} middleware A working middleware instance.
+	 */
+	setMiddleware (middleware:MiddlewareInterface):void;
 
 	/**
 	 * Returns the full payload of a FILE_TRANSFER message with the given messageType, transferIdentifier and payload.
