@@ -135,11 +135,11 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 		});
 
 		this._searchRequestManager.onQueryEnd((queryId, reason) => {
-			if (queryId !== this._runningQueryId) {
-				return;
-			}
+			this._handleQueryEnd(queryId, reason);
+		});
 
-			this._updateQueryStatus(reason);
+		this._searchRequestManager.onQueryCanceled((queryId, reason) => {
+			this._handleQueryEnd(queryId, reason);
 		});
 	}
 
@@ -166,8 +166,26 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 			this._updateQueryStatus('CREATED');
 			this._currentResults = null;
 
-			return this.updateUi();
+			this.updateUi();
 		});
+	}
+
+	/**
+	 * Sets the reason of the query end as the new status and triggers a ui update
+	 *
+	 * @method core.ui.UiSearchFormResultsManagerComponent~_handleQueryEnd
+	 *
+	 * @param {string} queryId
+	 * @param {string} reason
+	 */
+	private _handleQueryEnd (queryId:string, reason:string):void {
+		if (queryId !== this._runningQueryId) {
+			return;
+		}
+
+		this._updateQueryStatus(reason);
+
+		this.updateUi();
 	}
 
 	/**
@@ -189,7 +207,6 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 
 	private _updateQueryStatus (status:string):void {
 		this._runningQueryStatus = status;
-		console.log('query status', status);
 	}
 
 }

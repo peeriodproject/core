@@ -131,11 +131,11 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
         });
 
         this._searchRequestManager.onQueryEnd(function (queryId, reason) {
-            if (queryId !== _this._runningQueryId) {
-                return;
-            }
+            _this._handleQueryEnd(queryId, reason);
+        });
 
-            _this._updateQueryStatus(reason);
+        this._searchRequestManager.onQueryCanceled(function (queryId, reason) {
+            _this._handleQueryEnd(queryId, reason);
         });
     };
 
@@ -163,8 +163,26 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
             _this._updateQueryStatus('CREATED');
             _this._currentResults = null;
 
-            return _this.updateUi();
+            _this.updateUi();
         });
+    };
+
+    /**
+    * Sets the reason of the query end as the new status and triggers a ui update
+    *
+    * @method core.ui.UiSearchFormResultsManagerComponent~_handleQueryEnd
+    *
+    * @param {string} queryId
+    * @param {string} reason
+    */
+    UiSearchFormResultsManagerComponent.prototype._handleQueryEnd = function (queryId, reason) {
+        if (queryId !== this._runningQueryId) {
+            return;
+        }
+
+        this._updateQueryStatus(reason);
+
+        this.updateUi();
     };
 
     /**
@@ -186,7 +204,6 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
 
     UiSearchFormResultsManagerComponent.prototype._updateQueryStatus = function (status) {
         this._runningQueryStatus = status;
-        console.log('query status', status);
     };
     return UiSearchFormResultsManagerComponent;
 })(UiComponent);

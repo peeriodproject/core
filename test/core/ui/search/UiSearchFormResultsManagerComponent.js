@@ -6,7 +6,7 @@ var SearchFormResultsManager = require('../../../../src/core/search/SearchFormRe
 var SearchRequestManager = require('../../../../src/core/search/SearchRequestManager');
 var UiSearchFormResultsManagerComponent = require('../../../../src/core/ui/search/UiSearchFormResultsManagerComponent');
 
-describe('CORE --> UI --> SEARCH --> UiSearchFormResultsManagerComponent', function () {
+describe('CORE --> UI --> SEARCH --> UiSearchFormResultsManagerComponent @prio', function () {
     var sandbox;
     var component;
     var searchFormResultsManagerStub;
@@ -76,7 +76,8 @@ describe('CORE --> UI --> SEARCH --> UiSearchFormResultsManagerComponent', funct
 
         component.getState(function (state) {
             state.should.containDeep({
-                currentQuery: 'raw query'
+                currentQuery: 'raw query',
+                currentQueryStatus: 'CREATED'
             });
 
             (state.currentResults === null).should.be.true;
@@ -101,6 +102,7 @@ describe('CORE --> UI --> SEARCH --> UiSearchFormResultsManagerComponent', funct
 
         component.getState(function (state) {
             (state.currentQuery === null).should.be.true;
+            (state.currentQueryStatus === null).should.be.true;
 
             done();
         });
@@ -125,6 +127,40 @@ describe('CORE --> UI --> SEARCH --> UiSearchFormResultsManagerComponent', funct
             state.should.containDeep({
                 currentQuery: 'second query'
             });
+
+            done();
+        });
+    });
+
+    it('should correctly return the state from the searchRequestManager on query end', function (done) {
+        var uiUpdateSpy = sandbox.spy();
+
+        component.onUiUpdate(uiUpdateSpy);
+        component.emit('addQuery', 'query string');
+
+        searchRequestManagerStub.onQueryEnd.getCall(0).args[0]('queryId', 'reason');
+
+        uiUpdateSpy.calledTwice.should.be.true;
+
+        component.getState(function (state) {
+            state.currentQueryStatus.should.equal('reason');
+
+            done();
+        });
+    });
+
+    it('should correctly return the state from the searchRequestManager on query canceled', function (done) {
+        var uiUpdateSpy = sandbox.spy();
+
+        component.onUiUpdate(uiUpdateSpy);
+        component.emit('addQuery', 'query string');
+
+        searchRequestManagerStub.onQueryCanceled.getCall(0).args[0]('queryId', 'reason');
+
+        uiUpdateSpy.calledTwice.should.be.true;
+
+        component.getState(function (state) {
+            state.currentQueryStatus.should.equal('reason');
 
             done();
         });
@@ -190,6 +226,7 @@ describe('CORE --> UI --> SEARCH --> UiSearchFormResultsManagerComponent', funct
                 component.getState(function (state) {
                     state.should.containDeep({
                         currentQuery: 'lorem ipsum',
+                        currentQueryStatus: 'GOT_RESULTS',
                         currentResults: {
                             total: 1,
                             hits: [{
