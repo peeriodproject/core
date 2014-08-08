@@ -12,7 +12,7 @@ var logger = require('../../utils/logger/LoggerFactory').create();
 * @param {core.protocol.fileTransfer.WritableFileTransferMessageFactoryInterface} Factory for writable FILE_TRANSFER messages
 */
 var Middleware = (function () {
-    function Middleware(cellManager, protocolConnectionManager, hydraMessageCenter, writableFileTransferMessageFactory) {
+    function Middleware(protocolConfig, transferMessageCenter, cellManager, protocolConnectionManager, hydraMessageCenter, writableFileTransferMessageFactory) {
         /**
         * Stores the hydra cell manager instance.
         *
@@ -45,16 +45,20 @@ var Middleware = (function () {
         * @member {core.protocol.net.ProtcolConnectionManagerInterface} core.protocol.fileTransfer.Middleware~_protocolConnectionManager
         */
         this._protocolConnectionManager = null;
+        this._waitForFeedingRequestResponseInMs = 0;
+        this._transferMessageCenter = null;
         /**
         * Stores the factory for writable FILE_TRANSFER messages
         *
         * @member {core.protocol.fileTransfer.WritableFileTransferMessageFactoryInterface} core.protocol.fileTransfer.Middleware~_writableFileTransferMessageFactory
         */
         this._writableFileTransferMessageFactory = null;
+        this._transferMessageCenter = transferMessageCenter;
         this._cellManager = cellManager;
         this._protocolConnectionManager = protocolConnectionManager;
         this._hydraMessageCenter = hydraMessageCenter;
         this._writableFileTransferMessageFactory = writableFileTransferMessageFactory;
+        this._waitForFeedingRequestResponseInMs = protocolConfig.get('protocol.waitForNodeReactionInSeconds') * 1000;
 
         this._setupListeners();
     }
@@ -86,12 +90,7 @@ var Middleware = (function () {
         this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
     };
 
-    Middleware.prototype.feedNode = function (feedingNodes, associatedCircuitId, payloadToFeed) {
-        console.log('Trying to feed hydra');
-        logger.log('middleware', 'Trying to feed hydra');
-
-        logger.log('middlewareBug', 'Feeding nodes', { assocCircuit: associatedCircuitId, feedingNodes: JSON.stringify(feedingNodes) });
-
+    Middleware.prototype.feedNode2 = function (feedingNodes, associatedCircuitId, payloadToFeed) {
         var fed = false;
 
         for (var i = 0, l = feedingNodes.length; i < l; i++) {
@@ -99,8 +98,6 @@ var Middleware = (function () {
             var existingSocket = this._outgoingSockets[this._constructOutgoingKey(node, associatedCircuitId)];
 
             if (existingSocket) {
-                logger.log('middlewareBug', 'There is an existing socket for feeding', { socketIdent: existingSocket, feedingIdent: node.feedingIdentifier });
-
                 this._feedSocket(existingSocket, node.feedingIdentifier, payloadToFeed);
                 fed = true;
                 break;
@@ -125,6 +122,27 @@ var Middleware = (function () {
         return circuitId + '_' + node.ip + '_' + node.port + '_' + node.feedingIdentifier;
     };
 
+    Middleware.prototype.feedNode = function (feedingNodes, associatedCircuitId, payloadToFeed) {
+        var _this = this;
+        if (feedingNodes.length) {
+            this._retrieveConnectionToNodeAndReduceBatch(feedingNodes, associatedCircuitId, function (node, socketIdentifier, isExisting) {
+                if (node && socketIdentifier) {
+                    _this._requestFeeding(node, socketIdentifier, function (accepted) {
+                        if (!accepted) {
+                            _this.feedNode(feedingNodes, associatedCircuitId, payloadToFeed);
+                        } else {
+                            if (!isExisting) {
+                                _this._outgoingSockets[_this._constructOutgoingKey(node, associatedCircuitId)] = socketIdentifier;
+                            }
+
+                            _this._feedSocket(socketIdentifier, node.feedingIdentifier, payloadToFeed);
+                        }
+                    });
+                }
+            });
+        }
+    };
+
     /**
     * Wraps a payload ina GOT_FED message, which again is wrapped in a FILE_TRANSFER message, and pipes it through
     * the TCP hydra socket stored under the given identifier (in the protocol connection manager).
@@ -141,15 +159,82 @@ var Middleware = (function () {
         try  {
             bufferToSend = this._hydraMessageCenter.wrapFileTransferMessage(this._writableFileTransferMessageFactory.constructMessage(feedingIdentifier, 'GOT_FED', payloadToFeed));
         } catch (e) {
-            logger.log('middleware', 'Wrapping file transfer error');
         }
 
         if (bufferToSend) {
-            console.log('Actually feeding hydra socket');
-            logger.log('middleware', 'Actually feeding hydra socket');
-            logger.log('middlewareBug', 'Feeding the socket', { socketIdent: socketIdentifier });
             this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
         }
+    };
+
+    Middleware.prototype._retrieveConnectionToNodeAndReduceBatch = function (nodeBatch, associatedCircuitId, callback) {
+        var existingIndex = undefined;
+        var existingConnectionSocketIdent = null;
+        var existingConnectionToNode = null;
+
+        for (var i = 0, l = nodeBatch.length; i < l; i++) {
+            var node = nodeBatch[i];
+            var existingSocket = this._outgoingSockets[this._constructOutgoingKey(node, associatedCircuitId)];
+
+            if (existingSocket) {
+                existingIndex = i;
+                existingConnectionSocketIdent = existingSocket;
+                existingConnectionToNode = node;
+                break;
+            }
+        }
+
+        if (existingIndex !== undefined && existingConnectionSocketIdent && existingConnectionToNode) {
+            nodeBatch.splice(existingIndex, 1);
+            callback(existingConnectionToNode, existingConnectionSocketIdent, true);
+        } else {
+            this._connectToNodeAndReduceBatch(nodeBatch, callback);
+        }
+    };
+
+    Middleware.prototype._connectToNodeAndReduceBatch = function (nodeBatch, callback) {
+        var _this = this;
+        if (!nodeBatch.length) {
+            // callback with nothing
+            callback(null, null);
+        } else {
+            var randIndex = Math.floor(Math.random() * nodeBatch.length);
+            var node = nodeBatch.splice(randIndex, 1)[0];
+
+            this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
+                if (!err && identifier) {
+                    callback(node, identifier, false);
+                } else {
+                    _this._connectToNodeAndReduceBatch(nodeBatch, callback);
+                }
+            });
+        }
+    };
+
+    Middleware.prototype._requestFeeding = function (node, socketIdentifier, callback) {
+        var _this = this;
+        var bufferToSend = this._hydraMessageCenter.wrapFileTransferMessage(this._writableFileTransferMessageFactory.constructMessage(node.feedingIdentifier, 'FEED_REQUEST', new Buffer(0)));
+
+        this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
+
+        var eventName = 'FEEDING_REQUEST_RESPONSE_' + socketIdentifier + '_' + node.feedingIdentifier;
+        var timeout = 0;
+
+        var responseListener = function (successful) {
+            global.clearTimeout(timeout);
+            if (!successful) {
+                _this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
+            }
+            callback(successful);
+        };
+
+        // set up the timeout to wait for a response
+        timeout = global.setTimeout(function () {
+            _this._transferMessageCenter.removeListener(eventName, responseListener);
+            _this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
+            callback(false);
+        }, this._waitForFeedingRequestResponseInMs);
+
+        this._transferMessageCenter.once(eventName, responseListener);
     };
 
     /**
@@ -168,7 +253,6 @@ var Middleware = (function () {
     Middleware.prototype._obtainConnectionAndFeed = function (feedingNodes, associatedCircuitId, payloadToFeed, usedIndices) {
         var _this = this;
         if (typeof usedIndices === "undefined") { usedIndices = []; }
-        logger.log('middlewareBug', 'Obtaining connection for feeding', { assocCircuit: associatedCircuitId, feedingNodes: JSON.stringify(feedingNodes), usedIndices: JSON.stringify(usedIndices) });
         var feedingNodesLength = feedingNodes.length;
 
         if (usedIndices.length !== feedingNodesLength) {
@@ -183,21 +267,14 @@ var Middleware = (function () {
 
                 this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, function (err, identifier) {
                     if (!err && identifier) {
-                        logger.log('middlwareBug', 'Successfully obtained connection for feeding', { assocCircuit: associatedCircuitId, ip: node.ip, port: node.port, socketIdent: identifier });
                         _this._outgoingSockets[_this._constructOutgoingKey(node, associatedCircuitId)] = identifier;
 
                         _this._feedSocket(identifier, node.feedingIdentifier, payloadToFeed);
                     } else {
-                        console.log('Cannot connect to node. ' + node.ip + ':' + node.port);
-
-                        logger.log('middleware', 'Cannot connect to node');
-
                         _this._obtainConnectionAndFeed(feedingNodes, associatedCircuitId, payloadToFeed, usedIndices);
                     }
                 });
             }
-        } else {
-            console.log('All nodes exhausted. Cannot feed %o', feedingNodes);
         }
     };
 
@@ -241,8 +318,6 @@ var Middleware = (function () {
                 var key = outgoingSocketsKeys[i];
 
                 if (_this._outgoingSockets[key] === identifier) {
-                    logger.log('middlewareBug', 'Removing outgoing connection from list due to termination', { socketIdent: identifier, key: key });
-
                     delete _this._outgoingSockets[key];
                     break;
                 }

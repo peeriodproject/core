@@ -1,10 +1,12 @@
 import MiddlewareInterface = require('./interfaces/MiddlewareInterface');
+import TransferMessageCenterInterface = require('./interfaces/TransferMessageCenterInterface');
 import WritableFileTransferMessageFactoryInterface = require('./messages/interfaces/WritableFileTransferMessageFactoryInterface');
 import CellManagerInterface = require('../hydra/interfaces/CellManagerInterface');
 import ProtocolConnectionManagerInterface = require('../net/interfaces/ProtocolConnectionManagerInterface');
 import HydraMessageCenterInterface = require('../hydra/interfaces/HydraMessageCenterInterface');
 import HydraNodeList = require('../hydra/interfaces/HydraNodeList');
 import HydraNode = require('../hydra/interfaces/HydraNode');
+import ConfigInterface = require('../../config/interfaces/ConfigInterface');
 
 var logger = require('../../utils/logger/LoggerFactory').create();
 
@@ -58,6 +60,10 @@ class Middleware implements MiddlewareInterface {
 	 */
 	private _protocolConnectionManager:ProtocolConnectionManagerInterface = null;
 
+	private _waitForFeedingRequestResponseInMs:number = 0;
+
+	private _transferMessageCenter:TransferMessageCenterInterface = null;
+
 	/**
 	 * Stores the factory for writable FILE_TRANSFER messages
 	 *
@@ -65,11 +71,13 @@ class Middleware implements MiddlewareInterface {
 	 */
 	private _writableFileTransferMessageFactory:WritableFileTransferMessageFactoryInterface = null;
 
-	public constructor (cellManager:CellManagerInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, hydraMessageCenter:HydraMessageCenterInterface, writableFileTransferMessageFactory:WritableFileTransferMessageFactoryInterface) {
+	public constructor (protocolConfig:ConfigInterface, transferMessageCenter:TransferMessageCenterInterface, cellManager:CellManagerInterface, protocolConnectionManager:ProtocolConnectionManagerInterface, hydraMessageCenter:HydraMessageCenterInterface, writableFileTransferMessageFactory:WritableFileTransferMessageFactoryInterface) {
+		this._transferMessageCenter = transferMessageCenter;
 		this._cellManager = cellManager;
 		this._protocolConnectionManager = protocolConnectionManager;
 		this._hydraMessageCenter = hydraMessageCenter;
 		this._writableFileTransferMessageFactory = writableFileTransferMessageFactory;
+		this._waitForFeedingRequestResponseInMs = protocolConfig.get('protocol.waitForNodeReactionInSeconds') * 1000;
 
 		this._setupListeners();
 	}
@@ -105,11 +113,7 @@ class Middleware implements MiddlewareInterface {
 		this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
 	}
 
-	public feedNode (feedingNodes:HydraNodeList, associatedCircuitId:string, payloadToFeed:Buffer):void {
-		console.log('Trying to feed hydra');
-		logger.log('middleware', 'Trying to feed hydra');
-
-		logger.log('middlewareBug', 'Feeding nodes', {assocCircuit: associatedCircuitId, feedingNodes: JSON.stringify(feedingNodes)});
+	public feedNode2 (feedingNodes:HydraNodeList, associatedCircuitId:string, payloadToFeed:Buffer):void {
 
 		var fed:boolean = false;
 
@@ -118,8 +122,6 @@ class Middleware implements MiddlewareInterface {
 			var existingSocket:string = this._outgoingSockets[this._constructOutgoingKey(node, associatedCircuitId)];
 
 			if (existingSocket) {
-				logger.log('middlewareBug', 'There is an existing socket for feeding', {socketIdent: existingSocket, feedingIdent: node.feedingIdentifier});
-
 				this._feedSocket(existingSocket, node.feedingIdentifier, payloadToFeed);
 				fed = true;
 				break;
@@ -144,6 +146,27 @@ class Middleware implements MiddlewareInterface {
 		return circuitId + '_' + node.ip + '_' + node.port + '_' + node.feedingIdentifier;
 	}
 
+	public feedNode (feedingNodes:HydraNodeList, associatedCircuitId:string, payloadToFeed:Buffer):void {
+		if (feedingNodes.length) {
+			this._retrieveConnectionToNodeAndReduceBatch(feedingNodes, associatedCircuitId, (node:HydraNode, socketIdentifier:string, isExisting?:boolean) => {
+				if (node && socketIdentifier) {
+					this._requestFeeding(node, socketIdentifier, (accepted:boolean) => {
+						if (!accepted) {
+							this.feedNode(feedingNodes, associatedCircuitId, payloadToFeed);
+						}
+						else {
+							if (!isExisting) {
+								this._outgoingSockets[this._constructOutgoingKey(node, associatedCircuitId)] = socketIdentifier;
+							}
+
+							this._feedSocket(socketIdentifier, node.feedingIdentifier, payloadToFeed);
+						}
+					});
+				}
+			});
+		}
+	}
+
 	/**
 	 * Wraps a payload ina GOT_FED message, which again is wrapped in a FILE_TRANSFER message, and pipes it through
 	 * the TCP hydra socket stored under the given identifier (in the protocol connection manager).
@@ -160,16 +183,84 @@ class Middleware implements MiddlewareInterface {
 		try {
 			bufferToSend = this._hydraMessageCenter.wrapFileTransferMessage(this._writableFileTransferMessageFactory.constructMessage(feedingIdentifier, 'GOT_FED', payloadToFeed));
 		}
-		catch(e) {
-			logger.log('middleware', 'Wrapping file transfer error');
-		}
+		catch (e) {}
 
 		if (bufferToSend) {
-			console.log('Actually feeding hydra socket');
-			logger.log('middleware', 'Actually feeding hydra socket');
-			logger.log('middlewareBug', 'Feeding the socket', {socketIdent: socketIdentifier});
 			this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
 		}
+	}
+
+	private _retrieveConnectionToNodeAndReduceBatch (nodeBatch:HydraNodeList, associatedCircuitId:string, callback: (node:HydraNode, socketIdentifier:string, isExisting?:boolean) => any):void {
+		var existingIndex:number = undefined;
+		var existingConnectionSocketIdent:string = null;
+		var existingConnectionToNode:HydraNode = null;
+
+		// check if there is already an established connection, if yes, use it.
+		for (var i=0, l=nodeBatch.length; i<l; i++) {
+			var node:HydraNode = nodeBatch[i];
+			var existingSocket:string = this._outgoingSockets[this._constructOutgoingKey(node, associatedCircuitId)];
+
+			if (existingSocket) {
+				existingIndex = i;
+				existingConnectionSocketIdent = existingSocket;
+				existingConnectionToNode = node;
+				break;
+			}
+		}
+
+		if (existingIndex !== undefined && existingConnectionSocketIdent && existingConnectionToNode) {
+			nodeBatch.splice(existingIndex, 1);
+			callback(existingConnectionToNode, existingConnectionSocketIdent, true);
+		}
+		else {
+			this._connectToNodeAndReduceBatch(nodeBatch, callback);
+		}
+	}
+
+	private _connectToNodeAndReduceBatch (nodeBatch:HydraNodeList, callback: (node:HydraNode, socketIdentifier:string, isExisting?:boolean) => any):void {
+		if (!nodeBatch.length) {
+			// callback with nothing
+			callback(null, null);
+		}
+		else {
+			var randIndex:number = Math.floor(Math.random() * nodeBatch.length);
+			var node:HydraNode = nodeBatch.splice(randIndex, 1)[0];
+
+			this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, (err:Error, identifier:string) => {
+				if (!err && identifier) {
+					callback(node, identifier, false);
+				}
+				else {
+					this._connectToNodeAndReduceBatch(nodeBatch, callback);
+				}
+			});
+		}
+	}
+
+	private _requestFeeding (node:HydraNode, socketIdentifier:string, callback: (accepted:boolean) => any):void {
+		var bufferToSend:Buffer = this._hydraMessageCenter.wrapFileTransferMessage(this._writableFileTransferMessageFactory.constructMessage(node.feedingIdentifier, 'FEED_REQUEST', new Buffer(0)));
+
+		this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
+
+		var eventName:string = 'FEEDING_REQUEST_RESPONSE_' + socketIdentifier + '_' + node.feedingIdentifier;
+		var timeout:number = 0;
+
+		var responseListener = (successful:boolean) => {
+			global.clearTimeout(timeout);
+			if (!successful) {
+				this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
+			}
+			callback(successful);
+		};
+
+		// set up the timeout to wait for a response
+		timeout = global.setTimeout(() => {
+			this._transferMessageCenter.removeListener(eventName, responseListener);
+			this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
+			callback(false);
+		}, this._waitForFeedingRequestResponseInMs);
+
+		this._transferMessageCenter.once(eventName, responseListener);
 	}
 
 	/**
@@ -186,7 +277,6 @@ class Middleware implements MiddlewareInterface {
 	 * list have already been probed.
 	 */
 	private _obtainConnectionAndFeed(feedingNodes:HydraNodeList, associatedCircuitId:string, payloadToFeed:Buffer, usedIndices:Array<number> = []):void {
-		logger.log('middlewareBug', 'Obtaining connection for feeding', {assocCircuit: associatedCircuitId, feedingNodes: JSON.stringify(feedingNodes), usedIndices: JSON.stringify(usedIndices)});
 		var feedingNodesLength = feedingNodes.length;
 
 		if (usedIndices.length !== feedingNodesLength) {
@@ -203,23 +293,15 @@ class Middleware implements MiddlewareInterface {
 
 				this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, (err:Error, identifier:string) => {
 					if (!err && identifier) {
-						logger.log('middlwareBug', 'Successfully obtained connection for feeding', {assocCircuit: associatedCircuitId, ip: node.ip, port: node.port, socketIdent:identifier});
 						this._outgoingSockets[this._constructOutgoingKey(node, associatedCircuitId)] = identifier;
 
 						this._feedSocket(identifier, node.feedingIdentifier, payloadToFeed);
 					}
 					else {
-						console.log('Cannot connect to node. ' + node.ip + ':' + node.port);
-
-						logger.log('middleware', 'Cannot connect to node');
-
 						this._obtainConnectionAndFeed(feedingNodes, associatedCircuitId, payloadToFeed, usedIndices);
 					}
 				});
 			}
-		}
-		else {
-			console.log('All nodes exhausted. Cannot feed %o', feedingNodes);
 		}
 	}
 
@@ -263,8 +345,6 @@ class Middleware implements MiddlewareInterface {
 				var key:string = outgoingSocketsKeys[i];
 
 				if (this._outgoingSockets[key] === identifier) {
-
-					logger.log('middlewareBug', 'Removing outgoing connection from list due to termination', {socketIdent: identifier, key: key});
 
 					delete this._outgoingSockets[key];
 					break;

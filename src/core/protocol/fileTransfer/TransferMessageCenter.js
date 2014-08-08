@@ -223,6 +223,15 @@ var TransferMessageCenter = (function (_super) {
             } else {
                 this._middleware.closeSocketByIdentifier(socketIdentifier);
             }
+        } else if (msg.getMessageType() === 'FEED_REQUEST') {
+            var msgType = this._cellManager.getCircuitIdByFeedingIdentifier(msg.getTransferId()) ? 'FEED_REQUEST_ACCEPT' : 'FEED_REQUEST_REJECT';
+            var bufferToSend = this._hydraMessageCenter.wrapFileTransferMessage(this._writableFileTransferMessageFactory.constructMessage(msg.getTransferId(), msgType, new Buffer(0)));
+
+            this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
+        } else if (msg.getMessageType() === 'FEED_REQUEST_ACCEPT') {
+            this.emit('FEEDING_REQUEST_RESPONSE_' + socketIdentifier + '_' + msg.getTransferId(), true);
+        } else if (msg.getMessageType() === 'FEED_REQUEST_REJECT') {
+            this.emit('FEEDING_REQUEST_RESPONSE_' + socketIdentifier + '_' + msg.getTransferId(), false);
         }
     };
 
