@@ -22,7 +22,7 @@
     "protocol": {
         "waitForNodeReactionInSeconds": 3,
         "messages"                    : {
-            "maxByteLengthPerMessage"      : 1048576,
+            "maxByteLengthPerMessage"      : 104,
             "msToKeepNonAddressableMemory" : 10000,
             "msToWaitForIncomingMessage"   : 3000,
             "maxSecondsToWaitForConnection": 2.8
