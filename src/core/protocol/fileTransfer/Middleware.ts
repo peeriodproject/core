@@ -109,6 +109,8 @@ class Middleware implements MiddlewareInterface {
 		console.log('Trying to feed hydra');
 		logger.log('middleware', 'Trying to feed hydra');
 
+		logger.log('middlewareBug', 'Feeding nodes', {assocCircuit: associatedCircuitId, feedingNodes: JSON.stringify(feedingNodes)});
+
 		var fed:boolean = false;
 
 		for (var i=0, l=feedingNodes.length; i<l; i++) {
@@ -116,6 +118,8 @@ class Middleware implements MiddlewareInterface {
 			var existingSocket:string = this._outgoingSockets[this._constructOutgoingKey(node, associatedCircuitId)];
 
 			if (existingSocket) {
+				logger.log('middlewareBug', 'There is an existing socket for feeding', {socketIdent: existingSocket, feedingIdent: node.feedingIdentifier});
+
 				this._feedSocket(existingSocket, node.feedingIdentifier, payloadToFeed);
 				fed = true;
 				break;
@@ -163,7 +167,7 @@ class Middleware implements MiddlewareInterface {
 		if (bufferToSend) {
 			console.log('Actually feeding hydra socket');
 			logger.log('middleware', 'Actually feeding hydra socket');
-
+			logger.log('middlewareBug', 'Feeding the socket', {socketIdent: socketIdentifier});
 			this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
 		}
 	}
@@ -182,6 +186,7 @@ class Middleware implements MiddlewareInterface {
 	 * list have already been probed.
 	 */
 	private _obtainConnectionAndFeed(feedingNodes:HydraNodeList, associatedCircuitId:string, payloadToFeed:Buffer, usedIndices:Array<number> = []):void {
+		logger.log('middlewareBug', 'Obtaining connection for feeding', {assocCircuit: associatedCircuitId, feedingNodes: JSON.stringify(feedingNodes), usedIndices: JSON.stringify(usedIndices)});
 		var feedingNodesLength = feedingNodes.length;
 
 		if (usedIndices.length !== feedingNodesLength) {
@@ -198,7 +203,7 @@ class Middleware implements MiddlewareInterface {
 
 				this._protocolConnectionManager.hydraConnectTo(node.port, node.ip, (err:Error, identifier:string) => {
 					if (!err && identifier) {
-
+						logger.log('middlwareBug', 'Successfully obtained connection for feeding', {assocCircuit: associatedCircuitId, ip: node.ip, port: node.port, socketIdent:identifier});
 						this._outgoingSockets[this._constructOutgoingKey(node, associatedCircuitId)] = identifier;
 
 						this._feedSocket(identifier, node.feedingIdentifier, payloadToFeed);
@@ -258,6 +263,9 @@ class Middleware implements MiddlewareInterface {
 				var key:string = outgoingSocketsKeys[i];
 
 				if (this._outgoingSockets[key] === identifier) {
+
+					logger.log('middlewareBug', 'Removing outgoing connection from list due to termination', {socketIdent: identifier, key: key});
+
 					delete this._outgoingSockets[key];
 					break;
 				}

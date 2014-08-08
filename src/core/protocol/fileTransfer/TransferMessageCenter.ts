@@ -119,7 +119,8 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 	}
 
 	public issueExternalFeedToCircuit (nodesToFeedBlock:Buffer, payload:Buffer, circuitId?:string):boolean {
-
+		logger.log('middlewareBug', 'Issuing external feed to circuit', {circuitId: circuitId, nodesToFeedBlock: JSON.stringify(FeedingNodesMessageBlock.extractAndDeconstructBlock(nodesToFeedBlock).nodes)});
+		console.log('Issuing external feed to circuit %o', {circuitId: circuitId, nodesToFeedBlock: JSON.stringify(FeedingNodesMessageBlock.extractAndDeconstructBlock(nodesToFeedBlock).nodes)});
 		var wrappedMessage:Buffer = this.wrapTransferMessage('EXTERNAL_FEED', '00000000000000000000000000000000', Buffer.concat([nodesToFeedBlock, payload]));
 
 		if (wrappedMessage && !(circuitId && this._circuitManager.pipeFileTransferMessageThroughCircuit(circuitId, wrappedMessage))) {

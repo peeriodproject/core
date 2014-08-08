@@ -110,6 +110,7 @@ class FeedingNodesBlockMaintainer extends events.EventEmitter implements Feeding
 
 		this._nodeBatch = newBatch;
 
+		console.log('FeedingNodesBlockMaintainer %o', newBatch);
 		this._block = FeedingNodesMessageBlock.constructBlock(this._nodeBatch);
 
 		var nodeBatchLength:number = this._nodeBatch.length;
