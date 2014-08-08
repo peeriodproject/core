@@ -151,7 +151,7 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
         }, 10);
     });
 
-    it('should do nothing when the broadcast is ignored', function (done) {
+    it('should not process the broadcast it is ignored', function (done) {
         broadcastManager.once('BROADCAST_QUERY', function () {
             throw new Error('Should not emit BROADCAST_QUERY');
         });
@@ -162,8 +162,9 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
 
         setTimeout(function () {
             broadcastManager.removeAllListeners('BROADCAST_QUERY');
+            checkIfSentToAllNodesFromIndex(2);
             done();
-        }, 10);
+        }, 100);
     });
 
     it('should do nothing when the broadcast is too old', function (done) {
@@ -171,7 +172,7 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
             throw new Error('Should not emit BROADCAST_QUERY');
         });
 
-        emitMessage('01101011', 'broadcastId2', Date.now() - 1000);
+        emitMessage('01101011', 'broadcastId2', Date.now() - 1100);
 
         setTimeout(function () {
             broadcastManager.removeAllListeners('BROADCAST_QUERY');
@@ -182,12 +183,13 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
     it('should add the broadcast with a modified timestamp', function (done) {
         broadcastManager.once('BROADCAST_QUERY', function () {
             setImmediate(function () {
-                broadcastManager.getKnownBroadcastIds()[1].should.equal('broadcastId2');
+                broadcastManager.getKnownBroadcastIds()[2].should.equal('broadcastId2');
                 checkIfSentToAllNodesFromIndex(6).should.be.true;
 
                 setTimeout(function () {
-                    broadcastManager.getKnownBroadcastIds().length.should.equal(1);
+                    broadcastManager.getKnownBroadcastIds().length.should.equal(2);
                     broadcastManager.getKnownBroadcastIds()[0].should.equal('broadcastId1');
+                    broadcastManager.getKnownBroadcastIds()[1].should.equal('broadcastId1_ignore');
                     done();
                 }, 400);
             });
@@ -196,7 +198,7 @@ describe('CORE --> PROTOCOL --> BROADCAST --> BroadcastManager', function () {
         emitMessage('10000000', 'broadcastId2', Date.now() - 700);
     });
 
-    it('should finally clear the last known broadcast id', function (done) {
+    it('should finally clear the last known broadcast ids', function (done) {
         setTimeout(function () {
             broadcastManager.getKnownBroadcastIds().length.should.equal(0);
             done();
