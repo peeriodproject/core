@@ -11,6 +11,7 @@ var HydraMessageCenter = require('../../../../src/core/protocol/hydra/HydraMessa
 
 var WritableFileTransferMessageFactory = require('../../../../src/core/protocol/fileTransfer/messages/WritableFileTransferMessageFactory');
 var Middleware = require('../../../../src/core/protocol/fileTransfer/Middleware');
+var ObjectConfig = require('../../../../src/core/config/ObjectConfig');
 
 describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware', function () {
     var sandbox = null;
@@ -18,6 +19,8 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware', function () {
     var socketCount = 0;
     var openSockets = [];
 
+    var configStub = null;
+    var transferMessageCenterStub = new events.EventEmitter();
     var protocolConnectionManagerStub = null;
     var hydraMessageCenterStub = null;
     var writableFileTransferFactoryStub = null;
@@ -39,11 +42,11 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware', function () {
     };
 
     it('should correctly initialize the middleware', function () {
-        middleware = new Middleware(cellManagerStub, protocolConnectionManagerStub, hydraMessageCenterStub, writableFileTransferFactoryStub);
+        middleware = new Middleware(configStub, transferMessageCenterStub, cellManagerStub, protocolConnectionManagerStub, hydraMessageCenterStub, writableFileTransferFactoryStub);
         middleware.should.be.instanceof(Middleware);
     });
 
-    it('should correctly feed a node within a list of nodes', function (done) {
+    it('should correctly feed a node within a list of nodes when the feeding node accepts', function (done) {
         var nodes = [
             {
                 ip: '1',
@@ -75,13 +78,18 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware', function () {
             }
         });
 
-        connectEmitter.once('msgSent', function (ident, buffer) {
+        connectEmitter.once('msgSent', function () {
+            // this is the request, accept it
             connectEmitter.removeAllListeners('obtaining');
 
-            buffer.toString().should.equal('mumu');
+            connectEmitter.once('msgSent', function (ident, buffer) {
+                buffer.toString().should.equal('mumu');
 
-            middleware.getOutgoingList()['circ1_1_80_foobar'].should.equal(ident);
-            done();
+                middleware.getOutgoingList()['circ1_1_80_foobar'].should.equal(ident);
+                done();
+            });
+
+            transferMessageCenterStub.emit('FEEDING_REQUEST_RESPONSE_socket1_foobar', true);
         });
 
         middleware.feedNode(nodes, 'circ1', new Buffer('mumu'));
@@ -113,13 +121,87 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware', function () {
 
         var existingSocketIdentifier = middleware.getOutgoingList()['circ1_1_80_foobar'];
 
-        connectEmitter.once('msgSent', function (ident, buffer) {
-            ident.should.equal(existingSocketIdentifier);
-            buffer.toString().should.equal('foo');
-            done();
+        connectEmitter.once('msgSent', function () {
+            connectEmitter.once('msgSent', function (ident, buffer) {
+                ident.should.equal(existingSocketIdentifier);
+                buffer.toString().should.equal('foo');
+                done();
+            });
+
+            transferMessageCenterStub.emit('FEEDING_REQUEST_RESPONSE_socket1_foobar', true);
         });
 
         middleware.feedNode(nodes, 'circ1', new Buffer('foo'));
+    });
+
+    it('should be able to feed a socket if the existing one rejects, the second request times out, the third one rejects and the fourth one accepts', function (done) {
+        var nodes = [
+            {
+                ip: '1',
+                port: 80,
+                feedingIdentifier: 'foobar'
+            },
+            {
+                ip: '2',
+                port: 80,
+                feedingIdentifier: 'foobar2'
+            },
+            {
+                ip: '3',
+                port: 80,
+                feedingIdentifier: 'foobar3'
+            },
+            {
+                ip: '4',
+                port: 80,
+                feedingIdentifier: 'foobar4'
+            }
+        ];
+
+        connectEmitter.on('obtaining', function (port, ip) {
+            connectionResponse(ip, port, true);
+        });
+
+        // we need to keep track of the remaining nodes
+        var remainingNodes = [];
+
+        connectEmitter.once('msgSent', function () {
+            // this is the first existing one. reject
+            connectEmitter.once('msgSent', function () {
+                // this one times out
+                connectEmitter.once('msgSent', function () {
+                    connectEmitter.once('msgSent', function () {
+                        // accept
+                        connectEmitter.once('msgSent', function (ident, buffer) {
+                            ident.should.equal('socket4');
+                            buffer.toString().should.equal('foo2');
+                            Object.keys(middleware.getOutgoingList()).length.should.equal(1);
+                            (middleware.getOutgoingList()['circ1_1_80_foobar'] === undefined).should.be.true;
+
+                            connectEmitter.removeAllListeners('obtaining');
+                            done();
+                        });
+
+                        // this is here just for confusion
+                        transferMessageCenterStub.emit('FEEDING_REQUEST_RESPONSE_socket3_' + feedingIdent, true);
+
+                        transferMessageCenterStub.emit('FEEDING_REQUEST_RESPONSE_socket4_' + lastNode.feedingIdentifier, true);
+                    });
+
+                    // get the fourth, the third one rejects
+                    var lastNode = nodes[0];
+                    var feedingIdent = lastNode === remainingNodes[0] ? remainingNodes[1].feedingIdentifier : remainingNodes[1].feedingIdentifier;
+                    transferMessageCenterStub.emit('FEEDING_REQUEST_RESPONSE_socket3_' + feedingIdent, false);
+                });
+
+                remainingNodes.push(nodes[0]);
+                remainingNodes.push(nodes[1]);
+            });
+
+            transferMessageCenterStub.emit('FEEDING_REQUEST_RESPONSE_socket1_foobar', false);
+        });
+
+        middleware.feedNode(nodes, 'circ1', new Buffer('foo2'));
     });
 
     it('should close & remove the outgoing socket from the list if the underlying circuit is torn down', function () {
@@ -138,7 +220,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware', function () {
         middleware.getIncomingList()['circ2'][0].should.equal('foobar');
     });
 
-    it('should close & remove the incoming socket from the list if the underlygin circuit is torn down', function () {
+    it('should close & remove the incoming socket from the list if the underlying circuit is torn down', function () {
         openSockets.length.should.equal(1);
 
         cellManagerStub.emit('tornDownCell', 'circ2');
@@ -156,7 +238,7 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware', function () {
         openSockets.length.should.equal(0);
     });
 
-    it('should remove the correct outgoing socket from the list of the underlying socket closes', function (done) {
+    it('should remove the correct outgoing socket from the list if the underlying socket closes', function (done) {
         var nodes = [
             {
                 ip: '4',
@@ -169,16 +251,20 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware', function () {
             connectionResponse(ip, port, true);
         });
 
-        connectEmitter.once('msgSent', function (ident, buffer) {
-            ident.should.equal(middleware.getOutgoingList()['circ3_4_80_foobar4']);
-            buffer.toString().should.equal('foo');
+        connectEmitter.once('msgSent', function () {
+            connectEmitter.once('msgSent', function (ident, buffer) {
+                ident.should.equal(middleware.getOutgoingList()['circ3_4_80_foobar4']);
+                buffer.toString().should.equal('foo');
 
-            protocolConnectionManagerStub.emit('terminatedConnection', ident);
+                protocolConnectionManagerStub.emit('terminatedConnection', ident);
 
-            setImmediate(function () {
-                (middleware.getOutgoingList()['circ3_4_80_foobar4'] === undefined).should.be.true;
-                done();
+                setImmediate(function () {
+                    (middleware.getOutgoingList()['circ3_4_80_foobar4'] === undefined).should.be.true;
+                    done();
+                });
             });
+
+            transferMessageCenterStub.emit('FEEDING_REQUEST_RESPONSE_socket5_foobar4', true);
         });
 
         middleware.feedNode(nodes, 'circ3', new Buffer('foo'));
@@ -186,6 +272,13 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware', function () {
 
     before(function () {
         sandbox = sinon.sandbox.create();
+
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (what) {
+                if (what === 'protocol.waitForNodeReactionInSeconds')
+                    return 1;
+            }
+        });
 
         protocolConnectionManagerStub = new events.EventEmitter();
 
@@ -214,6 +307,8 @@ describe('CORE --> PROTOCOL --> FILE TRANSFER --> Middleware', function () {
             if (index >= 0) {
                 openSockets.splice(index, 1);
             }
+
+            protocolConnectionManagerStub.emit('terminatedConnection', identifier);
         };
 
         protocolConnectionManagerStub.hydraWriteMessageTo = function (ident, buffer) {

@@ -151,7 +151,9 @@ class Middleware implements MiddlewareInterface {
 			this._retrieveConnectionToNodeAndReduceBatch(feedingNodes, associatedCircuitId, (node:HydraNode, socketIdentifier:string, isExisting?:boolean) => {
 				if (node && socketIdentifier) {
 					this._requestFeeding(node, socketIdentifier, (accepted:boolean) => {
+
 						if (!accepted) {
+							// try again
 							this.feedNode(feedingNodes, associatedCircuitId, payloadToFeed);
 						}
 						else {
@@ -240,8 +242,6 @@ class Middleware implements MiddlewareInterface {
 	private _requestFeeding (node:HydraNode, socketIdentifier:string, callback: (accepted:boolean) => any):void {
 		var bufferToSend:Buffer = this._hydraMessageCenter.wrapFileTransferMessage(this._writableFileTransferMessageFactory.constructMessage(node.feedingIdentifier, 'FEED_REQUEST', new Buffer(0)));
 
-		this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
-
 		var eventName:string = 'FEEDING_REQUEST_RESPONSE_' + socketIdentifier + '_' + node.feedingIdentifier;
 		var timeout:number = 0;
 
@@ -261,6 +261,8 @@ class Middleware implements MiddlewareInterface {
 		}, this._waitForFeedingRequestResponseInMs);
 
 		this._transferMessageCenter.once(eventName, responseListener);
+
+		this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
 	}
 
 	/**

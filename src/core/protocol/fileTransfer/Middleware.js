@@ -129,6 +129,7 @@ var Middleware = (function () {
                 if (node && socketIdentifier) {
                     _this._requestFeeding(node, socketIdentifier, function (accepted) {
                         if (!accepted) {
+                            // try again
                             _this.feedNode(feedingNodes, associatedCircuitId, payloadToFeed);
                         } else {
                             if (!isExisting) {
@@ -214,8 +215,6 @@ var Middleware = (function () {
         var _this = this;
         var bufferToSend = this._hydraMessageCenter.wrapFileTransferMessage(this._writableFileTransferMessageFactory.constructMessage(node.feedingIdentifier, 'FEED_REQUEST', new Buffer(0)));
 
-        this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
-
         var eventName = 'FEEDING_REQUEST_RESPONSE_' + socketIdentifier + '_' + node.feedingIdentifier;
         var timeout = 0;
 
@@ -235,6 +234,8 @@ var Middleware = (function () {
         }, this._waitForFeedingRequestResponseInMs);
 
         this._transferMessageCenter.once(eventName, responseListener);
+
+        this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
     };
 
     /**

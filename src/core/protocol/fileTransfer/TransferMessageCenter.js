@@ -29,7 +29,7 @@ var logger = require('../../utils/logger/LoggerFactory').create();
 */
 var TransferMessageCenter = (function (_super) {
     __extends(TransferMessageCenter, _super);
-    function TransferMessageCenter(protocolConnectionManager, middleware, circuitManager, cellManager, hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseFactory, writableQueryResponseFactory) {
+    function TransferMessageCenter(protocolConnectionManager, circuitManager, cellManager, hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseFactory, writableQueryResponseFactory) {
         _super.call(this);
         /**
         * Stores the hydra cell manager instance.
@@ -90,7 +90,6 @@ var TransferMessageCenter = (function (_super) {
         this._cellManager = cellManager;
         this._hydraMessageCenter = hydraMessageCenter;
         this._protocolConnectionManager = protocolConnectionManager;
-        this._middleware = middleware;
         this._readableFileTransferMessageFactory = readableFileTransferMessageFactory;
         this._writableFileTransferMessageFactory = writableFileTransferMessageFactory;
         this._readableQueryResponseMessageFactory = readableQueryResponseFactory;
@@ -99,7 +98,6 @@ var TransferMessageCenter = (function (_super) {
         this._setupListeners();
     }
     TransferMessageCenter.prototype.issueExternalFeedToCircuit = function (nodesToFeedBlock, payload, circuitId) {
-        logger.log('middlewareBug', 'Issuing external feed to circuit', { circuitId: circuitId, nodesToFeedBlock: JSON.stringify(FeedingNodesMessageBlock.extractAndDeconstructBlock(nodesToFeedBlock).nodes) });
         console.log('Issuing external feed to circuit %o', { circuitId: circuitId, nodesToFeedBlock: JSON.stringify(FeedingNodesMessageBlock.extractAndDeconstructBlock(nodesToFeedBlock).nodes) });
         var wrappedMessage = this.wrapTransferMessage('EXTERNAL_FEED', '00000000000000000000000000000000', Buffer.concat([nodesToFeedBlock, payload]));
 
@@ -108,6 +106,10 @@ var TransferMessageCenter = (function (_super) {
         }
 
         return true;
+    };
+
+    TransferMessageCenter.prototype.setMiddleware = function (middleware) {
+        this._middleware = middleware;
     };
 
     TransferMessageCenter.prototype.wrapTransferMessage = function (messageType, transferId, payload) {

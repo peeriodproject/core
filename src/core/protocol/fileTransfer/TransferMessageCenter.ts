@@ -102,14 +102,13 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 	 */
 	private _writableQueryResponseMessageFactory:WritableQueryResponseMessageFactoryInterface = null;
 
-	public constructor (protocolConnectionManager:ProtocolConnectionManagerInterface, middleware:MiddlewareInterface, circuitManager:CircuitManagerInterface, cellManager:CellManagerInterface, hydraMessageCenter:HydraMessageCenterInterface, readableFileTransferMessageFactory:ReadableFileTransferMessageFactoryInterface, writableFileTransferMessageFactory:WritableFileTransferMessageFactoryInterface, readableQueryResponseFactory:ReadableQueryResponseMessageFactoryInterface, writableQueryResponseFactory:WritableQueryResponseMessageFactoryInterface) {
+	public constructor (protocolConnectionManager:ProtocolConnectionManagerInterface, circuitManager:CircuitManagerInterface, cellManager:CellManagerInterface, hydraMessageCenter:HydraMessageCenterInterface, readableFileTransferMessageFactory:ReadableFileTransferMessageFactoryInterface, writableFileTransferMessageFactory:WritableFileTransferMessageFactoryInterface, readableQueryResponseFactory:ReadableQueryResponseMessageFactoryInterface, writableQueryResponseFactory:WritableQueryResponseMessageFactoryInterface) {
 		super();
 
 		this._circuitManager = circuitManager;
 		this._cellManager = cellManager;
 		this._hydraMessageCenter = hydraMessageCenter;
 		this._protocolConnectionManager = protocolConnectionManager;
-		this._middleware = middleware;
 		this._readableFileTransferMessageFactory = readableFileTransferMessageFactory;
 		this._writableFileTransferMessageFactory = writableFileTransferMessageFactory;
 		this._readableQueryResponseMessageFactory = readableQueryResponseFactory;
@@ -119,7 +118,6 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 	}
 
 	public issueExternalFeedToCircuit (nodesToFeedBlock:Buffer, payload:Buffer, circuitId?:string):boolean {
-		logger.log('middlewareBug', 'Issuing external feed to circuit', {circuitId: circuitId, nodesToFeedBlock: JSON.stringify(FeedingNodesMessageBlock.extractAndDeconstructBlock(nodesToFeedBlock).nodes)});
 		console.log('Issuing external feed to circuit %o', {circuitId: circuitId, nodesToFeedBlock: JSON.stringify(FeedingNodesMessageBlock.extractAndDeconstructBlock(nodesToFeedBlock).nodes)});
 		var wrappedMessage:Buffer = this.wrapTransferMessage('EXTERNAL_FEED', '00000000000000000000000000000000', Buffer.concat([nodesToFeedBlock, payload]));
 
@@ -128,6 +126,10 @@ class TransferMessageCenter extends events.EventEmitter implements TransferMessa
 		}
 
 		return true;
+	}
+
+	public setMiddleware (middleware:MiddlewareInterface):void {
+		this._middleware = middleware;
 	}
 
 	public wrapTransferMessage (messageType:string, transferId:string, payload:Buffer):Buffer {

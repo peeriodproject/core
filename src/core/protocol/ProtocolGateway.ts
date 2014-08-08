@@ -201,8 +201,9 @@ class ProtocolGateway extends events.EventEmitter implements ProtocolGatewayInte
 		var readableBroadcastMessageFactory = new BroadcastReadableMessageFactory();
 		var writableBroadcastMessageFactory = new BroadcastWritableMessageFactory();
 
-		this._middleware = new Middleware(this._hydraCellManager, this._protocolConnectionManager, this._hydraMessageCenter, writableFileTransferMessageFactory);
-		this._transferMessageCenter = new TransferMessageCenter(this._protocolConnectionManager, this._middleware, this._hydraCircuitManager, this._hydraCellManager, this._hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseMessageFactory, writableQueryResponseMessageFactory);
+		this._middleware = new Middleware(this._protocolConfig, this._transferMessageCenter, this._hydraCellManager, this._protocolConnectionManager, this._hydraMessageCenter, writableFileTransferMessageFactory);
+		this._transferMessageCenter = new TransferMessageCenter(this._protocolConnectionManager, this._hydraCircuitManager, this._hydraCellManager, this._hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseMessageFactory, writableQueryResponseMessageFactory);
+		this._transferMessageCenter.setMiddleware(this._middleware);
 
 		this._broadcastManager = new BroadcastManager(this._topologyConfig, this._protocolConfig, this._myNode, this._protocolConnectionManager, this._proxyManager, this._routingTable, readableBroadcastMessageFactory, writableBroadcastMessageFactory);
 
