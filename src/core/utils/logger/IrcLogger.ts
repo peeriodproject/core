@@ -145,7 +145,8 @@ class IrcLogger implements LoggerInterface {
 			_caller: functionName,
 			_uuid: this._uuid,
 			process: {
-				pid: process.pid
+				pid: process.pid,
+				memory: process.memoryUsage()
 			}
 		};
 
