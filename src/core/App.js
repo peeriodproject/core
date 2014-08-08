@@ -228,7 +228,8 @@ var App = {
         var searchStoreFactory = new SearchStoreFactory();
         var searchItemFactory = new SearchItemFactory();
         var searchClient = new SearchClient(searchConfig, this.appQuitHandler, 'mainIndex', searchStoreFactory, searchItemFactory, {
-            onOpenCallback: function () {
+            onOpenCallback: function (err) {
+                console.log(err);
                 return callback(searchConfig, searchClient);
             }
         });
@@ -303,10 +304,15 @@ var App = {
             }
 
             var handlerFactory = new JSONStateHandlerFactory();
+            console.log(path.resolve(dataPath, 'myId.json'));
             var idState = handlerFactory.create(path.resolve(dataPath, 'myId.json'));
 
             idState.load(function (err, state) {
+                if (err)
+                    console.log(err);
                 var myId = null;
+
+                console.log(state);
 
                 if (state && state.id) {
                     myId = new Id(Id.byteBufferByHexString(state.id, 20), 160);
@@ -315,6 +321,7 @@ var App = {
                     var randBuffer = crypto.randomBytes(20);
                     state.id = randBuffer.toString('hex');
                     idState.save(state, function () {
+                        console.log('Id state saved.');
                     });
 
                     myId = new Id(randBuffer, 160);

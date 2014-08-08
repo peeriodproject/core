@@ -52,14 +52,16 @@ menu.items[menu.items.length - 1].click = function() {
     //console.log('bye bye');
 	App.stopQueryInterval();
 
-	if (process.env.UI_ENABLED) {
+	App.quit();
+
+	/*if (process.env.UI_ENABLED) {
 		App.quit();
 	}
 	else {
 		setTimeout(function () {
 			App.quit();
 		}, 40000);
-	}
+	}*/
 };
 
 tray.menu = menu;

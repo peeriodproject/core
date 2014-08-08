@@ -22,7 +22,7 @@
     "protocol": {
         "waitForNodeReactionInSeconds": 3,
         "messages"                    : {
-            "maxByteLengthPerMessage"      : 104,
+            "maxByteLengthPerMessage"      : 1048576,
             "msToKeepNonAddressableMemory" : 10000,
             "msToWaitForIncomingMessage"   : 3000,
             "maxSecondsToWaitForConnection": 2.8
@@ -55,7 +55,7 @@
     "fileTransfer": {
         "maximumNumberOfParallelDownloads": 10,
         "maximumNumberOfParallelUploads": 10,
-        "uploadBlockSizeInBytes": 1024000,
+        "uploadBlockSizeInBytes": 102,
         "query": {
             "broadcastValidityInSeconds": 60,
             "minimumNumberOfReadyCircuits": 1,
@@ -70,7 +70,7 @@
         }
     },
     "hydra": {
-        "desiredNumberOfCircuits": 0,
+        "desiredNumberOfCircuits": 3,
         "maximumNumberOfMaintainedCells": 30,
         "minimumNumberOfRelayNodes": 3,
         "maximumNumberOfRelayNodes": 4,
