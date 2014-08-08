@@ -177,7 +177,7 @@ var TCPSocket = (function (_super) {
 
             if (_this._idleTimeout) {
                 global.clearTimeout(_this._idleTimeout);
-                _this._heartbeatTimeout = null;
+                _this._idleTimeout = null;
             }
 
             if (_this._heartbeatTimeout) {

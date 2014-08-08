@@ -190,7 +190,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 			if (this._idleTimeout) {
 				global.clearTimeout(this._idleTimeout);
-				this._heartbeatTimeout = null;
+				this._idleTimeout = null;
 			}
 
 			if (this._heartbeatTimeout) {
