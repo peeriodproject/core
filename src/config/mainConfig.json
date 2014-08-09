@@ -55,7 +55,7 @@
     "fileTransfer": {
         "maximumNumberOfParallelDownloads": 10,
         "maximumNumberOfParallelUploads": 10,
-        "uploadBlockSizeInBytes": 102,
+        "uploadBlockSizeInBytes": 512000,
         "query": {
             "broadcastValidityInSeconds": 60,
             "minimumNumberOfReadyCircuits": 1,
@@ -65,12 +65,12 @@
             "waitForOwnResponseAsBroadcastInitiatorInSeconds": 2
         },
         "shareMessaging": {
-            "waitForResponseMessageInSeconds": 20,
+            "waitForResponseMessageInSeconds": 40,
             "maximumNumberOfMessageTries": 3
         }
     },
     "hydra": {
-        "desiredNumberOfCircuits": 0,
+        "desiredNumberOfCircuits": 6,
         "maximumNumberOfMaintainedCells": 80,
         "minimumNumberOfRelayNodes": 3,
         "maximumNumberOfRelayNodes": 4,
@@ -78,7 +78,7 @@
         "waitForAdditiveBatchFinishInSeconds": 20,
         "nodePicker": {
             "allowIdenticalIps": true,
-            "roundThreshold": 2,
+            "roundThreshold": 7,
             "waitingTimeInSeconds": 3,
             "errorThreshold": 5
         },
