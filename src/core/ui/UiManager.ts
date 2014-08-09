@@ -250,6 +250,10 @@ class UiManager implements UiManagerInterface {
 		this._channelComponentsMap[channelName] = component;
 		this._channelComponentsMap[channelName].onUiUpdate(() => {
 			component.getState((state) => {
+				if (!this._channelsMap[channelName] || !this._channelComponentsMap[channelName]) {
+					return;
+				}
+
 				this._channelsMap[channelName].send('update', state);
 				this._channelComponentsMap[channelName].onAfterUiUpdate();
 			});

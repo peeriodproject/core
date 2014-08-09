@@ -230,6 +230,10 @@ var UiManager = (function () {
         this._channelComponentsMap[channelName] = component;
         this._channelComponentsMap[channelName].onUiUpdate(function () {
             component.getState(function (state) {
+                if (!_this._channelsMap[channelName] || !_this._channelComponentsMap[channelName]) {
+                    return;
+                }
+
                 _this._channelsMap[channelName].send('update', state);
                 _this._channelComponentsMap[channelName].onAfterUiUpdate();
             });
