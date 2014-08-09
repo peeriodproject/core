@@ -128,8 +128,6 @@ var NetworkMaintainer = (function (_super) {
 
             this._prepopulateBucketRefreshes();
 
-            logger.log('topology', 'Joining the network');
-
             this._proxyManager.on('contactNodeInformation', function (node) {
                 _this._handleBucketAccess(node);
             });
@@ -196,9 +194,9 @@ var NetworkMaintainer = (function (_super) {
     */
     NetworkMaintainer.prototype._findEntryNodeAndJoin = function (avoidNode) {
         var _this = this;
-        console.log('finding entry node and join');
         this._nodeSeekerManager.forceFindActiveNode(avoidNode, function (node) {
-            logger.log('topology', 'Found an entry node, starting search for own id...', { with: node.getId().toHexString() });
+            _this.emit('foundEntryNode', node);
+
             console.log('Found an entry node, starting search for own id...');
             _this._findClosestNodesManager.startCycleFor(_this._myIdToSearchFor, [node]);
 
@@ -206,12 +204,11 @@ var NetworkMaintainer = (function (_super) {
                 //logger.info('Find closest nodes cycle finished', {for: searchForId.toHexString(), resultLen: resultingList.length});
                 if (!resultingList.length) {
                     console.log('Resulting list is empty, trying to find another node');
-                    logger.log('topology', 'Resulting list is empty, trying to find another node.');
+
                     setImmediate(function () {
                         _this._findEntryNodeAndJoin(node);
                     });
                 } else {
-                    logger.log('topology', 'The initial contact query is done.', { resultLen: resultingList.length });
                     _this.emit('initialContactQueryCompleted');
                     _this._finalizeEntryWithBucketRefreshes();
                 }

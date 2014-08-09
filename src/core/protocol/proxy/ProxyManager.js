@@ -231,6 +231,7 @@ var ProxyManager = (function (_super) {
         this._confirmedProxies[identifier] = node;
         this._protocolConnectionManager.keepSocketsOpenFromNode(node);
         this._updateMyNodeAddresses();
+        this.emit('proxyCount', Object.keys(this._confirmedProxies).length);
     };
 
     /**
@@ -244,6 +245,7 @@ var ProxyManager = (function (_super) {
     ProxyManager.prototype._addToProxyingFor = function (identifier, node) {
         this._proxyingFor[identifier] = node;
         this._protocolConnectionManager.keepSocketsOpenFromNode(node);
+        this.emit('proxyingForCount', Object.keys(this._proxyingFor).length);
     };
 
     /**
@@ -554,13 +556,14 @@ var ProxyManager = (function (_super) {
                     _this._updateMyNodeAddresses();
                     _this.emit('lostProxy', confirmedProxy);
                     console.log('Lost proxy %o', confirmedProxy.getId().toHexString());
-                    logger.log('proxy', 'Lost proxy', { id: confirmedProxy.getId().toHexString() });
+                    _this.emit('proxyCount', Object.keys(_this._confirmedProxies).length);
                 }
                 if (proxyingFor) {
                     _this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(proxyingFor);
                     delete _this._proxyingFor[identifier];
                     _this.emit('lostProxyingFor', proxyingFor);
                     logger.proxy('proxy', 'No longer proxying for', { id: proxyingFor.getId().toHexString() });
+                    _this.emit('proxyingForCount', Object.keys(_this._proxyingFor).length);
                 }
 
                 if (doStartCycle) {

@@ -260,6 +260,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		this._confirmedProxies[identifier] = node;
 		this._protocolConnectionManager.keepSocketsOpenFromNode(node);
 		this._updateMyNodeAddresses();
+		this.emit('proxyCount', Object.keys(this._confirmedProxies).length);
 	}
 
 	/**
@@ -273,6 +274,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 	private _addToProxyingFor (identifier:string, node:ContactNodeInterface):void {
 		this._proxyingFor[identifier] = node;
 		this._protocolConnectionManager.keepSocketsOpenFromNode(node);
+		this.emit('proxyingForCount', Object.keys(this._proxyingFor).length);
 	}
 
 	/**
@@ -589,13 +591,14 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 					this._updateMyNodeAddresses();
 					this.emit('lostProxy', confirmedProxy);
 					console.log('Lost proxy %o', confirmedProxy.getId().toHexString());
-					logger.log('proxy', 'Lost proxy', {id: confirmedProxy.getId().toHexString()})
+					this.emit('proxyCount', Object.keys(this._confirmedProxies).length);
 				}
 				if (proxyingFor) {
 					this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(proxyingFor);
 					delete this._proxyingFor[identifier];
 					this.emit('lostProxyingFor', proxyingFor);
 					logger.proxy('proxy', 'No longer proxying for', {id: proxyingFor.getId().toHexString()})
+					this.emit('proxyingForCount', Object.keys(this._proxyingFor).length);
 				}
 
 
