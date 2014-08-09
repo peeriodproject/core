@@ -114,6 +114,7 @@
         "host"             : "localhost",
         "port"             : 9200,
         "requestTimeoutInSeconds"   : 60,
+        "maxIncomingResponsesSize": 100,
         "binaryPath"       : "core/search/elasticsearch",
         "databasePath"     : "db/searchStore",
         "searchStoreConfig": "./config/searchStore.json",

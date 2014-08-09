@@ -417,7 +417,8 @@ var SearchClient = (function () {
             fields: [
                 '_source',
                 '_timestamp'
-            ]
+            ],
+            size: this._config.get('search.maxIncomingResponsesSize')
         }, function (err, response, status) {
             return _this._checkHitsAndCallCallback(err, response, status, callback);
         });

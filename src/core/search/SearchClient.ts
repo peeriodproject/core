@@ -433,7 +433,8 @@ class SearchClient implements SearchClientInterface {
 			fields: [
 				'_source',
 				'_timestamp'
-			]
+			],
+			size: this._config.get('search.maxIncomingResponsesSize')
 		}, (err, response:Object, status:number) => {
 			return this._checkHitsAndCallCallback(err, response, status, callback);
 		});
