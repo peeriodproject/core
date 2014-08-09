@@ -109,7 +109,7 @@ var TCPSocketHandler = (function (_super) {
 
         this._socketFactory = socketFactory;
 
-        this.setMyExternalIp(opts.myExternalIp);
+        this._myExternalIp = opts.myExternalIp;
         this._myOpenPorts = opts.myOpenPorts || [];
         this._idleConnectionKillTimeout = opts.idleConnectionKillTimeout || 0;
         this._allowHalfOpenSockets = !!opts.allowHalfOpenSockets;
@@ -118,8 +118,7 @@ var TCPSocketHandler = (function (_super) {
         this._simulatorRTT = opts.simulatorRTT || 0;
         this._maxReachableTries = opts.maxReachableTries || 3;
         this._heartbeatTimeout = opts.heartbeatTimeout;
-
-        this._TESTstartSocketInterval();
+        //this._TESTstartSocketInterval();
     }
     TCPSocketHandler.prototype._TESTsocketCount = function (socket) {
         var _this = this;
@@ -372,8 +371,9 @@ var TCPSocketHandler = (function (_super) {
     };
 
     TCPSocketHandler.prototype.setMyExternalIp = function (ip) {
-        // @todo Here IPv6 addresses should be transformed into a standardized format!
         this._myExternalIp = ip;
+
+        this.emit('ipReset', ip);
     };
     return TCPSocketHandler;
 })(events.EventEmitter);

@@ -49,6 +49,8 @@ var QueryManager = (function (_super) {
         */
         this._maxNumOfParallelQueries = 0;
         /**
+        * @deprecated
+        *
         * The minimum number of established circuits before a query can be issued, populated by config.
         *
         * @member {number} core.protocol.fileTransfer.QueryManager~_minNumOfReadyCircuits
@@ -71,7 +73,10 @@ var QueryManager = (function (_super) {
         this._circuitManager = circuitManager;
         this._searchBridge = searchBridge;
         this._maxNumOfParallelQueries = transferConfig.get('fileTransfer.query.maximumNumberOfParallelQueries');
+
+        // the 'minimum number of ready circuits' is no longer used. one can search with only one circuit.
         this._minNumOfReadyCircuits = transferConfig.get('fileTransfer.query.minimumNumberOfReadyCircuits');
+
         this._currentNumOfReadyCircuits = this._circuitManager.getReadyCircuits().length;
 
         this._setupListeners();
@@ -103,7 +108,7 @@ var QueryManager = (function (_super) {
 
         if (Object.keys(this._currentQueries).length >= this._maxNumOfParallelQueries) {
             return 'MAX_EXCEED';
-        } else if (this._currentNumOfReadyCircuits < this._minNumOfReadyCircuits) {
+        } else if (!this._currentNumOfReadyCircuits) {
             return 'NO_ANON';
         }
 

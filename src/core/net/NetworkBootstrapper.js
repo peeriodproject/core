@@ -24,6 +24,18 @@ var NetworkBootstrapper = (function () {
         */
         this._externalIp = '';
         /**
+        * The timeout to recheck the external IP which always gets reset
+        *
+        * @member {number} core.net.NetworkBootstrapper~_ipRecheckInterval
+        */
+        this._ipRecheckTimeout = 0;
+        /**
+        * Stores the number of milliseconds to wait between two IP checks.
+        *
+        * @member {number} core.net.NetworkBootstrapper~_recheckIpEveryMs
+        */
+        this._recheckIpEveryMs = 0;
+        /**
         * The TCPSockhetHandler instance
         *
         * @member {core.net.tcp.TCPSocketHandlerInterface} NetworkBootstrapper~_tcpSocketHandler
@@ -38,6 +50,7 @@ var NetworkBootstrapper = (function () {
         this._config = config;
         this._ipObtainers = ipObtainers;
         this._tcpSocketHandlerFactory = socketHandlerFactory;
+        this._recheckIpEveryMs = this._config.get('net.recheckIpIntervalInSeconds') * 1000;
     }
     NetworkBootstrapper.prototype.bootstrap = function (callback) {
         var _this = this;
@@ -50,6 +63,7 @@ var NetworkBootstrapper = (function () {
                 _this._tcpSocketHandler = _this._tcpSocketHandlerFactory.create(new TCPSocketFactory(), _this._getTCPSocketHandlerOptions());
 
                 _this._tcpSocketHandler.autoBootstrap(function (openPorts) {
+                    _this._setIpRecheckTimeout();
                     callback(null);
                 });
             }
@@ -67,6 +81,26 @@ var NetworkBootstrapper = (function () {
 
     NetworkBootstrapper.prototype.getTCPSocketHandler = function () {
         return this._tcpSocketHandler;
+    };
+
+    NetworkBootstrapper.prototype._setIpRecheckTimeout = function () {
+        var _this = this;
+        if (this._ipRecheckTimeout) {
+            global.clearTimeout(this._ipRecheckTimeout);
+        }
+
+        this._ipRecheckTimeout = global.setTimeout(function () {
+            _this._ipRecheckTimeout = 0;
+
+            _this._getExternalIp(function (err, ip) {
+                if (ip && ip !== _this._externalIp) {
+                    _this._externalIp = ip;
+                    _this._tcpSocketHandler.setMyExternalIp(ip);
+                }
+
+                _this._setIpRecheckTimeout();
+            });
+        }, this._recheckIpEveryMs);
     };
 
     /**
@@ -96,6 +130,7 @@ var NetworkBootstrapper = (function () {
             } else if (err) {
                 callback(new Error('NetworkBootstrapper: All IP obtainers throw an error.'), null);
             } else {
+                // @todo IP should be transformed into a standardized format (especiall IPv6)
                 callback(null, ip);
             }
         };

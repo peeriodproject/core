@@ -14,7 +14,7 @@
         "heartbeatTimeout"         : 3,
         "outboundConnectionTimeout": 3000,
         "myOpenPorts"              : [],
-
+        "recheckIpIntervalInSeconds": 60,
         "simulator": {
             "rtt": 0
         }

@@ -99,6 +99,10 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 	 * END TESTING PURPOSES ONLY
 	 */
 
+	public getDesiredNumberOfCircuits ():number {
+		return this._desiredNumberOfCircuits;
+	}
+
 	public getRandomFeedingNodesBatch ():HydraNodeList {
 		var nodes:HydraNodeList = [];
 		var circuits:HydraCircuitList = this.getReadyCircuits();

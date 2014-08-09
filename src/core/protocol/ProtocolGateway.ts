@@ -305,6 +305,7 @@ class ProtocolGateway extends events.EventEmitter implements ProtocolGatewayInte
 
 		this._networkMaintainer.joinNetwork();
 		this.emit('JOIN_NETWORK');
+		this.emit('DESIRED_AMOUNT_OF_CIRCUITS', this._hydraCircuitManager.getDesiredNumberOfCircuits());
 	}
 
 

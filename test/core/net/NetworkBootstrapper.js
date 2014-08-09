@@ -18,6 +18,7 @@ describe('CORE --> NET --> NetworkBootstrapper', function () {
     var tcpHandlerStub;
     var ipObtainerStubSuccess;
     var ipObtainerStubError;
+    var change = false;
 
     beforeEach(function () {
         sandbox = sinon.sandbox.create();
@@ -26,7 +27,9 @@ describe('CORE --> NET --> NetworkBootstrapper', function () {
                 if (key === 'net.allowHalfOpenSockets')
                     return false;
                 if (key === 'net.connectionRetrySeconds')
-                    return 3;
+                    return 2;
+                if (key === 'net.recheckIpIntervalInSeconds')
+                    return 2;
                 if (key === 'net.idleConnectionKillTimeout')
                     return 5;
                 if (key === 'net.myOpenPorts')
@@ -37,6 +40,12 @@ describe('CORE --> NET --> NetworkBootstrapper', function () {
         tcpHandlerStub = testUtils.stubPublicApi(sandbox, TCPSocketHandler, {
             "autoBootstrap": function (callback) {
                 callback();
+            },
+            "setMyExternalIp": function (ip) {
+                this.ip = ip;
+            },
+            "getMyExternalIp": function () {
+                return this.ip;
             }
         });
 
@@ -48,7 +57,9 @@ describe('CORE --> NET --> NetworkBootstrapper', function () {
 
         ipObtainerStubSuccess = testUtils.stubPublicApi(sandbox, JSONWebIp, {
             "obtainIP": function (cb) {
-                cb(null, '127.0.0.1');
+                var ip = change ? '127.0.0.2' : '127.0.0.1';
+
+                cb(null, ip);
             }
         });
 
@@ -103,6 +114,21 @@ describe('CORE --> NET --> NetworkBootstrapper', function () {
                 done();
             } else
                 throw new Error();
+        });
+    });
+
+    it('should notice an ip change and set the IP on the TCP socket handler', function (done) {
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubSuccess]);
+
+        bootstrapper.bootstrap(function () {
+            // there is none yet
+            (bootstrapper.getTCPSocketHandler().getMyExternalIp() === undefined).should.be.true;
+
+            change = true;
+            setTimeout(function () {
+                bootstrapper.getTCPSocketHandler().getMyExternalIp().should.equal('127.0.0.2');
+                done();
+            }, 2500);
         });
     });
 });

@@ -53,6 +53,8 @@ class QueryManager extends events.EventEmitter implements QueryManagerInterface 
 	private _maxNumOfParallelQueries:number = 0;
 
 	/**
+	 * @deprecated
+	 *
 	 * The minimum number of established circuits before a query can be issued, populated by config.
 	 *
 	 * @member {number} core.protocol.fileTransfer.QueryManager~_minNumOfReadyCircuits
@@ -80,7 +82,10 @@ class QueryManager extends events.EventEmitter implements QueryManagerInterface 
 		this._circuitManager = circuitManager;
 		this._searchBridge = searchBridge;
 		this._maxNumOfParallelQueries = transferConfig.get('fileTransfer.query.maximumNumberOfParallelQueries');
+
+		// the 'minimum number of ready circuits' is no longer used. one can search with only one circuit.
 		this._minNumOfReadyCircuits = transferConfig.get('fileTransfer.query.minimumNumberOfReadyCircuits');
+
 		this._currentNumOfReadyCircuits = this._circuitManager.getReadyCircuits().length;
 
 		this._setupListeners();
@@ -116,7 +121,7 @@ class QueryManager extends events.EventEmitter implements QueryManagerInterface 
 		if (Object.keys(this._currentQueries).length >= this._maxNumOfParallelQueries) {
 			return 'MAX_EXCEED';
 		}
-		else if (this._currentNumOfReadyCircuits < this._minNumOfReadyCircuits) {
+		else if (!this._currentNumOfReadyCircuits) {
 			return 'NO_ANON';
 		}
 
