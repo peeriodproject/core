@@ -248,16 +248,21 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 	 *
 	 * @param {core.protocol.hydra.HydraCircuitList} list The array to iterate over.
 	 * @param {core.protocol.hydra.HydraCircuitInterface} circuit The circuit to look for in the array and to remove from it.
+	 * @returns {boolean} `true` If one was found and removed, `false` if no match to remove was found
 	 */
-	private _iterateOverListAndRemoveCircuit (list:HydraCircuitList, circuit:HydraCircuitInterface):void {
+	private _iterateOverListAndRemoveCircuit (list:HydraCircuitList, circuit:HydraCircuitInterface):boolean {
+		var matched:boolean = false;
+
 		for (var i=0, l=list.length; i<l; i++) {
 			if (list[i] === circuit) {
-
 				list.splice(i, 1);
+				matched = true;
 
 				break;
 			}
 		}
+
+		return matched;
 	}
 
 	/**
@@ -302,11 +307,13 @@ class CircuitManager extends events.EventEmitter implements CircuitManagerInterf
 		circuit.removeAllListeners('fileTransferMessage');
 
 		this._iterateOverListAndRemoveCircuit(this._circuitsUnderConstruction, circuit);
-		this._iterateOverListAndRemoveCircuit(this._productionReadyCircuits, circuit);
+		var emit:boolean = this._iterateOverListAndRemoveCircuit(this._productionReadyCircuits, circuit);
 
 		delete this._constructedCircuitsByCircuitId[circuit.getCircuitId()];
 
-		this._emitCircuitCount();
+		if (emit) {
+			this._emitCircuitCount();
+		}
 
 		this._checkAndConstructCircuit();
 	}

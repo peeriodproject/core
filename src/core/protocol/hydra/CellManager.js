@@ -208,6 +208,8 @@ var CellManager = (function (_super) {
         cell.on('fileTransferMessage', function (circuitId, payload) {
             _this.emit('cellReceivedTransferMessage', circuitId, payload);
         });
+
+        this.emit('cellCount', this._maintainedCells.length);
     };
 
     /**
@@ -394,6 +396,7 @@ var CellManager = (function (_super) {
         }
 
         this.emit('tornDownCell', predecessorCircuitId);
+        this.emit('cellCount', this._maintainedCells.length);
     };
 
     /**

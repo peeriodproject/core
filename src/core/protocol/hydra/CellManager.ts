@@ -225,6 +225,8 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 		cell.on('fileTransferMessage', (circuitId:string, payload:Buffer) => {
 			this.emit('cellReceivedTransferMessage', circuitId, payload);
 		});
+
+		this.emit('cellCount', this._maintainedCells.length);
 	}
 
 	/**
@@ -414,6 +416,7 @@ class CellManager extends events.EventEmitter implements CellManagerInterface {
 		}
 
 		this.emit('tornDownCell', predecessorCircuitId);
+		this.emit('cellCount', this._maintainedCells.length);
 	}
 
 	/**

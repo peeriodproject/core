@@ -242,41 +242,69 @@ class ProtocolGateway extends events.EventEmitter implements ProtocolGatewayInte
 
 		if (this._proxyManager.needsAdditionalProxy()) {
 			console.log('needing proxy');
+
+			this.emit('NEEDS_PROXY', true);
+
 			this._networkMaintainer.once('initialContactQueryCompleted', () => {
 				console.log('Kicking off proxy search...');
+
 				this._proxyManager.kickOff();
 			});
 		}
 		else {
 			console.log('No proxy needed.');
+
+			this.emit('NEEDS_PROXY', false);
+
 			this._proxyManager.kickOff();
 		}
 
+		this._networkMaintainer.on('foundEntryNode', () => {
+			this.emit('FOUND_ENTRY_NODE');
+		});
+
+		this._proxyManager.on('proxyCount', (count:number) => {
+			this.emit('NUM_OF_PROXIES', count);
+		});
+
+		this._proxyManager.on('proxyingForCount', (count:number) => {
+			this.emit('NUM_OF_PROXYING_FOR', count);
+		});
+
 		this._networkMaintainer.once('initialContactQueryCompleted', () => {
+			this.emit('INITIAL_CONTACT_QUERY_COMPLETE');
 			console.log('Initial nodes found!');
 			logger.log('topology', 'Initial contact query completed. Kicking off proxy manager...', {id: this._myNode.getId().toHexString()});
 		});
 
 		this._networkMaintainer.once('joinedNetwork', () => {
-			console.log('Successfully joined the network, prepared hydras.');
+			this.emit('TOPOLOGY_JOIN_COMPLETE');
+
+			console.log('Successfully joined the network, preparing hydras.');
 			logger.log('topology', 'Successfully joined the network.', {id: this._myNode.getId().toHexString()});
 
 			// start the hydra things
 			this._hydraCircuitManager.kickOff();
 
 			this._hydraCircuitManager.on('circuitCount', (count:number) => {
+				this.emit('NUM_OF_HYDRA_CIRCUITS', count);
 				console.log('Maintaining currently %d circuits', count);
 			});
 
-			this._hydraCircuitManager.once('desiredCircuitAmountReached', () => {
-				console.log('Desired number of hydra circuits reached, ready to search.');
+			this._hydraCircuitManager.on('desiredCircuitAmountReached', () => {
+				console.log('Desired number of hydra circuits reached.');
 				logger.log('hydraSuccess', 'Hydra circuits constructed.', {id: this._myNode.getId().toHexString()});
 				this.emit('readyToSearch');
+				this.emit('HYDRA_CIRCUITS_DESIRED_AMOUNT_REACHED');
+			});
+
+			this._hydraCellManager.on('cellCount', (count:number) => {
+				this.emit('NUM_OF_HYDRA_CELLS', count);
 			});
 		});
 
 		this._networkMaintainer.joinNetwork();
-
+		this.emit('JOIN_NETWORK');
 	}
 
 
