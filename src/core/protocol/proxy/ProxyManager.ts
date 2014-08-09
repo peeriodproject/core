@@ -609,7 +609,7 @@ class ProxyManager extends events.EventEmitter implements ProxyManagerInterface 
 		});
 
 		this._myNode.onAddressChange((info?:string) => {
-			console.log('address has changed');
+			console.log('address has changed. %o', info);
 
 			if (this._addressChangeTimeout) {
 				global.clearTimeout(this._addressChangeTimeout);

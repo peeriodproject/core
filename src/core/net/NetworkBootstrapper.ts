@@ -39,6 +39,20 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 	private _ipObtainers:Array<ExternalIPObtainerInterface>;
 
 	/**
+	 * The timeout to recheck the external IP which always gets reset
+	 *
+	 * @member {number} core.net.NetworkBootstrapper~_ipRecheckInterval
+	 */
+	private _ipRecheckTimeout:number = 0;
+
+	/**
+	 * Stores the number of milliseconds to wait between two IP checks.
+	 *
+	 * @member {number} core.net.NetworkBootstrapper~_recheckIpEveryMs
+	 */
+	private _recheckIpEveryMs:number = 0;
+
+	/**
 	 * The TCPSockhetHandler instance
 	 *
 	 * @member {core.net.tcp.TCPSocketHandlerInterface} NetworkBootstrapper~_tcpSocketHandler
@@ -56,6 +70,7 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 		this._config = config;
 		this._ipObtainers = ipObtainers;
 		this._tcpSocketHandlerFactory = socketHandlerFactory;
+		this._recheckIpEveryMs = this._config.get('net.recheckIpIntervalInSeconds') * 1000;
 	}
 
 	public bootstrap (callback:(err:Error) => any):void {
@@ -68,9 +83,11 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 
 				this._tcpSocketHandler = this._tcpSocketHandlerFactory.create(new TCPSocketFactory(), this._getTCPSocketHandlerOptions());
 
-				this._tcpSocketHandler.autoBootstrap(function (openPorts:Array<number>) {
+				this._tcpSocketHandler.autoBootstrap((openPorts:Array<number>) => {
+					this._setIpRecheckTimeout();
 					callback(null);
 				});
+
 			}
 
 		});
@@ -87,6 +104,27 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 
 	public getTCPSocketHandler ():TCPSocketHandlerInterface {
 		return this._tcpSocketHandler;
+	}
+
+	private _setIpRecheckTimeout ():void {
+		if (this._ipRecheckTimeout) {
+			global.clearTimeout(this._ipRecheckTimeout);
+		}
+
+		this._ipRecheckTimeout = global.setTimeout(() => {
+			this._ipRecheckTimeout = 0;
+
+			this._getExternalIp((err:Error, ip:string) => {
+
+				if (ip && ip !== this._externalIp) {
+					this._externalIp = ip;
+					this._tcpSocketHandler.setMyExternalIp(ip);
+				}
+
+				this._setIpRecheckTimeout();
+			});
+
+		}, this._recheckIpEveryMs);
 	}
 
 	/**
@@ -119,6 +157,8 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 			}
 			// got an ip
 			else {
+				// @todo IP should be transformed into a standardized format (especiall IPv6)
+
 				callback(null, ip);
 			}
 		};

@@ -988,6 +988,14 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 			}
 		});
 
+		this._tcpSocketHandler.on('ipReset', (ip:string) => {
+			if (this._tcpSocketHandler.getOpenServerPortsArray().length) {
+				console.log('External IP change must be handled');
+				// has no proxy, so change the addresses
+				this._myNode.updateAddresses(this.getExternalAddressList(), 'ipChange');
+			}
+		});
+
 		this.on('confirmedSocket', this._onConfirmedSocket);
 	}
 

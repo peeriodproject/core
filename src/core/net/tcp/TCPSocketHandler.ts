@@ -78,7 +78,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	 *
 	 * @member {Object} TCPSocketHandler~_openTCPServer
 	 */
-	private _openTCPServers:{[port:string]:net.Socket} = {};
+	private _openTCPServers:{[port:number]:net.Server} = {};
 
 	/**
 	 * Number of ms to wait until an outbound socket without emitting `connected` will be considered as unsuccessful.
@@ -141,7 +141,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 
 		this._socketFactory = socketFactory;
 
-		this.setMyExternalIp(opts.myExternalIp);
+		this._myExternalIp = opts.myExternalIp;
 		this._myOpenPorts = opts.myOpenPorts || [];
 		this._idleConnectionKillTimeout = opts.idleConnectionKillTimeout || 0;
 		this._allowHalfOpenSockets = !!opts.allowHalfOpenSockets;
@@ -151,7 +151,7 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 		this._maxReachableTries = opts.maxReachableTries || 3;
 		this._heartbeatTimeout = opts.heartbeatTimeout;
 
-		this._TESTstartSocketInterval();
+		//this._TESTstartSocketInterval();
 	}
 
 	public autoBootstrap (callback:(openPorts:Array<number>) => any):void {
@@ -393,9 +393,9 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	}
 
 	public setMyExternalIp (ip:string):void {
-		// @todo Here IPv6 addresses should be transformed into a standardized format!
-
 		this._myExternalIp = ip;
+
+		this.emit('ipReset', ip);
 	}
 
 }

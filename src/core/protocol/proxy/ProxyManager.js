@@ -573,7 +573,7 @@ var ProxyManager = (function (_super) {
         });
 
         this._myNode.onAddressChange(function (info) {
-            console.log('address has changed');
+            console.log('address has changed. %o', info);
 
             if (_this._addressChangeTimeout) {
                 global.clearTimeout(_this._addressChangeTimeout);

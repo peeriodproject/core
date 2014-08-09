@@ -468,4 +468,25 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () 
 			if (!err) done();
 		})
 	});
+
+	it('should change the the addresses of a node on IP change', function (done) {
+		var changeListener = (info:string) => {
+			info.should.equal('ipChange');
+			var addresses = myNode.getAddresses();
+			addresses.length.should.equal(1); // 60000 port
+			addresses[0].getIp().should.equal('127.0.0.2');
+			addresses[0].getPort().should.equal(60000);
+
+			myNode.removeOnAddressChange(changeListener);
+			tcpSocketHandler.setMyExternalIp('127.0.0.1');
+
+			setImmediate(function () {
+				done();
+			});
+		};
+
+		myNode.onAddressChange(changeListener);
+
+		tcpSocketHandler.setMyExternalIp('127.0.0.2');
+	});
 })
