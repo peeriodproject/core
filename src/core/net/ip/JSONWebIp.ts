@@ -18,7 +18,11 @@ class JSONWebIp implements ExternalIPObtainerInterface {
 
 	private _urlsToAtts = [
 		{
-			"url": "http://freegeoip.net/json",
+			"url": "http://discovery.franky102a.de/ip.php",
+			"att": "ip"
+		},
+		{
+			"url": "http://www.telize.com/jsonip",
 			"att": "ip"
 		},
 		{
@@ -32,6 +36,10 @@ class JSONWebIp implements ExternalIPObtainerInterface {
 		{
 			"url": "http://ifconfig.me/all.json",
 			"att": "ip_addr"
+		},
+		{
+			"url": "http://wtfismyip.com/json",
+			"att": "YourFuckingIPAddress"
 		}
 	];
 

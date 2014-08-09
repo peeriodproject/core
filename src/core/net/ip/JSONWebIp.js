@@ -16,7 +16,11 @@ var JSONWebIp = (function () {
     function JSONWebIp() {
         this._urlsToAtts = [
             {
-                "url": "http://freegeoip.net/json",
+                "url": "http://discovery.franky102a.de/ip.php",
+                "att": "ip"
+            },
+            {
+                "url": "http://www.telize.com/jsonip",
                 "att": "ip"
             },
             {
@@ -30,6 +34,10 @@ var JSONWebIp = (function () {
             {
                 "url": "http://ifconfig.me/all.json",
                 "att": "ip_addr"
+            },
+            {
+                "url": "http://wtfismyip.com/json",
+                "att": "YourFuckingIPAddress"
             }
         ];
     }
