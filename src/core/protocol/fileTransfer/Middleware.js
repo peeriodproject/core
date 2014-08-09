@@ -101,9 +101,12 @@ var Middleware = (function () {
     Middleware.prototype.feedNode = function (feedingNodes, associatedCircuitId, payloadToFeed) {
         var _this = this;
         if (feedingNodes.length) {
+            //console.log('Trying to feed nodes %o', feedingNodes);
             this._retrieveConnectionToNodeAndReduceBatch(feedingNodes, associatedCircuitId, function (node, socketIdentifier, isExisting) {
                 if (node && socketIdentifier) {
+                    //		console.log('retrieved connection to %o with ident %o', node, socketIdentifier);
                     _this._requestFeeding(node, socketIdentifier, function (accepted) {
+                        //			console.log('retrieved response to feeding request from %o with response %o', node, accepted);
                         if (!accepted) {
                             // try again
                             _this.feedNode(feedingNodes, associatedCircuitId, payloadToFeed);
@@ -173,6 +176,7 @@ var Middleware = (function () {
     * @param {Buffer} payloadToFeed The complete buffer of the message to feed.
     */
     Middleware.prototype._feedSocket = function (socketIdentifier, feedingIdentifier, payloadToFeed) {
+        //console.log('feeding socket %o', socketIdentifier);
         var bufferToSend = null;
 
         try  {
@@ -206,6 +210,7 @@ var Middleware = (function () {
         var timeout = 0;
 
         var responseListener = function (successful) {
+            //console.log('received a response with %o', successful);
             global.clearTimeout(timeout);
             if (!successful) {
                 _this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
@@ -213,8 +218,11 @@ var Middleware = (function () {
             callback(successful);
         };
 
+        //		console.log('request feeding. number of timeout is %o', this._waitForFeedingRequestResponseInMs);
+        //		console.log('waiting for event on %o', eventName);
         // set up the timeout to wait for a response
         timeout = global.setTimeout(function () {
+            //console.log('timing out');
             _this._transferMessageCenter.removeListener(eventName, responseListener);
             _this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
             callback(false);

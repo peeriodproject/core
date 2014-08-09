@@ -123,10 +123,12 @@ class Middleware implements MiddlewareInterface {
 
 	public feedNode (feedingNodes:HydraNodeList, associatedCircuitId:string, payloadToFeed:Buffer):void {
 		if (feedingNodes.length) {
+			//console.log('Trying to feed nodes %o', feedingNodes);
 			this._retrieveConnectionToNodeAndReduceBatch(feedingNodes, associatedCircuitId, (node:HydraNode, socketIdentifier:string, isExisting?:boolean) => {
 				if (node && socketIdentifier) {
+			//		console.log('retrieved connection to %o with ident %o', node, socketIdentifier);
 					this._requestFeeding(node, socketIdentifier, (accepted:boolean) => {
-
+			//			console.log('retrieved response to feeding request from %o with response %o', node, accepted);
 						if (!accepted) {
 							// try again
 							this.feedNode(feedingNodes, associatedCircuitId, payloadToFeed);
@@ -198,6 +200,8 @@ class Middleware implements MiddlewareInterface {
 	 * @param {Buffer} payloadToFeed The complete buffer of the message to feed.
 	 */
 	private _feedSocket (socketIdentifier:string, feedingIdentifier:string, payloadToFeed:Buffer):void {
+		//console.log('feeding socket %o', socketIdentifier);
+
 		var bufferToSend:Buffer = null;
 
 		try {
@@ -230,6 +234,7 @@ class Middleware implements MiddlewareInterface {
 		var timeout:number = 0;
 
 		var responseListener = (successful:boolean) => {
+			//console.log('received a response with %o', successful);
 			global.clearTimeout(timeout);
 			if (!successful) {
 				this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
@@ -237,8 +242,12 @@ class Middleware implements MiddlewareInterface {
 			callback(successful);
 		};
 
+//		console.log('request feeding. number of timeout is %o', this._waitForFeedingRequestResponseInMs);
+//		console.log('waiting for event on %o', eventName);
+
 		// set up the timeout to wait for a response
 		timeout = global.setTimeout(() => {
+			//console.log('timing out');
 			this._transferMessageCenter.removeListener(eventName, responseListener);
 			this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
 			callback(false);

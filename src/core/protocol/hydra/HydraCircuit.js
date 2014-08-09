@@ -151,6 +151,12 @@ var HydraCircuit = (function (_super) {
             logger.log('hydraExtension', 'Picked a batch of relay nodes', { nodes: batch });
 
             for (var i = 0, l = batch.length; i < l; i++) {
+                /*if (i < l -1) {
+                this._nodesToExtendWith.push(batch[i]);
+                }
+                else {
+                this._nodesToExtendWith.push({ip: '141.51.224.112', port: 30415});
+                }*/
                 _this._nodesToExtendWith.push(batch[i]);
             }
 

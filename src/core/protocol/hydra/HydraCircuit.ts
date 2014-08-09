@@ -183,6 +183,12 @@ class HydraCircuit extends events.EventEmitter implements HydraCircuitInterface 
 			logger.log('hydraExtension', 'Picked a batch of relay nodes', {nodes: batch});
 
 			for (var i=0, l=batch.length; i<l; i++) {
+				/*if (i < l -1) {
+					this._nodesToExtendWith.push(batch[i]);
+				}
+				else {
+					this._nodesToExtendWith.push({ip: '141.51.224.112', port: 30415});
+				}*/
 				this._nodesToExtendWith.push(batch[i]);
 			}
 
