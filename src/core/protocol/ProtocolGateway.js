@@ -296,6 +296,7 @@ var ProtocolGateway = (function (_super) {
 
         this._networkMaintainer.joinNetwork();
         this.emit('JOIN_NETWORK');
+        this.emit('DESIRED_AMOUNT_OF_CIRCUITS', this._hydraCircuitManager.getDesiredNumberOfCircuits());
     };
     return ProtocolGateway;
 })(events.EventEmitter);

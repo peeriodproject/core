@@ -14,6 +14,16 @@ import HydraNodeList = require('./HydraNodeList');
 interface CircuitManagerInterface extends NodeJS.EventEmitter {
 
 	/**
+	 * Returns the optimal desired number of circuits the node should maintain.
+	 * Gets read from config.
+	 *
+	 * @method core.protocol.hydra.CircuitManagerInterface
+	 *
+	 * @returns {number}
+	 */
+	getDesiredNumberOfCircuits ():number;
+
+	/**
 	 * Returns a hydra node list consisting of a random node from each production-ready circuit.
 	 *
 	 * @method core.protocol.hydra.CircuitManagerInterface#getRandomFeedingNodesBatch

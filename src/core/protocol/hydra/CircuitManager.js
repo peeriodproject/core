@@ -87,6 +87,10 @@ var CircuitManager = (function (_super) {
     /**
     * END TESTING PURPOSES ONLY
     */
+    CircuitManager.prototype.getDesiredNumberOfCircuits = function () {
+        return this._desiredNumberOfCircuits;
+    };
+
     CircuitManager.prototype.getRandomFeedingNodesBatch = function () {
         var nodes = [];
         var circuits = this.getReadyCircuits();
