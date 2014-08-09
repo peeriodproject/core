@@ -4,6 +4,8 @@ var fs = require('fs-extra');
 
 // global imports
 var JSONConfig = require('./config/JSONConfig');
+
+var i18n = require('i18n');
 var logger = require('./utils/logger/LoggerFactory').create();
 
 var AppQuitHandler = require('./utils/AppQuitHandler');
@@ -60,15 +62,24 @@ var UiShareManagerComponent = require('./ui/share/UiShareManagerComponent');
 var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
 
+var UiProtocolGatewayComponent = require('./ui/protocol/UiProtocolGatewayComponent');
 var UiSearchFormResultsManagerComponent = require('./ui/search/UiSearchFormResultsManagerComponent');
 var UiManager = require('./ui/UiManager');
+var UiSplashScreen = require('./ui/UiSplashScreen');
 
 // Testing purposes only
 var nameFixtures = require('../config/nameFixtures');
 
+i18n.configure({
+    locales: ['en', 'de'],
+    directory: './locales'
+});
+
 var App = {
     appQuitHandler: null,
     _gui: null,
+    _i18n: null,
+    _splashScreen: null,
     _uiComponents: [],
     _requestManager: null,
     _responseManager: null,
@@ -85,12 +96,15 @@ var App = {
 
         return this._stateHandlerFactory;
     },
+    setLocale: function (locale) {
+        i18n.setLocale(locale);
+    },
     start: function (gui, nwApp, dataPath, win) {
+        //win.showDevTools();
         var _this = this;
-        win.showDevTools();
-
         this._gui = gui;
         this.appQuitHandler = new AppQuitHandler(nwApp);
+        this._splashScreen = new UiSplashScreen(this._gui);
 
         // copy node discovery.json to app data path
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
@@ -120,12 +134,12 @@ var App = {
                 var downloadBridge = new DownloadBridge(downloadManager);
                 var uploadBridge = new UploadBridge(uploadManager);
 
+                _this.startUi();
+
                 // disables the network layer for testing purposes
                 if (!process.env.DISABLE_TOPOLOGY) {
                     _this.startTopology(dataPath, searchMessageBridge, downloadBridge, uploadBridge);
                 }
-
-                _this.startUi();
             });
 
             _this._requestManager = searchRequestManager;
@@ -166,6 +180,8 @@ var App = {
         }.bind(this));
     },
     startSharing: function (searchClient, searchRequestsIndexName, callback) {
+        this._splashScreen.setStatus('startSharing');
+
         var shareConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'share']);
         var downloadManager = new DownloadManager(shareConfig, this.appQuitHandler, this.getStateHandlerFactory(), searchClient, searchRequestsIndexName);
         var uploadManager = new UploadManager(this.appQuitHandler, searchClient, searchRequestsIndexName);
@@ -176,6 +192,8 @@ var App = {
     },
     startIndexer: function (searchConfig, searchClient, searchRequestManager, searchResponseManager, callback) {
         var _this = this;
+        this._splashScreen.setStatus('startIndexer');
+
         var fsConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'fs']);
         var pluginConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'plugin']);
         var searchAppConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'search']);
@@ -223,6 +241,8 @@ var App = {
     },
     // index database setup
     startSearchClient: function (callback) {
+        this._splashScreen.setStatus('startSearchDatabase');
+
         var searchConfig = new JSONConfig('../../config/mainConfig.json', ['search']);
 
         var searchStoreFactory = new SearchStoreFactory();
@@ -256,6 +276,8 @@ var App = {
             return;
         }
 
+        this._splashScreen.setStatus('startUi');
+
         var uiConfig = new JSONConfig('../../config/mainConfig.json', ['ui']);
 
         this.addUiComponent(new UiFolderDropzoneComponent(this._gui.Window));
@@ -264,6 +286,8 @@ var App = {
     },
     startTopology: function (dataPath, searchMessageBridge, downloadBridge, uploadBridge) {
         var _this = this;
+        this._splashScreen.setStatus('startTopology');
+
         var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
         var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
         var protocolConfig = new JSONConfig('../../config/mainConfig.json', ['protocol']);
@@ -341,6 +365,7 @@ var App = {
                         }
 
                         protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
+                        _this.addUiComponent(new UiProtocolGatewayComponent(protocolGateway, _this._splashScreen));
 
                         protocolGateway.start();
                         /*protocolGateway.once('readyToSearch',  ()=> {
