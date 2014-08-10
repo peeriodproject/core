@@ -238,7 +238,9 @@ var PluginRunner = (function () {
         var _this = this;
         if (this._sandboxScripts[itemPath]) {
             this._sandboxScripts[itemPath].once('timeout', function (methodName) {
+                _this._sandboxScripts[itemPath].removeAllListeners('exit');
                 _this._sandboxScripts[itemPath].reset();
+
                 return callback(new Error('PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call "' + methodName), null);
             });
         }
@@ -257,6 +259,7 @@ var PluginRunner = (function () {
         var _this = this;
         if (this._sandboxScripts[identifier]) {
             this._sandboxScripts[identifier].once('exit', function (err, output, methodName) {
+                _this._sandboxScripts[identifier].removeAllListeners('timeout');
                 _this._sandboxScripts[identifier].reset();
 
                 if (err) {

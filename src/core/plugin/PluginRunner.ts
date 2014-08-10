@@ -255,7 +255,9 @@ class PluginRunner implements PluginRunnerInterface {
 	private _registerSandboxTimeoutHandler (itemPath:string, callback:Function):void {
 		if (this._sandboxScripts[itemPath]) {
 			this._sandboxScripts[itemPath].once('timeout', (methodName):void => {
+				this._sandboxScripts[itemPath].removeAllListeners('exit');
 				this._sandboxScripts[itemPath].reset();
+
 				return callback(new Error('PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call "' + methodName), null);
 			});
 		}
@@ -273,6 +275,7 @@ class PluginRunner implements PluginRunnerInterface {
 	private _registerSandboxExitHandler (identifier:string, callback:Function, onExit:(output:any) => void):void {
 		if (this._sandboxScripts[identifier]) {
 			this._sandboxScripts[identifier].once('exit', (err, output, methodName):void => {
+				this._sandboxScripts[identifier].removeAllListeners('timeout');
 				this._sandboxScripts[identifier].reset();
 
 				if (err) {
