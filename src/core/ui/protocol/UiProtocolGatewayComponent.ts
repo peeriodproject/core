@@ -78,7 +78,7 @@ class UiProtocolGatewayComponent extends UiComponent {
 	getState (callback:(state) => any):void {
 		console.log(this._state);
 
-		return process.nextTick(callback.bind(null, Object.freeze(this._state)));
+		return process.nextTick(callback.bind(null, this._state));
 	}
 
 	/**

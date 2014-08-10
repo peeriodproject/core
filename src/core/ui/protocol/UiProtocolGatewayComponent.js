@@ -76,7 +76,7 @@ var UiProtocolGatewayComponent = (function (_super) {
     UiProtocolGatewayComponent.prototype.getState = function (callback) {
         console.log(this._state);
 
-        return process.nextTick(callback.bind(null, Object.freeze(this._state)));
+        return process.nextTick(callback.bind(null, this._state));
     };
 
     /**
