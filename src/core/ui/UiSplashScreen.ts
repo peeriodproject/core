@@ -30,13 +30,15 @@ class UiSplashScreen implements UiSplashScreenInterface {
 
 		this._window.once('loaded', () => {
 			this._window.showDevTools();
+			this._window.moveBy(0, 200);
 			this._updateStatus();
 			this.open();
 		});
 	}
 
 	public close ():void {
-		this._window.close(true);
+		//this._window.close(true);
+		this._window.hide();
 	}
 
 	public isOpen ():boolean {
