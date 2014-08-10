@@ -6,6 +6,7 @@ var App = require('./core/App');
 
 var logger = require('./core/utils/logger/LoggerFactory').create();
 
+App.setLocale(window.navigator.language);
 App.start(gui, gui.App, gui.App.dataPath, gui.Window.get());
 
 /*

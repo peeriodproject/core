@@ -55,7 +55,7 @@
     "fileTransfer": {
         "maximumNumberOfParallelDownloads": 10,
         "maximumNumberOfParallelUploads": 10,
-        "uploadBlockSizeInBytes": 512000,
+        "uploadBlockSizeInBytes": 2048000,
         "query": {
             "broadcastValidityInSeconds": 60,
             "minimumNumberOfReadyCircuits": 1,
@@ -65,7 +65,7 @@
             "waitForOwnResponseAsBroadcastInitiatorInSeconds": 2
         },
         "shareMessaging": {
-            "waitForResponseMessageInSeconds": 40,
+            "waitForResponseMessageInSeconds": 120,
             "maximumNumberOfMessageTries": 3
         }
     },
