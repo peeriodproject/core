@@ -107,7 +107,7 @@ var App = {
 	},
 
 	start: function (gui, nwApp, dataPath, win) {
-		//win.showDevTools();
+		win.showDevTools();
 
 		this._gui = gui;
 		this.appQuitHandler = new AppQuitHandler(nwApp);
@@ -131,8 +131,6 @@ var App = {
 
 			this.startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager, () => {
 				this._started.push('indexer');
-
-				this.startUi();
 			});
 
 			this.startSharing(searchClient, searchRequestsIndexName, (downloadManager, uploadManager) => {
@@ -140,8 +138,6 @@ var App = {
 
 				var downloadBridge = new DownloadBridge(downloadManager);
 				var uploadBridge = new UploadBridge(uploadManager);
-
-				this.startUi();
 
 				// disables the network layer for testing purposes
 				if (!process.env.DISABLE_TOPOLOGY) {
@@ -384,6 +380,8 @@ var App = {
 
 						protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
 						this.addUiComponent(new UiProtocolGatewayComponent(protocolGateway, this._splashScreen));
+
+						this.startUi();
 
 						protocolGateway.start();
 

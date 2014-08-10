@@ -100,8 +100,9 @@ var App = {
         i18n.setLocale(locale);
     },
     start: function (gui, nwApp, dataPath, win) {
-        //win.showDevTools();
         var _this = this;
+        win.showDevTools();
+
         this._gui = gui;
         this.appQuitHandler = new AppQuitHandler(nwApp);
         this._splashScreen = new UiSplashScreen(this._gui);
@@ -124,8 +125,6 @@ var App = {
 
             _this.startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager, function () {
                 _this._started.push('indexer');
-
-                _this.startUi();
             });
 
             _this.startSharing(searchClient, searchRequestsIndexName, function (downloadManager, uploadManager) {
@@ -133,8 +132,6 @@ var App = {
 
                 var downloadBridge = new DownloadBridge(downloadManager);
                 var uploadBridge = new UploadBridge(uploadManager);
-
-                _this.startUi();
 
                 // disables the network layer for testing purposes
                 if (!process.env.DISABLE_TOPOLOGY) {
@@ -366,6 +363,8 @@ var App = {
 
                         protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
                         _this.addUiComponent(new UiProtocolGatewayComponent(protocolGateway, _this._splashScreen));
+
+                        _this.startUi();
 
                         protocolGateway.start();
                         /*protocolGateway.once('readyToSearch',  ()=> {
