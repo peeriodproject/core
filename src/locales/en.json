@@ -8,5 +8,10 @@
 	"splashScreen.joinNetwork": "splashScreen.joinNetwork",
 	"splashScreen.foundEntryNode": "splashScreen.foundEntryNode",
 	"splashScreen.initialContactQueryComplete": "splashScreen.initialContactQueryComplete",
-	"splashScreen.topologyJoinComplete": "splashScreen.topologyJoinComplete"
+	"splashScreen.topologyJoinComplete": "splashScreen.topologyJoinComplete",
+	"core.jj.uiroutine.chromeextension.name": "core.jj.uiroutine.chromeextension.name",
+	"core.jj.uiroutine.chromeextension.description": "core.jj.uiroutine.chromeextension.description",
+	"core.jj.uiroutine.chromeextension.installButtonLabel": "core.jj.uiroutine.chromeextension.installButtonLabel",
+	"uiRoutinesManager.installRoutinesHeadline": "uiRoutinesManager.installRoutinesHeadline",
+	"uiRoutinesManager.installRoutinesDescription": "uiRoutinesManager.installRoutinesDescription"
 }

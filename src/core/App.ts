@@ -67,6 +67,8 @@ import UiProtocolGatewayComponent = require('./ui/protocol/UiProtocolGatewayComp
 import UiSearchFormResultsManagerComponent = require('./ui/search/UiSearchFormResultsManagerComponent');
 import UiManager = require('./ui/UiManager');
 import UiSplashScreen = require('./ui/UiSplashScreen');
+import UiRoutinesManager = require('./ui/UiRoutinesManager');
+import UiChromeExtensionRoutine = require('./ui/routines/UiChromeExtensionRoutine');
 
 // Testing purposes only
 var nameFixtures = require('../config/nameFixtures');
@@ -295,6 +297,24 @@ var App = {
 		this.addUiComponent(new UiFolderDropzoneComponent(this._gui.Window));
 
 		var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
+
+		this._splashScreen.once('close', () => {
+			this.checkUiRoutines();
+		});
+	},
+
+	checkUiRoutines: function () {
+		var uiRoutinesManager = new UiRoutinesManager(this._gui);
+		uiRoutinesManager.addUiRoutine(new UiChromeExtensionRoutine(new JSONConfig('../../config/uiChromeExtensionRoutine.json', ['extension'])));
+
+		uiRoutinesManager.getInstalledRoutineIds(function (err, routineIds) {
+			if (!routineIds || !routineIds.length) {
+				uiRoutinesManager.open();
+			}
+			else {
+				uiRoutinesManager.getUiRoutine(routineIds[0]).start();
+			}
+		});
 	},
 
 	startTopology: function (dataPath, searchMessageBridge, downloadBridge, uploadBridge) {
