@@ -1,5 +1,7 @@
 /// <reference path='../../main.d.ts' />
 
+import events = require('events');
+
 var i18n = require('i18n');
 
 import UiSplashScreenInterface = require('./interfaces/UiSplashScreenInterface');
@@ -8,7 +10,7 @@ import UiSplashScreenInterface = require('./interfaces/UiSplashScreenInterface')
  * @class core.ui.UiSplashScreen
  * @implements core.ui.UiSplashScreenInterface
  */
-class UiSplashScreen implements UiSplashScreenInterface {
+class UiSplashScreen extends events.EventEmitter implements UiSplashScreenInterface {
 
 	// todo ts-declaration gui.Window
 	private _window = null;
@@ -18,6 +20,8 @@ class UiSplashScreen implements UiSplashScreenInterface {
 	private _currentStatus:string = '';
 
 	constructor(gui:any) {
+		super();
+
 		this._window = gui.Window.open('./public/splash-screen.html', {
 			position: 'center',
 			width: 720,
@@ -39,6 +43,10 @@ class UiSplashScreen implements UiSplashScreenInterface {
 	public close ():void {
 		//this._window.close(true);
 		this._window.hide();
+
+		this._isOpen = false;
+
+		this.emit('close');
 	}
 
 	public isOpen ():boolean {
@@ -50,6 +58,8 @@ class UiSplashScreen implements UiSplashScreenInterface {
 		this._window.focus();
 
 		this._isOpen = true;
+
+		this.emit('open');
 	}
 
 	public setStatus (status:string):void {
