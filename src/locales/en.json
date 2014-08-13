@@ -13,5 +13,7 @@
 	"core.jj.uiroutine.chromeextension.description": "core.jj.uiroutine.chromeextension.description",
 	"core.jj.uiroutine.chromeextension.installButtonLabel": "core.jj.uiroutine.chromeextension.installButtonLabel",
 	"uiRoutinesManager.installRoutinesHeadline": "uiRoutinesManager.installRoutinesHeadline",
-	"uiRoutinesManager.installRoutinesDescription": "uiRoutinesManager.installRoutinesDescription"
+	"uiRoutinesManager.installRoutinesDescription": "uiRoutinesManager.installRoutinesDescription",
+	"uiRoutinesManager.installRoutinesButtonPlaceholder": "uiRoutinesManager.installRoutinesButtonPlaceholder",
+	"uiRoutinesManager.installRoutinesWindowTitle": "uiRoutinesManager.installRoutinesWindowTitle"
 }

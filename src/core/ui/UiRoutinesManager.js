@@ -14,8 +14,10 @@ var UiRoutinesManager = (function () {
         this._window = null;
         this._window = gui.Window.open('./public/ui-routines-installer.html', {
             position: 'center',
-            width: 720,
-            height: 400,
+            min_width: 1050,
+            width: 1050,
+            min_height: 600,
+            height: 600,
             frame: true,
             toolbar: false,
             resizable: true,
@@ -23,7 +25,6 @@ var UiRoutinesManager = (function () {
         });
 
         this._window.once('loaded', function () {
-            //this._window.showDevTools();
             //this._window.moveBy(0, 200);
             //this._updateStatus();
             _this._updateWindow();
@@ -127,14 +128,48 @@ var UiRoutinesManager = (function () {
         this.getInstalledRoutineIds(function (err, ids) {
             var routines = _this.getUiRoutines();
             var doc = _this._window.window.document;
-            var onClick = function (event) {
-                event.target.removeEventListener(onClick);
+            var routinesList = doc.getElementById('routines-list');
+            var items = [];
+            var getClosest = function (el, tag) {
+                // this is necessary since nodeName is always in upper case
+                tag = tag.toUpperCase();
+                do {
+                    if (el.nodeName === tag) {
+                        // tag name is found! let's return it. :)
+                        return el;
+                    }
+                } while(el = el.parentNode);
+
+                // not found :(
+                return null;
+            };
+            var onItemClick = function (event) {
+                var target = event.target.tagName === 'LI' ? event.target : getClosest(event.target, 'LI');
+                var newClassName = target.className.indexOf('active') === -1 ? target.className + ' active' : target.className.replace('active', '');
+
+                console.log(target);
+
+                event.preventDefault();
+
+                for (var i = 0, l = items.length; i < l; i++) {
+                    items[i].className = '';
+                }
+
+                target.className = newClassName;
+            };
+            var onLinkClick = function (event) {
+                event.target.removeEventListener(onLinkClick);
 
                 _this._clickInstallRoutineButton(event);
             };
 
+            routinesList.innerHTML = '';
+
+            doc.title = i18n.__('uiRoutinesManager.installRoutinesWindowTitle');
+
             doc.getElementById('headline').innerHTML = i18n.__('uiRoutinesManager.installRoutinesHeadline');
             doc.getElementById('description').innerHTML = i18n.__('uiRoutinesManager.installRoutinesDescription');
+            doc.getElementById('install-btn-placeholder').innerHTML = i18n.__('uiRoutinesManager.installRoutinesButtonPlaceholder');
 
             for (var i = 0, l = routines.length; i < l; i++) {
                 var routine = routines[i];
@@ -146,23 +181,51 @@ var UiRoutinesManager = (function () {
                 }
 
                 var item = doc.createElement('li');
+                var icon = routine.getIconClassName();
+
+                item.className = icon ? 'has-icon' : '';
+                item.addEventListener('click', onItemClick, false);
+
+                var iconEl;
+
+                var contentEl = doc.createElement('div');
                 var heading = doc.createElement('h2');
                 var desc = doc.createElement('p');
+                var linkWrapper = doc.createElement('div');
                 var link = doc.createElement('a');
+
+                if (icon) {
+                    iconEl = doc.createElement('div');
+                    iconEl.className = 'icon ' + icon;
+                }
+
+                contentEl.className = 'content';
 
                 heading.appendChild(doc.createTextNode(routine.getName()));
                 desc.appendChild(doc.createTextNode(routine.getDescription()));
 
+                linkWrapper.className = 'install-btn-wrapper';
+
                 link.appendChild(doc.createTextNode(routine.getInstallButtonLabel()));
                 link.setAttribute('data-id', routine.getId());
                 link.href = '#';
-                link.addEventListener('click', onClick, false);
+                link.className = 'install-btn';
+                link.addEventListener('click', onLinkClick, false);
 
-                item.appendChild(heading);
-                item.appendChild(desc);
-                item.appendChild(link);
+                if (iconEl) {
+                    item.appendChild(iconEl);
+                }
 
-                doc.getElementById('routines-list').appendChild(item);
+                contentEl.appendChild(heading);
+                contentEl.appendChild(desc);
+                item.appendChild(contentEl);
+
+                linkWrapper.appendChild(link);
+                item.appendChild(linkWrapper);
+
+                routinesList.appendChild(item);
+
+                items.push(item);
             }
         });
     };

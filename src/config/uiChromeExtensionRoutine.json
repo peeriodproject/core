@@ -2,6 +2,7 @@
     "extension": {
         "id": "core.jj.uiroutine.chromeextension",
         "installPath": "Library/Application Support/Google/Chrome/External Extensions",
+        "iconClassName": "chrome",
         "extensionId": "fdebdfighadoiekjndfoholpdkcahnjg",
         "crxPath"   : "./ui_routines/chrome_extension/build.crx",
         "version": "0.0.1",

@@ -21,6 +21,10 @@ class UiChromeExtensionRoutine implements UiRoutineInterface {
 		return this._geti18n('description');
 	}
 
+	public getIconClassName () {
+		return this._config.get('extension.iconClassName');
+	}
+
 	public getId ():string {
 		return this._config.get('extension.id');
 	}
@@ -57,7 +61,7 @@ class UiChromeExtensionRoutine implements UiRoutineInterface {
 	}
 
 	public isInstalled (callback:(installed:boolean) => any):void {
-		fs.exists(this._getInstallPath(), callback);
+		fs.exists(this._getInstallPath() + '_', callback);
 	}
 
 	public start (callback?:(err:Error) => any):void {
@@ -81,13 +85,13 @@ class UiChromeExtensionRoutine implements UiRoutineInterface {
 	public stop (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function () {};
 
-		return process.nextTick(callback.bind(null, null));
+		return process.nextTick(callback.bind(null, new Error('UiChromeExtensionRoutine#stop: Can not stop "Google Chrome" programmatically. The user must close the browser manually.')));
 	}
 
 	public uninstall (callback?:(err:Error) => any):void {
 		var internalCallback = callback || function () {};
 
-		return process.nextTick(callback.bind(null, null));
+		fs.unlink(this._getInstallPath(), internalCallback);
 	}
 
 	private _geti18n (key:string):string {

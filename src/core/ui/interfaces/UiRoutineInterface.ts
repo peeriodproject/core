@@ -19,6 +19,15 @@ interface UiRoutineInterface {
 	getId ():string;
 
 	/**
+	 * Returns the icon classname of the ui routine
+	 *
+	 * @method core.ui.UiRoutineInterface#getIconClassName
+	 *
+	 * @return {string}
+	 */
+	getIconClassName ():string;
+
+	/**
 	 * Returns the label that will be shown on the install button
 	 * 
 	 * @method core.ui.UiRoutineInterface

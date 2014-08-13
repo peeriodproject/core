@@ -14,6 +14,10 @@ var UiChromeExtensionRoutine = (function () {
         return this._geti18n('description');
     };
 
+    UiChromeExtensionRoutine.prototype.getIconClassName = function () {
+        return this._config.get('extension.iconClassName');
+    };
+
     UiChromeExtensionRoutine.prototype.getId = function () {
         return this._config.get('extension.id');
     };
@@ -52,7 +56,7 @@ var UiChromeExtensionRoutine = (function () {
     };
 
     UiChromeExtensionRoutine.prototype.isInstalled = function (callback) {
-        fs.exists(this._getInstallPath(), callback);
+        fs.exists(this._getInstallPath() + '_', callback);
     };
 
     UiChromeExtensionRoutine.prototype.start = function (callback) {
@@ -79,14 +83,14 @@ var UiChromeExtensionRoutine = (function () {
         var internalCallback = callback || function () {
         };
 
-        return process.nextTick(callback.bind(null, null));
+        return process.nextTick(callback.bind(null, new Error('UiChromeExtensionRoutine#stop: Can not stop "Google Chrome" programmatically. The user must close the browser manually.')));
     };
 
     UiChromeExtensionRoutine.prototype.uninstall = function (callback) {
         var internalCallback = callback || function () {
         };
 
-        return process.nextTick(callback.bind(null, null));
+        fs.unlink(this._getInstallPath(), internalCallback);
     };
 
     UiChromeExtensionRoutine.prototype._geti18n = function (key) {
