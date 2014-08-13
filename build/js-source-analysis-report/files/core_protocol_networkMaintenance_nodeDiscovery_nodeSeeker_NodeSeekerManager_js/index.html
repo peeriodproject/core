@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.98</p>
+      <p class="stat">70.64</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">179</p>
+      <p class="stat">176</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">25.84</p>
+      <p class="stat">25.51</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.95</p>
+      <p class="stat">0.81</p>
     </div>
   </div>
 </div>
@@ -183,7 +183,7 @@ var NodeSeekerManager = (function () {
     }
     NodeSeekerManager.prototype.forceFindActiveNode = function (avoidNode, callback) {
         var _this = this;
-        logger.log(&#039;nodeSeeker&#039;, &#039;Force find active node initiated.&#039;);
+        console.log(&#039;Force find active node initiated.&#039;);
         this._avoidNode = avoidNode;
 
         if (!this._nodeSeekerList) {
@@ -194,24 +194,23 @@ var NodeSeekerManager = (function () {
         this._forceSearchActive = true;
 
         this._proxyManager.once(&#039;contactNodeInformation&#039;, function (node) {
-            logger.log(&#039;nodeSeeker&#039;, &#039;NodeSeeker: on contact node!&#039;);
-
+            //console.log(&#039;NodeSeeker: on contact node!&#039;);
             _this._forceSearchActive = false;
 
             if (_this._iterativeSeekTimeout) {
-                logger.log(&#039;nodeSeeker&#039;, &#039;clearing iterative seek timeout&#039;);
+                //console.log(&#039;clearing iterative seek timeout&#039;);
                 global.clearTimeout(_this._iterativeSeekTimeout);
                 _this._iterativeSeekTimeout = 0;
             }
 
             if (_this._avoidNode &amp;&amp; _this._avoidNode.getId().equals(node.getId())) {
-                logger.log(&#039;nodeSeeker&#039;, &#039;Force finding again on nex event loop&#039;);
+                //console.log(&#039;Force finding again on nex event loop&#039;);
                 setImmediate(function () {
-                    logger.log(&#039;nodeSeeker&#039;, &#039;Force finding again, as the node should be avoided.&#039;);
+                    //console.log(&#039;Force finding again, as the node should be avoided.&#039;);
                     _this.forceFindActiveNode(_this._avoidNode, callback);
                 });
             } else {
-                logger.log(&#039;nodeSeeker&#039;, &#039;Found a node, calling back&#039;);
+                //console.log(&#039;Found a node, calling back&#039;);
                 _this._avoidNode = null;
                 callback(node);
             }
@@ -230,12 +229,10 @@ var NodeSeekerManager = (function () {
     NodeSeekerManager.prototype._iterativeSeekAndPing = function (avoidNode) {
         var _this = this;
         if (this._forceSearchActive) {
-            logger.log(&#039;nodeSeeker&#039;, &#039;Doing iterative seek.&#039;);
-
+            //console.log(&#039;Doing iterative seek.&#039;);
             setImmediate(function () {
                 for (var i = 0; i &lt; _this._nodeSeekerList.length; i++) {
                     _this._nodeSeekerList[i].seek(function (node) {
-                        logger.info(&#039;a seeker found a node.&#039;);
                         if (node &amp;&amp; !node.getId().equals(_this._myNode.getId()) &amp;&amp; !(avoidNode &amp;&amp; node.getId().equals(avoidNode.getId()))) {
                             _this._pingNodeIfActive(node);
                         }
@@ -243,12 +240,12 @@ var NodeSeekerManager = (function () {
                 }
 
                 _this._iterativeSeekTimeout = global.setTimeout(function () {
-                    logger.log(&#039;nodeSeeker&#039;, &#039;setting new iterative seek timeout&#039;);
+                    //console.log(&#039;setting new iterative seek timeout&#039;);
                     _this._iterativeSeekAndPing(avoidNode);
                 }, _this._iterativeSeekTimeoutMs);
             });
         } else {
-            logger.log(&#039;nodeSeeker&#039;, &#039;do not seek again.&#039;);
+            //console.log(&#039;do not seek again.&#039;);
         }
     };
 

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">63.92</p>
+      <p class="stat">62.63</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">265</p>
+      <p class="stat">283</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">34.07</p>
+      <p class="stat">37.12</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.76</p>
+      <p class="stat">2.16</p>
     </div>
   </div>
 </div>
@@ -121,7 +121,7 @@ var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 */
 var TransferMessageCenter = (function (_super) {
     __extends(TransferMessageCenter, _super);
-    function TransferMessageCenter(protocolConnectionManager, middleware, circuitManager, cellManager, hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseFactory, writableQueryResponseFactory) {
+    function TransferMessageCenter(protocolConnectionManager, circuitManager, cellManager, hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseFactory, writableQueryResponseFactory) {
         _super.call(this);
         /**
         * Stores the hydra cell manager instance.
@@ -182,7 +182,6 @@ var TransferMessageCenter = (function (_super) {
         this._cellManager = cellManager;
         this._hydraMessageCenter = hydraMessageCenter;
         this._protocolConnectionManager = protocolConnectionManager;
-        this._middleware = middleware;
         this._readableFileTransferMessageFactory = readableFileTransferMessageFactory;
         this._writableFileTransferMessageFactory = writableFileTransferMessageFactory;
         this._readableQueryResponseMessageFactory = readableQueryResponseFactory;
@@ -191,6 +190,7 @@ var TransferMessageCenter = (function (_super) {
         this._setupListeners();
     }
     TransferMessageCenter.prototype.issueExternalFeedToCircuit = function (nodesToFeedBlock, payload, circuitId) {
+        console.log(&#039;Issuing external feed to circuit %o&#039;, { circuitId: circuitId, nodesToFeedBlock: JSON.stringify(FeedingNodesMessageBlock.extractAndDeconstructBlock(nodesToFeedBlock).nodes) });
         var wrappedMessage = this.wrapTransferMessage(&#039;EXTERNAL_FEED&#039;, &#039;00000000000000000000000000000000&#039;, Buffer.concat([nodesToFeedBlock, payload]));
 
         if (wrappedMessage &amp;&amp; !(circuitId &amp;&amp; this._circuitManager.pipeFileTransferMessageThroughCircuit(circuitId, wrappedMessage))) {
@@ -198,6 +198,10 @@ var TransferMessageCenter = (function (_super) {
         }
 
         return true;
+    };
+
+    TransferMessageCenter.prototype.setMiddleware = function (middleware) {
+        this._middleware = middleware;
     };
 
     TransferMessageCenter.prototype.wrapTransferMessage = function (messageType, transferId, payload) {
@@ -311,8 +315,22 @@ var TransferMessageCenter = (function (_super) {
                 this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg.getPayload());
                 this._middleware.addIncomingSocket(predecessorCircuitId, socketIdentifier);
             } else {
-                this._middleware.closeSocketByIdentifier(socketIdentifier);
+                this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
             }
+        } else if (msg.getMessageType() === &#039;FEED_REQUEST&#039;) {
+            var accept = !!this._cellManager.getCircuitIdByFeedingIdentifier(msg.getTransferId());
+            var msgType = accept ? &#039;FEED_REQUEST_ACCEPT&#039; : &#039;FEED_REQUEST_REJECT&#039;;
+            var bufferToSend = this._hydraMessageCenter.wrapFileTransferMessage(this._writableFileTransferMessageFactory.constructMessage(msg.getTransferId(), msgType, new Buffer(0)));
+
+            this._protocolConnectionManager.hydraWriteMessageTo(socketIdentifier, bufferToSend);
+
+            if (!accept) {
+                this._protocolConnectionManager.closeHydraSocket(socketIdentifier);
+            }
+        } else if (msg.getMessageType() === &#039;FEED_REQUEST_ACCEPT&#039;) {
+            this.emit(&#039;FEEDING_REQUEST_RESPONSE_&#039; + socketIdentifier + &#039;_&#039; + msg.getTransferId(), true);
+        } else if (msg.getMessageType() === &#039;FEED_REQUEST_REJECT&#039;) {
+            this.emit(&#039;FEEDING_REQUEST_RESPONSE_&#039; + socketIdentifier + &#039;_&#039; + msg.getTransferId(), false);
         }
     };
 

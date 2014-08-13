@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">67.26</p>
+      <p class="stat">67.37</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">351</p>
+      <p class="stat">401</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">32.67</p>
+      <p class="stat">34.57</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.72</p>
+      <p class="stat">4.41</p>
     </div>
   </div>
 </div>
@@ -96,6 +96,8 @@ var fs = require(&#039;fs-extra&#039;);
 
 // global imports
 var JSONConfig = require(&#039;./config/JSONConfig&#039;);
+
+var i18n = require(&#039;i18n&#039;);
 var logger = require(&#039;./utils/logger/LoggerFactory&#039;).create();
 
 var AppQuitHandler = require(&#039;./utils/AppQuitHandler&#039;);
@@ -152,15 +154,26 @@ var UiShareManagerComponent = require(&#039;./ui/share/UiShareManagerComponent&#
 var UiFolderWatcherManagerComponent = require(&#039;./ui/folder/UiFolderWatcherManagerComponent&#039;);
 var UiFolderDropzoneComponent = require(&#039;./ui/folder/UiFolderDropzoneComponent&#039;);
 
+var UiProtocolGatewayComponent = require(&#039;./ui/protocol/UiProtocolGatewayComponent&#039;);
 var UiSearchFormResultsManagerComponent = require(&#039;./ui/search/UiSearchFormResultsManagerComponent&#039;);
 var UiManager = require(&#039;./ui/UiManager&#039;);
+var UiSplashScreen = require(&#039;./ui/UiSplashScreen&#039;);
+var UiRoutinesManager = require(&#039;./ui/UiRoutinesManager&#039;);
+var UiChromeExtensionRoutine = require(&#039;./ui/routines/UiChromeExtensionRoutine&#039;);
 
 // Testing purposes only
 var nameFixtures = require(&#039;../config/nameFixtures&#039;);
 
+i18n.configure({
+    locales: [&#039;en&#039;, &#039;de&#039;],
+    directory: &#039;./locales&#039;
+});
+
 var App = {
     appQuitHandler: null,
     _gui: null,
+    _i18n: null,
+    _splashScreen: null,
     _uiComponents: [],
     _requestManager: null,
     _responseManager: null,
@@ -177,12 +190,16 @@ var App = {
 
         return this._stateHandlerFactory;
     },
+    setLocale: function (locale) {
+        i18n.setLocale(locale);
+    },
     start: function (gui, nwApp, dataPath, win) {
         var _this = this;
         win.showDevTools();
 
         this._gui = gui;
         this.appQuitHandler = new AppQuitHandler(nwApp);
+        this._splashScreen = new UiSplashScreen(this._gui);
 
         // copy node discovery.json to app data path
         var appConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;]);
@@ -202,8 +219,6 @@ var App = {
 
             _this.startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager, function () {
                 _this._started.push(&#039;indexer&#039;);
-
-                _this.startUi();
             });
 
             _this.startSharing(searchClient, searchRequestsIndexName, function (downloadManager, uploadManager) {
@@ -216,8 +231,6 @@ var App = {
                 if (!process.env.DISABLE_TOPOLOGY) {
                     _this.startTopology(dataPath, searchMessageBridge, downloadBridge, uploadBridge);
                 }
-
-                _this.startUi();
             });
 
             _this._requestManager = searchRequestManager;
@@ -258,6 +271,8 @@ var App = {
         }.bind(this));
     },
     startSharing: function (searchClient, searchRequestsIndexName, callback) {
+        this._splashScreen.setStatus(&#039;startSharing&#039;);
+
         var shareConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;share&#039;]);
         var downloadManager = new DownloadManager(shareConfig, this.appQuitHandler, this.getStateHandlerFactory(), searchClient, searchRequestsIndexName);
         var uploadManager = new UploadManager(this.appQuitHandler, searchClient, searchRequestsIndexName);
@@ -268,6 +283,8 @@ var App = {
     },
     startIndexer: function (searchConfig, searchClient, searchRequestManager, searchResponseManager, callback) {
         var _this = this;
+        this._splashScreen.setStatus(&#039;startIndexer&#039;);
+
         var fsConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;fs&#039;]);
         var pluginConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;plugin&#039;]);
         var searchAppConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;search&#039;]);
@@ -315,17 +332,21 @@ var App = {
     },
     // index database setup
     startSearchClient: function (callback) {
+        this._splashScreen.setStatus(&#039;startSearchDatabase&#039;);
+
         var searchConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;search&#039;]);
 
         var searchStoreFactory = new SearchStoreFactory();
         var searchItemFactory = new SearchItemFactory();
         var searchClient = new SearchClient(searchConfig, this.appQuitHandler, &#039;mainIndex&#039;, searchStoreFactory, searchItemFactory, {
-            onOpenCallback: function () {
+            onOpenCallback: function (err) {
+                console.log(err);
                 return callback(searchConfig, searchClient);
             }
         });
     },
     startUi: function () {
+        var _this = this;
         // disables the UI for testing purposes
         if (!process.env.UI_ENABLED) {
             return;
@@ -347,14 +368,34 @@ var App = {
             return;
         }
 
+        this._splashScreen.setStatus(&#039;startUi&#039;);
+
         var uiConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;ui&#039;]);
 
         this.addUiComponent(new UiFolderDropzoneComponent(this._gui.Window));
 
         var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
+
+        this._splashScreen.once(&#039;close&#039;, function () {
+            _this.checkUiRoutines();
+        });
+    },
+    checkUiRoutines: function () {
+        var uiRoutinesManager = new UiRoutinesManager(this._gui);
+        uiRoutinesManager.addUiRoutine(new UiChromeExtensionRoutine(new JSONConfig(&#039;../../config/uiChromeExtensionRoutine.json&#039;, [&#039;extension&#039;])));
+
+        uiRoutinesManager.getInstalledRoutineIds(function (err, routineIds) {
+            if (!routineIds || !routineIds.length) {
+                uiRoutinesManager.open();
+            } else {
+                uiRoutinesManager.getUiRoutine(routineIds[0]).start();
+            }
+        });
     },
     startTopology: function (dataPath, searchMessageBridge, downloadBridge, uploadBridge) {
         var _this = this;
+        this._splashScreen.setStatus(&#039;startTopology&#039;);
+
         var appConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;]);
         var netConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;net&#039;]);
         var protocolConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;protocol&#039;]);
@@ -395,10 +436,15 @@ var App = {
             }
 
             var handlerFactory = new JSONStateHandlerFactory();
+            console.log(path.resolve(dataPath, &#039;myId.json&#039;));
             var idState = handlerFactory.create(path.resolve(dataPath, &#039;myId.json&#039;));
 
             idState.load(function (err, state) {
+                if (err)
+                    console.log(err);
                 var myId = null;
+
+                console.log(state);
 
                 if (state &amp;&amp; state.id) {
                     myId = new Id(Id.byteBufferByHexString(state.id, 20), 160);
@@ -407,6 +453,7 @@ var App = {
                     var randBuffer = crypto.randomBytes(20);
                     state.id = randBuffer.toString(&#039;hex&#039;);
                     idState.save(state, function () {
+                        console.log(&#039;Id state saved.&#039;);
                     });
 
                     myId = new Id(randBuffer, 160);
@@ -426,6 +473,9 @@ var App = {
                         }
 
                         protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
+                        _this.addUiComponent(new UiProtocolGatewayComponent(protocolGateway, _this._splashScreen));
+
+                        _this.startUi();
 
                         protocolGateway.start();
                         /*protocolGateway.once(&#039;readyToSearch&#039;,  ()=&gt; {

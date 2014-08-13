@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/ui/UiRoutinesManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/ui/UiRoutinesManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">69.43</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">171</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">29.98</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.43</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../main.d.ts&#039; /&gt;
+var i18n = require(&#039;i18n&#039;);
+
+/**
+* @class core.ui.UiRoutinesManager
+* @implements core.ui.UiRoutinesManagerInterface
+*/
+var UiRoutinesManager = (function () {
+    function UiRoutinesManager(gui) {
+        var _this = this;
+        this._isOpen = false;
+        this._loaded = false;
+        this._routines = [];
+        this._window = null;
+        this._window = gui.Window.open(&#039;./public/ui-routines-installer.html&#039;, {
+            position: &#039;center&#039;,
+            width: 720,
+            height: 400,
+            frame: true,
+            toolbar: false,
+            resizable: true,
+            show: false
+        });
+
+        this._window.once(&#039;loaded&#039;, function () {
+            //this._window.showDevTools();
+            //this._window.moveBy(0, 200);
+            //this._updateStatus();
+            _this._updateWindow();
+
+            _this._loaded = true;
+
+            if (_this._isOpen) {
+                _this.open();
+            }
+        });
+    }
+    UiRoutinesManager.prototype.addUiRoutine = function (routine) {
+        if (this.getUiRoutine(routine.getId()) === null) {
+            this._routines.push(routine);
+        }
+    };
+
+    UiRoutinesManager.prototype.close = function () {
+        this._window.close(true);
+
+        //this._window.hide();
+        this._isOpen = false;
+    };
+
+    UiRoutinesManager.prototype.getInstalledRoutineIds = function (callback) {
+        var _this = this;
+        var installedRoutines = [];
+        var returned = 0;
+        var checkAndReturn = function () {
+            if (returned === _this._routines.length) {
+                returned = -1;
+
+                return callback(null, installedRoutines);
+            }
+        };
+
+        this._routines.forEach(function (routine) {
+            routine.isInstalled(function (isInstalled) {
+                if (isInstalled) {
+                    installedRoutines.push(routine.getId());
+                }
+
+                returned++;
+
+                return checkAndReturn();
+            });
+        });
+        //return process.nextTick(callback.bind(null, null, []));
+    };
+
+    UiRoutinesManager.prototype.getUiRoutines = function () {
+        return this._routines.slice();
+    };
+
+    UiRoutinesManager.prototype.getUiRoutine = function (routineId) {
+        for (var i = 0, l = this._routines.length; i &lt; l; i++) {
+            if (this._routines[i].getId() === routineId) {
+                return this._routines[i];
+            }
+        }
+
+        return null;
+    };
+
+    UiRoutinesManager.prototype.isOpen = function () {
+        return this._isOpen;
+    };
+
+    UiRoutinesManager.prototype.open = function () {
+        if (this._loaded) {
+            this._window.show();
+            this._window.focus();
+        }
+
+        this._isOpen = true;
+    };
+
+    UiRoutinesManager.prototype._clickInstallRoutineButton = function (event) {
+        var _this = this;
+        event.preventDefault();
+
+        var routine = this.getUiRoutine(event.target.getAttribute(&#039;data-id&#039;));
+
+        if (!routine) {
+            return;
+        }
+
+        routine.install(function (err) {
+            if (!err) {
+                _this.close();
+
+                routine.start();
+            } else {
+                console.error(err);
+            }
+        });
+    };
+
+    UiRoutinesManager.prototype._updateWindow = function () {
+        var _this = this;
+        this.getInstalledRoutineIds(function (err, ids) {
+            var routines = _this.getUiRoutines();
+            var doc = _this._window.window.document;
+            var onClick = function (event) {
+                event.target.removeEventListener(onClick);
+
+                _this._clickInstallRoutineButton(event);
+            };
+
+            doc.getElementById(&#039;headline&#039;).innerHTML = i18n.__(&#039;uiRoutinesManager.installRoutinesHeadline&#039;);
+            doc.getElementById(&#039;description&#039;).innerHTML = i18n.__(&#039;uiRoutinesManager.installRoutinesDescription&#039;);
+
+            for (var i = 0, l = routines.length; i &lt; l; i++) {
+                var routine = routines[i];
+
+                if (ids.indexOf(routine.getId()) !== -1) {
+                    routine = null;
+
+                    continue;
+                }
+
+                var item = doc.createElement(&#039;li&#039;);
+                var heading = doc.createElement(&#039;h2&#039;);
+                var desc = doc.createElement(&#039;p&#039;);
+                var link = doc.createElement(&#039;a&#039;);
+
+                heading.appendChild(doc.createTextNode(routine.getName()));
+                desc.appendChild(doc.createTextNode(routine.getDescription()));
+
+                link.appendChild(doc.createTextNode(routine.getInstallButtonLabel()));
+                link.setAttribute(&#039;data-id&#039;, routine.getId());
+                link.href = &#039;#&#039;;
+                link.addEventListener(&#039;click&#039;, onClick, false);
+
+                item.appendChild(heading);
+                item.appendChild(desc);
+                item.appendChild(link);
+
+                doc.getElementById(&#039;routines-list&#039;).appendChild(item);
+            }
+        });
+    };
+    return UiRoutinesManager;
+})();
+
+module.exports = UiRoutinesManager;
+//# sourceMappingURL=UiRoutinesManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

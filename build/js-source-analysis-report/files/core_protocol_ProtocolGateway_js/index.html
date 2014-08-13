@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">58.91</p>
+      <p class="stat">60.68</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">268</p>
+      <p class="stat">304</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">22.17</p>
+      <p class="stat">22.34</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.67</p>
+      <p class="stat">4.11</p>
     </div>
   </div>
 </div>
@@ -247,9 +247,11 @@ var ProtocolGateway = (function (_super) {
         // build up the NodePublishers
         var nodePublisherFactory = new NodePublisherFactory(appConfig, protocolConfig, this._myNode);
 
-        nodePublisherFactory.createPublisherList(function (list) {
-            _this._nodePublishers = list;
-        });
+        if (this._tcpSocketHandler.getOpenServerPortsArray().length) {
+            nodePublisherFactory.createPublisherList(function (list) {
+                _this._nodePublishers = list;
+            });
+        }
 
         // build up the NetworkMaintainer
         this._networkMaintainer = new NetworkMaintainer(this._topologyConfig, this._protocolConfig, this._myNode, this._nodeSeekerManager, this._findClosestNodesManager, this._proxyManager);
@@ -285,8 +287,9 @@ var ProtocolGateway = (function (_super) {
         var readableBroadcastMessageFactory = new BroadcastReadableMessageFactory();
         var writableBroadcastMessageFactory = new BroadcastWritableMessageFactory();
 
-        this._middleware = new Middleware(this._hydraCellManager, this._protocolConnectionManager, this._hydraMessageCenter, writableFileTransferMessageFactory);
-        this._transferMessageCenter = new TransferMessageCenter(this._protocolConnectionManager, this._middleware, this._hydraCircuitManager, this._hydraCellManager, this._hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseMessageFactory, writableQueryResponseMessageFactory);
+        this._transferMessageCenter = new TransferMessageCenter(this._protocolConnectionManager, this._hydraCircuitManager, this._hydraCellManager, this._hydraMessageCenter, readableFileTransferMessageFactory, writableFileTransferMessageFactory, readableQueryResponseMessageFactory, writableQueryResponseMessageFactory);
+        this._middleware = new Middleware(this._protocolConfig, this._transferMessageCenter, this._hydraCellManager, this._protocolConnectionManager, this._hydraMessageCenter, writableFileTransferMessageFactory);
+        this._transferMessageCenter.setMiddleware(this._middleware);
 
         this._broadcastManager = new BroadcastManager(this._topologyConfig, this._protocolConfig, this._myNode, this._protocolConnectionManager, this._proxyManager, this._routingTable, readableBroadcastMessageFactory, writableBroadcastMessageFactory);
 
@@ -319,40 +322,73 @@ var ProtocolGateway = (function (_super) {
         var _this = this;
         logger.log(&#039;topology&#039;, &#039;New node joining the network&#039;, { id: this._myNode.getId().toHexString() });
 
+        console.log(&#039;trying to join the network&#039;);
+
         if (this._proxyManager.needsAdditionalProxy()) {
+            console.log(&#039;needing proxy&#039;);
+
+            this.emit(&#039;NEEDS_PROXY&#039;, true);
+
             this._networkMaintainer.once(&#039;initialContactQueryCompleted&#039;, function () {
-                console.log(&#039;Needs proxy...&#039;);
+                console.log(&#039;Kicking off proxy search...&#039;);
+
                 _this._proxyManager.kickOff();
             });
         } else {
             console.log(&#039;No proxy needed.&#039;);
+
+            this.emit(&#039;NEEDS_PROXY&#039;, false);
+
             this._proxyManager.kickOff();
         }
 
+        this._networkMaintainer.on(&#039;foundEntryNode&#039;, function () {
+            _this.emit(&#039;FOUND_ENTRY_NODE&#039;);
+        });
+
+        this._proxyManager.on(&#039;proxyCount&#039;, function (count) {
+            _this.emit(&#039;NUM_OF_PROXIES&#039;, count);
+        });
+
+        this._proxyManager.on(&#039;proxyingForCount&#039;, function (count) {
+            _this.emit(&#039;NUM_OF_PROXYING_FOR&#039;, count);
+        });
+
         this._networkMaintainer.once(&#039;initialContactQueryCompleted&#039;, function () {
+            _this.emit(&#039;INITIAL_CONTACT_QUERY_COMPLETE&#039;);
             console.log(&#039;Initial nodes found!&#039;);
             logger.log(&#039;topology&#039;, &#039;Initial contact query completed. Kicking off proxy manager...&#039;, { id: _this._myNode.getId().toHexString() });
         });
 
         this._networkMaintainer.once(&#039;joinedNetwork&#039;, function () {
-            console.log(&#039;Successfully joined the network, prepared hydras.&#039;);
+            _this.emit(&#039;TOPOLOGY_JOIN_COMPLETE&#039;);
+
+            console.log(&#039;Successfully joined the network, preparing hydras.&#039;);
             logger.log(&#039;topology&#039;, &#039;Successfully joined the network.&#039;, { id: _this._myNode.getId().toHexString() });
 
             // start the hydra things
             _this._hydraCircuitManager.kickOff();
 
             _this._hydraCircuitManager.on(&#039;circuitCount&#039;, function (count) {
+                _this.emit(&#039;NUM_OF_HYDRA_CIRCUITS&#039;, count);
                 console.log(&#039;Maintaining currently %d circuits&#039;, count);
             });
 
-            _this._hydraCircuitManager.once(&#039;desiredCircuitAmountReached&#039;, function () {
-                console.log(&#039;Desired number of hydra circuits reached, ready to search.&#039;);
+            _this._hydraCircuitManager.on(&#039;desiredCircuitAmountReached&#039;, function () {
+                console.log(&#039;Desired number of hydra circuits reached.&#039;);
                 logger.log(&#039;hydraSuccess&#039;, &#039;Hydra circuits constructed.&#039;, { id: _this._myNode.getId().toHexString() });
                 _this.emit(&#039;readyToSearch&#039;);
+                _this.emit(&#039;HYDRA_CIRCUITS_DESIRED_AMOUNT_REACHED&#039;);
+            });
+
+            _this._hydraCellManager.on(&#039;cellCount&#039;, function (count) {
+                _this.emit(&#039;NUM_OF_HYDRA_CELLS&#039;, count);
             });
         });
 
         this._networkMaintainer.joinNetwork();
+        this.emit(&#039;JOIN_NETWORK&#039;);
+        this.emit(&#039;DESIRED_AMOUNT_OF_CIRCUITS&#039;, this._hydraCircuitManager.getDesiredNumberOfCircuits());
     };
     return ProtocolGateway;
 })(events.EventEmitter);

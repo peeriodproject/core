@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">72.14</p>
+      <p class="stat">70.45</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">261</p>
+      <p class="stat">309</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">45.05</p>
+      <p class="stat">51.46</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.80</p>
+      <p class="stat">2.22</p>
     </div>
   </div>
 </div>
@@ -116,11 +116,17 @@ var TCPSocket = (function (_super) {
     function TCPSocket(socket, opts) {
         _super.call(this);
         /**
-        * Flag which indicates if an idle socket will be closed on a `timeout` event.
+        * Flag which indicates if an idle socket will be closed. This is true by default and only set to `false` if
+        * otherwise stated in the constructor options.
         *
-        * @member {boolean} core.net.tcp.TCPSocket~_closeOnTimeout
+        * @member {boolean} core.net.tcp.TCPSocket~_closeWhenIdle
         */
-        this._closeOnTimeout = false;
+        this._closeWhenIdle = true;
+        this._closeAfterLastDataReceivedInMs = 0;
+        this._idleTimeout = 0;
+        this._heartbeatTimeout = 0;
+        this._sendHeartbeatAfterLastDataInMs = 0;
+        this._doKeepOpen = false;
         /**
         * The options passed in the constructor (for reference)
         *
@@ -173,12 +179,18 @@ var TCPSocket = (function (_super) {
         this._simulatorRTT = opts.simulatorRTT || 0;
 
         // set the timeout
-        if (opts.idleConnectionKillTimeout &gt; 0) {
-            this._closeOnTimeout = true;
-            this.getSocket().setTimeout(opts.idleConnectionKillTimeout * 1000);
+        if (opts.idleConnectionKillTimeout === 0) {
+            this._closeWhenIdle = false;
+        } else {
+            this._closeAfterLastDataReceivedInMs = opts.idleConnectionKillTimeout * 1000;
         }
 
-        this.setupListeners();
+        this._sendHeartbeatAfterLastDataInMs = opts.heartbeatTimeout * 1000;
+
+        this._setupListeners();
+
+        this._resetIdleTimeout();
+        this._resetHeartbeatTimeout();
     }
     TCPSocket.prototype.end = function (data, encoding) {
         if (this.getSocket() &amp;&amp; !this._preventWrite) {
@@ -208,18 +220,8 @@ var TCPSocket = (function (_super) {
         return this._socket;
     };
 
-    TCPSocket.prototype.onTimeout = function () {
-        if (this._closeOnTimeout) {
-            this.end();
-        }
-    };
-
-    TCPSocket.prototype.setCloseOnTimeout = function (flag) {
-        if (!this._closeOnTimeout &amp;&amp; flag) {
-            this.getSocket().setTimeout(this._constructorOpts.idleConnectionKillTimeout * 1000);
-        }
-
-        this._closeOnTimeout = flag;
+    TCPSocket.prototype.setKeepOpen = function (state) {
+        this._doKeepOpen = state;
     };
 
     TCPSocket.prototype.setIdentifier = function (identifier) {
@@ -234,13 +236,9 @@ var TCPSocket = (function (_super) {
         this._socket = socket;
     };
 
-    TCPSocket.prototype.setupListeners = function () {
+    TCPSocket.prototype._setupListeners = function () {
         var _this = this;
         var socket = this.getSocket();
-
-        socket.on(&#039;timeout&#039;, function () {
-            return _this.onTimeout();
-        });
 
         socket.on(&#039;error&#039;, function (err) {
             logger.error(&#039;THIS IS A SOCKET ERROR!&#039;, {
@@ -269,6 +267,16 @@ var TCPSocket = (function (_super) {
 
             _this.emit(&#039;destroy&#039;);
 
+            if (_this._idleTimeout) {
+                global.clearTimeout(_this._idleTimeout);
+                _this._idleTimeout = null;
+            }
+
+            if (_this._heartbeatTimeout) {
+                global.clearTimeout(_this._heartbeatTimeout);
+                _this._heartbeatTimeout = null;
+            }
+
             process.nextTick(function () {
                 _this.removeAllListeners();
             });
@@ -278,7 +286,43 @@ var TCPSocket = (function (_super) {
             _this._preventWrite = true;
         });
 
+        socket.on(&#039;data&#039;, function () {
+            _this._resetIdleTimeout();
+        });
+
         this._propagateEvents(this._eventsToPropagate);
+    };
+
+    TCPSocket.prototype._resetIdleTimeout = function () {
+        var _this = this;
+        if (this._idleTimeout) {
+            global.clearTimeout(this._idleTimeout);
+        }
+
+        this._idleTimeout = global.setTimeout(function () {
+            _this._idleTimeout = null;
+
+            if (_this._closeWhenIdle) {
+                _this.end();
+            }
+        }, this._closeAfterLastDataReceivedInMs);
+    };
+
+    TCPSocket.prototype._resetHeartbeatTimeout = function () {
+        var _this = this;
+        if (this._heartbeatTimeout) {
+            global.clearTimeout(this._heartbeatTimeout);
+        }
+
+        this._heartbeatTimeout = global.setTimeout(function () {
+            _this._heartbeatTimeout = null;
+
+            if (_this._doKeepOpen) {
+                _this.writeBuffer(new Buffer([0x00, 0x00, 0x00, 0x00]));
+            } else {
+                _this._resetHeartbeatTimeout();
+            }
+        }, this._sendHeartbeatAfterLastDataInMs);
     };
 
     TCPSocket.prototype.writeBuffer = function (buffer, callback, forceAvoidSimulation) {
@@ -295,7 +339,9 @@ var TCPSocket = (function (_super) {
         if (!this._preventWrite &amp;&amp; this.getSocket().writable) {
             try  {
                 success = this.getSocket().write(buffer, callback);
+                this._resetHeartbeatTimeout();
             } catch (e) {
+                this.getSocket().end();
             }
 
             buffer = null;
@@ -322,7 +368,9 @@ var TCPSocket = (function (_super) {
         if (!this._preventWrite &amp;&amp; this.getSocket().writable) {
             try  {
                 success = this.getSocket().write(message, encoding, callback);
+                this._resetHeartbeatTimeout();
             } catch (e) {
+                this.getSocket().end();
             }
         }
 

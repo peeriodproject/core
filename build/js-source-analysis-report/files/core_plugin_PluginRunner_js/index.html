@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.80</p>
+      <p class="stat">73.60</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">283</p>
+      <p class="stat">286</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">38.08</p>
+      <p class="stat">38.86</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.01</p>
+      <p class="stat">2.05</p>
     </div>
   </div>
 </div>
@@ -330,7 +330,9 @@ var PluginRunner = (function () {
         var _this = this;
         if (this._sandboxScripts[itemPath]) {
             this._sandboxScripts[itemPath].once(&#039;timeout&#039;, function (methodName) {
+                _this._sandboxScripts[itemPath].removeAllListeners(&#039;exit&#039;);
                 _this._sandboxScripts[itemPath].reset();
+
                 return callback(new Error(&#039;PluginRunner~registerSandboxTimeouthandler: The Plugin did not respond to a call &quot;&#039; + methodName), null);
             });
         }
@@ -349,6 +351,7 @@ var PluginRunner = (function () {
         var _this = this;
         if (this._sandboxScripts[identifier]) {
             this._sandboxScripts[identifier].once(&#039;exit&#039;, function (err, output, methodName) {
+                _this._sandboxScripts[identifier].removeAllListeners(&#039;timeout&#039;);
                 _this._sandboxScripts[identifier].reset();
 
                 if (err) {

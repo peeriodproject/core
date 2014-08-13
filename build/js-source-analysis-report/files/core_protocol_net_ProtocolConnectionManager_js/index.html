@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.50</p>
+      <p class="stat">68.59</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">1002</p>
+      <p class="stat">1027</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">86.32</p>
+      <p class="stat">87.59</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">6.68</p>
+      <p class="stat">7.00</p>
     </div>
   </div>
 </div>
@@ -247,7 +247,7 @@ var ProtocolConnectionManager = (function (_super) {
         this._addressFactory = new ContactNodeAddressFactory();
 
         if (!this._myNode.getAddresses()) {
-            this._myNode.updateAddresses(this.getExternalAddressList());
+            this._myNode.updateAddresses(this.getExternalAddressList(), &#039;initially&#039;);
         }
 
         this._incomingDataPipeline = new IncomingDataPipeline(config.get(&#039;protocol.messages.maxByteLengthPerMessage&#039;), MessageByteCheatsheet.messageEnd, config.get(&#039;protocol.messages.msToKeepNonAddressableMemory&#039;), new ReadableMessageFactory());
@@ -431,7 +431,19 @@ var ProtocolConnectionManager = (function (_super) {
         var socket = this._hydraSockets[identifier];
 
         if (socket) {
-            socket.setCloseOnTimeout(true);
+            socket.setKeepOpen(false);
+        }
+    };
+
+    ProtocolConnectionManager.prototype.invalidateOutgoingConnectionsTo = function (node) {
+        var identifier = this._nodeToIdentifier(node);
+        var outgoingPending = this._outgoingPendingSockets[identifier];
+        var confirmed = this._confirmedSockets[identifier];
+
+        if (outgoingPending) {
+            outgoingPending.closeAtOnce = true;
+        } else if (confirmed &amp;&amp; confirmed.direction === &#039;outgoing&#039;) {
+            this._destroyConnection(confirmed.socket);
         }
     };
 
@@ -439,7 +451,7 @@ var ProtocolConnectionManager = (function (_super) {
         var socket = this._hydraSockets[identifier];
 
         if (socket) {
-            socket.setCloseOnTimeout(false);
+            socket.setKeepOpen(true);
         }
     };
 
@@ -450,7 +462,7 @@ var ProtocolConnectionManager = (function (_super) {
         if (i &gt; -1) {
             var existing = this._confirmedSockets[identifier];
             if (existing) {
-                existing.socket.setCloseOnTimeout(true);
+                existing.socket.setKeepOpen(false);
             }
             this._keepSocketOpenList.splice(i, 1);
         }
@@ -465,7 +477,7 @@ var ProtocolConnectionManager = (function (_super) {
             this._keepSocketOpenList.push(identifier);
             var existing = this._confirmedSockets[identifier];
             if (existing) {
-                existing.socket.setCloseOnTimeout(false);
+                existing.socket.setKeepOpen(true);
             }
         }
     };
@@ -543,7 +555,7 @@ var ProtocolConnectionManager = (function (_super) {
         this._hookDestroyOnCloseToSocket(socket);
 
         if (this._keepSocketOpenList.indexOf(identifier) &gt; -1) {
-            socket.setCloseOnTimeout(false);
+            socket.setKeepOpen(true);
         }
 
         this._confirmedSockets[identifier] = newConfirmedSocket;
@@ -1013,9 +1025,22 @@ var ProtocolConnectionManager = (function (_super) {
             _this._onHydraMessage(identifier, message);
         });
 
+        this._incomingDataPipeline.on(&#039;memoryExcess&#039;, function (identifier) {
+            _this._destroyConnectionByIdentifier(identifier);
+        });
+
         this._tcpSocketHandler.on(&#039;connected&#039;, function (socket, direction) {
             if (direction === &#039;incoming&#039;) {
                 _this._onIncomingConnection(socket);
+            }
+        });
+
+        this._tcpSocketHandler.on(&#039;ipReset&#039;, function (ip) {
+            if (_this._tcpSocketHandler.getOpenServerPortsArray().length) {
+                console.log(&#039;External IP change must be handled&#039;);
+
+                // has no proxy, so change the addresses
+                _this._myNode.updateAddresses(_this.getExternalAddressList(), &#039;ipChange&#039;);
             }
         });
 

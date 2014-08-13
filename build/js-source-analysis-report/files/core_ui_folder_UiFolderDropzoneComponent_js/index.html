@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.19</p>
+      <p class="stat">71.36</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">123</p>
+      <p class="stat">169</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">25.45</p>
+      <p class="stat">30.50</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.09</p>
+      <p class="stat">1.52</p>
     </div>
   </div>
 </div>
@@ -113,11 +113,12 @@ var UiFolderDropzoneComponent = (function (_super) {
         this._windowDimensions = {};
         this._windowPosition = {};
         this._paths = [];
+        this._currentPathKey = &#039;&#039;;
 
         this._guiWindow = window;
 
-        this._windowDimensions.height = 300;
-        this._windowDimensions.width = 300;
+        this._windowDimensions.height = 400;
+        this._windowDimensions.width = 400;
 
         this._setupEventListeners();
     }
@@ -126,16 +127,22 @@ var UiFolderDropzoneComponent = (function (_super) {
     };
 
     UiFolderDropzoneComponent.prototype.getEventNames = function () {
-        return [&#039;background&#039;, &#039;open&#039;, &#039;close&#039;];
+        return [&#039;open&#039;, &#039;close&#039;];
     };
 
     UiFolderDropzoneComponent.prototype.getState = function (callback) {
-        return process.nextTick(callback.bind(null, this._paths));
+        var state = {};
+
+        if (this._currentPathKey) {
+            state[this._currentPathKey] = this._paths;
+        }
+        return process.nextTick(callback.bind(null, state));
     };
 
     UiFolderDropzoneComponent.prototype.onAfterUiUpdate = function () {
         this._paths = null;
         this._paths = [];
+        this._currentPathKey = &#039;&#039;;
     };
 
     UiFolderDropzoneComponent.prototype._setupEventListeners = function () {
@@ -149,8 +156,33 @@ var UiFolderDropzoneComponent = (function (_super) {
             localStorage.setItem(&#039;invertedBackgroundColor&#039;, background.invertedBackgroundColor);
         });
 
-        this.on(&#039;open&#039;, function () {
-            _this._getWindow().focus();
+        this.on(&#039;open&#039;, function (key, backgroundSource, button) {
+            var w = _this._getWindow();
+
+            _this._currentPathKey = key || &#039;&#039;;
+
+            backgroundSource = backgroundSource || &#039;&#039;;
+
+            //buttonSource = buttonSource || &#039;&#039;;
+            //title  = title || &#039;__Title__&#039;;
+            //description = description || &#039;__Description__&#039;;
+            w.once(&#039;loaded&#039;, function () {
+                if (backgroundSource) {
+                    w.window.document.getElementById(&#039;background-wrapper&#039;).style.backgroundImage = _this._getBackgroundUrl(backgroundSource);
+                }
+
+                if (button) {
+                    var buttonEl = w.window.document.getElementById(&#039;close-button&#039;);
+
+                    buttonEl.style.backgroundImage = _this._getBackgroundUrl(button.source);
+                    buttonEl.style.height = button.height + &#039;px&#039;;
+                    buttonEl.style.width = button.width + &#039;px&#039;;
+                    buttonEl.style.marginLeft = (button.width / -2) + &#039;px&#039;;
+                }
+
+                w.focus();
+                //w.showDevTools();
+            });
         });
 
         this.on(&#039;close&#039;, function () {
@@ -158,6 +190,20 @@ var UiFolderDropzoneComponent = (function (_super) {
                 _this._window.close();
             }
         });
+    };
+
+    /**
+    * Adds the image metadata to the base64 data png string to prevent base64 content attacks.
+    *
+    * @param {string} source
+    * @returns {string}
+    */
+    UiFolderDropzoneComponent.prototype._getBackgroundUrl = function (source) {
+        if (!source) {
+            return &#039;&#039;;
+        }
+
+        return &#039;url(&quot;data:image/png;base64,&#039; + source.replace(&#039;data:image/png;base64,&#039;, &#039;&#039;) + &#039;&quot;)&#039;;
     };
 
     /**

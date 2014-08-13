@@ -49,7 +49,7 @@
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">366</p>
+      <p class="stat">372</p>
     </div>
   </div>
   <div class="row historical">
@@ -243,6 +243,12 @@ var HydraCircuit = (function (_super) {
             logger.log(&#039;hydraExtension&#039;, &#039;Picked a batch of relay nodes&#039;, { nodes: batch });
 
             for (var i = 0, l = batch.length; i &lt; l; i++) {
+                /*if (i &lt; l -1) {
+                this._nodesToExtendWith.push(batch[i]);
+                }
+                else {
+                this._nodesToExtendWith.push({ip: &#039;141.51.224.112&#039;, port: 30415});
+                }*/
                 _this._nodesToExtendWith.push(batch[i]);
             }
 

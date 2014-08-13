@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.90</p>
+      <p class="stat">70.45</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">761</p>
+      <p class="stat">803</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">82.24</p>
+      <p class="stat">90.68</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">6.16</p>
+      <p class="stat">6.66</p>
     </div>
   </div>
 </div>
@@ -236,6 +236,7 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.addItem = function (objectToIndex, callback) {
+        var _this = this;
         var pluginIdentifiers = Object.keys(objectToIndex);
         var amount = pluginIdentifiers.length;
         var itemIds = [];
@@ -246,7 +247,7 @@ var SearchClient = (function () {
             }
 
             if (itemIds.length === amount) {
-                callback(null, itemIds);
+                return callback(null, itemIds);
             }
         };
 
@@ -254,15 +255,28 @@ var SearchClient = (function () {
             return process.nextTick(callback.bind(null, new Error(&#039;SearchClient.addItem: No item data specified! Preventing item creation.&#039;), null));
         }
 
-        for (var i = 0, l = pluginIdentifiers.length; i &lt; l; i++) {
-            var identifier = pluginIdentifiers[i];
+        // todo get data from plugin indexes. check each plugin individual and update or add data
+        this.itemExists(objectToIndex[pluginIdentifiers[0]].itemPath, function (exists, item) {
+            var existingIdentifiers = item ? item.getPluginIdentifiers() : [];
+            var existingIdentifiersLength = existingIdentifiers.length;
 
-            this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
-                itemIds.push(id);
+            for (var i = 0, l = pluginIdentifiers.length; i &lt; l; i++) {
+                var identifier = pluginIdentifiers[i];
+                var lowercasedIdentifier = identifier.toLowerCase();
 
-                return checkCallback(err);
-            });
-        }
+                // checks if the existing item contains the current identifier and adds the current id to the object to force
+                // the database to update the old item instead of creating a new one.
+                if (existingIdentifiersLength &amp;&amp; existingIdentifiers.indexOf(lowercasedIdentifier) !== -1) {
+                    objectToIndex[identifier][&#039;_id&#039;] = item.getPluginData(lowercasedIdentifier)[&#039;_id&#039;];
+                }
+
+                _this._addItemToPluginIndex(identifier.toLowerCase(), objectToIndex[identifier], function (err, id) {
+                    itemIds.push(id);
+
+                    return checkCallback(err);
+                });
+            }
+        });
     };
 
     SearchClient.prototype.addMapping = function (type, mapping, callback) {
@@ -495,7 +509,8 @@ var SearchClient = (function () {
             fields: [
                 &#039;_source&#039;,
                 &#039;_timestamp&#039;
-            ]
+            ],
+            size: this._config.get(&#039;search.maxIncomingResponsesSize&#039;)
         }, function (err, response, status) {
             return _this._checkHitsAndCallCallback(err, response, status, callback);
         });
@@ -531,7 +546,6 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.getItemByPath = function (itemPath, callback) {
-        // todo limit query to 1
         var searchQuery = {
             query: {
                 match: {
@@ -565,10 +579,27 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.itemExists = function (pathToIndex, callback) {
-        console.log(&#039;todo SearchClient#itemExists&#039;);
+        var query = {
+            query: {
+                match: {
+                    itemPath: pathToIndex
+                }
+            },
+            _source: {
+                include: [&#039;itemPath&#039;, &#039;itemHash&#039;, &#039;itemName&#039;, &#039;itemStats&#039;]
+            }
+        };
 
-        // todo iplementation
-        return process.nextTick(callback.bind(null, null, null));
+        this._getItemByQuery(query, function (err, item) {
+            var exists;
+
+            item = err ? null : item;
+
+            exists = item !== null ? true : false;
+
+            return callback(exists, item);
+        });
+        //return process.nextTick(callback.bind(null, null, null));
     };
 
     SearchClient.prototype.itemExistsById = function (id, callback) {
@@ -597,12 +628,15 @@ var SearchClient = (function () {
             _this._client = elasticsearch.Client({
                 apiVersion: _this._config.get(&#039;search.apiVersion&#039;, &#039;1.1&#039;),
                 host: _this._config.get(&#039;search.host&#039;) + &#039;:&#039; + _this._config.get(&#039;search.port&#039;),
+                requestTimeout: _this._config.get(&#039;search.requestTimeoutInSeconds&#039;) * 1000,
                 log: {
                     type: &#039;file&#039;,
-                    level: &#039;trace&#039;,
+                    level: [&#039;error&#039;, &#039;warning&#039;],
                     path: path.join(_this._options.logsPath, _this._options.logsFileName)
                 }
             });
+
+            console.log(&#039;added elasticsearch client&#039;);
 
             _this._waitForDatabaseServer(function (err) {
                 if (err) {
@@ -663,6 +697,7 @@ var SearchClient = (function () {
 
     /**
     * Creates a new `type` item and stores the given data within the {@link core.search.SearchClient~_indexName} index.
+    * Should the the data object contains a `_id` key an existing item will be updated.
     *
     * @method core.search.SearchClient~_addItemToPluginIndex
     *
@@ -671,9 +706,14 @@ var SearchClient = (function () {
     * @param {Function} callback
     */
     SearchClient.prototype._addItemToPluginIndex = function (type, data, callback) {
+        var id = data[&#039;_id&#039;] || null;
+
+        delete data[&#039;_id&#039;];
+
         this._client.index({
             index: this._indexName,
             type: type,
+            id: id,
             refresh: true,
             body: data
         }, function (err, response, status) {
@@ -745,30 +785,32 @@ var SearchClient = (function () {
             return null;
         }
 
-        //console.log(&#039;_createSearchItemFromHits&#039;, hits);
         return this._searchItemFactory.create(hits);
     };
 
     /**
-    * todo docs
+    * Transforms an incoming response into a {@link core.search.SearchItemInterface} by using the {@link core.search.SearchClient~_searchItemFactory}
     *
-    * @param response
-    * @returns {*}
+    * @method core.search.SearchClient~_createSearchItemFromResponse
+    *
+    * @param {Object} response
+    * @returns core.search.SearchItemInterface
     */
     SearchClient.prototype._createSearchItemFromResponse = function (response) {
         if (!response) {
             return null;
         }
 
-        //console.log(&#039;_createSearchItemFromResponse&#039;, response);
         return this._searchItemFactory.create([response]);
     };
 
     /**
-    * todo docs
+    * Internal helper method that transforms the results of the given search query into a {@link core.search.SearchItemInterface}
     *
-    * @param searchQuery
-    * @param callback
+    * @method core.search.SearchClient~_getItemByQuery
+    *
+    * @param {Object} searchQuery
+    * @param {Function} callback
     */
     SearchClient.prototype._getItemByQuery = function (searchQuery, callback) {
         var _this = this;
@@ -797,7 +839,7 @@ var SearchClient = (function () {
     *
     * @method core.search.SearchClient~_getResponseType
     *
-    * @param type
+    * @param {string} type
     * @returns {string}
     */
     SearchClient.prototype._getResponseType = function (type) {

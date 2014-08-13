@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.08</p>
+      <p class="stat">69.76</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">525</p>
+      <p class="stat">516</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">58.82</p>
+      <p class="stat">60.93</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.44</p>
+      <p class="stat">3.58</p>
     </div>
   </div>
 </div>
@@ -421,6 +421,7 @@ var PluginManager = (function () {
             }
 
             _this._pluginState = pluginState;
+
             _this._isOpen = true;
 
             return internalCallback(null);
@@ -429,7 +430,7 @@ var PluginManager = (function () {
 
     /**
     * The PluginManager is going to activate the plugin. But before we&#039;re going to run thirdparty code within
-    * the app we validate the plugin using a {@link core.plugin.PluginValidatorInterface}.
+    * the app we&#039;re going to validate the plugin using a {@link core.plugin.PluginValidatorInterface}.
     *
     * @member {core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_activatePlugin
     *
@@ -522,23 +523,9 @@ var PluginManager = (function () {
                 return callback(null, data[&#039;plugins&#039;]);
             } else {
                 // check for syntax errors
-                console.warn(err);
+                console.error(err);
+                return callback(null, null);
             }
-            /*if (err) {
-            
-            console.log(err);
-            if (err.code === &#039;ENOENT&#039;) {
-            
-            }
-            }
-            else {
-            if (data.hasOwnProperty(&#039;plugins&#039;)) {
-            callback(null, data[&#039;plugins&#039;]);
-            }
-            else {
-            callback(null, null);
-            }
-            }*/
         });
     };
 
@@ -570,6 +557,7 @@ var PluginManager = (function () {
     * @param {Function} callback
     */
     PluginManager.prototype._loadApacheTikaData = function (itemPath, callback) {
+        var maxFileBufferLength = this._config.get(&#039;plugin.pluginManagerMaxFileBufferInMegaBytes&#039;);
         var tikaData = {};
 
         fs.stat(itemPath, function (err, stats) {
@@ -579,13 +567,16 @@ var PluginManager = (function () {
                 return callback(err, tikaData);
             }
 
-            if (stats.isFile()) {
+            if (!stats.isFile() || maxFileBufferLength &lt; stats.size / 1048576) {
+                console.log(&#039;PluginManager~_loadApacheTikaData: file&#039;, itemPath, &#039;is not a file or does not fit into the maxFileBufferLength limit.&#039;, stats.size / 1048576, maxFileBufferLength, &#039;MB&#039;);
+
+                return callback(null, {});
+            } else {
                 fs.readFile(itemPath, function (err, data) {
                     if (err) {
                         return callback(err, tikaData);
                     }
 
-                    //tikaData[&#039;fileBuffer&#039;] = &#039;foobar&#039;;
                     tikaData.file = data.toString(&#039;base64&#039;);
 
                     return callback(null, tikaData);

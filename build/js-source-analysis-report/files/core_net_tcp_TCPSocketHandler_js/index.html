@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">72.28</p>
+      <p class="stat">72.30</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">379</p>
+      <p class="stat">381</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">62.32</p>
+      <p class="stat">60.52</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.70</p>
+      <p class="stat">2.59</p>
     </div>
   </div>
 </div>
@@ -131,6 +131,7 @@ var TCPSocketHandler = (function (_super) {
         * @member {number} TCPSocketHandler~_connectionRetry
         */
         this._connectionRetry = 0;
+        this._heartbeatTimeout = 0;
         /**
         * For a &quot;regular&quot; connection (i.e. not a connection which serves as a proxy), how many seconds should be waited
         * after the last activity until the socket connection is killed from this side.
@@ -200,7 +201,7 @@ var TCPSocketHandler = (function (_super) {
 
         this._socketFactory = socketFactory;
 
-        this.setMyExternalIp(opts.myExternalIp);
+        this._myExternalIp = opts.myExternalIp;
         this._myOpenPorts = opts.myOpenPorts || [];
         this._idleConnectionKillTimeout = opts.idleConnectionKillTimeout || 0;
         this._allowHalfOpenSockets = !!opts.allowHalfOpenSockets;
@@ -208,8 +209,8 @@ var TCPSocketHandler = (function (_super) {
         this._outboundConnectionTimeout = opts.outboundConnectionTimeout || 2000;
         this._simulatorRTT = opts.simulatorRTT || 0;
         this._maxReachableTries = opts.maxReachableTries || 3;
-
-        this._TESTstartSocketInterval();
+        this._heartbeatTimeout = opts.heartbeatTimeout;
+        //this._TESTstartSocketInterval();
     }
     TCPSocketHandler.prototype._TESTsocketCount = function (socket) {
         var _this = this;
@@ -221,15 +222,14 @@ var TCPSocketHandler = (function (_super) {
     };
 
     TCPSocketHandler.prototype._TESTstartSocketInterval = function () {
-        var _this = this;
-        global.setInterval(function () {
-            var now = Math.floor(Date.now() / 1000);
-
-            if (now !== _this._socketSecond) {
-                _this._socketSecond = now;
-                logger.log(&#039;socketCount&#039;, &#039;&#039;, { count: _this._socketCount, when: new Date(now * 1000) });
-            }
-        }, 1000);
+        /*global.setInterval(() =&gt; {
+        var now:number = Math.floor(Date.now() / 1000);
+        
+        if (now !== this._socketSecond) {
+        this._socketSecond = now;
+        logger.log(&#039;socketCount&#039;, &#039;&#039;, {count: this._socketCount, when: new Date(now * 1000)});
+        }
+        }, 1000);*/
     };
 
     TCPSocketHandler.prototype.autoBootstrap = function (callback) {
@@ -446,6 +446,7 @@ var TCPSocketHandler = (function (_super) {
     TCPSocketHandler.prototype.getDefaultSocketOptions = function () {
         return {
             idleConnectionKillTimeout: this._idleConnectionKillTimeout,
+            heartbeatTimeout: this._heartbeatTimeout,
             simulatorRTT: this._simulatorRTT,
             doKeepAlive: true
         };
@@ -462,8 +463,9 @@ var TCPSocketHandler = (function (_super) {
     };
 
     TCPSocketHandler.prototype.setMyExternalIp = function (ip) {
-        // @todo Here IPv6 addresses should be transformed into a standardized format!
         this._myExternalIp = ip;
+
+        this.emit(&#039;ipReset&#039;, ip);
     };
     return TCPSocketHandler;
 })(events.EventEmitter);

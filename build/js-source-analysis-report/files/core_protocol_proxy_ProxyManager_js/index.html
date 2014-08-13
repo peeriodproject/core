@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.68</p>
+      <p class="stat">68.27</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">553</p>
+      <p class="stat">610</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">74.79</p>
+      <p class="stat">78.95</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.81</p>
+      <p class="stat">4.49</p>
     </div>
   </div>
 </div>
@@ -107,7 +107,7 @@ var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 *
 * @class core.protocol.proxy.ProxyManager
 * @extends NodeJS.EventEmitter
-* @implements core.protocl.proxy.ProxyManagerInterface
+* @implements core.protocol.proxy.ProxyManagerInterface
 *
 * @param {core.config.ConfigInterface} config The configuration object
 * @apram {core.protocol.net.ProtocolConnectionManagerInterface} protocolConnectionManager A running connection manager.
@@ -117,6 +117,20 @@ var ProxyManager = (function (_super) {
     __extends(ProxyManager, _super);
     function ProxyManager(config, protocolConnectionManager, routingTable) {
         _super.call(this);
+        /**
+        * Stores a timeout which gets reset when my node&#039;s address changes, so address changes need to be valid for a given time
+        * until all known nodes are notified. This is to ensure that a node doesn&#039;t send too many messages if it e.g. loses a proxy
+        * and immediately finds a new one.
+        *
+        * @member {number} core.protocol.proxy.ProxyManager~_addressChangeTimeout
+        */
+        this._addressChangeTimeout = 0;
+        /**
+        * The number of milliseconds to wait for another new address change before notifying all known nodes.
+        *
+        * @member {number} core.protocol.proxy.ProxyManager~_addressChangeTimeoutBeforeNotifyInMs
+        */
+        this._addressChangeTimeoutBeforeNotifyInMs = 0;
         /**
         * A flag indicating if a potential new proxy request can be fired off.
         *
@@ -231,6 +245,7 @@ var ProxyManager = (function (_super) {
         this._reactionTime = config.get(&#039;protocol.waitForNodeReactionInSeconds&#039;) * 1000;
         this._maxUnsuccessfulProxyTries = config.get(&#039;protocol.proxy.maxUnsuccessfulProxyTries&#039;);
         this._unsuccessfulProxyTryWaitTime = config.get(&#039;protocol.proxy.unsuccessfulProxyTryWaitTimeInSeconds&#039;) * 1000;
+        this._addressChangeTimeoutBeforeNotifyInMs = config.get(&#039;protocol.proxy.addressChangeTimeoutBeforeNotifyInSeconds&#039;) * 1000;
 
         this._protocolConnectionManager = protocolConnectionManager;
         this._routingTable = routingTable;
@@ -308,6 +323,7 @@ var ProxyManager = (function (_super) {
         this._confirmedProxies[identifier] = node;
         this._protocolConnectionManager.keepSocketsOpenFromNode(node);
         this._updateMyNodeAddresses();
+        this.emit(&#039;proxyCount&#039;, Object.keys(this._confirmedProxies).length);
     };
 
     /**
@@ -321,6 +337,7 @@ var ProxyManager = (function (_super) {
     ProxyManager.prototype._addToProxyingFor = function (identifier, node) {
         this._proxyingFor[identifier] = node;
         this._protocolConnectionManager.keepSocketsOpenFromNode(node);
+        this.emit(&#039;proxyingForCount&#039;, Object.keys(this._proxyingFor).length);
     };
 
     /**
@@ -394,6 +411,7 @@ var ProxyManager = (function (_super) {
                 if (msgType === &#039;PROXY_ACCEPT&#039; &amp;&amp; Object.keys(this._confirmedProxies).length &lt; this._maxNumberOfProxies) {
                     this._addToConfirmedProxies(identifier, sender);
                     this.emit(&#039;newProxy&#039;, sender);
+                    console.log(&#039;Got new proxy %o&#039;, { id: sender.getId().toHexString(), proxyNow: Object.keys(this._confirmedProxies).length });
                     logger.log(&#039;proxy&#039;, &#039;Got new proxy&#039;, { id: sender.getId().toHexString(), lengthNow: Object.keys(this._confirmedProxies).length });
                 } else {
                     this.emit(&#039;proxyReject&#039;, sender);
@@ -563,7 +581,23 @@ var ProxyManager = (function (_super) {
     };
 
     /**
-    * Sets the `message` and `terminatedConnection` listeners on the ProtocolConnectionManagerInterface
+    * Sends an ADDRESS_CHANGE message to all known nodes to notify them of the address change.
+    *
+    * @method core.protocol.proxy.ProxyManager~_sendAddressChangeToAllKnownNodes
+    */
+    ProxyManager.prototype._sendAddressChangeToAllKnownNodes = function () {
+        var _this = this;
+        console.log(&#039;sending ADDRESS_CHANGE to all known nodes&#039;);
+        this._routingTable.getAllContactNodes(function (err, allNodes) {
+            for (var i = 0, l = allNodes.length; i &lt; l; i++) {
+                _this._protocolConnectionManager.writeMessageTo(allNodes[i], &#039;ADDRESS_CHANGE&#039;, new Buffer(0));
+            }
+        });
+    };
+
+    /**
+    * Sets the `message` and `terminatedConnection` listeners on the ProtocolConnectionManagerInterface.
+    * Furthermore sends an ADDRESS_CHANGE message to all known nodes if the address of the node changes.
     *
     * @method core.protocol.proxy.ProxyManager~_setupListeners
     */
@@ -581,6 +615,11 @@ var ProxyManager = (function (_super) {
             if (_this._messageIsIntendedForMyNode(message)) {
                 if (_this._messageIsProxyAffine(message)) {
                     _this._handleProxyMessage(message);
+                } else if (message.getMessageType() === &#039;ADDRESS_CHANGE&#039;) {
+                    // we can safely call this, as if we would be proxying for this node, we would always communicate
+                    // with this node via incoming connections
+                    console.log(&#039;handling ADDRESS_CHANGE message&#039;);
+                    _this._protocolConnectionManager.invalidateOutgoingConnectionsTo(message.getSender());
                 } else {
                     _this.emit(&#039;message&#039;, message);
                 }
@@ -608,18 +647,36 @@ var ProxyManager = (function (_super) {
                     delete _this._confirmedProxies[identifier];
                     _this._updateMyNodeAddresses();
                     _this.emit(&#039;lostProxy&#039;, confirmedProxy);
-                    logger.log(&#039;proxy&#039;, &#039;Lost proxy&#039;, { id: confirmedProxy.getId().toHexString() });
+                    console.log(&#039;Lost proxy %o&#039;, confirmedProxy.getId().toHexString());
+                    _this.emit(&#039;proxyCount&#039;, Object.keys(_this._confirmedProxies).length);
                 }
                 if (proxyingFor) {
                     _this._protocolConnectionManager.keepSocketsNoLongerOpenFromNode(proxyingFor);
                     delete _this._proxyingFor[identifier];
                     _this.emit(&#039;lostProxyingFor&#039;, proxyingFor);
                     logger.proxy(&#039;proxy&#039;, &#039;No longer proxying for&#039;, { id: proxyingFor.getId().toHexString() });
+                    _this.emit(&#039;proxyingForCount&#039;, Object.keys(_this._proxyingFor).length);
                 }
 
                 if (doStartCycle) {
                     _this._proxyCycleOnNextTick();
                 }
+            }
+        });
+
+        this._myNode.onAddressChange(function (info) {
+            console.log(&#039;address has changed. %o&#039;, info);
+
+            if (_this._addressChangeTimeout) {
+                global.clearTimeout(_this._addressChangeTimeout);
+                _this._addressChangeTimeout = 0;
+            }
+
+            if (info !== &#039;initial&#039;) {
+                _this._addressChangeTimeout = global.setTimeout(function () {
+                    _this._sendAddressChangeToAllKnownNodes();
+                    _this._addressChangeTimeout = 0;
+                }, _this._addressChangeTimeoutBeforeNotifyInMs);
             }
         });
     };
@@ -637,7 +694,7 @@ var ProxyManager = (function (_super) {
             addressList = addressList.concat(this._confirmedProxies[keys[i]].getAddresses());
         }
 
-        this._myNode.updateAddresses(addressList);
+        this._myNode.updateAddresses(addressList, &#039;fromProxy&#039;);
     };
     return ProxyManager;
 })(events.EventEmitter);
