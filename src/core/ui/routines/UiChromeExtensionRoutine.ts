@@ -49,7 +49,7 @@ class UiChromeExtensionRoutine implements UiRoutineInterface {
 
 			console.log(path.resolve(process.cwd(), this._config.get('extension.crxPath')));
 
-			fs.writeJson(installPath, {
+			fs.outputJson(installPath, {
 				external_crx: path.resolve(process.cwd(), this._config.get('extension.crxPath')),
 				external_version: this._config.get('extension.version')
 			}, function (err) {

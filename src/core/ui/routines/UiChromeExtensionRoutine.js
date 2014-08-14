@@ -43,7 +43,7 @@ var UiChromeExtensionRoutine = (function () {
 
             console.log(path.resolve(process.cwd(), _this._config.get('extension.crxPath')));
 
-            fs.writeJson(installPath, {
+            fs.outputJson(installPath, {
                 external_crx: path.resolve(process.cwd(), _this._config.get('extension.crxPath')),
                 external_version: _this._config.get('extension.version')
             }, function (err) {
