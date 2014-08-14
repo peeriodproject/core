@@ -125,7 +125,6 @@ var IncomingDataPipeline = (function (_super) {
     };
 
     IncomingDataPipeline.prototype.unhookSocket = function (socket) {
-        var _this = this;
         if (socket) {
             var identifier = socket.getIdentifier();
             if (identifier) {
@@ -145,16 +144,29 @@ var IncomingDataPipeline = (function (_super) {
                 }
 
                 // temporary buffer storage will only be deleted if no new data comes in within the specified time
-                if (!this._doCleanBufferTimeouts[identifier]) {
-                    this._doCleanBufferTimeouts[identifier] = global.setTimeout(function () {
-                        _this._freeMemory(identifier);
-                    }, this._clearTimeoutLength);
-                }
+                this._setCleanBufferTimeout(identifier);
 
                 return a || b;
             }
         }
         return false;
+    };
+
+    IncomingDataPipeline.prototype._setCleanBufferTimeout = function (identifier) {
+        var _this = this;
+        if (!this._doCleanBufferTimeouts[identifier]) {
+            this._doCleanBufferTimeouts[identifier] = global.setTimeout(function () {
+                delete _this._doCleanBufferTimeouts[identifier];
+                _this._freeMemory(identifier);
+            }, this._clearTimeoutLength);
+        }
+    };
+
+    IncomingDataPipeline.prototype._clearCleanBufferTimeout = function (identifier) {
+        if (this._doCleanBufferTimeouts[identifier]) {
+            global.clearTimeout(this._doCleanBufferTimeouts[identifier]);
+            delete this._doCleanBufferTimeouts[identifier];
+        }
     };
 
     /**
@@ -244,10 +256,7 @@ var IncomingDataPipeline = (function (_super) {
     IncomingDataPipeline.prototype._handleIncomingData = function (buffer, socket) {
         var identifier = socket.getIdentifier();
 
-        if (this._doCleanBufferTimeouts[identifier]) {
-            global.clearTimeout(this._doCleanBufferTimeouts[identifier]);
-            delete this._doCleanBufferTimeouts[identifier];
-        }
+        this._clearCleanBufferTimeout(identifier);
 
         if (buffer) {
             var len = buffer.length;
@@ -311,8 +320,8 @@ var IncomingDataPipeline = (function (_super) {
         }
 
         if (emptyMemoryTimeout) {
-            this._doCleanBufferTimeouts[newIdentifier] = emptyMemoryTimeout;
-            delete this._doCleanBufferTimeouts[oldIdentifier];
+            this._clearCleanBufferTimeout(oldIdentifier);
+            this._setCleanBufferTimeout(newIdentifier);
         }
     };
 

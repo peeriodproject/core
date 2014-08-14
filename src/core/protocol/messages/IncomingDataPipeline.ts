@@ -157,16 +157,28 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 				}
 
 				// temporary buffer storage will only be deleted if no new data comes in within the specified time
-				if (!this._doCleanBufferTimeouts[identifier]) {
-					this._doCleanBufferTimeouts[identifier] = global.setTimeout(() => {
-						this._freeMemory(identifier);
-					}, this._clearTimeoutLength);
-				}
+				this._setCleanBufferTimeout(identifier);
 
 				return a || b;
 			}
 		}
 		return false;
+	}
+
+	private _setCleanBufferTimeout (identifier:string):void {
+		if (!this._doCleanBufferTimeouts[identifier]) {
+			this._doCleanBufferTimeouts[identifier] = global.setTimeout(() => {
+				delete this._doCleanBufferTimeouts[identifier];
+				this._freeMemory(identifier);
+			}, this._clearTimeoutLength);
+		}
+	}
+
+	private _clearCleanBufferTimeout (identifier:string):void {
+		if (this._doCleanBufferTimeouts[identifier]) {
+			global.clearTimeout(this._doCleanBufferTimeouts[identifier]);
+			delete this._doCleanBufferTimeouts[identifier];
+		}
 	}
 
 	/**
@@ -256,10 +268,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 	private _handleIncomingData (buffer:Buffer, socket:TCPSocketInterface):void {
 		var identifier = socket.getIdentifier();
 
-		if (this._doCleanBufferTimeouts[identifier]) {
-			global.clearTimeout(this._doCleanBufferTimeouts[identifier]);
-			delete this._doCleanBufferTimeouts[identifier];
-		}
+		this._clearCleanBufferTimeout(identifier);
 
 		if (buffer) {
 			var len = buffer.length;
@@ -326,8 +335,8 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 		}
 
 		if (emptyMemoryTimeout) {
-			this._doCleanBufferTimeouts[newIdentifier] = emptyMemoryTimeout;
-			delete this._doCleanBufferTimeouts[oldIdentifier];
+			this._clearCleanBufferTimeout(oldIdentifier);
+			this._setCleanBufferTimeout(newIdentifier);
 		}
 
 	}
