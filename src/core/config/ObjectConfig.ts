@@ -111,7 +111,7 @@ class ObjectConfig implements ConfigInterface {
 						}
 					}
 
-					res[newKey] = value;
+					res[newKey.toLowerCase()] = value;
 				}
 			}
 		};

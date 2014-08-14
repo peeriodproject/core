@@ -100,7 +100,7 @@ var ObjectConfig = (function () {
                         }
                     }
 
-                    res[newKey] = value;
+                    res[newKey.toLowerCase()] = value;
                 }
             }
         };
