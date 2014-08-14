@@ -22,6 +22,7 @@ var UiSplashScreen = (function (_super) {
         this._window = null;
         this._isOpen = false;
         this._currentStatus = '';
+        this._updateCounter = 0;
 
         this._window = gui.Window.open('./public/splash-screen.html', {
             position: 'center',
@@ -71,7 +72,13 @@ var UiSplashScreen = (function (_super) {
     };
 
     UiSplashScreen.prototype._updateStatus = function () {
-        this._window.window.document.getElementById('status').innerHTML = i18n.__('splashScreen.' + this._currentStatus);
+        this._updateCounter++;
+
+        var isEven = this._updateCounter % 2 === 0 ? true : false;
+        var element = isEven ? 'status-even' : 'status-odd';
+
+        this._window.window.document.getElementById('progress-wrapper').className = isEven ? 'even' : 'odd';
+        this._window.window.document.getElementById(element).innerHTML = i18n.__('splashScreen.' + this._currentStatus);
     };
     return UiSplashScreen;
 })(events.EventEmitter);

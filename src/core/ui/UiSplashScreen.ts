@@ -19,6 +19,8 @@ class UiSplashScreen extends events.EventEmitter implements UiSplashScreenInterf
 
 	private _currentStatus:string = '';
 
+	private _updateCounter:number = 0;
+
 	constructor(gui:any) {
 		super();
 
@@ -71,7 +73,13 @@ class UiSplashScreen extends events.EventEmitter implements UiSplashScreenInterf
 	}
 
 	private _updateStatus ():void {
-		this._window.window.document.getElementById('status').innerHTML = i18n.__('splashScreen.' + this._currentStatus);
+		this._updateCounter++;
+
+		var isEven:boolean = this._updateCounter % 2 === 0 ? true : false;
+		var element:string = isEven ? 'status-even' : 'status-odd';
+
+		this._window.window.document.getElementById('progress-wrapper').className = isEven ? 'even' : 'odd';
+		this._window.window.document.getElementById(element).innerHTML = i18n.__('splashScreen.' + this._currentStatus);
 	}
 
 }
