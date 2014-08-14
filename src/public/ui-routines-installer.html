@@ -51,6 +51,13 @@
 			padding: 4rem 1rem 5rem;
 		}
 
+		* {
+			-webkit-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+				user-select: none;
+		}
+
 		h1 {
 			font-weight: bold;
 			font-style: italic;
@@ -67,16 +74,17 @@
 
 		#routines-list {
 			list-style-type: none;
-  			margin: 0;
-  			padding: 0;
-  			overflow: hidden;
-  			text-align: center;
-  			margin: 5rem 0;
-  			white-space: nowrap;
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+			text-align: center;
+			margin: 5rem 0;
+			white-space: nowrap;
 		}
 
 		#routines-list li {
-			transition: background 0.25s ease, border-color 0.25s ease;
+			-webkit-transition: background 0.25s ease, border-color 0.25s ease;
+					transition: background 0.25s ease, border-color 0.25s ease;
 
 			background-color: #F9F9F9;
 			border: 1px solid #D8D8D8;
@@ -121,6 +129,8 @@
 		#routines-list .icon,
 		#routines-list .content {
 			-webkit-user-select: none;
+			-moz-user-select: none;
+			user-select: none;
 		}
 
 		#routines-list h2 {
@@ -147,7 +157,8 @@
 		}
 
 		#routines-list li .install-btn-wrapper {
-			transition: visibility 0s linear 0.25s, opacity 0.25s linear;
+			-webkit-transition: visibility 0s linear 0.25s, opacity 0.25s linear;
+					transition: visibility 0s linear 0.25s, opacity 0.25s linear;
 			
 			visibility: hidden;
 			opacity: 0;
@@ -158,11 +169,13 @@
 		#routines-list li.active .install-btn-wrapper {
 			visibility: visible;
 			opacity: 1;
-			transition-delay: 0s;
+			-webkit-transition-delay: 0s;
+					transition-delay: 0s;
 		}
 
 		.install-btn {
-			transition: background-color 0.15s ease, color 0.15s linear;
+			-webkit-transition: background-color 0.15s ease, color 0.15s linear;
+					transition: background-color 0.15s ease, color 0.15s linear;
 
 			background-color: #F0F0F0;
 			border: 2px solid #00D97E;
