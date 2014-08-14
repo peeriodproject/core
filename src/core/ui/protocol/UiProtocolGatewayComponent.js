@@ -55,7 +55,9 @@ var UiProtocolGatewayComponent = (function (_super) {
 
         protocolGateway.once('TOPOLOGY_JOIN_COMPLETE', function () {
             _this._setKeyAndUpdateSplashScreen('topologyJoinComplete');
-            _this._splashScreen.close();
+            if (_this._splashScreen) {
+                _this._splashScreen.close();
+            }
         });
 
         protocolGateway.once('NEEDS_PROXY', function (needsProxy) {

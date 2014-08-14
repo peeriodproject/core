@@ -54,7 +54,9 @@ class UiProtocolGatewayComponent extends UiComponent {
 
 		protocolGateway.once('TOPOLOGY_JOIN_COMPLETE', () => {
 			this._setKeyAndUpdateSplashScreen('topologyJoinComplete');
-			this._splashScreen.close();
+			if (this._splashScreen) {
+				this._splashScreen.close();
+			}
 		});
 
 		protocolGateway.once('NEEDS_PROXY', (needsProxy:boolean) => {
