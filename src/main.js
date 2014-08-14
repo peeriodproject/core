@@ -7,6 +7,7 @@ var App = require('./core/App');
 var logger = require('./core/utils/logger/LoggerFactory').create();
 
 App.setLocale(window.navigator.language);
+App.setConfigPath('../../config/environmentConfig.json');
 App.start(gui, gui.App, gui.App.dataPath, gui.Window.get());
 
 /*
@@ -26,28 +27,13 @@ var tray = new gui.Tray({
     icon: 'icon.png'
 }), menu = new gui.Menu();
 
-// Give it a menu
-var addFolderItem = new gui.MenuItem({
-    label: 'Start Query'
-});
-
-addFolderItem.click = function () {
-    App.startQuery();
-};
-
-menu.append(addFolderItem);
-
-menu.append(new gui.MenuItem({
-    type: 'separator'
-}));
-
+/*menu.append(new gui.MenuItem({
+type: 'separator'
+}));*/
 menu.append(new gui.MenuItem({
     label: 'Quit'
 }));
 menu.items[menu.items.length - 1].click = function () {
-    //console.log('bye bye');
-    App.stopQueryInterval();
-
     App.quit();
     /*if (process.env.UI_ENABLED) {
     App.quit();

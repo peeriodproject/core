@@ -4,9 +4,14 @@ import fs = require('fs-extra');
 
 // global imports
 import JSONConfig = require('./config/JSONConfig');
+import ObjectConfig = require('./config/ObjectConfig');
 
 var i18n = require('i18n');
 var logger = require('./utils/logger/LoggerFactory').create();
+
+// interfaces
+import ConfigInterface = require('./config/interfaces/ConfigInterface');
+import UiComponentInterface = require('./ui/interfaces/UiComponentInterface');
 
 import AppQuitHandler = require('./utils/AppQuitHandler');
 
@@ -74,7 +79,7 @@ import UiChromeExtensionRoutine = require('./ui/routines/UiChromeExtensionRoutin
 var nameFixtures = require('../config/nameFixtures');
 
 i18n.configure({
-	locales:['en', 'de'],
+	locales  : ['en', 'de'],
 	directory: './locales'
 });
 
@@ -82,21 +87,41 @@ var App = {
 
 	appQuitHandler: null,
 
-	_gui         : null,
-	_i18n: null,
-	_splashScreen: null,
-	_uiComponents: [],
-	_requestManager: null,
-	_responseManager: null,
-	_started: [],
-	_stateHandlerFactory: null,
-	_queryInterval: null,
+	_environmentConfigPath    : '',
+	_environmentConfig        : null,
+	_environmentConfigDefaults: {
+		startUi            : false,
+		startSearchDatabase: false,
+		startIndexer       : false,
+		startTopology      : true
+	},
+	_mainConfig: null,
 
-	addUiComponent: function (component) {
-		this._uiComponents.push(component);
+	_gui     : null,
+	_dataPath: '',
+
+	_i18n               : null,
+	_splashScreen       : null,
+	_uiComponents       : [],
+	_requestManager     : null,
+	_responseManager    : null,
+	_stateHandlerFactory: null,
+
+	addUiComponent: function (component:UiComponentInterface):void {
+		if (this._environmentConfig.get('environment.startUi')) {
+			this._uiComponents.push(component);
+		}
+		else {
+			component = null;
+		}
 	},
 
-	getStateHandlerFactory: function () {
+	/**
+	 * Returns a JSONStateHandlerFactory by using the singleton pattern
+	 *
+	 * @returns {core.utils.JSONStateHandlerFactory}
+	 */
+	getJSONStateHandlerFactory: function ():JSONStateHandlerFactory {
 		if (!this._stateHandlerFactory) {
 			this._stateHandlerFactory = new JSONStateHandlerFactory();
 		}
@@ -104,83 +129,83 @@ var App = {
 		return this._stateHandlerFactory;
 	},
 
-	setLocale: function (locale:string) {
+	/**
+	 * Returns the application's data path in user's directory
+	 *
+	 * @returns {string}
+	 */
+	getDataPath: function ():string {
+		return this._dataPath;
+	},
+
+	getMainConfig: function (configKeys:Array<string>):ConfigInterface {
+		return new ObjectConfig(this._mainConfig, configKeys);
+	},
+
+	/**
+	 * Sets the environment config path
+	 *
+	 * @param {string} configPath
+	 */
+	setConfigPath: function (configPath:string):void {
+		this._environmentConfigPath = configPath;
+	},
+
+	/**
+	 * Loads the environment config from the specified config path or creates an empty config instance
+	 */
+	_loadConfig: function ():void {
+		this._environmentConfig = this._environmentConfigPath ? new JSONConfig(this._environmentConfigPath) : new ObjectConfig(this._environmentConfigDefaults);
+		this._mainConfig = require('../config/mainConfig.json');
+
+		// todo update data path here
+		// this._mainConfig.app.dataPath = this._dataPath;
+	},
+
+	/**
+	 * Sets the locale of the app interface
+	 *
+	 * @param {string} locale
+	 */
+	setLocale: function (locale:string):void {
 		i18n.setLocale(locale);
 	},
 
+	_initSplashScreen: function ():void {
+		this._splashScreen = this._environmentConfig.get('environment.startUi') ? new UiSplashScreen(this._gui) : null;
+	},
+
+	_setSplashScreenStatus: function (status):void {
+		if (this._splashScreen) {
+			this._splashScreen.setStatus(status);
+		}
+	},
+
 	start: function (gui, nwApp, dataPath, win) {
+		this._gui = gui;
+		this._dataPath = dataPath;
+
+		this.appQuitHandler = new AppQuitHandler(nwApp);
+		this._loadConfig();
+
 		win.showDevTools();
 
-		this._gui = gui;
-		this.appQuitHandler = new AppQuitHandler(nwApp);
-		this._splashScreen = new UiSplashScreen(this._gui);
+		this._initSplashScreen();
 
 		// copy node discovery.json to app data path
-		var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
-		var nodeDiscoveryPath = path.resolve(appConfig.get('app.dataPath'), 'nodeDiscovery.json');
+		var nodeDiscoveryPath = path.resolve(this.getDataPath(), 'nodeDiscovery.json');
 
 		if (!fs.existsSync(nodeDiscoveryPath)) {
 			fs.copySync(path.join(__dirname, '../config/nodeDiscovery.json'), nodeDiscoveryPath);
 		}
 
-		this.startSearchClient((searchConfig, searchClient) => {
-			var searchRequestsIndexName:string = 'searchrequests';
-
-			var searchRequestManager = new SearchRequestManager(this.appQuitHandler, searchRequestsIndexName, searchClient);
-			var searchResponseManager = new SearchResponseManager(this.appQuitHandler, searchClient);
-
-			var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
-
-			this.startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager, () => {
-				this._started.push('indexer');
-			});
-
-			this.startSharing(searchClient, searchRequestsIndexName, (downloadManager, uploadManager) => {
-				this._started.push('share');
-
-				var downloadBridge = new DownloadBridge(downloadManager);
-				var uploadBridge = new UploadBridge(uploadManager);
-
-				// disables the network layer for testing purposes
-				if (!process.env.DISABLE_TOPOLOGY) {
-					this.startTopology(dataPath, searchMessageBridge, downloadBridge, uploadBridge);
-				}
-			});
-
-			this._requestManager = searchRequestManager;
-			this._responseManager = searchResponseManager;
-		});
-	},
-
-	stopQueryInterval: function () {
-		if (this._queryInterval) {
-			clearInterval(this._queryInterval);
+		if (this._environmentConfig.get('environment.startSearchDatabase')) {
+			this.startSearchDatabase();
+		}
+		else {
+			this.startTopology(null, null, null);
 		}
 	},
-
-	startQuery: function () {
-		var i = Math.floor(Math.random() * nameFixtures.length);
-		var name = nameFixtures[i].name;
-		//var name = "Vivamus";
-		var queryBody = {
-			"query"    : {
-				"match": {
-					"itemName": name,
-					"file": name
-				}
-			},
-			"highlight": {
-				"fields": {
-					"itemName": {},
-					"file": {}
-				}
-			}
-		};
-
-		this._requestManager.addQuery(queryBody);
-	},
-
-
 
 	quit: function () {
 		console.log('quitting...');
@@ -189,24 +214,57 @@ var App = {
 		}.bind(this));
 	},
 
-	startSharing: function (searchClient, searchRequestsIndexName, callback:Function) {
-		this._splashScreen.setStatus('startSharing');
+	startSearchDatabase: function () {
+		this.startSearchClient((searchConfig, searchClient) => {
+			var searchRequestsIndexName:string = 'searchrequests';
 
-		var shareConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'share']);
-		var downloadManager = new DownloadManager(shareConfig, this.appQuitHandler, this.getStateHandlerFactory(), searchClient, searchRequestsIndexName);
+			var searchRequestManager = new SearchRequestManager(this.appQuitHandler, searchRequestsIndexName, searchClient);
+			var searchResponseManager = new SearchResponseManager(this.appQuitHandler, searchClient);
+			var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
+
+			this.startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager);
+
+			this.startSharing(searchClient, searchRequestsIndexName, (downloadManager, uploadManager) => {
+				var downloadBridge = new DownloadBridge(downloadManager);
+				var uploadBridge = new UploadBridge(uploadManager);
+
+				// disables the network layer for testing purposes
+				this.startTopology(searchMessageBridge, downloadBridge, uploadBridge);
+			});
+
+			this._requestManager = searchRequestManager;
+			this._responseManager = searchResponseManager;
+		});
+	},
+
+	startSharing: function (searchClient, searchRequestsIndexName, callback:Function) {
+		if (!this._environmentConfig.get('environment.startSearchDatabase')) {
+			return process.nextTick(callback.bind(null, null, null));
+		}
+
+		this._setSplashScreenStatus('startSharing');
+
+		var internalCallback = callback || function () {};
+
+		//var shareConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'share']);
+		var downloadManager = new DownloadManager(this.getMainConfig(['app', 'share']), this.appQuitHandler, this.getJSONStateHandlerFactory(), searchClient, searchRequestsIndexName);
 		var uploadManager = new UploadManager(this.appQuitHandler, searchClient, searchRequestsIndexName);
 
 		this.addUiComponent(new UiShareManagerComponent(downloadManager, uploadManager));
 
-		return callback(downloadManager, uploadManager);
+		return process.nextTick(internalCallback.bind(null, downloadManager, uploadManager));
 	},
 
 	startIndexer     : function (searchConfig, searchClient, searchRequestManager, searchResponseManager, callback:Function) {
-		this._splashScreen.setStatus('startIndexer');
+		if (!this._environmentConfig.get('environment.startSearchDatabase') || !this._environmentConfig.get('environment.startIndexer')) {
+			return process.nextTick(internalCallback.bind(null));
+		}
 
-		var fsConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'fs']);
-		var pluginConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'plugin']);
-		var searchAppConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'search']);
+		this._setSplashScreenStatus('startIndexer');
+
+		var internalCallback = callback || function () {};
+
+		var pluginConfig = this.getMainConfig(['app', 'plugin']);
 
 		var pluginFinder = new PluginFinder(pluginConfig);
 		var pluginValidator = new PluginValidator();
@@ -223,7 +281,7 @@ var App = {
 		var pluginManager = new PluginManager(pluginConfig, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
 			onOpenCallback: () => {
 				searchManager = new SearchManager(searchConfig, pluginManager, searchClient);
-				folderWatcherManager = new FolderWatcherManager(fsConfig, this.appQuitHandler, this.getStateHandlerFactory(), folderWatcherFactory, {
+				folderWatcherManager = new FolderWatcherManager(this.getMainConfig(['app', 'fs']), this.appQuitHandler, this.getJSONStateHandlerFactory(), folderWatcherFactory, {
 					onOpenCallback: () => {
 						indexManager = new IndexManager(searchConfig, this.appQuitHandler, folderWatcherManager, pathValidator, searchManager);
 						pluginManager.activatePluginState((err) => {
@@ -231,21 +289,17 @@ var App = {
 								logger.error(err)
 							}
 
-							searchFormResultsManager = new SearchFormResultsManager(searchAppConfig, this.appQuitHandler, this.getStateHandlerFactory(), pluginManager, searchRequestManager);
+							searchFormResultsManager = new SearchFormResultsManager(this.getMainConfig(['app', 'search']), this.appQuitHandler, this.getJSONStateHandlerFactory(), pluginManager, searchRequestManager);
 							this.addUiComponent(new UiSearchFormResultsManagerComponent(searchFormResultsManager, searchRequestManager));
 
 							console.log('started indexer');
 
-							return callback();
+							return internalCallback();
 						});
 					}
 				});
 
-				// register ui components
-				// ----------------------
-
 				this.addUiComponent(new UiFolderWatcherManagerComponent(this._gui, folderWatcherManager));
-				//});
 			}
 		});
 
@@ -254,53 +308,38 @@ var App = {
 
 	// index database setup
 	startSearchClient: function (callback) {
-		this._splashScreen.setStatus('startSearchDatabase');
+		this._setSplashScreenStatus('startSearchDatabase');
 
-		var searchConfig = new JSONConfig('../../config/mainConfig.json', ['search']);
+		var internalCallback = callback || function () {};
+
+		var searchConfig = this.getMainConfig(['search']);
 
 		var searchStoreFactory = new SearchStoreFactory();
 		var searchItemFactory = new SearchItemFactory();
 		var searchClient = new SearchClient(searchConfig, this.appQuitHandler, 'mainIndex', searchStoreFactory, searchItemFactory, {
 			onOpenCallback: function (err) {
 				console.log(err);
-				return callback(searchConfig, searchClient);
+				return internalCallback(searchConfig, searchClient);
 			}
 		});
 	},
 
 	startUi: function () {
-		// disables the UI for testing purposes
-		if (!process.env.UI_ENABLED) {
+		if (!this._environmentConfig.get('environment.startUi')) {
 			return;
 		}
 
-		console.log('started:', this._started);
-
-		var dependencies = ['indexer', 'share'];
-		var loaded = true;
-
-		for (var i in dependencies) {
-			if (this._started.indexOf(dependencies[i]) === -1) {
-				loaded = false;
-				break;
-			}
-		}
-
-		if (!loaded) {
-			return;
-		}
-
-		this._splashScreen.setStatus('startUi');
-
-		var uiConfig = new JSONConfig('../../config/mainConfig.json', ['ui']);
+		this._setSplashScreenStatus('startUi');
 
 		this.addUiComponent(new UiFolderDropzoneComponent(this._gui.Window));
 
-		var uiManager = new UiManager(uiConfig, this.appQuitHandler, this._uiComponents);
+		var uiManager = new UiManager(this.getMainConfig(['ui']), this.appQuitHandler, this._uiComponents);
 
-		this._splashScreen.once('close', () => {
-			this.checkUiRoutines();
-		});
+		if (this._splashScreen) {
+			this._splashScreen.once('close', () => {
+				this.checkUiRoutines();
+			});
+		}
 	},
 
 	checkUiRoutines: function () {
@@ -317,8 +356,12 @@ var App = {
 		});
 	},
 
-	startTopology: function (dataPath, searchMessageBridge, downloadBridge, uploadBridge) {
-		this._splashScreen.setStatus('startTopology');
+	startTopology: function (searchMessageBridge, downloadBridge, uploadBridge) {
+		if (!this._environmentConfig.get('environment.startTopology')) {
+			return;
+		}
+
+		this._setSplashScreenStatus('startTopology');
 
 		var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
 		var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
@@ -360,9 +403,8 @@ var App = {
 				addressList.push(nodeAddressFactory.create(myIp, myOpenPorts[i]));
 			}
 
-			var handlerFactory = new JSONStateHandlerFactory();
-			console.log(path.resolve(dataPath, 'myId.json'));
-			var idState = handlerFactory.create(path.resolve(dataPath, 'myId.json'));
+			console.log(path.resolve(this.getDataPath(), 'myId.json'));
+			var idState = this.getJSONStateHandlerFactory().create(path.resolve(this.getDataPath(), 'myId.json'));
 
 			idState.load((err:Error, state:any) => {
 				if (err) console.log(err);
@@ -404,12 +446,6 @@ var App = {
 						this.startUi();
 
 						protocolGateway.start();
-
-						/*protocolGateway.once('readyToSearch',  ()=> {
-							this._queryInterval = setInterval(() => {
-								this.startQuery();
-							}, 15000);
-						});*/
 					}
 				});
 			});

@@ -9,10 +9,25 @@ import UiComponent = require('../UiComponent');
  */
 class UiProtocolGatewayComponent extends UiComponent {
 
+	/**
+	 * The current state of the component
+	 *
+	 * @member {Object} core.ui.UiProtocolGatewayComponent~_state
+	 */
 	private _state = {};
 
+	/**
+	 * The splash screen instance
+	 *
+	 * @member {core.ui.UiSplashScreenInterface} core.ui.UiProtocolGatewayComponent~_splashScreen
+	 */
 	private _splashScreen:UiSplashScreenInterface = null;
 
+	/**
+	 * The cached value of the desired amount of cirquits
+	 *
+	 * @member {number} core.ui.UiProtocolGatewayComponent~_desiredAmountOfCircuits
+	 */
 	private _desiredAmountOfCirquits:number = 0;
 
 	constructor(protocolGateway:ProtocolGatewayInterface, splashScreen:UiSplashScreenInterface) {
@@ -76,15 +91,16 @@ class UiProtocolGatewayComponent extends UiComponent {
 	}
 
 	getState (callback:(state) => any):void {
-		console.log(this._state);
-
 		return process.nextTick(callback.bind(null, this._state));
 	}
 
 	/**
 	 * Tiny helper that sets the value for the given key to `true` if no value was provided before triggering the UI update
 	 *
+	 * @method core.ui.UiProtocolGatewayComponent~_setKey
+	 *
 	 * @param {string} key
+	 * @param {string} [value] The optional value for the given key which will fall back to `true`
 	 */
 	private _setKey (key:string, value:any = true) {
 		this._state[key] = value;
@@ -92,9 +108,20 @@ class UiProtocolGatewayComponent extends UiComponent {
 		this.updateUi();
 	}
 
+	/**
+	 * Sets the key for the given value as well as setting the as the new splash screen status.
+	 *
+	 * @method core.ui.UiProtocolGatewayComponent~_setKeyAndUpdateSplashScreen
+	 *
+	 * @param {string} key
+	 * @param {Object} value
+	 */
 	_setKeyAndUpdateSplashScreen (key:string, value?:any) {
 		this._setKey(key, value);
-		this._splashScreen.setStatus(key);
+
+		if (this._splashScreen) {
+			this._splashScreen.setStatus(key);
+		}
 	}
 }
 
