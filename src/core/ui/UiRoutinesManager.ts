@@ -156,8 +156,6 @@ class UiRoutinesManager implements UiRoutinesManagerInterface {
 				var target = event.target.tagName === 'LI' ? event.target : getClosest(event.target, 'LI');
 				var newClassName = target.className.indexOf('active') === -1 ? target.className + ' active' : target.className.replace('active', '');
 
-				console.log(target);
-
 				event.preventDefault();
 
 				for (var i = 0, l = items.length; i < l; i++) {
@@ -190,7 +188,7 @@ class UiRoutinesManager implements UiRoutinesManagerInterface {
 				}
 
 				var item = doc.createElement('li');
-				var icon = routine.getIconClassName();
+				var icon = routine.getIcon();
 
 				item.className = icon ? 'has-icon' : '';
 				item.addEventListener('click', onItemClick, false);
@@ -205,7 +203,8 @@ class UiRoutinesManager implements UiRoutinesManagerInterface {
 
 				if (icon) {
 					iconEl = doc.createElement('div');
-					iconEl.className = 'icon ' + icon;
+					iconEl.className = 'icon';
+					iconEl.style.backgroundImage = 'url(data:image/svg+xml;base64,' + icon + ')';
 				}
 
 				contentEl.className = 'content';

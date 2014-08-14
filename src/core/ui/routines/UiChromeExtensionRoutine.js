@@ -14,8 +14,8 @@ var UiChromeExtensionRoutine = (function () {
         return this._geti18n('description');
     };
 
-    UiChromeExtensionRoutine.prototype.getIconClassName = function () {
-        return this._config.get('extension.iconClassName');
+    UiChromeExtensionRoutine.prototype.getIcon = function () {
+        return this._config.get('extension.icon');
     };
 
     UiChromeExtensionRoutine.prototype.getId = function () {
@@ -56,7 +56,7 @@ var UiChromeExtensionRoutine = (function () {
     };
 
     UiChromeExtensionRoutine.prototype.isInstalled = function (callback) {
-        fs.exists(this._getInstallPath() + '_', callback);
+        fs.exists(this._getInstallPath(), callback);
     };
 
     UiChromeExtensionRoutine.prototype.start = function (callback) {

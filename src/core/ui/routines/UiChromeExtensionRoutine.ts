@@ -21,8 +21,8 @@ class UiChromeExtensionRoutine implements UiRoutineInterface {
 		return this._geti18n('description');
 	}
 
-	public getIconClassName () {
-		return this._config.get('extension.iconClassName');
+	public getIcon () {
+		return this._config.get('extension.icon');
 	}
 
 	public getId ():string {
@@ -61,7 +61,7 @@ class UiChromeExtensionRoutine implements UiRoutineInterface {
 	}
 
 	public isInstalled (callback:(installed:boolean) => any):void {
-		fs.exists(this._getInstallPath() + '_', callback);
+		fs.exists(this._getInstallPath(), callback);
 	}
 
 	public start (callback?:(err:Error) => any):void {

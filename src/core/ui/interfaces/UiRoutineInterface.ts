@@ -19,13 +19,13 @@ interface UiRoutineInterface {
 	getId ():string;
 
 	/**
-	 * Returns the icon classname of the ui routine
+	 * Returns the svg icon of the ui routine encoded as base64 string __without__ the base64 svg header
 	 *
 	 * @method core.ui.UiRoutineInterface#getIconClassName
 	 *
 	 * @return {string}
 	 */
-	getIconClassName ():string;
+	getIcon ():string;
 
 	/**
 	 * Returns the label that will be shown on the install button
