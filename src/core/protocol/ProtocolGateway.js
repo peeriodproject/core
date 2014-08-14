@@ -201,9 +201,12 @@ var ProtocolGateway = (function (_super) {
 
         this._broadcastManager = new BroadcastManager(this._topologyConfig, this._protocolConfig, this._myNode, this._protocolConnectionManager, this._proxyManager, this._routingTable, readableBroadcastMessageFactory, writableBroadcastMessageFactory);
 
-        var queryFactory = new QueryFactory(this._transferConfig, this._transferMessageCenter, this._hydraCircuitManager, this._broadcastManager);
+        // query manager is not needed with a raw node
+        if (this._searchBridge) {
+            var queryFactory = new QueryFactory(this._transferConfig, this._transferMessageCenter, this._hydraCircuitManager, this._broadcastManager);
 
-        this._queryManager = new QueryManager(this._transferConfig, queryFactory, this._hydraCircuitManager, this._searchBridge);
+            this._queryManager = new QueryManager(this._transferConfig, queryFactory, this._hydraCircuitManager, this._searchBridge);
+        }
 
         this._responseManager = new ResponseManager(this._transferConfig, this._hydraCellManager, this._transferMessageCenter, this._searchBridge, this._broadcastManager, this._hydraCircuitManager, writableQueryResponseMessageFactory);
 
@@ -217,8 +220,13 @@ var ProtocolGateway = (function (_super) {
         var uploadFactory = new Aes128GcmUploadFactory(this._transferConfig, feedingNodesBlockMaintainerFactory, shareMessengerFactory, fileBlockReaderFactory, this._transferMessageCenter);
         var readableShareRequestMessageFactory = new ReadableShareRequestMessageFactory();
 
-        this._downlodManager = new DownloadManager(this._transferConfig, this._hydraCircuitManager, this._downloadBridge, downloadFactory);
-        this._uploadManager = new UploadManager(this._transferConfig, this._transferMessageCenter, uploadFactory, readableShareRequestMessageFactory, this._uploadBridge);
+        if (this._downloadBridge) {
+            this._downlodManager = new DownloadManager(this._transferConfig, this._hydraCircuitManager, this._downloadBridge, downloadFactory);
+        }
+
+        if (this._uploadBridge) {
+            this._uploadManager = new UploadManager(this._transferConfig, this._transferMessageCenter, uploadFactory, readableShareRequestMessageFactory, this._uploadBridge);
+        }
     }
     ProtocolGateway.prototype.start = function () {
         /**

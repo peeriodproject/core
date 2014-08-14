@@ -120,57 +120,60 @@ var ResponseManager = (function () {
     */
     ResponseManager.prototype._setupListeners = function () {
         var _this = this;
-        this._broadcastManager.on('BROADCAST_QUERY', function (broadcastPayload, broadcastId) {
-            // only respond to it if we have circuits
-            if (!_this._circuitManager.getReadyCircuits().length) {
-                return;
-            }
+        // only do this if the app is not a raw node
+        if (this._searchBridge) {
+            this._broadcastManager.on('BROADCAST_QUERY', function (broadcastPayload, broadcastId) {
+                // only respond to it if we have circuits
+                if (!_this._circuitManager.getReadyCircuits().length) {
+                    return;
+                }
 
-            // we need to extract the possible feeding nodes
-            var feedingObj = null;
+                // we need to extract the possible feeding nodes
+                var feedingObj = null;
 
-            try  {
-                feedingObj = FeedingNodesMessageBlock.extractAndDeconstructBlock(broadcastPayload);
-            } catch (e) {
-                return;
-            }
+                try  {
+                    feedingObj = FeedingNodesMessageBlock.extractAndDeconstructBlock(broadcastPayload);
+                } catch (e) {
+                    return;
+                }
 
-            if (feedingObj) {
-                var feedingNodesBlock = broadcastPayload.slice(0, feedingObj.bytesRead);
-                var queryBuffer = broadcastPayload.slice(feedingObj.bytesRead);
+                if (feedingObj) {
+                    var feedingNodesBlock = broadcastPayload.slice(0, feedingObj.bytesRead);
+                    var queryBuffer = broadcastPayload.slice(feedingObj.bytesRead);
 
-                _this._pendingBroadcastQueries[broadcastId] = feedingNodesBlock;
+                    _this._pendingBroadcastQueries[broadcastId] = feedingNodesBlock;
 
-                _this._searchBridge.emit('matchBroadcastQuery', broadcastId, queryBuffer);
-            }
-        });
+                    _this._searchBridge.emit('matchBroadcastQuery', broadcastId, queryBuffer);
+                }
+            });
 
-        this._searchBridge.on('broadcastQueryResults', function (identifier, results) {
-            logger.log('query', 'Received broadcast query results from bridge', { broadcastId: identifier });
+            this._searchBridge.on('broadcastQueryResults', function (identifier, results) {
+                logger.log('query', 'Received broadcast query results from bridge', { broadcastId: identifier });
 
-            if (_this._externalQueryHandlers[identifier]) {
-                // we call the callback no matter what. if the results are empty, it must be handled externally
-                _this._externalQueryHandlers[identifier](identifier, results);
-                delete _this._externalQueryHandlers[identifier];
-            } else if (_this._pendingBroadcastQueries[identifier]) {
-                var externalFeedingNodesBlock = _this._pendingBroadcastQueries[identifier];
+                if (_this._externalQueryHandlers[identifier]) {
+                    // we call the callback no matter what. if the results are empty, it must be handled externally
+                    _this._externalQueryHandlers[identifier](identifier, results);
+                    delete _this._externalQueryHandlers[identifier];
+                } else if (_this._pendingBroadcastQueries[identifier]) {
+                    var externalFeedingNodesBlock = _this._pendingBroadcastQueries[identifier];
 
-                delete _this._pendingBroadcastQueries[identifier];
+                    delete _this._pendingBroadcastQueries[identifier];
 
-                if (results) {
-                    logger.log('query', 'Wrapping query response message', { broadcastId: identifier, queryCount: 'wrap' });
+                    if (results) {
+                        logger.log('query', 'Wrapping query response message', { broadcastId: identifier, queryCount: 'wrap' });
 
-                    var msg = _this._wrapQueryResponse(identifier, results);
+                        var msg = _this._wrapQueryResponse(identifier, results);
 
-                    if (msg) {
-                        var result = _this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
-                        logger.log('query', 'Issuing external feed to circuit', { broadcastId: identifier, result: result, queryCount: 'issuenext' });
-                    } else {
-                        console.log('no message');
+                        if (msg) {
+                            var result = _this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
+                            logger.log('query', 'Issuing external feed to circuit', { broadcastId: identifier, result: result, queryCount: 'issuenext' });
+                        } else {
+                            console.log('no message');
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
         this._transferMessageCenter.on('issueBroadcastQuery', function (predecessorCircuitId, broadcastId, searchObject, broadcastPayload) {
             // start a broadcast but answer to the query by yourself after a given time
@@ -178,23 +181,26 @@ var ResponseManager = (function () {
 
             _this._broadcastManager.initBroadcast('BROADCAST_QUERY', broadcastPayload, broadcastId);
 
-            _this.externalQueryHandler(broadcastId, searchObject, function (identifier, results) {
-                if (results) {
-                    logger.log('query', 'Wrapping query response message', { broadcastId: identifier, queryCount: 'wrap' });
+            // only do this if the app is not a raw node
+            if (_this._searchBridge) {
+                _this.externalQueryHandler(broadcastId, searchObject, function (identifier, results) {
+                    if (results) {
+                        logger.log('query', 'Wrapping query response message', { broadcastId: identifier, queryCount: 'wrap' });
 
-                    var msg = _this._wrapQueryResponse(identifier, results);
+                        var msg = _this._wrapQueryResponse(identifier, results);
 
-                    if (msg) {
-                        logger.log('query', 'Issuing result back through circuit', { broadcastId: identifier, queryCount: 'issueback' });
+                        if (msg) {
+                            logger.log('query', 'Issuing result back through circuit', { broadcastId: identifier, queryCount: 'issueback' });
 
-                        var waitingTime = Math.round(Math.random() * _this._waitForOwnResponseAsBroadcastInitiatorInMs);
+                            var waitingTime = Math.round(Math.random() * _this._waitForOwnResponseAsBroadcastInitiatorInMs);
 
-                        setTimeout(function () {
-                            _this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg);
-                        }, waitingTime);
+                            setTimeout(function () {
+                                _this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg);
+                            }, waitingTime);
+                        }
                     }
-                }
-            });
+                });
+            }
         });
     };
 

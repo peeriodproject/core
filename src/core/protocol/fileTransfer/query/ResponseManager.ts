@@ -143,60 +143,67 @@ class ResponseManager implements ResponseManagerInterface {
 	 * @method core.protocol.fileTransfer.ResponseManager~_setupListeners
 	 */
 	private _setupListeners ():void {
-		this._broadcastManager.on('BROADCAST_QUERY', (broadcastPayload:Buffer, broadcastId:string) => {
-			// only respond to it if we have circuits
-			if (!this._circuitManager.getReadyCircuits().length) {
-				return;
-			}
 
-			// we need to extract the possible feeding nodes
-			var feedingObj:any = null;
+		// only do this if the app is not a raw node
+		if (this._searchBridge) {
 
-			try {
-				feedingObj = FeedingNodesMessageBlock.extractAndDeconstructBlock(broadcastPayload);
-			}
-			catch (e) {
-				return;
-			}
+			this._broadcastManager.on('BROADCAST_QUERY', (broadcastPayload:Buffer, broadcastId:string) => {
+				// only respond to it if we have circuits
+				if (!this._circuitManager.getReadyCircuits().length) {
+					return;
+				}
 
-			if (feedingObj) {
-				var feedingNodesBlock:Buffer = broadcastPayload.slice(0, feedingObj.bytesRead);
-				var queryBuffer:Buffer = broadcastPayload.slice(feedingObj.bytesRead);
+				// we need to extract the possible feeding nodes
+				var feedingObj:any = null;
 
-				this._pendingBroadcastQueries[broadcastId] = feedingNodesBlock;
+				try {
+					feedingObj = FeedingNodesMessageBlock.extractAndDeconstructBlock(broadcastPayload);
+				}
+				catch (e) {
+					return;
+				}
 
-				this._searchBridge.emit('matchBroadcastQuery', broadcastId, queryBuffer);
-			}
-		});
+				if (feedingObj) {
+					var feedingNodesBlock:Buffer = broadcastPayload.slice(0, feedingObj.bytesRead);
+					var queryBuffer:Buffer = broadcastPayload.slice(feedingObj.bytesRead);
 
-		this._searchBridge.on('broadcastQueryResults', (identifier:string, results:Buffer) => {
-			logger.log('query', 'Received broadcast query results from bridge', {broadcastId: identifier});
+					this._pendingBroadcastQueries[broadcastId] = feedingNodesBlock;
 
-			if (this._externalQueryHandlers[identifier]) {
-				// we call the callback no matter what. if the results are empty, it must be handled externally
-				this._externalQueryHandlers[identifier](identifier, results);
-				delete this._externalQueryHandlers[identifier];
-			}
-			else if (this._pendingBroadcastQueries[identifier]) {
-				var externalFeedingNodesBlock:Buffer = this._pendingBroadcastQueries[identifier];
+					this._searchBridge.emit('matchBroadcastQuery', broadcastId, queryBuffer);
+				}
+			});
 
-				delete this._pendingBroadcastQueries[identifier];
 
-				if (results) {
-					logger.log('query', 'Wrapping query response message', {broadcastId: identifier, queryCount:'wrap'});
+			this._searchBridge.on('broadcastQueryResults', (identifier:string, results:Buffer) => {
+				logger.log('query', 'Received broadcast query results from bridge', {broadcastId: identifier});
 
-					var msg:Buffer = this._wrapQueryResponse(identifier, results);
+				if (this._externalQueryHandlers[identifier]) {
+					// we call the callback no matter what. if the results are empty, it must be handled externally
+					this._externalQueryHandlers[identifier](identifier, results);
+					delete this._externalQueryHandlers[identifier];
+				}
+				else if (this._pendingBroadcastQueries[identifier]) {
+					var externalFeedingNodesBlock:Buffer = this._pendingBroadcastQueries[identifier];
 
-					if (msg) {
-						var result = this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
-						logger.log('query', 'Issuing external feed to circuit', {broadcastId: identifier, result: result, queryCount:'issuenext'});
-					}
-					else {
-						console.log('no message');
+					delete this._pendingBroadcastQueries[identifier];
+
+					if (results) {
+						logger.log('query', 'Wrapping query response message', {broadcastId: identifier, queryCount: 'wrap'});
+
+						var msg:Buffer = this._wrapQueryResponse(identifier, results);
+
+						if (msg) {
+							var result = this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
+							logger.log('query', 'Issuing external feed to circuit', {broadcastId: identifier, result: result, queryCount: 'issuenext'});
+						}
+						else {
+							console.log('no message');
+						}
 					}
 				}
-			}
-		});
+			});
+
+		}
 
 		this._transferMessageCenter.on('issueBroadcastQuery', (predecessorCircuitId:string, broadcastId:string, searchObject:Buffer, broadcastPayload:Buffer) => {
 			// start a broadcast but answer to the query by yourself after a given time
@@ -205,24 +212,28 @@ class ResponseManager implements ResponseManagerInterface {
 
 			this._broadcastManager.initBroadcast('BROADCAST_QUERY', broadcastPayload, broadcastId);
 
-			this.externalQueryHandler(broadcastId, searchObject, (identifier:string, results:Buffer) => {
-				if (results) {
+			// only do this if the app is not a raw node
+			if (this._searchBridge) {
 
-					logger.log('query', 'Wrapping query response message', {broadcastId: identifier, queryCount:'wrap'});
+				this.externalQueryHandler(broadcastId, searchObject, (identifier:string, results:Buffer) => {
+					if (results) {
 
-					var msg = this._wrapQueryResponse(identifier, results);
+						logger.log('query', 'Wrapping query response message', {broadcastId: identifier, queryCount: 'wrap'});
 
-					if (msg) {
-						logger.log('query', 'Issuing result back through circuit', {broadcastId: identifier, queryCount:'issueback'});
+						var msg = this._wrapQueryResponse(identifier, results);
 
-						var waitingTime:number = Math.round(Math.random() * this._waitForOwnResponseAsBroadcastInitiatorInMs);
+						if (msg) {
+							logger.log('query', 'Issuing result back through circuit', {broadcastId: identifier, queryCount: 'issueback'});
 
-						setTimeout(() => {
-							this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg);
-						}, waitingTime);
+							var waitingTime:number = Math.round(Math.random() * this._waitForOwnResponseAsBroadcastInitiatorInMs);
+
+							setTimeout(() => {
+								this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg);
+							}, waitingTime);
+						}
 					}
-				}
-			});
+				});
+			}
 		});
 	}
 

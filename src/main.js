@@ -30,10 +30,11 @@ var tray = new gui.Tray({
 /*menu.append(new gui.MenuItem({
 type: 'separator'
 }));*/
-menu.append(new gui.MenuItem({
+var quitItem = new gui.MenuItem({
     label: 'Quit'
-}));
-menu.items[menu.items.length - 1].click = function () {
+});
+
+quitItem.click = function () {
     App.quit();
     /*if (process.env.UI_ENABLED) {
     App.quit();
@@ -44,6 +45,8 @@ menu.items[menu.items.length - 1].click = function () {
     }, 40000);
     }*/
 };
+
+menu.append(quitItem);
 
 tray.menu = menu;
 //# sourceMappingURL=main.js.map
