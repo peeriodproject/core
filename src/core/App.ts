@@ -171,6 +171,7 @@ var App = {
 	 * @param {string} locale
 	 */
 	setLocale: function (locale:string):void {
+		console.log('set locale', locale);
 		i18n.setLocale(locale);
 	},
 
@@ -196,7 +197,9 @@ var App = {
 		this.appQuitHandler = new AppQuitHandler(nwApp);
 		this._loadConfig();
 
-		win.showDevTools();
+		if (win && win.showDevTools) {
+			win.showDevTools();
+		}
 
 		this._initSplashScreen();
 
