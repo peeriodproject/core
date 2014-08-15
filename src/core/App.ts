@@ -7,7 +7,10 @@ import JSONConfig = require('./config/JSONConfig');
 import ObjectConfig = require('./config/ObjectConfig');
 
 var i18n = require('i18n');
-var logger = require('./utils/logger/LoggerFactory').create();
+
+var loggerFactory = require('./utils/logger/LoggerFactory');
+loggerFactory.setLogPath('/Volumes/HDD/logs/');
+var logger = loggerFactory.create();
 
 // interfaces
 import ConfigInterface = require('./config/interfaces/ConfigInterface');

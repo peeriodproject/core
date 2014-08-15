@@ -1,11 +1,10 @@
 /// <reference path='./main.d.ts' />
 var gui = require('nw.gui');
-var logger = require('./core/utils/logger/LoggerFactory').create();
 
+//var logger = require('./core/utils/logger/LoggerFactory').create('/Volumes/HDD/logs/');
 var App = require('./core/App');
 
-var logger = require('./core/utils/logger/LoggerFactory').create();
-
+//var logger = require('./core/utils/logger/LoggerFactory').create();
 App.setLocale(window.navigator.language);
 App.setConfigPath('../../config/environmentConfig.json');
 App.start(gui, gui.App, gui.App.dataPath, gui.Window.get());

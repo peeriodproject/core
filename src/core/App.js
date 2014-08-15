@@ -7,7 +7,10 @@ var JSONConfig = require('./config/JSONConfig');
 var ObjectConfig = require('./config/ObjectConfig');
 
 var i18n = require('i18n');
-var logger = require('./utils/logger/LoggerFactory').create();
+
+var loggerFactory = require('./utils/logger/LoggerFactory');
+loggerFactory.setLogPath('/Volumes/HDD/logs/');
+var logger = loggerFactory.create();
 
 var AppQuitHandler = require('./utils/AppQuitHandler');
 

@@ -12,7 +12,8 @@ var ObjectUtils = require('../ObjectUtils');
 * @implements core.utils.logger.LoggerInterface
 */
 var IrcLoggerBackend = (function () {
-    function IrcLoggerBackend() {
+    function IrcLoggerBackend(logPath) {
+        if (typeof logPath === "undefined") { logPath = ''; }
         /**
         * The base path to the apps root directory
         *
@@ -31,7 +32,9 @@ var IrcLoggerBackend = (function () {
         * @member {boolean} core.utils.logger.IrcLoggerBackend~_useIrc
         */
         this._useIrc = false;
+        this._logPath = '';
         this._basePath = path.resolve(__dirname, '../../../');
+        this._logPath = logPath;
 
         // typescript hack...
         var winLogger = winston.Logger;
@@ -157,10 +160,14 @@ var IrcLoggerBackend = (function () {
             });
         } else {
             if (!process.env.DISABLE_FILE_LOGGER) {
+                var fileLogPath = this._logPath ? this._logPath : '/logs';
+
+                console.log('fileLogPath', fileLogPath);
+
                 this._logger.add(winston.transports.File, {
                     silent: false,
                     timestamp: true,
-                    filename: path.resolve('/Users/jj/Desktop/logs/a' + Math.round(Math.random() * 1000000000000) + '.log'),
+                    filename: path.resolve(path.join(fileLogPath, '/a' + Math.round(Math.random() * 1000000000000) + '.log')),
                     //filename : this._basePath + '/logs/a' + Math.round(Math.random() * 10000000000000),
                     level: 'debug',
                     handleExceptions: true

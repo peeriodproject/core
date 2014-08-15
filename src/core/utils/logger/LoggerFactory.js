@@ -10,15 +10,21 @@ var JSONConfig = require('../../config/JSONConfig');
 var LoggerFactory;
 (function (LoggerFactory) {
     var _ircLogger = null;
+    var _logPath = '';
 
-    function create(uuid) {
-        if (typeof uuid === "undefined") { uuid = ''; }
+    function setLogPath(logPath) {
+        _logPath = logPath;
+    }
+    LoggerFactory.setLogPath = setLogPath;
+
+    function create() {
         var envPronePath = process.env.NODE_ENV === 'test' ? 'src/config/mainConfig' : 'config/mainConfig';
-
         var configPath = path.join(process.cwd(), envPronePath);
 
+        console.log(_logPath);
+
         if (!_ircLogger) {
-            _ircLogger = new IrcLogger(new JSONConfig(configPath, ['net']), uuid, new IrcLoggerBackend());
+            _ircLogger = new IrcLogger(new JSONConfig(configPath, ['net']), '', new IrcLoggerBackend(_logPath));
         }
 
         return _ircLogger;
