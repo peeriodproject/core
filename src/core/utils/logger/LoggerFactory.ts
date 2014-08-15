@@ -11,15 +11,21 @@ import JSONConfig = require('../../config/JSONConfig');
  */
 module LoggerFactory {
 	var _ircLogger = null;
+	var _logPath:string = '';
 
-	export function create (uuid:string = ''):LoggerInterface {
+	export function setLogPath (logPath:string) {
+		_logPath = logPath;
+	}
+
+	export function create ():LoggerInterface {
 
 		var envPronePath:string = process.env.NODE_ENV === 'test' ? 'src/config/mainConfig' : 'config/mainConfig';
-
 		var configPath:string = path.join(process.cwd(), envPronePath);
 
+		console.log(_logPath);
+
 		if (!_ircLogger) {
-			_ircLogger = new IrcLogger(new JSONConfig(configPath, ['net']), uuid, new IrcLoggerBackend());
+			_ircLogger = new IrcLogger(new JSONConfig(configPath, ['net']), '', new IrcLoggerBackend(_logPath));
 		}
 
 		return _ircLogger;

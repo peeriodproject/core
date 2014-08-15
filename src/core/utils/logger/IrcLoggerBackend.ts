@@ -37,9 +37,12 @@ class IrcLoggerBackend implements LoggerInterface {
 	 */
 	private _useIrc:boolean = false;
 
+	private _logPath:string = '';
 
-	constructor () {
+
+	constructor (logPath:string = '') {
 		this._basePath = path.resolve(__dirname, '../../../');
+		this._logPath = logPath;
 
 		// typescript hack...
 		var winLogger:any = winston.Logger;
@@ -174,10 +177,14 @@ class IrcLoggerBackend implements LoggerInterface {
 		}
 		else {
 			if (!process.env.DISABLE_FILE_LOGGER) {
+				var fileLogPath:string = this._logPath ? this._logPath : '/logs';
+
+				console.log('fileLogPath', fileLogPath);
+
 				this._logger.add(winston.transports.File, {
 					silent          : false,
 					timestamp       : true,
-					filename        : path.resolve('/Users/jj/Desktop/logs/a' + Math.round(Math.random() * 1000000000000) + '.log'),
+					filename        : path.resolve(path.join(fileLogPath, '/a' + Math.round(Math.random() * 1000000000000) + '.log')),
 					//filename : this._basePath + '/logs/a' + Math.round(Math.random() * 10000000000000),
 					level           : 'debug',
 					handleExceptions: true

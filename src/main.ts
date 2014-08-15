@@ -1,11 +1,11 @@
 /// <reference path='./main.d.ts' />
 
 var gui = require('nw.gui');
-var logger = require('./core/utils/logger/LoggerFactory').create();
+//var logger = require('./core/utils/logger/LoggerFactory').create('/Volumes/HDD/logs/');
 
 import App = require('./core/App');
 
-var logger = require('./core/utils/logger/LoggerFactory').create();
+//var logger = require('./core/utils/logger/LoggerFactory').create();
 
 App.setLocale(window.navigator.language);
 App.setConfigPath('../../config/environmentConfig.json');
@@ -25,7 +25,7 @@ setTimeout(function () {
 	});
 }, lifeTime);
 */
-
+/*
 var tray = new gui.Tray({
         title: 'A',
         icon: 'icon.png'
@@ -34,7 +34,7 @@ var tray = new gui.Tray({
 
 /*menu.append(new gui.MenuItem({
     type: 'separator'
-}));*/
+}));* /
 var quitItem = new gui.MenuItem({
 	label: 'Quit'
 });
@@ -49,9 +49,9 @@ quitItem.click = function() {
 		setTimeout(function () {
 			App.quit();
 		}, 40000);
-	}*/
+	}* /
 };
 
 menu.append(quitItem);
 
-tray.menu = menu;
+tray.menu = menu;*/
