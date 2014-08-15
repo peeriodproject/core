@@ -1,13 +1,37 @@
 /// <reference path='./main.d.ts' />
-var gui = require('nw.gui');
+var path = require('path');
+var gui;
+
+try  {
+    gui = require('nw.gui');
+} catch (e) {
+    console.log('node runner');
+}
 
 //var logger = require('./core/utils/logger/LoggerFactory').create('/Volumes/HDD/logs/');
 var App = require('./core/App');
 
 //var logger = require('./core/utils/logger/LoggerFactory').create();
-App.setLocale(window.navigator.language);
+var language;
+try  {
+    language = window && window.navigator;
+} catch (e) {
+    language = 'en';
+}
+
+App.setLocale(language);
 App.setConfigPath('../../config/environmentConfig.json');
-App.start(gui, gui.App, gui.App.dataPath, gui.Window.get());
+
+var guiApp = gui && gui.App ? gui.App : {
+    quit: function () {
+        process.exit();
+    }
+};
+
+var dataPath = gui && gui.App ? gui.App.dataPath : path.resolve('./appDataFolder');
+var guiWindow = gui && gui.Window ? gui.Window.get() : null;
+
+App.start(gui, guiApp, dataPath, guiWindow);
 /*
 // lifetime > 5 min < 1 day
 var minSeconds:number = 30;//300;
