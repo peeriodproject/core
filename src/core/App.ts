@@ -162,8 +162,6 @@ var App = {
 		this._mainConfig = require('../config/mainConfig.json');
 
 		this._mainConfig.app.dataPath = this._dataPath;
-
-		console.log(this._mainConfig);
 	},
 
 	/**
