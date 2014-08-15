@@ -214,14 +214,14 @@ var App = {
         });
     },
     startSharing: function (searchClient, searchRequestsIndexName, callback) {
+        var internalCallback = callback || function () {
+        };
+
         if (!this._environmentConfig.get('environment.startSearchDatabase')) {
-            return process.nextTick(callback.bind(null, null, null));
+            return process.nextTick(internalCallback.bind(null, null, null));
         }
 
         this._setSplashScreenStatus('startSharing');
-
-        var internalCallback = callback || function () {
-        };
 
         //var shareConfig = new JSONConfig('../../config/mainConfig.json', ['app', 'share']);
         var downloadManager = new DownloadManager(this.getMainConfig(['app', 'share']), this.appQuitHandler, this.getJSONStateHandlerFactory(), searchClient, searchRequestsIndexName);
@@ -233,14 +233,14 @@ var App = {
     },
     startIndexer: function (searchConfig, searchClient, searchRequestManager, searchResponseManager, callback) {
         var _this = this;
+        var internalCallback = callback || function () {
+        };
+
         if (!this._environmentConfig.get('environment.startSearchDatabase') || !this._environmentConfig.get('environment.startIndexer')) {
             return process.nextTick(internalCallback.bind(null));
         }
 
         this._setSplashScreenStatus('startIndexer');
-
-        var internalCallback = callback || function () {
-        };
 
         var pluginConfig = this.getMainConfig(['app', 'plugin']);
 
@@ -284,15 +284,14 @@ var App = {
     },
     // index database setup
     startSearchClient: function (callback) {
-        this._setSplashScreenStatus('startSearchDatabase');
-
         var internalCallback = callback || function () {
         };
-
         var searchConfig = this.getMainConfig(['search']);
-
         var searchStoreFactory = new SearchStoreFactory();
         var searchItemFactory = new SearchItemFactory();
+
+        this._setSplashScreenStatus('startSearchDatabase');
+
         var searchClient = new SearchClient(searchConfig, this.appQuitHandler, 'mainIndex', searchStoreFactory, searchItemFactory, {
             onOpenCallback: function (err) {
                 console.log(err);
