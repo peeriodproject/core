@@ -182,6 +182,11 @@ var App = {
 	},
 
 	start: function (gui, nwApp, dataPath, win) {
+
+		process.on('uncaughtException', (err:Error) => {
+			console.warn('Uncaught exception %o', err);
+		});
+
 		this._gui = gui;
 		this._dataPath = dataPath;
 
@@ -446,6 +451,7 @@ var App = {
 						this.startUi();
 
 						protocolGateway.start();
+						global.gateway = protocolGateway;
 					}
 				});
 			});
