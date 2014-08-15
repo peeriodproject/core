@@ -8,7 +8,6 @@ var App = require('./core/App');
 App.setLocale(window.navigator.language);
 App.setConfigPath('../../config/environmentConfig.json');
 App.start(gui, gui.App, gui.App.dataPath, gui.Window.get());
-
 /*
 // lifetime > 5 min < 1 day
 var minSeconds:number = 30;//300;
@@ -21,31 +20,29 @@ gui.App.quit();
 });
 }, lifeTime);
 */
+/*
 var tray = new gui.Tray({
-    title: 'A',
-    icon: 'icon.png'
-}), menu = new gui.Menu();
-
+title: 'A',
+icon: 'icon.png'
+}),
+menu = new gui.Menu();
 /*menu.append(new gui.MenuItem({
 type: 'separator'
-}));*/
+}));* /
 var quitItem = new gui.MenuItem({
-    label: 'Quit'
+label: 'Quit'
 });
-
-quitItem.click = function () {
-    App.quit();
-    /*if (process.env.UI_ENABLED) {
-    App.quit();
-    }
-    else {
-    setTimeout(function () {
-    App.quit();
-    }, 40000);
-    }*/
+quitItem.click = function() {
+App.quit();
+/*if (process.env.UI_ENABLED) {
+App.quit();
+}
+else {
+setTimeout(function () {
+App.quit();
+}, 40000);
+}* /
 };
-
 menu.append(quitItem);
-
-tray.menu = menu;
+tray.menu = menu;*/
 //# sourceMappingURL=main.js.map
