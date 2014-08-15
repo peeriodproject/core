@@ -161,8 +161,9 @@ var App = {
 		this._environmentConfig = this._environmentConfigPath ? new JSONConfig(this._environmentConfigPath) : new ObjectConfig(this._environmentConfigDefaults);
 		this._mainConfig = require('../config/mainConfig.json');
 
-		// todo update data path here
-		// this._mainConfig.app.dataPath = this._dataPath;
+		this._mainConfig.app.dataPath = this._dataPath;
+
+		console.log(this._mainConfig);
 	},
 
 	/**
