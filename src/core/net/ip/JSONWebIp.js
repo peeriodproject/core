@@ -1,4 +1,4 @@
-var http = require('follow-redirects').http;
+var http = require('http');
 var net = require('net');
 
 var logger = require('../../utils/logger/LoggerFactory').create();
