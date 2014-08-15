@@ -52,7 +52,6 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 	}
 
 	public seek (callback:(node:ContactNodeInterface) => any):void {
-		console.log(this);
 		var index:number = -1;
 		var increaseAndQuery = () => {
 			if (++index <= this._serverListLength - 1) {

@@ -91,7 +91,6 @@ var NodeSeekerManager = (function () {
     }
     NodeSeekerManager.prototype.forceFindActiveNode = function (avoidNode, callback) {
         var _this = this;
-        console.log('Force find active node initiated.');
         this._avoidNode = avoidNode;
 
         if (!this._nodeSeekerList) {
@@ -100,6 +99,8 @@ var NodeSeekerManager = (function () {
         }
 
         this._forceSearchActive = true;
+
+        console.log('Force find active node initiated.');
 
         this._proxyManager.once('contactNodeInformation', function (node) {
             //console.log('NodeSeeker: on contact node!');
@@ -137,9 +138,9 @@ var NodeSeekerManager = (function () {
     NodeSeekerManager.prototype._iterativeSeekAndPing = function (avoidNode) {
         var _this = this;
         if (this._forceSearchActive) {
-            //console.log('Doing iterative seek.');
             setImmediate(function () {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {
+                    //console.log(this._nodeSeekerList[i]);
                     _this._nodeSeekerList[i].seek(function (node) {
                         if (node && !node.getId().equals(_this._myNode.getId()) && !(avoidNode && node.getId().equals(avoidNode.getId()))) {
                             _this._pingNodeIfActive(node);

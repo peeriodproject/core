@@ -111,7 +111,7 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 	}
 
 	public forceFindActiveNode (avoidNode:ContactNodeInterface, callback:(node:ContactNodeInterface) => any):void {
-		console.log('Force find active node initiated.');
+
 		this._avoidNode = avoidNode;
 
 		if (!this._nodeSeekerList) {
@@ -120,6 +120,8 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 		}
 
 		this._forceSearchActive = true;
+
+		console.log('Force find active node initiated.');
 
 		this._proxyManager.once('contactNodeInformation', (node:ContactNodeInterface) => {
 
@@ -162,13 +164,11 @@ class NodeSeekerManager implements NodeSeekerManagerInterface {
 
 		if (this._forceSearchActive) {
 
-			//console.log('Doing iterative seek.');
-
 			setImmediate(() => {
 				//console.log(this._nodeSeekerList);
 
 				for (var i = 0; i < this._nodeSeekerList.length; i++) {
-
+					//console.log(this._nodeSeekerList[i]);
 					this._nodeSeekerList[i].seek((node:ContactNodeInterface) => {
 						if (node && !node.getId().equals(this._myNode.getId()) && !(avoidNode && node.getId().equals(avoidNode.getId()))) {
 							this._pingNodeIfActive(node);
