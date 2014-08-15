@@ -49,6 +49,7 @@ var HttpNodeSeeker = (function (_super) {
     }
     HttpNodeSeeker.prototype.seek = function (callback) {
         var _this = this;
+        console.log(this);
         var index = -1;
         var increaseAndQuery = function () {
             if (++index <= _this._serverListLength - 1) {
