@@ -144,8 +144,8 @@ var App = {
     _loadConfig: function () {
         this._environmentConfig = this._environmentConfigPath ? new JSONConfig(this._environmentConfigPath) : new ObjectConfig(this._environmentConfigDefaults);
         this._mainConfig = require('../config/mainConfig.json');
-        // todo update data path here
-        // this._mainConfig.app.dataPath = this._dataPath;
+
+        this._mainConfig.app.dataPath = this._dataPath;
     },
     /**
     * Sets the locale of the app interface
