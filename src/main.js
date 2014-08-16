@@ -1,5 +1,6 @@
 /// <reference path='./main.d.ts' />
 var path = require('path');
+var usage = require('usage');
 var gui;
 
 try  {
@@ -11,7 +12,8 @@ try  {
 //var logger = require('./core/utils/logger/LoggerFactory').create('/Volumes/HDD/logs/');
 var App = require('./core/App');
 
-//var logger = require('./core/utils/logger/LoggerFactory').create();
+var logger = require('./core/utils/logger/LoggerFactory').create();
+
 var language;
 try  {
     language = window && window.navigator;
@@ -31,6 +33,25 @@ var guiApp = gui && gui.App ? gui.App : {
 var dataPath = gui && gui.App ? gui.App.dataPath : path.resolve('./appDataFolder');
 var guiWindow = gui && gui.Window ? gui.Window.get() : null;
 
+var logUsageTimeout = null;
+
+var createUsageTimeout = function () {
+    logUsageTimeout = setTimeout(function () {
+        usage.lookup(process.pid, function (err, result) {
+            if (err) {
+                return;
+            }
+
+            logger.log('usage', result);
+        });
+        logUsageTimeout = null;
+
+        createUsageTimeout();
+    }, 5000);
+};
+
+createUsageTimeout();
+
 App.start(gui, guiApp, dataPath, guiWindow);
 /*
 // lifetime > 5 min < 1 day
@@ -44,29 +65,4 @@ gui.App.quit();
 });
 }, lifeTime);
 */
-/*
-var tray = new gui.Tray({
-title: 'A',
-icon: 'icon.png'
-}),
-menu = new gui.Menu();
-/*menu.append(new gui.MenuItem({
-type: 'separator'
-}));* /
-var quitItem = new gui.MenuItem({
-label: 'Quit'
-});
-quitItem.click = function() {
-App.quit();
-/*if (process.env.UI_ENABLED) {
-App.quit();
-}
-else {
-setTimeout(function () {
-App.quit();
-}, 40000);
-}* /
-};
-menu.append(quitItem);
-tray.menu = menu;*/
 //# sourceMappingURL=main.js.map

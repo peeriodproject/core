@@ -25,6 +25,7 @@
     "primus.io": "^3.1.1",
     "sandcastle": "https://github.com/joernroeder/sandcastle/tarball/master",
     "stack-trace": "0.0.9",
+    "usage": "^0.4.12",
     "usb-detection": "^1.0.3",
     "winston": "^0.7.3",
     "winston-irc": "^0.3.4",

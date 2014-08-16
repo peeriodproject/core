@@ -1,6 +1,7 @@
 /// <reference path='./main.d.ts' />
 
 var path = require('path');
+var usage = require('usage');
 var gui;
 
 try {
@@ -14,7 +15,7 @@ catch (e) {
 
 import App = require('./core/App');
 
-//var logger = require('./core/utils/logger/LoggerFactory').create();
+var logger = require('./core/utils/logger/LoggerFactory').create();
 
 var language;
 try {
@@ -36,49 +37,38 @@ var guiApp = gui && gui.App ? gui.App : {
 var dataPath = gui && gui.App ? gui.App.dataPath : path.resolve('./appDataFolder');
 var guiWindow = gui && gui.Window ? gui.Window.get() : null;
 
+var logUsageTimeout = null;
+
+var createUsageTimeout = function () {
+	logUsageTimeout = setTimeout(function () {
+		usage.lookup(process.pid, function (err, result) {
+			if (err) {
+				return;
+			}
+
+			logger.log('usage', result);
+		});
+		logUsageTimeout = null;
+
+		createUsageTimeout();
+	}, 5000);
+};
+
+createUsageTimeout();
+
 App.start(gui, guiApp, dataPath, guiWindow);
 
 /*
-// lifetime > 5 min < 1 day
-var minSeconds:number = 30;//300;
-var maxSeconds:number =120;//86400;
+ // lifetime > 5 min < 1 day
+ var minSeconds:number = 30;//300;
+ var maxSeconds:number =120;//86400;
 
-var lifeTime = Math.max(minSeconds * 1000, Math.random() * maxSeconds * 1000);
-setTimeout(function () {
-	logger.info('quitting...');
+ var lifeTime = Math.max(minSeconds * 1000, Math.random() * maxSeconds * 1000);
+ setTimeout(function () {
+ logger.info('quitting...');
 
-	return process.nextTick(function () {
-		gui.App.quit();
-	});
-}, lifeTime);
-*/
-/*
-var tray = new gui.Tray({
-        title: 'A',
-        icon: 'icon.png'
-    }),
-    menu = new gui.Menu();
-
-/*menu.append(new gui.MenuItem({
-    type: 'separator'
-}));* /
-var quitItem = new gui.MenuItem({
-	label: 'Quit'
-});
-
-quitItem.click = function() {
-	App.quit();
-
-	/*if (process.env.UI_ENABLED) {
-		App.quit();
-	}
-	else {
-		setTimeout(function () {
-			App.quit();
-		}, 40000);
-	}* /
-};
-
-menu.append(quitItem);
-
-tray.menu = menu;*/
+ return process.nextTick(function () {
+ gui.App.quit();
+ });
+ }, lifeTime);
+ */
