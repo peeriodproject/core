@@ -42,7 +42,7 @@ var createUsageTimeout = function () {
                 return;
             }
 
-            logger.log('usage', result);
+            logger.log('usage', 'current cpu and memory usage', result);
         });
         logUsageTimeout = null;
 
