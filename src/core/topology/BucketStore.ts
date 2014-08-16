@@ -1,6 +1,9 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
 /// <reference path='../../../ts-definitions/node-lmdb/node-lmdb.d.ts' />
 
+import fs = require('fs');
+import path = require('path');
+
 import lmdb = require('node-lmdb');
 
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
@@ -176,12 +179,15 @@ class BucketStore implements BucketStoreInterface {
 		if (this._isOpen) return;
 
 		this._databaseEnvironment = new lmdb.Env();
-		this._databaseEnvironment.open({
+
+		this._checkAndOpenDatabaseEnvironment();
+
+		/*this._databaseEnvironment.open({
 			//name: this._name,
 			path: this._path
 			//mapSize: 2*1024*1024*1024, // maximum database size
 			//maxDbs: 3
-		});
+		});*/
 
 		this._databaseInstance = this._databaseEnvironment.openDbi({
 			name  : this._name,
@@ -322,10 +328,41 @@ class BucketStore implements BucketStoreInterface {
 	}
 
 	/**
+	 * Opens the database and handles environment architecture changes by cleaning up the old bucket store.
+	 *
+	 * @method core.topology.BucketStore~_checkAndOpenDatabaseEnvironment
+	 */
+	private _checkAndOpenDatabaseEnvironment ():void {
+		var openDatabase = () => {
+			this._databaseEnvironment.open({
+				//name: this._name,
+				path: this._path
+				//mapSize: 2*1024*1024*1024, // maximum database size
+				//maxDbs: 3
+			});
+		};
+
+		try {
+			openDatabase();
+		}
+		catch (e) {
+			if (e.message === 'MDB_INVALID: File is not an MDB file') {
+				fs.unlinkSync(path.join(this._path, 'data.mdb'));
+				//fs.unlinkSync(path.join(this._path, 'lock.mdb'));
+
+				openDatabase();
+			}
+			else {
+				throw e;
+			}
+		}
+	}
+
+	/**
 	 *
 	 * @method core.topology.BucketStore~_get
 	 *
-	 * @param {lmdbTxn} txn
+	 * @param {lmdb.Txn} txn
 	 * @param {Buffer} id
 	 * @returns {any}
 	 */
@@ -344,7 +381,7 @@ class BucketStore implements BucketStoreInterface {
 	}
 
 	/**
-	 * Creates a Cursor on the instace database
+	 * Creates a Cursor on the database instance
 	 *
 	 * @method core.topology.BucketStore~_getCursor
 	 *
@@ -404,7 +441,7 @@ class BucketStore implements BucketStoreInterface {
 	}
 
 	/**
-	 * We'll use this method eventually in the future when node-lmdb updates it's internall class from SlowBuffer to teh new
+	 * We'll use this method eventually in the future when node-lmdb updates it's internall class from SlowBuffer to the new
 	 * node Buffer implementation.
 	 *
 	 * @method core.topology.BucketStore~_getPropertyKey
