@@ -508,7 +508,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 
 			}
 
-			tempMessageMemory = null;
+			tempMessageMemory.data = null;
 			tempMessageMemory.data = newDataArray;
 			tempMessageMemory.length = tempMessageMemory.length - 4 - expectedLength;
 			tempMessageMemory.expectedLength = undefined;

@@ -482,7 +482,7 @@ var IncomingDataPipeline = (function (_super) {
                 }
             }
 
-            tempMessageMemory = null;
+            tempMessageMemory.data = null;
             tempMessageMemory.data = newDataArray;
             tempMessageMemory.length = tempMessageMemory.length - 4 - expectedLength;
             tempMessageMemory.expectedLength = undefined;
