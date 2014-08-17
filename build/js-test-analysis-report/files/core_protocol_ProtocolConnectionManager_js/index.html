@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/ProtocolConnectionManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/ProtocolConnectionManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">73.69</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">470</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">46.83</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">5.87</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">var net = require(&#039;net&#039;);
+
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var TCPSocketFactory = require(&#039;../../../src/core/net/tcp/TCPSocketFactory&#039;);
+
+var TCPSocketHandler = require(&#039;../../../src/core/net/tcp/TCPSocketHandler&#039;);
+
+var ObjectConfig = require(&#039;../../../src/core/config/ObjectConfig&#039;);
+
+var ContactNodeFactory = require(&#039;../../../src/core/topology/ContactNodeFactory&#039;);
+
+var ProtocolConnectionManager = require(&#039;../../../src/core/protocol/net/ProtocolConnectionManager&#039;);
+
+var ContactNodeAddressFactory = require(&#039;../../../src/core/topology/ContactNodeAddressFactory&#039;);
+var Id = require(&#039;../../../src/core/topology/Id&#039;);
+
+var MyNode = require(&#039;../../../src/core/topology/MyNode&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; NET --&gt; ProtocolConnectionManager&#039;, function () {
+    this.timeout(0);
+
+    var protoPort = 60000;
+    var remotePort = 60001;
+
+    var sandbox;
+    var configStub;
+    var tcpSocketHandler;
+    var remoteServer;
+
+    var handler_built = false;
+    var server_built = false;
+
+    var manager;
+
+    var addressFactory = new ContactNodeAddressFactory();
+    var nodeFactory = new ContactNodeFactory();
+
+    var handlerOpts = {
+        allowHalfOpenSockets: false,
+        myExternalIp: &#039;127.0.0.1&#039;,
+        myOpenPorts: [protoPort],
+        doKeepAlive: true,
+        idleConnectionKillTimeout: 1.2,
+        outboundConnectionTimeout: 500,
+        heartbeatTimeout: 0.5
+    };
+
+    var tcpSocketFactory = new TCPSocketFactory();
+
+    var currentRemoteSocket;
+
+    var myNode = new MyNode(new Id(Id.byteBufferByHexString(&#039;0a0000000000000078f406020100000005000000&#039;, 20), 160), [addressFactory.create(&#039;127.0.0.1&#039;, 10)]);
+
+    var currentHydraIdentifer = null;
+
+    var doEcho = true;
+
+    before(function (done) {
+        sandbox = sinon.sandbox.create();
+
+        // build our config
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (key) {
+                if (key === &#039;protocol.messages.maxByteLengthPerMessage&#039;)
+                    return 1024 * 1024;
+                if (key === &#039;protocol.messages.msToKeepNonAddressableMemory&#039;)
+                    return 2000;
+                if (key === &#039;protocol.messages.msToWaitForIncomingMessage&#039;)
+                    return 500;
+                if (key === &#039;protocol.messages.maxSecondsToWaitForConnection&#039;)
+                    return 2;
+            }
+        });
+
+        remoteServer = net.createServer();
+        remoteServer.listen(remotePort);
+        remoteServer.on(&#039;listening&#039;, function () {
+            server_built = true;
+            if (server_built &amp;&amp; handler_built)
+                done();
+        });
+
+        remoteServer.on(&#039;connection&#039;, function (socket) {
+            socket.on(&#039;data&#039;, function (data) {
+                if (doEcho)
+                    socket.write(data);
+            });
+        });
+
+        // build our tcp socket handler
+        tcpSocketHandler = new TCPSocketHandler(tcpSocketFactory, handlerOpts);
+
+        tcpSocketHandler.autoBootstrap(function (openPorts) {
+            if (openPorts[0] === protoPort) {
+                manager = new ProtocolConnectionManager(configStub, myNode, tcpSocketHandler);
+                handler_built = true;
+                if (server_built &amp;&amp; handler_built)
+                    done();
+            }
+        });
+    });
+
+    after(function (done) {
+        sandbox.restore();
+
+        var keys_a = Object.keys(manager.getHydraSocketList());
+        var keys_b = Object.keys(manager.getConfirmedSocketList());
+        for (var i = 0; i &lt; keys_a.length; i++) {
+            manager.getHydraSocketList()[keys_a[i]].getSocket().destroy();
+        }
+
+        for (var i = 0; i &lt; keys_a.length; i++) {
+            manager.getConfirmedSocketList()[keys_b[i]].socket.getSocket().destroy();
+        }
+
+        remoteServer.close(function () {
+            done();
+        });
+    });
+
+    // ------- MESSAGES ----
+    var createWorkingMessageA = function () {
+        var receiverId = new Buffer([0xf3, 0xec, 0x6b, 0x95, 0x29, 0x92, 0xbb, 0x07, 0xf3, 0x48, 0x62, 0xa4, 0x11, 0xbb, 0x1f, 0x83, 0x3f, 0x63, 0x62, 0x88]), senderId = new Buffer([0xfe, 0x36, 0x26, 0xca, 0xca, 0x6c, 0x84, 0xfa, 0x4e, 0x5d, 0x32, 0x3b, 0x6a, 0x26, 0xb8, 0x97, 0x58, 0x2c, 0x57, 0xf9]), ipv4Address = new Buffer([0x04, 127, 0, 0, 1, 0x17, 0x71]), addressEnd = new Buffer([0x05]), messageType = new Buffer([0x50, 0x49]), payload = new Buffer(&#039;foobar&#039;, &#039;utf8&#039;), list = [receiverId, senderId, ipv4Address, addressEnd, messageType, payload];
+
+        var buff = Buffer.concat(list);
+        var retBuff = new Buffer(buff.length + 4);
+        retBuff.writeUInt32BE(buff.length, 0);
+        buff.copy(retBuff, 4, 0);
+
+        return retBuff;
+    };
+
+    var createWorkingMessageB = function () {
+        var receiverId = new Buffer([0xf3, 0xec, 0x6b, 0x95, 0x29, 0x92, 0xbb, 0x07, 0xf3, 0x48, 0x62, 0xa4, 0x11, 0xbb, 0x1f, 0x83, 0x3f, 0x63, 0x62, 0x88]), senderId = new Buffer([0x1e, 0x36, 0x26, 0xca, 0xca, 0x6c, 0x84, 0xfa, 0x4e, 0x5d, 0x32, 0x3b, 0x6a, 0x26, 0xb8, 0x97, 0x58, 0x2c, 0x57, 0xf9]), ipv4Address = new Buffer([0x04, 127, 0, 0, 1, 0x17, 0x71]), addressEnd = new Buffer([0x05]), messageType = new Buffer([0x50, 0x49]), payload = new Buffer(&#039;foobar&#039;, &#039;utf8&#039;), list = [receiverId, senderId, ipv4Address, addressEnd, messageType, payload];
+
+        var buff = Buffer.concat(list);
+        var retBuff = new Buffer(buff.length + 4);
+        retBuff.writeUInt32BE(buff.length, 0);
+        buff.copy(retBuff, 4, 0);
+
+        return retBuff;
+    };
+
+    var createWorkingHydraMessage = function () {
+        var begin = new Buffer([0, 0, 0, 26]), receiverId = new Buffer(20), payload = new Buffer(&#039;foobar&#039;, &#039;utf8&#039;);
+        receiverId.fill(0x00);
+
+        return Buffer.concat([begin, receiverId, payload]);
+    };
+
+    // ------- TESTS -------
+    it(&#039;should correctly add a connection to the incoming pending list&#039;, function (done) {
+        net.createConnection(protoPort, &#039;localhost&#039;);
+        tcpSocketHandler.once(&#039;connected&#039;, function () {
+            var item = manager.getIncomingPendingSocketList()[&#039;_temp1&#039;];
+            if (item &amp;&amp; item.timeout)
+                done();
+        });
+    });
+
+    it(&#039;should correctly timeout kill the incoming pending socket&#039;, function (done) {
+        var socket = manager.getIncomingPendingSocketList()[&#039;_temp1&#039;].socket;
+
+        socket.once(&#039;destroy&#039;, function () {
+            if (manager.getIncomingPendingSocketList()[&#039;_temp1&#039;] === undefined) {
+                manager.removeAllListeners(&#039;terminatedConnection&#039;);
+                done();
+            }
+        });
+
+        manager.once(&#039;terminatedConnection&#039;, function () {
+            throw new Error(&#039;Should not do that, nope nope.&#039;);
+        });
+    });
+
+    it(&#039;should add the incoming socket to the confirmed sockets&#039;, function (done) {
+        var message_a = createWorkingMessageA();
+        manager.once(&#039;confirmedSocket&#039;, function (identifier) {
+            if (Object.keys(manager.getIncomingPendingSocketList()).length === 0 &amp;&amp; identifier === &#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;)
+                done();
+        });
+
+        var sock = net.createConnection(protoPort, &#039;localhost&#039;, function () {
+            // is connected
+            sock.write(message_a);
+
+            // echoing
+            sock.on(&#039;data&#039;, function (data) {
+                sock.write(data);
+            });
+        });
+    });
+
+    it(&#039;should return the existing socket when connecting&#039;, function (done) {
+        var contactNode = ContactNodeFactory.createDummy(&#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;, &#039;hex&#039;, &#039;127.0.0.1&#039;, remotePort);
+        var existing = manager.getConfirmedSocketList()[&#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;].socket;
+
+        manager.obtainConnectionTo(contactNode, function (err, socket) {
+            if (socket &amp;&amp; socket === existing)
+                done();
+        });
+    });
+
+    it(&#039;should keep the existing socket open&#039;, function (done) {
+        var contactNode = ContactNodeFactory.createDummy(&#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;, &#039;hex&#039;, &#039;127.0.0.1&#039;, remotePort);
+        manager.keepSocketsOpenFromNode(contactNode);
+        var sock = manager.getConfirmedSocketByContactNode(contactNode);
+        sock.once(&#039;destroy&#039;, function () {
+            throw new Error(&#039;Should not happen, nope nope.&#039;);
+        });
+        setTimeout(function () {
+            sock.removeAllListeners(&#039;destroy&#039;);
+            done();
+        }, 1500);
+    });
+
+    it(&#039;should no longer keep the existing socket open&#039;, function (done) {
+        var contactNode = ContactNodeFactory.createDummy(&#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;, &#039;hex&#039;, &#039;127.0.0.1&#039;, remotePort);
+        manager.keepSocketsNoLongerOpenFromNode(contactNode);
+        manager.once(&#039;terminatedConnection&#039;, function (id) {
+            if (id.toHexString() === &#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;) {
+                if (Object.keys(manager.getConfirmedSocketList()).length === 0)
+                    done();
+            }
+        });
+    });
+
+    it(&#039;should fail obtaining an outward connection to a node&#039;, function (done) {
+        var id = new Id(Id.byteBufferByHexString(&#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;, 20), 160);
+        var badContactNode = nodeFactory.create(id, [addressFactory.create(&#039;14.213.160.0&#039;, 1111)]);
+
+        manager.obtainConnectionTo(badContactNode, function (err, sock) {
+            if (err &amp;&amp; Object.keys(manager.getWaitForSocketList()).length === 0)
+                done();
+        });
+    });
+
+    it(&#039;should succeed obtaining an outward connection to a node on second try&#039;, function (done) {
+        var id = new Id(Id.byteBufferByHexString(&#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;, 20), 160);
+        var goodContactNode = nodeFactory.create(id, [addressFactory.create(&#039;14.213.160.0&#039;, 1111), addressFactory.create(&#039;127.0.0.1&#039;, remotePort)]);
+
+        manager.obtainConnectionTo(goodContactNode, function (err, socket) {
+            if (socket &amp;&amp; socket.getIdentifier() === &#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;) {
+                if (Object.keys(manager.getOutgoingPendingSocketList()).length === 0) {
+                    if (manager.getConfirmedSocketList()[&#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;].socket === socket)
+                        done();
+                }
+            }
+        });
+    });
+
+    it(&#039;should swap out the outgoing connection with the inbound connection&#039;, function (done) {
+        var sock = net.createConnection(protoPort, &#039;localhost&#039;);
+        tcpSocketHandler.once(&#039;connected&#039;, function () {
+            manager.on(&#039;terminatedConnection&#039;, function () {
+                throw new Error(&#039;Should definitely not do that, nope nope.&#039;);
+            });
+            manager.on(&#039;confirmedSocket&#039;, function (identifier, socket) {
+                manager.removeAllListeners(&#039;terminatedConnection&#039;);
+                if (manager.getConfirmedSocketList()[identifier].direction === &#039;incoming&#039;) {
+                    if (Object.keys(manager.getIncomingPendingSocketList()).length === 0) {
+                        if (Object.keys(manager.getOutgoingPendingSocketList()).length === 0) {
+                            done();
+                        }
+                    }
+                }
+            });
+            sock.write(createWorkingMessageA());
+        });
+    });
+
+    it(&#039;should prefer the incoming connection and close the outgoing pending at once when a connection has been established&#039;, function (done) {
+        var ident = &#039;1e3626caca6c84fa4e5d323b6a26b897582c57f9&#039;;
+        var id = new Id(Id.byteBufferByHexString(ident, 20), 160);
+        var goodContactNode = nodeFactory.create(id, [addressFactory.create(&#039;14.213.160.0&#039;, 1111), addressFactory.create(&#039;127.0.0.1&#039;, remotePort)]);
+
+        manager.obtainConnectionTo(goodContactNode, function (err, socket) {
+            // check that is is inbound
+            if (manager.getOutgoingPendingSocketList()[ident].closeAtOnce === true) {
+                if (manager.getConfirmedSocketList()[ident].direction === &#039;incoming&#039;) {
+                    setTimeout(function () {
+                        if (Object.keys(manager.getOutgoingPendingSocketList()).length === 0) {
+                            manager.removeAllListeners(&#039;terminatedConnection&#039;);
+                            done();
+                        }
+                    }, 1000);
+                }
+            }
+        });
+
+        tcpSocketHandler.once(&#039;connected&#039;, function () {
+            manager.on(&#039;terminatedConnection&#039;, function () {
+                throw new Error(&#039;Should definitely not do that, nope nope.&#039;);
+            });
+            currentRemoteSocket.write(createWorkingMessageB());
+        });
+        currentRemoteSocket = net.createConnection(protoPort, &#039;localhost&#039;);
+    });
+
+    it(&#039;should destroy the connection when an incoming message does not match the identifier of the socket&#039;, function (done) {
+        var ident = &#039;1e3626caca6c84fa4e5d323b6a26b897582c57f9&#039;;
+        manager.once(&#039;terminatedConnection&#039;, function (id) {
+            if (id.toHexString() === ident &amp;&amp; manager.getConfirmedSocketList()[ident] === undefined)
+                done();
+        });
+
+        currentRemoteSocket.write(createWorkingMessageA());
+    });
+
+    it(&#039;should obtain an outbound connection, write the buffer successfully and keep it open&#039;, function (done) {
+        var ident = &#039;1e3626caca6c84fa4e5d323b6a26b897582c57f9&#039;;
+        var id = new Id(Id.byteBufferByHexString(ident, 20), 160);
+
+        var goodContactNode = nodeFactory.create(id, [addressFactory.create(&#039;14.213.160.0&#039;, 1111), addressFactory.create(&#039;127.0.0.1&#039;, remotePort)]);
+
+        manager.keepSocketsOpenFromNode(goodContactNode);
+
+        manager.writeBufferTo(goodContactNode, new Buffer([0x01]), function (err) {
+            if (!err) {
+                manager.getConfirmedSocketList()[ident].socket.on(&#039;close&#039;, function () {
+                    throw new Error(&#039;Should not happen, nope, nope&#039;);
+                });
+                setTimeout(function () {
+                    manager.getConfirmedSocketList()[ident].socket.removeAllListeners(&#039;close&#039;);
+                    done();
+                }, 1500);
+            }
+        });
+    });
+
+    it(&#039;should not change anything when keeping the same socket open&#039;, function () {
+        var ident = &#039;1e3626caca6c84fa4e5d323b6a26b897582c57f9&#039;;
+        var id = new Id(Id.byteBufferByHexString(ident, 20), 160);
+        var goodContactNode = nodeFactory.create(id, [addressFactory.create(&#039;14.213.160.0&#039;, 1111), addressFactory.create(&#039;127.0.0.1&#039;, remotePort)]);
+        manager.keepSocketsOpenFromNode(goodContactNode);
+        var num = 0;
+        var openList = manager.getKeepOpenList();
+        for (var i = 0; i &lt; openList.length; i++) {
+            if (openList[i] === ident)
+                num++;
+        }
+        num.should.equal(1);
+    });
+
+    it(&#039;should error out when writing buffer to a connection it cannot establish&#039;, function (done) {
+        var id = new Id(Id.byteBufferByHexString(&#039;0e3626caca6c84fa4e5d323b6a26b897582c57f9&#039;, 20), 160);
+        var badContactNode = nodeFactory.create(id, [addressFactory.create(&#039;14.213.160.0&#039;, 1111)]);
+        manager.writeBufferTo(badContactNode, new Buffer([0x01]), function (err) {
+            if (err) {
+                if (Object.keys(manager.getOutgoingPendingSocketList()).length === 0)
+                    done();
+            }
+        });
+    });
+
+    it(&#039;should return the correct confirmed socket&#039;, function () {
+        var ident = &#039;1e3626caca6c84fa4e5d323b6a26b897582c57f9&#039;;
+        manager.getConfirmedSocketList()[ident].socket.should.equal(manager.getConfirmedSocketById(new Id(Id.byteBufferByHexString(ident, 20), 160)));
+    });
+
+    it(&#039;should add the incoming socket to the hydra sockets&#039;, function (done) {
+        currentRemoteSocket = net.createConnection(protoPort, &#039;localhost&#039;);
+        tcpSocketHandler.once(&#039;connected&#039;, function () {
+            manager.once(&#039;hydraSocket&#039;, function (identifier, socket) {
+                currentHydraIdentifer = identifier;
+                if (manager.getHydraSocketList()[identifier] === socket)
+                    done();
+            });
+            currentRemoteSocket.write(createWorkingHydraMessage());
+        });
+    });
+
+    it(&#039;should close the hydra socket when writing a regular protocol message to it&#039;, function (done) {
+        currentRemoteSocket.write(createWorkingMessageA());
+        manager.once(&#039;terminatedConnection&#039;, function (identifier) {
+            if (identifier === currentHydraIdentifer &amp;&amp; manager.getHydraSocketList()[identifier] === undefined)
+                done();
+        });
+    });
+
+    it(&#039;should successfully open an outgoing hydra socket&#039;, function (done) {
+        manager.hydraConnectTo(remotePort, &#039;localhost&#039;, function (err, identifier) {
+            currentHydraIdentifer = identifier;
+            if (!err &amp;&amp; identifier)
+                done();
+        });
+    });
+
+    it(&#039;should keep the hydra socket open&#039;, function (done) {
+        manager.keepHydraSocketOpen(currentHydraIdentifer);
+        setTimeout(function () {
+            manager.removeAllListeners(&#039;terminatedConnection&#039;);
+            done();
+        }, 1500);
+        manager.once(&#039;terminatedConnection&#039;, function () {
+            throw new Error(&#039;Should not do that.&#039;);
+        });
+    });
+
+    it(&#039;should no longer keep the hydra socket open&#039;, function (done) {
+        manager.keepHydraSocketNoLongerOpen(currentHydraIdentifer);
+        manager.once(&#039;terminatedConnection&#039;, function (identifier) {
+            if (identifier === currentHydraIdentifer)
+                done();
+        });
+    });
+
+    it(&#039;should successfully write a hydra message to a socket &#039;, function (done) {
+        currentRemoteSocket = net.createConnection(protoPort, &#039;localhost&#039;);
+        tcpSocketHandler.once(&#039;connected&#039;, function () {
+            manager.once(&#039;hydraSocket&#039;, function (identifier, socket) {
+                manager.hydraWriteMessageTo(identifier, new Buffer(&#039;foobar&#039;, &#039;utf8&#039;), function (err) {
+                    if (err)
+                        console.log(err);
+                });
+
+                var msg = createWorkingHydraMessage();
+
+                currentRemoteSocket.once(&#039;data&#039;, function (buffer) {
+                    var okay = buffer.length === msg.length;
+
+                    for (var i = 0; i &lt; buffer.length; i++) {
+                        if (buffer[i] !== msg[i])
+                            okay = false;
+                    }
+                    if (okay) {
+                        done();
+                    }
+                });
+            });
+            currentRemoteSocket.write(createWorkingHydraMessage());
+        });
+    });
+
+    it(&#039;should successfully write a regular message to a socket&#039;, function (done) {
+        var ident = &#039;1e3626caca6c84fa4e5d323b6a26b897582cf7f9&#039;;
+        var id = new Id(Id.byteBufferByHexString(ident, 20), 160);
+        var goodContactNode = nodeFactory.create(id, [addressFactory.create(&#039;127.0.0.1&#039;, remotePort)]);
+        manager.writeMessageTo(goodContactNode, &#039;PING&#039;, new Buffer(0), function (err) {
+            if (!err)
+                done();
+        });
+    });
+
+    it(&#039;should change the the addresses of a node on IP change&#039;, function (done) {
+        var changeListener = function (info) {
+            info.should.equal(&#039;ipChange&#039;);
+            var addresses = myNode.getAddresses();
+            addresses.length.should.equal(1); // 60000 port
+            addresses[0].getIp().should.equal(&#039;127.0.0.2&#039;);
+            addresses[0].getPort().should.equal(60000);
+
+            myNode.removeOnAddressChange(changeListener);
+            tcpSocketHandler.setMyExternalIp(&#039;127.0.0.1&#039;);
+
+            setImmediate(function () {
+                done();
+            });
+        };
+
+        myNode.onAddressChange(changeListener);
+
+        tcpSocketHandler.setMyExternalIp(&#039;127.0.0.2&#039;);
+    });
+});
+//# sourceMappingURL=ProtocolConnectionManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

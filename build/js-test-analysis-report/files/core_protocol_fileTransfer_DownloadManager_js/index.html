@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/fileTransfer/DownloadManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/fileTransfer/DownloadManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">76.86</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">274</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">40.86</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.59</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var events = require(&#039;events&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var CircuitManager = require(&#039;../../../../src/core/protocol/hydra/CircuitManager&#039;);
+var ObjectConfig = require(&#039;../../../../src/core/config/ObjectConfig&#039;);
+var DownloadFactory = require(&#039;../../../../src/core/protocol/fileTransfer/share/Aes128GcmDownloadFactory&#039;);
+var DownloadManager = require(&#039;../../../../src/core/protocol/fileTransfer/share/DownloadManager&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; FILE TRANSFER --&gt; DownloadManager&#039;, function () {
+    var sandbox = null;
+    var configStub = null;
+    var factoryStub = null;
+    var bridge = null;
+    var circuitManagerStub = null;
+
+    var manager = null;
+
+    var downloadConstructionError = false;
+    var readyCircuitsNum = 0;
+
+    it(&#039;should correctly construct a download manager&#039;, function () {
+        manager = new DownloadManager(configStub, circuitManagerStub, bridge, factoryStub);
+
+        manager.should.be.instanceof(DownloadManager);
+        Object.keys(manager.getActiveDownloads()).length.should.equal(0);
+        manager.getMaximumNumberOfDownloads().should.equal(3);
+    });
+
+    it(&#039;should not start a new download when no hydra circuits are present&#039;, function (done) {
+        bridge.once(&#039;end&#039;, function (identifier, reason) {
+            identifier.should.equal(&#039;foobar&#039;);
+            reason.should.equal(&#039;NO_ANON&#039;);
+            done();
+        });
+
+        bridge.emit(&#039;newDownload&#039;, &#039;foobar&#039;);
+    });
+
+    it(&#039;should not start a new download when the metadata is badly formatted&#039;, function (done) {
+        downloadConstructionError = true;
+        readyCircuitsNum = 1;
+
+        bridge.once(&#039;end&#039;, function (identifier, reason) {
+            identifier.should.equal(&#039;foobar2&#039;);
+            reason.should.equal(&#039;BAD_METADATA&#039;);
+            downloadConstructionError = false;
+            done();
+        });
+
+        bridge.emit(&#039;newDownload&#039;, &#039;foobar2&#039;);
+    });
+
+    it(&#039;should add three downloads to the active download list&#039;, function (done) {
+        bridge.emit(&#039;newDownload&#039;, &#039;download1&#039;);
+        bridge.emit(&#039;newDownload&#039;, &#039;download2&#039;);
+        bridge.emit(&#039;newDownload&#039;, &#039;download3&#039;);
+
+        setImmediate(function () {
+            Object.keys(manager.getActiveDownloads()).length.should.equal(3);
+            done();
+        });
+    });
+
+    it(&#039;should not allow a new download if the maximum number of parallel downloads is exceeded&#039;, function (done) {
+        bridge.once(&#039;end&#039;, function (identifier, reason) {
+            identifier.should.equal(&#039;download4&#039;);
+            reason.should.equal(&#039;MAX_DOWNLOADS_EXCEED&#039;);
+            done();
+        });
+
+        bridge.emit(&#039;newDownload&#039;, &#039;download4&#039;);
+    });
+
+    it(&#039;should abort a download&#039;, function (done) {
+        bridge.once(&#039;manuallyAborted&#039;, function (ident) {
+            ident.should.equal(&#039;download2&#039;);
+            done();
+        });
+
+        bridge.emit(&#039;abortDownload&#039;, &#039;download2&#039;);
+    });
+
+    it(&#039;should correctly emit the normal propagated events&#039;, function (done) {
+        var events = [&#039;requestingFile&#039;, &#039;startingTransfer&#039;, &#039;completed&#039;];
+        var count = 0;
+
+        for (var i = 0; i &lt; events.length; i++) {
+            (function (evt) {
+                bridge.once(evt, function (ident) {
+                    ident.should.equal(&#039;download1&#039;);
+                    if (++count === 3)
+                        done();
+                });
+            })(events[i]);
+        }
+
+        for (var i = 0; i &lt; events.length; i++) {
+            manager.getActiveDownloads()[&#039;download1&#039;].emit(events[i]);
+        }
+    });
+
+    it(&#039;should correctly emit the written bytes event&#039;, function (done) {
+        bridge.once(&#039;writtenBytes&#039;, function (ident, a, b) {
+            ident.should.equal(&#039;download3&#039;);
+            a.should.equal(10);
+            b.should.equal(11);
+            done();
+        });
+
+        manager.getActiveDownloads()[&#039;download3&#039;].emit(&#039;writtenBytes&#039;, 10, 11);
+    });
+
+    it(&#039;should correctly emit the FS_ERROR event&#039;, function (done) {
+        bridge.once(&#039;end&#039;, function (ident, reason) {
+            ident.should.equal(&#039;download3&#039;);
+            reason.should.equal(&#039;FS_ERROR&#039;);
+
+            setImmediate(function () {
+                (manager.getActiveDownloads()[&#039;download3&#039;] === undefined).should.be.true;
+                done();
+            });
+        });
+
+        manager.getActiveDownloads()[&#039;download3&#039;].emit(&#039;killed&#039;, &#039;File cannot be written.&#039;);
+    });
+
+    it(&#039;should correctly emit the MANUAL_ABORT event&#039;, function (done) {
+        bridge.once(&#039;end&#039;, function (ident, reason) {
+            ident.should.equal(&#039;download2&#039;);
+            reason.should.equal(&#039;MANUAL_ABORT&#039;);
+
+            setImmediate(function () {
+                (manager.getActiveDownloads()[&#039;download2&#039;] === undefined).should.be.true;
+                done();
+            });
+        });
+
+        manager.getActiveDownloads()[&#039;download2&#039;].emit(&#039;killed&#039;, &#039;Manually aborted.&#039;);
+    });
+
+    it(&#039;should correctly emit the REMOTE_ABORT event&#039;, function (done) {
+        bridge.once(&#039;end&#039;, function (ident, reason) {
+            ident.should.equal(&#039;download1&#039;);
+            reason.should.equal(&#039;REMOTE_ABORT&#039;);
+
+            setImmediate(function () {
+                (manager.getActiveDownloads()[&#039;download1&#039;] === undefined).should.be.true;
+                done();
+            });
+        });
+
+        manager.getActiveDownloads()[&#039;download1&#039;].emit(&#039;killed&#039;, &#039;Uploader aborted transfer.&#039;);
+    });
+
+    it(&#039;should correctly emit the COMPLETED event&#039;, function (done) {
+        bridge.emit(&#039;newDownload&#039;, &#039;download1&#039;);
+
+        bridge.once(&#039;end&#039;, function (ident, reason) {
+            ident.should.equal(&#039;download1&#039;);
+            reason.should.equal(&#039;COMPLETED&#039;);
+
+            setImmediate(function () {
+                (manager.getActiveDownloads()[&#039;download1&#039;] === undefined).should.be.true;
+                Object.keys(manager.getActiveDownloads()).length.should.equal(0);
+                done();
+            });
+        });
+
+        manager.getActiveDownloads()[&#039;download1&#039;].emit(&#039;killed&#039;, &#039;Completed.&#039;);
+    });
+
+    it(&#039;should correctly emit the TIMED_OUT event&#039;, function (done) {
+        bridge.emit(&#039;newDownload&#039;, &#039;download1&#039;);
+
+        bridge.once(&#039;end&#039;, function (ident, reason) {
+            ident.should.equal(&#039;download1&#039;);
+            reason.should.equal(&#039;TIMED_OUT&#039;);
+
+            setImmediate(function () {
+                (manager.getActiveDownloads()[&#039;download1&#039;] === undefined).should.be.true;
+                Object.keys(manager.getActiveDownloads()).length.should.equal(0);
+                done();
+            });
+        });
+
+        manager.getActiveDownloads()[&#039;download1&#039;].emit(&#039;killed&#039;, &#039;Maximum tries exhausted.&#039;);
+    });
+
+    it(&#039;should correctly emit the FS_ERROR (file block writer) event&#039;, function (done) {
+        bridge.emit(&#039;newDownload&#039;, &#039;download1&#039;);
+
+        bridge.once(&#039;end&#039;, function (ident, reason) {
+            ident.should.equal(&#039;download1&#039;);
+            reason.should.equal(&#039;FS_ERROR&#039;);
+
+            setImmediate(function () {
+                (manager.getActiveDownloads()[&#039;download1&#039;] === undefined).should.be.true;
+                Object.keys(manager.getActiveDownloads()).length.should.equal(0);
+                done();
+            });
+        });
+
+        manager.getActiveDownloads()[&#039;download1&#039;].emit(&#039;killed&#039;, &#039;FileBlockWriter: Cannot be written to.&#039;);
+    });
+
+    it(&#039;should correctly emit the PROTOCOL_ERR (file block writer) event&#039;, function (done) {
+        bridge.emit(&#039;newDownload&#039;, &#039;download1&#039;);
+
+        bridge.once(&#039;end&#039;, function (ident, reason) {
+            ident.should.equal(&#039;download1&#039;);
+            reason.should.equal(&#039;PROTOCOL_ERR&#039;);
+
+            setImmediate(function () {
+                (manager.getActiveDownloads()[&#039;download1&#039;] === undefined).should.be.true;
+                Object.keys(manager.getActiveDownloads()).length.should.equal(0);
+                done();
+            });
+        });
+
+        manager.getActiveDownloads()[&#039;download1&#039;].emit(&#039;killed&#039;, &#039;Malformed message.&#039;);
+    });
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (what) {
+                if (what === &#039;fileTransfer.maximumNumberOfParallelDownloads&#039;)
+                    return 3;
+            }
+        });
+
+        factoryStub = testUtils.stubPublicApi(sandbox, DownloadFactory, {
+            create: function () {
+                if (downloadConstructionError)
+                    return null;
+
+                var download = new events.EventEmitter();
+
+                download.manuallyAbort = function () {
+                    this.emit(&#039;abort&#039;);
+                };
+
+                download.kickOff = function () {
+                };
+
+                return download;
+            }
+        });
+
+        bridge = new events.EventEmitter();
+
+        circuitManagerStub = testUtils.stubPublicApi(sandbox, CircuitManager, {
+            getReadyCircuits: function () {
+                var a = [];
+
+                for (var i = 0; i &lt; readyCircuitsNum; i++) {
+                    a.push(1);
+                }
+
+                return a;
+            }
+        });
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+});
+//# sourceMappingURL=DownloadManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

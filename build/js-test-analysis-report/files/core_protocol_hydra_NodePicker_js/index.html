@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/hydra/NodePicker.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/hydra/NodePicker.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">74.55</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">203</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">38.41</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.02</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var NodePicker = require(&#039;../../../../src/core/protocol/hydra/NodePicker&#039;);
+var RoutingTable = require(&#039;../../../../src/core/topology/RoutingTable&#039;);
+var ContactNodeAddress = require(&#039;../../../../src/core/topology/ContactNodeAddress&#039;);
+var ContactNode = require(&#039;../../../../src/core/topology/ContactNode&#039;);
+
+var ObjectConfig = require(&#039;../../../../src/core/config/ObjectConfig&#039;);
+var TCPSocketHandler = require(&#039;../../../../src/core/net/tcp/TCPSocketHandler&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; HYDRA --&gt; NodePicker&#039;, function () {
+    this.timeout(0);
+
+    var sandbox;
+
+    var randomNodeList = [];
+    var i = 0;
+
+    var nodePicker = null;
+
+    var returnPort = 80;
+
+    var setRandomNode = function (ip) {
+        if (ip) {
+            randomNodeList.push(testUtils.stubPublicApi(sandbox, ContactNode, {
+                getAddresses: function () {
+                    return [testUtils.stubPublicApi(sandbox, ContactNodeAddress, {
+                            getPort: function () {
+                                return returnPort;
+                            },
+                            getIp: function () {
+                                return ip;
+                            }
+                        })];
+                }
+            }));
+        } else {
+            randomNodeList.push(null);
+        }
+    };
+
+    var routingTable = null;
+    var config = null;
+    var tcpSocketHandler = null;
+
+    var createRandomList = function (ips) {
+        randomNodeList = [];
+        i = 0;
+        for (var j = 0, l = ips.length; j &lt; l; j++) {
+            setRandomNode(ips[j]);
+        }
+    };
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+
+        config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (what) {
+                if (what === &#039;hydra.additiveSharingNodeAmount&#039;)
+                    return 3;
+                if (what === &#039;hydra.nodePicker.roundThreshold&#039;)
+                    return 2;
+                if (what === &#039;hydra.nodePicker.waitingTimeInSeconds&#039;)
+                    return 1;
+                if (what === &#039;hydra.nodePicker.errorThreshold&#039;)
+                    return 2;
+                if (what === &#039;hydra.nodePicker.allowIdenticalIps&#039;)
+                    return true;
+            }
+        });
+
+        routingTable = testUtils.stubPublicApi(sandbox, RoutingTable, {
+            getRandomContactNode: function (cb) {
+                var node = randomNodeList[i];
+                i++;
+                if (node) {
+                    cb(null, node);
+                } else {
+                    cb(new Error(), null);
+                }
+            }
+        });
+
+        tcpSocketHandler = testUtils.stubPublicApi(sandbox, TCPSocketHandler, {
+            getMyExternalIp: function () {
+                return &#039;foobar&#039;;
+            },
+            getOpenServerPortsArray: function () {
+                return [666];
+            }
+        });
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+
+    it(&#039;should correctly instantiate&#039;, function () {
+        nodePicker = new NodePicker(config, 3, routingTable, tcpSocketHandler);
+
+        nodePicker.should.be.instanceof(NodePicker);
+        nodePicker.getAdditiveNodeAmount().should.equal(3);
+        nodePicker.getThreshold().should.equal(2);
+        nodePicker.getErrorThreshold().should.equal(2);
+        nodePicker.getWaitingTime().should.equal(1000);
+    });
+
+    it(&#039;should throw an error when trying to pick additive nodes before relay nodes&#039;, function () {
+        (function () {
+            nodePicker.pickNextAdditiveNodeBatch(null);
+        }).should.throw(&#039;NodePicker: Picking additive nodes before relay nodes is not allowed!&#039;);
+    });
+
+    it(&#039;should throw an error when trying to pick an additional relay nodes before general relay nodes&#039;, function () {
+        (function () {
+            nodePicker.pickAdditionalRelayNode(null);
+        }).should.throw(&#039;NodePicker: Picking additional relay node before general relay nodes is not allowed!&#039;);
+    });
+
+    it(&#039;should pick three relay nodes&#039;, function (done) {
+        createRandomList([&#039;a&#039;, &#039;b&#039;, &#039;a&#039;, &#039;c&#039;]);
+
+        nodePicker.pickRelayNodeBatch(function (b) {
+            if (b[0].ip === &#039;a&#039; &amp;&amp; b[1].ip === &#039;b&#039; &amp;&amp; b[2].ip === &#039;c&#039;)
+                done();
+        });
+    });
+
+    it(&#039;should throw an error when picking relay nodes again&#039;, function () {
+        (function () {
+            nodePicker.pickRelayNodeBatch(null);
+        }).should.throw(&#039;NodePicker: Relay nodes can only be picked once!&#039;);
+    });
+
+    it(&#039;should pick three additive nodes after a wait time&#039;, function (done) {
+        var now = Date.now();
+        createRandomList([&#039;d&#039;, &#039;c&#039;, &#039;e&#039;, &#039;e&#039;, &#039;d&#039;, &#039;f&#039;]);
+
+        nodePicker.pickNextAdditiveNodeBatch(function (b) {
+            if (b[0].ip === &#039;d&#039; &amp;&amp; b[1].ip === &#039;e&#039; &amp;&amp; b[2].ip === &#039;f&#039; &amp;&amp; Date.now() - now &gt; 1000)
+                done();
+        });
+    });
+
+    it(&#039;list check 1&#039;, function () {
+        var a = nodePicker.getRelayNodes();
+        var b = nodePicker.getNodesUsed();
+
+        a[0].ip.should.equal(&#039;a&#039;);
+        a[1].ip.should.equal(&#039;b&#039;);
+        a[2].ip.should.equal(&#039;c&#039;);
+        b[0].ip.should.equal(&#039;d&#039;);
+        b[1].ip.should.equal(&#039;e&#039;);
+        b[2].ip.should.equal(&#039;f&#039;);
+    });
+
+    it(&#039;should pick three additive nodes with threshold&#039;, function (done) {
+        var now = Date.now();
+
+        createRandomList([null, &#039;d&#039;, &#039;d&#039;, &#039;a&#039;, &#039;e&#039;, null, &#039;f&#039;, &#039;f&#039;, &#039;g&#039;]);
+
+        nodePicker.pickNextAdditiveNodeBatch(function (b) {
+            if (b[0].ip === &#039;d&#039; &amp;&amp; b[1].ip === &#039;e&#039; &amp;&amp; b[2].ip === &#039;g&#039; &amp;&amp; Date.now() - now &gt; 2000)
+                done();
+        });
+    });
+
+    it(&#039;list check 2&#039;, function () {
+        var b = nodePicker.getNodesUsed();
+
+        b[0].ip.should.equal(&#039;d&#039;);
+        b[1].ip.should.equal(&#039;e&#039;);
+        b[2].ip.should.equal(&#039;f&#039;);
+        b[3].ip.should.equal(&#039;d&#039;);
+        b[4].ip.should.equal(&#039;e&#039;);
+        b[5].ip.should.equal(&#039;g&#039;);
+    });
+
+    it(&#039;should pick an additional relay node&#039;, function (done) {
+        createRandomList([&#039;a&#039;, &#039;d&#039;, &#039;h&#039;]);
+
+        nodePicker.pickAdditionalRelayNode(function (node) {
+            if (node.ip === &#039;h&#039; &amp;&amp; nodePicker.getRelayNodes()[3].ip === &#039;h&#039;)
+                done();
+        });
+    });
+
+    it(&#039;should pick nodes with the same ip but different port&#039;, function (done) {
+        returnPort = 70;
+        createRandomList([&#039;d&#039;, &#039;e&#039;, &#039;f&#039;]);
+
+        nodePicker.pickNextAdditiveNodeBatch(function (b) {
+            b[0].ip.should.equal(&#039;d&#039;);
+            b[1].ip.should.equal(&#039;e&#039;);
+            b[2].ip.should.equal(&#039;f&#039;);
+            done();
+        });
+    });
+});
+//# sourceMappingURL=NodePicker.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

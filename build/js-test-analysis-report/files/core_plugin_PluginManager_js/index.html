@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/plugin/PluginManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/plugin/PluginManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">76.15</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">324</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">32.64</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">3.05</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var PluginFinder = require(&#039;../../../src/core/plugin/PluginFinder&#039;);
+var PluginManager = require(&#039;../../../src/core/plugin/PluginManager&#039;);
+
+//import PluginRunner = require(&#039;../../../src/core/plugin/PluginRunner&#039;);
+var PluginLoaderFactory = require(&#039;../../../src/core/plugin/PluginLoaderFactory&#039;);
+var PluginRunner = require(&#039;../../../src/core/plugin/PluginRunner&#039;);
+var PluginRunnerFactory = require(&#039;../../../src/core/plugin/PluginRunnerFactory&#039;);
+var PluginValidator = require(&#039;../../../src/core/plugin/PluginValidator&#039;);
+var ObjectConfig = require(&#039;../../../src/core/config/ObjectConfig&#039;);
+
+describe(&#039;CORE --&gt; PLUGIN --&gt; PluginManager&#039;, function () {
+    var sandbox;
+    var appDataPath = testUtils.getFixturePath(&#039;core/plugin/appDataPath&#039;);
+    var createConfig = function () {
+        return testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (key) {
+                if (key === &#039;app.dataPath&#039;) {
+                    return appDataPath;
+                } else if (key === &#039;pluginManagerStateConfig&#039;) {
+                    return &#039;pluginManager.json&#039;;
+                }
+            }
+        });
+    };
+    var closeAndDone = function (pluginManager, done) {
+        pluginManager.close(function () {
+            done();
+        });
+    };
+
+    beforeEach(function () {
+        //testUtils.createFolder(appDataPath);
+        sandbox = sinon.sandbox.create();
+    });
+
+    afterEach(function () {
+        sandbox.restore();
+        //testUtils.deleteFolderRecursive(appDataPath);
+    });
+
+    it(&#039;should correctly instantiate PluginManager without error&#039;, function (done) {
+        var config = createConfig();
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+        var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
+
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+            onOpenCallback: function () {
+                closeAndDone(pluginManager, done);
+            }
+        });
+
+        pluginManager.should.be.an.instanceof(PluginManager);
+    });
+
+    it(&#039;should correctly call the onOpen and onClose callback&#039;, function (done) {
+        var config = createConfig();
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+        var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+            onOpenCallback: function () {
+                pluginManager.open(function () {
+                    pluginManager.close();
+                });
+            },
+            onCloseCallback: function (err) {
+                pluginManager.close(function (err) {
+                    pluginManager.isOpen(function (err, isOpen) {
+                        isOpen.should.be.false;
+
+                        pluginManager.open(function () {
+                            closeAndDone(pluginManager, done);
+                        });
+                    });
+                });
+            }
+        });
+    });
+
+    it(&#039;should correctly call the findPlugins method from the pluginFinder&#039;, function (done) {
+        var config = createConfig();
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder, {
+            findPlugins: function (callback) {
+                callback(null, null);
+            }
+        });
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+        var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory);
+
+        pluginManager.findNewPlugins(function (err) {
+            pluginFinder.findPlugins.calledOnce.should.be.true;
+
+            closeAndDone(pluginManager, done);
+        });
+    });
+
+    it(&#039;should correctly load without a pluginState file&#039;, function (done) {
+        var config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (key) {
+                if (key === &#039;app.dataPath&#039;) {
+                    return appDataPath;
+                } else if (key === &#039;pluginManagerStateConfig&#039;) {
+                    return &#039;invalidFileName.json&#039;;
+                }
+            }
+        });
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+        var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+            onOpenCallback: function () {
+                pluginManager.getActivePluginRunners(function (pluginState) {
+                    closeAndDone(pluginManager, done);
+                });
+            }
+        });
+    });
+
+    it(&#039;should correctly load the pluginState from disk&#039;, function (done) {
+        var config = createConfig();
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
+        var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+            onOpenCallback: function () {
+                pluginManager.getPluginState(function (pluginState) {
+                    var state = {
+                        idle: [
+                            {
+                                name: &#039;foo bar idle&#039;,
+                                path: &#039;/path&#039;,
+                                hash: &#039;123&#039;,
+                                since: 123456
+                            }
+                        ],
+                        inactive: [
+                            {
+                                name: &#039;foo bar inactive&#039;,
+                                path: &#039;/path&#039;,
+                                hash: &#039;123&#039;,
+                                since: 123456
+                            }
+                        ],
+                        active: [
+                            {
+                                name: &#039;foo bar active&#039;,
+                                path: &#039;/path&#039;,
+                                hash: &#039;123&#039;,
+                                since: 123456
+                            }
+                        ]
+                    };
+
+                    pluginState.should.containDeep(state);
+
+                    closeAndDone(pluginManager, done);
+                });
+            }
+        });
+    });
+
+    it(&#039;should correctly activate the plugin, trigger the &quot;pluginAdded&quot; event and return it\&#039;s runner&#039;, function (done) {
+        var config = createConfig();
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator, {
+            validateState: function (pluginState, callback) {
+                return process.nextTick(callback.bind(null, null));
+            }
+        });
+        var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory, {
+            create: function () {
+                return {
+                    getMain: function () {
+                        return &#039;index.js&#039;;
+                    },
+                    getFileMimeTypes: function () {
+                        return [&#039;application/pdf&#039;];
+                    }
+                };
+            }
+        });
+        var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner);
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory, {
+            create: function () {
+                return pluginRunnerStub;
+            }
+        });
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+            onOpenCallback: function () {
+                pluginManager.activatePluginState();
+            }
+        });
+
+        var onPluginAdded = function (identifier) {
+            identifier.should.equal(&#039;foo bar active&#039;);
+
+            pluginManager.removeEventListener(&#039;pluginAdded&#039;, onPluginAdded);
+
+            pluginManager.getActivePluginRunners(function (pluginRunners) {
+                pluginRunners[&#039;foo bar active&#039;].should.equal(pluginRunnerStub);
+                Object.keys(pluginRunners).length.should.equal(1);
+
+                pluginManager.getActivePluginRunner(&#039;foo bar active&#039;, function (pluginRunner) {
+                    pluginRunner.should.equal(pluginRunnerStub);
+
+                    pluginManager.getActivePluginRunnerIdentifiers(function (identifiers) {
+                        identifiers.should.have.a.lengthOf(1);
+                        identifiers[0].should.equal(&#039;foo bar active&#039;);
+
+                        closeAndDone(pluginManager, done);
+                    });
+                });
+            });
+        };
+
+        pluginManager.addEventListener(&#039;pluginAdded&#039;, onPluginAdded);
+    });
+
+    it(&#039;should correctly return the plugin runner specified for the mime type&#039;, function (done) {
+        var config = createConfig();
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator, {
+            validateState: function (pluginState, callback) {
+                return process.nextTick(callback.bind(null, null));
+            }
+        });
+        var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory, {
+            create: function () {
+                return {
+                    getMain: function () {
+                        return &#039;index.js&#039;;
+                    },
+                    getFileMimeTypes: function () {
+                        return [&#039;image/jpeg&#039;];
+                    }
+                };
+            }
+        });
+        var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner);
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory, {
+            create: function () {
+                return pluginRunnerStub;
+            }
+        });
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+            onOpenCallback: function () {
+                pluginManager.activatePluginState(function () {
+                    pluginManager.getPluginRunnersForItem(testUtils.getFixturePath(&#039;core/plugin/pluginManager/image.jpg&#039;), function (pluginRunners) {
+                        Object.keys(pluginRunners).length.should.equal(1);
+                        pluginRunners[&#039;foo bar active&#039;].should.equal(pluginRunnerStub);
+
+                        closeAndDone(pluginManager, done);
+                    });
+                });
+            }
+        });
+    });
+
+    it(&#039;should correctly return additional fields provided by the plugins&#039;, function (done) {
+        var config = createConfig();
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator, {
+            validateState: function (pluginState, callback) {
+                return process.nextTick(callback.bind(null, null));
+            }
+        });
+        var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory, {
+            create: function () {
+                return {
+                    getMain: function () {
+                        return &#039;index.js&#039;;
+                    },
+                    getFileMimeTypes: function () {
+                        return [&#039;image/jpeg&#039;];
+                    },
+                    getSettings: function () {
+                        return {
+                            useApacheTika: true
+                        };
+                    }
+                };
+            }
+        });
+        var pluginDataStub = {
+            foo: &#039;foobar&#039;,
+            bar: &#039;barfoo&#039;
+        };
+        var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
+            onBeforeItemAdd: function (itemPath, stats, tikaGlobals, callback) {
+                callback(null, pluginDataStub);
+            }
+        });
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory, {
+            create: function () {
+                return pluginRunnerStub;
+            }
+        });
+        var statsJson = &#039;{&quot;dev&quot;:16777222,&quot;mode&quot;:33188,&quot;nlink&quot;:1,&quot;uid&quot;:501,&quot;gid&quot;:20,&quot;rdev&quot;:0,&quot;blksize&quot;:4096,&quot;ino&quot;:27724859,&quot;size&quot;:6985,&quot;blocks&quot;:16,&quot;atime&quot;:&quot;2014-05-18T11:59:13.000Z&quot;,&quot;mtime&quot;:&quot;2014-05-16T21:16:41.000Z&quot;,&quot;ctime&quot;:&quot;2014-05-16T21:16:41.000Z&quot;}&#039;;
+        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+            onOpenCallback: function () {
+                pluginManager.activatePluginState(function () {
+                    pluginManager.onBeforeItemAdd(testUtils.getFixturePath(&#039;core/plugin/pluginManager/image.jpg&#039;), JSON.parse(statsJson), &#039;fileHash&#039;, function (pluginData) {
+                        Object.keys(pluginData).length.should.equal(1);
+                        pluginData[&#039;foo bar active&#039;].should.containDeep(pluginDataStub);
+
+                        closeAndDone(pluginManager, done);
+                    });
+                });
+            }
+        });
+    });
+});
+//# sourceMappingURL=PluginManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

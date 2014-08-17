@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/net/NetworkBootstrapper.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/net/NetworkBootstrapper.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">77.39</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">133</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">24.59</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.00</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var JSONWebIp = require(&#039;../../../src/core/net/ip/JSONWebIp&#039;);
+var NetworkBootstrapper = require(&#039;../../../src/core/net/NetworkBootstrapper&#039;);
+var TCPSocketHandlerFactory = require(&#039;../../../src/core/net/tcp/TCPSocketHandlerFactory&#039;);
+var TCPSocketHandler = require(&#039;../../../src/core/net/tcp/TCPSocketHandler&#039;);
+var ObjectConfig = require(&#039;../../../src/core/config/ObjectConfig&#039;);
+
+describe(&#039;CORE --&gt; NET --&gt; NetworkBootstrapper&#039;, function () {
+    var sandbox;
+    var configStub;
+    var factoryStub;
+    var tcpHandlerStub;
+    var ipObtainerStubSuccess;
+    var ipObtainerStubError;
+    var change = false;
+
+    beforeEach(function () {
+        sandbox = sinon.sandbox.create();
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            &quot;get&quot;: function (key) {
+                if (key === &#039;net.allowHalfOpenSockets&#039;)
+                    return false;
+                if (key === &#039;net.connectionRetrySeconds&#039;)
+                    return 2;
+                if (key === &#039;net.recheckIpIntervalInSeconds&#039;)
+                    return 2;
+                if (key === &#039;net.idleConnectionKillTimeout&#039;)
+                    return 5;
+                if (key === &#039;net.myOpenPorts&#039;)
+                    return [56789];
+            }
+        });
+
+        tcpHandlerStub = testUtils.stubPublicApi(sandbox, TCPSocketHandler, {
+            &quot;autoBootstrap&quot;: function (callback) {
+                callback();
+            },
+            &quot;setMyExternalIp&quot;: function (ip) {
+                this.ip = ip;
+            },
+            &quot;getMyExternalIp&quot;: function () {
+                return this.ip;
+            }
+        });
+
+        factoryStub = testUtils.stubPublicApi(sandbox, TCPSocketHandlerFactory, {
+            &quot;create&quot;: function () {
+                return tcpHandlerStub;
+            }
+        });
+
+        ipObtainerStubSuccess = testUtils.stubPublicApi(sandbox, JSONWebIp, {
+            &quot;obtainIP&quot;: function (cb) {
+                var ip = change ? &#039;127.0.0.2&#039; : &#039;127.0.0.1&#039;;
+
+                cb(null, ip);
+            }
+        });
+
+        ipObtainerStubError = testUtils.stubPublicApi(sandbox, JSONWebIp, {
+            &quot;obtainIP&quot;: function (cb) {
+                cb(new Error(&#039;foobar&#039;), null);
+            }
+        });
+    });
+
+    afterEach(function () {
+        sandbox.restore();
+    });
+
+    it(&#039;should successfully return the external ip on first try&#039;, function (done) {
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubSuccess]);
+        bootstrapper.bootstrap(function () {
+            if (bootstrapper.getExternalIp() === &#039;127.0.0.1&#039;)
+                done();
+        });
+    });
+
+    it(&#039;should successfully return the external ip on second try&#039;, function (done) {
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubError, ipObtainerStubSuccess]);
+        bootstrapper.bootstrap(function () {
+            if (bootstrapper.getExternalIp() === &#039;127.0.0.1&#039;)
+                done();
+        });
+    });
+
+    it(&#039;should bootstrap with error&#039;, function (done) {
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubError]);
+        bootstrapper.bootstrap(function (err) {
+            if (err &amp;&amp; err.message === &#039;NetworkBootstrapper: All IP obtainers throw an error.&#039;)
+                done();
+        });
+    });
+
+    it(&#039;should error out that no IP obtainers have been specified&#039;, function (done) {
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, []);
+        bootstrapper.bootstrap(function (err) {
+            if (err &amp;&amp; err.message === &#039;NetworkBootstrapper: No IP obtainers specified.&#039;)
+                done();
+        });
+    });
+
+    it(&#039;should return tcp socket handler&#039;, function (done) {
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubSuccess]);
+
+        bootstrapper.bootstrap(function () {
+            if (bootstrapper.getTCPSocketHandler() === tcpHandlerStub) {
+                done();
+            } else
+                throw new Error();
+        });
+    });
+
+    it(&#039;should notice an ip change and set the IP on the TCP socket handler&#039;, function (done) {
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubSuccess]);
+
+        bootstrapper.bootstrap(function () {
+            // there is none yet
+            (bootstrapper.getTCPSocketHandler().getMyExternalIp() === undefined).should.be.true;
+
+            change = true;
+            setTimeout(function () {
+                bootstrapper.getTCPSocketHandler().getMyExternalIp().should.equal(&#039;127.0.0.2&#039;);
+                done();
+            }, 2500);
+        });
+    });
+});
+//# sourceMappingURL=NetworkBootstrapper.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

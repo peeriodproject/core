@@ -1,6 +1,9 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
 /// <reference path='../../../ts-definitions/node-lmdb/node-lmdb.d.ts' />
 
+import fs = require('fs');
+import path = require('path');
+
 import lmdb = require('node-lmdb');
 
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
@@ -64,6 +67,7 @@ class BucketStore implements BucketStoreInterface {
 		var added:boolean = this._add(txn, bucketKey, id, lastSeen, addresses);
 
 		txn.commit();
+		txn = null;
 
 		return added;
 	}
@@ -80,6 +84,7 @@ class BucketStore implements BucketStoreInterface {
 		}
 
 		txn.commit();
+		txn = null;
 
 		return added;
 	}
@@ -109,6 +114,8 @@ class BucketStore implements BucketStoreInterface {
 
 		cursor.close();
 		txn.commit();
+		cursor = null;
+		txn = null;
 
 		return value;
 	}
@@ -134,6 +141,8 @@ class BucketStore implements BucketStoreInterface {
 
 		cursor.close();
 		txn.commit();
+		cursor = null;
+		txn = null;
 
 		return values;
 	}
@@ -157,6 +166,8 @@ class BucketStore implements BucketStoreInterface {
 
 		cursor.close();
 		txn.commit();
+		cursor = null;
+		txn = null;
 
 		return contact;
 	}
@@ -176,12 +187,15 @@ class BucketStore implements BucketStoreInterface {
 		if (this._isOpen) return;
 
 		this._databaseEnvironment = new lmdb.Env();
-		this._databaseEnvironment.open({
-			//name: this._name,
-			path: this._path
-			//mapSize: 2*1024*1024*1024, // maximum database size
-			//maxDbs: 3
-		});
+
+		this._checkAndOpenDatabaseEnvironment();
+
+		/*this._databaseEnvironment.open({
+		 //name: this._name,
+		 path: this._path
+		 //mapSize: 2*1024*1024*1024, // maximum database size
+		 //maxDbs: 3
+		 });*/
 
 		this._databaseInstance = this._databaseEnvironment.openDbi({
 			name  : this._name,
@@ -220,6 +234,7 @@ class BucketStore implements BucketStoreInterface {
 		}
 
 		txn.commit();
+		txn = null;
 
 		return true;
 	}
@@ -243,6 +258,8 @@ class BucketStore implements BucketStoreInterface {
 
 		cursor.close();
 		txn.commit();
+		cursor = null;
+		txn = null;
 
 		return size;
 	}
@@ -272,11 +289,11 @@ class BucketStore implements BucketStoreInterface {
 
 			// stores the object with id as it's key
 			/*
-			// multi row test
-			txn.putBinary(this._databaseInstance, this._getPropertyKey(id, 'id'), id);
-			txn.putNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'), lastSeen);
-			txn.putString(this._databaseInstance, this._getPropertyKey(id, 'addresses'), JSON.stringify(addresses));
-			*/
+			 // multi row test
+			 txn.putBinary(this._databaseInstance, this._getPropertyKey(id, 'id'), id);
+			 txn.putNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'), lastSeen);
+			 txn.putString(this._databaseInstance, this._getPropertyKey(id, 'addresses'), JSON.stringify(addresses));
+			 */
 			txn.putString(this._databaseInstance, idKey, JSON.stringify(value));
 
 			// stores a shortcut for bucketwide last seen searches.
@@ -287,6 +304,8 @@ class BucketStore implements BucketStoreInterface {
 		catch (err) {
 			console.error(err);
 		}
+
+		value = null;
 
 		return true;
 	}
@@ -322,29 +341,60 @@ class BucketStore implements BucketStoreInterface {
 	}
 
 	/**
+	 * Opens the database and handles environment architecture changes by cleaning up the old bucket store.
+	 *
+	 * @method core.topology.BucketStore~_checkAndOpenDatabaseEnvironment
+	 */
+	private _checkAndOpenDatabaseEnvironment ():void {
+		var openDatabase = () => {
+			this._databaseEnvironment.open({
+				//name: this._name,
+				path: this._path
+				//mapSize: 2*1024*1024*1024, // maximum database size
+				//maxDbs: 3
+			});
+		};
+
+		try {
+			openDatabase();
+		}
+		catch (e) {
+			if (e.message === 'MDB_INVALID: File is not an MDB file') {
+				fs.unlinkSync(path.join(this._path, 'data.mdb'));
+				//fs.unlinkSync(path.join(this._path, 'lock.mdb'));
+
+				openDatabase();
+			}
+			else {
+				throw e;
+			}
+		}
+	}
+
+	/**
 	 *
 	 * @method core.topology.BucketStore~_get
 	 *
-	 * @param {lmdbTxn} txn
+	 * @param {lmdb.Txn} txn
 	 * @param {Buffer} id
 	 * @returns {any}
 	 */
 	private _get(txn:lmdb.Txn, id:Buffer):any {
 		/*
-		multi row test
-		var contact = {
-			addresses: JSON.parse(txn.getString(this._databaseInstance, this._getPropertyKey(id, 'addresses'))),
-			id: txn.getBinary(this._databaseInstance, this._getPropertyKey(id, 'id')),
-			lastSeen: txn.getNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'))
-		};
+		 multi row test
+		 var contact = {
+		 addresses: JSON.parse(txn.getString(this._databaseInstance, this._getPropertyKey(id, 'addresses'))),
+		 id: txn.getBinary(this._databaseInstance, this._getPropertyKey(id, 'id')),
+		 lastSeen: txn.getNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'))
+		 };
 
-		return contact;*/
+		 return contact;*/
 
 		return JSON.parse(txn.getString(this._databaseInstance, this._getIdKey(id)));
 	}
 
 	/**
-	 * Creates a Cursor on the instace database
+	 * Creates a Cursor on the database instance
 	 *
 	 * @method core.topology.BucketStore~_getCursor
 	 *
@@ -404,7 +454,7 @@ class BucketStore implements BucketStoreInterface {
 	}
 
 	/**
-	 * We'll use this method eventually in the future when node-lmdb updates it's internall class from SlowBuffer to teh new
+	 * We'll use this method eventually in the future when node-lmdb updates it's internall class from SlowBuffer to the new
 	 * node Buffer implementation.
 	 *
 	 * @method core.topology.BucketStore~_getPropertyKey
@@ -414,8 +464,8 @@ class BucketStore implements BucketStoreInterface {
 	 * @returns {string}
 	 */
 	/*private _getPropertyKey(id:Buffer, propertyName:string):string {
-		return this._getIdKey(id) + '-' + propertyName;
-	}*/
+	 return this._getIdKey(id) + '-' + propertyName;
+	 }*/
 
 }
 

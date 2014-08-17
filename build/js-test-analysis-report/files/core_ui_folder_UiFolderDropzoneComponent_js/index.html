@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/ui/folder/UiFolderDropzoneComponent.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/ui/folder/UiFolderDropzoneComponent.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">72.02</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">213</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">33.66</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.66</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+var sinon = require(&#039;sinon&#039;);
+
+var UiFolderDropzoneComponent = require(&#039;../../../../src/core/ui/folder/UiFolderDropzoneComponent&#039;);
+
+describe(&#039;CORE --&gt; UI --&gt; FOLDER --&gt; UiFolderDropzoneComponent&#039;, function () {
+    var sandbox;
+    var component;
+
+    //var eventListeners:{ [eventName:string]:Function };
+    var folderWatcherManagerStub;
+    var sparkStub;
+    var nwWindowStub;
+    var sparkOnListeners;
+    var windowOnListeners;
+
+    var triggerListeners = function () {
+        var any = [];
+        for (var _i = 0; _i &lt; (arguments.length - 0); _i++) {
+            any[_i] = arguments[_i + 0];
+        }
+        var args = arguments;
+        var listeners = Array.prototype.shift.call(args);
+
+        listeners.forEach(function (listener) {
+            if (listener) {
+                listener.apply(this, args);
+            }
+        });
+    };
+
+    beforeEach(function () {
+        sandbox = sinon.sandbox.create();
+
+        //eventListeners = {};
+        sparkOnListeners = {};
+        windowOnListeners = {};
+
+        sparkStub = {
+            send: sandbox.spy(),
+            on: function (eventName, listener) {
+                if (!sparkOnListeners[eventName]) {
+                    sparkOnListeners[eventName] = [];
+                }
+
+                sparkOnListeners[eventName].push(listener);
+            }
+        };
+
+        nwWindowStub = {
+            _window: {
+                resizeTo: sandbox.spy(),
+                moveTo: sandbox.spy(),
+                show: sandbox.spy(),
+                setAlwaysOnTop: sandbox.spy(),
+                on: function (eventName, listener) {
+                    if (!windowOnListeners[eventName]) {
+                        windowOnListeners[eventName] = [];
+                    }
+
+                    windowOnListeners[eventName].push(listener);
+                },
+                once: function (eventName, listener) {
+                    if (!windowOnListeners[eventName]) {
+                        windowOnListeners[eventName] = [];
+                    }
+
+                    windowOnListeners[eventName].push(listener);
+                },
+                hide: sandbox.spy(),
+                close: sandbox.spy(),
+                focus: sandbox.spy(),
+                window: {
+                    localStorage: {
+                        setItem: sandbox.spy()
+                    }
+                }
+            },
+            get: function () {
+                return this._window;
+            },
+            open: function () {
+                return this._window;
+            }
+        };
+
+        component = new UiFolderDropzoneComponent(nwWindowStub);
+    });
+
+    afterEach(function () {
+        sandbox.restore();
+        component = null;
+        folderWatcherManagerStub = null;
+
+        //eventListeners = null;
+        sparkStub = null;
+        nwWindowStub = null;
+        sparkOnListeners = null;
+        windowOnListeners = null;
+    });
+
+    it(&#039;should correctly instantiate without error&#039;, function () {
+        component.should.be.an.instanceof(UiFolderDropzoneComponent);
+    });
+
+    it(&#039;should correctly return the channel name&#039;, function () {
+        component.getChannelName().should.equal(&#039;folderdropzone&#039;);
+    });
+
+    it(&#039;should correctly return the state&#039;, function (done) {
+        component.getState(function (state) {
+            state.should.be.an.instanceof(Object);
+            Object.keys(state).length.should.equal(0);
+
+            done();
+        });
+    });
+
+    /*it(&#039;should correctly save the given color object in localStorage&#039;, function () {
+    component.onConnection(sparkStub);
+    
+    sparkOnListeners[&#039;background&#039;].forEach(function(listener) {
+    listener({
+    background             : &#039;background&#039;,
+    color                  : &#039;color&#039;,
+    inverted               : &#039;inverted&#039;,
+    invertedBackgroundColor: &#039;invertedBackgroundColor&#039;
+    });
+    });
+    
+    nwWindowStub._window.window.localStorage.setItem.callCount.should.equal(4);
+    
+    var data = [&#039;background&#039;, &#039;color&#039;, &#039;inverted&#039;, &#039;invertedBackgroundColor&#039;];
+    
+    for (var i = 0; i &lt; 4; i++) {
+    // key data[i] exists
+    nwWindowStub._window.window.localStorage.setItem.getCall(i).args[0].should.equal(data[i]);
+    
+    // value for key data[i] equals data[i]
+    nwWindowStub._window.window.localStorage.setItem.getCall(i).args[1].should.equal(data[i]);
+    }
+    });*/
+    it(&#039;should correctly open the internal window and focus it&#039;, function () {
+        component.emit(&#039;open&#039;);
+
+        nwWindowStub._window.show.calledOnce.should.be.true;
+        nwWindowStub._window.setAlwaysOnTop.calledOnce.should.be.true;
+    });
+
+    it(&#039;should correctly call the internal window close method on close&#039;, function () {
+        component.emit(&#039;open&#039;);
+        component.emit(&#039;close&#039;);
+
+        nwWindowStub._window.close.calledOnce.should.be.true;
+    });
+
+    it(&#039;should correctly open and close the internal window&#039;, function () {
+        component.emit(&#039;open&#039;);
+
+        triggerListeners(windowOnListeners[&#039;close&#039;]);
+
+        nwWindowStub._window.hide.calledOnce.should.be.true;
+        nwWindowStub._window.close.calledOnce.should.be.true;
+    });
+
+    it(&#039;should correctly open the window on the previous position&#039;, function () {
+        component.emit(&#039;open&#039;);
+        triggerListeners(windowOnListeners[&#039;move&#039;], 123, 321);
+
+        component.emit(&#039;close&#039;);
+        component.emit(&#039;open&#039;);
+
+        nwWindowStub._window.moveTo.getCall(1).args[0].should.equal(123);
+        nwWindowStub._window.moveTo.getCall(1).args[1].should.equal(321);
+    });
+
+    it(&#039;should correctly open the window with the previous dimensions&#039;, function () {
+        component.emit(&#039;open&#039;);
+        triggerListeners(windowOnListeners[&#039;resize&#039;], 358, 853);
+
+        component.emit(&#039;close&#039;);
+        component.emit(&#039;open&#039;);
+
+        nwWindowStub._window.resizeTo.getCall(1).args[0].should.equal(358);
+        nwWindowStub._window.resizeTo.getCall(1).args[1].should.equal(853);
+    });
+
+    it(&#039;should correctly set the path list, update the UI on drop and clean up the path list&#039;, function (done) {
+        var uiUpdateSpy = sandbox.spy();
+        component.onUiUpdate(uiUpdateSpy);
+
+        component.emit(&#039;open&#039;, &#039;pathKey&#039;);
+
+        triggerListeners(windowOnListeners[&#039;drop&#039;], [&#039;/path/one&#039;, &#039;/path/two&#039;]);
+
+        uiUpdateSpy.calledOnce.should.be.true;
+
+        component.getState(function (state) {
+            // check paths
+            state[&#039;pathKey&#039;][0].should.equal(&#039;/path/one&#039;);
+            state[&#039;pathKey&#039;][1].should.equal(&#039;/path/two&#039;);
+
+            component.onAfterUiUpdate();
+
+            // paths should be removed from the list
+            component.getState(function (state) {
+                state.should.be.an.instanceof(Object);
+                Object.keys(state).should.have.a.lengthOf(0);
+
+                done();
+            });
+        });
+    });
+});
+//# sourceMappingURL=UiFolderDropzoneComponent.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

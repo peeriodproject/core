@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/share/DownloadBridge.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/share/DownloadBridge.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">72.33</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">121</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">16.93</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.35</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var DownloadBridge = require(&#039;../../../src/core/share/DownloadBridge&#039;);
+var DownloadManager = require(&#039;../../../src/core/share/DownloadManager&#039;);
+
+describe(&#039;CORE --&gt; SHARE --&gt; DownloadBridge&#039;, function () {
+    var sandbox;
+    var downloadManagerStub;
+
+    var bridge;
+
+    beforeEach(function () {
+        sandbox = sinon.sandbox.create();
+
+        downloadManagerStub = testUtils.stubPublicApi(sandbox, DownloadManager);
+
+        bridge = new DownloadBridge(downloadManagerStub);
+    });
+
+    afterEach(function () {
+        sandbox.restore();
+
+        bridge = null;
+        downloadManagerStub = null;
+        sandbox = null;
+    });
+
+    it(&#039;should correctly instantiate the DownloadBridge&#039;, function () {
+        bridge.should.be.an.instanceof(DownloadBridge);
+    });
+
+    describe(&#039;it should correctly forward the events from the download manager&#039;, function () {
+        it(&#039;download was added&#039;, function () {
+            var newDownloadSpy = sandbox.spy();
+            bridge.on(&#039;newDownload&#039;, newDownloadSpy);
+
+            downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, &#039;/destination&#039;, { metadata: true });
+
+            newDownloadSpy.calledOnce.should.be.true;
+            var args = newDownloadSpy.getCall(0).args;
+
+            args[0].should.equal(&#039;downloadId&#039;);
+            args[1].should.equal(&#039;foobar.txt&#039;);
+            args[2].should.equal(123);
+            args[3].should.equal(&#039;hash&#039;);
+            args[4].should.equal(&#039;/destination&#039;);
+            args[5].should.containDeep({ metadata: true });
+        });
+
+        it(&#039;download was removed&#039;, function () {
+            var abortDownloadSpy = sandbox.spy();
+            bridge.on(&#039;abortDownload&#039;, abortDownloadSpy);
+
+            downloadManagerStub.onDownloadCanceled.getCall(0).args[0](&#039;downloadId&#039;);
+
+            abortDownloadSpy.calledOnce.should.be.true;
+            abortDownloadSpy.getCall(0).args[0].should.equal(&#039;downloadId&#039;);
+        });
+    });
+
+    describe(&#039;it should correctly forward events received from the event emitter&#039;, function () {
+        it(&#039;should correctly forward the `writtenBytes` event&#039;, function () {
+            bridge.emit(&#039;writtenBytes&#039;, &#039;downloadId&#039;, 10, 100);
+
+            downloadManagerStub.updateDownloadProgress.calledOnce.should.be.true;
+            var args = downloadManagerStub.updateDownloadProgress.getCall(0).args;
+
+            args[0].should.equal(&#039;downloadId&#039;);
+            args[1].should.equal(10);
+            args[2].should.equal(100);
+        });
+
+        it(&#039;should correctly forward the `requestingFile` event&#039;, function () {
+            bridge.emit(&#039;requestingFile&#039;, &#039;downloadId&#039;);
+
+            downloadManagerStub.updateDownloadStatus.calledOnce.should.be.true;
+
+            downloadManagerStub.updateDownloadStatus.getCall(0).args[0].should.equal(&#039;downloadId&#039;);
+            downloadManagerStub.updateDownloadStatus.getCall(0).args[1].should.equal(&#039;REQUESTING_FILE&#039;);
+        });
+
+        it(&#039;should correctly forward the `startingTransfer` event&#039;, function () {
+            bridge.emit(&#039;startingTransfer&#039;, &#039;downloadId&#039;);
+
+            downloadManagerStub.updateDownloadStatus.calledOnce.should.be.true;
+
+            downloadManagerStub.updateDownloadStatus.getCall(0).args[0].should.equal(&#039;downloadId&#039;);
+            downloadManagerStub.updateDownloadStatus.getCall(0).args[1].should.equal(&#039;TRANSFER_STARTED&#039;);
+        });
+
+        it(&#039;should correctly forward the `manuallyAborted` event&#039;, function () {
+            bridge.emit(&#039;manuallyAborted&#039;, &#039;downloadId&#039;);
+
+            downloadManagerStub.updateDownloadStatus.calledOnce.should.be.true;
+
+            downloadManagerStub.updateDownloadStatus.getCall(0).args[0].should.equal(&#039;downloadId&#039;);
+            downloadManagerStub.updateDownloadStatus.getCall(0).args[1].should.equal(&#039;MANUAL_ABORT&#039;);
+        });
+
+        it(&#039;should correctly forward the `completed` event&#039;, function () {
+            bridge.emit(&#039;completed&#039;, &#039;downloadId&#039;);
+
+            downloadManagerStub.updateDownloadStatus.calledOnce.should.be.true;
+
+            downloadManagerStub.updateDownloadStatus.getCall(0).args[0].should.equal(&#039;downloadId&#039;);
+            downloadManagerStub.updateDownloadStatus.getCall(0).args[1].should.equal(&#039;COMPLETED&#039;);
+        });
+
+        it(&#039;should correctly forward the `end` event&#039;, function () {
+            bridge.emit(&#039;end&#039;, &#039;downloadId&#039;, &#039;reason&#039;);
+
+            downloadManagerStub.downloadEnded.calledOnce.should.be.true;
+
+            downloadManagerStub.downloadEnded.getCall(0).args[0].should.equal(&#039;downloadId&#039;);
+            downloadManagerStub.downloadEnded.getCall(0).args[1].should.equal(&#039;reason&#039;);
+        });
+    });
+});
+//# sourceMappingURL=DownloadBridge.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

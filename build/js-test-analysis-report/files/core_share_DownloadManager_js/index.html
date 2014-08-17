@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/share/DownloadManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/share/DownloadManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">75.88</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">467</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">42.86</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">4.29</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var AppQuitHandler = require(&#039;../../../src/core/utils/AppQuitHandler&#039;);
+var DownloadManager = require(&#039;../../../src/core/share/DownloadManager&#039;);
+var JSONStateHandler = require(&#039;../../../src/core/utils/JSONStateHandler&#039;);
+var JSONStateHandlerFactory = require(&#039;../../../src/core/utils/JSONStateHandlerFactory&#039;);
+var ObjectConfig = require(&#039;../../../src/core/config/ObjectConfig&#039;);
+var SearchClient = require(&#039;../../../src/core/search/SearchClient&#039;);
+
+describe(&#039;CORE --&gt; SHARE --&gt; DownloadManager&#039;, function () {
+    var sandbox;
+    var configStub;
+    var stateHandlerFactoryStub;
+    var stateHandlerStub;
+    var appQuitHandlerStub;
+    var searchClientStub;
+
+    var appDataPath = testUtils.getFixturePath(&#039;core/share/DownloadManager&#039;);
+    var response = null;
+
+    var state = null;
+
+    var validResponse;
+
+    var closeAndDone = function (downloadManager, done) {
+        downloadManager.getRunningDownloadIds(function (ids) {
+            downloadManager.close(function () {
+                done();
+            });
+
+            ids.forEach(function (id) {
+                downloadManager.downloadEnded(id, &#039;MANUAL_ABORT&#039;);
+            });
+        });
+    };
+
+    beforeEach(function () {
+        testUtils.createFolder(appDataPath);
+
+        sandbox = sinon.sandbox.create();
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (key) {
+                if (key === &#039;app.dataPath&#039;) {
+                    return appDataPath;
+                } else if (key === &#039;share.downloadManagerStateConfig&#039;) {
+                    return &#039;downloadManager.json&#039;;
+                }
+            }
+        });
+        appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
+        stateHandlerStub = testUtils.stubPublicApi(sandbox, JSONStateHandler, {
+            load: function () {
+                return process.nextTick(arguments[0].bind(null, null, state));
+            },
+            save: function () {
+                return process.nextTick(arguments[1].bind(null, null));
+            }
+        });
+
+        stateHandlerFactoryStub = testUtils.stubPublicApi(sandbox, JSONStateHandlerFactory, {
+            create: function () {
+                arguments[0].should.equal(appDataPath + &#039;/downloadManager.json&#039;);
+
+                return stateHandlerStub;
+            }
+        });
+        searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
+            close: function (callback) {
+                callback = callback || function () {
+                };
+
+                return process.nextTick(callback.bind(null, null));
+            },
+            getIncomingResponseById: function () {
+                return process.nextTick(arguments[3].bind(null, null, response));
+            },
+            open: function (callback) {
+                callback = callback || function () {
+                };
+
+                return process.nextTick(callback.bind(null, null));
+            }
+        });
+
+        validResponse = {
+            _type: &quot;jj.core.documentanalyser&quot;,
+            _itemId: &quot;3c45b5405c817c047a0759d7f3249d19a0aa58d9&quot;,
+            itemName: &quot;LoremIpsum.txt&quot;,
+            itemStats: {
+                uid: 501,
+                atime: &quot;2014-07-21T15:58:48.000Z&quot;,
+                ino: 47882983,
+                dev: 16777218,
+                blksize: 4096,
+                mtime: &quot;2014-07-13T15:02:41.000Z&quot;,
+                gid: 0,
+                nlink: 1,
+                blocks: 8,
+                rdev: 0,
+                ctime: &quot;2014-07-13T15:02:41.000Z&quot;,
+                size: 308,
+                mode: 33188
+            },
+            itemHash: &quot;3c45b5405c817c047a0759d7f3249d19a0aa58d9&quot;,
+            file: [
+                &quot;vel augue laoreet rutrum faucibus dolor auctor. Lorem ipsum dolor sit amet, consectetur adipiscing elit&quot;
+            ],
+            _meta: {
+                additional: &quot;metadata&quot;
+            }
+        };
+    });
+
+    afterEach(function () {
+        sandbox.restore();
+        appQuitHandlerStub = null;
+        searchClientStub = null;
+        response = null;
+
+        testUtils.deleteFolderRecursive(appDataPath);
+    });
+
+    it(&#039;should correctly instantiate the DownloadManager&#039;, function (done) {
+        var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, &#039;searchresponses&#039;);
+
+        manager.should.be.an.instanceof(DownloadManager);
+
+        closeAndDone(manager, done);
+    });
+
+    it(&#039;should correctly open and close the manager&#039;, function (done) {
+        var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, &#039;searchresponses&#039;, {
+            onOpenCallback: function () {
+                manager.open(function () {
+                    searchClientStub.open.called.should.be.true;
+                    stateHandlerStub.load.called.should.be.true;
+
+                    manager.isOpen(function (err, isOpen) {
+                        (err === null).should.be.true;
+                        isOpen.should.be.true;
+
+                        manager.close(function () {
+                            searchClientStub.close.called.should.be.true;
+                            stateHandlerStub.save.called.should.be.true;
+
+                            manager.isOpen(function (err, isOpen) {
+                                (err === null).should.be.true;
+                                isOpen.should.be.false;
+
+                                closeAndDone(manager, done);
+                            });
+                        });
+                    });
+                });
+            }
+        });
+    });
+
+    it(&#039;should correctly create a new download&#039;, function (done) {
+        response = validResponse;
+
+        var addedSpy = sandbox.spy();
+
+        var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, &#039;searchresponses&#039;, {
+            onOpenCallback: function () {
+                manager.setDownloadDestination(appDataPath, function (err) {
+                    (err === null).should.be.true;
+
+                    manager.createDownload(&#039;QqGNZv7rSrGJzBzs5Ya2XQ&#039;, function (err) {
+                        (err === null).should.be.true;
+
+                        addedSpy.calledOnce.should.be.true;
+                        addedSpy.getCall(0).args[0].should.equal(&#039;QqGNZv7rSrGJzBzs5Ya2XQ&#039;);
+                        addedSpy.getCall(0).args[1].should.equal(&#039;LoremIpsum.txt&#039;);
+                        addedSpy.getCall(0).args[2].should.equal(308);
+                        addedSpy.getCall(0).args[3].should.equal(&#039;3c45b5405c817c047a0759d7f3249d19a0aa58d9&#039;);
+                        addedSpy.getCall(0).args[4].should.equal(appDataPath);
+                        addedSpy.getCall(0).args[5].should.containDeep({
+                            additional: &#039;metadata&#039;
+                        });
+
+                        closeAndDone(manager, done);
+                    });
+                });
+            }
+        });
+
+        manager.onDownloadAdded(addedSpy);
+    });
+
+    describe(&#039;should correclty prevent the creation of a new download&#039;, function () {
+        var manager = null;
+
+        beforeEach(function (done) {
+            state = { destination: appDataPath };
+            manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, &#039;searchresponses&#039;, {
+                onOpenCallback: function () {
+                    done();
+                }
+            });
+        });
+
+        afterEach(function (done) {
+            closeAndDone(manager, done);
+        });
+
+        it(&#039;if the current download destination does not exists&#039;, function (done) {
+            var onAddedSpy = sandbox.spy();
+
+            response = validResponse;
+
+            // close the manager and load an invalid path from state
+            manager.close(function () {
+                state = { destination: &#039;invalid/destination&#039; };
+                manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, &#039;searchresponses&#039;, {
+                    onOpenCallback: function (err) {
+                        (err === null).should.be.true;
+
+                        // create the download
+                        manager.createDownload(&#039;randomId&#039;, function (err) {
+                            err.should.be.an.instanceof(Error);
+                            err.message.should.equal(&#039;DownloadManager#getDownloadDestination: The download destination does not exists: invalid/destination&#039;);
+
+                            onAddedSpy.called.should.be.false;
+
+                            done();
+                        });
+
+                        manager.onDownloadAdded(onAddedSpy);
+                    }
+                });
+            });
+        });
+
+        it(&#039;if no response was found&#039;, function (done) {
+            var onAddedSpy = sandbox.spy();
+
+            manager.createDownload(&#039;randomId&#039;, function (err) {
+                (err).should.be.an.instanceof(Error);
+                err.message.should.equal(&#039;DownloadManager#createDownload: Could not find a response with the given id.&#039;);
+
+                onAddedSpy.called.should.be.false;
+
+                done();
+            });
+
+            manager.onDownloadAdded(onAddedSpy);
+        });
+
+        it(&#039;if a download with the given id is already running&#039;, function (done) {
+            var onAddedSpy = sandbox.spy();
+
+            response = validResponse;
+
+            manager.createDownload(&#039;duplicatedId&#039;, function (err) {
+                (err === null).should.be.true;
+
+                manager.createDownload(&#039;duplicatedId&#039;, function (err) {
+                    err.should.be.an.instanceof(Error);
+                    err.message.should.equal(&#039;DownloadManager#createDownload: Download is already in progress.&#039;);
+
+                    onAddedSpy.calledOnce.should.be.true;
+
+                    done();
+                });
+            });
+
+            manager.onDownloadAdded(onAddedSpy);
+        });
+
+        it(&#039;if the download size is empty&#039;, function (done) {
+            var onAddedSpy = sandbox.spy();
+
+            response = validResponse;
+            response.itemStats.size = 0;
+
+            manager.createDownload(&#039;randomId&#039;, function (err) {
+                (err).should.be.an.instanceof(Error);
+                err.message.should.equal(&#039;DownloadManager#createDownload: Could not create download. No or empty file size provided.&#039;);
+
+                onAddedSpy.called.should.be.false;
+
+                done();
+            });
+
+            manager.onDownloadAdded(onAddedSpy);
+        });
+    });
+
+    describe(&#039;should correclty return the running download ids&#039;, function () {
+        it(&#039;it should correctly return an empty array&#039;, function (done) {
+            var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, &#039;searchresponses&#039;, {
+                onOpenCallback: function () {
+                    manager.getRunningDownloadIds(function (ids) {
+                        ids.should.be.an.instanceof(Array);
+                        ids.should.have.a.lengthOf(0);
+
+                        closeAndDone(manager, done);
+                    });
+                }
+            });
+        });
+
+        it(&#039;should correctly return the download id&#039;, function (done) {
+            response = validResponse;
+            state = { destination: appDataPath };
+
+            var id = &#039;QqGNZv7rSrGJzBzs5Ya2XQ&#039;;
+
+            var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, &#039;searchresponses&#039;, {
+                onOpenCallback: function () {
+                    manager.createDownload(id);
+                }
+            });
+
+            manager.onDownloadAdded(function () {
+                manager.getRunningDownloadIds(function (ids) {
+                    ids.should.have.a.lengthOf(1);
+                    ids[0].should.equal(id);
+
+                    closeAndDone(manager, done);
+                });
+            });
+        });
+    });
+
+    it(&#039;should correctly cancel the download&#039;, function (done) {
+        response = validResponse;
+        state = { destination: appDataPath };
+
+        var id = &#039;QqGNZv7rSrGJzBzs5Ya2XQ&#039;;
+        var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, &#039;searchresponses&#039;, {
+            onOpenCallback: function () {
+                manager.createDownload(id);
+            }
+        });
+
+        manager.onDownloadAdded(function (downloadId) {
+            downloadId.should.equal(id);
+
+            manager.cancelDownload(downloadId);
+        });
+
+        manager.onDownloadCanceled(function (downloadId) {
+            downloadId.should.equal(id);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly end a download&#039;, function (done) {
+        response = validResponse;
+        state = { destination: appDataPath };
+
+        var id = &#039;QqGNZv7rSrGJzBzs5Ya2XQ&#039;;
+
+        // prevent recursion flag
+        var removed = false;
+
+        var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, &#039;searchresponses&#039;, {
+            onOpenCallback: function () {
+                manager.createDownload(id);
+            }
+        });
+
+        manager.onDownloadAdded(function (id) {
+            if (!removed) {
+                removed = true;
+                manager.downloadEnded(id, &#039;reason&#039;);
+            }
+        });
+
+        manager.onDownloadEnded(function (downloadId, reason) {
+            downloadId.should.equal(id);
+            reason.should.equal(&#039;reason&#039;);
+
+            // proper cleanup check
+            manager.createDownload(id, function (err) {
+                (err === null).should.be.true;
+
+                done();
+            });
+        });
+    });
+
+    it(&#039;should correctly update the status&#039;, function (done) {
+        response = validResponse;
+        state = { destination: appDataPath };
+
+        var id = &#039;QqGNZv7rSrGJzBzs5Ya2XQ&#039;;
+
+        var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, &#039;searchresponses&#039;, {
+            onOpenCallback: function () {
+                manager.createDownload(id);
+            }
+        });
+
+        manager.onDownloadAdded(function (id) {
+            manager.updateDownloadStatus(id, &#039;newStatus&#039;);
+        });
+
+        manager.onDownloadStatusChanged(function (downloadId, status) {
+            downloadId.should.equal(id);
+            status.should.equal(&#039;newStatus&#039;);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly update the progress&#039;, function (done) {
+        response = validResponse;
+        state = { destination: appDataPath };
+
+        var id = &#039;QqGNZv7rSrGJzBzs5Ya2XQ&#039;;
+
+        var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, &#039;searchresponses&#039;, {
+            onOpenCallback: function () {
+                manager.createDownload(id);
+            }
+        });
+
+        manager.onDownloadAdded(function (id) {
+            manager.updateDownloadProgress(id, 10, 100);
+        });
+
+        manager.onDownloadProgressUpdate(function (downloadId, written, expected) {
+            downloadId.should.equal(id);
+
+            written.should.equal(10);
+            expected.should.equal(100);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly stop all running downloads, wait for the `end` event and close down the manager afterwards.&#039;, function (done) {
+        response = validResponse;
+        state = { destination: appDataPath };
+
+        var id = &#039;QqGNZv7rSrGJzBzs5Ya2XQ&#039;;
+
+        var manager = new DownloadManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, searchClientStub, &#039;searchresponses&#039;, {
+            onOpenCallback: function () {
+                manager.createDownload(id);
+            }
+        });
+
+        manager.onDownloadAdded(function (id) {
+            var endedSpy = sandbox.spy();
+
+            manager.onDownloadEnded(endedSpy);
+            manager.onDownloadCanceled(function (id) {
+                manager.downloadEnded(id, &#039;MANUAL_ABORT&#039;);
+            });
+
+            manager.close(function () {
+                endedSpy.calledOnce.should.be.true;
+                endedSpy.getCall(0).args[0].should.equal(id);
+
+                done();
+            });
+        });
+    });
+});
+//# sourceMappingURL=DownloadManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

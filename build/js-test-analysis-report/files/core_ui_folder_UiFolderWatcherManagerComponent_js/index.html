@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/ui/folder/UiFolderWatcherManagerComponent.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/ui/folder/UiFolderWatcherManagerComponent.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">73.29</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">240</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">34.19</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.01</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+var sinon = require(&#039;sinon&#039;);
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var FolderWatcherManager = require(&#039;../../../../src/core/fs/FolderWatcherManager&#039;);
+var UiFolderWatcherManagerComponent = require(&#039;../../../../src/core/ui/folder/UiFolderWatcherManagerComponent&#039;);
+
+describe(&#039;CORE --&gt; UI --&gt; FOLDER --&gt; UiFolderWatcherManagerComponent&#039;, function () {
+    var sandbox;
+    var component;
+    var eventListeners;
+    var folderWatcherManagerStub;
+    var nwGuiStub;
+
+    beforeEach(function () {
+        sandbox = sinon.sandbox.create();
+        eventListeners = {};
+        folderWatcherManagerStub = testUtils.stubPublicApi(sandbox, FolderWatcherManager, {
+            on: function (eventName, callback) {
+                if (eventListeners[eventName]) {
+                    throw new Error(&#039;Already added a listener to: &#039; + eventName);
+                }
+
+                eventListeners[eventName] = callback;
+            }
+        });
+
+        nwGuiStub = {
+            Shell: {
+                showItemInFolder: sandbox.spy()
+            }
+        };
+
+        component = new UiFolderWatcherManagerComponent(nwGuiStub, folderWatcherManagerStub);
+    });
+
+    afterEach(function () {
+        sandbox.restore();
+        component = null;
+        folderWatcherManagerStub = null;
+        nwGuiStub = null;
+        eventListeners = null;
+    });
+
+    it(&#039;should correctly instantiate without error&#039;, function () {
+        component.should.be.an.instanceof(UiFolderWatcherManagerComponent);
+    });
+
+    it(&#039;should correctly listen for FolderWatcherManager events&#039;, function () {
+        var eventNames = [&#039;watcher.add&#039;, &#039;watcher.invalid&#039;, &#039;watcher.remove&#039;, &#039;watcher.removeInvalid&#039;, &#039;add&#039;, &#039;unlink&#039;];
+        var listenerNames = Object.keys(eventListeners);
+
+        for (var i in listenerNames) {
+            eventNames.indexOf(listenerNames[i]).should.be.greaterThan(-1);
+        }
+    });
+
+    it(&#039;should correctly return the channel name&#039;, function () {
+        component.getChannelName().should.equal(&#039;folder&#039;);
+    });
+
+    it(&#039;should correctly return the event names&#039;, function () {
+        component.getEventNames().should.containDeep([&#039;addFolder&#039;, &#039;removeFolder&#039;, &#039;showFolder&#039;, &#039;syncFolders&#039;]);
+    });
+
+    it(&#039;should correctly return the state&#039;, function (done) {
+        component.getState(function (state) {
+            state.should.be.an.instanceof(Array);
+            state.length.should.equal(0);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly send a new folder to the ui&#039;, function (done) {
+        // add a new folder
+        component.onUiUpdate(function () {
+            component.getState(function (state) {
+                state.should.containDeep([{
+                        items: 0,
+                        name: &#039;Folder Name&#039;,
+                        path: &#039;/path/to/the/Folder Name&#039;,
+                        status: &#039;active&#039;
+                    }]);
+
+                done();
+            });
+        });
+
+        eventListeners[&#039;watcher.add&#039;](&#039;/path/to/the/Folder Name&#039;);
+    });
+
+    it(&#039;should correctly remove a folder from the ui&#039;, function (done) {
+        var uiUpdateSpy = sandbox.spy();
+        component.onUiUpdate(uiUpdateSpy);
+
+        // add a new folder
+        eventListeners[&#039;watcher.add&#039;](&#039;/path/to/the/Folder Name&#039;);
+        uiUpdateSpy.calledOnce.should.be.true;
+        component.getState(function (state) {
+            state.should.have.a.lengthOf(1);
+
+            eventListeners[&#039;watcher.remove&#039;](&#039;/path/to/the/Folder Name&#039;);
+
+            uiUpdateSpy.calledTwice.should.be.true;
+            component.getState(function (state) {
+                state.should.have.a.lengthOf(0);
+
+                done();
+            });
+        });
+    });
+
+    it(&#039;should correctly remove a invalid folder from the ui&#039;, function (done) {
+        var uiUpdateSpy = sandbox.spy();
+        component.onUiUpdate(uiUpdateSpy);
+
+        // add a new folder
+        eventListeners[&#039;watcher.invalid&#039;](&#039;/path/to/the/Folder Name&#039;);
+        eventListeners[&#039;watcher.removeInvalid&#039;](&#039;/path/to/the/Folder Name&#039;);
+
+        uiUpdateSpy.calledTwice.should.be.true;
+        component.getState(function (state) {
+            state.should.have.a.lengthOf(0);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly set the folder status&#039;, function (done) {
+        var uiUpdateSpy = sandbox.spy();
+        component.onUiUpdate(uiUpdateSpy);
+
+        eventListeners[&#039;watcher.add&#039;](&#039;/path/to/the/Folder Name&#039;);
+        component.getState(function (state) {
+            state[0].should.containDeep({
+                items: 0,
+                name: &#039;Folder Name&#039;,
+                path: &#039;/path/to/the/Folder Name&#039;,
+                status: &#039;active&#039;
+            });
+
+            eventListeners[&#039;watcher.invalid&#039;](&#039;/path/to/the/Folder Name&#039;);
+            uiUpdateSpy.calledTwice.should.be.true;
+            component.getState(function (state) {
+                state[0].should.containDeep({
+                    items: 0,
+                    name: &#039;Folder Name&#039;,
+                    path: &#039;/path/to/the/Folder Name&#039;,
+                    status: &#039;invalid&#039;
+                });
+
+                done();
+            });
+        });
+    });
+
+    it(&#039;should correctly increment the item count&#039;, function (done) {
+        var uiUpdateSpy = sandbox.spy();
+        component.onUiUpdate(uiUpdateSpy);
+
+        // add folder
+        eventListeners[&#039;watcher.add&#039;](&#039;/path/to/the/folder&#039;);
+        eventListeners[&#039;watcher.add&#039;](&#039;/path/to/the/folder2/sub/folder&#039;);
+        eventListeners[&#039;watcher.add&#039;](&#039;/path/to&#039;);
+
+        // add item to the folder
+        eventListeners[&#039;add&#039;](&#039;/path/to/the/folder/foo/bar.txt&#039;);
+
+        uiUpdateSpy.callCount.should.equal(4);
+
+        component.getState(function (state) {
+            for (var i in state) {
+                var folder = state[i];
+
+                if (folder.path === &#039;/path/to/the/folder&#039;) {
+                    folder.items.should.equal(1);
+                } else {
+                    folder.items.should.equal(0);
+                }
+            }
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly decrement the item count&#039;, function (done) {
+        var uiUpdateSpy = sandbox.spy();
+        component.onUiUpdate(uiUpdateSpy);
+
+        // add folder
+        eventListeners[&#039;watcher.add&#039;](&#039;/path/to/the/folder&#039;);
+        eventListeners[&#039;watcher.add&#039;](&#039;/path/to/the/folder2/sub/folder&#039;);
+        eventListeners[&#039;watcher.add&#039;](&#039;/path/to&#039;);
+
+        // add item to the folder
+        eventListeners[&#039;add&#039;](&#039;/path/to/the/folder/foo/bar.txt&#039;);
+        eventListeners[&#039;unlink&#039;](&#039;/path/to/the/folder/foo/bar.txt&#039;);
+
+        uiUpdateSpy.callCount.should.equal(5);
+
+        component.getState(function (state) {
+            for (var i in state) {
+                state[i].items.should.equal(0);
+            }
+        });
+
+        done();
+    });
+
+    it(&#039;should correctly call the FolderWatcherManager.addFolderWatcher method when the component recieves an &quot;addFolder&quot; event&#039;, function () {
+        var newFolderPath = &#039;/the/path/to/the/folder/to/add&#039;;
+
+        component.emit(&#039;addFolder&#039;, newFolderPath);
+
+        folderWatcherManagerStub.addFolderWatcher.calledOnce.should.be.true;
+        folderWatcherManagerStub.addFolderWatcher.getCall(0).args[0].should.equal(newFolderPath);
+    });
+
+    it(&#039;should correctly call the FolderWatcherManager.removeFolderWatcher method when the component receives an &quot;removeFolder&quot; event&#039;, function () {
+        var newFolderPath = &#039;/the/path/to/the/folder/to/remove&#039;;
+
+        component.emit(&#039;removeFolder&#039;, newFolderPath);
+
+        folderWatcherManagerStub.removeFolderWatcher.calledOnce.should.be.true;
+        folderWatcherManagerStub.removeFolderWatcher.getCall(0).args[0].should.equal(newFolderPath);
+    });
+
+    it(&#039;should correctly call the FolderWatcherManager.removeFolderWatcher method when the component receives an &quot;syncFolders&quot; event&#039;, function () {
+        component.emit(&#039;syncFolders&#039;);
+
+        folderWatcherManagerStub.checkFolderWatcherPaths.calledOnce.should.be.true;
+    });
+
+    it(&#039;should correctly open the given path by calling nw.Shell.showItemInFolder&#039;, function () {
+        component.emit(&#039;showFolder&#039;, &#039;/path/to/the/folder&#039;);
+
+        nwGuiStub.Shell.showItemInFolder.calledOnce.should.be.true;
+        nwGuiStub.Shell.showItemInFolder.getCall(0).args[0].should.equal(&#039;/path/to/the/folder&#039;);
+    });
+});
+//# sourceMappingURL=UiFolderWatcherManagerComponent.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

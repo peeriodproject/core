@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/NetworkMaintainer.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/NetworkMaintainer.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">74.46</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">206</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">40.31</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.90</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+var events = require(&#039;events&#039;);
+var crypto = require(&#039;crypto&#039;);
+
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var NodeSeekerManager = require(&#039;../../../src/core/protocol/networkMaintenance/nodeDiscovery/nodeSeeker/NodeSeekerManager&#039;);
+
+var ContactNode = require(&#039;../../../src/core/topology/ContactNode&#039;);
+
+var NetworkMaintainer = require(&#039;../../../src/core/protocol/networkMaintenance/NetworkMaintainer&#039;);
+var ObjectConfig = require(&#039;../../../src/core/config/ObjectConfig&#039;);
+var MyNode = require(&#039;../../../src/core/topology/MyNode&#039;);
+
+var Id = require(&#039;../../../src/core/topology/Id&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; NETWORK MAINTENANCE --&gt; NetworkMaintainer&#039;, function () {
+    var sandbox = null;
+
+    var maintainer = null;
+
+    var myNodeIdAsString = &#039;0020000000000060009400010100000050f40602&#039;;
+    var myNodeIdToSearchForString = &#039;0020000000000060009400010100000050f40603&#039;;
+    var myNodeId = new Id(Id.byteBufferByHexString(myNodeIdAsString, 20), 160);
+
+    var config = null;
+    var myNode = null;
+    var findClosestNodesManager = null;
+    var proxyManager = null;
+    var nodeSeekerManager = null;
+
+    var forceFindNode = null;
+
+    // checkers
+    var idsSearchedFor = [];
+    var joined = false;
+
+    var createNode = function () {
+        var buf = crypto.pseudoRandomBytes(20);
+        var id = new Id(buf, 160);
+        return testUtils.stubPublicApi(sandbox, ContactNode, {
+            getId: function () {
+                return id;
+            }
+        });
+    };
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+
+        myNode = testUtils.stubPublicApi(sandbox, MyNode, {
+            getId: function () {
+                return myNodeId;
+            }
+        });
+
+        config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (what) {
+                if (what === &#039;protocol.networkMaintenance.bucketRefreshRateInSeconds&#039;)
+                    return 1;
+                if (what === &#039;topology.bitLength&#039;)
+                    return 160;
+            }
+        });
+
+        findClosestNodesManager = new events.EventEmitter();
+        findClosestNodesManager.startCycleFor = function (id) {
+            idsSearchedFor.push(id);
+        };
+
+        proxyManager = new events.EventEmitter();
+
+        nodeSeekerManager = testUtils.stubPublicApi(sandbox, NodeSeekerManager, {
+            forceFindActiveNode: function (avoidNode, cb) {
+                cb(forceFindNode);
+            }
+        });
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+
+    it(&#039;should correctly initialize the network maintainer&#039;, function () {
+        maintainer = new NetworkMaintainer(config, config, myNode, nodeSeekerManager, findClosestNodesManager, proxyManager);
+
+        maintainer.should.be.instanceof(NetworkMaintainer);
+        maintainer.getMyIdToSearchFor().toHexString().should.equal(myNodeIdToSearchForString);
+        maintainer.getJoinedNetwork().should.be.false;
+
+        maintainer.once(&#039;joinedNetwork&#039;, function () {
+            joined = true;
+        });
+    });
+
+    it(&#039;should prepopulate the buckets with timeouts&#039;, function () {
+        forceFindNode = createNode();
+        maintainer.joinNetwork();
+
+        for (var i = 0; i &lt; maintainer.getBucketRefreshes().length; i++) {
+            maintainer.getBucketRefreshes()[i].should.be.instanceof(Object);
+        }
+
+        maintainer.getJoinedNetwork().should.be.true;
+    });
+
+    it(&#039;should correctly set a bucket as accessed&#039;, function (done) {
+        var node = createNode();
+        node.getId().set(158, myNodeId.at(158) ^ 1);
+        var index = node.getId().differsInHighestBit(myNodeId);
+        var oldTimer = maintainer.getBucketRefreshes()[index];
+
+        proxyManager.emit(&#039;contactNodeInformation&#039;, node);
+
+        setImmediate(function () {
+            if (oldTimer !== maintainer.getBucketRefreshes()[index] &amp;&amp; maintainer.getNearestAccessedBucket() === index)
+                done();
+        });
+    });
+
+    it(&#039;should have started a cycle for the id close to my node id&#039;, function () {
+        idsSearchedFor.length.should.equal(1);
+        idsSearchedFor[0].toHexString().should.equal(myNodeIdToSearchForString);
+    });
+
+    it(&#039;should repeat the process when the query results in no additional nodes&#039;, function (done) {
+        forceFindNode = createNode();
+
+        findClosestNodesManager.emit(&#039;foundClosestNodes&#039;, null, []);
+
+        setTimeout(function () {
+            if (idsSearchedFor.length === 2)
+                done();
+        }, 10);
+    });
+
+    it(&#039;should emit initialContactQueryCompleted exactly once&#039;, function (done) {
+        idsSearchedFor = [];
+
+        maintainer.once(&#039;initialContactQueryCompleted&#039;, function () {
+            maintainer.once(&#039;initialContactQueryCompleted&#039;, function () {
+                throw new Error(&#039;should not emit twice&#039;);
+            });
+
+            done();
+        });
+
+        findClosestNodesManager.emit(&#039;foundClosestNodes&#039;, null, [createNode(), createNode()]);
+    });
+
+    it(&#039;should query all buckets further away from the nearest neighbor&#039;, function () {
+        var nearestBucket = maintainer.getNearestAccessedBucket();
+
+        for (var i = nearestBucket + 1; i &lt; 160; i++) {
+            idsSearchedFor[i - nearestBucket - 1].differsInHighestBit(myNodeId).should.equal(i);
+        }
+    });
+
+    it(&#039;should finally emit joinedNetwork and unbind the listener&#039;, function (done) {
+        if (!joined) {
+            maintainer.once(&#039;joinedNetwork&#039;, function () {
+                if (findClosestNodesManager.listeners(&#039;foundClosestNodes&#039;).length === 0)
+                    done();
+            });
+
+            for (var i = 0; i &lt; idsSearchedFor.length; i++) {
+                (function (j) {
+                    process.nextTick(function () {
+                        findClosestNodesManager.emit(&#039;foundClosestNodes&#039;, idsSearchedFor[j], [createNode()]);
+                    });
+                })(i);
+            }
+        } else {
+            if (findClosestNodesManager.listeners(&#039;foundClosestNodes&#039;).length === 0)
+                done();
+        }
+    });
+
+    it(&#039;should refresh all buckets except 2 (or 1 if equal indexes)&#039;, function (done) {
+        var node1 = createNode();
+        var index1 = node1.getId().differsInHighestBit(myNodeId);
+        var node2 = createNode();
+        var index2 = node2.getId().differsInHighestBit(myNodeId);
+
+        var subtract = index1 === index2 ? 1 : 2;
+
+        var list = [];
+
+        maintainer.on(&#039;refreshingBucket&#039;, function (index) {
+            list.push(index);
+        });
+
+        setTimeout(function () {
+            proxyManager.emit(&#039;contactNodeInformation&#039;, node1);
+            proxyManager.emit(&#039;contactNodeInformation&#039;, node2);
+        }, 500);
+
+        setTimeout(function () {
+            if (list.length === (160 - subtract) &amp;&amp; list.indexOf(index1) === -1 &amp;&amp; list.indexOf(index2) === -1)
+                done();
+        }, 1000);
+    });
+});
+//# sourceMappingURL=NetworkMaintainer.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

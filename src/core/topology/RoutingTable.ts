@@ -156,7 +156,7 @@ class RoutingTable implements RoutingTableInterface {
 			if (bucketsReturned === bucketAmount) {
 				var lastSeenKeys = Object.keys(contactLastSeenMap);
 
-				if (!lastSeenKeys) {
+				if (!lastSeenKeys.length) {
 					return callback(null, []);
 				}
 
@@ -166,7 +166,7 @@ class RoutingTable implements RoutingTableInterface {
 					allContactsList.push(contactLastSeenMap[lastSeenKeys[i]]);
 				}
 
-				return callback(null, allContactsList);
+				return callback(null, allContactsList.slice());
 			}
 		};
 
@@ -316,7 +316,7 @@ class RoutingTable implements RoutingTableInterface {
 				}
 			}
 
-			callback(null, closestContactNodes);
+			callback(null, closestContactNodes.slice());
 
 			distances = null;
 			distanceMap = null;
@@ -368,27 +368,27 @@ class RoutingTable implements RoutingTableInterface {
 			return process.nextTick(callback.bind(null, null, []));
 		}
 
-		if (this._isInBucketKeyRange(bucketKey)) {
-			this._getBucket(bucketKey).getAll((err:Error, contacts:ContactNodeListInterface) => {
-				var contactLength:number;
-
-				if (err) {
-					return callback(err, null);
-				}
-
-				contactLength = contacts.length;
-
-				if (!contactLength || contactLength <= amount) {
-					return callback(null, contacts);
-				}
-				else {
-					return callback(null, this._getRandomizedArray(contacts).slice(0, amount));
-				}
-			});
-		}
-		else {
+		if (!this._isInBucketKeyRange(bucketKey)) {
 			return process.nextTick(callback.bind(null, new Error('RoutingTable.getRandomContactNodesFromBucket: The bucket key is out of range.'), null));
 		}
+
+		this._getBucket(bucketKey).getAll((err:Error, contacts:ContactNodeListInterface) => {
+			var contactLength:number;
+
+			if (err) {
+				return callback(err, null);
+			}
+
+			contactLength = contacts.length;
+
+			if (!contactLength || contactLength <= amount) {
+				return callback(null, contacts);
+			}
+			else {
+				return callback(null, this._getRandomizedArray(contacts).slice(0, amount));
+			}
+		});
+
 	}
 
 	public isOpen (callback:(err:Error, isOpen:boolean) => any):void {
@@ -558,7 +558,7 @@ class RoutingTable implements RoutingTableInterface {
 
 		bucketKeys.forEach((key) => {
 			this._buckets[key].size(function (err, size) {
-				size= size || 0;
+				size = size || 0;
 
 				if (size) {
 					sizes[key] = size;

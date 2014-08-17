@@ -1,5 +1,8 @@
 /// <reference path='../../../ts-definitions/node/node.d.ts' />
 /// <reference path='../../../ts-definitions/node-lmdb/node-lmdb.d.ts' />
+var fs = require('fs');
+var path = require('path');
+
 var lmdb = require('node-lmdb');
 
 /**
@@ -50,6 +53,7 @@ var BucketStore = (function () {
         var added = this._add(txn, bucketKey, id, lastSeen, addresses);
 
         txn.commit();
+        txn = null;
 
         return added;
     };
@@ -66,6 +70,7 @@ var BucketStore = (function () {
         }
 
         txn.commit();
+        txn = null;
 
         return added;
     };
@@ -95,6 +100,8 @@ var BucketStore = (function () {
 
         cursor.close();
         txn.commit();
+        cursor = null;
+        txn = null;
 
         return value;
     };
@@ -120,6 +127,8 @@ var BucketStore = (function () {
 
         cursor.close();
         txn.commit();
+        cursor = null;
+        txn = null;
 
         return values;
     };
@@ -143,6 +152,8 @@ var BucketStore = (function () {
 
         cursor.close();
         txn.commit();
+        cursor = null;
+        txn = null;
 
         return contact;
     };
@@ -163,11 +174,15 @@ var BucketStore = (function () {
             return;
 
         this._databaseEnvironment = new lmdb.Env();
-        this._databaseEnvironment.open({
-            //name: this._name,
-            path: this._path
-        });
 
+        this._checkAndOpenDatabaseEnvironment();
+
+        /*this._databaseEnvironment.open({
+        //name: this._name,
+        path: this._path
+        //mapSize: 2*1024*1024*1024, // maximum database size
+        //maxDbs: 3
+        });*/
         this._databaseInstance = this._databaseEnvironment.openDbi({
             name: this._name,
             create: true
@@ -203,6 +218,7 @@ var BucketStore = (function () {
         }
 
         txn.commit();
+        txn = null;
 
         return true;
     };
@@ -225,6 +241,8 @@ var BucketStore = (function () {
 
         cursor.close();
         txn.commit();
+        cursor = null;
+        txn = null;
 
         return size;
     };
@@ -268,6 +286,8 @@ var BucketStore = (function () {
             console.error(err);
         }
 
+        value = null;
+
         return true;
     };
 
@@ -302,10 +322,38 @@ var BucketStore = (function () {
     };
 
     /**
+    * Opens the database and handles environment architecture changes by cleaning up the old bucket store.
+    *
+    * @method core.topology.BucketStore~_checkAndOpenDatabaseEnvironment
+    */
+    BucketStore.prototype._checkAndOpenDatabaseEnvironment = function () {
+        var _this = this;
+        var openDatabase = function () {
+            _this._databaseEnvironment.open({
+                //name: this._name,
+                path: _this._path
+            });
+        };
+
+        try  {
+            openDatabase();
+        } catch (e) {
+            if (e.message === 'MDB_INVALID: File is not an MDB file') {
+                fs.unlinkSync(path.join(this._path, 'data.mdb'));
+
+                //fs.unlinkSync(path.join(this._path, 'lock.mdb'));
+                openDatabase();
+            } else {
+                throw e;
+            }
+        }
+    };
+
+    /**
     *
     * @method core.topology.BucketStore~_get
     *
-    * @param {lmdbTxn} txn
+    * @param {lmdb.Txn} txn
     * @param {Buffer} id
     * @returns {any}
     */
@@ -323,7 +371,7 @@ var BucketStore = (function () {
     };
 
     /**
-    * Creates a Cursor on the instace database
+    * Creates a Cursor on the database instance
     *
     * @method core.topology.BucketStore~_getCursor
     *

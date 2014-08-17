@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/GeneralWritableMessageFactory.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/GeneralWritableMessageFactory.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">70.80</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">107</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">18.32</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.40</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var GeneralWritableMessageFactory = require(&#039;../../../src/core/protocol/messages/GeneralWritableMessageFactory&#039;);
+
+var MyNode = require(&#039;../../../src/core/topology/MyNode&#039;);
+var ContactNode = require(&#039;../../../src/core/topology/ContactNode&#039;);
+var Id = require(&#039;../../../src/core/topology/Id&#039;);
+var ContactNodeAddress = require(&#039;../../../src/core/topology/ContactNodeAddress&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; MESSAGES --&gt; GeneralWritableMessageFactory&#039;, function () {
+    var sandbox;
+    var sender;
+    var receiver;
+    var factory;
+
+    var createWorkingMessage = function () {
+        var receiverId = new Buffer([0xf3, 0xec, 0x6b, 0x95, 0x29, 0x92, 0xbb, 0x07, 0xf3, 0x48, 0x62, 0xa4, 0x11, 0xbb, 0x1f, 0x83, 0x3f, 0x63, 0x62, 0x88]), senderId = new Buffer([0xfe, 0x36, 0x26, 0xca, 0xca, 0x6c, 0x84, 0xfa, 0x4e, 0x5d, 0x32, 0x3b, 0x6a, 0x26, 0xb8, 0x97, 0x58, 0x2c, 0x57, 0xf9]), ipv4Address = new Buffer([0x04, 44, 123, 255, 7, 0xd9, 0x03]), ipv6Address = new Buffer([0x06, 0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x42, 0x83, 0x29, 0xd9, 0x03]), addressEnd = new Buffer([0x05]), messageType = new Buffer([0x50, 0x49]), payload = new Buffer(&#039;foobar&#039;, &#039;utf8&#039;), list = [receiverId, senderId, ipv4Address, ipv6Address, addressEnd, messageType, payload];
+
+        var buff = Buffer.concat(list);
+        var retBuff = new Buffer(buff.length + 4);
+        retBuff.writeUInt32BE(buff.length, 0);
+        buff.copy(retBuff, 4, 0);
+
+        return retBuff;
+    };
+
+    var createWorkingHydraMessage = function () {
+        var begin = new Buffer([0, 0, 0, 26]), receiverId = new Buffer(20), payload = new Buffer(&#039;foobar&#039;, &#039;utf8&#039;);
+        receiverId.fill(0x00);
+
+        return Buffer.concat([begin, receiverId, payload]);
+    };
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+        receiver = testUtils.stubPublicApi(sandbox, ContactNode, {
+            &quot;getId&quot;: function () {
+                return new Id(Id.byteBufferByHexString(&#039;f3ec6b952992bb07f34862a411bb1f833f636288&#039;, 20), 160);
+            }
+        });
+
+        var addressList = [new ContactNodeAddress(&#039;44.123.255.7&#039;, 55555), new ContactNodeAddress(&#039;2001:db8::ff00:42:8329&#039;, 55555)];
+        sender = new MyNode(new Id(Id.byteBufferByHexString(&#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;, 20), 160), addressList);
+
+        factory = new GeneralWritableMessageFactory(sender);
+    });
+
+    it(&#039;should correctly create the message&#039;, function () {
+        factory.setReceiver(receiver);
+        factory.setMessageType(&#039;PING&#039;);
+        var msg = factory.constructMessage(new Buffer(&#039;foobar&#039;, &#039;utf8&#039;));
+        var msgCheck = createWorkingMessage();
+
+        msg.length.should.equal(msgCheck.length);
+
+        for (var i = 0; i &lt; msg.length; i++) {
+            msg[i].should.equal(msgCheck[i]);
+        }
+    });
+
+    it(&#039;should correctly create the hydra message&#039;, function () {
+        var msg = factory.hydraConstructMessage(new Buffer(&#039;foobar&#039;, &#039;utf8&#039;));
+        var msgCheck = createWorkingHydraMessage();
+
+        msg.length.should.equal(msgCheck.length);
+
+        for (var i = 0; i &lt; msg.length; i++) {
+            msg[i].should.equal(msgCheck[i]);
+        }
+    });
+
+    it(&#039;should throw an error when not setting a receiver/message type&#039;, function () {
+        (function () {
+            factory.constructMessage(new Buffer(1));
+        }).should.throw(&#039;GeneralWritableMessageFactory#constructMessage: Sender and receiver must be specified.&#039;);
+    });
+
+    it(&#039;sender has changed should be true&#039;, function () {
+        var addressList = [new ContactNodeAddress(&#039;2001:db8::ff00:42:8329&#039;, 55555)];
+        sender.updateAddresses(addressList);
+        factory.getSenderHasChanged().should.be.true;
+    });
+
+    it(&#039;should throw an error that the message type is unknown&#039;, function () {
+        factory.setReceiver(receiver);
+        factory.setMessageType(&#039;foobar&#039;);
+        (function () {
+            factory.constructMessage(new Buffer([1]), 1);
+        }).should.throw(&#039;GeneralWritableMessageFactory#constructMessage: Unknown message type.&#039;);
+    });
+
+    it(&#039;should set a new node and remove the old listener&#039;, function (done) {
+        var addressList = [new ContactNodeAddress(&#039;44.123.255.7&#039;, 55555), new ContactNodeAddress(&#039;2001:db8::ff00:42:8329&#039;, 55555)];
+        var newSender = new MyNode(new Id(Id.byteBufferByHexString(&#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;, 20), 160), addressList);
+
+        factory.setSender(newSender);
+        done();
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+});
+//# sourceMappingURL=GeneralWritableMessageFactory.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

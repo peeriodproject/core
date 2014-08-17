@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/hydra/Aes128GcmWritableMessageFactory.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/hydra/Aes128GcmWritableMessageFactory.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">79.53</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">55</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">18.79</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.39</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+// Please note that as node.js does not yet support GCM auth tags in this version, we use an 16 byte buffer filled with 0xff
+require(&#039;should&#039;);
+
+var Aes128GcmWritableMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/Aes128GcmWritableMessageFactory&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; HYDRA --&gt; Aes128GcmWritableMessageFactory&#039;, function () {
+    var factory = new Aes128GcmWritableMessageFactory();
+
+    it(&#039;should return a random buffer&#039;, function (done) {
+        factory.getIV(function (buff) {
+            if ((buff instanceof Buffer === true) &amp;&amp; buff.length === 12)
+                done();
+        });
+    });
+
+    it(&#039;should correctly format the message with auth tag&#039;, function (done) {
+        var key = new Buffer(&#039;feffe9928665731c6d6a8f9467308308&#039;, &#039;hex&#039;);
+        var plaintext = new Buffer(&#039;d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b391aafd255&#039;, &#039;hex&#039;);
+        var iv = new Buffer(&#039;cafebabefacedbaddecaf888&#039;, &#039;hex&#039;);
+
+        var t_hex = &#039;ffffffffffffffffffffffffffffffff&#039;;
+
+        factory.getIV = function (cb) {
+            cb(iv);
+        };
+
+        factory.encryptMessage(key, true, plaintext, function (err, buff) {
+            if (!err &amp;&amp; buff.toString(&#039;hex&#039;) === &#039;cafebabefacedbaddecaf8889a6b1dd5fc0bf6c70b8e717bee8a0720ff8b2fd56a2367cdc1a3022e9e171ad64ff5242b549bf246016fab70c16bb9958f788c2135ad4726d081f8d3648a240288&#039; + t_hex)
+                done();
+        });
+    });
+
+    it(&#039;should correctly format the message without auth tag&#039;, function (done) {
+        var key = new Buffer(&#039;feffe9928665731c6d6a8f9467308308&#039;, &#039;hex&#039;);
+        var plaintext = new Buffer(&#039;d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b391aafd255&#039;, &#039;hex&#039;);
+        var iv = new Buffer(&#039;cafebabefacedbaddecaf888&#039;, &#039;hex&#039;);
+
+        factory.getIV = function (cb) {
+            cb(iv);
+        };
+
+        factory.encryptMessage(key, false, plaintext, function (err, buff) {
+            if (!err &amp;&amp; buff.toString(&#039;hex&#039;) === &#039;cafebabefacedbaddecaf8889b6b1dd5fc0bf6c70b8e717bee8a0720ff8b2fd56a2367cdc1a3022e9e171ad64ff5242b549bf246016fab70c16bb9958f788c2135ad4726d081f8d3648a240288&#039;)
+                done();
+        });
+    });
+
+    it(&#039;should throw an error when passing in wrong parameters&#039;, function (done) {
+        factory = new Aes128GcmWritableMessageFactory();
+
+        factory.encryptMessage(new Buffer(10), true, new Buffer(20), function (err, buff) {
+            if (err &amp;&amp; !buff)
+                done();
+        });
+    });
+});
+//# sourceMappingURL=Aes128GcmWritableMessageFactory.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

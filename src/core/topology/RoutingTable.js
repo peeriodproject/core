@@ -133,7 +133,7 @@ var RoutingTable = (function () {
             if (bucketsReturned === bucketAmount) {
                 var lastSeenKeys = Object.keys(contactLastSeenMap);
 
-                if (!lastSeenKeys) {
+                if (!lastSeenKeys.length) {
                     return callback(null, []);
                 }
 
@@ -143,7 +143,7 @@ var RoutingTable = (function () {
                     allContactsList.push(contactLastSeenMap[lastSeenKeys[i]]);
                 }
 
-                return callback(null, allContactsList);
+                return callback(null, allContactsList.slice());
             }
         };
 
@@ -285,7 +285,7 @@ var RoutingTable = (function () {
                 }
             }
 
-            callback(null, closestContactNodes);
+            callback(null, closestContactNodes.slice());
 
             distances = null;
             distanceMap = null;
@@ -338,25 +338,25 @@ var RoutingTable = (function () {
             return process.nextTick(callback.bind(null, null, []));
         }
 
-        if (this._isInBucketKeyRange(bucketKey)) {
-            this._getBucket(bucketKey).getAll(function (err, contacts) {
-                var contactLength;
-
-                if (err) {
-                    return callback(err, null);
-                }
-
-                contactLength = contacts.length;
-
-                if (!contactLength || contactLength <= amount) {
-                    return callback(null, contacts);
-                } else {
-                    return callback(null, _this._getRandomizedArray(contacts).slice(0, amount));
-                }
-            });
-        } else {
+        if (!this._isInBucketKeyRange(bucketKey)) {
             return process.nextTick(callback.bind(null, new Error('RoutingTable.getRandomContactNodesFromBucket: The bucket key is out of range.'), null));
         }
+
+        this._getBucket(bucketKey).getAll(function (err, contacts) {
+            var contactLength;
+
+            if (err) {
+                return callback(err, null);
+            }
+
+            contactLength = contacts.length;
+
+            if (!contactLength || contactLength <= amount) {
+                return callback(null, contacts);
+            } else {
+                return callback(null, _this._getRandomizedArray(contacts).slice(0, amount));
+            }
+        });
     };
 
     RoutingTable.prototype.isOpen = function (callback) {

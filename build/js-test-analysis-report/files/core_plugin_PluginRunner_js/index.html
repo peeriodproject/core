@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/plugin/PluginRunner.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/plugin/PluginRunner.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">74.10</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">217</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">22.49</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.89</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+var path = require(&#039;path&#039;);
+
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var FileBlockReader = require(&#039;../../../src/core/fs/FileBlockReader&#039;);
+var FileBlockReaderFactory = require(&#039;../../../src/core/fs/FileBlockReaderFactory&#039;);
+var ObjectConfig = require(&#039;../../../src/core/config/ObjectConfig&#039;);
+var PluginRunner = require(&#039;../../../src/core/plugin/PluginRunner&#039;);
+
+// todo add json error tests
+describe(&#039;CORE --&gt; PLUGIN --&gt; PluginRunner&#039;, function () {
+    var sandbox;
+    var pluginToLoadPath = &#039;src/plugins/textDocumentPlugin&#039;;
+    var pluginsFolderPath = testUtils.getFixturePath(&#039;core/plugin/pluginRunner/plugins&#039;);
+    var pluginFolderName = &#039;plugin&#039;;
+    var pluginPath = pluginsFolderPath + &#039;/&#039; + pluginFolderName;
+    var pluginFilePath = pluginPath + &#039;/lib/index.js&#039;;
+    var configStub;
+    var cleanupAndDone = function (pluginRunner, done) {
+        pluginRunner.cleanup();
+        done();
+    };
+
+    var fileBlockReaderStub;
+    var fileBlockReaderFactoryStub;
+
+    this.timeout(0);
+
+    before(function () {
+        testUtils.deleteFolderRecursive(pluginsFolderPath);
+        testUtils.copyFolder(pluginToLoadPath, pluginPath);
+    });
+
+    beforeEach(function () {
+        sandbox = sinon.sandbox.create();
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (key) {
+                if (key === &#039;plugin.api.basePath&#039;) {
+                    return path.resolve(process.cwd(), &#039;./src/core/plugin/api&#039;);
+                } else if (key === &#039;plugin.api.pluginApiName&#039;) {
+                    return &#039;PluginApi.js&#039;;
+                } else if (key === &#039;plugin.binaryPath&#039;) {
+                    return &#039;./core/plugin/pluginRunner/node_v0_10_30&#039;;
+                } else if (key === &#039;plugin.timeoutInSeconds&#039;) {
+                    return 5;
+                }
+            }
+        });
+        fileBlockReaderStub = testUtils.stubPublicApi(sandbox, FileBlockReader, {
+            abort: function () {
+                return process.nextTick(arguments[0].bind(null, null));
+            },
+            prepareToRead: function () {
+                return process.nextTick(arguments[0].bind(null, null));
+            }
+        });
+
+        fileBlockReaderFactoryStub = testUtils.stubPublicApi(sandbox, FileBlockReaderFactory, {
+            create: function () {
+                return fileBlockReaderStub;
+            }
+        });
+    });
+
+    afterEach(function () {
+        sandbox.restore();
+
+        configStub = null;
+        fileBlockReaderStub = null;
+        fileBlockReaderFactoryStub = null;
+        sandbox = null;
+    });
+
+    after(function () {
+        testUtils.deleteFolderRecursive(pluginsFolderPath);
+    });
+
+    it(&#039;should correctly instantiate without error&#039;, function (done) {
+        var pluginRunner = new PluginRunner(configStub, &#039;identifier&#039;, pluginFilePath, fileBlockReaderFactoryStub);
+        pluginRunner.should.be.an.instanceof(PluginRunner);
+
+        setImmediate(function () {
+            cleanupAndDone(pluginRunner, done);
+        });
+    });
+
+    describe(&#039;should correctly run the provided script&#039;, function () {
+        var statsJson;
+        var pluginPath;
+        var filePath;
+        var globals;
+
+        beforeEach(function () {
+            statsJson = &#039;{&quot;dev&quot;:16777222,&quot;mode&quot;:33188,&quot;nlink&quot;:1,&quot;uid&quot;:501,&quot;gid&quot;:20,&quot;rdev&quot;:0,&quot;blksize&quot;:4096,&quot;ino&quot;:27724859,&quot;size&quot;:6985,&quot;blocks&quot;:16,&quot;atime&quot;:&quot;2014-05-18T11:59:13.000Z&quot;,&quot;mtime&quot;:&quot;2014-05-16T21:16:41.000Z&quot;,&quot;ctime&quot;:&quot;2014-05-16T21:16:41.000Z&quot;}&#039;;
+            pluginPath = testUtils.getFixturePath(&#039;core/plugin/pluginRunner/plugin.js&#039;);
+            filePath = testUtils.getFixturePath(&#039;core/plugin/pluginRunner/file.jpg&#039;);
+            globals = {
+                fileBuffer: new Buffer(1000)
+            };
+        });
+
+        afterEach(function () {
+            statsJson = null;
+            pluginPath = null;
+            filePath = null;
+            globals = null;
+        });
+
+        it(&#039;should correctly return a &quot;timed out&quot; error&#039;, function (done) {
+            this.timeout(10000);
+
+            var pluginRunner = new PluginRunner(configStub, &#039;identifier&#039;, testUtils.getFixturePath(&#039;core/plugin/pluginRunner/timeoutPlugin.js&#039;), fileBlockReaderFactoryStub);
+
+            pluginRunner.onBeforeItemAdd(filePath, JSON.parse(statsJson), globals, function (err, output) {
+                // todo check message
+                err.should.be.an.instanceof(Error);
+                (output === null).should.be.true;
+
+                cleanupAndDone(pluginRunner, done);
+            });
+        });
+
+        it(&#039;should correctly return the script error&#039;, function (done) {
+            var pluginRunner = new PluginRunner(configStub, &#039;identifier&#039;, testUtils.getFixturePath(&#039;core/plugin/pluginRunner/invalidPlugin.js&#039;), fileBlockReaderFactoryStub);
+
+            pluginRunner.onBeforeItemAdd(filePath, JSON.parse(statsJson), globals, function (err, output) {
+                err.should.be.an.instanceof(Error);
+                err.message.should.equal(&#039;invalidFunctonCall is not defined&#039;);
+                (output === null).should.be.true;
+
+                cleanupAndDone(pluginRunner, done);
+            });
+        });
+
+        it(&#039;should correctly call the onNewItemWillBeAdded method&#039;, function (done) {
+            var pluginRunner = new PluginRunner(configStub, &#039;identifier&#039;, pluginPath, fileBlockReaderFactoryStub);
+
+            pluginRunner.onBeforeItemAdd(filePath, JSON.parse(statsJson), globals, function (err, output) {
+                (err === null).should.be.true;
+                output.should.containDeep({
+                    fileBuffer: globals.fileBuffer.toJSON(),
+                    foo: &#039;bar&#039;,
+                    bar: &#039;foo&#039;
+                });
+
+                cleanupAndDone(pluginRunner, done);
+            });
+        });
+
+        it(&#039;should correctly call the getMapping method&#039;, function (done) {
+            var pluginRunner = new PluginRunner(configStub, &#039;identifier&#039;, pluginPath, fileBlockReaderFactoryStub);
+
+            pluginRunner.getMapping(function (err, output) {
+                (err === null).should.be.true;
+                output.should.containDeep({
+                    &quot;tweet&quot;: {
+                        &quot;properties&quot;: {
+                            &quot;message&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;store&quot;: true }
+                        }
+                    }
+                });
+
+                cleanupAndDone(pluginRunner, done);
+            });
+        });
+
+        it(&#039;should correctly call the getQuery method&#039;, function (done) {
+            var pluginRunner = new PluginRunner(configStub, &#039;identifier&#039;, pluginPath, fileBlockReaderFactoryStub);
+
+            pluginRunner.getQuery(&#039;foobario&#039;, function (err, output) {
+                output.should.containDeep({ term: { field: &#039;foobario&#039; } });
+
+                done();
+            });
+        });
+
+        it(&#039;should correctly call the getResultFields method&#039;, function (done) {
+            var pluginRunner = new PluginRunner(configStub, &#039;identifier&#039;, pluginPath, fileBlockReaderFactoryStub);
+
+            pluginRunner.getResultFields(function (err, fields) {
+                (err === null).should.be.true;
+
+                fields.should.containDeep({
+                    _template: &#039;text&#039;,
+                    title: &#039;title&#039;,
+                    content: &#039;content&#039;
+                });
+
+                cleanupAndDone(pluginRunner, done);
+            });
+        });
+
+        it(&#039;should correctly call the getSearchFields method&#039;, function (done) {
+            var pluginRunner = new PluginRunner(configStub, &#039;identifier&#039;, pluginPath, fileBlockReaderFactoryStub);
+
+            pluginRunner.getSearchFields(function (err, output) {
+                (err === null).should.be.true;
+
+                output.should.containDeep({
+                    &quot;action&quot;: &quot;index.html&quot;,
+                    &quot;method&quot;: &quot;get&quot;,
+                    &quot;html&quot;: [
+                        {
+                            &quot;type&quot;: &quot;p&quot;,
+                            &quot;html&quot;: &quot;You must login&quot;
+                        }
+                    ]
+                });
+
+                cleanupAndDone(pluginRunner, done);
+            });
+        });
+    });
+});
+//# sourceMappingURL=PluginRunner.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

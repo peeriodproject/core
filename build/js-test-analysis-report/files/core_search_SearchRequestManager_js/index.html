@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/search/SearchRequestManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/search/SearchRequestManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">75.51</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">380</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">42.00</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">3.80</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var AppQuitHandler = require(&#039;../../../src/core/utils/AppQuitHandler&#039;);
+var SearchClient = require(&#039;../../../src/core/search/SearchClient&#039;);
+var SearchRequestManager = require(&#039;../../../src/core/search/SearchRequestManager&#039;);
+
+describe(&#039;CORE --&gt; SEARCH --&gt; SearchRequestManager&#039;, function () {
+    var sandbox;
+    var appQuitHandlerStub;
+    var searchClientStub;
+
+    var closeAndDone = function (searchRequestManager, done) {
+        searchRequestManager.close(function () {
+            done();
+        });
+    };
+
+    beforeEach(function () {
+        sandbox = sinon.sandbox.create();
+        appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
+        searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
+            close: function (callback) {
+                callback = callback || function () {
+                };
+
+                return process.nextTick(callback.bind(null, null));
+            },
+            open: function (callback) {
+                callback = callback || function () {
+                };
+
+                return process.nextTick(callback.bind(null, null));
+            },
+            addIncomingResponse: function () {
+                return process.nextTick(arguments[4].bind(null, null));
+            },
+            addPercolate: function (percolateParams, callback) {
+                return process.nextTick(callback.bind(null, null));
+            },
+            checkIncomingResponse: function () {
+                return process.nextTick(arguments[3].bind(null, null, [
+                    { _index: arguments[0], _id: arguments[1] }
+                ]));
+            },
+            createOutgoingQuery: function () {
+                return process.nextTick(arguments[3].bind(null, null));
+            },
+            createOutgoingQueryIndex: function () {
+                return process.nextTick(arguments[1].bind(null, null));
+            },
+            deleteOutgoingQuery: function () {
+                return process.nextTick(arguments[2].bind(null, null));
+            },
+            getOutgoingQuery: function () {
+                return process.nextTick(arguments[2].bind(null, null, { query: true }));
+            },
+            getIncomingResponses: function () {
+                return process.nextTick(arguments[3].bind(null, null, { response: true }));
+            }
+        });
+    });
+
+    afterEach(function () {
+        sandbox.restore();
+        appQuitHandlerStub = null;
+        searchClientStub = null;
+    });
+
+    it(&#039;should correctly instantiate the SearchRequestManager&#039;, function (done) {
+        var manager = new SearchRequestManager(appQuitHandlerStub, &#039;searchqueries&#039;, searchClientStub);
+
+        manager.should.be.an.instanceof(SearchRequestManager);
+
+        closeAndDone(manager, done);
+    });
+
+    it(&#039;should correctly open and close the manager&#039;, function (done) {
+        var manager = new SearchRequestManager(appQuitHandlerStub, &#039;searchqueries&#039;, searchClientStub, {
+            onOpenCallback: function () {
+                manager.open(function () {
+                    searchClientStub.open.called.should.be.true;
+
+                    manager.isOpen(function (err, isOpen) {
+                        (err === null).should.be.true;
+                        isOpen.should.be.true;
+
+                        manager.close(function () {
+                            searchClientStub.close.called.should.be.true;
+
+                            manager.isOpen(function (err, isOpen) {
+                                (err === null).should.be.true;
+                                isOpen.should.be.false;
+
+                                closeAndDone(manager, done);
+                            });
+                        });
+                    });
+                });
+            }
+        });
+    });
+
+    it(&#039;should correctly create the query index on open&#039;, function (done) {
+        var manager = new SearchRequestManager(appQuitHandlerStub, &#039;searchqueries&#039;, searchClientStub, {
+            onOpenCallback: function () {
+                searchClientStub.createOutgoingQueryIndex.calledOnce.should.be.true;
+                searchClientStub.createOutgoingQueryIndex.getCall(0).args[0].should.equal(&#039;searchqueries&#039;);
+
+                closeAndDone(manager, done);
+            }
+        });
+    });
+
+    it(&#039;should correctly add a outgoing search query to the database&#039;, function (done) {
+        var manager = new SearchRequestManager(appQuitHandlerStub, &#039;searchqueries&#039;, searchClientStub, {
+            onOpenCallback: function () {
+                manager.addQuery({ foo: true }, function (err, queryId) {
+                    (err === null).should.be.true;
+                    queryId.should.be.an.instanceof(String);
+
+                    searchClientStub.createOutgoingQuery.calledOnce.should.be.true;
+                    searchClientStub.createOutgoingQuery.getCall(0).args[0].should.equal(&#039;searchqueries&#039;);
+                    searchClientStub.createOutgoingQuery.getCall(0).args[1].should.equal(queryId);
+                    searchClientStub.createOutgoingQuery.getCall(0).args[2].should.containDeep({ foo: true });
+
+                    closeAndDone(manager, done);
+                });
+            }
+        });
+    });
+
+    it(&#039;should correctly add a incoming response to the database&#039;, function (done) {
+        var responseList = {
+            total: 1,
+            max_score: 0.13424811,
+            hits: [{
+                    _id: &#039;fileHash&#039;,
+                    _type: &#039;pluginidentifier&#039;,
+                    _score: 0.13424811,
+                    _source: {
+                        itemHash: &#039;fileHash&#039;,
+                        itemStats: {
+                            stats: true
+                        },
+                        itemName: &#039;foobar.txt&#039;
+                    },
+                    highlight: {
+                        file: [
+                            &#039;Mollis Magna &lt;em&gt;Euismod&lt;/em&gt; Malesuada Dolor\n&#039;
+                        ]
+                    }
+                }] };
+
+        var manager = new SearchRequestManager(appQuitHandlerStub, &#039;searchqueries&#039;, searchClientStub, {
+            onOpenCallback: function () {
+                manager.addQuery({ foo: true }, function (err, queryId) {
+                    manager.addResponse(queryId, new Buffer(JSON.stringify(responseList)), { metadata: true }, function (err) {
+                        (err === null).should.be.true;
+
+                        searchClientStub.addIncomingResponse.calledOnce.should.be.true;
+                        searchClientStub.addIncomingResponse.getCall(0).args[0].should.equal(&#039;searchqueries&#039;);
+                        searchClientStub.addIncomingResponse.getCall(0).args[1].should.equal(queryId);
+                        searchClientStub.addIncomingResponse.getCall(0).args[2].should.containDeep({
+                            _id: &quot;fileHash&quot;,
+                            _score: 0.13424811,
+                            _type: &quot;pluginidentifier&quot;,
+                            file: [
+                                &quot;Mollis Magna &lt;em&gt;Euismod&lt;/em&gt; Malesuada Dolor\n&quot;
+                            ],
+                            itemHash: &quot;fileHash&quot;,
+                            itemName: &quot;foobar.txt&quot;,
+                            itemStats: {
+                                stats: true
+                            }
+                        });
+
+                        closeAndDone(manager, done);
+                    });
+                });
+            }
+        });
+    });
+
+    it(&#039;should correctly return an incoming response from the database and use the query cache for furtger calls&#039;, function (done) {
+        var manager = new SearchRequestManager(appQuitHandlerStub, &#039;searchqueries&#039;, searchClientStub, {
+            onOpenCallback: function () {
+                manager.addQuery({ foo: true }, function (err, queryId) {
+                    // first call: get outgoing query from database
+                    manager.getResponses(queryId, function (err, responses) {
+                        (err === null).should.be.true;
+
+                        searchClientStub.getOutgoingQuery.calledOnce.should.be.true;
+                        searchClientStub.getOutgoingQuery.getCall(0).args[0].should.equal(&#039;searchqueries&#039;);
+                        searchClientStub.getOutgoingQuery.getCall(0).args[1].should.equal(queryId);
+
+                        searchClientStub.getIncomingResponses.calledOnce.should.be.true;
+                        searchClientStub.getIncomingResponses.getCall(0).args[0].should.equal(&#039;searchqueries&#039;);
+                        searchClientStub.getIncomingResponses.getCall(0).args[1].should.equal(queryId);
+                        searchClientStub.getIncomingResponses.getCall(0).args[2].should.containDeep({
+                            query: true
+                        });
+
+                        responses.should.containDeep({
+                            response: true
+                        });
+
+                        // second call: get outgoing query from cache
+                        manager.getResponses(queryId, function (err, responses) {
+                            (err === null).should.be.true;
+
+                            searchClientStub.getOutgoingQuery.calledOnce.should.be.true;
+                            searchClientStub.getIncomingResponses.calledTwice.should.be.true;
+
+                            responses.should.containDeep({
+                                response: true
+                            });
+
+                            closeAndDone(manager, done);
+                        });
+                    });
+                });
+            }
+        });
+    });
+
+    it(&#039;should correctly call a &quot;onQueryAdd&quot; listener after a new query was added&#039;, function (done) {
+        var theQueryId = &#039;&#039;;
+
+        var manager = new SearchRequestManager(appQuitHandlerStub, &#039;searchqueries&#039;, searchClientStub, {
+            onOpenCallback: function () {
+                manager.addQuery({ foo: true }, function (err, queryId) {
+                    theQueryId = queryId;
+                });
+            }
+        });
+
+        manager.onQueryAdd(function (queryId) {
+            queryId.should.equal(theQueryId);
+
+            closeAndDone(manager, done);
+        });
+    });
+
+    it(&#039;should correctly call a &quot;onQueryCanceled&quot; listener after the `queryEnded` method was called&#039;, function (done) {
+        var theQueryId = &#039;&#039;;
+
+        var manager = new SearchRequestManager(appQuitHandlerStub, &#039;searchqueries&#039;, searchClientStub, {
+            onOpenCallback: function () {
+                manager.addQuery({ foo: true }, function (err, queryId) {
+                    theQueryId = queryId;
+
+                    return setImmediate(function () {
+                        manager.queryEnded(theQueryId, &#039;reason&#039;);
+                    });
+                });
+            }
+        });
+
+        manager.onQueryCanceled(function (queryId, reason) {
+            queryId.should.equal(theQueryId);
+            reason.should.equal(&#039;reason&#039;);
+
+            closeAndDone(manager, done);
+        });
+    });
+
+    it(&#039;should correctly call a &quot;resultsChanged&quot; listener after a new result was added to the database and matched a running query&#039;, function (done) {
+        var theQueryId = &#039;&#039;;
+        var responseList = {
+            total: 1,
+            hits: [{
+                    _id: &#039;fileHash&#039;,
+                    _type: &#039;pluginidentifier&#039;,
+                    _source: {
+                        itemHash: &quot;fileHash&quot;,
+                        itemStats: {
+                            stats: true
+                        },
+                        foo: &quot;bar io&quot;
+                    }
+                }]
+        };
+
+        var manager = new SearchRequestManager(appQuitHandlerStub, &#039;searchqueries&#039;, searchClientStub, {
+            onOpenCallback: function () {
+                manager.addQuery({ foo: true }, function (err, queryId) {
+                    theQueryId = queryId;
+
+                    manager.addResponse(queryId, new Buffer(JSON.stringify(responseList)), { metadata: true }, function (err) {
+                        (err === null).should.be.true;
+                    });
+                });
+            }
+        });
+
+        manager.onQueryResultsChanged(function (queryId) {
+            return process.nextTick(function () {
+                queryId.should.equal(theQueryId);
+
+                closeAndDone(manager, done);
+            });
+        });
+    });
+
+    it(&#039;should correctly call a &quot;onQueryEnd&quot; listener instead of &quot;onQueryCanceled&quot; after a new result matched the query&#039;, function (done) {
+        this.timeout(5000);
+
+        var canceledSpy = sandbox.spy();
+        var theQueryId = &#039;&#039;;
+        var responseList = {
+            total: 1,
+            hits: [{
+                    _id: &#039;fileHash&#039;,
+                    _type: &#039;pluginidentifier&#039;,
+                    _source: {
+                        itemHash: &quot;fileHash&quot;,
+                        itemStats: {
+                            stats: true
+                        },
+                        foo: &quot;bar io&quot;
+                    }
+                }]
+        };
+
+        var manager = new SearchRequestManager(appQuitHandlerStub, &#039;searchqueries&#039;, searchClientStub, {
+            onOpenCallback: function () {
+                manager.addQuery({ foo: true }, function (err, queryId) {
+                    theQueryId = queryId;
+
+                    //responseList.hits[0]._id = theQueryId;
+                    manager.addResponse(queryId, new Buffer(JSON.stringify(responseList)), { metadata: true }, function (err) {
+                        (err === null).should.be.true;
+
+                        return setImmediate(function () {
+                            manager.queryEnded(theQueryId, &#039;reason&#039;);
+                        });
+                    });
+                });
+            }
+        });
+
+        manager.onQueryCanceled(canceledSpy);
+
+        manager.onQueryEnd(function (queryId, reason) {
+            queryId.should.equal(theQueryId);
+            reason.should.equal(&#039;reason&#039;);
+
+            canceledSpy.called.should.be.false;
+
+            closeAndDone(manager, done);
+        });
+    });
+
+    it(&#039;should correctly remove a query from the database and call &quot;onQueryRemoved&quot; afterwards&#039;, function (done) {
+        var theQueryId = &#039;&#039;;
+
+        var manager = new SearchRequestManager(appQuitHandlerStub, &#039;searchqueries&#039;, searchClientStub, {
+            onOpenCallback: function () {
+                manager.addQuery({ foo: true }, function (err, queryId) {
+                    theQueryId = queryId;
+
+                    manager.removeQuery(queryId);
+                });
+            }
+        });
+
+        manager.onQueryRemoved(function (queryId) {
+            queryId.should.equal(theQueryId);
+
+            searchClientStub.deleteOutgoingQuery.calledOnce.should.be.true;
+            searchClientStub.deleteOutgoingQuery.getCall(0).args[0].should.equal(&#039;searchqueries&#039;);
+            searchClientStub.deleteOutgoingQuery.getCall(0).args[1].should.equal(theQueryId);
+
+            closeAndDone(manager, done);
+        });
+    });
+});
+//# sourceMappingURL=SearchRequestManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

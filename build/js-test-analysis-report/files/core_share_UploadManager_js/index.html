@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/share/UploadManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/share/UploadManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">76.39</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">239</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">26.96</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.22</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var AppQuitHandler = require(&#039;../../../src/core/utils/AppQuitHandler&#039;);
+var UploadManager = require(&#039;../../../src/core/share/UploadManager&#039;);
+var SearchClient = require(&#039;../../../src/core/search/SearchClient&#039;);
+
+describe(&#039;CORE --&gt; SHARE --&gt; UploadManager&#039;, function () {
+    var sandbox;
+    var appQuitHandlerStub;
+    var searchClientStub;
+
+    var manager = null;
+
+    var searchItemError = null;
+    var searchItem = null;
+
+    var closeAndDone = function (uploadManager, done) {
+        uploadManager.getRunningUploadIds(function (ids) {
+            uploadManager.close(function () {
+                manager = null;
+                done();
+            });
+
+            ids.forEach(function (id) {
+                uploadManager.uploadEnded(id, &#039;MANUAL_ABORT&#039;);
+            });
+        });
+    };
+
+    beforeEach(function () {
+        sandbox = sinon.sandbox.create();
+
+        appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
+        searchClientStub = testUtils.stubPublicApi(sandbox, SearchClient, {
+            close: function (callback) {
+                callback = callback || function () {
+                };
+
+                return process.nextTick(callback.bind(null, null));
+            },
+            open: function (callback) {
+                callback = callback || function () {
+                };
+
+                return process.nextTick(callback.bind(null, null));
+            },
+            getItemByHash: function () {
+                return process.nextTick(arguments[1].bind(null, searchItemError, searchItem));
+            }
+        });
+
+        manager = new UploadManager(appQuitHandlerStub, searchClientStub, &#039;searchresponses&#039;);
+    });
+
+    afterEach(function (done) {
+        sandbox.restore();
+        appQuitHandlerStub = null;
+        searchClientStub = null;
+
+        searchItemError = null;
+        searchItem = null;
+
+        closeAndDone(manager, done);
+    });
+
+    it(&#039;should correctly instantiate the UploadManager&#039;, function () {
+        manager.should.be.an.instanceof(UploadManager);
+    });
+
+    it(&#039;should correctly open and close the manager&#039;, function (done) {
+        manager.open(function () {
+            searchClientStub.open.called.should.be.true;
+
+            manager.isOpen(function (err, isOpen) {
+                (err === null).should.be.true;
+                isOpen.should.be.true;
+
+                manager.close(function () {
+                    searchClientStub.close.called.should.be.true;
+
+                    manager.isOpen(function (err, isOpen) {
+                        (err === null).should.be.true;
+                        isOpen.should.be.false;
+
+                        done();
+                    });
+                });
+            });
+        });
+    });
+
+    it(&#039;should correctly add a new upload&#039;, function () {
+        var onAddedSpy = sandbox.spy();
+
+        manager.onUploadAdded(onAddedSpy);
+
+        manager.createUpload(&#039;uploadId&#039;, &#039;/path/to/file.ext&#039;, &#039;file.ext&#039;, 123);
+        manager.createUpload(&#039;uploadId&#039;, &#039;/path/to/file.ext&#039;, &#039;file.ext&#039;, 123);
+
+        onAddedSpy.calledOnce.should.be.true;
+
+        onAddedSpy.getCall(0).args[0].should.equal(&#039;uploadId&#039;);
+        onAddedSpy.getCall(0).args[1].should.equal(&#039;/path/to/file.ext&#039;);
+        onAddedSpy.getCall(0).args[2].should.equal(&#039;file.ext&#039;);
+        onAddedSpy.getCall(0).args[3].should.equal(123);
+    });
+
+    it(&#039;should correctly cancel the upload&#039;, function () {
+        var onCanceledSpy = sandbox.spy();
+
+        manager.onUploadCanceled(onCanceledSpy);
+
+        manager.cancelUpload(&#039;invalidId&#039;);
+        onCanceledSpy.called.should.be.false;
+
+        manager.createUpload(&#039;uploadId&#039;, &#039;/path/to/file.ext&#039;, &#039;file.ext&#039;, 123);
+        manager.cancelUpload(&#039;uploadId&#039;);
+        onCanceledSpy.calledOnce.should.be.true;
+
+        onCanceledSpy.getCall(0).args[0].should.equal(&#039;uploadId&#039;);
+    });
+
+    describe(&#039;should correctly return the file data by hash&#039;, function () {
+        it(&#039;should correctly return the data&#039;, function (done) {
+            searchItem = {
+                getPath: function () {
+                    return &#039;/path/to/file.ext&#039;;
+                },
+                getName: function () {
+                    return &#039;file.ext&#039;;
+                },
+                getStats: function () {
+                    return { size: 123 };
+                }
+            };
+
+            manager.getFileInfoByHash(&#039;randomHash&#039;, function (err, fullFilePath, fileName, fileSize) {
+                (err === null).should.be.true;
+
+                fullFilePath.should.equal(&#039;/path/to/file.ext&#039;);
+                fileName.should.equal(&#039;file.ext&#039;);
+                fileSize.should.equal(123);
+
+                done();
+            });
+        });
+
+        it(&#039;should correctly return an error&#039;, function (done) {
+            searchItemError = new Error(&#039;error message&#039;);
+
+            manager.getFileInfoByHash(&#039;randomHash&#039;, function (err, fullFilePath, fileName, fileSize) {
+                err.should.be.an.instanceof(Error);
+                err.message.should.equal(&#039;error message&#039;);
+
+                (fullFilePath === null).should.be.true;
+                (fileName === null).should.be.true;
+                (fileSize === null).should.be.true;
+
+                done();
+            });
+        });
+
+        it(&#039;should correctly return null if the item was not found&#039;, function (done) {
+            manager.getFileInfoByHash(&#039;randomHash&#039;, function (err, fullFilePath, fileName, fileSize) {
+                (err === null).should.be.true;
+
+                (fullFilePath === null).should.be.true;
+                (fileName === null).should.be.true;
+                (fileSize === null).should.be.true;
+
+                done();
+            });
+        });
+    });
+
+    describe(&#039;should correctly return the running upload ids&#039;, function () {
+        it(&#039;it should correctly return an empty array&#039;, function (done) {
+            manager.getRunningUploadIds(function (ids) {
+                ids.should.be.an.instanceof(Array);
+                ids.should.have.a.lengthOf(0);
+
+                done();
+            });
+        });
+
+        it(&#039;should correctly return the upload id&#039;, function (done) {
+            manager.createUpload(&#039;uploadId&#039;);
+            manager.createUpload(&#039;uploadId&#039;);
+
+            manager.getRunningUploadIds(function (ids) {
+                ids.should.have.a.lengthOf(1);
+                ids[0].should.equal(&#039;uploadId&#039;);
+
+                done();
+            });
+        });
+    });
+
+    it(&#039;should correctly end a upload&#039;, function (done) {
+        var onEndedSpy = sandbox.spy();
+        manager.onUploadEnded(onEndedSpy);
+
+        manager.createUpload(&#039;uploadId&#039;);
+
+        manager.uploadEnded(&#039;randomId&#039;, &#039;reason&#039;); // not found
+        manager.uploadEnded(&#039;uploadId&#039;, &#039;reason&#039;);
+        manager.uploadEnded(&#039;uploadId&#039;, &#039;reason&#039;); // already ended
+
+        onEndedSpy.calledOnce.should.be.true;
+
+        onEndedSpy.getCall(0).args[0].should.equal(&#039;uploadId&#039;);
+        onEndedSpy.getCall(0).args[1].should.equal(&#039;reason&#039;);
+
+        manager.getRunningUploadIds(function (ids) {
+            ids.should.have.a.lengthOf(0);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly update the upload status&#039;, function () {
+        var onUpdateSpy = sandbox.spy();
+
+        manager.onUploadStatusChanged(onUpdateSpy);
+
+        manager.createUpload(&#039;uploadId&#039;);
+
+        manager.updateUploadStatus(&#039;randomId&#039;, &#039;status&#039;); // not found
+        manager.updateUploadStatus(&#039;uploadId&#039;, &#039;status&#039;);
+
+        onUpdateSpy.calledOnce.should.be.true;
+
+        onUpdateSpy.getCall(0).args[0].should.equal(&#039;uploadId&#039;);
+        onUpdateSpy.getCall(0).args[1].should.equal(&#039;status&#039;);
+    });
+});
+//# sourceMappingURL=UploadManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

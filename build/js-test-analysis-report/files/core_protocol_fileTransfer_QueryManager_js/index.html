@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/fileTransfer/QueryManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/fileTransfer/QueryManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">75.39</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">147</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">24.32</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.32</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var events = require(&#039;events&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var QueryFactory = require(&#039;../../../../src/core/protocol/fileTransfer/query/QueryFactory&#039;);
+var QueryManager = require(&#039;../../../../src/core/protocol/fileTransfer/query/QueryManager&#039;);
+var ObjectConfig = require(&#039;../../../../src/core/config/ObjectConfig&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; FILE TRANSFER --&gt; QueryManager&#039;, function () {
+    var sandbox = null;
+
+    var queryManager = null;
+    var bridge = null;
+    var queryFactory = null;
+    var config = null;
+    var circuitManager = null;
+
+    var queries = [];
+
+    it(&#039;should correctly construct the query manager&#039;, function () {
+        queryManager = new QueryManager(config, queryFactory, circuitManager, bridge);
+
+        queryManager.should.be.instanceof(QueryManager);
+        Object.keys(queryManager.getQueries()).length.should.equal(0);
+    });
+
+    it(&#039;should immediately emit an end event, when there are not enough circuits ready&#039;, function (done) {
+        bridge.emit(&#039;newBroadcastQuery&#039;, &#039;foobar&#039;, new Buffer(10));
+
+        bridge.once(&#039;end&#039;, function (ident, reason) {
+            Object.keys(queryManager.getQueries()).length.should.equal(0);
+
+            ident.should.equal(&#039;foobar&#039;);
+            reason.should.equal(&#039;NO_ANON&#039;);
+            done();
+        });
+    });
+
+    it(&#039;should allow three queries&#039;, function () {
+        circuitManager.emit(&#039;circuitCount&#039;, 2);
+
+        bridge.emit(&#039;newBroadcastQuery&#039;, &#039;query1&#039;, new Buffer(0));
+        bridge.emit(&#039;newBroadcastQuery&#039;, &#039;query2&#039;, new Buffer(0));
+        bridge.emit(&#039;newBroadcastQuery&#039;, &#039;query3&#039;, new Buffer(0));
+
+        var queries = queryManager.getQueries();
+
+        (queries[&#039;query1&#039;] == undefined).should.be.false;
+        (queries[&#039;query2&#039;] == undefined).should.be.false;
+        (queries[&#039;query3&#039;] == undefined).should.be.false;
+    });
+
+    it(&#039;should emit a result event&#039;, function (done) {
+        bridge.once(&#039;result&#039;, function (identifier) {
+            identifier.should.equal(&#039;query2&#039;);
+            done();
+        });
+
+        queries[1].emit(&#039;result&#039;);
+    });
+
+    it(&#039;should remove the query when it is ended and propagate the event&#039;, function (done) {
+        bridge.once(&#039;end&#039;, function (identifier) {
+            identifier.should.equal(&#039;query1&#039;);
+
+            Object.keys(queryManager.getQueries()).length.should.equal(2);
+
+            done();
+        });
+
+        queries[0].emit(&#039;end&#039;, &#039;COMPLETE&#039;);
+    });
+
+    it(&#039;should not allow a new query when the maximum amount of parallel queries has been exhausted&#039;, function (done) {
+        bridge.once(&#039;end&#039;, function (ident, reason) {
+            ident.should.equal(&#039;query5&#039;);
+            reason.should.equal(&#039;MAX_EXCEED&#039;);
+            (queryManager.getQueries()[&#039;query5&#039;] === undefined).should.be.true;
+            Object.keys(queryManager.getQueries()).length.should.equal(3);
+            done();
+        });
+
+        bridge.emit(&#039;newBroadcastQuery&#039;, &#039;query4&#039;, new Buffer(0));
+        bridge.emit(&#039;newBroadcastQuery&#039;, &#039;query5&#039;, new Buffer(0));
+    });
+
+    it(&#039;should manually abort a query&#039;, function (done) {
+        bridge.once(&#039;end&#039;, function (ident, reason) {
+            ident.should.equal(&#039;query2&#039;);
+            reason.should.equal(&#039;MANUAL&#039;);
+
+            (queryManager.getQueries()[&#039;query2&#039;] === undefined).should.be.true;
+            Object.keys(queryManager.getQueries()).length.should.equal(2);
+
+            done();
+        });
+
+        bridge.emit(&#039;abort&#039;, &#039;query2&#039;);
+    });
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+
+        config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (what) {
+                if (what === &#039;fileTransfer.query.maximumNumberOfParallelQueries&#039;)
+                    return 3;
+                if (what === &#039;fileTransfer.query.minimumNumberOfReadyCircuits&#039;)
+                    return 2;
+            }
+        });
+
+        bridge = new events.EventEmitter();
+
+        circuitManager = new events.EventEmitter();
+        circuitManager.getReadyCircuits = function () {
+            return [];
+        };
+
+        queryFactory = testUtils.stubPublicApi(sandbox, QueryFactory, {
+            constructBroadcastBasedQuery: function (searchObject) {
+                var query = new events.EventEmitter();
+                query.kickOff = function () {
+                    queries.push(query);
+                };
+
+                query.abort = function (reason) {
+                    query.emit(&#039;end&#039;, reason);
+                };
+
+                query.getQueryId = function () {
+                    return null;
+                };
+
+                return query;
+            }
+        });
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+});
+//# sourceMappingURL=QueryManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

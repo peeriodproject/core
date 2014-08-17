@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/topology/BucketStore.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/topology/BucketStore.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">66.38</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">164</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">35.77</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.69</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var BucketStore = require(&#039;../../../src/core/topology/BucketStore&#039;);
+var ContactNodeFactory = require(&#039;../../../src/core/topology/ContactNodeFactory&#039;);
+
+describe(&#039;CORE --&gt; TOPOLOGY --&gt; BucketStore&#039;, function () {
+    var databasePath = testUtils.getFixturePath(&#039;core/topology/bucketstore/db&#039;);
+    var store = null;
+
+    beforeEach(function () {
+        testUtils.createFolder(databasePath);
+        store = new BucketStore(&#039;name&#039;, databasePath);
+    });
+
+    afterEach(function () {
+        // close the database
+        store.close();
+        store = null;
+
+        // remove the temporary database folder
+        testUtils.deleteFolderRecursive(databasePath);
+    });
+
+    it(&#039;should correctly instantiate BucketStore without error&#039;, function () {
+        store.should.be.a.instanceof(BucketStore);
+
+        store.open();
+        store.isOpen().should.be.true;
+    });
+
+    it(&#039;should close the bucket store correctly&#039;, function () {
+        store.close();
+        store.close();
+        store.isOpen().should.be.false;
+    });
+
+    it(&#039;should correctly return if the specified bucket contains the id&#039;, function () {
+        var contact1 = ContactNodeFactory.createDummy();
+        var contact2 = ContactNodeFactory.createDummy();
+
+        store.add(&#039;bucket1&#039;, contact1.getId().getBuffer(), contact1.getLastSeen(), contact1.getAddresses());
+        store.contains(&#039;bucket1&#039;, contact1.getId().getBuffer()).should.be.true;
+
+        store.contains(&#039;bucket1&#039;, contact2.getId().getBuffer()).should.equal(contact1.getId().equals(contact2.getId()));
+    });
+
+    it(&#039;should return the correct object stored for the specific bucket/id combination&#039;, function () {
+        var contact = ContactNodeFactory.createDummy();
+        var contactJSON = JSON.stringify({
+            addresses: contact.getAddresses(),
+            id: contact.getId().getBuffer(),
+            lastSeen: contact.getLastSeen()
+        });
+
+        store.add(&#039;bucket1&#039;, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
+        JSON.stringify(store.get(&#039;bucket1&#039;, contact.getId().getBuffer())).should.equal(contactJSON);
+    });
+
+    it(&#039;should correctly return all items stored in a specified bucket sorted by lastSeen&#039;, function () {
+        var contacts = [];
+        var amount = 10;
+
+        for (var i = 0; i &lt; amount; i++) {
+            var contact = ContactNodeFactory.createDummy();
+
+            contacts.push(contact);
+        }
+
+        // add items
+        store.addAll(&#039;bucket1&#039;, contacts);
+
+        var all = store.getAll(&#039;bucket1&#039;);
+        var lastTimestamp = 0;
+        var gotAmount = 0;
+
+        for (var i in all) {
+            var lastSeen = all[i].lastSeen;
+
+            lastSeen.should.be.greaterThan(lastTimestamp);
+
+            lastTimestamp = lastSeen;
+            gotAmount++;
+        }
+
+        gotAmount.should.be.equal(amount);
+    });
+
+    it(&#039;should correctly return the contact node which was not seen for the longest time&#039;, function () {
+        var contacts = [];
+        var amount = 10;
+
+        for (var i = 0; i &lt; amount; i++) {
+            var contact = ContactNodeFactory.createDummy();
+            contacts.push(contact);
+        }
+
+        // add items
+        store.addAll(&#039;bucket1&#039;, contacts);
+
+        var lastSeenObject = store.getLongestNotSeen(&#039;bucket1&#039;);
+
+        lastSeenObject.lastSeen.should.equal(contacts[0].getLastSeen());
+    });
+
+    it(&#039;should correctly return a random item for the specified bucket key&#039;, function () {
+        var contacts = [];
+        var amount = 10;
+
+        for (var i = 0; i &lt; amount; i++) {
+            var contact = ContactNodeFactory.createDummy();
+            contacts.push(contact);
+        }
+
+        // add items
+        store.addAll(&#039;bucket1&#039;, contacts);
+
+        var randomObject = store.getRandom(&#039;bucket1&#039;);
+        var found = false;
+
+        for (var i in contacts) {
+            if (contacts[i].getLastSeen() === randomObject.lastSeen) {
+                found = true;
+                break;
+            }
+        }
+
+        found.should.be.true;
+    });
+
+    it(&#039;should add multiple contacts at once&#039;, function () {
+        var contact1 = ContactNodeFactory.createDummy();
+        var contact2 = ContactNodeFactory.createDummy();
+        var contact3 = ContactNodeFactory.createDummy();
+
+        store.addAll(&#039;bucket1&#039;, [contact1, contact2, contact3]); //
+        store.contains(&#039;bucket1&#039;, contact1.getId().getBuffer()).should.be.true;
+        store.contains(&#039;bucket1&#039;, contact2.getId().getBuffer()).should.be.true;
+        store.contains(&#039;bucket1&#039;, contact3.getId().getBuffer()).should.be.true;
+        store.size(&#039;bucket1&#039;).should.equal(3);
+    });
+
+    it(&#039;should correctly remove an item from the database even if it does not exists&#039;, function () {
+        var contact = ContactNodeFactory.createDummy();
+
+        store.add(&#039;bucket1&#039;, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
+        store.remove(&#039;bucket1&#039;, contact.getId().getBuffer());
+
+        store.remove(&#039;randomBucket&#039;, contact.getId().getBuffer());
+
+        //store.size(&#039;bucket1&#039;).should.equal(0);
+        (null === store.get(&#039;bucket1&#039;, contact.getId().getBuffer())).should.be.true;
+    });
+
+    it(&#039;should return the correct size items stored under the given bucket key&#039;, function () {
+        var contact = ContactNodeFactory.createDummy();
+
+        store.add(&#039;bucket1&#039;, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
+        store.size(&#039;bucket1&#039;).should.equal(1);
+
+        store.size(&#039;bucket0&#039;).should.equal(0);
+    });
+});
+//# sourceMappingURL=BucketStore.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

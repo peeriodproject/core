@@ -130,7 +130,7 @@ class Bucket implements BucketInterface {
 			}
 		}
 
-		return process.nextTick(callback.bind(null, null, contacts));
+		return process.nextTick(callback.bind(null, null, contacts.slice()));
 	}
 
 	public getLongestNotSeen (callback:(err:Error, contact:ContactNodeInterface) => any):void {
@@ -201,7 +201,7 @@ class Bucket implements BucketInterface {
 					removed = true;
 				}
 
-				updatedCallback();
+				return updatedCallback();
 			}
 		});
 
@@ -215,7 +215,7 @@ class Bucket implements BucketInterface {
 					added = true;
 				}
 
-				updatedCallback();
+				return updatedCallback();
 			}
 		});
 	}

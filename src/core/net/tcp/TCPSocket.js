@@ -104,6 +104,11 @@ var TCPSocket = (function (_super) {
         if (this.getSocket() && !this._preventWrite) {
             this._preventWrite = true;
 
+            if (this._idleTimeout) {
+                global.clearTimeout(this._idleTimeout);
+                this._idleTimeout = null;
+            }
+
             this.getSocket().end(data, encoding);
         }
     };
@@ -171,6 +176,7 @@ var TCPSocket = (function (_super) {
 
         socket.on('close', function (had_error) {
             _this._preventWrite = true;
+            _this._socket.removeAllListeners();
             _this._socket = null;
 
             _this.emit('destroy');
@@ -205,11 +211,10 @@ var TCPSocket = (function (_super) {
         var _this = this;
         if (this._idleTimeout) {
             global.clearTimeout(this._idleTimeout);
+            this._idleTimeout = null;
         }
 
         this._idleTimeout = global.setTimeout(function () {
-            _this._idleTimeout = null;
-
             if (_this._closeWhenIdle) {
                 _this.end();
             }
@@ -220,6 +225,7 @@ var TCPSocket = (function (_super) {
         var _this = this;
         if (this._heartbeatTimeout) {
             global.clearTimeout(this._heartbeatTimeout);
+            this._heartbeatTimeout = null;
         }
 
         this._heartbeatTimeout = global.setTimeout(function () {
@@ -250,6 +256,7 @@ var TCPSocket = (function (_super) {
                 this._resetHeartbeatTimeout();
             } catch (e) {
                 this.getSocket().end();
+                logger.warn('TCPSocket -> catched end buffer');
             }
 
             buffer = null;
@@ -279,6 +286,7 @@ var TCPSocket = (function (_super) {
                 this._resetHeartbeatTimeout();
             } catch (e) {
                 this.getSocket().end();
+                logger.warn('TCPSocket -> catched end string');
             }
         }
 

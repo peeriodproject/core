@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/hydra/HydraCircuit.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/hydra/HydraCircuit.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">79.00</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">376</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">29.38</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.71</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var crypto = require(&#039;crypto&#039;);
+var events = require(&#039;events&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var ObjectConfig = require(&#039;../../../../src/core/config/ObjectConfig&#039;);
+
+var HydraMessageCenter = require(&#039;../../../../src/core/protocol/hydra/HydraMessageCenter&#039;);
+var ConnectionManager = require(&#039;../../../../src/core/protocol/hydra/ConnectionManager&#039;);
+
+var CircuitExtender = require(&#039;../../../../src/core/protocol/hydra/CircuitExtender&#039;);
+var CircuitExtenderFactory = require(&#039;../../../../src/core/protocol/hydra/CircuitExtenderFactory&#039;);
+var NodePicker = require(&#039;../../../../src/core/protocol/hydra/NodePicker&#039;);
+var HydraCircuit = require(&#039;../../../../src/core/protocol/hydra/HydraCircuit&#039;);
+
+var ReadableHydraMessage = require(&#039;../../../../src/core/protocol/hydra/messages/ReadableHydraMessage&#039;);
+
+var LayeredEncDecHandlerFactory = require(&#039;../../../../src/core/protocol/hydra/messages/Aes128GcmLayeredEncDecHandlerFactory&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; HYDRA --&gt; HydraCircuit&#039;, function () {
+    var sandbox = null;
+
+    var circuit = null;
+
+    var extendEmitter = new events.EventEmitter();
+
+    // STUBS
+    var configStub = null;
+    var circuitExtenderFactoryStub = null;
+    var messageCenterStub = null;
+    var connectionManagerStub = null;
+
+    var relayNodes = null;
+    var additiveNodes = [{ ip: &#039;1.1.1.1&#039;, port: 80 }];
+
+    var terminate = null;
+    var digest = null;
+
+    var digestCount = 0;
+
+    // HELPER FUNCTIONS
+    var messageForcedThrough = null;
+
+    var currentNodeToExtendWith = null;
+
+    var createNodePickerStub = function () {
+        return testUtils.stubPublicApi(sandbox, NodePicker, {
+            pickAdditionalRelayNode: function (cb) {
+                cb({ ip: &#039;2.2.2.2&#039;, port: 80 });
+            },
+            pickNextAdditiveNodeBatch: function (cb) {
+                cb(additiveNodes);
+            },
+            pickRelayNodeBatch: function (cb) {
+                cb([
+                    {
+                        ip: &#039;a&#039;
+                    },
+                    {
+                        ip: &#039;b&#039;
+                    },
+                    {
+                        ip: &#039;c&#039;
+                    }
+                ]);
+            }
+        });
+    };
+
+    var createCircuit = function () {
+        return new HydraCircuit(configStub, 3, createNodePickerStub(), messageCenterStub, connectionManagerStub, new LayeredEncDecHandlerFactory(), circuitExtenderFactoryStub);
+    };
+
+    var reject = function () {
+        extendEmitter.emit(&#039;answer&#039;, null, true, null);
+    };
+    var accept = function () {
+        currentNodeToExtendWith.circuitId = &#039;cafebabecafebabecafebabecafebabe&#039;;
+        var key = crypto.pseudoRandomBytes(16);
+        currentNodeToExtendWith.incomingKey = key;
+        currentNodeToExtendWith.outgoingKey = key;
+
+        circuit.getLayeredEncDec().addNode(currentNodeToExtendWith);
+
+        setImmediate(function () {
+            extendEmitter.emit(&#039;answer&#039;, null, false, currentNodeToExtendWith);
+        });
+    };
+    var errorWithTermination = function () {
+        setImmediate(function () {
+            extendEmitter.emit(&#039;answer&#039;, new Error(&#039;Circuit socket terminated&#039;), false, null);
+        });
+    };
+    var errorOut = function () {
+        setImmediate(function () {
+            extendEmitter.emit(&#039;answer&#039;, new Error(&#039;Foobar&#039;), false, null);
+        });
+    };
+
+    //---------------------------------------
+    it(&#039;should correctly initialize a HydraCircuit instance&#039;, function () {
+        circuit = createCircuit();
+        circuit.should.be.instanceOf(HydraCircuit);
+    });
+
+    it(&#039;should manage to fully construct a circuit&#039;, function (done) {
+        circuit = createCircuit();
+
+        extendEmitter.once(&#039;extending&#039;, function () {
+            accept();
+
+            extendEmitter.once(&#039;extending&#039;, function () {
+                accept();
+
+                extendEmitter.once(&#039;extending&#039;, function () {
+                    accept();
+                });
+            });
+        });
+
+        circuit.on(&#039;isConstructed&#039;, function () {
+            circuit.getCircuitNodes().length.should.equal(3);
+            circuit.getCircuitId().should.equal(&#039;cafebabecafebabecafebabecafebabe&#039;);
+            done();
+        });
+        circuit.construct();
+    });
+
+    it(&#039;should handle a rejection and successfully retry&#039;, function (done) {
+        circuit = createCircuit();
+
+        extendEmitter.once(&#039;extending&#039;, function () {
+            accept();
+
+            extendEmitter.once(&#039;extending&#039;, function () {
+                reject();
+
+                extendEmitter.once(&#039;extending&#039;, function () {
+                    accept();
+
+                    extendEmitter.once(&#039;extending&#039;, function () {
+                        accept();
+                    });
+                });
+            });
+        });
+
+        circuit.on(&#039;isConstructed&#039;, done);
+        circuit.construct();
+    });
+
+    it(&#039;should teardown the circuit on too many rejections and close the socket&#039;, function (done) {
+        circuit = createCircuit();
+
+        extendEmitter.once(&#039;extending&#039;, function () {
+            accept();
+
+            extendEmitter.once(&#039;extending&#039;, function () {
+                digestCount.should.equal(3);
+                reject();
+
+                extendEmitter.once(&#039;extending&#039;, function () {
+                    reject();
+                });
+            });
+        });
+
+        circuit.on(&#039;isTornDown&#039;, function () {
+            circuit.alsoClosedSocket.should.be.true;
+            digestCount.should.equal(2);
+            done();
+        });
+
+        circuit.construct();
+    });
+
+    it(&#039;should teardown the circuit on too many rejections and not close the socket&#039;, function (done) {
+        circuit = createCircuit();
+
+        extendEmitter.once(&#039;extending&#039;, function () {
+            reject();
+
+            extendEmitter.once(&#039;extending&#039;, function () {
+                reject();
+            });
+        });
+
+        circuit.on(&#039;isTornDown&#039;, function () {
+            digestCount.should.equal(2);
+            circuit.alsoClosedSocket.should.be.false;
+            done();
+        });
+
+        circuit.construct();
+    });
+
+    it(&#039;should teardown the circuit on a regular error and close the socket&#039;, function (done) {
+        circuit = createCircuit();
+
+        extendEmitter.once(&#039;extending&#039;, function () {
+            accept();
+
+            extendEmitter.once(&#039;extending&#039;, function () {
+                errorOut();
+            });
+        });
+
+        circuit.on(&#039;isTornDown&#039;, function () {
+            circuit.alsoClosedSocket.should.be.true;
+            done();
+        });
+
+        circuit.construct();
+    });
+
+    it(&#039;should teardown the circuit on a regular error and not close the socket&#039;, function (done) {
+        circuit = createCircuit();
+
+        extendEmitter.once(&#039;extending&#039;, function () {
+            errorOut();
+        });
+
+        circuit.on(&#039;isTornDown&#039;, function () {
+            circuit.alsoClosedSocket.should.be.false;
+            done();
+        });
+
+        circuit.construct();
+    });
+
+    it(&#039;should teardown the circuit on a circuit termination error and not close the socket&#039;, function (done) {
+        circuit = createCircuit();
+
+        extendEmitter.once(&#039;extending&#039;, function () {
+            accept();
+
+            extendEmitter.once(&#039;extending&#039;, function () {
+                errorWithTermination();
+            });
+        });
+
+        circuit.on(&#039;isTornDown&#039;, function () {
+            circuit.alsoClosedSocket.should.be.false;
+            done();
+        });
+
+        circuit.construct();
+    });
+
+    it(&#039;should construct a circuit but tear it down on circuit termination&#039;, function (done) {
+        circuit = createCircuit();
+
+        extendEmitter.once(&#039;extending&#039;, function () {
+            accept();
+
+            extendEmitter.once(&#039;extending&#039;, function () {
+                accept();
+
+                extendEmitter.once(&#039;extending&#039;, function () {
+                    accept();
+                });
+            });
+        });
+
+        circuit.on(&#039;isConstructed&#039;, function () {
+            digestCount.should.equal(3);
+
+            circuit.on(&#039;isTornDown&#039;, function () {
+                digestCount.should.equal(2);
+                done();
+            });
+
+            terminate(&#039;cafebabecafebabecafebabecafebabe&#039;);
+        });
+        circuit.construct();
+    });
+
+    it(&#039;should force a decrypted circuit message through&#039;, function (done) {
+        circuit = createCircuit();
+
+        extendEmitter.once(&#039;extending&#039;, function () {
+            accept();
+
+            extendEmitter.once(&#039;extending&#039;, function () {
+                accept();
+
+                extendEmitter.once(&#039;extending&#039;, function () {
+                    accept();
+                });
+            });
+        });
+
+        circuit.on(&#039;isConstructed&#039;, function () {
+            var cleartext = new Buffer(&#039;Deine mudda stinkt nach fisch.&#039;);
+            var from = circuit.getLayeredEncDec().getNodes()[0];
+
+            circuit.getLayeredEncDec().encrypt(cleartext, null, function (err, buff) {
+                digest(from, testUtils.stubPublicApi(sandbox, ReadableHydraMessage, {
+                    getPayload: function () {
+                        return buff;
+                    }
+                }));
+
+                setTimeout(function () {
+                    messageForcedThrough.should.equal(&#039;Deine mudda stinkt nach fisch.&#039;);
+                    done();
+                }, 100);
+            });
+        });
+        circuit.construct();
+    });
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (what) {
+                if (what === &#039;hydra.circuit.extensionReactionTimeBaseInSeconds&#039;)
+                    return 1;
+                if (what === &#039;hydra.circuit.extensionReactionTimeFactor&#039;)
+                    return 1.1;
+                if (what === &#039;hydra.circuit.maximumExtensionRetries&#039;)
+                    return 1;
+            }
+        });
+
+        circuitExtenderFactoryStub = testUtils.stubPublicApi(sandbox, CircuitExtenderFactory, {
+            create: function () {
+                return testUtils.stubPublicApi(sandbox, CircuitExtender, {
+                    extend: function (nodeToExtendWith, batch, callback) {
+                        currentNodeToExtendWith = nodeToExtendWith;
+
+                        setImmediate(function () {
+                            extendEmitter.emit(&#039;extending&#039;);
+                        });
+
+                        extendEmitter.once(&#039;answer&#039;, callback);
+                    }
+                });
+            }
+        });
+
+        connectionManagerStub = testUtils.stubPublicApi(sandbox, ConnectionManager, {
+            on: function (what, callback) {
+                if (what === &#039;circuitTermination&#039;)
+                    terminate = callback;
+            }
+        });
+        messageCenterStub = testUtils.stubPublicApi(sandbox, HydraMessageCenter, {
+            forceCircuitMessageThrough: function (buffer) {
+                messageForcedThrough = buffer.toString();
+            },
+            on: function (what, callback) {
+                if (what === &#039;ENCRYPTED_DIGEST_cafebabecafebabecafebabecafebabe&#039;) {
+                    digestCount++;
+                    digest = callback;
+                }
+            },
+            removeListener: function (what, func) {
+                if (what === &#039;ENCRYPTED_DIGEST_cafebabecafebabecafebabecafebabe&#039;) {
+                    if (func === digest) {
+                        digestCount--;
+                    }
+                }
+            }
+        });
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+});
+//# sourceMappingURL=HydraCircuit.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

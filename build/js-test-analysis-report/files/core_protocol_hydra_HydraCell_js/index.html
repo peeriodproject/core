@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/hydra/HydraCell.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/hydra/HydraCell.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">72.33</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">227</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">29.92</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.30</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var crypto = require(&#039;crypto&#039;);
+var events = require(&#039;events&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var ObjectConfig = require(&#039;../../../../src/core/config/ObjectConfig&#039;);
+
+var HydraMessageCenter = require(&#039;../../../../src/core/protocol/hydra/HydraMessageCenter&#039;);
+
+var HydraCell = require(&#039;../../../../src/core/protocol/hydra/HydraCell&#039;);
+
+var WritableEncryptedMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/Aes128GcmWritableMessageFactory&#039;);
+var ReadableDecryptedMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/Aes128GcmReadableDecryptedMessageFactory&#039;);
+
+var ReadableHydraMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/ReadableHydraMessageFactory&#039;);
+
+var ReadableCellCreatedRejectedMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/ReadableCellCreatedRejectedMessageFactory&#039;);
+var ReadableAdditiveSharingMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/ReadableAdditiveSharingMessageFactory&#039;);
+var ReadableCreateCellAdditiveMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/ReadableCreateCellAdditiveMessageFactory&#039;);
+
+var WritableHydraMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/WritableHydraMessageFactory&#039;);
+var WritableCellCreatedRejectedMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/WritableCellCreatedRejectedMessageFactory&#039;);
+var WritableAdditiveSharingMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/WritableAdditiveSharingMessageFactory&#039;);
+var WritableCreateCellAdditiveMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; HYDRA --&gt; HydraCell&#039;, function () {
+    var sandbox = null;
+
+    // STUBS
+    var configStub = null;
+    var connectionManager = null;
+    var messageCenter = null;
+
+    var writableCreateCellFactory = new WritableCreateCellAdditiveMessageFactory();
+    var writableAdditiveFactory = new WritableAdditiveSharingMessageFactory();
+    var writableHydraFactory = new WritableHydraMessageFactory();
+    var encryptionFactory = new WritableEncryptedMessageFactory();
+    var cellCreatedRejectedFactory = new WritableCellCreatedRejectedMessageFactory();
+    var readableHydraFactory = new ReadableHydraMessageFactory();
+
+    // CHECKERS
+    var lastMessageSent = null;
+
+    var cell = null;
+    var count = 0;
+    var succ = null;
+
+    // HELPER FUNCTIONS
+    var sendRelayExtendCellRequest = function () {
+        var uuid = crypto.pseudoRandomBytes(16).toString(&#039;hex&#039;);
+        var additivePayload = crypto.pseudoRandomBytes(256);
+        var predecessor = cell.getPredecessor();
+
+        var m1 = writableCreateCellFactory.constructMessage(false, uuid, additivePayload);
+        var m2 = writableAdditiveFactory.constructMessage(&#039;1.1.1.1&#039;, 80, m1);
+        var m3 = writableHydraFactory.constructMessage(&#039;ADDITIVE_SHARING&#039;, m2);
+        encryptionFactory.encryptMessage(predecessor.incomingKey, true, m3, function (err, buff) {
+            if (err)
+                throw err;
+
+            var m4 = writableHydraFactory.constructMessage(&#039;ENCRYPTED_SPITOUT&#039;, buff, buff.length, predecessor.circuitId);
+
+            connectionManager.emit(&#039;circuitMessage&#039;, readableHydraFactory.create(m4), predecessor);
+        });
+
+        return uuid;
+    };
+
+    var sendExtensionResponse = function (reject, fuckUp) {
+        var successor = cell.getSuccessor();
+
+        var m1 = cellCreatedRejectedFactory.constructMessage(fuckUp ? (new Buffer(16).toString(&#039;hex&#039;)) : cell.getCurrentUUID(), reject ? null : new Buffer(20), reject ? null : new Buffer(256));
+        var m2 = writableHydraFactory.constructMessage(&#039;CELL_CREATED_REJECTED&#039;, m1, m1.length, successor.circuitId);
+
+        connectionManager.emit(&#039;circuitMessage&#039;, readableHydraFactory.create(m2), successor);
+    };
+
+    var createCell = function (predecessorNode) {
+        cell = new HydraCell(predecessorNode, configStub, connectionManager, messageCenter, new ReadableDecryptedMessageFactory(), new WritableEncryptedMessageFactory());
+        return cell;
+    };
+
+    it(&#039;should correctly initialize the cell&#039;, function () {
+        createCell({
+            ip: &#039;2.2.2.2&#039;,
+            port: 100,
+            circuitId: crypto.pseudoRandomBytes(16),
+            socketIdentifier: &#039;ident1&#039;,
+            incomingKey: crypto.pseudoRandomBytes(16),
+            outgoingKey: crypto.pseudoRandomBytes(16)
+        }).should.be.instanceof(HydraCell);
+    });
+
+    it(&#039;should correctly send a CREATE_CELL_ADDITIVE request&#039;, function (done) {
+        sendRelayExtendCellRequest();
+
+        setTimeout(function () {
+            succ = cell.getSuccessor();
+            succ.ip.should.equal(&#039;1.1.1.1&#039;);
+            succ.port.should.equal(80);
+
+            lastMessageSent.to.should.equal(cell.getSuccessor());
+            lastMessageSent.type.should.equal(&#039;CREATE_CELL_ADDITIVE&#039;);
+
+            messageCenter.listeners(&#039;CELL_CREATED_REJECTED_&#039; + succ.circuitId).length.should.equal(1);
+            cell.getExtensionTimeout().should.not.equal(0);
+
+            done();
+        }, 200);
+    });
+
+    it(&#039;should handle the rejection&#039;, function (done) {
+        sendExtensionResponse(true, false);
+
+        setTimeout(function () {
+            (cell.getSuccessor() == null).should.be.true;
+            lastMessageSent.to.should.equal(cell.getPredecessor());
+            messageCenter.listeners(&#039;CELL_CREATED_REJECTED_&#039; + succ.circuitId).length.should.equal(0);
+            cell.getExtensionTimeout().should.equal(0);
+
+            done();
+        }, 200);
+    });
+
+    it(&#039;should handle the acceptance of an extension&#039;, function (done) {
+        sendRelayExtendCellRequest();
+
+        setTimeout(function () {
+            sendExtensionResponse(false, false);
+
+            setTimeout(function () {
+                (cell.getSuccessor() == null).should.be.false;
+                messageCenter.listeners(&#039;CELL_CREATED_REJECTED_&#039; + succ.circuitId).length.should.equal(0);
+                lastMessageSent.to.should.equal(cell.getPredecessor());
+                lastMessageSent.type.should.equal(&#039;ENCRYPTED_DIGEST&#039;);
+                cell.getExtensionTimeout().should.equal(0);
+                done();
+            }, 200);
+        }, 200);
+    });
+
+    it(&#039;should tear down the circuit on a socket termination&#039;, function (done) {
+        cell.once(&#039;isTornDown&#039;, done);
+        connectionManager.emit(&#039;circuitTermination&#039;, cell.getSuccessor().circuitId);
+    });
+
+    it(&#039;should teardown the circuit when extending the cell&#039;, function (done) {
+        createCell({
+            ip: &#039;2.2.2.2&#039;,
+            port: 100,
+            circuitId: crypto.pseudoRandomBytes(16),
+            socketIdentifier: &#039;ident1&#039;,
+            incomingKey: crypto.pseudoRandomBytes(16),
+            outgoingKey: crypto.pseudoRandomBytes(16)
+        });
+
+        sendRelayExtendCellRequest();
+
+        setTimeout(function () {
+            succ = cell.getSuccessor();
+
+            cell.on(&#039;isTornDown&#039;, function () {
+                cell.getExtensionTimeout().should.equal(0);
+                messageCenter.listeners(&#039;CELL_CREATED_REJECTED_&#039; + succ.circuitId).length.should.equal(0);
+                done();
+            });
+        }, 20);
+    });
+
+    it(&#039;should teardown the circuit when extending the cell on mismatching uuids&#039;, function (done) {
+        createCell({
+            ip: &#039;2.2.2.2&#039;,
+            port: 100,
+            circuitId: crypto.pseudoRandomBytes(16),
+            socketIdentifier: &#039;ident1&#039;,
+            incomingKey: crypto.pseudoRandomBytes(16),
+            outgoingKey: crypto.pseudoRandomBytes(16)
+        });
+
+        sendRelayExtendCellRequest();
+
+        setTimeout(function () {
+            cell.on(&#039;isTornDown&#039;, function () {
+                done();
+            });
+
+            sendExtensionResponse(false, true);
+        }, 200);
+    });
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (what) {
+                if (what === &#039;hydra.cell.extensionReactionInSeconds&#039;)
+                    return 1;
+            }
+        });
+
+        connectionManager = new events.EventEmitter();
+
+        connectionManager.pipeCircuitMessageTo = function (to, msgType, payload) {
+            if (!to.socketIdentifier) {
+                to.socketIdentifier = &#039;hydraNode&#039; + ++count;
+            }
+
+            lastMessageSent = {
+                to: to,
+                type: msgType,
+                payload: Buffer
+            };
+        };
+        connectionManager.removeFromCircuitNodes = function () {
+        };
+
+        messageCenter = new HydraMessageCenter(connectionManager, new ReadableHydraMessageFactory(), new ReadableCellCreatedRejectedMessageFactory(), new ReadableAdditiveSharingMessageFactory(), new ReadableCreateCellAdditiveMessageFactory(), new WritableCreateCellAdditiveMessageFactory(), new WritableAdditiveSharingMessageFactory(), new WritableHydraMessageFactory(), new WritableCellCreatedRejectedMessageFactory());
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+});
+//# sourceMappingURL=HydraCell.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

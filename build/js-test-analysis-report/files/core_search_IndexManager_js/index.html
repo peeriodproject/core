@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/search/IndexManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/search/IndexManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">78.15</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">282</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">43.33</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.61</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var AppQuitHandler = require(&#039;../../../src/core/utils/AppQuitHandler&#039;);
+var FolderWatcherManager = require(&#039;../../../src/core/fs/FolderWatcherManager&#039;);
+var IndexManager = require(&#039;../../../src/core/search/IndexManager&#039;);
+var ObjectConfig = require(&#039;../../../src/core/config/ObjectConfig&#039;);
+var PathValidator = require(&#039;../../../src/core/fs/PathValidator&#039;);
+var SearchManager = require(&#039;../../../src/core/search/SearchManager&#039;);
+
+describe(&#039;CORE --&gt; SEARCH --&gt; IndexManager&#039;, function () {
+    var sandbox;
+    var indexManager;
+    var configStub;
+    var appQuitHandlerStub;
+    var folderWatcherManagerStub;
+    var pathValidatorStub;
+    var searchManagerStub;
+
+    var closableAsync = {
+        open: function (callback) {
+            if (callback) {
+                return process.nextTick(callback.bind(null, null));
+            }
+        },
+        close: function (callback) {
+            if (callback) {
+                return process.nextTick(callback.bind(null, null));
+            }
+        }
+    };
+
+    var createIndexManager = function (stubExtensions, callback) {
+        var pathValidatorMethods = {};
+        var searchManagerMethods = closableAsync;
+
+        if (stubExtensions.pathValidator) {
+            for (var key in stubExtensions.pathValidator) {
+                pathValidatorMethods[key] = stubExtensions.pathValidator[key];
+            }
+        }
+
+        pathValidatorStub = testUtils.stubPublicApi(sandbox, PathValidator, pathValidatorMethods);
+
+        if (stubExtensions.searchManager) {
+            for (var key in stubExtensions.searchManager) {
+                searchManagerMethods[key] = stubExtensions.searchManager[key];
+            }
+        }
+
+        searchManagerStub = testUtils.stubPublicApi(sandbox, SearchManager, searchManagerMethods);
+
+        indexManager = new IndexManager(configStub, appQuitHandlerStub, folderWatcherManagerStub, pathValidatorStub, searchManagerStub);
+        indexManager.open(function () {
+            callback();
+        });
+    };
+
+    var closeAndDone = function (done) {
+        indexManager.close(function () {
+            done();
+        });
+    };
+
+    this.timeout(0);
+
+    beforeEach(function () {
+        sandbox = sinon.sandbox.create();
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (key) {
+                if (key === &#039;search.indexManager.indexRunnerDelayInMilliSeconds&#039;) {
+                    return 1000;
+                } else if (key === &#039;search.indexManager.indexRunnersInParallel&#039;) {
+                    return 3;
+                }
+            }
+        });
+        appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
+        folderWatcherManagerStub = testUtils.stubPublicApi(sandbox, FolderWatcherManager, closableAsync);
+    });
+
+    afterEach(function () {
+        sandbox.restore();
+        indexManager = null;
+        configStub = null;
+        appQuitHandlerStub = null;
+        folderWatcherManagerStub = null;
+        searchManagerStub = null;
+    });
+
+    it(&#039;should correctly return the open/close state of the index manager&#039;, function (done) {
+        createIndexManager({}, function () {
+            indexManager.open(function (err) {
+                (err === null).should.be.true;
+
+                indexManager.isOpen(function (err, isOpen) {
+                    (err === null).should.be.true;
+                    isOpen.should.be.true;
+
+                    indexManager.close(function () {
+                        indexManager.isOpen(function (err, isOpen) {
+                            (err === null).should.be.true;
+                            isOpen.should.be.false;
+
+                            closeAndDone(done);
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    it(&#039;should correctly pause and resume the indexing process&#039;, function (done) {
+        createIndexManager({}, function () {
+            indexManager.isPaused(function (isPaused) {
+                isPaused.should.be.false;
+
+                indexManager.pause(function () {
+                    indexManager.isPaused(function (isPaused) {
+                        isPaused.should.be.true;
+
+                        indexManager.resume(function () {
+                            indexManager.isPaused(function (isPaused) {
+                                isPaused.should.be.false;
+
+                                closeAndDone(done);
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    describe(&#039;should correctly call the searchManager.addItem method&#039;, function () {
+        var stats = &#039;{&quot;foo&quot;:&quot;bar&quot;}&#039;;
+
+        it(&#039;should correctly add a fresh item which does not exits in the database&#039;, function (done) {
+            createIndexManager({
+                pathValidator: {
+                    getHash: function (filePath, callback) {
+                        return process.nextTick(callback.bind(null, null, &#039;fileHash&#039;));
+                    }
+                },
+                searchManager: {
+                    // no item exists in the database
+                    getItem: function (pathToIndex, callback) {
+                        return process.nextTick(callback.bind(null, null, null));
+                    },
+                    addItem: function (pathToIndex, stats, fileHash, callback) {
+                        return process.nextTick(callback.bind(null));
+                    }
+                }
+            }, function () {
+                indexManager.addToIndex(&#039;/path/to/index&#039;, JSON.parse(stats), function (err) {
+                    searchManagerStub.getItem.calledOnce.should.be.true;
+
+                    pathValidatorStub.validateStats.called.should.be.false;
+                    pathValidatorStub.validateHash.called.should.be.false;
+
+                    searchManagerStub.addItem.calledOnce.should.be.true;
+
+                    (err === null).should.be.true;
+
+                    closeAndDone(done);
+                });
+            });
+        });
+
+        it(&#039;should correctly reject the creation after the stats validation&#039;, function (done) {
+            createIndexManager({
+                pathValidator: {
+                    // validate stats check returns &#039;isValid:true&#039;
+                    validateStats: function (filePath, stats, callback) {
+                        return process.nextTick(callback.bind(null, null, true, JSON.parse(&#039;{&quot;fs.Stats&quot;: &quot;Object&quot;}&#039;)));
+                    }
+                },
+                searchManager: {
+                    // a item exists in the database
+                    getItem: function (pathToIndex, callback) {
+                        return process.nextTick(callback.bind(null, &#039;hash&#039;, JSON.parse(&#039;{&quot;fs.Stats&quot;: &quot;Object&quot;}&#039;)));
+                    },
+                    addItem: function (pathToIndex, stats, fileHash, callback) {
+                        return process.nextTick(callback.bind(null));
+                    }
+                }
+            }, function () {
+                indexManager.addToIndex(&#039;/path/to/index&#039;, JSON.parse(stats), function (err) {
+                    searchManagerStub.getItem.calledOnce.should.be.true;
+
+                    pathValidatorStub.validateStats.calledOnce.should.be.true;
+                    pathValidatorStub.validateHash.called.should.be.false;
+
+                    searchManagerStub.addItem.called.should.be.false;
+
+                    err.should.be.an.instanceof(Error);
+                    err.message.should.equal(&#039;IndexManager~_processPendingPathToIndex: The item at path &quot;&#039; + &#039;/path/to/index&#039; + &#039;&quot; is already indexed.&#039;);
+
+                    closeAndDone(done);
+                });
+            });
+        });
+
+        it(&#039;should correctly reject the creation after the hash validation&#039;, function (done) {
+            createIndexManager({
+                pathValidator: {
+                    // validate stats check returns &#039;isValid:false&#039;
+                    validateStats: function (filePath, stats, callback) {
+                        return process.nextTick(callback.bind(null, null, false, JSON.parse(&#039;{&quot;fs.Stats&quot;: &quot;Object&quot;}&#039;)));
+                    },
+                    // validate hash check returns &#039;isValid:true&#039;
+                    validateHash: function (filePath, hash, callback) {
+                        return process.nextTick(callback.bind(null, null, true, &#039;searchManagerHash&#039;));
+                    }
+                },
+                searchManager: {
+                    // a item exists in the database
+                    getItem: function (pathToIndex, callback) {
+                        return process.nextTick(callback.bind(null, &#039;hash&#039;, JSON.parse(&#039;{&quot;fs.Stats&quot;: &quot;Object&quot;}&#039;)));
+                    },
+                    addItem: function (pathToIndex, stats, fileHash, callback) {
+                        return process.nextTick(callback.bind(null));
+                    }
+                }
+            }, function () {
+                indexManager.addToIndex(&#039;/path/to/index&#039;, JSON.parse(stats), function (err) {
+                    searchManagerStub.getItem.calledOnce.should.be.true;
+
+                    pathValidatorStub.validateStats.calledOnce.should.be.true;
+                    pathValidatorStub.validateHash.calledOnce.should.be.true;
+
+                    searchManagerStub.addItem.called.should.be.false;
+
+                    err.should.be.an.instanceof(Error);
+                    err.message.should.equal(&#039;IndexManager~_processPendingPathToIndex: The item at path &quot;&#039; + &#039;/path/to/index&#039; + &#039;&quot; is already indexed.&#039;);
+
+                    closeAndDone(done);
+                });
+            });
+        });
+
+        it(&#039;should correctly add the item after the stats and the hash validation failed&#039;, function (done) {
+            createIndexManager({
+                pathValidator: {
+                    // validate stats check returns &#039;isValid:false&#039;
+                    validateStats: function (filePath, stats, callback) {
+                        return process.nextTick(callback.bind(null, null, false, JSON.parse(&#039;{&quot;fs.Stats&quot;: &quot;Object&quot;}&#039;)));
+                    },
+                    // validate hash check returns &#039;isValid:false&#039;
+                    validateHash: function (filePath, hash, callback) {
+                        return process.nextTick(callback.bind(null, null, false, &#039;searchManagerHash&#039;));
+                    }
+                },
+                searchManager: {
+                    // a item exists in the database
+                    getItem: function (pathToIndex, callback) {
+                        return process.nextTick(callback.bind(null, &#039;hash&#039;, JSON.parse(&#039;{&quot;fs.Stats&quot;: &quot;Object&quot;}&#039;)));
+                    },
+                    addItem: function (pathToIndex, stats, fileHash, callback) {
+                        return process.nextTick(callback.bind(null));
+                    }
+                }
+            }, function () {
+                indexManager.addToIndex(&#039;/path/to/index&#039;, JSON.parse(stats), function (err) {
+                    searchManagerStub.getItem.calledOnce.should.be.true;
+
+                    pathValidatorStub.validateStats.calledOnce.should.be.true;
+                    pathValidatorStub.validateHash.calledOnce.should.be.true;
+
+                    searchManagerStub.addItem.called.should.be.true;
+
+                    (err === null).should.be.true;
+
+                    closeAndDone(done);
+                });
+            });
+        });
+    });
+    //it (&#039;should correctly batch it&#039;)
+});
+//# sourceMappingURL=IndexManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

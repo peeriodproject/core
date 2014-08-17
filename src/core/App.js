@@ -63,6 +63,7 @@ var UploadBridge = require('./share/UploadBridge');
 
 // ui imports
 var UiShareManagerComponent = require('./ui/share/UiShareManagerComponent');
+var UiDeamon = require('./ui/UiDeamon');
 var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
 
@@ -153,7 +154,6 @@ var App = {
     * @param {string} locale
     */
     setLocale: function (locale) {
-        console.log('set locale', locale);
         i18n.setLocale(locale);
     },
     _initSplashScreen: function () {
@@ -176,11 +176,12 @@ var App = {
         this.appQuitHandler = new AppQuitHandler(nwApp);
         this._loadConfig();
 
+        this.startUiDeamon();
+        this._initSplashScreen();
+
         if (win && win.showDevTools) {
             win.showDevTools();
         }
-
-        this._initSplashScreen();
 
         // copy node discovery.json to app data path
         var nodeDiscoveryPath = path.resolve(this.getDataPath(), 'nodeDiscovery.json');
@@ -309,6 +310,13 @@ var App = {
                 return internalCallback(searchConfig, searchClient);
             }
         });
+    },
+    startUiDeamon: function () {
+        if (!this._environmentConfig.get('environment.startUi')) {
+            return;
+        }
+
+        var uiDeamon = new UiDeamon(this._gui, this.appQuitHandler);
     },
     startUi: function () {
         var _this = this;

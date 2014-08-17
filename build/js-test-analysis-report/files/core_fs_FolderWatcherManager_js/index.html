@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/fs/FolderWatcherManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/fs/FolderWatcherManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">76.08</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">428</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">50.06</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">3.58</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var fs = require(&#039;fs&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var AppQuitHandler = require(&#039;../../../src/core/utils/AppQuitHandler&#039;);
+var JSONStateHandler = require(&#039;../../../src/core/utils/JSONStateHandler&#039;);
+var JSONStateHandlerFactory = require(&#039;../../../src/core/utils/JSONStateHandlerFactory&#039;);
+var ObjectConfig = require(&#039;../../../src/core/config/ObjectConfig&#039;);
+var FolderWatcher = require(&#039;../../../src/core/fs/FolderWatcher&#039;);
+var FolderWatcherFactory = require(&#039;../../../src/core/fs/FolderWatcherFactory&#039;);
+var FolderWatcherManager = require(&#039;../../../src/core/fs/FolderWatcherManager&#039;);
+
+describe(&#039;CORE --&gt; FS --&gt; FolderWatcherManager&#039;, function () {
+    var managerStoragePath = testUtils.getFixturePath(&#039;core/fs/folderWatcherManagerTest&#039;);
+    var validPathToWatch = testUtils.getFixturePath(&#039;core/fs/folderWatcherManagerTest/folderToWatch&#039;);
+    var invalidPathToWatch = testUtils.getFixturePath(&#039;core/fs/folderWatcherManagerTest/invalidPathToWatch&#039;);
+    var sandbox;
+    var configStub;
+    var appQuitHandlerStub;
+    var folderWatcherStub;
+    var folderWatcherFactoryStub;
+    var stateHandlerStub;
+    var stateHandlerFactoryStub;
+
+    var createStateHandlerStub = function (state) {
+        if (typeof state === &quot;undefined&quot;) { state = {}; }
+        stateHandlerStub = testUtils.stubPublicApi(sandbox, JSONStateHandler, {
+            load: function (callback) {
+                return process.nextTick(callback.bind(null, null, state));
+            },
+            save: function (state, callback) {
+                if (callback) {
+                    return process.nextTick(callback.bind(null, null));
+                }
+            }
+        });
+    };
+
+    var closeAndDone = function (folderWatcherManager, done) {
+        folderWatcherManager.close(function () {
+            done();
+        });
+    };
+
+    beforeEach(function () {
+        sandbox = sinon.sandbox.create();
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (key) {
+                if (key === &#039;app.dataPath&#039;) {
+                    return managerStoragePath;
+                    //return [pathToWatchPath];
+                }
+            }
+        });
+        appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
+
+        createStateHandlerStub();
+
+        stateHandlerFactoryStub = testUtils.stubPublicApi(sandbox, JSONStateHandlerFactory, {
+            create: function () {
+                return stateHandlerStub;
+            }
+        });
+
+        folderWatcherStub = testUtils.stubPublicApi(sandbox, FolderWatcher);
+
+        folderWatcherFactoryStub = testUtils.stubPublicApi(sandbox, FolderWatcherFactory, {
+            create: function () {
+                return folderWatcherStub;
+            }
+        });
+
+        testUtils.createFolder(managerStoragePath);
+        testUtils.createFolder(validPathToWatch);
+    });
+
+    afterEach(function () {
+        sandbox.restore();
+
+        configStub = null;
+        appQuitHandlerStub = null;
+        stateHandlerFactoryStub = null;
+        folderWatcherStub = null;
+        folderWatcherFactoryStub = null;
+
+        testUtils.deleteFolderRecursive(managerStoragePath);
+        testUtils.deleteFolderRecursive(validPathToWatch);
+    });
+
+    it(&#039;should correctly instantiate FolderWatcherManager without error&#039;, function (done) {
+        var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub);
+
+        folderWatcherManager.should.be.an.instanceof(FolderWatcherManager);
+
+        closeAndDone(folderWatcherManager, done);
+    });
+
+    it(&#039;should correctly return the open/closed state of the manager&#039;, function (done) {
+        createStateHandlerStub({
+            paths: [
+                validPathToWatch
+            ]
+        });
+
+        var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+            onOpenCallback: function (err) {
+                (err === null).should.be.true;
+
+                folderWatcherManager.isOpen(function (err, isOpen) {
+                    (err === null).should.be.true;
+                    isOpen.should.be.true;
+
+                    folderWatcherManager.open(function (err) {
+                        (err === null).should.be.true;
+
+                        folderWatcherManager.close(function (err) {
+                            (err === null).should.be.true;
+
+                            folderWatcherManager.isOpen(function (err, isOpen) {
+                                isOpen.should.be.false;
+
+                                folderWatcherManager.close(function (err) {
+                                    (err === null).should.be.true;
+
+                                    closeAndDone(folderWatcherManager, done);
+                                });
+                            });
+                        });
+                    });
+                });
+            }
+        });
+    });
+
+    it(&#039;should throw an error if the specified path is not absolute&#039;, function (done) {
+        createStateHandlerStub({
+            paths: [
+                &#039;./not/a/absolute/path&#039;
+            ]
+        });
+
+        var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+            onOpenCallback: function (err) {
+                err.should.be.an.instanceof(Error);
+                err.message.should.equal(&#039;FolderWatcherManager~_checkFolderWatcherPaths: The specified path is not an absolute path. &quot;./not/a/absolute/path&quot;&#039;);
+
+                closeAndDone(folderWatcherManager, done);
+            }
+        });
+    });
+
+    it(&#039;should correctly create a watcher for the specified path&#039;, function (done) {
+        createStateHandlerStub({
+            paths: [
+                validPathToWatch
+            ]
+        });
+
+        var onWatcherAdd = sinon.spy();
+
+        var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+            onOpenCallback: function (err) {
+                (err === null).should.be.true;
+
+                folderWatcherFactoryStub.create.calledOnce.should.be.true;
+
+                folderWatcherManager.getFolderWatchers(function (watchers) {
+                    (watchers[validPathToWatch] === undefined).should.be.false;
+
+                    onWatcherAdd.calledOnce.should.be.true;
+                    onWatcherAdd.getCall(0).args[0].should.equal(validPathToWatch);
+
+                    closeAndDone(folderWatcherManager, done);
+                });
+            }
+        });
+
+        folderWatcherManager.on(&#039;watcher.add&#039;, onWatcherAdd);
+    });
+
+    it(&#039;should correctly remove the watcher if a path becomes invalid&#039;, function (done) {
+        createStateHandlerStub({
+            paths: [
+                validPathToWatch
+            ]
+        });
+
+        var onWatcherInvalid = sinon.spy();
+
+        var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+            onOpenCallback: function (err) {
+                testUtils.deleteFolderRecursive(validPathToWatch);
+
+                folderWatcherManager.checkFolderWatcherPaths(function () {
+                    folderWatcherManager.getFolderWatchers(function (watchers) {
+                        Object.keys(watchers).length.should.equal(0);
+
+                        onWatcherInvalid.calledOnce.should.be.true;
+                        onWatcherInvalid.getCall(0).args[0].should.equal(validPathToWatch);
+
+                        closeAndDone(folderWatcherManager, done);
+                    });
+                });
+            }
+        });
+
+        folderWatcherManager.on(&#039;watcher.invalid&#039;, onWatcherInvalid);
+    });
+
+    it(&#039;should correctly add the watcher if a path becomes valid&#039;, function (done) {
+        createStateHandlerStub({
+            paths: [
+                validPathToWatch
+            ]
+        });
+
+        testUtils.deleteFolderRecursive(validPathToWatch);
+
+        var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+            onOpenCallback: function (err) {
+                testUtils.createFolder(validPathToWatch);
+
+                folderWatcherManager.checkFolderWatcherPaths(function () {
+                    folderWatcherManager.getFolderWatchers(function (watchers) {
+                        Object.keys(watchers).length.should.equal(1);
+
+                        (watchers[validPathToWatch] === undefined).should.be.false;
+
+                        closeAndDone(folderWatcherManager, done);
+                    });
+                });
+            }
+        });
+    });
+
+    it(&#039;should correctly remove the folder watcher&#039;, function (done) {
+        createStateHandlerStub({
+            paths: [
+                validPathToWatch
+            ]
+        });
+
+        var onWatcherRemove = sinon.spy();
+
+        var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+            onOpenCallback: function (err) {
+                folderWatcherFactoryStub.create.calledOnce.should.be.true;
+
+                folderWatcherManager.removeFolderWatcher(validPathToWatch, function () {
+                    folderWatcherManager.getFolderWatchers(function (watchers) {
+                        Object.keys(watchers).length.should.equal(0);
+
+                        onWatcherRemove.calledOnce.should.be.true;
+                        onWatcherRemove.getCall(0).args[0].should.equal(validPathToWatch);
+
+                        closeAndDone(folderWatcherManager, done);
+                    });
+                });
+            }
+        });
+
+        folderWatcherManager.on(&#039;watcher.remove&#039;, onWatcherRemove);
+    });
+
+    it(&#039;should correctly remove a invalid folder watcher&#039;, function (done) {
+        createStateHandlerStub({
+            paths: [
+                invalidPathToWatch
+            ]
+        });
+
+        var onWatcherRemoveInvalid = sinon.spy();
+
+        var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+            onOpenCallback: function (err) {
+                folderWatcherFactoryStub.create.calledOnce.should.be.false;
+
+                folderWatcherManager.removeFolderWatcher(invalidPathToWatch, function () {
+                    onWatcherRemoveInvalid.calledOnce.should.be.true;
+                    onWatcherRemoveInvalid.getCall(0).args[0].should.equal(invalidPathToWatch);
+
+                    closeAndDone(folderWatcherManager, done);
+                });
+            }
+        });
+
+        folderWatcherManager.on(&#039;watcher.removeInvalid&#039;, onWatcherRemoveInvalid);
+    });
+
+    it(&#039;should correctly add the folder watcher&#039;, function (done) {
+        createStateHandlerStub({
+            paths: []
+        });
+
+        var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+            onOpenCallback: function (err) {
+                folderWatcherFactoryStub.create.callCount.should.equal(0);
+
+                folderWatcherManager.addFolderWatcher(validPathToWatch, function () {
+                    folderWatcherFactoryStub.create.calledOnce.should.be.true;
+
+                    folderWatcherManager.getFolderWatchers(function (watchers) {
+                        Object.keys(watchers).length.should.equal(1);
+
+                        closeAndDone(folderWatcherManager, done);
+                    });
+                });
+            }
+        });
+    });
+
+    describe(&#039;implementation tests: should correctly forward the events from the watchers&#039;, function () {
+        var folderWatcherConfigStub;
+
+        this.timeout(0);
+
+        beforeEach(function () {
+            folderWatcherConfigStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+                get: function (key) {
+                    if (key === &#039;fs.folderWatcher.interval&#039;) {
+                        return 1000;
+                    } else if (key === &#039;fs.folderWatcher.binaryInterval&#039;) {
+                        return 5000;
+                    } else if (key === &#039;fs.folderWatcher.eventDelay&#039;) {
+                        return 3000;
+                    }
+                }
+            });
+
+            folderWatcherFactoryStub = testUtils.stubPublicApi(sandbox, FolderWatcherFactory, {
+                create: function (config, pathToWatch, options) {
+                    options = options || {};
+                    return new FolderWatcher(folderWatcherConfigStub, pathToWatch, options);
+                }
+            });
+
+            testUtils.createFolder(validPathToWatch);
+        });
+
+        afterEach(function () {
+            testUtils.deleteFolderRecursive(validPathToWatch);
+        });
+
+        it(&#039;should correctly forward the add event&#039;, function (done) {
+            createStateHandlerStub({
+                paths: [
+                    validPathToWatch
+                ]
+            });
+
+            var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+                onOpenCallback: function (err) {
+                    folderWatcherManager.on(&#039;add&#039;, function (changedPath, stats) {
+                        changedPath.should.equal(validPathToWatch + &#039;/foo.txt&#039;);
+                        (stats !== null).should.be.true;
+
+                        closeAndDone(folderWatcherManager, done);
+                    });
+
+                    fs.writeFileSync(validPathToWatch + &#039;/foo.txt&#039;, new Buffer(100));
+                }
+            });
+        });
+
+        it(&#039;should correctly forward the change event&#039;, function (done) {
+            var filePath = validPathToWatch + &#039;/foo.txt&#039;;
+
+            createStateHandlerStub({
+                paths: [
+                    validPathToWatch
+                ]
+            });
+
+            fs.writeFileSync(filePath, new Buffer(100));
+
+            var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+                onOpenCallback: function (err) {
+                    folderWatcherManager.on(&#039;add&#039;, function (changedPath, stats) {
+                        fs.writeFileSync(filePath, new Buffer(500));
+                    });
+
+                    folderWatcherManager.on(&#039;change&#039;, function (changedPath, stats) {
+                        changedPath.should.equal(filePath);
+                        (stats !== null).should.be.true;
+
+                        closeAndDone(folderWatcherManager, done);
+                    });
+                }
+            });
+        });
+
+        it(&#039;should correctly forward the unlink event&#039;, function (done) {
+            var filePath = validPathToWatch + &#039;/foo.txt&#039;;
+
+            createStateHandlerStub({
+                paths: [
+                    validPathToWatch
+                ]
+            });
+
+            fs.writeFileSync(filePath, new Buffer(100));
+
+            var onAddChangeCallback = function () {
+            };
+            var folderWatcherManager = new FolderWatcherManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, folderWatcherFactoryStub, {
+                onOpenCallback: function (err) {
+                    // on/off test
+                    folderWatcherManager.on(&#039;change&#039;, onAddChangeCallback);
+                    folderWatcherManager.off(&#039;change&#039;, onAddChangeCallback);
+
+                    folderWatcherManager.on(&#039;add&#039;, function (changedPath, stats) {
+                        fs.unlinkSync(filePath);
+                    });
+
+                    folderWatcherManager.on(&#039;unlink&#039;, function (changedPath, stats) {
+                        changedPath.should.equal(filePath);
+                        (stats === null).should.be.true;
+
+                        closeAndDone(folderWatcherManager, done);
+                    });
+                }
+            });
+        });
+    });
+});
+//# sourceMappingURL=FolderWatcherManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>
