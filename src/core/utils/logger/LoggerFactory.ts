@@ -22,8 +22,6 @@ module LoggerFactory {
 		var envPronePath:string = process.env.NODE_ENV === 'test' ? 'src/config/mainConfig' : 'config/mainConfig';
 		var configPath:string = path.join(process.cwd(), envPronePath);
 
-		console.log(_logPath);
-
 		if (!_ircLogger) {
 			_ircLogger = new IrcLogger(new JSONConfig(configPath, ['net']), '', new IrcLoggerBackend(_logPath));
 		}
