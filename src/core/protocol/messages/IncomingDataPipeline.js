@@ -447,6 +447,7 @@ var IncomingDataPipeline = (function (_super) {
             for (var i = 0, l = dataArray.length; i < l; i++) {
                 // slice away the first four bytes (expected length)
                 var currentBuff = dataArray[i];
+                dataArray[i] = null;
                 var unignoredBuff = null;
 
                 if (bytesToIgnore) {
@@ -479,6 +480,7 @@ var IncomingDataPipeline = (function (_super) {
                 }
             }
 
+            tempMessageMemory = null;
             tempMessageMemory.data = newDataArray;
             tempMessageMemory.length = tempMessageMemory.length - 4 - expectedLength;
             tempMessageMemory.expectedLength = undefined;

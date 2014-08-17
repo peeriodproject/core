@@ -467,6 +467,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 			for (var i=0, l=dataArray.length; i<l; i++) {
 				// slice away the first four bytes (expected length)
 				var currentBuff:Buffer = dataArray[i];
+				dataArray[i] = null;
 				var unignoredBuff:Buffer = null;
 
 				if (bytesToIgnore) {
@@ -504,6 +505,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 
 			}
 
+			tempMessageMemory = null;
 			tempMessageMemory.data = newDataArray;
 			tempMessageMemory.length = tempMessageMemory.length - 4 - expectedLength;
 			tempMessageMemory.expectedLength = undefined;
