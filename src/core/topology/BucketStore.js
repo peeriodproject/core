@@ -173,8 +173,6 @@ var BucketStore = (function () {
         if (this._isOpen)
             return;
 
-        this._databaseEnvironment = new lmdb.Env();
-
         this._checkAndOpenDatabaseEnvironment();
 
         /*this._databaseEnvironment.open({
@@ -329,6 +327,7 @@ var BucketStore = (function () {
     BucketStore.prototype._checkAndOpenDatabaseEnvironment = function () {
         var _this = this;
         var openDatabase = function () {
+            _this._databaseEnvironment = new lmdb.Env();
             _this._databaseEnvironment.open({
                 //name: this._name,
                 path: _this._path
@@ -338,14 +337,22 @@ var BucketStore = (function () {
         try  {
             openDatabase();
         } catch (e) {
-            if (e.message === 'MDB_INVALID: File is not an MDB file') {
-                fs.unlinkSync(path.join(this._path, 'data.mdb'));
+            var dbPath = path.join(this._path, 'data.mdb');
+            var lockPath = path.join(this._path, 'lock.mdb');
 
-                //fs.unlinkSync(path.join(this._path, 'lock.mdb'));
-                openDatabase();
-            } else {
-                throw e;
+            this._databaseEnvironment = null;
+
+            if (e.message === 'MDB_INVALID: File is not an MDB file') {
+                fs.unlinkSync(dbPath);
+
+                if (fs.existsSync(lockPath)) {
+                    fs.unlinkSync(lockPath);
+                }
+
+                return openDatabase();
             }
+
+            throw e;
         }
     };
 
