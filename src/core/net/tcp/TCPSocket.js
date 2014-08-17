@@ -42,12 +42,6 @@ var TCPSocket = (function (_super) {
         */
         this._constructorOpts = null;
         /**
-        * List of event names of net.Socket which will be simply propagated on emission
-        *
-        * @member {string[]} core.net.tcp.TCPSocket~_eventsToPropagate
-        */
-        this._eventsToPropagate = ['data', 'close', 'end', 'error'];
-        /**
         * Identification string.
         *
         * @member {string} core.net.tcp.TCPSocket~_identifier
@@ -67,6 +61,11 @@ var TCPSocket = (function (_super) {
         */
         this._socket = null;
         this._preventWrite = false;
+        this._errorListener = null;
+        this._closeListener = null;
+        this._drainListener = null;
+        this._dataListener = null;
+        this._endListener = null;
 
         if (!(socket && socket instanceof net.Socket)) {
             throw new Error('TCPSocket.constructor: Invalid or no socket specified');
@@ -101,15 +100,12 @@ var TCPSocket = (function (_super) {
         this._resetHeartbeatTimeout();
     }
     TCPSocket.prototype.end = function (data, encoding) {
-        if (this.getSocket() && !this._preventWrite) {
+        if (this._socket && !this._preventWrite) {
             this._preventWrite = true;
 
-            if (this._idleTimeout) {
-                global.clearTimeout(this._idleTimeout);
-                this._idleTimeout = null;
-            }
+            this._clearHeartbeatAndIdleTimeouts();
 
-            this.getSocket().end(data, encoding);
+            this._socket.end(data, encoding);
         }
     };
 
@@ -118,15 +114,11 @@ var TCPSocket = (function (_super) {
     };
 
     TCPSocket.prototype.getIP = function () {
-        var socket = this.getSocket();
-
-        return socket.remoteAddress;
+        return this._socket.remoteAddress;
     };
 
     TCPSocket.prototype.getIPPortString = function () {
-        var socket = this.getSocket();
-
-        return socket.remoteAddress + ':' + socket.remotePort;
+        return this._socket.remoteAddress + ':' + this._socket.remotePort;
     };
 
     TCPSocket.prototype.getSocket = function () {
@@ -149,72 +141,89 @@ var TCPSocket = (function (_super) {
         this._socket = socket;
     };
 
+    TCPSocket.prototype._clearHeartbeatAndIdleTimeouts = function () {
+        if (this._idleTimeout) {
+            global.clearTimeout(this._idleTimeout);
+            this._idleTimeout = null;
+        }
+
+        if (this._heartbeatTimeout) {
+            global.clearTimeout(this._heartbeatTimeout);
+            this._heartbeatTimeout = null;
+        }
+    };
+
     TCPSocket.prototype._setupListeners = function () {
         var _this = this;
-        var socket = this.getSocket();
-
-        socket.on('error', function (err) {
+        this._errorListener = function (err) {
             logger.error('THIS IS A SOCKET ERROR!', {
                 emsg: err.message,
-                stack: err.stack,
-                /*trace: {
-                typeName: trace.getTypeName(),
-                fnName  : trace.getFunctionName(),
-                fileName: trace.getFileName(),
-                line    : trace.getLineNumber()
-                },*/
+                //stack:err.stack,
+                //trace: {
+                // typeName: trace.getTypeName(),
+                // fnName  : trace.getFunctionName(),
+                // fileName: trace.getFileName(),
+                // line    : trace.getLineNumber()
+                // },
                 ident: _this.getIdentifier()
             });
 
             _this._preventWrite = true;
+            _this.emit('error', err);
+        };
+        this._socket.on('error', this._errorListener);
 
-            try  {
-                socket.destroy();
-            } catch (e) {
-            }
-        });
+        this._closeListener = function (had_error) {
+            _this._socket.destroy();
 
-        socket.on('close', function (had_error) {
+            _this._socket.removeListener('error', _this._errorListener);
+            _this._socket.removeListener('close', _this._closeListener);
+            _this._socket.removeListener('end', _this._endListener);
+            _this._socket.removeListener('data', _this._dataListener);
+            _this._socket.removeListener('drain', _this._drainListener);
+
             _this._preventWrite = true;
-            _this._socket.removeAllListeners();
             _this._socket = null;
 
-            _this.emit('destroy');
+            _this.emit('close', had_error);
 
-            if (_this._idleTimeout) {
-                global.clearTimeout(_this._idleTimeout);
-                _this._idleTimeout = null;
-            }
-
-            if (_this._heartbeatTimeout) {
-                global.clearTimeout(_this._heartbeatTimeout);
-                _this._heartbeatTimeout = null;
-            }
+            _this._clearHeartbeatAndIdleTimeouts();
 
             process.nextTick(function () {
                 _this.removeAllListeners();
             });
-        });
+        };
+        this._socket.on('close', this._closeListener);
 
-        socket.on('end', function () {
+        this._endListener = function () {
             _this._preventWrite = true;
-        });
+            _this.emit('end');
+        };
+        this._socket.on('end', this._endListener);
 
-        socket.on('data', function () {
+        this._dataListener = function (data) {
             _this._resetIdleTimeout();
-        });
 
-        this._propagateEvents(this._eventsToPropagate);
+            _this.emit('data', data);
+        };
+        this._socket.on('data', this._dataListener);
+
+        this._drainListener = function () {
+            //console.log('drained');
+            _this._resetHeartbeatTimeout();
+        };
+        this._socket.on('drain', this._drainListener);
     };
 
     TCPSocket.prototype._resetIdleTimeout = function () {
         var _this = this;
         if (this._idleTimeout) {
             global.clearTimeout(this._idleTimeout);
-            this._idleTimeout = null;
         }
 
         this._idleTimeout = global.setTimeout(function () {
+            _this._idleTimeout = null;
+
             if (_this._closeWhenIdle) {
                 _this.end();
             }
@@ -225,13 +234,13 @@ var TCPSocket = (function (_super) {
         var _this = this;
         if (this._heartbeatTimeout) {
             global.clearTimeout(this._heartbeatTimeout);
-            this._heartbeatTimeout = null;
         }
 
         this._heartbeatTimeout = global.setTimeout(function () {
             _this._heartbeatTimeout = null;
 
             if (_this._doKeepOpen) {
+                //console.log('writing heartbeat');
                 _this.writeBuffer(new Buffer([0x00, 0x00, 0x00, 0x00]));
             } else {
                 _this._resetHeartbeatTimeout();
@@ -239,24 +248,18 @@ var TCPSocket = (function (_super) {
         }, this._sendHeartbeatAfterLastDataInMs);
     };
 
-    TCPSocket.prototype.writeBuffer = function (buffer, callback, forceAvoidSimulation) {
-        var _this = this;
-        if (this._simulatorRTT && !forceAvoidSimulation) {
-            global.setTimeout(function () {
-                _this.writeBuffer(buffer, callback, true);
-            }, this._simulatorRTT);
-            return;
-        }
-
+    TCPSocket.prototype.writeBuffer = function (buffer, callback) {
         var success = false;
 
-        if (!this._preventWrite && this.getSocket().writable) {
+        if (!this._preventWrite && this._socket.writable) {
             try  {
-                success = this.getSocket().write(buffer, callback);
-                this._resetHeartbeatTimeout();
+                success = this._socket.write(buffer, callback);
+
+                if (success) {
+                    this._resetHeartbeatTimeout();
+                }
             } catch (e) {
-                this.getSocket().end();
-                logger.warn('TCPSocket -> catched end buffer');
+                this._socket.end();
             }
 
             buffer = null;
@@ -266,27 +269,15 @@ var TCPSocket = (function (_super) {
     };
 
     TCPSocket.prototype.writeString = function (message, encoding, callback, forceAvoidSimulation) {
-        var _this = this;
         if (typeof encoding === "undefined") { encoding = 'utf8'; }
-        if (this._preventWrite)
-            return;
-
-        if (this._simulatorRTT && !forceAvoidSimulation) {
-            global.setTimeout(function () {
-                _this.writeString(message, encoding, callback, true);
-            }, this._simulatorRTT);
-            return;
-        }
-
         var success = false;
 
-        if (!this._preventWrite && this.getSocket().writable) {
+        if (!this._preventWrite && this._socket.writable) {
             try  {
                 success = this.getSocket().write(message, encoding, callback);
                 this._resetHeartbeatTimeout();
             } catch (e) {
-                this.getSocket().end();
-                logger.warn('TCPSocket -> catched end string');
+                this._socket.end();
             }
         }
 
@@ -294,6 +285,8 @@ var TCPSocket = (function (_super) {
     };
 
     /**
+    * @deprecated
+    *
     * Takes an array of event names and propagates the corresponding node.js's net.Socket events,
     * so that the raw socket doesn't have to be accessed.
     *

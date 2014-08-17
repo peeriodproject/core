@@ -44,13 +44,6 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	private _constructorOpts:TCPSocketOptions = null;
 
 	/**
-	 * List of event names of net.Socket which will be simply propagated on emission
-	 *
-	 * @member {string[]} core.net.tcp.TCPSocket~_eventsToPropagate
-	 */
-	private _eventsToPropagate:Array<string> = ['data', 'close', 'end', 'error'];
-
-	/**
 	 * Identification string.
 	 *
 	 * @member {string} core.net.tcp.TCPSocket~_identifier
@@ -73,6 +66,16 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	private _socket:net.Socket = null;
 
 	private _preventWrite:boolean = false;
+
+	private _errorListener:Function = null;
+
+	private _closeListener:Function = null;
+
+	private _drainListener:Function = null;
+
+	private _dataListener:Function = null;
+
+	private _endListener:Function = null;
 
 	public constructor (socket:net.Socket, opts:TCPSocketOptions) {
 		super();
@@ -113,15 +116,12 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	public end (data?:any, encoding?:string):void {
 
-		if (this.getSocket() && !this._preventWrite) {
+		if (this._socket && !this._preventWrite) {
 			this._preventWrite = true;
 
-			if (this._idleTimeout) {
-				global.clearTimeout(this._idleTimeout);
-				this._idleTimeout = null;
-			}
+			this._clearHeartbeatAndIdleTimeouts();
 
-			this.getSocket().end(data, encoding);
+			this._socket.end(data, encoding);
 		}
 	}
 
@@ -130,15 +130,11 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	}
 
 	public getIP ():string {
-		var socket = this.getSocket();
-
-		return socket.remoteAddress;
+		return this._socket.remoteAddress;
 	}
 
 	public getIPPortString ():string {
-		var socket = this.getSocket();//
-
-		return socket.remoteAddress + ':' + socket.remotePort;
+		return this._socket.remoteAddress + ':' + this._socket.remotePort;
 	}
 
 	public getSocket ():net.Socket {
@@ -161,88 +157,106 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		this._socket = socket;
 	}
 
-	private _setupListeners ():void {
-		var socket = this.getSocket();
-
-		socket.on('error', (err) => {
-
-			logger.error('THIS IS A SOCKET ERROR!', {
-				emsg: err.message,
-				stack:err.stack,
-				/*trace: {
-				 typeName: trace.getTypeName(),
-				 fnName  : trace.getFunctionName(),
-				 fileName: trace.getFileName(),
-				 line    : trace.getLineNumber()
-				 },*/
-				ident: this.getIdentifier()
-			});
-
-			this._preventWrite = true;
-
-			try {
-				socket.destroy();
-			}
-			catch (e) {}
-		});
-
-		socket.on('close', (had_error:boolean) => {
-			this._preventWrite = true;
-			this._socket.removeAllListeners();
-			this._socket = null;
-
-			this.emit('destroy');
-
-			if (this._idleTimeout) {
-				global.clearTimeout(this._idleTimeout);
-				this._idleTimeout = null;
-			}
-
-			if (this._heartbeatTimeout) {
-				global.clearTimeout(this._heartbeatTimeout);
-				this._heartbeatTimeout = null;
-			}
-
-			process.nextTick(() => {
-				this.removeAllListeners();
-			});
-		});
-
-		socket.on('end', () => {
-			this._preventWrite = true;
-		});
-
-		socket.on('data', () => {
-			this._resetIdleTimeout();
-		});
-
-		this._propagateEvents(this._eventsToPropagate);
-	}
-
-	private _resetIdleTimeout ():void {
+	private _clearHeartbeatAndIdleTimeouts ():void {
 		if (this._idleTimeout) {
 			global.clearTimeout(this._idleTimeout);
 			this._idleTimeout = null;
 		}
 
+		if (this._heartbeatTimeout) {
+			global.clearTimeout(this._heartbeatTimeout);
+			this._heartbeatTimeout = null;
+		}
+	}
+
+	private _setupListeners ():void {
+
+		this._errorListener = (err:Error) => {
+			logger.error('THIS IS A SOCKET ERROR!', {
+			 emsg: err.message,
+			 //stack:err.stack,
+			 //trace: {
+			 // typeName: trace.getTypeName(),
+			 // fnName  : trace.getFunctionName(),
+			 // fileName: trace.getFileName(),
+			 // line    : trace.getLineNumber()
+			 // },
+			 ident: this.getIdentifier()
+			 });
+
+			this._preventWrite = true;
+			this.emit('error', err);
+		};
+		this._socket.on('error', this._errorListener);
+
+		this._closeListener = (had_error:boolean) => {
+			this._socket.destroy();
+
+			this._socket.removeListener('error', this._errorListener);
+			this._socket.removeListener('close', this._closeListener);
+			this._socket.removeListener('end', this._endListener);
+			this._socket.removeListener('data', this._dataListener);
+			this._socket.removeListener('drain', this._drainListener);
+
+			this._preventWrite = true;
+			this._socket = null;
+
+			this.emit('close', had_error);
+
+			this._clearHeartbeatAndIdleTimeouts();
+
+			process.nextTick(() => {
+				this.removeAllListeners();
+			});
+		};
+		this._socket.on('close', this._closeListener);
+
+		this._endListener = () => {
+			this._preventWrite = true;
+			this.emit('end');
+		};
+		this._socket.on('end', this._endListener);
+
+		this._dataListener = (data:Buffer) => {
+			this._resetIdleTimeout();
+
+			this.emit('data', data);
+		};
+		this._socket.on('data', this._dataListener);
+
+		this._drainListener = () => {
+			//console.log('drained');
+			this._resetHeartbeatTimeout();
+		};
+		this._socket.on('drain', this._drainListener);
+
+	}
+
+	private _resetIdleTimeout ():void {
+		if (this._idleTimeout) {
+			global.clearTimeout(this._idleTimeout);
+		}
+
 		this._idleTimeout = global.setTimeout(() => {
+			this._idleTimeout = null;
+
 			if (this._closeWhenIdle) {
 				this.end();
 			}
-
 		}, this._closeAfterLastDataReceivedInMs);
 	}
 
 	private _resetHeartbeatTimeout ():void {
 		if (this._heartbeatTimeout) {
 			global.clearTimeout(this._heartbeatTimeout);
-			this._heartbeatTimeout = null;
 		}
 
 		this._heartbeatTimeout = global.setTimeout(() => {
 			this._heartbeatTimeout = null;
 
 			if (this._doKeepOpen) {
+				//console.log('writing heartbeat');
+
 				this.writeBuffer(new Buffer([0x00, 0x00, 0x00, 0x00]));
 			}
 			else {
@@ -251,30 +265,24 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		}, this._sendHeartbeatAfterLastDataInMs);
 	}
 
-	public writeBuffer (buffer:NodeBuffer, callback?:Function, forceAvoidSimulation?:boolean):boolean {
-
-		if (this._simulatorRTT && !forceAvoidSimulation) {
-			global.setTimeout(() => {
-				this.writeBuffer(buffer, callback, true);
-			}, this._simulatorRTT);
-			return;
-		}
+	public writeBuffer (buffer:NodeBuffer, callback?:Function):boolean {
 
 		var success:boolean = false;
 
-		if (!this._preventWrite && this.getSocket().writable) {
+		if (!this._preventWrite && this._socket.writable) {
 
 			try {
-				success = this.getSocket().write(buffer, callback);
-				this._resetHeartbeatTimeout();
+				success = this._socket.write(buffer, callback);
+
+				if (success) {
+					this._resetHeartbeatTimeout();
+				}
 			}
 			catch (e) {
-				this.getSocket().end();
-				logger.warn('TCPSocket -> catched end buffer');
+				this._socket.end();
 			}
 
 			buffer = null;
-
 		}
 
 		return success;
@@ -282,26 +290,16 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 	public writeString (message:string, encoding:string = 'utf8', callback?:Function, forceAvoidSimulation?:boolean):boolean {
 
-		if (this._preventWrite) return;
-
-		if (this._simulatorRTT && !forceAvoidSimulation) {
-			global.setTimeout(() => {
-				this.writeString(message, encoding, callback, true);
-			}, this._simulatorRTT);
-			return;
-		}
-
 		var success:boolean = false;
 
-		if (!this._preventWrite && this.getSocket().writable) {
+		if (!this._preventWrite && this._socket.writable) {
 
 			try {
 				success = this.getSocket().write(message, encoding, callback);
 				this._resetHeartbeatTimeout();
 			}
 			catch (e) {
-				this.getSocket().end();
-				logger.warn('TCPSocket -> catched end string');
+				this._socket.end();
 			}
 
 		}
@@ -310,6 +308,8 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	}
 
 	/**
+	 * @deprecated
+	 *
 	 * Takes an array of event names and propagates the corresponding node.js's net.Socket events,
 	 * so that the raw socket doesn't have to be accessed.
 	 *

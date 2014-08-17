@@ -120,15 +120,13 @@ var TCPSocketHandler = (function (_super) {
         this._heartbeatTimeout = opts.heartbeatTimeout;
         //this._TESTstartSocketInterval();
     }
-    TCPSocketHandler.prototype._TESTsocketCount = function (socket) {
-        var _this = this;
-        this._socketCount++;
-
-        socket.once('end', function () {
-            _this._socketCount--;
-        });
-    };
-
+    /*private _TESTsocketCount (socket:TCPSocketInterface):void {
+    this._socketCount++;
+    
+    socket.once('end', () => {
+    this._socketCount--;
+    });
+    }*/
     TCPSocketHandler.prototype._TESTstartSocketInterval = function () {
         /*global.setInterval(() => {
         var now:number = Math.floor(Date.now() / 1000);
@@ -197,8 +195,6 @@ var TCPSocketHandler = (function (_super) {
                     _this.emit('connection error', port, ip);
                 }
             } else {
-                _this._TESTsocketCount(socket);
-
                 if (callback) {
                     callback(socket);
                 } else {
@@ -250,7 +246,6 @@ var TCPSocketHandler = (function (_super) {
 
                     server.on('connection', function (sock) {
                         var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
-                        _this._TESTsocketCount(socket);
                         _this.emit('connected', socket, 'incoming');
                     });
 
