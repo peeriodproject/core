@@ -2,11 +2,11 @@
 var i18n = require('i18n');
 
 /**
-* @class core.ui.UiDeamon
-* @implements core.ui.UiDeamonInterface
+* @class core.ui.UiDaemon
+* @implements core.ui.UiDaemonInterface
 */
-var UiDeamon = (function () {
-    function UiDeamon(gui, appQuitHandler) {
+var UiDaemon = (function () {
+    function UiDaemon(gui, appQuitHandler) {
         this._menu = null;
         this._tray = null;
         this._tray = new gui.Tray({
@@ -42,8 +42,8 @@ var UiDeamon = (function () {
         };
         */
     }
-    return UiDeamon;
+    return UiDaemon;
 })();
 
-module.exports = UiDeamon;
-//# sourceMappingURL=UiDeamon.js.map
+module.exports = UiDaemon;
+//# sourceMappingURL=UiDaemon.js.map

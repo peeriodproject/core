@@ -63,7 +63,7 @@ var UploadBridge = require('./share/UploadBridge');
 
 // ui imports
 var UiShareManagerComponent = require('./ui/share/UiShareManagerComponent');
-var UiDeamon = require('./ui/UiDeamon');
+var UiDaemon = require('./ui/UiDaemon');
 var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
 
@@ -176,7 +176,7 @@ var App = {
         this.appQuitHandler = new AppQuitHandler(nwApp);
         this._loadConfig();
 
-        this.startUiDeamon();
+        this.startUiDaemon();
         this._initSplashScreen();
 
         if (win && win.showDevTools) {
@@ -311,12 +311,12 @@ var App = {
             }
         });
     },
-    startUiDeamon: function () {
+    startUiDaemon: function () {
         if (!this._environmentConfig.get('environment.startUi')) {
             return;
         }
 
-        var uiDeamon = new UiDeamon(this._gui, this.appQuitHandler);
+        var uiDeamon = new UiDaemon(this._gui, this.appQuitHandler);
     },
     startUi: function () {
         var _this = this;

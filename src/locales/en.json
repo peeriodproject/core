@@ -16,6 +16,6 @@
 	"uiRoutinesManager.installRoutinesDescription": "uiRoutinesManager.installRoutinesDescription",
 	"uiRoutinesManager.installRoutinesButtonPlaceholder": "uiRoutinesManager.installRoutinesButtonPlaceholder",
 	"uiRoutinesManager.installRoutinesWindowTitle": "uiRoutinesManager.installRoutinesWindowTitle",
-	"UiDeamon.trayTitle": "UiDeamon.trayTitle",
-	"UiDeamon.menu.quit.title": "UiDeamon.menu.quit.title",
+	"UiDaemon.trayTitle": "UiDaemon.trayTitle",
+	"UiDaemon.menu.quit.title": "UiDaemon.menu.quit.title",
 }
