@@ -185,6 +185,7 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 
 			this._pendingCycles.push(identifier);
 
+			// todo hier werden theoretisch immer instanz neue erzeugt ohne das eine referenz abgelegt wird die im callback wieder genullt wird
 			this._findClosestNodesCycleFactory.create(searchForId, startWithList, (resultingList:ContactNodeListInterface) => {
 				this._pendingCycles.splice(this._pendingCycles.indexOf(identifier), 1);
 				logger.log('findClosestNodes', 'Found closest nodes cycle done', {for: searchForId.toHexString()});
@@ -220,6 +221,8 @@ class FindClosestNodesManager extends events.EventEmitter implements FindClosest
 			catch (e) {
 				logger.error('Could not construct found closest nodes message');
 			}
+
+			searchForId = null;
 
 			if (payload) {
 				this._protocolConnectionManager.writeMessageTo(requestingNode, 'FOUND_CLOSEST_NODES', payload);

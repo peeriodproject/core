@@ -406,6 +406,7 @@ var ProtocolConnectionManager = (function (_super) {
         this.obtainConnectionTo(node, function (err, socket) {
             if (err) {
                 if (callback) {
+                    buffer = null;
                     callback(err);
                 }
             } else {
@@ -609,6 +610,7 @@ var ProtocolConnectionManager = (function (_super) {
 
         socket.end();
 
+        // todo: socket = null ?
         if ((confirmed || hydra) && !blockTerminationEvent) {
             this._emitTerminatedEventByIdentifier(identifier);
         }
