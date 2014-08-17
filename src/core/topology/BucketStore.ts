@@ -186,8 +186,6 @@ class BucketStore implements BucketStoreInterface {
 	public open ():void {
 		if (this._isOpen) return;
 
-		this._databaseEnvironment = new lmdb.Env();
-
 		this._checkAndOpenDatabaseEnvironment();
 
 		/*this._databaseEnvironment.open({
@@ -347,6 +345,7 @@ class BucketStore implements BucketStoreInterface {
 	 */
 	private _checkAndOpenDatabaseEnvironment ():void {
 		var openDatabase = () => {
+			this._databaseEnvironment = new lmdb.Env();
 			this._databaseEnvironment.open({
 				//name: this._name,
 				path: this._path
@@ -359,15 +358,22 @@ class BucketStore implements BucketStoreInterface {
 			openDatabase();
 		}
 		catch (e) {
-			if (e.message === 'MDB_INVALID: File is not an MDB file') {
-				fs.unlinkSync(path.join(this._path, 'data.mdb'));
-				//fs.unlinkSync(path.join(this._path, 'lock.mdb'));
+			var dbPath:string = path.join(this._path, 'data.mdb');
+			var lockPath:string = path.join(this._path, 'lock.mdb');
 
-				openDatabase();
+			this._databaseEnvironment = null;
+
+			if (e.message === 'MDB_INVALID: File is not an MDB file') {
+				fs.unlinkSync(dbPath);
+
+				if (fs.existsSync(lockPath)) {
+					fs.unlinkSync(lockPath);
+				}
+
+				return openDatabase();
 			}
-			else {
-				throw e;
-			}
+
+			throw e;
 		}
 	}
 
