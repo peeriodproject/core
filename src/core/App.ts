@@ -187,7 +187,8 @@ var App = {
 	start: function (gui, nwApp, dataPath, win) {
 
 		process.on('uncaughtException', (err:Error) => {
-			console.warn('Uncaught exception %o', err);
+			console.log('Uncaught exception');
+			console.log(err);
 		});
 
 		this._gui = gui;
