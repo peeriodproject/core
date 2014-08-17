@@ -115,13 +115,13 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 	private _socketCount:number = 0;
 	private _socketSecond:number = 0;
 
-	private _TESTsocketCount (socket:TCPSocketInterface):void {
+	/*private _TESTsocketCount (socket:TCPSocketInterface):void {
 		this._socketCount++;
 
 		socket.once('end', () => {
 			this._socketCount--;
 		});
-	}
+	}*/
 
 	private _TESTstartSocketInterval ():void {
 		/*global.setInterval(() => {
@@ -214,7 +214,6 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 				}
 			}
 			else {
-				this._TESTsocketCount(socket);
 
 				if (callback) {
 					callback(socket);
@@ -270,7 +269,6 @@ class TCPSocketHandler extends events.EventEmitter implements TCPSocketHandlerIn
 
 					server.on('connection', (sock:net.Socket) => {
 						var socket = this._socketFactory.create(sock, this.getDefaultSocketOptions());
-						this._TESTsocketCount(socket);
 						this.emit('connected', socket, 'incoming');
 					});
 

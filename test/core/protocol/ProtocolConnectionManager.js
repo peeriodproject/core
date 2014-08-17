@@ -166,7 +166,7 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () 
     it('should correctly timeout kill the incoming pending socket', function (done) {
         var socket = manager.getIncomingPendingSocketList()['_temp1'].socket;
 
-        socket.once('destroy', function () {
+        socket.once('close', function () {
             if (manager.getIncomingPendingSocketList()['_temp1'] === undefined) {
                 manager.removeAllListeners('terminatedConnection');
                 done();
@@ -210,11 +210,12 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () 
         var contactNode = ContactNodeFactory.createDummy('fe3626caca6c84fa4e5d323b6a26b897582c57f9', 'hex', '127.0.0.1', remotePort);
         manager.keepSocketsOpenFromNode(contactNode);
         var sock = manager.getConfirmedSocketByContactNode(contactNode);
-        sock.once('destroy', function () {
+        var errorFunc = function () {
             throw new Error('Should not happen, nope nope.');
-        });
+        };
+        sock.once('close', errorFunc);
         setTimeout(function () {
-            sock.removeAllListeners('destroy');
+            sock.removeListener('close', errorFunc);
             done();
         }, 1500);
     });
@@ -230,7 +231,7 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () 
         });
     });
 
-    it('should fail obtaining an outward connection to a node', function (done) {
+    it('should fail obtaining an outbound connection to a node', function (done) {
         var id = new Id(Id.byteBufferByHexString('fe3626caca6c84fa4e5d323b6a26b897582c57f9', 20), 160);
         var badContactNode = nodeFactory.create(id, [addressFactory.create('14.213.160.0', 1111)]);
 
@@ -322,11 +323,12 @@ describe('CORE --> PROTOCOL --> NET --> ProtocolConnectionManager', function () 
 
         manager.writeBufferTo(goodContactNode, new Buffer([0x01]), function (err) {
             if (!err) {
-                manager.getConfirmedSocketList()[ident].socket.on('close', function () {
+                var errorFunc = function () {
                     throw new Error('Should not happen, nope, nope');
-                });
+                };
+                manager.getConfirmedSocketList()[ident].socket.on('close', errorFunc);
                 setTimeout(function () {
-                    manager.getConfirmedSocketList()[ident].socket.removeAllListeners('close');
+                    manager.getConfirmedSocketList()[ident].socket.removeListener('close', errorFunc);
                     done();
                 }, 1500);
             }
