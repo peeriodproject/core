@@ -595,6 +595,7 @@ var ProtocolConnectionManager = (function (_super) {
         if (incoming) {
             if (incoming.timeout) {
                 global.clearTimeout(incoming.timeout);
+                incoming.timeout = null;
             }
             delete this._incomingPendingSockets[identifier];
         }
@@ -824,6 +825,8 @@ var ProtocolConnectionManager = (function (_super) {
             for (var i = 0; i < waiting.length; i++) {
                 var item = waiting[i];
                 global.clearTimeout(item.timeout);
+                item.timeout = null;
+
                 item.callback(null, socket);
             }
 
