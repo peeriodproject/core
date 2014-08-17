@@ -45,7 +45,7 @@
             "parallelismDelayInSeconds": 1.5
         },
         "networkMaintenance"          : {
-            "bucketRefreshRateInSeconds": 3600
+            "bucketRefreshRateInSeconds": 300
         },
         "nodeDiscovery"               : {
             "iterativeSeekTimeoutInMs": 1500,
@@ -70,7 +70,7 @@
         }
     },
     "hydra": {
-        "desiredNumberOfCircuits": 0,
+        "desiredNumberOfCircuits": 6,
         "maximumNumberOfMaintainedCells": 80,
         "minimumNumberOfRelayNodes": 3,
         "maximumNumberOfRelayNodes": 4,
