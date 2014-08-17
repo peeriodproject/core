@@ -93,7 +93,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		// set keep-alive
 		if (opts.doKeepAlive) {
-			this.getSocket().setKeepAlive(true, opts.keepAliveDelay || 0);
+			this.getSocket().setKeepAlive(true, opts.keepAliveDelay || 180000);
 		}
 
 		this._simulatorRTT = opts.simulatorRTT || 0;
