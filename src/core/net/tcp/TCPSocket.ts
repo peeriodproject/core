@@ -112,6 +112,13 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		this._resetIdleTimeout();
 		this._resetHeartbeatTimeout();
+
+		if (global.socketCount === undefined) {
+			global.socketCount = 0;
+		}
+
+		global.socketCount++;
+		console.log('Number of open sockets %o', global.socketCount);
 	}
 
 	public end (data?:any, encoding?:string):void {
@@ -208,6 +215,9 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			process.nextTick(() => {
 				this.removeAllListeners();
 			});
+
+			global.socketCount--;
+			console.log('Number of open sockets %o', global.socketCount);
 		};
 		this._socket.on('close', this._closeListener);
 
