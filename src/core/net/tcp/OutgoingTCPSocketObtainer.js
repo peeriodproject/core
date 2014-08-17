@@ -33,6 +33,7 @@ var OutgoingTCPSocketObtainer = (function () {
         this._connectListener = function () {
             if (_this._connectionTimeout) {
                 global.clearTimeout(_this._connectionTimeout);
+                _this._connectionTimeout = null;
             }
 
             var socket = _this._factory.create(_this._rawSocket, _this._options);

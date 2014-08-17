@@ -53,6 +53,7 @@ var BucketStore = (function () {
         var added = this._add(txn, bucketKey, id, lastSeen, addresses);
 
         txn.commit();
+        txn = null;
 
         return added;
     };
@@ -69,6 +70,7 @@ var BucketStore = (function () {
         }
 
         txn.commit();
+        txn = null;
 
         return added;
     };
@@ -98,6 +100,8 @@ var BucketStore = (function () {
 
         cursor.close();
         txn.commit();
+        cursor = null;
+        txn = null;
 
         return value;
     };
@@ -123,6 +127,8 @@ var BucketStore = (function () {
 
         cursor.close();
         txn.commit();
+        cursor = null;
+        txn = null;
 
         return values;
     };
@@ -146,6 +152,8 @@ var BucketStore = (function () {
 
         cursor.close();
         txn.commit();
+        cursor = null;
+        txn = null;
 
         return contact;
     };
@@ -210,6 +218,7 @@ var BucketStore = (function () {
         }
 
         txn.commit();
+        txn = null;
 
         return true;
     };
@@ -232,6 +241,8 @@ var BucketStore = (function () {
 
         cursor.close();
         txn.commit();
+        cursor = null;
+        txn = null;
 
         return size;
     };
@@ -274,6 +285,8 @@ var BucketStore = (function () {
         } catch (err) {
             console.error(err);
         }
+
+        value = null;
 
         return true;
     };

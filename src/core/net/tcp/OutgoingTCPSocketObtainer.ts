@@ -42,6 +42,7 @@ class OutgoingTCPSocketObtainer {
 		this._connectListener = () => {
 			if (this._connectionTimeout) {
 				global.clearTimeout(this._connectionTimeout);
+				this._connectionTimeout = null;
 			}
 
 			var socket:TCPSocketInterface = this._factory.create(this._rawSocket, this._options);

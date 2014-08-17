@@ -67,6 +67,7 @@ class BucketStore implements BucketStoreInterface {
 		var added:boolean = this._add(txn, bucketKey, id, lastSeen, addresses);
 
 		txn.commit();
+		txn = null;
 
 		return added;
 	}
@@ -83,6 +84,7 @@ class BucketStore implements BucketStoreInterface {
 		}
 
 		txn.commit();
+		txn = null;
 
 		return added;
 	}
@@ -112,6 +114,8 @@ class BucketStore implements BucketStoreInterface {
 
 		cursor.close();
 		txn.commit();
+		cursor = null;
+		txn = null;
 
 		return value;
 	}
@@ -137,6 +141,8 @@ class BucketStore implements BucketStoreInterface {
 
 		cursor.close();
 		txn.commit();
+		cursor = null;
+		txn = null;
 
 		return values;
 	}
@@ -160,6 +166,8 @@ class BucketStore implements BucketStoreInterface {
 
 		cursor.close();
 		txn.commit();
+		cursor = null;
+		txn = null;
 
 		return contact;
 	}
@@ -183,11 +191,11 @@ class BucketStore implements BucketStoreInterface {
 		this._checkAndOpenDatabaseEnvironment();
 
 		/*this._databaseEnvironment.open({
-			//name: this._name,
-			path: this._path
-			//mapSize: 2*1024*1024*1024, // maximum database size
-			//maxDbs: 3
-		});*/
+		 //name: this._name,
+		 path: this._path
+		 //mapSize: 2*1024*1024*1024, // maximum database size
+		 //maxDbs: 3
+		 });*/
 
 		this._databaseInstance = this._databaseEnvironment.openDbi({
 			name  : this._name,
@@ -226,6 +234,7 @@ class BucketStore implements BucketStoreInterface {
 		}
 
 		txn.commit();
+		txn = null;
 
 		return true;
 	}
@@ -249,6 +258,8 @@ class BucketStore implements BucketStoreInterface {
 
 		cursor.close();
 		txn.commit();
+		cursor = null;
+		txn = null;
 
 		return size;
 	}
@@ -278,11 +289,11 @@ class BucketStore implements BucketStoreInterface {
 
 			// stores the object with id as it's key
 			/*
-			// multi row test
-			txn.putBinary(this._databaseInstance, this._getPropertyKey(id, 'id'), id);
-			txn.putNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'), lastSeen);
-			txn.putString(this._databaseInstance, this._getPropertyKey(id, 'addresses'), JSON.stringify(addresses));
-			*/
+			 // multi row test
+			 txn.putBinary(this._databaseInstance, this._getPropertyKey(id, 'id'), id);
+			 txn.putNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'), lastSeen);
+			 txn.putString(this._databaseInstance, this._getPropertyKey(id, 'addresses'), JSON.stringify(addresses));
+			 */
 			txn.putString(this._databaseInstance, idKey, JSON.stringify(value));
 
 			// stores a shortcut for bucketwide last seen searches.
@@ -293,6 +304,8 @@ class BucketStore implements BucketStoreInterface {
 		catch (err) {
 			console.error(err);
 		}
+
+		value = null;
 
 		return true;
 	}
@@ -368,14 +381,14 @@ class BucketStore implements BucketStoreInterface {
 	 */
 	private _get(txn:lmdb.Txn, id:Buffer):any {
 		/*
-		multi row test
-		var contact = {
-			addresses: JSON.parse(txn.getString(this._databaseInstance, this._getPropertyKey(id, 'addresses'))),
-			id: txn.getBinary(this._databaseInstance, this._getPropertyKey(id, 'id')),
-			lastSeen: txn.getNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'))
-		};
+		 multi row test
+		 var contact = {
+		 addresses: JSON.parse(txn.getString(this._databaseInstance, this._getPropertyKey(id, 'addresses'))),
+		 id: txn.getBinary(this._databaseInstance, this._getPropertyKey(id, 'id')),
+		 lastSeen: txn.getNumber(this._databaseInstance, this._getPropertyKey(id, 'lastSeen'))
+		 };
 
-		return contact;*/
+		 return contact;*/
 
 		return JSON.parse(txn.getString(this._databaseInstance, this._getIdKey(id)));
 	}
@@ -451,8 +464,8 @@ class BucketStore implements BucketStoreInterface {
 	 * @returns {string}
 	 */
 	/*private _getPropertyKey(id:Buffer, propertyName:string):string {
-		return this._getIdKey(id) + '-' + propertyName;
-	}*/
+	 return this._getIdKey(id) + '-' + propertyName;
+	 }*/
 
 }
 

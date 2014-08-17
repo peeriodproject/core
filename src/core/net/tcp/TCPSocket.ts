@@ -116,8 +116,12 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		if (this.getSocket() && !this._preventWrite) {
 			this._preventWrite = true;
 
-			this.getSocket().end(data, encoding);
+			if (this._idleTimeout) {
+				global.clearTimeout(this._idleTimeout);
+				this._idleTimeout = null;
+			}
 
+			this.getSocket().end(data, encoding);
 		}
 	}
 
@@ -166,11 +170,11 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 				emsg: err.message,
 				stack:err.stack,
 				/*trace: {
-					typeName: trace.getTypeName(),
-					fnName  : trace.getFunctionName(),
-					fileName: trace.getFileName(),
-					line    : trace.getLineNumber()
-				},*/
+				 typeName: trace.getTypeName(),
+				 fnName  : trace.getFunctionName(),
+				 fileName: trace.getFileName(),
+				 line    : trace.getLineNumber()
+				 },*/
 				ident: this.getIdentifier()
 			});
 
@@ -184,6 +188,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 
 		socket.on('close', (had_error:boolean) => {
 			this._preventWrite = true;
+			this._socket.removeAllListeners();
 			this._socket = null;
 
 			this.emit('destroy');
@@ -217,11 +222,10 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	private _resetIdleTimeout ():void {
 		if (this._idleTimeout) {
 			global.clearTimeout(this._idleTimeout);
+			this._idleTimeout = null;
 		}
 
 		this._idleTimeout = global.setTimeout(() => {
-			this._idleTimeout = null;
-
 			if (this._closeWhenIdle) {
 				this.end();
 			}
@@ -232,6 +236,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 	private _resetHeartbeatTimeout ():void {
 		if (this._heartbeatTimeout) {
 			global.clearTimeout(this._heartbeatTimeout);
+			this._heartbeatTimeout = null;
 		}
 
 		this._heartbeatTimeout = global.setTimeout(() => {
@@ -265,6 +270,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			}
 			catch (e) {
 				this.getSocket().end();
+				logger.warn('TCPSocket -> catched end buffer');
 			}
 
 			buffer = null;
@@ -295,6 +301,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			}
 			catch (e) {
 				this.getSocket().end();
+				logger.warn('TCPSocket -> catched end string');
 			}
 
 		}

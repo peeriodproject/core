@@ -105,7 +105,7 @@ var Bucket = (function () {
             }
         }
 
-        return process.nextTick(callback.bind(null, null, contacts));
+        return process.nextTick(callback.bind(null, null, contacts.slice()));
     };
 
     Bucket.prototype.getLongestNotSeen = function (callback) {
@@ -174,7 +174,7 @@ var Bucket = (function () {
                     removed = true;
                 }
 
-                updatedCallback();
+                return updatedCallback();
             }
         });
 
@@ -187,7 +187,7 @@ var Bucket = (function () {
                     added = true;
                 }
 
-                updatedCallback();
+                return updatedCallback();
             }
         });
     };
