@@ -398,6 +398,8 @@ var IncomingDataPipeline = (function (_super) {
                 msgs = null;
                 break;
             }
+
+            messageBuffers[i] = null;
         }
 
         if (!msgs) {
@@ -487,6 +489,10 @@ var IncomingDataPipeline = (function (_super) {
 
             if (msgDataArray.length) {
                 messageArray.push(Buffer.concat(msgDataArray, expectedLength));
+
+                for (var j = 0, k = msgDataArray.length; j < k; j++) {
+                    msgDataArray[i] = null;
+                }
             }
 
             this._sliceMessagesFromMemory(identifier, tempMessageMemory, messageArray);

@@ -409,6 +409,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 		var msgs:Array<ReadableMessageInterface> = [];
 
 		for (var i=0, l=messageBuffers.length; i<l; i++) {
+
 			try {
 				msgs.push(this._readableMessageFactory.create(messageBuffers[i]));
 			}
@@ -416,6 +417,8 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 				msgs = null;
 				break;
 			}
+
+			messageBuffers[i] = null;
 		}
 
 		if (!msgs) {
@@ -512,6 +515,10 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 
 			if (msgDataArray.length) {
 				messageArray.push(Buffer.concat(msgDataArray, expectedLength));
+
+				for (var j=0,k=msgDataArray.length; j<k; j++) {
+					msgDataArray[i] = null;
+				}
 			}
 
 			this._sliceMessagesFromMemory(identifier, tempMessageMemory, messageArray);
