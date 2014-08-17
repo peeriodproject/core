@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/fileTransfer/WritableShareRatifyMessageFactory.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/fileTransfer/WritableShareRatifyMessageFactory.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">63.60</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">28</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">9.00</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">0.33</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var ReadableShareRatifyMessage = require(&#039;../../../../src/core/protocol/fileTransfer/share/messages/ReadableShareRatifyMessage&#039;);
+var WritableShareRatifyMessageFactory = require(&#039;../../../../src/core/protocol/fileTransfer/share/messages/WritableShareRatifyMessageFactory&#039;);
+var FeedingNodesMessageBlock = require(&#039;../../../../src/core/protocol/fileTransfer/messages/FeedingNodesMessageBlock&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; FILE TRANSFER --&gt; WritableShareRatifyMessageFactory (via readable message)&#039;, function () {
+    it(&#039;should correctly create the SHARE_RATIFY message&#039;, function () {
+        var factory = new WritableShareRatifyMessageFactory();
+
+        var feedingNodesBlock = FeedingNodesMessageBlock.constructBlock([{ ip: &#039;1.1.1.1&#039;, port: 80, feedingIdentifier: &#039;cafebabecafebabecafebabecafebabe&#039; }]);
+        var filename = &#039;This is a file.jpg&#039;;
+        var filesize = 12345632434;
+        var dhPayload = &#039;7589c6bd69d863f193060424cd916bba25510ab8cbed80e608c9a03cb848b712dfc62d0cbea8b7b1bcdd0a9887d5965a11435463789a0009292010f464b57ac817dd35b2bda21444e656313d01ac665c2e0621057dad2400a72317d0a5f2c68c8836418b93ed140844d97940837a6fb14bbe15bace76ebe0385401d2381d35a5d4b0269fa22649f35c6fd9081f2fbfd980e042b1aa314178e0ce51295227d914a3529a8d66200434a3c39aadc7aaa3626ef86e458382f8c0513224c43c81883600c7cb537f4d65282ca94e410e1e5d2de07fe7e3255ca88662aba5720c9057f72fe61e1152e8bf388f0e784aa19b66432c65a457b809d3e085d02435b5e8db5f&#039;;
+        var hash = &#039;770606aff59bca0b045d8e0eaf5a7a7568bc1d39&#039;;
+
+        var msg = new ReadableShareRatifyMessage(factory.constructMessage(new Buffer(dhPayload, &#039;hex&#039;), new Buffer(hash, &#039;hex&#039;), factory.constructPartToEncrypt(feedingNodesBlock, filesize, filename, feedingNodesBlock.length)));
+
+        msg.getDHPayload().toString(&#039;hex&#039;).should.equal(dhPayload);
+        msg.getSecretHash().toString(&#039;hex&#039;).should.equal(hash);
+
+        msg.deformatDecryptedPart(msg.getEncryptedPart());
+
+        msg.getDeformattedDecryptedFeedingNodesBlock().toString(&#039;hex&#039;).should.equal(feedingNodesBlock.toString(&#039;hex&#039;));
+        msg.getDeformattedDecryptedFilename().should.equal(filename);
+        msg.getDeformattedDecryptedFileSize().should.equal(filesize);
+    });
+});
+//# sourceMappingURL=WritableShareRatifyMessageFactory.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

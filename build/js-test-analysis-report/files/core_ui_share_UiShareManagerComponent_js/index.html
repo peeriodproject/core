@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/ui/share/UiShareManagerComponent.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/ui/share/UiShareManagerComponent.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">74.55</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">300</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">32.83</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">3.17</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+var sinon = require(&#039;sinon&#039;);
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var DownloadManager = require(&#039;../../../../src/core/share/DownloadManager&#039;);
+var UploadManager = require(&#039;../../../../src/core/share/UploadManager&#039;);
+
+var UiShareManagerComponent = require(&#039;../../../../src/core/ui/share/UiShareManagerComponent&#039;);
+
+describe(&#039;CORE --&gt; UI --&gt; SHARE --&gt; UiShareManagerComponent&#039;, function () {
+    var sandbox;
+    var component;
+    var downloadManagerStub;
+    var uploadManagerStub;
+
+    var uiUpdateSpy;
+
+    beforeEach(function () {
+        sandbox = sinon.sandbox.create();
+
+        downloadManagerStub = testUtils.stubPublicApi(sandbox, DownloadManager, {
+            createDownload: function () {
+                return process.nextTick(arguments[1].bind(null, null));
+            },
+            getDownloadDestination: function () {
+                return process.nextTick(arguments[0].bind(null, null, &#039;/destination&#039;));
+            },
+            setDownloadDestination: function () {
+                return process.nextTick(arguments[1].bind(null, null));
+            }
+        });
+
+        uploadManagerStub = testUtils.stubPublicApi(sandbox, UploadManager, {});
+
+        component = new UiShareManagerComponent(downloadManagerStub, uploadManagerStub);
+        uiUpdateSpy = sandbox.spy();
+
+        component.onUiUpdate(uiUpdateSpy);
+    });
+
+    afterEach(function () {
+        sandbox.restore();
+
+        downloadManagerStub = null;
+        uploadManagerStub = null;
+
+        component = null;
+        uiUpdateSpy = null;
+    });
+
+    it(&#039;should correctly instantiate without error&#039;, function () {
+        component.should.be.an.instanceof(UiShareManagerComponent);
+    });
+
+    it(&#039;should correctly return the channel name&#039;, function () {
+        component.getChannelName().should.equal(&#039;share&#039;);
+    });
+
+    it(&#039;should correctly return the event names&#039;, function () {
+        component.getEventNames().should.containDeep([&#039;addDownload&#039;, &#039;cancelDownload&#039;, &#039;removeDownload&#039;, &#039;updateDownloadDestination&#039;]);
+    });
+
+    it(&#039;should correctly add the specified download&#039;, function (done) {
+        component.emit(&#039;addDownload&#039;, &#039;responseId&#039;, function (err) {
+            (err === null).should.be.true;
+
+            downloadManagerStub.createDownload.calledOnce.should.be.true;
+            downloadManagerStub.createDownload.getCall(0).args[0].should.equal(&#039;responseId&#039;);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly return the error message in the callback if the creation failed&#039;, function (done) {
+        downloadManagerStub = testUtils.stubPublicApi(sandbox, DownloadManager, {
+            createDownload: function () {
+                return process.nextTick(arguments[1].bind(null, new Error(&#039;Error Message&#039;)));
+            }
+        });
+        component = new UiShareManagerComponent(downloadManagerStub, uploadManagerStub);
+
+        component.emit(&#039;addDownload&#039;, &#039;responseId&#039;, function (err) {
+            err.should.equal(&#039;Error Message&#039;);
+
+            downloadManagerStub.createDownload.calledOnce.should.be.true;
+            downloadManagerStub.createDownload.getCall(0).args[0].should.equal(&#039;responseId&#039;);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly start progress runner and update the ui after a the creation was confimed from the network layer&#039;, function (done) {
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, { metadata: true });
+
+        uiUpdateSpy.calledOnce.should.be.true;
+
+        component.getState(function (state) {
+            state.should.containDeep({
+                downloads: {
+                    downloadId: {
+                        id: &#039;downloadId&#039;,
+                        hash: &#039;hash&#039;,
+                        loaded: 0,
+                        name: &#039;foobar.txt&#039;,
+                        status: &#039;CREATED&#039;
+                    }
+                },
+                destination: {
+                    path: &#039;/destination&#039;
+                }
+            });
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly forward the download cancel event&#039;, function (done) {
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, { metadata: true });
+
+        setImmediate(function () {
+            component.emit(&#039;cancelDownload&#039;, &#039;downloadId&#039;);
+
+            downloadManagerStub.cancelDownload.calledOnce.should.be.true;
+            downloadManagerStub.cancelDownload.getCall(0).args[0].should.equal(&#039;downloadId&#039;);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly remove a download and update the UI&#039;, function (done) {
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, { metadata: true });
+
+        setImmediate(function () {
+            component.emit(&#039;removeDownload&#039;, &#039;downloadId&#039;);
+
+            uiUpdateSpy.calledTwice.should.be.true;
+
+            component.getState(function (state) {
+                state.should.containDeep({
+                    downloads: {},
+                    destination: {
+                        path: &#039;/destination&#039;
+                    }
+                });
+
+                Object.keys(state[&#039;downloads&#039;]).should.have.a.lengthOf(0);
+
+                done();
+            });
+        });
+    });
+
+    it(&#039;should correctly forward the new download destination&#039;, function (done) {
+        component.emit(&#039;updateDownloadDestination&#039;, &#039;/new/destination&#039;);
+
+        setImmediate(function () {
+            downloadManagerStub.setDownloadDestination.calledOnce.should.be.true;
+            downloadManagerStub.setDownloadDestination.getCall(0).args[0].should.equal(&#039;/new/destination&#039;);
+
+            uiUpdateSpy.calledOnce.should.be.true;
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly update the status of a running download&#039;, function (done) {
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, { metadata: true });
+        downloadManagerStub.onDownloadStatusChanged.getCall(0).args[0](&#039;downloadId&#039;, &#039;new status&#039;);
+
+        uiUpdateSpy.calledTwice.should.be.true;
+
+        component.getState(function (state) {
+            state.should.containDeep({
+                downloads: {
+                    downloadId: {
+                        status: &#039;new status&#039;
+                    }
+                }
+            });
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly update the status on download ended&#039;, function (done) {
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, { metadata: true });
+        downloadManagerStub.onDownloadEnded.getCall(0).args[0](&#039;downloadId&#039;, &#039;reason&#039;);
+
+        uiUpdateSpy.calledTwice.should.be.true;
+
+        component.getState(function (state) {
+            state.should.containDeep({
+                downloads: {
+                    downloadId: {
+                        status: &#039;reason&#039;
+                    }
+                }
+            });
+
+            done();
+        });
+    });
+
+    it(&#039;should update the UI in the specified interval&#039;, function (done) {
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, { metadata: true });
+
+        var bytes = 0;
+        var interval = setInterval(function () {
+            downloadManagerStub.onDownloadProgressUpdate.getCall(0).args[0](&#039;downloadId&#039;, ++bytes);
+        }, 50);
+
+        setTimeout(function () {
+            clearInterval(interval);
+
+            uiUpdateSpy.callCount.should.be.greaterThan(1);
+
+            component.getState(function (state) {
+                state.downloads.downloadId.loaded.should.be.greaterThan(0);
+
+                done();
+            });
+        }, 1300);
+    });
+
+    it(&#039;should correctly add a new upload&#039;, function (done) {
+        uploadManagerStub.onUploadAdded.getCall(0).args[0](&#039;uploadId&#039;, &#039;/path/to/file.ext&#039;, &#039;file.ext&#039;, 123);
+
+        uiUpdateSpy.calledOnce.should.be.true;
+
+        component.getState(function (state) {
+            state.uploads.uploadId.should.containDeep({
+                id: &#039;uploadId&#039;,
+                path: &#039;/path/to/file.ext&#039;,
+                name: &#039;file.ext&#039;,
+                size: 123,
+                status: &#039;CREATED&#039;
+            });
+
+            state.uploads.uploadId.created.should.be.an.instanceof(Number);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly update the upload status and update the UI&#039;, function (done) {
+        uploadManagerStub.onUploadStatusChanged.getCall(0).args[0](&#039;uploadId&#039;, &#039;status&#039;);
+
+        uploadManagerStub.onUploadAdded.getCall(0).args[0](&#039;uploadId&#039;, &#039;/path/to/file.ext&#039;, &#039;file.ext&#039;, 123);
+        uploadManagerStub.onUploadStatusChanged.getCall(0).args[0](&#039;uploadId&#039;, &#039;status&#039;);
+
+        uiUpdateSpy.calledTwice.should.be.true;
+
+        component.getState(function (state) {
+            state.uploads.uploadId.status.should.equal(&#039;status&#039;);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly update the upload on end and update the UI&#039;, function (done) {
+        uploadManagerStub.onUploadEnded.getCall(0).args[0](&#039;uploadId&#039;, &#039;reason&#039;);
+
+        uploadManagerStub.onUploadAdded.getCall(0).args[0](&#039;uploadId&#039;, &#039;/path/to/file.ext&#039;, &#039;file.ext&#039;, 123);
+        uploadManagerStub.onUploadEnded.getCall(0).args[0](&#039;uploadId&#039;, &#039;reason&#039;);
+
+        uiUpdateSpy.calledTwice.should.be.true;
+
+        component.getState(function (state) {
+            state.uploads.uploadId.status.should.equal(&#039;reason&#039;);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly cancel a running upload&#039;, function () {
+        component.emit(&#039;cancelUpload&#039;, &#039;uploadId&#039;);
+        uploadManagerStub.cancelUpload.called.should.be.false;
+
+        uploadManagerStub.onUploadAdded.getCall(0).args[0](&#039;uploadId&#039;, &#039;/path/to/file.ext&#039;, &#039;file.ext&#039;, 123);
+        component.emit(&#039;cancelUpload&#039;, &#039;uploadId&#039;);
+        uploadManagerStub.cancelUpload.calledOnce.should.be.true;
+        uploadManagerStub.cancelUpload.getCall(0).args[0].should.equal(&#039;uploadId&#039;);
+    });
+
+    it(&#039;should correctly remove all related data to the given upload id from the UI&#039;, function (done) {
+        component.emit(&#039;removeUpload&#039;, &#039;uploadId&#039;);
+        uiUpdateSpy.called.should.be.false;
+
+        uploadManagerStub.onUploadAdded.getCall(0).args[0](&#039;uploadId&#039;, &#039;/path/to/file.ext&#039;, &#039;file.ext&#039;, 123);
+
+        component.emit(&#039;removeUpload&#039;, &#039;uploadId&#039;);
+        uiUpdateSpy.calledTwice.should.be.true;
+
+        component.getState(function (state) {
+            state.uploads.should.be.an.instanceof(Object);
+            Object.keys(state.uploads).should.have.a.lengthOf(0);
+
+            done();
+        });
+    });
+});
+//# sourceMappingURL=UiShareManagerComponent.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/search/SearchFormResultsManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/search/SearchFormResultsManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">73.55</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">239</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">26.74</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.96</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var PluginManager = require(&#039;../../../src/core/plugin/PluginManager&#039;);
+var PluginRunner = require(&#039;../../../src/core/plugin/PluginRunner&#039;);
+var SearchFormResultsManager = require(&#039;../../../src/core/search/SearchFormResultsManager&#039;);
+var SearchRequestManager = require(&#039;../../../src/core/search/SearchRequestManager&#039;);
+var JSONStateHandler = require(&#039;../../../src/core/utils/JSONStateHandler&#039;);
+var JSONStateHandlerFactory = require(&#039;../../../src/core/utils/JSONStateHandlerFactory&#039;);
+
+var AppQuitHandler = require(&#039;../../../src/core/utils/AppQuitHandler&#039;);
+var ObjectConfig = require(&#039;../../../src/core/config/ObjectConfig&#039;);
+
+describe(&#039;CORE --&gt; SEARCH --&gt; SearchFormResultsManager&#039;, function () {
+    var sandbox;
+    var configStub;
+    var appQuitHandlerStub;
+    var pluginManagerStub;
+    var pluginRunnerStub;
+    var searchRequestManagerStub;
+    var stateHandlerFactoryStub;
+    var stateHandlerStub;
+
+    var appDataPath = testUtils.getFixturePath(&#039;/core/search/SearchFormResultsManager&#039;);
+
+    var stateObject = null;
+    var activeIdentifiers = [];
+    var manager = null;
+
+    var createSearchFormResultsManager = function (onOpen) {
+        manager = new SearchFormResultsManager(configStub, appQuitHandlerStub, stateHandlerFactoryStub, pluginManagerStub, searchRequestManagerStub, {
+            onOpenCallback: onOpen
+        });
+    };
+
+    var closeAndDone = function (done) {
+        manager.close(function () {
+            done();
+        });
+    };
+
+    beforeEach(function () {
+        testUtils.createFolder(appDataPath);
+
+        sandbox = sinon.sandbox.create();
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (key) {
+                if (key === &#039;app.dataPath&#039;) {
+                    return appDataPath;
+                } else if (key === &#039;search.searchFormStateConfig&#039;) {
+                    return &#039;searchFormManager.json&#039;;
+                }
+            }
+        });
+        appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
+        pluginManagerStub = testUtils.stubPublicApi(sandbox, PluginManager, {
+            getActivePluginRunner: function () {
+                return process.nextTick(arguments[1].bind(null, pluginRunnerStub));
+            },
+            getActivePluginRunners: function () {
+                return process.nextTick(arguments[0].bind(null, { &#039;identifier&#039;: pluginRunnerStub }));
+            },
+            getActivePluginRunnerIdentifiers: function () {
+                return process.nextTick(arguments[0].bind(null, activeIdentifiers));
+            },
+            open: function () {
+                return process.nextTick(arguments[0].bind(null, null));
+            }
+        });
+
+        pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
+            getResultFields: function () {
+                return arguments[0](null, {
+                    _template: &#039;text&#039;,
+                    title: &#039;title&#039;,
+                    content: &#039;content&#039;
+                });
+            }
+        });
+
+        searchRequestManagerStub = testUtils.stubPublicApi(sandbox, SearchRequestManager, {
+            addQuery: function () {
+                return process.nextTick(arguments[1].bind(null, null));
+            }
+        });
+
+        stateHandlerFactoryStub = testUtils.stubPublicApi(sandbox, JSONStateHandlerFactory, {
+            create: function () {
+                return stateHandlerStub;
+            }
+        });
+
+        stateHandlerStub = testUtils.stubPublicApi(sandbox, JSONStateHandler, {
+            load: function () {
+                return process.nextTick(arguments[0].bind(null, null, stateObject));
+            },
+            save: function () {
+                return process.nextTick(arguments[1].bind(null, null));
+            }
+        });
+    });
+
+    afterEach(function () {
+        sandbox.restore();
+
+        configStub = null;
+        appQuitHandlerStub = null;
+        pluginManagerStub = null;
+        pluginRunnerStub = null;
+        searchRequestManagerStub = null;
+        stateHandlerFactoryStub = null;
+        stateHandlerStub = null;
+
+        stateObject = null;
+        activeIdentifiers = [];
+
+        testUtils.deleteFolderRecursive(appDataPath);
+    });
+
+    it(&#039;should correctly instantiate SearchFormResultsManager without error&#039;, function (done) {
+        activeIdentifiers = [&#039;pluginIdentifier&#039;];
+
+        createSearchFormResultsManager(function () {
+            manager.should.be.an.instanceof(SearchFormResultsManager);
+
+            return closeAndDone(done);
+        });
+    });
+
+    it(&#039;should correctly fetch all plugin resultFields on open&#039;, function (done) {
+        activeIdentifiers = [&#039;pluginIdentifier&#039;];
+
+        createSearchFormResultsManager(function () {
+            manager.open(function (err) {
+                (err === null).should.be.true;
+
+                pluginManagerStub.getActivePluginRunners.calledTwice.should.be.true;
+                pluginRunnerStub.getResultFields.calledTwice.should.be.true;
+
+                return closeAndDone(done);
+            });
+        });
+    });
+
+    it(&#039;should correctly fetch all plugin resultFields on setForm update&#039;, function (done) {
+        activeIdentifiers = [&#039;foo&#039;, &#039;identifier&#039;];
+
+        createSearchFormResultsManager(function () {
+            manager.setForm(&#039;identifier&#039;, function (err) {
+                (err === null).should.be.true;
+
+                pluginManagerStub.getActivePluginRunners.calledTwice.should.be.true;
+                pluginRunnerStub.getResultFields.calledTwice.should.be.true;
+
+                return closeAndDone(done);
+            });
+        });
+    });
+
+    describe(&#039;should correctly return the transformed responses&#039;, function () {
+        it(&#039;transformed results should be wellformed&#039;, function (done) {
+            var responses = [{
+                    _source: {
+                        _type: &#039;identifier&#039;
+                    }
+                }];
+
+            activeIdentifiers = [&#039;identifier&#039;];
+
+            createSearchFormResultsManager(function () {
+                manager.transformResponses(responses, false, function (err, transformedResults) {
+                    (err === null).should.be.true;
+
+                    transformedResults.should.containDeep([{
+                            response: {
+                                _source: {
+                                    _type: &#039;identifier&#039;
+                                }
+                            },
+                            fields: {
+                                _template: &#039;text&#039;,
+                                title: &#039;title&#039;,
+                                content: &#039;content&#039;
+                            }
+                        }]);
+
+                    return closeAndDone(done);
+                });
+            });
+        });
+
+        it(&#039;should correctly clean up the result fields&#039;, function (done) {
+            var responses = [{
+                    _index: &#039;index&#039;,
+                    _type: &#039;responseQueryId&#039;,
+                    _source: {
+                        _type: &#039;identifier&#039;,
+                        _meta: {
+                            meta: true
+                        }
+                    },
+                    fields: {
+                        _timestamp: 1234567890
+                    }
+                }];
+
+            activeIdentifiers = [&#039;identifier&#039;];
+
+            createSearchFormResultsManager(function () {
+                manager.transformResponses(responses, true, function (err, transformedResults) {
+                    (err === null).should.be.true;
+
+                    transformedResults.should.containDeep([{
+                            response: {
+                                _source: {
+                                    _type: &#039;identifier&#039;
+                                },
+                                _timestamp: 1234567890
+                            },
+                            fields: {
+                                _template: &#039;text&#039;,
+                                title: &#039;title&#039;,
+                                content: &#039;content&#039;
+                            }
+                        }]);
+
+                    (transformedResults[0].response._index === undefined).should.be.true;
+                    (transformedResults[0].response._type === undefined).should.be.true;
+                    (transformedResults[0].response._source._meta === undefined).should.be.true;
+                    (transformedResults[0].response.fields === undefined).should.be.true;
+
+                    return closeAndDone(done);
+                });
+            });
+        });
+    });
+});
+//# sourceMappingURL=SearchFormResultsManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

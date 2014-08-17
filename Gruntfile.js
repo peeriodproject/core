@@ -23,6 +23,15 @@ module.exports = function (grunt) {
                 files  : {
                     'build/js-source-analysis-report': ['src/**/*.js']
                 }
+            },
+            tests: {
+                options: {
+                    title: "JavaScript Test Analysis",
+                    exclude: /node_modules|fixtures|reports|interfaces|public|namespace\.js|\.json/
+                },
+                files  : {
+                    'build/js-test-analysis-report': ['test/**/*.js']
+                }
             }
         },
 

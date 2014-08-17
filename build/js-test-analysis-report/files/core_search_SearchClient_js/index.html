@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/search/SearchClient.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/search/SearchClient.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">71.32</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">568</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">48.77</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">5.17</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var fs = require(&#039;fs&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var AppQuitHandler = require(&#039;../../../src/core/utils/AppQuitHandler&#039;);
+var ObjectConfig = require(&#039;../../../src/core/config/ObjectConfig&#039;);
+var SearchClient = require(&#039;../../../src/core/search/SearchClient&#039;);
+var SearchItem = require(&#039;../../../src/core/search/SearchItem&#039;);
+var SearchItemFactory = require(&#039;../../../src/core/search/SearchItemFactory&#039;);
+var SearchStoreFactory = require(&#039;../../../src/core/search/SearchStoreFactory&#039;);
+
+describe(&#039;CORE --&gt; SEARCH --&gt; SearchClient&#039;, function () {
+    var sandbox;
+    var config;
+    var appQuitHandlerStub;
+    var searchStoreLogsFolder = testUtils.getFixturePath(&#039;core/search/searchStoreLogs&#039;);
+    var searchStoreDataFolder = testUtils.getFixturePath(&#039;core/search/searchStoreData&#039;);
+    var searchClient = null;
+
+    this.timeout(0);
+
+    before(function (done) {
+        try  {
+            testUtils.deleteFolderRecursive(searchStoreDataFolder);
+            testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+        } catch (e) {
+        }
+        testUtils.createFolder(searchStoreLogsFolder);
+        testUtils.createFolder(searchStoreDataFolder);
+
+        sandbox = sinon.sandbox.create();
+        config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (key) {
+                if (key === &#039;search.host&#039;) {
+                    return &#039;localhost&#039;;
+                } else if (key === &#039;search.port&#039;) {
+                    return 9200;
+                } else if (key === &#039;search.binaryPath&#039;) {
+                    return &#039;core/search/elasticsearch&#039;;
+                } else if (key === &#039;search.pidFilename&#039;) {
+                    return &#039;../elasticsearch-pid-client&#039;;
+                } else if (key === &#039;search.searchStoreConfig&#039;) {
+                    return &#039;./config/searchStore.json&#039;;
+                } else if (key === &#039;search.databasePath&#039;) {
+                    return searchStoreDataFolder;
+                }
+            }
+        });
+
+        appQuitHandlerStub = testUtils.stubPublicApi(sandbox, AppQuitHandler);
+
+        searchClient = new SearchClient(config, appQuitHandlerStub, &#039;mainIndex&#039;, new SearchStoreFactory(), new SearchItemFactory(), {
+            logsPath: searchStoreLogsFolder,
+            onOpenCallback: function (err) {
+                if (err) {
+                    throw err;
+                } else {
+                    return process.nextTick(done.bind(null));
+                }
+            }
+        });
+    });
+
+    after(function (done) {
+        searchClient.close(function () {
+            searchClient = null;
+            try  {
+                testUtils.deleteFolderRecursive(searchStoreDataFolder);
+                testUtils.deleteFolderRecursive(searchStoreLogsFolder);
+            } catch (e) {
+                console.log(e);
+            }
+
+            sandbox.restore();
+            config = null;
+            appQuitHandlerStub = null;
+
+            done();
+        });
+    });
+
+    beforeEach(function (done) {
+        searchClient.open(function () {
+            searchClient.deleteIndex(function () {
+                done();
+            });
+        });
+    });
+
+    it(&#039;should correctly instantiate the search client&#039;, function () {
+        searchClient.should.be.an.instanceof(SearchClient);
+    });
+
+    it(&#039;should correctly return the open/closed state&#039;, function (done) {
+        searchClient.isOpen(function (err, isOpen) {
+            (err === null).should.be.true;
+            isOpen.should.be.true;
+
+            searchClient.close(function (err) {
+                searchClient.isOpen(function (err, isOpen) {
+                    (err === null).should.be.true;
+                    isOpen.should.be.false;
+
+                    done();
+                });
+            });
+        });
+    });
+
+    it(&#039;should correctly return if an item with the specified type exists&#039;, function (done) {
+        searchClient.typeExists(&#039;foobar&#039;, function (exists) {
+            exists.should.be.false;
+
+            // todo add item and check again
+            done();
+        });
+    });
+
+    it(&#039;should correctly return if an item exists in the index&#039;, function (done) {
+        var dataToIndex = {
+            pluginidentifier: {
+                itemHash: &#039;fileHash&#039;,
+                itemPath: &#039;../path/file.txt&#039;,
+                itemStats: {
+                    stats: true
+                }
+            }
+        };
+
+        searchClient.itemExistsById(&#039;randomId&#039;, function (exists) {
+            exists.should.be.false;
+
+            searchClient.addItem(dataToIndex, function (err, ids) {
+                searchClient.itemExistsById(ids[0], function (exists) {
+                    exists.should.be.true;
+
+                    done();
+                });
+            });
+        });
+    });
+
+    it(&#039;should correctly prevent the creation of empty items&#039;, function (done) {
+        searchClient.addItem({}, function (err, ids) {
+            err.should.be.an.instanceof(Error);
+            err.message.should.equal(&#039;SearchClient.addItem: No item data specified! Preventing item creation.&#039;);
+            (ids === null).should.be.true;
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly return the added item by hash&#039;, function (done) {
+        var dataToIndex = {
+            itemHash: &#039;fileHash&#039;,
+            itemName: &#039;file.txt&#039;,
+            itemPath: &#039;../path/file.txt&#039;,
+            itemStats: {
+                stats: true
+            },
+            foo: &#039;bar&#039;
+        };
+
+        var pluginDataToIndex = {
+            pluginidentifier: dataToIndex,
+            pluginidentifier2: dataToIndex
+        };
+        searchClient.getItemByHash(&#039;fileHash&#039;, function (err, items) {
+            (err === null).should.be.true;
+            (items === null).should.be.true;
+
+            searchClient.addItem(pluginDataToIndex, function (err, ids) {
+                searchClient.getItemByHash(&#039;fileHash&#039;, function (err, item) {
+                    var identifiers = item.getPluginIdentifiers();
+
+                    identifiers.length.should.equal(2);
+
+                    for (var i in identifiers) {
+                        var identifier = identifiers[i];
+
+                        item.getPluginData(identifier).should.containDeep({ foo: &#039;bar&#039; });
+                    }
+
+                    done();
+                });
+            });
+        });
+    });
+
+    it(&#039;should correctly return the added item by id&#039;, function (done) {
+        var dataToIndex = {
+            itemHash: &#039;fileHash&#039;,
+            itemName: &#039;file.txt&#039;,
+            itemPath: &#039;../path/file.txt&#039;,
+            itemStats: {
+                stats: true
+            }
+        };
+
+        var pluginDataToIndex = {
+            pluginidentifier: dataToIndex,
+            pluginidentifier2: dataToIndex
+        };
+
+        searchClient.itemExistsById(&#039;randomId&#039;, function (exists) {
+            exists.should.be.false;
+
+            searchClient.addItem(pluginDataToIndex, function (err, ids) {
+                searchClient.getItemById(ids[0], function (err, item) {
+                    item.should.be.an.instanceof(SearchItem);
+
+                    item.getHash().should.equal(&#039;fileHash&#039;);
+                    item.getName().should.equal(&#039;file.txt&#039;);
+                    item.getPath().should.equal(&#039;../path/file.txt&#039;);
+                    item.getStats().should.containDeep({ stats: true });
+
+                    done();
+                });
+            });
+        });
+    });
+
+    it(&#039;should correctly return the added item by path&#039;, function (done) {
+        var dataToIndex = {
+            itemHash: &#039;fileHash&#039;,
+            itemName: &#039;file.txt&#039;,
+            itemPath: &#039;../path/file.txt&#039;,
+            itemStats: {
+                stats: true
+            },
+            foo: &#039;bar&#039;
+        };
+
+        var pluginDataToIndex = {
+            pluginidentifier: dataToIndex,
+            pluginidentifier2: dataToIndex
+        };
+        searchClient.getItemByPath(&#039;../path/file.txt&#039;, function (err, items) {
+            (err === null).should.be.true;
+            (items === null).should.be.true;
+
+            searchClient.addItem(pluginDataToIndex, function (err, ids) {
+                ids.should.have.a.lengthOf(2);
+
+                searchClient.getItemByPath(&#039;../path/file.txt&#039;, function (err, item) {
+                    var identifiers = item.getPluginIdentifiers();
+
+                    identifiers.length.should.equal(2);
+
+                    for (var i in identifiers) {
+                        var identifier = identifiers[i];
+
+                        item.getPluginData(identifier).should.containDeep({ foo: &#039;bar&#039; });
+                    }
+
+                    done();
+                });
+            });
+        });
+    });
+
+    it(&#039;should correctly add an item to the datastore which uses the attachment mapper plugin&#039;, function (done) {
+        var filePath = testUtils.getFixturePath(&#039;core/search/searchManager/Peeriod_Anonymous_decentralized_network.pdf&#039;);
+        var mapping = {
+            &#039;_source&#039;: {
+                &#039;excludes&#039;: [&#039;file&#039;]
+            },
+            properties: {
+                file: {
+                    type: &#039;attachment&#039;,
+                    indexed_chars: -1,
+                    detect_anguage: true,
+                    fields: {
+                        file: {
+                            store: &#039;yes&#039;,
+                            term_vector: &#039;with_positions_offsets&#039;,
+                            analyzer: &#039;english&#039;
+                        },
+                        author: {
+                            store: &#039;yes&#039;
+                        },
+                        title: {
+                            store: &#039;yes&#039;,
+                            analyzer: &#039;english&#039;
+                        },
+                        date: {
+                            store: &#039;yes&#039;
+                        },
+                        keywords: {
+                            store: &#039;yes&#039;,
+                            analyzer: &#039;keyword&#039;
+                        },
+                        content_type: {
+                            store: &#039;yes&#039;
+                        },
+                        content_length: {
+                            store: &#039;yes&#039;
+                        },
+                        language: {
+                            store: &#039;yes&#039;
+                        }
+                    }
+                }
+            }
+        };
+        var dataToIndex = {
+            pluginidentifier: {
+                file: fs.readFileSync(filePath).toString(&#039;base64&#039;),
+                itemHash: &#039;fileHash&#039;,
+                itemName: &#039;Peeriod_Anonymous_decentralized_network.pdf&#039;,
+                itemPath: filePath,
+                itemStats: {
+                    stats: true
+                }
+            }
+        };
+
+        searchClient.addMapping(&#039;pluginidentifier&#039;, mapping, function (err) {
+            (err === null).should.be.true;
+
+            searchClient.addItem(dataToIndex, function (err, ids) {
+                (err === null).should.be.true;
+                (ids !== null).should.be.true;
+                ids.length.should.equal(1);
+
+                searchClient.getItemById(ids[0], function (err, item) {
+                    (err === null).should.be.true;
+
+                    item.should.be.an.instanceof(SearchItem);
+
+                    item.getName().should.equal(&#039;Peeriod_Anonymous_decentralized_network.pdf&#039;);
+                    item.getPath().should.equal(filePath);
+                    item.getStats().should.containDeep({ stats: true });
+                    item.getHash().should.equal(&#039;fileHash&#039;);
+
+                    done();
+                });
+            });
+        });
+    });
+
+    it(&#039;should correctly create an index with not indexed meta fields in the mapping&#039;, function (done) {
+        searchClient.createOutgoingQueryIndex(&#039;indexname&#039;, function (err) {
+            (err === null).should.be.true;
+
+            // todo check index fields
+            done();
+        });
+    });
+
+    it(&#039;should correctly create a percolate index and check the item against the running query&#039;, function (done) {
+        var queryBody = {
+            query: {
+                match: {
+                    message: &#039;bonsai tree&#039;
+                }
+            }
+        };
+
+        searchClient.createOutgoingQuery(&#039;mainindex&#039;, &#039;searchQueryId&#039;, queryBody, function (err) {
+            (err === null).should.be.true;
+
+            searchClient.checkIncomingResponse(&#039;mainindex&#039;, &#039;searchQueryId&#039;, { message: &#039;A new bonsai tree in the office&#039; }, function (err, matches) {
+                (err === null).should.be.true;
+
+                matches.should.have.a.lengthOf(1);
+                matches.should.containDeep([
+                    {
+                        _index: &#039;mainindex&#039;,
+                        _id: &#039;searchQueryId&#039;
+                    }
+                ]);
+
+                done();
+            });
+        });
+    });
+
+    it(&#039;should correctly add a response to the database&#039;, function (done) {
+        var randomQueryId = &#039;searchQueryId&#039; + Math.round(Math.random() * 100000000);
+        var queryBody = {
+            query: {
+                match: {
+                    message: &#039;bonsai tree&#039;
+                }
+            }
+        };
+
+        searchClient.createOutgoingQuery(&#039;mainindex&#039;, randomQueryId, queryBody, function (err) {
+            searchClient.addIncomingResponse(&#039;mainindex&#039;, randomQueryId, { message: &#039;A new bonsai tree in the office&#039; }, { metadata: true }, function (err) {
+                (err === null).should.be.true;
+
+                done();
+            });
+        });
+    });
+
+    it(&#039;should correctly return the corresponding query object for the specified queryId&#039;, function (done) {
+        var theQueryBody = {
+            query: {
+                match: {
+                    message: &#039;bonsai tree&#039;
+                }
+            }
+        };
+
+        searchClient.createOutgoingQuery(&#039;mainindex&#039;, &#039;searchQueryId&#039;, theQueryBody, function (err) {
+            searchClient.getOutgoingQuery(&#039;mainindex&#039;, &#039;searchQueryId&#039;, function (err, queryBody) {
+                (err === null).should.be.true;
+                queryBody.should.containDeep(theQueryBody);
+
+                done();
+            });
+        });
+    });
+
+    it(&#039;should correctly return the results for the given query&#039;, function (done) {
+        var randomQueryId = &#039;searchQueryId&#039; + Math.round(Math.random() * 100000000);
+        var queryBody = {
+            query: {
+                match: {
+                    message: &#039;bonsai tree&#039;
+                }
+            }
+        };
+
+        var timestamp = new Date().getTime();
+
+        searchClient.createOutgoingQueryIndex(&#039;mainindex&#039;, function (err) {
+            searchClient.createOutgoingQuery(&#039;mainindex&#039;, randomQueryId, queryBody, function (err) {
+                searchClient.addIncomingResponse(&#039;mainindex&#039;, randomQueryId, { message: &#039;A new bonsai tree in the office&#039; }, { metadata: true }, function () {
+                    searchClient.getIncomingResponses(&#039;mainindex&#039;, randomQueryId, queryBody, function (err, responses) {
+                        responses.total.should.equal(1);
+                        responses.hits.should.have.a.lengthOf(1);
+
+                        responses.hits[0].should.containDeep({
+                            _source: {
+                                message: &#039;A new bonsai tree in the office&#039;,
+                                _meta: {
+                                    metadata: true
+                                }
+                            }
+                        });
+
+                        responses.hits[0].fields._timestamp.should.be.greaterThan(timestamp);
+
+                        done();
+                    });
+                });
+            });
+        });
+    });
+
+    it(&#039;should correctly return an incoming result by hash and by id&#039;, function (done) {
+        var randomQueryId = &#039;searchQueryId&#039; + Math.round(Math.random() * 100000000);
+        var queryBody = {
+            query: {
+                match: {
+                    message: &#039;foobar&#039;
+                }
+            }
+        };
+        var responseBody = {
+            _type: &quot;jj.core.documentanalyser&quot;,
+            _itemId: &quot;1234567890abc&quot;,
+            itemName: &quot;fileName.txt&quot;,
+            itemStats: {
+                stats: true
+            },
+            itemHash: &quot;1234567890abc&quot;
+        };
+
+        var item = {
+            _index: &quot;mainindex&quot;,
+            _score: 1,
+            _source: {
+                _type: &quot;jj.core.documentanalyser&quot;,
+                _itemId: &quot;1234567890abc&quot;,
+                itemName: &quot;fileName.txt&quot;,
+                itemStats: {
+                    stats: true
+                },
+                itemHash: &quot;1234567890abc&quot;,
+                _meta: {
+                    metadata: true
+                }
+            }
+        };
+
+        searchClient.createOutgoingQueryIndex(&#039;mainindex&#039;, function (err) {
+            searchClient.createOutgoingQuery(&#039;mainindex&#039;, randomQueryId, queryBody, function (err) {
+                searchClient.addIncomingResponse(&#039;mainindex&#039;, randomQueryId, responseBody, { metadata: true }, function () {
+                    searchClient.getIncomingResponseByHash(&#039;mainindex&#039;, &#039;_all&#039;, &#039;1234567890abc&#039;, function (err, response) {
+                        (err === null).should.be.true;
+
+                        response.should.containDeep(item);
+
+                        searchClient.getIncomingResponseById(&#039;mainindex&#039;, &#039;_all&#039;, response[&#039;_id&#039;], function (err, response) {
+                            (err === null).should.be.true;
+
+                            response.should.containDeep(item._source);
+
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+    });
+
+    it(&#039;should correctly remove a outgoing query and all corresponding responses from the database&#039;, function (done) {
+        searchClient.deleteOutgoingQuery(&#039;myotherindex&#039;, &#039;searchQueryId&#039;, function (err) {
+            (err === null).should.be.true;
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly match the results for the given query&#039;, function (done) {
+        var dataToIndex = {
+            pluginidentifier: {
+                itemHash: &#039;fileHash&#039;,
+                itemName: &#039;file.txt&#039;,
+                itemPath: &#039;../path/file.txt&#039;,
+                itemStats: {
+                    stats: true
+                },
+                foo: &#039;bar io&#039;
+            }
+        };
+
+        searchClient.addItem(dataToIndex, function (err, ids) {
+            searchClient.search({
+                query: {
+                    match: {
+                        &#039;pluginidentifier.foo&#039;: &#039;bar&#039;
+                    }
+                }
+            }, function (err, results) {
+                (err === null).should.be.true;
+
+                results.should.containDeep({
+                    total: 1,
+                    hits: [
+                        {
+                            _index: &#039;mainindex&#039;,
+                            _type: &#039;pluginidentifier&#039;,
+                            _source: {
+                                itemHash: &#039;fileHash&#039;,
+                                itemName: &#039;file.txt&#039;,
+                                itemPath: &#039;../path/file.txt&#039;,
+                                itemStats: {
+                                    stats: true
+                                },
+                                foo: &#039;bar io&#039;
+                            }
+                        }
+                    ]
+                });
+
+                done();
+            });
+        });
+    });
+});
+//# sourceMappingURL=SearchClient.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

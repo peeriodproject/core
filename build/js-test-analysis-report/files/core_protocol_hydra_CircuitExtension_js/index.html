@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/hydra/CircuitExtension.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/hydra/CircuitExtension.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">67.57</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">494</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">57.14</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">5.15</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var crypto = require(&#039;crypto&#039;);
+var events = require(&#039;events&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var HydraMessageCenter = require(&#039;../../../../src/core/protocol/hydra/HydraMessageCenter&#039;);
+var ConnectionManager = require(&#039;../../../../src/core/protocol/hydra/ConnectionManager&#039;);
+var ProtocolConnectionManager = require(&#039;../../../../src/core/protocol/net/ProtocolConnectionManager&#039;);
+
+var CircuitExtender = require(&#039;../../../../src/core/protocol/hydra/CircuitExtender&#039;);
+var AdditiveSharingScheme = require(&#039;../../../../src/core/crypto/AdditiveSharingScheme&#039;);
+
+var ReadableMessage = require(&#039;../../../../src/core/protocol/messages/ReadableMessage&#039;);
+var ReadableHydraMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/ReadableHydraMessageFactory&#039;);
+
+var ReadableCellCreatedRejectedMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/ReadableCellCreatedRejectedMessageFactory&#039;);
+var ReadableAdditiveSharingMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/ReadableAdditiveSharingMessageFactory&#039;);
+var ReadableCreateCellAdditiveMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/ReadableCreateCellAdditiveMessageFactory&#039;);
+
+var WritableHydraMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/WritableHydraMessageFactory&#039;);
+var WritableCellCreatedRejectedMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/WritableCellCreatedRejectedMessageFactory&#039;);
+var WritableAdditiveSharingMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/WritableAdditiveSharingMessageFactory&#039;);
+var WritableCreateCellAdditiveMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory&#039;);
+var LayeredEncDecHandler = require(&#039;../../../../src/core/protocol/hydra/messages/Aes128GcmLayeredEncDecHandler&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; HYDRA --&gt; Circuit extension (integration)&#039;, function () {
+    this.timeout(0);
+
+    var sandbox = null;
+
+    // STUBS
+    var protocolConnectionManagerStub = null;
+
+    // HELPERS
+    var theSocketIdentifier = null;
+    var openSockets = [];
+
+    var messageListener = new events.EventEmitter();
+
+    var terminationCallback = null;
+    var emitTermination = function (identifier) {
+        var i = openSockets.indexOf(identifier);
+        if (i &gt; -1) {
+            openSockets.splice(i, 1);
+            terminationCallback(identifier);
+        }
+    };
+
+    var messageCallback = null;
+    var writableHydraMessageFactory = new WritableHydraMessageFactory();
+    var readablyHydraMessageFactory = new ReadableHydraMessageFactory();
+
+    var emitHydraMessage = function (type, identifier, messagePayload, circuitId, decrypted) {
+        var msgPayload = writableHydraMessageFactory.constructMessage(type, messagePayload, messagePayload.length, decrypted ? null : circuitId);
+
+        if (decrypted) {
+            var from = connectionManager.getCircuitNodes()[identifier];
+
+            if (from) {
+                messageCenter.forceCircuitMessageThrough(msgPayload, from);
+            }
+        } else {
+            var msg = testUtils.stubPublicApi(sandbox, ReadableMessage, {
+                getPayload: function () {
+                    return msgPayload;
+                }
+            });
+
+            messageCallback(identifier, null, msg, decrypted);
+        }
+    };
+
+    var connectionError = null;
+    var socketCount = 0;
+
+    // INSTANCES USED
+    var connectionManager = null;
+    var messageCenter = null;
+    var layeredEncDec = null;
+    var circuitExtender = null;
+
+    it(&#039;should correctly instantiate the connection manager, message center, and extender&#039;, function () {
+        connectionManager = new ConnectionManager(protocolConnectionManagerStub, new WritableHydraMessageFactory(), new ReadableHydraMessageFactory());
+        messageCenter = new HydraMessageCenter(connectionManager, new ReadableHydraMessageFactory(), new ReadableCellCreatedRejectedMessageFactory(), new ReadableAdditiveSharingMessageFactory(), new ReadableCreateCellAdditiveMessageFactory(), new WritableCreateCellAdditiveMessageFactory(), new WritableAdditiveSharingMessageFactory(), new WritableHydraMessageFactory(), new WritableCellCreatedRejectedMessageFactory());
+        layeredEncDec = new LayeredEncDecHandler();
+
+        circuitExtender = new CircuitExtender(1000, 1.1, connectionManager, messageCenter, layeredEncDec);
+
+        connectionManager.should.be.instanceof(ConnectionManager);
+        messageCenter.should.be.instanceof(HydraMessageCenter);
+        layeredEncDec.should.be.instanceof(LayeredEncDecHandler);
+        circuitExtender.should.be.instanceof(CircuitExtender);
+    });
+
+    it(&#039;should pipe all the message and add the node to extend with to the circuit nodes and handle the timeout&#039;, function (done) {
+        var nodeToExtendWith = {
+            ip: &#039;1.1.1.1&#039;,
+            port: 80
+        };
+
+        var additiveNodes = [
+            {
+                ip: &#039;2.2.2.2&#039;,
+                port: 80
+            },
+            {
+                ip: &#039;3.3.3.3&#039;,
+                port: 80
+            }
+        ];
+
+        var count = 0;
+        messageListener.on(&#039;message&#039;, function (identifier, msg) {
+            if (msg.getMessageType() === &#039;CREATE_CELL_ADDITIVE&#039;) {
+                count++;
+                connectionManager.getCircuitNodes()[identifier].socketIdentifier.should.equal(identifier);
+                connectionManager.getCircuitNodes()[identifier].circuitId.should.equal(circuitExtender.getCircuitId());
+                (connectionManager.getCircuitNodes()[identifier] === circuitExtender.getExpectReactionFrom()).should.be.true;
+            } else if (msg.getMessageType() === &#039;ADDITIVE_SHARING&#039;)
+                count++;
+        });
+
+        circuitExtender.extend(nodeToExtendWith, additiveNodes, function (err, isRejected, newNode) {
+            messageListener.removeAllListeners(&#039;message&#039;);
+
+            count.should.equal(3);
+            err.message.should.equal(&#039;CircuitExtender: Timed out&#039;);
+            isRejected.should.be.false;
+            (newNode == null).should.be.true;
+
+            Object.keys(connectionManager.getCircuitNodes()).length.should.equal(0);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly handle the termination of a circuit socket while extending&#039;, function (done) {
+        var nodeToExtendWith = {
+            ip: &#039;1.1.1.1&#039;,
+            port: 80
+        };
+
+        var additiveNodes = [
+            {
+                ip: &#039;2.2.2.2&#039;,
+                port: 80
+            },
+            {
+                ip: &#039;3.3.3.3&#039;,
+                port: 80
+            }
+        ];
+
+        messageListener.on(&#039;message&#039;, function (identifier, msg) {
+            if (msg.getMessageType() === &#039;CREATE_CELL_ADDITIVE&#039;) {
+                emitTermination(identifier);
+            }
+        });
+
+        circuitExtender.extend(nodeToExtendWith, additiveNodes, function (err, isRejected, newNode) {
+            messageListener.removeAllListeners(&#039;message&#039;);
+
+            err.message.should.equal(&#039;CircuitExtender: Circuit socket terminated&#039;);
+            Object.keys(connectionManager.getCircuitNodes()).length.should.equal(0);
+            circuitExtender.getNodes().length.should.equal(0);
+            layeredEncDec.getNodes().length.should.equal(0);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly handle the acceptance of a circuit extension (first node)&#039;, function (done) {
+        var nodeToExtendWith = {
+            ip: &#039;1.1.1.1&#039;,
+            port: 80
+        };
+
+        var additiveNodes = [
+            {
+                ip: &#039;2.2.2.2&#039;,
+                port: 80
+            },
+            {
+                ip: &#039;3.3.3.3&#039;,
+                port: 80
+            }
+        ];
+
+        var receivedCount = 0;
+        var bufList = [];
+        var circuitId = null;
+        var uuid = null;
+        var dhGroup = crypto.getDiffieHellman(&#039;modp14&#039;);
+        dhGroup.generateKeys();
+
+        messageListener.on(&#039;message&#039;, function (identifier, message) {
+            receivedCount++;
+
+            if (message.getMessageType() === &#039;CREATE_CELL_ADDITIVE&#039;) {
+                theSocketIdentifier = identifier;
+
+                var msg = (new ReadableCreateCellAdditiveMessageFactory()).create(message.getPayload());
+                circuitId = msg.getCircuitId();
+                uuid = msg.getUUID();
+
+                bufList.push(msg.getAdditivePayload());
+            } else if (message.getMessageType() == &#039;ADDITIVE_SHARING&#039;) {
+                (connectionManager.getCircuitNodes()[identifier] == undefined).should.be.true;
+                var msg = (new ReadableCreateCellAdditiveMessageFactory()).create((new ReadableAdditiveSharingMessageFactory()).create(message.getPayload()).getPayload());
+
+                bufList.push(msg.getAdditivePayload());
+            }
+
+            if (receivedCount === 3) {
+                var dh = AdditiveSharingScheme.getCleartext(bufList, 256);
+                var secret = dhGroup.computeSecret(dh);
+                var sha = crypto.createHash(&#039;sha1&#039;);
+                var secretHash = sha.update(secret).digest();
+
+                messageListener.removeAllListeners(&#039;message&#039;);
+
+                emitHydraMessage(&#039;CELL_CREATED_REJECTED&#039;, theSocketIdentifier, (new WritableCellCreatedRejectedMessageFactory()).constructMessage(uuid, secretHash, dhGroup.getPublicKey()), circuitId);
+            }
+        });
+
+        circuitExtender.extend(nodeToExtendWith, additiveNodes, function (err, isRejected, newNode) {
+            (newNode === connectionManager.getCircuitNodes()[theSocketIdentifier]).should.be.true;
+            (newNode === layeredEncDec.getNodes()[0]).should.be.true;
+            (newNode === circuitExtender.getExpectReactionFrom()).should.be.true;
+
+            newNode.incomingKey.length.should.equal(16);
+            newNode.outgoingKey.length.should.equal(16);
+            newNode.socketIdentifier.should.equal(theSocketIdentifier);
+
+            newNode.incomingKey = newNode.outgoingKey;
+
+            done();
+        });
+    });
+
+    it(&#039;should handle the rejection of an extension (second node)&#039;, function (done) {
+        var nodeToExtendWith = {
+            ip: &#039;2.2.2.2&#039;,
+            port: 80
+        };
+
+        var additiveNodes = [
+            {
+                ip: &#039;3.3.3.3&#039;,
+                port: 80
+            },
+            {
+                ip: &#039;4.4.4.4&#039;,
+                port: 80
+            }
+        ];
+
+        var uuid = null;
+
+        messageListener.on(&#039;message&#039;, function (identifier, message) {
+            if (message.getMessageType() === &#039;ENCRYPTED_SPITOUT&#039;) {
+                identifier.should.equal(theSocketIdentifier);
+
+                layeredEncDec.decrypt(message.getPayload(), function (err, decryptedBuf) {
+                    var msg = (new ReadableCreateCellAdditiveMessageFactory()).create((new ReadableAdditiveSharingMessageFactory()).create(readablyHydraMessageFactory.create(decryptedBuf).getPayload()).getPayload());
+                    uuid = msg.getUUID();
+
+                    messageListener.removeAllListeners(&#039;message&#039;);
+
+                    emitHydraMessage(&#039;CELL_CREATED_REJECTED&#039;, theSocketIdentifier, (new WritableCellCreatedRejectedMessageFactory()).constructMessage(uuid), layeredEncDec.getNodes()[0].circuitId, true);
+                });
+            }
+        });
+
+        circuitExtender.extend(nodeToExtendWith, additiveNodes, function (err, isRejected, newNode) {
+            // wait until all messages have been sent. it&#039;s a bit too fast
+            setTimeout(function () {
+                isRejected.should.be.true;
+                (err == null).should.be.true;
+                (newNode == null).should.be.true;
+
+                Object.keys(connectionManager.getCircuitNodes()).length.should.equal(1);
+
+                (circuitExtender.getExpectReactionFrom() === layeredEncDec.getNodes()[0]).should.be.true;
+
+                done();
+            }, 500);
+        });
+    });
+
+    it(&#039;should handle the acceptance of an extension (second ndoe)&#039;, function (done) {
+        var nodeToExtendWith = {
+            ip: &#039;4.4.4.4&#039;,
+            port: 80
+        };
+
+        var additiveNodes = [
+            {
+                ip: &#039;2.2.2.2&#039;,
+                port: 80
+            },
+            {
+                ip: &#039;3.3.3.3&#039;,
+                port: 80
+            }
+        ];
+
+        var receivedCount = 0;
+        var bufList = [];
+        var uuid = null;
+        var dhGroup = crypto.getDiffieHellman(&#039;modp14&#039;);
+        dhGroup.generateKeys();
+
+        var check = function () {
+            if (receivedCount === 3) {
+                var dh = AdditiveSharingScheme.getCleartext(bufList, 256);
+
+                var secret = dhGroup.computeSecret(dh);
+                var sha = crypto.createHash(&#039;sha1&#039;);
+                var secretHash = sha.update(secret).digest();
+
+                messageListener.removeAllListeners(&#039;message&#039;);
+
+                emitHydraMessage(&#039;CELL_CREATED_REJECTED&#039;, theSocketIdentifier, (new WritableCellCreatedRejectedMessageFactory()).constructMessage(uuid, secretHash, dhGroup.getPublicKey()), circuitExtender.getCircuitId(), true);
+            }
+        };
+
+        messageListener.on(&#039;message&#039;, function (identifier, message) {
+            receivedCount++;
+
+            if (message.getMessageType() === &#039;ENCRYPTED_SPITOUT&#039;) {
+                theSocketIdentifier.should.equal(identifier);
+
+                layeredEncDec.decrypt(message.getPayload(), function (err, decryptedBuf) {
+                    var msg = (new ReadableCreateCellAdditiveMessageFactory()).create((new ReadableAdditiveSharingMessageFactory()).create(readablyHydraMessageFactory.create(decryptedBuf).getPayload()).getPayload());
+                    uuid = msg.getUUID();
+
+                    bufList.push(msg.getAdditivePayload());
+
+                    check();
+                });
+            } else if (message.getMessageType() == &#039;ADDITIVE_SHARING&#039;) {
+                (connectionManager.getCircuitNodes()[identifier] == undefined).should.be.true;
+                var msg = (new ReadableCreateCellAdditiveMessageFactory()).create((new ReadableAdditiveSharingMessageFactory()).create(message.getPayload()).getPayload());
+
+                bufList.push(msg.getAdditivePayload());
+
+                check();
+            }
+        });
+
+        circuitExtender.extend(nodeToExtendWith, additiveNodes, function (err, isRejected, newNode) {
+            (newNode === layeredEncDec.getNodes()[1]).should.be.true;
+
+            circuitExtender.getNodes().length.should.equal(2);
+            Object.keys(connectionManager.getCircuitNodes()).length.should.equal(1);
+
+            newNode.incomingKey.length.should.equal(16);
+            newNode.outgoingKey.length.should.equal(16);
+
+            newNode.incomingKey = newNode.outgoingKey;
+
+            done();
+        });
+    });
+
+    it(&#039;should not react to messages when the circuit socket terminates&#039;, function (done) {
+        var nodeToExtendWith = {
+            ip: &#039;2.2.2.2&#039;,
+            port: 80
+        };
+
+        var additiveNodes = [
+            {
+                ip: &#039;5.5.5.5&#039;,
+                port: 80
+            },
+            {
+                ip: &#039;3.3.3.3&#039;,
+                port: 80
+            }
+        ];
+
+        messageListener.on(&#039;message&#039;, function (identifier, message) {
+            if (message.getMessageType() === &#039;ENCRYPTED_SPITOUT&#039;) {
+                messageListener.removeAllListeners(&#039;message&#039;);
+
+                emitTermination(theSocketIdentifier);
+
+                theSocketIdentifier.should.equal(identifier);
+
+                layeredEncDec.decrypt(message.getPayload(), function (err, decryptedBuf) {
+                    var msg = (new ReadableCreateCellAdditiveMessageFactory()).create((new ReadableAdditiveSharingMessageFactory()).create(readablyHydraMessageFactory.create(decryptedBuf).getPayload()).getPayload());
+                    var uuid = msg.getUUID();
+
+                    emitHydraMessage(&#039;CELL_CREATED_REJECTED&#039;, theSocketIdentifier, (new WritableCellCreatedRejectedMessageFactory()).constructMessage(uuid), circuitExtender.getCircuitId(), true);
+                });
+            }
+        });
+
+        circuitExtender.extend(nodeToExtendWith, additiveNodes, function (err, isRejected, newNode) {
+            err.message.should.equal(&#039;CircuitExtender: Circuit socket terminated&#039;);
+
+            connectionManager.listeners(&#039;CELL_CREATED_REJECTED_&#039; + circuitExtender.getCircuitId()).length.should.equal(0);
+            connectionManager.listeners(&#039;circuitTermination&#039;).length.should.equal(0);
+
+            setTimeout(function () {
+                done();
+            }, 300);
+        });
+    });
+
+    it(&#039;should error out if the hash of the secret does not match&#039;, function (done) {
+        layeredEncDec = new LayeredEncDecHandler();
+
+        circuitExtender = new CircuitExtender(1000, 1.1, connectionManager, messageCenter, layeredEncDec);
+
+        var nodeToExtendWith = {
+            ip: &#039;2.2.2.2&#039;,
+            port: 80
+        };
+
+        var additiveNodes = [
+            {
+                ip: &#039;5.5.5.5&#039;,
+                port: 80
+            },
+            {
+                ip: &#039;3.3.3.3&#039;,
+                port: 80
+            }
+        ];
+
+        messageListener.on(&#039;message&#039;, function (identifier, message) {
+            if (message.getMessageType() === &#039;CREATE_CELL_ADDITIVE&#039;) {
+                messageListener.removeAllListeners(&#039;message&#039;);
+
+                var msg = (new ReadableCreateCellAdditiveMessageFactory()).create(message.getPayload());
+                var uuid = msg.getUUID();
+                var circuitId = msg.getCircuitId();
+
+                emitHydraMessage(&#039;CELL_CREATED_REJECTED&#039;, identifier, (new WritableCellCreatedRejectedMessageFactory()).constructMessage(uuid, crypto.randomBytes(20), crypto.randomBytes(256)), circuitId);
+            }
+        });
+
+        circuitExtender.extend(nodeToExtendWith, additiveNodes, function (err) {
+            err.message.should.equal(&#039;CircuitExtender: Hashes of shared secret do not match.&#039;);
+            done();
+        });
+    });
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+
+        protocolConnectionManagerStub = testUtils.stubPublicApi(sandbox, ProtocolConnectionManager, {
+            on: function (what, callback) {
+                if (what === &#039;terminatedConnection&#039;) {
+                    terminationCallback = callback;
+                } else if (what === &#039;hydraMessage&#039;) {
+                    messageCallback = callback;
+                }
+            },
+            hydraConnectTo: function (port, ip, callback) {
+                if (connectionError) {
+                    setTimeout(function () {
+                        callback(connectionError);
+                    }, 10);
+                } else {
+                    setTimeout(function () {
+                        var identifier = &#039;hydra&#039; + ++socketCount;
+                        openSockets.push(identifier);
+                        callback(null, identifier);
+                    }, 10);
+                }
+            },
+            hydraWriteMessageTo: function (identifier, sendableBuffer) {
+                if (openSockets.indexOf(identifier) &gt; -1) {
+                    var msg = readablyHydraMessageFactory.create(sendableBuffer);
+                    setImmediate(function () {
+                        messageListener.emit(&#039;message&#039;, identifier, msg);
+                    });
+                }
+            }
+        });
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+});
+//# sourceMappingURL=CircuitExtension.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

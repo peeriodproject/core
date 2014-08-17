@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/ui/search/UiSearchFormResultsManagerComponent.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/ui/search/UiSearchFormResultsManagerComponent.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">72.85</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">242</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">30.43</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.04</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+var sinon = require(&#039;sinon&#039;);
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var SearchFormResultsManager = require(&#039;../../../../src/core/search/SearchFormResultsManager&#039;);
+var SearchRequestManager = require(&#039;../../../../src/core/search/SearchRequestManager&#039;);
+var UiSearchFormResultsManagerComponent = require(&#039;../../../../src/core/ui/search/UiSearchFormResultsManagerComponent&#039;);
+
+describe(&#039;CORE --&gt; UI --&gt; SEARCH --&gt; UiSearchFormResultsManagerComponent @prio&#039;, function () {
+    var sandbox;
+    var component;
+    var searchFormResultsManagerStub;
+    var searchRequestManagerStub;
+
+    var responses;
+
+    beforeEach(function () {
+        sandbox = sinon.sandbox.create();
+        searchFormResultsManagerStub = testUtils.stubPublicApi(sandbox, SearchFormResultsManager, {
+            addQuery: function () {
+                return arguments[1](null, &#039;queryId&#039;);
+            },
+            transformResponses: function () {
+                return arguments[2](null, arguments[0]);
+            }
+        });
+        searchRequestManagerStub = testUtils.stubPublicApi(sandbox, SearchRequestManager, {
+            removeQuery: function () {
+                return arguments[1](null);
+            },
+            getResponses: function () {
+                return arguments[1](null, responses);
+            }
+        });
+
+        component = new UiSearchFormResultsManagerComponent(searchFormResultsManagerStub, searchRequestManagerStub);
+
+        responses = null;
+    });
+
+    afterEach(function () {
+        sandbox.restore();
+        component = null;
+
+        searchFormResultsManagerStub = null;
+        searchRequestManagerStub = null;
+
+        responses = null;
+    });
+
+    it(&#039;should correctly instantiate without error&#039;, function () {
+        component.should.be.an.instanceof(UiSearchFormResultsManagerComponent);
+    });
+
+    it(&#039;should correctly return the channel name&#039;, function () {
+        component.getChannelName().should.equal(&#039;search&#039;);
+    });
+
+    it(&#039;should correctly return the event names&#039;, function () {
+        component.getEventNames().should.containDeep([&#039;addQuery&#039;, &#039;removeQuery&#039;]);
+    });
+
+    it(&#039;should correctly add the specified query&#039;, function (done) {
+        var uiUpdateSpy = sandbox.spy();
+
+        component.onUiUpdate(uiUpdateSpy);
+        component.emit(&#039;addQuery&#039;, &#039;raw query&#039;);
+
+        // should ignore the second call
+        component.emit(&#039;addQuery&#039;, &#039;raw query&#039;);
+
+        searchFormResultsManagerStub.addQuery.calledOnce.should.be.true;
+        searchFormResultsManagerStub.addQuery.getCall(0).args[0].should.equal(&#039;raw query&#039;);
+
+        uiUpdateSpy.calledOnce.should.be.true;
+
+        component.getState(function (state) {
+            state.should.containDeep({
+                currentQuery: &#039;raw query&#039;,
+                currentQueryStatus: &#039;CREATED&#039;
+            });
+
+            (state.currentResults === null).should.be.true;
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly remove a running query&#039;, function (done) {
+        var uiUpdateSpy = sandbox.spy();
+
+        component.emit(&#039;addQuery&#039;, &#039;raw query&#039;);
+
+        // added after the addQuery event to get the more precise call count
+        component.onUiUpdate(uiUpdateSpy);
+        component.emit(&#039;removeQuery&#039;);
+
+        searchRequestManagerStub.removeQuery.calledOnce.should.be.true;
+        searchRequestManagerStub.removeQuery.getCall(0).args[0].should.equal(&#039;queryId&#039;);
+
+        uiUpdateSpy.calledOnce.should.be.true;
+
+        component.getState(function (state) {
+            (state.currentQuery === null).should.be.true;
+            (state.currentQueryStatus === null).should.be.true;
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly remove the old query whenever a new query starts&#039;, function (done) {
+        var uiUpdateSpy = sandbox.spy();
+
+        component.onUiUpdate(uiUpdateSpy);
+        component.emit(&#039;addQuery&#039;, &#039;first query&#039;);
+
+        searchRequestManagerStub.removeQuery.called.should.be.false;
+
+        component.emit(&#039;addQuery&#039;, &#039;second query&#039;);
+
+        searchRequestManagerStub.removeQuery.calledOnce.should.be.true;
+        searchRequestManagerStub.removeQuery.getCall(0).args[0].should.equal(&#039;queryId&#039;);
+
+        uiUpdateSpy.calledTwice.should.be.true;
+
+        component.getState(function (state) {
+            state.should.containDeep({
+                currentQuery: &#039;second query&#039;
+            });
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly return the state from the searchRequestManager on query end&#039;, function (done) {
+        var uiUpdateSpy = sandbox.spy();
+
+        component.onUiUpdate(uiUpdateSpy);
+        component.emit(&#039;addQuery&#039;, &#039;query string&#039;);
+
+        searchRequestManagerStub.onQueryEnd.getCall(0).args[0](&#039;queryId&#039;, &#039;reason&#039;);
+
+        uiUpdateSpy.calledTwice.should.be.true;
+
+        component.getState(function (state) {
+            state.currentQueryStatus.should.equal(&#039;reason&#039;);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly return the state from the searchRequestManager on query canceled&#039;, function (done) {
+        var uiUpdateSpy = sandbox.spy();
+
+        component.onUiUpdate(uiUpdateSpy);
+        component.emit(&#039;addQuery&#039;, &#039;query string&#039;);
+
+        searchRequestManagerStub.onQueryCanceled.getCall(0).args[0](&#039;queryId&#039;, &#039;reason&#039;);
+
+        uiUpdateSpy.calledTwice.should.be.true;
+
+        component.getState(function (state) {
+            state.currentQueryStatus.should.equal(&#039;reason&#039;);
+
+            done();
+        });
+    });
+
+    describe(&#039;should correctly get the responses for the changed queryId and transform them before updating the ui&#039;, function () {
+        it(&#039;should correctly do nothing if the changed queryId does not match the current ui query&#039;, function () {
+            var uiUpdateSpy = sandbox.spy();
+
+            component.onUiUpdate(uiUpdateSpy);
+
+            searchRequestManagerStub.onQueryResultsChanged.getCall(0).args[0](&#039;randomQueryId&#039;);
+            searchRequestManagerStub.getResponses.called.should.be.false;
+
+            uiUpdateSpy.called.should.be.false;
+        });
+
+        it(&#039;should correctly get the responses from the database and do nothing if the results are malformed&#039;, function (done) {
+            var uiUpdateSpy = sandbox.spy();
+
+            component.onUiUpdate(uiUpdateSpy);
+
+            component.emit(&#039;addQuery&#039;, &#039;lorem ipsum&#039;);
+
+            setImmediate(function () {
+                uiUpdateSpy.calledOnce.should.be.true;
+
+                searchRequestManagerStub.onQueryResultsChanged.getCall(0).args[0](&#039;queryId&#039;);
+
+                searchRequestManagerStub.getResponses.calledOnce.should.be.true;
+                searchRequestManagerStub.getResponses.getCall(0).args[0].should.equal(&#039;queryId&#039;);
+
+                uiUpdateSpy.calledOnce.should.be.true;
+
+                done();
+            });
+        });
+
+        it(&#039;should correctly send the responses to the transformer and trigger the ui update afterwards&#039;, function (done) {
+            var uiUpdateSpy = sandbox.spy();
+
+            responses = {
+                total: 1,
+                hits: [{
+                        item: true
+                    }]
+            };
+
+            component.onUiUpdate(uiUpdateSpy);
+
+            component.emit(&#039;addQuery&#039;, &#039;lorem ipsum&#039;);
+
+            setImmediate(function () {
+                uiUpdateSpy.calledOnce.should.be.true;
+
+                searchRequestManagerStub.onQueryResultsChanged.getCall(0).args[0](&#039;queryId&#039;);
+
+                searchFormResultsManagerStub.transformResponses.calledOnce.should.be.true;
+                searchFormResultsManagerStub.transformResponses.getCall(0).args[0].should.containDeep(responses.hits);
+
+                uiUpdateSpy.calledTwice.should.be.true;
+
+                component.getState(function (state) {
+                    state.should.containDeep({
+                        currentQuery: &#039;lorem ipsum&#039;,
+                        currentQueryStatus: &#039;GOT_RESULTS&#039;,
+                        currentResults: {
+                            total: 1,
+                            hits: [{
+                                    item: true
+                                }]
+                        }
+                    });
+
+                    done();
+                });
+            });
+        });
+    });
+});
+//# sourceMappingURL=UiSearchFormResultsManagerComponent.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

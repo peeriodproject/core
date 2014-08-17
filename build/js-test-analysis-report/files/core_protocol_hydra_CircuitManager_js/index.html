@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/hydra/CircuitManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/hydra/CircuitManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">69.13</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">164</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">32.02</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.47</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var events = require(&#039;events&#039;);
+var crypto = require(&#039;crypto&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var ObjectConfig = require(&#039;../../../../src/core/config/ObjectConfig&#039;);
+
+var HydraCircuit = require(&#039;../../../../src/core/protocol/hydra/HydraCircuit&#039;);
+
+var CircuitManager = require(&#039;../../../../src/core/protocol/hydra/CircuitManager&#039;);
+var HydraCircuitFactory = require(&#039;../../../../src/core/protocol/hydra/HydraCircuitFactory&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; HYDRA --&gt; CircuitManager&#039;, function () {
+    var minNodes = 3;
+    var maxNodes = 7;
+    var desiredNumOfCircs = 4;
+
+    var sandbox = null;
+    var circuitFactoryStub = null;
+    var configStub = null;
+
+    var circuitManager = null;
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (what) {
+                if (what === &#039;hydra.minimumNumberOfRelayNodes&#039;)
+                    return minNodes;
+                if (what === &#039;hydra.maximumNumberOfRelayNodes&#039;)
+                    return maxNodes;
+                if (what === &#039;hydra.desiredNumberOfCircuits&#039;)
+                    return desiredNumOfCircs;
+            }
+        });
+
+        circuitFactoryStub = testUtils.stubPublicApi(sandbox, HydraCircuitFactory, {
+            create: function (relayNodeAmount) {
+                var circuit = new events.EventEmitter;
+
+                circuit.relayNodeAmount = relayNodeAmount;
+                circuit.toEmit = Math.random() &lt; 0.5 ? &#039;isTornDown&#039; : &#039;isConstructed&#039;;
+                circuit.circuitId = null;
+                circuit.getCircuitId = function () {
+                    return circuit.circuitId;
+                };
+
+                circuit.getCircuitNodes = function () {
+                    return [];
+                };
+
+                circuit.construct = function () {
+                    var _this = this;
+                    setImmediate(function () {
+                        if (_this.toEmit === &#039;isConstructed&#039;) {
+                            circuit.circuitId = crypto.pseudoRandomBytes(16).toString(&#039;hex&#039;);
+                        }
+                        _this.emit(_this.toEmit);
+                    });
+                };
+
+                return circuit;
+            }
+        });
+    });
+
+    it(&#039;should construct circuits until it has reached the desired number&#039;, function (done) {
+        circuitManager = new CircuitManager(configStub, circuitFactoryStub);
+
+        circuitManager.kickOff();
+
+        circuitManager.once(&#039;desiredCircuitAmountReached&#039;, function () {
+            var production = circuitManager.getProductionReadyCircuits();
+
+            production.length.should.equal(desiredNumOfCircs);
+            for (var i = 0; i &lt; production.length; i++) {
+                var circuit = production[i];
+                circuit.relayNodeAmount.should.be.below(maxNodes + 1);
+                circuit.relayNodeAmount.should.be.above(minNodes - 1);
+            }
+
+            circuitManager.getCircuitsUnderConstruction().length.should.equal(0);
+
+            done();
+        });
+    });
+
+    it(&#039;should reconstruct circuits until it has reached the desired number&#039;, function (done) {
+        var productionReady = circuitManager.getProductionReadyCircuits();
+        var readyCopy = [];
+
+        for (var i = 0; i &lt; productionReady.length; i++) {
+            readyCopy.push(productionReady[i]);
+        }
+
+        for (var i = 0; i &lt; productionReady.length; i++) {
+            if (i &lt; 2) {
+                productionReady[i].emit(&#039;isTornDown&#039;);
+            }
+        }
+
+        circuitManager.on(&#039;desiredCircuitAmountReached&#039;, function () {
+            var production = circuitManager.getProductionReadyCircuits();
+
+            production.length.should.equal(desiredNumOfCircs);
+            for (var i = 0; i &lt; production.length; i++) {
+                var circuit = production[i];
+                circuit.relayNodeAmount.should.be.below(maxNodes + 1);
+                circuit.relayNodeAmount.should.be.above(minNodes - 1);
+            }
+
+            circuitManager.getCircuitsUnderConstruction().length.should.equal(0);
+
+            var identicalCount = 0;
+            for (var i = 0; i &lt; production.length; i++) {
+                for (var j = 0; j &lt; readyCopy.length; j++) {
+                    if (production[i] === readyCopy[j]) {
+                        identicalCount++;
+                        break;
+                    }
+                }
+            }
+
+            identicalCount.should.equal(2);
+
+            done();
+        });
+    });
+
+    it(&#039;should return a random batch of feeding nodes&#039;, function () {
+        circuitManager.__getReadyCircuits = circuitManager.getReadyCircuits();
+
+        circuitManager.getReadyCircuits = function () {
+            return [
+                testUtils.stubPublicApi(sandbox, HydraCircuit, {
+                    getCircuitNodes: function () {
+                        return [{ checker: &#039;foo1&#039; }, { checker: &#039;foo2&#039; }];
+                    }
+                }),
+                testUtils.stubPublicApi(sandbox, HydraCircuit, {
+                    getCircuitNodes: function () {
+                        return [{ checker: &#039;bar1&#039; }, { checker: &#039;bar2&#039; }];
+                    }
+                })
+            ];
+        };
+
+        var list = circuitManager.getRandomFeedingNodesBatch();
+
+        [&#039;foo1&#039;, &#039;foo2&#039;].should.containEql(list[0].checker);
+        [&#039;bar1&#039;, &#039;bar2&#039;].should.containEql(list[1].checker);
+
+        circuitManager.getReadyCircuits = circuitManager.__getReadyCircuits;
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+});
+//# sourceMappingURL=CircuitManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

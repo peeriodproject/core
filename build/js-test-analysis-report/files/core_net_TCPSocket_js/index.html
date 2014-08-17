@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/net/TCPSocket.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/net/TCPSocket.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">80.94</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">172</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">24.35</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.19</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var TCPSocket = require(&#039;../../../src/core/net/tcp/TCPSocket&#039;);
+var events = require(&#039;events&#039;);
+var net = require(&#039;net&#039;);
+
+var socket_opts = {
+    &quot;idleConnectionKillTimeout&quot;: 2,
+    &quot;heartbeatTimeout&quot;: 0.5,
+    &quot;doKeepAlive&quot;: true,
+    &quot;simulatorRTT&quot;: 1
+};
+
+var doEcho = true;
+
+// echoing server
+var server = net.createServer(function (socket) {
+    socket.setKeepAlive(true, 0);
+
+    socket.on(&#039;data&#039;, function (data) {
+        if (doEcho)
+            socket.write(data);
+    });
+});
+
+describe(&#039;CORE --&gt; NET --&gt; TCP --&gt; TCPSocket&#039;, function () {
+    before(function (done) {
+        server.listen(9002, &#039;localhost&#039;, function () {
+            done();
+        });
+    });
+
+    var socket = null;
+
+    before(function (done) {
+        var sock = net.createConnection(9002, &#039;localhost&#039;);
+
+        sock.on(&#039;connect&#039;, function () {
+            socket = new TCPSocket(sock, socket_opts);
+            done();
+        });
+    });
+
+    after(function (done) {
+        server.close(function () {
+            done();
+        });
+    });
+
+    it(&#039;should inherit event emitter&#039;, function () {
+        socket.should.be.instanceof(events.EventEmitter);
+    });
+
+    it(&#039;should successfully set and get the identifier&#039;, function () {
+        socket.setIdentifier(&#039;foobar&#039;);
+        socket.getIdentifier().should.equal(&#039;foobar&#039;);
+    });
+
+    it(&#039;getSocket should return the socket&#039;, function () {
+        socket.getSocket().should.be.instanceof(net.Socket);
+    });
+
+    it(&#039;constructing a TCP socket without a valid net.Socket should throw an error&#039;, function () {
+        (function () {
+            new TCPSocket(&#039;foo&#039;, socket_opts);
+        }).should.throw(&#039;TCPSocket.constructor: Invalid or no socket specified&#039;);
+    });
+
+    it(&#039;should successfully write a buffer to the raw socket&#039;, function (done) {
+        socket.writeBuffer(new Buffer([20]), function () {
+            done();
+        });
+    });
+
+    it(&#039;should successfully retrieve buffer data&#039;, function (done) {
+        socket.once(&#039;data&#039;, function (buffer) {
+            if ((buffer instanceof Buffer) &amp;&amp; buffer[0] == 20) {
+                done();
+            } else {
+                throw new Error(&#039;socket could not successfully retrieve data&#039;);
+            }
+        });
+
+        socket.writeBuffer(new Buffer([20]));
+    });
+
+    it(&#039;should successfully write and retrieve a UTF-8 string&#039;, function (done) {
+        var theString = &#039;foobar&#039;;
+        socket.once(&#039;data&#039;, function (data) {
+            if (data.toString() == theString) {
+                done();
+            } else
+                throw new Error(&#039;did not successfully write utf-8 string&#039;);
+        });
+        socket.writeString(theString);
+    });
+
+    it(&#039;should successfully close an idle socket&#039;, function (done) {
+        this.timeout(0);
+        socket.once(&#039;close&#039;, function () {
+            done();
+        });
+    });
+
+    it(&#039;should not close the socket when dynamically setting keepOpen to true&#039;, function (done) {
+        this.timeout(0);
+        var sock_b = net.createConnection(9002, &#039;localhost&#039;);
+        var socket_b = null;
+        var all_good = true;
+        sock_b.on(&#039;connect&#039;, function () {
+            socket_b = new TCPSocket(sock_b, socket_opts);
+
+            socket_b.setKeepOpen(true);
+
+            socket_b.once(&#039;close&#039;, function () {
+                all_good = false;
+            });
+
+            setTimeout(function () {
+                if (all_good) {
+                    socket_b.end();
+                    done();
+                }
+            }, 4300);
+        });
+    });
+
+    it(&#039;should close the socket when heartbeating but the other side does not heartbeat&#039;, function (done) {
+        this.timeout(0);
+        doEcho = false;
+        var sock_c = net.createConnection(9002, &#039;localhost&#039;);
+
+        sock_c.on(&#039;connect&#039;, function () {
+            var socket = new TCPSocket(sock_c, socket_opts);
+
+            socket.setKeepOpen(true);
+
+            socket.once(&#039;close&#039;, function () {
+                doEcho = true;
+                done();
+            });
+        });
+    });
+
+    it(&#039;should close the socket keeping the socket open but then keeping it no longer open&#039;, function (done) {
+        this.timeout(0);
+
+        var sock = net.createConnection(9002, &#039;localhost&#039;);
+
+        sock.on(&#039;connect&#039;, function () {
+            var socket = new TCPSocket(sock, socket_opts);
+
+            var closeList1 = function () {
+                throw new Error(&#039;Should not close socket&#039;);
+            };
+
+            socket.once(&#039;close&#039;, closeList1);
+
+            socket.setKeepOpen(true);
+
+            setTimeout(function () {
+                socket.removeListener(&#039;close&#039;, closeList1);
+
+                socket.once(&#039;close&#039;, function () {
+                    done();
+                });
+
+                socket.setKeepOpen(false);
+            }, 3000);
+        });
+    });
+});
+//# sourceMappingURL=TCPSocket.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

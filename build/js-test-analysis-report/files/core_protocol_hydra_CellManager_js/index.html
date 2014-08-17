@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/hydra/CellManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/hydra/CellManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">72.17</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">242</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">44.50</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.25</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var crypto = require(&#039;crypto&#039;);
+var events = require(&#039;events&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var HydraMessageCenter = require(&#039;../../../../src/core/protocol/hydra/HydraMessageCenter&#039;);
+
+var CellManager = require(&#039;../../../../src/core/protocol/hydra/CellManager&#039;);
+
+var ObjectConfig = require(&#039;../../../../src/core/config/ObjectConfig&#039;);
+
+var WritableCreateCellAdditiveMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/WritableCreateCellAdditiveMessageFactory&#039;);
+var ReadableCreateCellAdditiveMessageFactory = require(&#039;../../../../src/core/protocol/hydra/messages/ReadableCreateCellAdditiveMessageFactory&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; HYDRA --&gt; CellManager&#039;, function () {
+    var cellManager = null;
+
+    var sandbox = null;
+    var socketCount = 0;
+    var writableCreateCellFactory = new WritableCreateCellAdditiveMessageFactory();
+    var readableCreateCellFactory = new ReadableCreateCellAdditiveMessageFactory();
+
+    // STUBS
+    var configStub = null;
+    var cellFactory = {};
+    var messageCenterStub = null;
+    var connectionManagerStub = null;
+
+    var onMessageListener = null;
+
+    // CHECKERS
+    var responseSent = null;
+    var circuitNodes = [];
+
+    var closedSocketFrom = null;
+
+    // HELPER FUNCTIONS
+    var sendCreateCellMessage = function (uuid, circuitId) {
+        var identifier = &#039;hydra&#039; + ++socketCount;
+
+        var msg = writableCreateCellFactory.constructMessage(circuitId ? true : false, uuid, crypto.pseudoRandomBytes(256), circuitId);
+        onMessageListener(identifier, readableCreateCellFactory.create(msg));
+
+        return identifier;
+    };
+
+    var terminateCircuit = function (circuitId) {
+        connectionManagerStub.emit(&#039;circuitTermination&#039;, circuitId);
+    };
+
+    var tearDownCell = function (cell) {
+        cell.emit(&#039;isTornDown&#039;);
+    };
+
+    it(&#039;should correctly initialize the cell manager&#039;, function () {
+        cellManager = new CellManager(configStub, connectionManagerStub, messageCenterStub, cellFactory);
+
+        cellManager.should.be.instanceof(CellManager);
+    });
+
+    it(&#039;should accept one request and reject the other&#039;, function (done) {
+        cellManager.once(&#039;timeout&#039;, function () {
+            throw new Error(&#039;Timeout should not be present&#039;);
+        });
+
+        var uuid1 = &#039;cafebabecafebabecafebabecafebabe&#039;;
+        var uuid2 = &#039;babecafebabecafebabecafebabecafe&#039;;
+        var circuitId1 = &#039;ffffffffffffffffffffffffffffffff&#039;;
+        var circuitId2 = &#039;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&#039;;
+
+        sendCreateCellMessage(uuid1);
+        var ident2 = sendCreateCellMessage(uuid2, circuitId2);
+
+        cellManager.getPending()[uuid2].initiator.socketIdentifier.should.equal(ident2);
+        cellManager.getPending()[uuid2].circuitId.should.equal(circuitId2);
+        (cellManager.getPending()[uuid1].initiator == undefined).should.be.true;
+
+        var ident1 = sendCreateCellMessage(uuid1, circuitId1);
+
+        circuitNodes.length.should.equal(2);
+        responseSent.to.socketIdentifier.should.equal(ident1);
+        responseSent.rejected.should.be.false;
+        responseSent.uuid.should.equal(uuid1);
+
+        sendCreateCellMessage(uuid2);
+
+        circuitNodes.length.should.equal(1);
+        (closedSocketFrom == null).should.be.true;
+
+        Object.keys(cellManager.getPending()).length.should.equal(0);
+
+        connectionManagerStub.listeners(&#039;circuitTermination&#039;).length.should.equal(0);
+
+        var cell = cellManager.getCells()[0];
+
+        cell.predecessor.should.equal(circuitNodes[0]);
+        responseSent.uuid.should.equal(uuid2);
+        responseSent.rejected.should.be.true;
+
+        setTimeout(function () {
+            cellManager.removeAllListeners(&#039;timeout&#039;);
+            done();
+        }, 1100);
+    });
+
+    it(&#039;should remove the cell from the maintained list if the cell is torn down&#039;, function (done) {
+        tearDownCell(cellManager.getCells()[0]);
+
+        setImmediate(function () {
+            cellManager.getCells().length.should.equal(0);
+            done();
+        });
+    });
+
+    it(&#039;should handle the termination of the circuits when constructing&#039;, function (done) {
+        cellManager.once(&#039;timeout&#039;, function () {
+            throw new Error(&#039;Timeout should not be present&#039;);
+        });
+
+        var uuid1 = &#039;cafebabecafebabecafebabecafebabe&#039;;
+        var uuid2 = &#039;babecafebabecafebabecafebabecafe&#039;;
+        var circuitId1 = &#039;ffffffffffffffffffffffffffffffff&#039;;
+        var circuitId2 = &#039;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&#039;;
+
+        var ident2 = sendCreateCellMessage(uuid2, circuitId2);
+        sendCreateCellMessage(uuid1, circuitId1);
+
+        connectionManagerStub.listeners(&#039;circuitTermination&#039;).length.should.equal(2);
+
+        terminateCircuit(circuitId1);
+
+        setImmediate(function () {
+            Object.keys(cellManager.getPending()).length.should.equal(1);
+            cellManager.getPending()[uuid2].circuitId.should.equal(circuitId2);
+            cellManager.getPending()[uuid2].initiator.socketIdentifier.should.equal(ident2);
+            connectionManagerStub.listeners(&#039;circuitTermination&#039;).length.should.equal(1);
+
+            terminateCircuit(circuitId2);
+
+            setImmediate(function () {
+                Object.keys(cellManager.getPending()).length.should.equal(0);
+                connectionManagerStub.listeners(&#039;circuitTermination&#039;).length.should.equal(0);
+
+                setTimeout(function () {
+                    cellManager.removeAllListeners(&#039;timeout&#039;);
+                    done();
+                }, 1100);
+            });
+        });
+    });
+
+    it(&#039;should correctly handle the timeout on a pending request&#039;, function (done) {
+        var uuid1 = &#039;cafebabecafebabecafebabecafebabe&#039;;
+        var circuitId1 = &#039;ffffffffffffffffffffffffffffffff&#039;;
+
+        sendCreateCellMessage(uuid1, circuitId1);
+
+        setImmediate(function () {
+            Object.keys(cellManager.getPending()).length.should.equal(1);
+
+            cellManager.once(&#039;timeout&#039;, function () {
+                Object.keys(cellManager.getPending()).length.should.equal(0);
+                done();
+            });
+        });
+    });
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (what) {
+                if (what === &#039;hydra.maximumNumberOfMaintainedCells&#039;)
+                    return 1;
+                if (what === &#039;hydra.additiveSharingNodeAmount&#039;)
+                    return 1;
+                if (what === &#039;hydra.waitForAdditiveBatchFinishInSeconds&#039;)
+                    return 1;
+            }
+        });
+
+        cellFactory.create = function (initiatorNode) {
+            var cell = new events.EventEmitter();
+
+            cell.predecessor = initiatorNode;
+            cell.getPredecessorCircuitId = function () {
+                return cell.predecessor.circuitId;
+            };
+            cell.getFeedingIdentifier = function () {
+                return cell.predecessor.feedingIdentifier;
+            };
+
+            return cell;
+        };
+
+        messageCenterStub = testUtils.stubPublicApi(sandbox, HydraMessageCenter, {
+            sendCellCreatedRejectedMessage: function (initiatorNode, uuid, sha1, publicKey) {
+                responseSent = {
+                    to: initiatorNode,
+                    uuid: uuid,
+                    rejected: (sha1 &amp;&amp; publicKey) ? false : true
+                };
+            },
+            on: function (what, cb) {
+                if (what === &#039;CREATE_CELL_ADDITIVE&#039;) {
+                    onMessageListener = cb;
+                }
+            }
+        });
+
+        connectionManagerStub = new events.EventEmitter();
+
+        connectionManagerStub.addToCircuitNodes = function (socketIdentifier, node) {
+            node.socketIdentifier = socketIdentifier;
+            circuitNodes.push(node);
+        };
+
+        connectionManagerStub.removeFromCircuitNodes = function (node, closeSocket) {
+            if (typeof closeSocket === &quot;undefined&quot;) { closeSocket = true; }
+            if (closeSocket) {
+                closedSocketFrom = node.socketIdentifier;
+            }
+            for (var i = 0; i &lt; circuitNodes.length; i++) {
+                if (circuitNodes[i] === node) {
+                    circuitNodes.splice(i, 1);
+                    break;
+                }
+            }
+        };
+
+        connectionManagerStub.closeSocketByIdentifier = function () {
+        };
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+});
+//# sourceMappingURL=CellManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

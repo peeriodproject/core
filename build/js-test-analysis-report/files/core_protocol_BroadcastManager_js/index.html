@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/BroadcastManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/BroadcastManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">73.67</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">298</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">44.86</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.59</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+var events = require(&#039;events&#039;);
+
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var ObjectConfig = require(&#039;../../../src/core/config/ObjectConfig&#039;);
+var ProtocolConnectionManager = require(&#039;../../../src/core/protocol/net/ProtocolConnectionManager&#039;);
+
+var MyNode = require(&#039;../../../src/core/topology/MyNode&#039;);
+var Id = require(&#039;../../../src/core/topology/Id&#039;);
+var RoutingTable = require(&#039;../../../src/core/topology/RoutingTable&#039;);
+var ContactNode = require(&#039;../../../src/core/topology/ContactNode&#039;);
+var ReadableMessage = require(&#039;../../../src/core/protocol/messages/ReadableMessage&#039;);
+var BroadcastManager = require(&#039;../../../src/core/protocol/broadcast/BroadcastManager&#039;);
+var BroadcastReadableMessageFactory = require(&#039;../../../src/core/protocol/broadcast/messages/BroadcastReadableMessageFactory&#039;);
+var BroadcastReadableMessage = require(&#039;../../../src/core/protocol/broadcast/messages/BroadcastReadableMessage&#039;);
+var BroadcastWritableMessageFactory = require(&#039;../../../src/core/protocol/broadcast/messages/BroadcastWritableMessageFactory&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; BROADCAST --&gt; BroadcastManager&#039;, function () {
+    var sandbox = null;
+
+    var myId = &#039;01010101&#039;;
+
+    var broadcastManager = null;
+
+    // CHECKERS
+    var writtenMessage = null;
+    var writtenTo = [];
+
+    var currentBroadcastId = null;
+    var currentTimestamp = null;
+
+    // STUBS
+    var configStub = null;
+    var proxyManager = null;
+    var protocolConnectionManagerStub = null;
+    var myNodeStub = null;
+    var routingTableStub = null;
+    var readableFactoryStub = null;
+    var writableFactoryStub = null;
+
+    // HELPER FUNCTIONS
+    var emitMessage = function (fromId, broadcastId, timestamp) {
+        currentBroadcastId = broadcastId;
+        currentTimestamp = timestamp;
+
+        var msg = testUtils.stubPublicApi(sandbox, ReadableMessage, {
+            getMessageType: function () {
+                return &#039;BROADCAST_QUERY&#039;;
+            },
+            getPayload: function () {
+                return new Buffer(&#039;foobar&#039;);
+            },
+            getSender: function () {
+                return testUtils.stubPublicApi(sandbox, ContactNode, {
+                    getId: function () {
+                        return new Id(Id.byteBufferByBitString(fromId, 1), 8);
+                    }
+                });
+            }
+        });
+
+        proxyManager.emit(&#039;message&#039;, msg);
+    };
+
+    var checkIfSentToAllNodesFromIndex = function (index) {
+        var checks = [];
+        for (var i = 0; i &lt;= index; i++) {
+            checks[i] = 0;
+        }
+
+        var myId = myNodeStub.getId();
+
+        for (var j = 0; j &lt; writtenTo.length; j++) {
+            var b = writtenTo[j].differsInHighestBit(myId);
+            checks[b]++;
+        }
+
+        var ret = true;
+        for (var i = 0; i &lt;= index; i++) {
+            if (i == 0) {
+                if (checks[0] !== 1) {
+                    ret = false;
+                }
+            } else if (checks[i] !== 2) {
+                ret = false;
+            }
+
+            if (!ret)
+                break;
+        }
+
+        writtenTo = [];
+
+        return ret;
+    };
+
+    it(&#039;should correctly initialize the broadcast manager&#039;, function () {
+        broadcastManager = new BroadcastManager(configStub, configStub, myNodeStub, protocolConnectionManagerStub, proxyManager, routingTableStub, readableFactoryStub, writableFactoryStub);
+
+        broadcastManager.should.be.instanceof(BroadcastManager);
+    });
+
+    it(&#039;should correctly intialize a broadcast&#039;, function (done) {
+        broadcastManager.initBroadcast(&#039;BROADCAST_QUERY&#039;, new Buffer(&#039;muschi&#039;));
+        broadcastManager.getKnownBroadcastIds().length.should.equal(1);
+
+        setImmediate(function () {
+            writtenTo.length.should.equal(15);
+            writtenMessage.toString().should.equal(&#039;muschi&#039;);
+            checkIfSentToAllNodesFromIndex(7).should.be.true;
+
+            done();
+        });
+    });
+
+    it(&#039;should timeout remove the broadcast id&#039;, function (done) {
+        setTimeout(function () {
+            broadcastManager.getKnownBroadcastIds().length.should.equal(0);
+            done();
+        }, 1000);
+    });
+
+    it(&#039;should propagate on a broadcast message&#039;, function (done) {
+        broadcastManager.once(&#039;BROADCAST_QUERY&#039;, function () {
+            setImmediate(function () {
+                writtenMessage.toString().should.equal(&#039;foobar&#039;);
+                checkIfSentToAllNodesFromIndex(3).should.be.true;
+            });
+
+            done();
+        });
+
+        emitMessage(&#039;01001111&#039;, &#039;broadcastId1&#039;, Date.now());
+    });
+
+    it(&#039;should do nothing when the broadcast is known&#039;, function (done) {
+        broadcastManager.once(&#039;BROADCAST_QUERY&#039;, function () {
+            throw new Error(&#039;Should not emit BROADCAST_QUERY&#039;);
+        });
+
+        emitMessage(&#039;01101011&#039;, &#039;broadcastId1&#039;, Date.now());
+
+        setTimeout(function () {
+            broadcastManager.removeAllListeners(&#039;BROADCAST_QUERY&#039;);
+            done();
+        }, 10);
+    });
+
+    it(&#039;should not process the broadcast it is ignored&#039;, function (done) {
+        broadcastManager.once(&#039;BROADCAST_QUERY&#039;, function () {
+            throw new Error(&#039;Should not emit BROADCAST_QUERY&#039;);
+        });
+
+        broadcastManager.ignoreBroadcastId(&#039;broadcastId1_ignore&#039;);
+
+        emitMessage(&#039;01101011&#039;, &#039;broadcastId1_ignore&#039;, Date.now());
+
+        setTimeout(function () {
+            broadcastManager.removeAllListeners(&#039;BROADCAST_QUERY&#039;);
+            checkIfSentToAllNodesFromIndex(2);
+            done();
+        }, 100);
+    });
+
+    it(&#039;should do nothing when the broadcast is too old&#039;, function (done) {
+        broadcastManager.once(&#039;BROADCAST_QUERY&#039;, function () {
+            throw new Error(&#039;Should not emit BROADCAST_QUERY&#039;);
+        });
+
+        emitMessage(&#039;01101011&#039;, &#039;broadcastId2&#039;, Date.now() - 1100);
+
+        setTimeout(function () {
+            broadcastManager.removeAllListeners(&#039;BROADCAST_QUERY&#039;);
+            done();
+        }, 10);
+    });
+
+    it(&#039;should add the broadcast with a modified timestamp&#039;, function (done) {
+        broadcastManager.once(&#039;BROADCAST_QUERY&#039;, function () {
+            setImmediate(function () {
+                broadcastManager.getKnownBroadcastIds()[2].should.equal(&#039;broadcastId2&#039;);
+                checkIfSentToAllNodesFromIndex(6).should.be.true;
+
+                setTimeout(function () {
+                    broadcastManager.getKnownBroadcastIds().length.should.equal(2);
+                    broadcastManager.getKnownBroadcastIds()[0].should.equal(&#039;broadcastId1&#039;);
+                    broadcastManager.getKnownBroadcastIds()[1].should.equal(&#039;broadcastId1_ignore&#039;);
+                    done();
+                }, 400);
+            });
+        });
+
+        emitMessage(&#039;10000000&#039;, &#039;broadcastId2&#039;, Date.now() - 700);
+    });
+
+    it(&#039;should finally clear the last known broadcast ids&#039;, function (done) {
+        setTimeout(function () {
+            broadcastManager.getKnownBroadcastIds().length.should.equal(0);
+            done();
+        }, 700);
+    });
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (what) {
+                if (what === &#039;topology.bitLength&#039;)
+                    return 8;
+                if (what === &#039;topology.alpha&#039;)
+                    return 2;
+                if (what === &#039;protocol.broadcast.broadcastLifetimeInSeconds&#039;)
+                    return 1;
+            }
+        });
+
+        proxyManager = new events.EventEmitter();
+
+        protocolConnectionManagerStub = testUtils.stubPublicApi(sandbox, ProtocolConnectionManager, {
+            writeMessageTo: function (to, type, message) {
+                writtenMessage = message;
+                writtenTo.push(to.getId());
+            }
+        });
+
+        myNodeStub = testUtils.stubPublicApi(sandbox, MyNode, {
+            getId: function () {
+                return new Id(Id.byteBufferByBitString(myId, 1), 8);
+            }
+        });
+
+        readableFactoryStub = testUtils.stubPublicApi(sandbox, BroadcastReadableMessageFactory, {
+            create: function (payload) {
+                return testUtils.stubPublicApi(sandbox, BroadcastReadableMessage, {
+                    getBroadcastId: function () {
+                        return currentBroadcastId;
+                    },
+                    getTimestamp: function () {
+                        return currentTimestamp;
+                    },
+                    getPayload: function () {
+                        return payload;
+                    }
+                });
+            }
+        });
+
+        writableFactoryStub = testUtils.stubPublicApi(sandbox, BroadcastWritableMessageFactory, {
+            constructPayload: function (id, payload) {
+                return payload;
+            }
+        });
+
+        routingTableStub = testUtils.stubPublicApi(sandbox, RoutingTable, {
+            getRandomContactNodesFromBucket: function (i, alpha, cb) {
+                var ret = [];
+
+                for (var k = 0; k &lt; alpha; k++) {
+                    var id = &#039;&#039;;
+                    for (var j = 0; j &lt; 8; j++) {
+                        var char = null;
+                        if (j &lt; i) {
+                            char = Math.round(Math.random());
+                        } else if (j == i) {
+                            char = myId[7 - j] === &#039;1&#039; ? &#039;0&#039; : &#039;1&#039;;
+                        } else {
+                            char = myId[7 - j];
+                        }
+                        id = char + id;
+                    }
+                    var node = null;
+                    (function (theId) {
+                        node = testUtils.stubPublicApi(sandbox, ContactNode, {
+                            getId: function () {
+                                return new Id(Id.byteBufferByBitString(theId, 1), 8);
+                            }
+                        });
+                    })(id);
+
+                    ret.push(node);
+
+                    if (i === 0)
+                        break;
+                }
+
+                cb(null, ret);
+            }
+        });
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+});
+//# sourceMappingURL=BroadcastManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

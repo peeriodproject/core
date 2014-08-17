@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/fileTransfer/UploadManager.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/fileTransfer/UploadManager.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">78.54</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">249</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">28.27</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.15</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var events = require(&#039;events&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var ObjectConfig = require(&#039;../../../../src/core/config/ObjectConfig&#039;);
+var UploadFactory = require(&#039;../../../../src/core/protocol/fileTransfer/share/Aes128GcmUploadFactory&#039;);
+var UploadManager = require(&#039;../../../../src/core/protocol/fileTransfer/share/UploadManager&#039;);
+var ReadableShareRequestMessageFactory = require(&#039;../../../../src/core/protocol/fileTransfer/share/messages/ReadableShareRequestMessageFactory&#039;);
+var ReadableShareRequestMessage = require(&#039;../../../../src/core/protocol/fileTransfer/share/messages/ReadableShareRequestMessage&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; FILE TRANSFER --&gt; UploadManager&#039;, function () {
+    var sandbox = null;
+
+    var configStub = null;
+    var bridge = new events.EventEmitter();
+    var factoryStub = null;
+    var readableShareRequestFactoryStub = null;
+    var transferMessageCenterStub = new events.EventEmitter();
+
+    var uploadManager = null;
+
+    var hasFile = true;
+
+    var createRequest = function (transferIdentifier) {
+        setImmediate(function () {
+            transferMessageCenterStub.emit(&#039;SHARE_REQUEST&#039;, transferIdentifier, &#039;circuitId&#039;, new Buffer(0));
+        });
+    };
+
+    var uploadCount = function () {
+        return Object.keys(uploadManager.getActiveUploads()).length;
+    };
+
+    it(&#039;should correctly create an upload manager&#039;, function () {
+        uploadManager = new UploadManager(configStub, transferMessageCenterStub, factoryStub, readableShareRequestFactoryStub, bridge);
+        uploadManager.should.be.instanceof(UploadManager);
+
+        uploadCount().should.equal(0);
+    });
+
+    it(&#039;should add an upload to the active list&#039;, function (done) {
+        createRequest(&#039;upload1&#039;);
+
+        bridge.once(&#039;newUpload&#039;, function (ident, filePath, filename, filesize) {
+            ident.should.equal(&#039;upload1&#039;);
+            filePath.should.equal(&#039;foo&#039;);
+            filename.should.equal(&#039;bar&#039;);
+            filesize.should.equal(10);
+            (uploadManager.getActiveUploads()[&#039;upload1&#039;] == undefined).should.be.false;
+            done();
+        });
+    });
+
+    it(&#039;should do nothing when the request identifier is already known&#039;, function (done) {
+        createRequest(&#039;upload1&#039;);
+
+        setImmediate(function () {
+            uploadCount().should.equal(1);
+            done();
+        });
+    });
+
+    it(&#039;should only add two more uploads&#039;, function (done) {
+        createRequest(&#039;upload2&#039;);
+        createRequest(&#039;upload3&#039;);
+        createRequest(&#039;upload4&#039;);
+
+        setImmediate(function () {
+            uploadCount().should.equal(3);
+            (uploadManager.getActiveUploads()[&#039;upload4&#039;] == undefined).should.be.true;
+            done();
+        });
+    });
+
+    it(&#039;should propagate the abort event to the bridge after manually aborting&#039;, function (done) {
+        bridge.once(&#039;manuallyAborted&#039;, function (ident) {
+            ident.should.equal(&#039;upload2&#039;);
+            done();
+        });
+
+        bridge.emit(&#039;abortUpload&#039;, &#039;upload2&#039;);
+    });
+
+    it(&#039;should propagate the completed event to the bridge&#039;, function (done) {
+        bridge.once(&#039;completed&#039;, function (ident) {
+            ident.should.equal(&#039;upload1&#039;);
+            done();
+        });
+
+        uploadManager.getActiveUploads()[&#039;upload1&#039;].emit(&#039;completed&#039;);
+    });
+
+    it(&#039;should propagate the ratifyingRequest event to the bridge&#039;, function (done) {
+        bridge.once(&#039;ratifyingRequest&#039;, function (ident) {
+            ident.should.equal(&#039;upload3&#039;);
+            done();
+        });
+
+        uploadManager.getActiveUploads()[&#039;upload3&#039;].emit(&#039;ratifyingRequest&#039;);
+    });
+
+    it(&#039;should propagate the uploadingBytes event to the bridge&#039;, function (done) {
+        bridge.once(&#039;uploadingBytes&#039;, function (ident, bytes) {
+            ident.should.equal(&#039;upload3&#039;);
+            bytes.should.equal(100);
+            done();
+        });
+
+        uploadManager.getActiveUploads()[&#039;upload3&#039;].emit(&#039;uploadingBytes&#039;, 100);
+    });
+
+    it(&#039;should emit a FS_ERROR reason (1) when killed and remove the upload from the active list&#039;, function (done) {
+        bridge.once(&#039;end&#039;, function (ident, code) {
+            ident.should.equal(&#039;upload2&#039;);
+            code.should.equal(&#039;FS_ERROR&#039;);
+            uploadCount().should.equal(2);
+            (uploadManager.getActiveUploads()[&#039;upload2&#039;] == undefined).should.be.true;
+            done();
+        });
+
+        uploadManager.getActiveUploads()[&#039;upload2&#039;].emit(&#039;killed&#039;, &#039;File cannot be read.&#039;);
+    });
+
+    it(&#039;should emit a FS_ERROR reason (2) when killed and remove the upload from the active list&#039;, function (done) {
+        bridge.once(&#039;end&#039;, function (ident, code) {
+            ident.should.equal(&#039;upload1&#039;);
+            code.should.equal(&#039;FS_ERROR&#039;);
+            uploadCount().should.equal(1);
+            done();
+        });
+
+        uploadManager.getActiveUploads()[&#039;upload1&#039;].emit(&#039;killed&#039;, &#039;Block cannot be read.&#039;);
+    });
+
+    it(&#039;should emit a FS_ERROR reason (2) when killed and remove the upload from the active list&#039;, function (done) {
+        bridge.once(&#039;end&#039;, function (ident, code) {
+            ident.should.equal(&#039;upload3&#039;);
+            code.should.equal(&#039;MANUAL_ABORT&#039;);
+            uploadCount().should.equal(0);
+            done();
+        });
+
+        uploadManager.getActiveUploads()[&#039;upload3&#039;].emit(&#039;killed&#039;, &#039;Manually aborted.&#039;);
+    });
+
+    it(&#039;should emit a REMOTE_ABORT when killed&#039;, function (done) {
+        createRequest(&#039;upload1&#039;);
+
+        setImmediate(function () {
+            bridge.once(&#039;end&#039;, function (ident, code) {
+                ident.should.equal(&#039;upload1&#039;);
+                code.should.equal(&#039;REMOTE_ABORT&#039;);
+                done();
+            });
+
+            uploadManager.getActiveUploads()[&#039;upload1&#039;].emit(&#039;killed&#039;, &#039;Downloader aborted transfer.&#039;);
+        });
+    });
+
+    it(&#039;should emit a COMPLETED when killed&#039;, function (done) {
+        createRequest(&#039;upload1&#039;);
+
+        setImmediate(function () {
+            bridge.once(&#039;end&#039;, function (ident, code) {
+                ident.should.equal(&#039;upload1&#039;);
+                code.should.equal(&#039;COMPLETED&#039;);
+                done();
+            });
+
+            uploadManager.getActiveUploads()[&#039;upload1&#039;].emit(&#039;killed&#039;, &#039;Completed.&#039;);
+        });
+    });
+
+    it(&#039;should emit a PROTOCOL_ERR when killed&#039;, function (done) {
+        createRequest(&#039;upload1&#039;);
+
+        setImmediate(function () {
+            bridge.once(&#039;end&#039;, function (ident, code) {
+                ident.should.equal(&#039;upload1&#039;);
+                code.should.equal(&#039;PROTOCOL_ERR&#039;);
+                done();
+            });
+
+            uploadManager.getActiveUploads()[&#039;upload1&#039;].emit(&#039;killed&#039;, &#039;Whatever.&#039;);
+        });
+    });
+
+    it(&#039;should emit a REMOTE_ABORT when killed&#039;, function (done) {
+        createRequest(&#039;upload1&#039;);
+
+        setImmediate(function () {
+            bridge.once(&#039;end&#039;, function (ident, code) {
+                ident.should.equal(&#039;upload1&#039;);
+                code.should.equal(&#039;REMOTE_ABORT&#039;);
+                done();
+            });
+
+            uploadManager.getActiveUploads()[&#039;upload1&#039;].emit(&#039;killed&#039;, &#039;Downloader aborted transfer.&#039;);
+        });
+    });
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+
+        readableShareRequestFactoryStub = testUtils.stubPublicApi(sandbox, ReadableShareRequestMessageFactory, {
+            create: function () {
+                return testUtils.stubPublicApi(sandbox, ReadableShareRequestMessage);
+            }
+        });
+
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (what) {
+                if (what === &#039;fileTransfer.maximumNumberOfParallelUploads&#039;)
+                    return 3;
+            }
+        });
+
+        factoryStub = testUtils.stubPublicApi(sandbox, UploadFactory, {
+            create: function () {
+                var upload = new events.EventEmitter();
+
+                upload.manuallyAbort = function () {
+                    this.emit(&#039;abort&#039;);
+                };
+
+                upload.kickOff = function () {
+                };
+
+                return upload;
+            }
+        });
+
+        bridge.getFileInfoByHash = function (hash, cb) {
+            if (hasFile) {
+                cb(null, &#039;foo&#039;, &#039;bar&#039;, 10);
+            } else {
+                cb(null, null, null, null);
+            }
+        };
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+});
+//# sourceMappingURL=UploadManager.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

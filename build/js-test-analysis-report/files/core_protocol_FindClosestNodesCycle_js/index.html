@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/FindClosestNodesCycle.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/FindClosestNodesCycle.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">75.86</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">193</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">35.15</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.96</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../utils/testUtils&#039;);
+
+var FindClosestNodesCycle = require(&#039;../../../src/core/protocol/findClosestNodes/FindClosestNodesCycle&#039;);
+
+var MyNode = require(&#039;../../../src/core/topology/MyNode&#039;);
+var Id = require(&#039;../../../src/core/topology/Id&#039;);
+var ContactNode = require(&#039;../../../src/core/topology/ContactNode&#039;);
+var ProtocolConnectionManager = require(&#039;../../../src/core/protocol/net/ProtocolConnectionManager&#039;);
+var FindClosestNodesManager = require(&#039;../../../src/core/protocol/findClosestNodes/FindClosestNodesManager&#039;);
+var FoundClosestNodesReadableMessage = require(&#039;../../../src/core/protocol/findClosestNodes/messages/FoundClosestNodesReadableMessage&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; FIND CLOSEST NODES --&gt; FindClosestNodesCycle&#039;, function () {
+    var sandbox;
+
+    var myNodeBits = &#039;11001101&#039;;
+
+    // first search
+    var findCycle = null;
+    var searchFor = &#039;01101101&#039;;
+    var searchForHex = &#039;6d&#039;;
+    var startWith = [
+        &#039;01100000&#039;,
+        &#039;00100100&#039;];
+
+    var responder1 = &#039;00100100&#039;;
+    var response1 = [
+        &#039;01101101&#039;,
+        &#039;01100000&#039;,
+        &#039;10101101&#039;,
+        &#039;11011011&#039;,
+        &#039;01111111&#039;];
+
+    var resultingList = null;
+
+    // stubs
+    var protocolConnectionManagerStub = null;
+    var myNodeStub = null;
+    var managerStub = null;
+
+    // checkers for testing
+    var sentSearchForTo = [];
+    var managerListeners = {};
+
+    var createNode = function (bitstring) {
+        return testUtils.stubPublicApi(sandbox, ContactNode, {
+            getId: function () {
+                return new Id(Id.byteBufferByBitString(bitstring, 1), 8);
+            }
+        });
+    };
+
+    var createNodeList = function (array) {
+        var ret = [];
+        for (var i = 0; i &lt; array.length; i++) {
+            ret.push(createNode(array[i]));
+        }
+
+        return ret;
+    };
+
+    var emitReply = function (identifier, fromBitString, array) {
+        var msg = testUtils.stubPublicApi(sandbox, FoundClosestNodesReadableMessage, {
+            getFoundNodeList: function () {
+                return createNodeList(array);
+            }
+        });
+
+        if (managerListeners[identifier]) {
+            managerListeners[identifier](createNode(fromBitString), msg);
+        } else
+            throw new Error(&#039;no listener bound.&#039;);
+    };
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+
+        protocolConnectionManagerStub = testUtils.stubPublicApi(sandbox, ProtocolConnectionManager, {
+            writeMessageTo: function (node, type, buffer) {
+                sentSearchForTo.push(node.getId().toBitString());
+            }
+        });
+
+        myNodeStub = testUtils.stubPublicApi(sandbox, MyNode, {
+            getId: function () {
+                return new Id(Id.byteBufferByBitString(myNodeBits, 1), 8);
+            }
+        });
+
+        managerStub = testUtils.stubPublicApi(sandbox, FindClosestNodesManager, {
+            getK: function () {
+                return 3;
+            },
+            getAlpha: function () {
+                return 3;
+            },
+            getCycleExpirationMillis: function () {
+                return 500;
+            },
+            getParallelismDelayMillis: function () {
+                return 200;
+            },
+            on: function (identifier, callback) {
+                managerListeners[identifier] = callback;
+            },
+            removeListener: function (identifier) {
+                delete managerListeners[identifier];
+            }
+        });
+    });
+
+    it(&#039;should correctly instantiate the find cycle&#039;, function () {
+        findCycle = new FindClosestNodesCycle(myNodeStub, new Id(Id.byteBufferByBitString(searchFor, 1), 8), createNodeList(startWith), managerStub, protocolConnectionManagerStub, function (res) {
+            resultingList = res;
+        });
+
+        findCycle.should.be.instanceof(FindClosestNodesCycle);
+    });
+
+    it(&#039;should have probed the starting list&#039;, function () {
+        sentSearchForTo.length.should.equal(2);
+        sentSearchForTo[0].should.equal(startWith[0]);
+        sentSearchForTo[1].should.equal(startWith[1]);
+        findCycle.getProbeList().length.should.equal(0);
+    });
+
+    it(&#039;should have set the cycle expiration timeout, but not the alpha timeout&#039;, function () {
+        findCycle.getCycleTimeout().should.not.equal(0);
+        findCycle.getAlphaTimeout().should.equal(0);
+    });
+
+    it(&#039;should add the node to the confirmed list&#039;, function () {
+        emitReply(&#039;6d&#039;, responder1, response1);
+
+        findCycle.getConfirmedList().length.should.equal(1);
+
+        findCycle.getConfirmedList()[0].getId().toBitString().should.equal(responder1);
+    });
+
+    it(&#039;should have cleared the cycle timeout and set the alpha timeout&#039;, function () {
+        findCycle.getCycleTimeout().should.equal(0);
+        findCycle.getAlphaTimeout().should.not.equal(0);
+    });
+
+    it(&#039;should have correctly put the received nodes into the right slot in the probe list&#039;, function () {
+        findCycle.getProbeList().length.should.equal(4);
+        findCycle.getProbeList()[0].getId().toBitString().should.equal(&#039;01101101&#039;);
+        findCycle.getProbeList()[1].getId().toBitString().should.equal(&#039;01111111&#039;);
+        findCycle.getProbeList()[2].getId().toBitString().should.equal(&#039;11011011&#039;);
+        findCycle.getProbeList()[3].getId().toBitString().should.equal(&#039;10101101&#039;);
+    });
+
+    it(&#039;should probe the next alpha nodes with loose parallelism&#039;, function (done) {
+        setTimeout(function () {
+            if (findCycle.getProbeList().length === 1) {
+                setTimeout(function () {
+                    if (findCycle.getProbeList().length === 0 &amp;&amp; findCycle.getRegisteredIdentifiers().length === 6)
+                        done();
+                }, 200);
+            }
+        }, 200);
+    });
+
+    it(&#039;should correctly finish up the cycle&#039;, function () {
+        emitReply(&#039;6d&#039;, &#039;11011011&#039;, [&#039;11011111&#039;]);
+        emitReply(&#039;6d&#039;, &#039;01101101&#039;, []);
+
+        resultingList.length.should.equal(3);
+        resultingList[0].getId().toBitString().should.equal(&#039;01101101&#039;);
+        resultingList[1].getId().toBitString().should.equal(&#039;00100100&#039;);
+        resultingList[2].getId().toBitString().should.equal(&#039;11011011&#039;);
+
+        findCycle.getAlphaTimeout().should.equal(0);
+        findCycle.getCycleTimeout().should.equal(0);
+        (true).should.equal(managerListeners[&#039;6d&#039;] === undefined);
+    });
+
+    it(&#039;should expire the search cycle&#039;, function (done) {
+        new FindClosestNodesCycle(myNodeStub, new Id(Id.byteBufferByBitString(searchFor, 1), 8), [], managerStub, protocolConnectionManagerStub, function (res) {
+            if (res.length === 1)
+                done();
+        });
+
+        emitReply(&#039;6d&#039;, &#039;11011011&#039;, [&#039;11001101&#039;, &#039;11011011&#039;, &#039;11011010&#039;, &#039;11011001&#039;, &#039;11011111&#039;, &#039;00011011&#039;, &#039;11000011&#039;, &#039;11110011&#039;]);
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+});
+//# sourceMappingURL=FindClosestNodesCycle.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

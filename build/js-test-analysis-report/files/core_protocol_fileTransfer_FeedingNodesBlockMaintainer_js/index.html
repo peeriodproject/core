@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/fileTransfer/FeedingNodesBlockMaintainer.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/fileTransfer/FeedingNodesBlockMaintainer.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">67.08</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">157</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">27.81</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.14</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var events = require(&#039;events&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var HydraCircuit = require(&#039;../../../../src/core/protocol/hydra/HydraCircuit&#039;);
+var FeedingNodesBlockMaintainer = require(&#039;../../../../src/core/protocol/fileTransfer/share/FeedingNodesBlockMaintainer&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; FILE TRANSFER --&gt; FeedingNodesBlockMaintainer&#039;, function () {
+    var circuitManagerStub = new events.EventEmitter();
+    var sandbox = sinon.sandbox.create();
+
+    var maintainedCircuitNodes = [];
+
+    var blockMaintainer = null;
+
+    it(&#039;should correctly initialize the block maintainer&#039;, function () {
+        blockMaintainer = new FeedingNodesBlockMaintainer(circuitManagerStub);
+
+        blockMaintainer.getCurrentNodeBatch().length.should.equal(0);
+        blockMaintainer.getBlock().length.should.equal(1);
+        circuitManagerStub.listeners(&#039;circuitCount&#039;).length.should.equal(1);
+    });
+
+    it(&#039;should correctly add new circuit nodes&#039;, function (done) {
+        maintainedCircuitNodes = [
+            [
+                {
+                    ip: &#039;1.1.1.1&#039;,
+                    port: 80,
+                    feedingIdentifier: &#039;21a3b57e5fc5871b8ded8cd38196effa&#039;
+                },
+                {
+                    ip: &#039;2.2.2.2&#039;,
+                    port: 80,
+                    feedingIdentifier: &#039;4a0ec8a9bd567e0c2b38f8e4191a391c&#039;
+                }
+            ],
+            [
+                {
+                    ip: &#039;3.3.3.3&#039;,
+                    port: 80,
+                    feedingIdentifier: &#039;21a3b57e5fc5871b8ded8cd38196effa&#039;
+                },
+                {
+                    ip: &#039;4.4.4.4&#039;,
+                    port: 80,
+                    feedingIdentifier: &#039;4a0ec8a9bd567e0c2b38f8e4191a391c&#039;
+                }
+            ]
+        ];
+
+        blockMaintainer.once(&#039;nodeBatchLength&#039;, function (count) {
+            count.should.equal(2);
+            setImmediate(function () {
+                done();
+            });
+        });
+
+        circuitManagerStub.emit(&#039;circuitCount&#039;);
+
+        var batch = blockMaintainer.getCurrentNodeBatch();
+
+        batch.length.should.equal(2);
+
+        [&#039;1.1.1.1&#039;, &#039;2.2.2.2&#039;].should.containEql(batch[0].ip);
+        [&#039;3.3.3.3&#039;, &#039;4.4.4.4&#039;].should.containEql(batch[1].ip);
+    });
+
+    it(&#039;should correctly update the list when a circuit is removed and one is added&#039;, function () {
+        maintainedCircuitNodes.splice(0, 1);
+
+        maintainedCircuitNodes.push([
+            {
+                ip: &#039;5.5.5.5&#039;,
+                port: 80,
+                feedingIdentifier: &#039;21a3b57e5fc5871b8ded8cd38196effa&#039;
+            },
+            {
+                ip: &#039;6.6.6.6&#039;,
+                port: 80,
+                feedingIdentifier: &#039;4a0ec8a9bd567e0c2b38f8e4191a391c&#039;
+            }
+        ]);
+        maintainedCircuitNodes.push([
+            {
+                ip: &#039;7.7.7.7&#039;,
+                port: 80,
+                feedingIdentifier: &#039;21a3b57e5fc5871b8ded8cd38196effa&#039;
+            },
+            {
+                ip: &#039;8.8.8.8&#039;,
+                port: 80,
+                feedingIdentifier: &#039;4a0ec8a9bd567e0c2b38f8e4191a391c&#039;
+            }
+        ]);
+
+        circuitManagerStub.emit(&#039;circuitCount&#039;);
+
+        var batch = blockMaintainer.getCurrentNodeBatch();
+        batch.length.should.equal(3);
+
+        [&#039;3.3.3.3&#039;, &#039;4.4.4.4&#039;].should.containEql(batch[0].ip);
+        [&#039;5.5.5.5&#039;, &#039;6.6.6.6&#039;].should.containEql(batch[1].ip);
+        [&#039;7.7.7.7&#039;, &#039;8.8.8.8&#039;].should.containEql(batch[2].ip);
+
+        maintainedCircuitNodes.splice(maintainedCircuitNodes.length - 1, 1);
+
+        circuitManagerStub.emit(&#039;circuitCount&#039;);
+
+        batch = blockMaintainer.getCurrentNodeBatch();
+
+        batch.length.should.equal(2);
+
+        [&#039;3.3.3.3&#039;, &#039;4.4.4.4&#039;].should.containEql(batch[0].ip);
+        [&#039;5.5.5.5&#039;, &#039;6.6.6.6&#039;].should.containEql(batch[1].ip);
+    });
+
+    it(&#039;should correctly cleanup the maintainer&#039;, function () {
+        blockMaintainer.cleanup();
+
+        circuitManagerStub.listeners(&#039;circuitCount&#039;).length.should.equal(0);
+    });
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+
+        circuitManagerStub.getRandomFeedingNodesBatch = function () {
+            return [];
+        };
+
+        circuitManagerStub.getReadyCircuits = function () {
+            var circuits = [];
+
+            for (var i = 0; i &lt; maintainedCircuitNodes.length; i++) {
+                var circuitNodes = maintainedCircuitNodes[i];
+
+                (function (cNodes) {
+                    circuits.push(testUtils.stubPublicApi(sandbox, HydraCircuit, {
+                        getCircuitNodes: function () {
+                            return cNodes;
+                        }
+                    }));
+                })(circuitNodes);
+            }
+
+            return circuits;
+        };
+    });
+
+    after(function () {
+        sandbox.restore();
+    });
+});
+//# sourceMappingURL=FeedingNodesBlockMaintainer.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

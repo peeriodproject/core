@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/protocol/fileTransfer/Upload.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/protocol/fileTransfer/Upload.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">78.55</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">596</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">67.65</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">5.14</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../test.d.ts&#039; /&gt;
+require(&#039;should&#039;);
+
+var events = require(&#039;events&#039;);
+
+var fs = require(&#039;fs&#039;);
+
+var sinon = require(&#039;sinon&#039;);
+
+var testUtils = require(&#039;../../../utils/testUtils&#039;);
+
+var Aes128GcmDownloadFactory = require(&#039;../../../../src/core/protocol/fileTransfer/share/Aes128GcmDownloadFactory&#039;);
+var Aes128GcmUploadFactory = require(&#039;../../../../src/core/protocol/fileTransfer/share/Aes128GcmUploadFactory&#039;);
+var TransferMessageCenter = require(&#039;../../../../src/core/protocol/fileTransfer/TransferMessageCenter&#039;);
+var WritableFileTransferMessageFactory = require(&#039;../../../../src/core/protocol/fileTransfer/messages/WritableFileTransferMessageFactory&#039;);
+var ReadableFileTransferMessageFactory = require(&#039;../../../../src/core/protocol/fileTransfer/messages/ReadableFileTransferMessageFactory&#039;);
+var ReadableShareRequestMessageFactory = require(&#039;../../../../src/core/protocol/fileTransfer/share/messages/ReadableShareRequestMessageFactory&#039;);
+
+var FeedingNodesMessageBlock = require(&#039;../../../../src/core/protocol/fileTransfer/messages/FeedingNodesMessageBlock&#039;);
+var FeedingNodesBlockMaintainerFactory = require(&#039;../../../../src/core/protocol/fileTransfer/share/FeedingNodesBlockMaintainerFactory&#039;);
+
+var ShareMessengerFactory = require(&#039;../../../../src/core/protocol/fileTransfer/share/ShareMessengerFactory&#039;);
+var ShareMessenger = require(&#039;../../../../src/core/protocol/fileTransfer/share/ShareMessenger&#039;);
+var FileBlockWriterFactory = require(&#039;../../../../src/core/fs/FileBlockWriterFactory&#039;);
+var FileBlockReaderFactory = require(&#039;../../../../src/core/fs/FileBlockReaderFactory&#039;);
+var ObjectConfig = require(&#039;../../../../src/core/config/ObjectConfig&#039;);
+
+describe(&#039;CORE --&gt; PROTOCOL --&gt; FILE TRANSFER --&gt; Upload (integration with Download)&#039;, function () {
+    var sandbox = null;
+    var writableFileTransferMessageFactory = new WritableFileTransferMessageFactory();
+    var readableFileTransferMessageFactory = new ReadableFileTransferMessageFactory();
+    var readableShareRequestMessageFactory = new ReadableShareRequestMessageFactory();
+    var feedingNodesBlock = FeedingNodesMessageBlock.constructBlock([{ ip: &#039;1.1.1.1&#039;, port: 80, feedingIdentifier: &#039;cafebabecafebabecafebabecafebabe&#039; }]);
+
+    var filepath = testUtils.getFixturePath(&#039;core/fileTransfer/snowden_brighton.jpg&#039;);
+    var downloadFolder = testUtils.getFixturePath(&#039;core/fileTransfer/download&#039;);
+    var filename = &#039;snowden_brighton.jpg&#039;;
+    var sha1Hash = &#039;4dad5e4374038a14465f0c42fc150a36674b4bd8&#039;;
+    var filesize = 517880;
+
+    var downloaderMiddleware = new events.EventEmitter();
+    var uploaderMiddleware = new events.EventEmitter();
+    var downloadFactory = null;
+    var uploadFactory = null;
+    var theDownload = null;
+    var theUpload = null;
+
+    var transferMessageCenterStub = null;
+    var configStub = null;
+    var downloaderCircuitLength = 1;
+    var uploaderCircuitLength = 1;
+    var messWithFilePath = false;
+
+    var createFeedingNodesBlockMaintainerFactory = function (forWhat) {
+        var middleware = forWhat === &#039;download&#039; ? downloaderMiddleware : uploaderMiddleware;
+
+        return testUtils.stubPublicApi(sandbox, FeedingNodesBlockMaintainerFactory, {
+            create: function () {
+                var maintainer = new events.EventEmitter();
+                maintainer.getCurrentNodeBatch = function () {
+                    var ret = [];
+                    var len = forWhat === &#039;download&#039; ? downloaderCircuitLength : uploaderCircuitLength;
+
+                    for (var i = 0; i &lt; len; i++) {
+                        ret.push(&#039;1&#039;);
+                    }
+                    return ret;
+                };
+                maintainer.getBlock = function () {
+                    return feedingNodesBlock;
+                };
+                maintainer.cleanup = function () {
+                };
+
+                middleware.on(&#039;circuitLength&#039;, function (l) {
+                    if (forWhat === &#039;download&#039;) {
+                        downloaderCircuitLength = l;
+                    } else {
+                        uploaderCircuitLength = l;
+                    }
+
+                    maintainer.emit(&#039;nodeBatchLength&#039;);
+                });
+
+                return maintainer;
+            }
+        });
+    };
+
+    var createShareMessengerFactory = function (forWhat) {
+        var myMiddleware = forWhat === &#039;download&#039; ? downloaderMiddleware : uploaderMiddleware;
+        var remoteMiddleware = forWhat === &#039;download&#039; ? uploaderMiddleware : downloaderMiddleware;
+
+        return testUtils.stubPublicApi(sandbox, ShareMessengerFactory, {
+            createMessenger: function () {
+                return testUtils.stubPublicApi(sandbox, ShareMessenger, {
+                    pipeLastMessage: function (payloadToFeed) {
+                        var msg = readableFileTransferMessageFactory.create(payloadToFeed);
+
+                        myMiddleware.once(&#039;canSend&#039;, function (success) {
+                            var payload = null;
+                            if (success) {
+                                payload = msg.getPayload();
+
+                                setImmediate(function () {
+                                    remoteMiddleware.emit(&#039;message&#039;, msg.getMessageType() + &#039;_&#039; + msg.getTransferId(), payload);
+                                });
+                            }
+                        });
+                        myMiddleware.emit(&#039;sending&#039;, msg.getMessageType(), msg.getTransferId(), msg.getPayload());
+                    },
+                    pipeMessageAndWaitForResponse: function (payloadToFeed, nodesToFeed, expectedMessageType, expectedIdent, cb) {
+                        var msg = readableFileTransferMessageFactory.create(payloadToFeed);
+
+                        myMiddleware.once(&#039;canSend&#039;, function (success) {
+                            var payload = null;
+                            if (success) {
+                                payload = msg.getPayload();
+                                setImmediate(function () {
+                                    remoteMiddleware.emit(&#039;message&#039;, msg.getMessageType() + &#039;_&#039; + msg.getTransferId(), payload);
+                                });
+                            } else {
+                                cb(new Error(&#039;Timed out.&#039;), null);
+                            }
+                        });
+
+                        myMiddleware.once(&#039;message&#039;, function (concat, p) {
+                            if (concat === (expectedMessageType + &#039;_&#039; + expectedIdent)) {
+                                if (p) {
+                                    cb(null, p);
+                                }
+                            }
+                        });
+
+                        myMiddleware.emit(&#039;sending&#039;, msg.getMessageType(), msg.getTransferId(), msg.getPayload());
+                    }
+                });
+            }
+        });
+    };
+
+    var buildFreshDownloadAndUpload = function (cb) {
+        removeFile();
+
+        downloaderMiddleware.removeAllListeners(&#039;circuitLength&#039;);
+        downloaderMiddleware.removeAllListeners(&#039;sending&#039;);
+        downloaderMiddleware.removeAllListeners(&#039;canSend&#039;);
+        downloaderMiddleware.removeAllListeners(&#039;message&#039;);
+        uploaderMiddleware.removeAllListeners(&#039;circuitLength&#039;);
+        uploaderMiddleware.removeAllListeners(&#039;sending&#039;);
+        uploaderMiddleware.removeAllListeners(&#039;canSend&#039;);
+        uploaderMiddleware.removeAllListeners(&#039;message&#039;);
+
+        theDownload = downloadFactory.create(downloadFolder, filename, filesize, sha1Hash, [{ ip: &#039;1.1.1.1&#039;, port: 80, feedingIdentifier: &#039;cafebabecafebabecafebabecafebabe&#039; }]);
+
+        downloaderMiddleware.once(&#039;sending&#039;, function (type, ident) {
+            downloaderMiddleware.emit(&#039;canSend&#039;, true);
+            uploaderMiddleware.once(&#039;message&#039;, function (concat, payload) {
+                if (concat === type + &#039;_&#039; + ident) {
+                    var msg = readableShareRequestMessageFactory.create(payload);
+
+                    theUpload = uploadFactory.create(&#039;foobar&#039;, ident, msg, filepath + (messWithFilePath ? &#039;foo&#039; : &#039;&#039;), filename, filesize, sha1Hash);
+                    cb();
+                }
+            });
+        });
+
+        theDownload.kickOff();
+    };
+
+    var removeFile = function () {
+        try  {
+            fs.unlinkSync(downloadFolder + &#039;/snowden_brighton.jpg&#039;);
+        } catch (e) {
+        }
+    };
+
+    it(&#039;should correctly build up the factories&#039;, function () {
+        downloadFactory = new Aes128GcmDownloadFactory(createFeedingNodesBlockMaintainerFactory(&#039;download&#039;), createShareMessengerFactory(&#039;download&#039;), new FileBlockWriterFactory(), transferMessageCenterStub);
+        uploadFactory = new Aes128GcmUploadFactory(configStub, createFeedingNodesBlockMaintainerFactory(&#039;upload&#039;), createShareMessengerFactory(&#039;upload&#039;), new FileBlockReaderFactory(), transferMessageCenterStub);
+
+        downloadFactory.should.be.instanceof(Aes128GcmDownloadFactory);
+        uploadFactory.should.be.instanceof(Aes128GcmUploadFactory);
+    });
+
+    it(&#039;should build up the download and create the upload&#039;, function (done) {
+        buildFreshDownloadAndUpload(done);
+    });
+
+    it(&#039;should completely upload and download the file&#039;, function (done) {
+        var downloadComplete = false;
+        var uploadComplete = false;
+        var check = function () {
+            if (downloadComplete &amp;&amp; uploadComplete) {
+                done();
+            }
+        };
+
+        theUpload.once(&#039;killed&#039;, function (reason) {
+            if (reason === &#039;Completed.&#039;) {
+                uploadComplete = true;
+                check();
+            } else
+                throw new Error(&#039;Bad reason.&#039;);
+        });
+
+        theDownload.once(&#039;killed&#039;, function (reason) {
+            if (reason === &#039;Completed.&#039;) {
+                downloadComplete = true;
+                check();
+            } else
+                throw new Error(&#039;Bad reason.&#039;);
+        });
+
+        uploaderMiddleware.on(&#039;sending&#039;, function () {
+            uploaderMiddleware.emit(&#039;canSend&#039;, true);
+        });
+
+        downloaderMiddleware.on(&#039;sending&#039;, function () {
+            downloaderMiddleware.emit(&#039;canSend&#039;, true);
+        });
+
+        theUpload.kickOff();
+    });
+
+    it(&#039;should kill the upload when sending a ratify message but aborting manually when waiting for circuits&#039;, function (done) {
+        buildFreshDownloadAndUpload(function () {
+            uploaderCircuitLength = 0;
+
+            theUpload.kickOff();
+
+            theUpload.once(&#039;killed&#039;, function (reason) {
+                reason.should.equal(&#039;Manually aborted.&#039;);
+                done();
+            });
+
+            setImmediate(function () {
+                theUpload.manuallyAbort();
+            });
+        });
+    });
+
+    it(&#039;should kill the upload when aborting during the encryption of the SHARE_RATIFY encrypted part&#039;, function (done) {
+        buildFreshDownloadAndUpload(function () {
+            uploaderCircuitLength = 0;
+
+            theUpload.kickOff();
+
+            theUpload.once(&#039;killed&#039;, function (reason) {
+                reason.should.equal(&#039;Manually aborted.&#039;);
+                done();
+            });
+
+            setImmediate(function () {
+                uploaderMiddleware.emit(&#039;circuitLength&#039;, 1);
+                theUpload.manuallyAbort();
+            });
+        });
+    });
+
+    it(&#039;should kill the upload when sending a message and the response times out&#039;, function (done) {
+        buildFreshDownloadAndUpload(function () {
+            uploaderCircuitLength = 1;
+
+            uploaderMiddleware.once(&#039;sending&#039;, function () {
+                uploaderMiddleware.emit(&#039;canSend&#039;, null);
+            });
+
+            theUpload.kickOff();
+
+            theUpload.once(&#039;killed&#039;, function (reason) {
+                reason.should.equal(&#039;Timed out.&#039;);
+                done();
+            });
+        });
+    });
+
+    it(&#039;should kill the upload when receiving a message which cannot be properly decrypted&#039;, function (done) {
+        buildFreshDownloadAndUpload(function () {
+            uploaderCircuitLength = 1;
+
+            uploaderMiddleware.once(&#039;sending&#039;, function () {
+                downloaderMiddleware.once(&#039;sending&#039;, function (type, ident, payload) {
+                    payload[12] += 10;
+
+                    downloaderMiddleware.emit(&#039;canSend&#039;, true);
+                });
+
+                uploaderMiddleware.emit(&#039;canSend&#039;, true);
+            });
+
+            theUpload.kickOff();
+
+            theUpload.once(&#039;killed&#039;, function (reason) {
+                reason.should.equal(&#039;Decryption error.&#039;);
+                done();
+            });
+        });
+    });
+
+    it(&#039;should kill the upload when receiving a malformed decrypted message&#039;, function (done) {
+        buildFreshDownloadAndUpload(function () {
+            uploaderCircuitLength = 1;
+
+            uploaderMiddleware.once(&#039;sending&#039;, function () {
+                downloaderMiddleware.once(&#039;sending&#039;, function (type, ident, payload) {
+                    payload[13] += 10;
+
+                    downloaderMiddleware.emit(&#039;canSend&#039;, true);
+                });
+
+                uploaderMiddleware.emit(&#039;canSend&#039;, true);
+            });
+
+            theUpload.kickOff();
+
+            theUpload.once(&#039;killed&#039;, function (reason) {
+                reason.should.equal(&#039;Malformed share message.&#039;);
+                done();
+            });
+        });
+    });
+
+    it(&#039;should kill the upload when receiving a malformed decrypted message&#039;, function (done) {
+        buildFreshDownloadAndUpload(function () {
+            uploaderCircuitLength = 1;
+
+            uploaderMiddleware.once(&#039;sending&#039;, function () {
+                downloaderMiddleware.once(&#039;sending&#039;, function (type, ident, payload) {
+                    payload[13] += 10;
+
+                    downloaderMiddleware.emit(&#039;canSend&#039;, true);
+                });
+
+                uploaderMiddleware.emit(&#039;canSend&#039;, true);
+            });
+
+            theUpload.kickOff();
+
+            theUpload.once(&#039;killed&#039;, function (reason) {
+                reason.should.equal(&#039;Malformed share message.&#039;);
+                done();
+            });
+        });
+    });
+
+    it(&#039;should kill the upload when receiving a SHARE_ABORT message with unmatching file properties&#039;, function (done) {
+        buildFreshDownloadAndUpload(function () {
+            uploaderCircuitLength = 1;
+
+            uploaderMiddleware.once(&#039;sending&#039;, function () {
+                downloaderMiddleware.once(&#039;sending&#039;, function (type, ident, payload) {
+                    payload[14] += 10;
+
+                    downloaderMiddleware.emit(&#039;canSend&#039;, true);
+                });
+
+                theDownload.manuallyAbort();
+                uploaderMiddleware.emit(&#039;canSend&#039;, true);
+            });
+
+            theUpload.kickOff();
+
+            theUpload.once(&#039;killed&#039;, function (reason) {
+                reason.should.equal(&#039;File properties do not match in abort message.&#039;);
+                done();
+            });
+        });
+    });
+
+    it(&#039;should gracefully kill the upload when receiving a valid SHARE_ABORT message&#039;, function (done) {
+        buildFreshDownloadAndUpload(function () {
+            uploaderCircuitLength = 1;
+
+            uploaderMiddleware.once(&#039;sending&#039;, function () {
+                downloaderMiddleware.once(&#039;sending&#039;, function (type, ident, payload) {
+                    downloaderMiddleware.emit(&#039;canSend&#039;, true);
+                });
+
+                theDownload.manuallyAbort();
+                uploaderMiddleware.emit(&#039;canSend&#039;, true);
+            });
+
+            theUpload.kickOff();
+
+            theUpload.once(&#039;killed&#039;, function (reason) {
+                reason.should.equal(&#039;Downloader aborted transfer.&#039;);
+                done();
+            });
+        });
+    });
+
+    it(&#039;should kill the upload and send a SHARE_ABORT message if the uplaod was manually aborted while waiting for a response&#039;, function (done) {
+        buildFreshDownloadAndUpload(function () {
+            uploaderCircuitLength = 1;
+
+            uploaderMiddleware.once(&#039;sending&#039;, function () {
+                downloaderMiddleware.once(&#039;sending&#039;, function (type, ident, payload) {
+                    uploaderMiddleware.once(&#039;sending&#039;, function () {
+                        uploaderMiddleware.emit(&#039;canSend&#039;, true);
+                    });
+
+                    downloaderMiddleware.emit(&#039;canSend&#039;, true);
+                });
+
+                theUpload.manuallyAbort();
+                uploaderMiddleware.emit(&#039;canSend&#039;, true);
+            });
+
+            theUpload.kickOff();
+
+            theUpload.once(&#039;killed&#039;, function (reason) {
+                reason.should.equal(&#039;Manually aborted.&#039;);
+
+                theDownload.once(&#039;killed&#039;, function (reason) {
+                    reason.should.equal(&#039;Uploader aborted transfer.&#039;);
+                    done();
+                });
+            });
+        });
+    });
+
+    it(&#039;should kill the upload when the file cannot be read and send a SHARE_ABORT message&#039;, function (done) {
+        messWithFilePath = true;
+
+        buildFreshDownloadAndUpload(function () {
+            uploaderMiddleware.once(&#039;sending&#039;, function () {
+                downloaderMiddleware.once(&#039;sending&#039;, function (type, ident, payload) {
+                    uploaderMiddleware.once(&#039;sending&#039;, function () {
+                        uploaderMiddleware.emit(&#039;canSend&#039;, true);
+                    });
+
+                    downloaderMiddleware.emit(&#039;canSend&#039;, true);
+                });
+
+                uploaderMiddleware.emit(&#039;canSend&#039;, true);
+            });
+
+            theUpload.kickOff();
+
+            theUpload.once(&#039;killed&#039;, function (reason) {
+                reason.should.equal(&#039;File cannot be read.&#039;);
+
+                theDownload.once(&#039;killed&#039;, function (reason) {
+                    reason.should.equal(&#039;Uploader aborted transfer.&#039;);
+                    done();
+                });
+            });
+        });
+    });
+
+    it(&#039;should kill the upload when reading a block renders an error (send SHARE_ABORT)&#039;, function (done) {
+        messWithFilePath = false;
+
+        buildFreshDownloadAndUpload(function () {
+            uploaderMiddleware.once(&#039;sending&#039;, function () {
+                downloaderMiddleware.once(&#039;sending&#039;, function (type, ident, payload) {
+                    uploaderMiddleware.once(&#039;sending&#039;, function () {
+                        downloaderMiddleware.once(&#039;sending&#039;, function () {
+                            theUpload._fileReader._fileDescriptor = -1;
+
+                            uploaderMiddleware.once(&#039;sending&#039;, function () {
+                                uploaderMiddleware.emit(&#039;canSend&#039;, true);
+                            });
+
+                            downloaderMiddleware.emit(&#039;canSend&#039;, true);
+                        });
+
+                        uploaderMiddleware.emit(&#039;canSend&#039;, true);
+                    });
+
+                    downloaderMiddleware.emit(&#039;canSend&#039;, true);
+                });
+
+                uploaderMiddleware.emit(&#039;canSend&#039;, true);
+            });
+
+            theUpload.kickOff();
+
+            theUpload.once(&#039;killed&#039;, function (reason) {
+                reason.should.equal(&#039;Block cannot be read.&#039;);
+
+                theDownload.once(&#039;killed&#039;, function (reason) {
+                    reason.should.equal(&#039;Uploader aborted transfer.&#039;);
+                    done();
+                });
+            });
+        });
+    });
+
+    it(&#039;should kill the upload if manually aborting while waiting for circuits for sending a block (send SHARE_ABORT)&#039;, function (done) {
+        buildFreshDownloadAndUpload(function () {
+            uploaderMiddleware.once(&#039;sending&#039;, function () {
+                downloaderMiddleware.once(&#039;sending&#039;, function (type, ident, payload) {
+                    uploaderMiddleware.once(&#039;sending&#039;, function () {
+                        downloaderMiddleware.once(&#039;sending&#039;, function () {
+                            uploaderMiddleware.emit(&#039;circuitLength&#039;, 0);
+
+                            uploaderMiddleware.once(&#039;sending&#039;, function () {
+                                uploaderMiddleware.emit(&#039;canSend&#039;, true);
+                            });
+
+                            downloaderMiddleware.emit(&#039;canSend&#039;, true);
+
+                            setTimeout(function () {
+                                theUpload.manuallyAbort();
+                            }, 100);
+                        });
+
+                        uploaderMiddleware.emit(&#039;canSend&#039;, true);
+                    });
+
+                    downloaderMiddleware.emit(&#039;canSend&#039;, true);
+                });
+
+                uploaderMiddleware.emit(&#039;canSend&#039;, true);
+            });
+
+            theUpload.kickOff();
+
+            theUpload.once(&#039;killed&#039;, function (reason) {
+                reason.should.equal(&#039;Manually aborted.&#039;);
+
+                theDownload.once(&#039;killed&#039;, function (reason) {
+                    reason.should.equal(&#039;Uploader aborted transfer.&#039;);
+                    done();
+                });
+            });
+        });
+    });
+
+    it(&#039;should kill the upload if manually aborting while encrypting a block message (send SHARE_ABORT)&#039;, function (done) {
+        uploaderCircuitLength = 1;
+
+        buildFreshDownloadAndUpload(function () {
+            uploaderMiddleware.once(&#039;sending&#039;, function () {
+                downloaderMiddleware.once(&#039;sending&#039;, function (type, ident, payload) {
+                    uploaderMiddleware.emit(&#039;circuitLength&#039;, 0);
+
+                    uploaderMiddleware.once(&#039;sending&#039;, function () {
+                        uploaderMiddleware.emit(&#039;canSend&#039;, true);
+                    });
+
+                    downloaderMiddleware.emit(&#039;canSend&#039;, true);
+
+                    setTimeout(function () {
+                        theUpload.once(&#039;uploadingBytes&#039;, function () {
+                            theUpload.manuallyAbort();
+                        });
+
+                        uploaderMiddleware.emit(&#039;circuitLength&#039;, 1);
+                    }, 100);
+
+                    downloaderMiddleware.emit(&#039;canSend&#039;, true);
+                });
+
+                uploaderMiddleware.emit(&#039;canSend&#039;, true);
+            });
+
+            theUpload.kickOff();
+
+            theUpload.once(&#039;killed&#039;, function (reason) {
+                reason.should.equal(&#039;Manually aborted.&#039;);
+
+                theDownload.once(&#039;killed&#039;, function (reason) {
+                    reason.should.equal(&#039;Uploader aborted transfer.&#039;);
+                    done();
+                });
+            });
+        });
+    });
+
+    before(function () {
+        removeFile();
+
+        sandbox = sinon.sandbox.create();
+
+        transferMessageCenterStub = testUtils.stubPublicApi(sandbox, TransferMessageCenter, {
+            wrapTransferMessage: function (messageType, transferId, payload) {
+                return writableFileTransferMessageFactory.constructMessage(transferId, messageType, payload);
+            }
+        });
+
+        configStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+            get: function (what) {
+                if (what === &#039;fileTransfer.uploadBlockSizeInBytes&#039;)
+                    return 204800;
+            }
+        });
+    });
+
+    after(function () {
+        sandbox.restore();
+
+        removeFile();
+    });
+});
+//# sourceMappingURL=Upload.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>
