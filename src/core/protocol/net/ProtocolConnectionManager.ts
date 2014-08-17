@@ -449,6 +449,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		this.obtainConnectionTo(node, function (err:Error, socket:TCPSocketInterface) {
 			if (err) {
 				if (callback) {
+					buffer = null;
 					callback(err);
 				}
 			}
@@ -651,6 +652,8 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 		}
 
 		socket.end();
+
+		// todo: socket = null ?
 
 		if ((confirmed || hydra) && !blockTerminationEvent) {
 			this._emitTerminatedEventByIdentifier(identifier);
