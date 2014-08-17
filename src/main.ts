@@ -51,7 +51,7 @@ var createUsageTimeout = function () {
 		logUsageTimeout = null;
 
 		createUsageTimeout();
-	}, 5000);
+	}, 500);
 };
 
 createUsageTimeout();
