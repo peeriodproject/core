@@ -610,7 +610,8 @@ var ProtocolConnectionManager = (function (_super) {
 
         socket.end();
 
-        // todo: socket = null ?
+        socket = null;
+
         if ((confirmed || hydra) && !blockTerminationEvent) {
             this._emitTerminatedEventByIdentifier(identifier);
         }
@@ -676,6 +677,7 @@ var ProtocolConnectionManager = (function (_super) {
 
         if (pending.timeout) {
             global.clearTimeout(pending.timeout);
+            pending.timeout = null;
         }
         delete this._incomingPendingSockets[oldIdentifier];
 
@@ -704,6 +706,7 @@ var ProtocolConnectionManager = (function (_super) {
 
         if (pending.timeout) {
             global.clearTimeout(pending.timeout);
+            pending.timeout = null;
         }
         delete this._incomingPendingSockets[oldIdentifier];
 

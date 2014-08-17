@@ -653,7 +653,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 		socket.end();
 
-		// todo: socket = null ?
+		socket = null;
 
 		if ((confirmed || hydra) && !blockTerminationEvent) {
 			this._emitTerminatedEventByIdentifier(identifier);
@@ -722,6 +722,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 		if (pending.timeout) {
 			global.clearTimeout(pending.timeout);
+			pending.timeout = null;
 		}
 		delete this._incomingPendingSockets[oldIdentifier];
 
@@ -750,6 +751,7 @@ class ProtocolConnectionManager extends events.EventEmitter implements ProtocolC
 
 		if (pending.timeout) {
 			global.clearTimeout(pending.timeout);
+			pending.timeout = null;
 		}
 		delete this._incomingPendingSockets[oldIdentifier];
 
