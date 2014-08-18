@@ -54,7 +54,7 @@ var createUsageTimeout = function () {
 	}, 500);
 };
 
-createUsageTimeout();
+//createUsageTimeout();
 
 App.start(gui, guiApp, dataPath, guiWindow);
 
