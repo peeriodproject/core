@@ -210,7 +210,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 
 			this._alphaTimeout = global.setTimeout(() => {
 				logger.log('findClosestNodes', 'alpha timeout elapsed.');
-				this._alphaTimeout = 0;
+				this._alphaTimeout = null;
 				this._requestAlphaNodes();
 			}, this._parallelismDelayMillis);
 		}
@@ -231,11 +231,11 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 
 		if (this._cycleTimeout) {
 			global.clearTimeout(this._cycleTimeout);
-			this._cycleTimeout = 0;
+			this._cycleTimeout = null;
 		}
 		if (this._alphaTimeout) {
 			global.clearTimeout(this._alphaTimeout);
-			this._alphaTimeout = 0;
+			this._alphaTimeout = null;
 		}
 
 		this._callback(this._confirmedList);
@@ -286,7 +286,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 				if (this._cycleTimeout) {
 					logger.log('findClosestNodes', 'Clearing cycle timeout 2');
 					global.clearTimeout(this._cycleTimeout);
-					this._cycleTimeout = 0;
+					this._cycleTimeout = null;
 				}
 				this._doAlphaTimeout();
 			}

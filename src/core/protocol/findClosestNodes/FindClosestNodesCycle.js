@@ -175,7 +175,7 @@ var FindClosestNodesCycle = (function () {
 
             this._alphaTimeout = global.setTimeout(function () {
                 logger.log('findClosestNodes', 'alpha timeout elapsed.');
-                _this._alphaTimeout = 0;
+                _this._alphaTimeout = null;
                 _this._requestAlphaNodes();
             }, this._parallelismDelayMillis);
         } else {
@@ -195,11 +195,11 @@ var FindClosestNodesCycle = (function () {
 
         if (this._cycleTimeout) {
             global.clearTimeout(this._cycleTimeout);
-            this._cycleTimeout = 0;
+            this._cycleTimeout = null;
         }
         if (this._alphaTimeout) {
             global.clearTimeout(this._alphaTimeout);
-            this._alphaTimeout = 0;
+            this._alphaTimeout = null;
         }
 
         this._callback(this._confirmedList);
@@ -249,7 +249,7 @@ var FindClosestNodesCycle = (function () {
                 if (this._cycleTimeout) {
                     logger.log('findClosestNodes', 'Clearing cycle timeout 2');
                     global.clearTimeout(this._cycleTimeout);
-                    this._cycleTimeout = 0;
+                    this._cycleTimeout = null;
                 }
                 this._doAlphaTimeout();
             }
