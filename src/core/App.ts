@@ -341,7 +341,7 @@ var App = {
 			return;
 		}
 
-		var uiDeamon = new UiDaemon(this._gui, this.appQuitHandler);
+		//var uiDaemon = new UiDaemon(this._gui, this.appQuitHandler);
 	},
 
 	startUi: function () {
@@ -378,6 +378,13 @@ var App = {
 
 	startTopology: function (searchMessageBridge, downloadBridge, uploadBridge) {
 		if (!this._environmentConfig.get('environment.startTopology')) {
+			this.startUi();
+
+			if (this._splashScreen) {
+				setImmediate(() => {
+					this._splashScreen.close();
+				});
+			}
 			return;
 		}
 
