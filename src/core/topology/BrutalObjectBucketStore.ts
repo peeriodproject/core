@@ -5,31 +5,34 @@ import ContactNodeObjectListInterface = require('./interfaces/ContactNodeObjectL
 class BrutalObjectBucketStore implements BucketStoreInterface {
 
 	private _buckets = {};
-
-	public constructor () {
-		for (var i=0; i<160; i++) {
-			this._buckets[i.toString()] = {};
-		}
-	}
+	private _open = true;
 
 	close ():void {
+		this._open = false;
 	}
 
 	isOpen ():boolean {
-		return true;
+		return this._open;
 	}
 
 	open ():void {
+		this._open = true;
 	}
 
 	private _add (bucketKey:string, id:Buffer, lastSeen:number, addresses:any):boolean {
+		if (!this._buckets[bucketKey]) {
+			this._buckets[bucketKey] = [];
+		}
+
 		var addressArray = [];
 
 		for (var i=0, l=addresses.length; i<l; i++) {
 			var address = addresses[i];
 			addressArray.push({
 				_ip: address.getIp(),
-				_port: address.getPort()
+				_port: address.getPort(),
+				_isV4: address.isIPv4(),
+				_isV6: address.isIPv6()
 			});
 		}
 
@@ -53,6 +56,9 @@ class BrutalObjectBucketStore implements BucketStoreInterface {
 
 	contains (bucketKey:string, id:Buffer):boolean {
 		var bucket = this._buckets[bucketKey];
+
+		if (!bucket) return false;
+
 		var idToCheck = id.toString('hex');
 		var contains = false;
 
@@ -78,7 +84,7 @@ class BrutalObjectBucketStore implements BucketStoreInterface {
 
 		for (var i=0,l=addresses.length; i<l; i++) {
 			var address = addresses[i];
-			obj.addresses.push({_ip: address._ip, _port: address._port});
+			obj.addresses.push({_ip: address._ip, _port: address._port, _isV4: address._isV4, _isV6: address._isV6});
 		}
 
 		return obj;
@@ -86,6 +92,9 @@ class BrutalObjectBucketStore implements BucketStoreInterface {
 
 	get (bucketKey:string, id:Buffer):ContactNodeObjectInterface {
 		var bucket = this._buckets[bucketKey];
+
+		if (!bucket) return null;
+
 		var found = null;
 		var idToSearch = id.toString('hex');
 
@@ -103,6 +112,8 @@ class BrutalObjectBucketStore implements BucketStoreInterface {
 		var retList = [];
 		var bucket = this._buckets[bucketKey];
 
+		if (!bucket) return retList;
+
 		for (var i=0, l=bucket.length; i<l; i++) {
 			if (bucket[i]) {
 				retList.push(this._mutableSafeCopy(bucket[i]));
@@ -116,7 +127,7 @@ class BrutalObjectBucketStore implements BucketStoreInterface {
 		var longestNotSeenNum = undefined;
 		var bucket = this._buckets[bucketKey];
 
-		if (!bucket.length) return null;
+		if (!(bucket && bucket.length)) return null;
 
 		var retIndex = 0;
 
@@ -138,13 +149,16 @@ class BrutalObjectBucketStore implements BucketStoreInterface {
 	getRandom (bucketKey:string):ContactNodeObjectInterface {
 		var bucket = this._buckets[bucketKey];
 
-		if (!bucket.length) return null;
+		if (!(bucket && bucket.length)) return null;
 
 		return this._mutableSafeCopy(bucket[Math.floor(Math.random() * bucket.length)]);
 	}
 
 	remove (bucketKey:string, id:Buffer):boolean {
 		var bucket = this._buckets[bucketKey];
+
+		if (!bucket) return true;
+
 		var idToSearch = id.toString('hex');
 		var spliceIndex = undefined;
 
@@ -163,6 +177,8 @@ class BrutalObjectBucketStore implements BucketStoreInterface {
 	}
 
 	size (bucketKey:string):number {
+		if (!this._buckets[bucketKey]) return 0;
+
 		return this._buckets[bucketKey].length;
 	}
 
