@@ -50,8 +50,7 @@ var createUsageTimeout = function () {
     }, 500);
 };
 
-createUsageTimeout();
-
+//createUsageTimeout();
 App.start(gui, guiApp, dataPath, guiWindow);
 /*
 // lifetime > 5 min < 1 day
