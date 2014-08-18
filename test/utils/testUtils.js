@@ -95,6 +95,15 @@ var testUtils;
     }
     testUtils.deleteFolderRecursive = deleteFolderRecursive;
     ;
+
+    function deleteFile(path) {
+        try  {
+            fs.unlinkSync(path);
+        } catch (e) {
+        }
+    }
+    testUtils.deleteFile = deleteFile;
+    ;
 })(testUtils || (testUtils = {}));
 
 module.exports = testUtils;

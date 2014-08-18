@@ -92,6 +92,12 @@ module testUtils {
 			fs.rmdirSync(path);
 		}
 	};
+
+	export function deleteFile (path:string):void {
+		try {
+			fs.unlinkSync(path);
+		} catch (e) {}
+	};
 }
 
 export = testUtils;
