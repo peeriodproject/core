@@ -35,7 +35,7 @@ var UiSplashScreen = (function (_super) {
         });
 
         this._window.once('loaded', function () {
-            _this._window.showDevTools();
+            //this._window.showDevTools();
             _this._window.moveBy(0, 200);
             _this._updateStatus();
             _this.open();
