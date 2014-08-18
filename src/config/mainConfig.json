@@ -107,7 +107,7 @@
     },
     "app"     : {
         "dataPath": "appDataFolder",
-        "internalDataPath": "appDataFolder"
+        "internalDataPath": "initialState"
     },
     "share" : {
         "downloadManagerStateConfig": "downloadManager.json"

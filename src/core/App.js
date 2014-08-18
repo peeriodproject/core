@@ -431,14 +431,12 @@ var App = {
                 bucketStore = new BrutalObjectBucketStore();
                 bucketFactory = new BucketFactory();
                 contactNodeFactory = new ContactNodeFactory();
-                console.log('starting routing table');
                 routingTable = new RoutingTable(topologyConfig, _this._appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory, {
                     onOpenCallback: function (err) {
                         if (err) {
                             console.error(err);
                         }
 
-                        console.log('starting protocol gateway');
                         protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
                         _this._addUiComponent(new UiProtocolGatewayComponent(protocolGateway, _this._splashScreen));
 
