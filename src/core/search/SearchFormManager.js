@@ -63,8 +63,11 @@ var SearchFormManager = (function () {
             }
         };
 
+        var statePath = path.join(config.get('app.dataPath'), config.get('search.searchFormStateConfig'));
+        var fallbackStatePath = path.join(config.get('app.internalDataPath'), config.get('search.searchFormStateConfig'));
+
         this._config = config;
-        this._stateHandler = stateHandlerFactory.create(path.join(this._config.get('app.dataPath'), this._config.get('search.searchFormStateConfig')));
+        this._stateHandler = stateHandlerFactory.create(statePath, fallbackStatePath);
         this._pluginManager = pluginManager;
         this._searchRequestManager = searchRequestManager;
 

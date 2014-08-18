@@ -50,6 +50,8 @@ describe('CORE --> SEARCH --> SearchFormResultsManager', function () {
             get: function (key) {
                 if (key === 'app.dataPath') {
                     return appDataPath;
+                } else if (key === 'app.internalDataPath') {
+                    return appDataPath;
                 } else if (key === 'search.searchFormStateConfig') {
                     return 'searchFormManager.json';
                 }

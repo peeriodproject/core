@@ -20,7 +20,7 @@ var HttpNodeSeeker = require('./HttpNodeSeeker');
 * @oaram {core.topology.RoutingTableInterface} routingTable
 */
 var NodeSeekerFactory = (function () {
-    function NodeSeekerFactory(appConfig, routingTable) {
+    function NodeSeekerFactory(appConfig, protocolConfig, routingTable) {
         /**
         * @member {core.topology.ContactNodeAddressFactoryInterface} core.protocol.nodeDiscovery.NodeSeekerFactory~_addressFactory
         */
@@ -46,6 +46,10 @@ var NodeSeekerFactory = (function () {
         */
         this._nodeFactory = null;
         /**
+        * @member {core.topology.ContactNodeFactoryInterface} core.protocol.nodeDiscovery.NodeSeekerFactory~_protocolConfig
+        */
+        this._protocolConfig = null;
+        /**
         * @member {core.topology.RoutingTableInterface} core.protocol.nodeDiscovery.NodeSeekerFactory~_routingTable
         */
         this._routingTable = null;
@@ -54,6 +58,7 @@ var NodeSeekerFactory = (function () {
         */
         this._routingTableNodeSeeker = null;
         this._appConfig = appConfig;
+        this._protocolConfig = protocolConfig;
         this._jsonStateHandlerFactory = new JSONStateHandlerFactory();
         this._routingTable = routingTable;
         this._nodeFactory = new ContactNodeFactory();
@@ -62,7 +67,10 @@ var NodeSeekerFactory = (function () {
     }
     NodeSeekerFactory.prototype.createSeekerList = function (callback) {
         var _this = this;
-        this._nodeDiscoveryState = this._jsonStateHandlerFactory.create(path.resolve(this._appConfig.get('app.dataPath'), 'nodeDiscovery.json'));
+        var statePath = path.resolve(this._appConfig.get('app.dataPath'), this._protocolConfig.get('protocol.nodeDiscovery.nodeSeekerFactoryStateConfig'));
+        var fallbackStatePath = path.resolve(this._appConfig.get('app.internalDataPath'), this._protocolConfig.get('protocol.nodeDiscovery.nodeSeekerFactoryStateConfig'));
+
+        this._nodeDiscoveryState = this._jsonStateHandlerFactory.create(statePath, fallbackStatePath);
         this._nodeDiscoveryState.load(function (err, state) {
             if (err) {
                 callback([]);

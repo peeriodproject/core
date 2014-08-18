@@ -13,6 +13,7 @@ describe('CORE --> PROTOCOL --> NODE DISOVERY --> NodeSeekerFactory', function (
 	var sandbox:SinonSandbox = null;
 	var routingTable:any = null;
 	var appConfig:any = null;
+	var protocolConfig:any = null;
 
 	before(function () {
 		sandbox = sinon.sandbox.create();
@@ -20,12 +21,18 @@ describe('CORE --> PROTOCOL --> NODE DISOVERY --> NodeSeekerFactory', function (
 		appConfig = testUtils.stubPublicApi(sandbox, ObjectConfig, {
 			get: function (what) {
 				if (what === 'app.dataPath') return testUtils.getFixturePath('core/config');
+				if (what === 'app.internalDataPath') return testUtils.getFixturePath('core/config');
+			}
+		});
+		protocolConfig = testUtils.stubPublicApi(sandbox, ObjectConfig, {
+			get: function (what) {
+				if (what === 'protocol.nodeDiscovery.nodeSeekerFactoryStateConfig') return 'nodeDiscovery.json';
 			}
 		});
 	});
 
 	it('should return a list of node seekers', function (done) {
-		var factory = new NodeSeekerFactory(appConfig, routingTable);
+		var factory = new NodeSeekerFactory(appConfig, protocolConfig, routingTable);
 		factory.createSeekerList(function (list) {
 			if (list.length === 2) done();
 		});

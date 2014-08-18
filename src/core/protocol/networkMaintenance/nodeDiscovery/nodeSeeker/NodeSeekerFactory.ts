@@ -64,6 +64,11 @@ class NodeSeekerFactory implements NodeSeekerFactoryInterface {
 	private _nodeFactory:ContactNodeFactoryInterface = null;
 
 	/**
+	 * @member {core.topology.ContactNodeFactoryInterface} core.protocol.nodeDiscovery.NodeSeekerFactory~_protocolConfig
+	 */
+	private _protocolConfig:ConfigInterface = null;
+
+	/**
 	 * @member {core.topology.RoutingTableInterface} core.protocol.nodeDiscovery.NodeSeekerFactory~_routingTable
 	 */
 	private _routingTable:RoutingTableInterface = null;
@@ -74,8 +79,9 @@ class NodeSeekerFactory implements NodeSeekerFactoryInterface {
 	private _routingTableNodeSeeker:RoutingTableNodeSeeker = null;
 
 
-	constructor (appConfig:ConfigInterface, routingTable:RoutingTableInterface) {
+	constructor (appConfig:ConfigInterface, protocolConfig:ConfigInterface, routingTable:RoutingTableInterface) {
 		this._appConfig = appConfig;
+		this._protocolConfig = protocolConfig;
 		this._jsonStateHandlerFactory = new JSONStateHandlerFactory();
 		this._routingTable = routingTable;
 		this._nodeFactory = new ContactNodeFactory();
@@ -84,7 +90,10 @@ class NodeSeekerFactory implements NodeSeekerFactoryInterface {
 	}
 
 	public createSeekerList (callback:(list:NodeSeekerList) => any):void {
-		this._nodeDiscoveryState = this._jsonStateHandlerFactory.create(path.resolve(this._appConfig.get('app.dataPath'), 'nodeDiscovery.json'));
+		var statePath:string = path.resolve(this._appConfig.get('app.dataPath'), this._protocolConfig.get('protocol.nodeDiscovery.nodeSeekerFactoryStateConfig'));
+		var fallbackStatePath:string = path.resolve(this._appConfig.get('app.internalDataPath'), this._protocolConfig.get('protocol.nodeDiscovery.nodeSeekerFactoryStateConfig'));
+
+		this._nodeDiscoveryState = this._jsonStateHandlerFactory.create(statePath, fallbackStatePath);
 		this._nodeDiscoveryState.load((err:Error, state:any) => {
 
 			if (err) {

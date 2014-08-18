@@ -46,6 +46,8 @@ describe('CORE --> SHARE --> DownloadManager', function () {
             get: function (key) {
                 if (key === 'app.dataPath') {
                     return appDataPath;
+                } else if (key === 'app.internalDataPath') {
+                    return appDataPath;
                 } else if (key === 'share.downloadManagerStateConfig') {
                     return 'downloadManager.json';
                 }

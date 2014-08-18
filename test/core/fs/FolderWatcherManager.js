@@ -53,6 +53,10 @@ describe('CORE --> FS --> FolderWatcherManager', function () {
                 if (key === 'app.dataPath') {
                     return managerStoragePath;
                     //return [pathToWatchPath];
+                } else if (key === 'app.internalDataPath') {
+                    return managerStoragePath;
+                } else if (key === 'fs.folderWatcherManagerStateConfig') {
+                    return 'folderWatcherManager.json';
                 }
             }
         });

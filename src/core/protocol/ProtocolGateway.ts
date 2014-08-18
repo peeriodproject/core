@@ -152,7 +152,7 @@ class ProtocolGateway extends events.EventEmitter implements ProtocolGatewayInte
 		this._findClosestNodesManager = new FindClosestNodesManager(this._topologyConfig, this._protocolConfig, this._myNode, this._protocolConnectionManager, this._proxyManager, this._routingTable, findClosestNodesCycleFactory, foundClosestNodesWritableMessageFactory, foundClosestNodesReadableMessageFactory);
 
 		// build up the NodeSeekerManager
-		var nodeSeekerFactory:NodeSeekerFactory = new NodeSeekerFactory(this._appConfig, this._routingTable);
+		var nodeSeekerFactory:NodeSeekerFactory = new NodeSeekerFactory(this._appConfig, this._protocolConfig, this._routingTable);
 
 		this._nodeSeekerManager = new NodeSeekerManager(this._protocolConfig, this._myNode, nodeSeekerFactory, this._protocolConnectionManager, this._proxyManager);
 
