@@ -91,9 +91,8 @@ var FolderWatcherManager = (function () {
         this._options = ObjectUtils.extend(defaults, options);
 
         var statePath = path.join(this._config.get('app.dataPath'), this._config.get('fs.folderWatcherManagerStateConfig'));
-        var fallbackStatePath = path.join(this._config.get('app.internalDataPath'), this._config.get('fs.folderWatcherManagerStateConfig'));
 
-        this._stateHandler = stateHandlerFactory.create(statePath, fallbackStatePath);
+        this._stateHandler = stateHandlerFactory.create(statePath);
 
         if (this._options.closeOnProcessExit) {
             appQuitHandler.add(function (done) {

@@ -112,9 +112,8 @@ class FolderWatcherManager implements FolderWatcherManagerInterface {
 		this._options = ObjectUtils.extend(defaults, options);
 
 		var statePath:string = path.join(this._config.get('app.dataPath'), this._config.get('fs.folderWatcherManagerStateConfig'));
-		var fallbackStatePath:string = path.join(this._config.get('app.internalDataPath'), this._config.get('fs.folderWatcherManagerStateConfig'));
 
-		this._stateHandler = stateHandlerFactory.create(statePath, fallbackStatePath);
+		this._stateHandler = stateHandlerFactory.create(statePath);
 
 		if (this._options.closeOnProcessExit) {
 			appQuitHandler.add((done) => {

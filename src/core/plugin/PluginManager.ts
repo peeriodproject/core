@@ -22,6 +22,8 @@ import PluginStateInterface = require('./interfaces/PluginStateInterface');
 import PluginStateObjectInterface = require('./interfaces/PluginStateObjectInterface');
 import PluginStateObjectListInterface = require('./interfaces/PluginStateObjectListInterface');
 import PluginValidatorInterface = require('./interfaces/PluginValidatorInterface');
+import StateHandlerFactoryInterface = require('../utils/interfaces/StateHandlerFactoryInterface');
+import StateHandlerInterface = require('../utils/interfaces/StateHandlerInterface');
 
 import ObjectUtils = require('../utils/ObjectUtils');
 
@@ -34,6 +36,7 @@ var logger = require('../utils/logger/LoggerFactory').create();
  * @implements PluginManagerInterface
  *
  * @param {core.config.ConfigInterface} config
+ * @param {core.utils.StateHandlerInterface} stateHandler
  * @param {core.plugin.PluginFinderInterface} pluginFinder
  * @param {core.plugin.PluginValidatorInterface} pluginValidator
  * @param {core.plugin.PluginRunnerFactoryInterface} pluginRunnerFactory
@@ -125,11 +128,18 @@ class PluginManager implements PluginManagerInterface {
 	private _pluginStateIsActive:boolean = false;
 
 	/**
+	 * The StateHandler instance that is used to store the plugin state
+	 *
+	 * @member {core.utils.StateHandlerInterface} core.plugin.PluginManager~_stateHandler
+	 */
+	private _stateHandler:StateHandlerInterface = null;
+
+	/**
 	 * @member {core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_pluginValidator
 	 */
 	private _pluginValidator:PluginValidatorInterface = null;
 
-	constructor (config:ConfigInterface, pluginFinder:PluginFinderInterface, pluginValidator:PluginValidatorInterface, pluginLoaderFactory:PluginLoaderFactoryInterface, pluginRunnerFactory:PluginRunnerFactoryInterface, options:ClosableAsyncOptions = {}) {
+	constructor (config:ConfigInterface, stateHandlerFactory:StateHandlerFactoryInterface ,pluginFinder:PluginFinderInterface, pluginValidator:PluginValidatorInterface, pluginLoaderFactory:PluginLoaderFactoryInterface, pluginRunnerFactory:PluginRunnerFactoryInterface, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
 			onCloseCallback: function (err:Error) {
 			},
@@ -137,7 +147,14 @@ class PluginManager implements PluginManagerInterface {
 			}
 		};
 
+		var statePath:string = path.join(config.get('app.dataPath'), config.get('plugin.pluginManagerStateConfig'));
+		var fallbackStatePath:string = path.join(config.get('app.internalDataPath'), config.get('plugin.pluginManagerStateConfig'));
+
+		console.log(statePath);
+		console.log(fallbackStatePath);
+
 		this._config = config;
+		this._stateHandler = stateHandlerFactory.create(statePath, fallbackStatePath);
 		this._pluginFinder = pluginFinder;
 		this._pluginValidator = pluginValidator;
 		this._pluginLoaderFactory = pluginLoaderFactory;
@@ -194,7 +211,7 @@ class PluginManager implements PluginManagerInterface {
 			return process.nextTick(internalCallback.bind(null, null));
 		}
 
-		this._savePluginState((err:Error) => {
+		this._stateHandler.save(this._pluginState, (err:Error) => {
 			if (err) {
 				internalCallback(err);
 			}
@@ -352,11 +369,12 @@ class PluginManager implements PluginManagerInterface {
 			//return internalCallback(null);
 		}
 
-		this._loadPluginState((err:Error, pluginState:any) => {
+		this._stateHandler.load((err:Error, pluginState:any) => {
 			if (err) {
 				console.error(err);
 				return internalCallback(err);
 			}
+
 			if (!this._eventEmitter) {
 				this._eventEmitter = new events.EventEmitter();
 			}
@@ -418,17 +436,6 @@ class PluginManager implements PluginManagerInterface {
 	}
 
 	/**
-	 * Returns the absolute path where the manager should load and store the plugin state
-	 *
-	 * @method core.plugin.PluginManager~_getManagerStoragePath
-	 *
-	 * @returns {string} The path to load from/store to
-	 */
-	private _getManagerStoragePath ():string {
-		return path.resolve(this._config.get('app.dataPath'), 'pluginManager.json');
-	}
-
-	/**
 	 * Returns the mimetype for the given path.
 	 *
 	 * @method core.plugin.PluginManager~_getMimeType
@@ -443,54 +450,6 @@ class PluginManager implements PluginManagerInterface {
 	/*private _isResponsibleForMimeType (mimeType:string, pluginLoader:PluginLoaderInterface):boolean {
 	 return (pluginLoader.getFileMimeTypes().indexOf(mimeType) !== 1) ? true : false;
 	 }*/
-
-	/**
-	 * Loads the plugin state from a persistant storage
-	 *
-	 * todo define pluginState
-	 *
-	 * @method core.plugin.PluginManager~_loadPluginState
-	 *
-	 * @param {Function} callback
-	 */
-	private _loadPluginState (callback:(err:Error, pluginState:any) => void):void {
-		//console.log('loading the plugin state from the preferences!');
-		fs.readJson(this._getManagerStoragePath(), (err:Error, data:Object) => {
-			var hasPlugins:boolean = data ? data.hasOwnProperty('plugins') : false;
-
-			// no file or no plugins
-			if (err && err.name === 'ENOENT' || !hasPlugins) {
-				return callback(null, null);
-			}
-			else if (hasPlugins) {
-				return callback(null, data['plugins']);
-			}
-			else {
-				// check for syntax errors
-				console.error(err);
-				return callback(null, null)
-			}
-		});
-	}
-
-	/**
-	 * Saves the plugin state to a persistant storage
-	 *
-	 * todo define pluginState
-	 *
-	 * @method core.plugin.PluginManagerInterface~_savePluginState
-	 *
-	 * @param {Function} callback
-	 */
-	private _savePluginState (callback:(err:Error) => void):void {
-		var state = {
-			plugins: this._pluginState
-		};
-
-		fs.writeJson(this._getManagerStoragePath(), state, function (err:Error) {
-			callback(err);
-		});
-	}
 
 	/**
 	 * Loads additional data for the specified path that are required for a plugin that uses `Apache Tika`.

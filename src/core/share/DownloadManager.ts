@@ -99,10 +99,9 @@ class DownloadManager implements DownloadManagerInterface {
 		};
 
 		var statePath:string = path.join(config.get('app.dataPath'), config.get('share.downloadManagerStateConfig'));
-		var fallbackStatePath:string = path.join(config.get('app.internalDataPath'), config.get('share.downloadManagerStateConfig'));
 
 		this._config = config;
-		this._stateHandler = stateHandlerFactory.create(statePath, fallbackStatePath);
+		this._stateHandler = stateHandlerFactory.create(statePath);
 		this._searchClient = searchClient;
 		this._indexName = indexName;
 		this._options = ObjectUtils.extend(defaults, options);

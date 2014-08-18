@@ -16,13 +16,14 @@ var logger = require('../utils/logger/LoggerFactory').create();
 * @implements PluginManagerInterface
 *
 * @param {core.config.ConfigInterface} config
+* @param {core.utils.StateHandlerInterface} stateHandler
 * @param {core.plugin.PluginFinderInterface} pluginFinder
 * @param {core.plugin.PluginValidatorInterface} pluginValidator
 * @param {core.plugin.PluginRunnerFactoryInterface} pluginRunnerFactory
 * @param {core.utils.ClosableAsyncOptions} options (optional)
 */
 var PluginManager = (function () {
-    function PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, options) {
+    function PluginManager(config, stateHandlerFactory, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, options) {
         if (typeof options === "undefined") { options = {}; }
         /**
         * The internally used config object instance
@@ -96,6 +97,12 @@ var PluginManager = (function () {
         */
         this._pluginStateIsActive = false;
         /**
+        * The StateHandler instance that is used to store the plugin state
+        *
+        * @member {core.utils.StateHandlerInterface} core.plugin.PluginManager~_stateHandler
+        */
+        this._stateHandler = null;
+        /**
         * @member {core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_pluginValidator
         */
         this._pluginValidator = null;
@@ -106,7 +113,14 @@ var PluginManager = (function () {
             }
         };
 
+        var statePath = path.join(config.get('app.dataPath'), config.get('plugin.pluginManagerStateConfig'));
+        var fallbackStatePath = path.join(config.get('app.internalDataPath'), config.get('plugin.pluginManagerStateConfig'));
+
+        console.log(statePath);
+        console.log(fallbackStatePath);
+
         this._config = config;
+        this._stateHandler = stateHandlerFactory.create(statePath, fallbackStatePath);
         this._pluginFinder = pluginFinder;
         this._pluginValidator = pluginValidator;
         this._pluginLoaderFactory = pluginLoaderFactory;
@@ -163,7 +177,7 @@ var PluginManager = (function () {
             return process.nextTick(internalCallback.bind(null, null));
         }
 
-        this._savePluginState(function (err) {
+        this._stateHandler.save(this._pluginState, function (err) {
             if (err) {
                 internalCallback(err);
             } else {
@@ -319,11 +333,12 @@ var PluginManager = (function () {
             //return internalCallback(null);
         }
 
-        this._loadPluginState(function (err, pluginState) {
+        this._stateHandler.load(function (err, pluginState) {
             if (err) {
                 console.error(err);
                 return internalCallback(err);
             }
+
             if (!_this._eventEmitter) {
                 _this._eventEmitter = new events.EventEmitter();
             }
@@ -385,17 +400,6 @@ var PluginManager = (function () {
     };
 
     /**
-    * Returns the absolute path where the manager should load and store the plugin state
-    *
-    * @method core.plugin.PluginManager~_getManagerStoragePath
-    *
-    * @returns {string} The path to load from/store to
-    */
-    PluginManager.prototype._getManagerStoragePath = function () {
-        return path.resolve(this._config.get('app.dataPath'), 'pluginManager.json');
-    };
-
-    /**
     * Returns the mimetype for the given path.
     *
     * @method core.plugin.PluginManager~_getMimeType
@@ -410,52 +414,6 @@ var PluginManager = (function () {
     /*private _isResponsibleForMimeType (mimeType:string, pluginLoader:PluginLoaderInterface):boolean {
     return (pluginLoader.getFileMimeTypes().indexOf(mimeType) !== 1) ? true : false;
     }*/
-    /**
-    * Loads the plugin state from a persistant storage
-    *
-    * todo define pluginState
-    *
-    * @method core.plugin.PluginManager~_loadPluginState
-    *
-    * @param {Function} callback
-    */
-    PluginManager.prototype._loadPluginState = function (callback) {
-        //console.log('loading the plugin state from the preferences!');
-        fs.readJson(this._getManagerStoragePath(), function (err, data) {
-            var hasPlugins = data ? data.hasOwnProperty('plugins') : false;
-
-            // no file or no plugins
-            if (err && err.name === 'ENOENT' || !hasPlugins) {
-                return callback(null, null);
-            } else if (hasPlugins) {
-                return callback(null, data['plugins']);
-            } else {
-                // check for syntax errors
-                console.error(err);
-                return callback(null, null);
-            }
-        });
-    };
-
-    /**
-    * Saves the plugin state to a persistant storage
-    *
-    * todo define pluginState
-    *
-    * @method core.plugin.PluginManagerInterface~_savePluginState
-    *
-    * @param {Function} callback
-    */
-    PluginManager.prototype._savePluginState = function (callback) {
-        var state = {
-            plugins: this._pluginState
-        };
-
-        fs.writeJson(this._getManagerStoragePath(), state, function (err) {
-            callback(err);
-        });
-    };
-
     /**
     * Loads additional data for the specified path that are required for a plugin that uses `Apache Tika`.
     *
