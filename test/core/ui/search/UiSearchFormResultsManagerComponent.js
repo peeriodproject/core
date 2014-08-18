@@ -6,7 +6,7 @@ var SearchFormResultsManager = require('../../../../src/core/search/SearchFormRe
 var SearchRequestManager = require('../../../../src/core/search/SearchRequestManager');
 var UiSearchFormResultsManagerComponent = require('../../../../src/core/ui/search/UiSearchFormResultsManagerComponent');
 
-describe('CORE --> UI --> SEARCH --> UiSearchFormResultsManagerComponent @prio', function () {
+describe('CORE --> UI --> SEARCH --> UiSearchFormResultsManagerComponent', function () {
     var sandbox;
     var component;
     var searchFormResultsManagerStub;

@@ -9,7 +9,7 @@ import testUtils = require('../../utils/testUtils');
 
 import JSONStateHandler = require('../../../src/core/utils/JSONStateHandler');
 
-describe('CORE --> UTILS --> JSONStateHandler @prio', function () {
+describe('CORE --> UTILS --> JSONStateHandler', function () {
 	var validStatePath:string = testUtils.getFixturePath('core/utils/JSONStateHandler/state.json');
 	var invalidStatePath:string = testUtils.getFixturePath('core/utils/JSONStateHandler/invalidState.json');
 	var invalidJSONPath:string = testUtils.getFixturePath('core/utils/JSONStateHandler/invalidJsonState.json');

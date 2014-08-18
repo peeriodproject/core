@@ -9,7 +9,7 @@ import SearchFormResultsManager = require('../../../../src/core/search/SearchFor
 import SearchRequestManager = require('../../../../src/core/search/SearchRequestManager');
 import UiSearchFormResultsManagerComponent = require('../../../../src/core/ui/search/UiSearchFormResultsManagerComponent');
 
-describe('CORE --> UI --> SEARCH --> UiSearchFormResultsManagerComponent @prio', function () {
+describe('CORE --> UI --> SEARCH --> UiSearchFormResultsManagerComponent', function () {
 	var sandbox:SinonSandbox;
 	var component:UiSearchFormResultsManagerComponent;
 	var searchFormResultsManagerStub:any;

@@ -15,7 +15,7 @@ import ProtocolConnectionManager = require('../../../src/core/protocol/net/Proto
 import FindClosestNodesManager = require('../../../src/core/protocol/findClosestNodes/FindClosestNodesManager');
 import FoundClosestNodesReadableMessage = require('../../../src/core/protocol/findClosestNodes/messages/FoundClosestNodesReadableMessage');
 
-describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesCycle @prio', function () {
+describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesCycle', function () {
 
 	var sandbox:SinonSandbox;
 

@@ -5,7 +5,7 @@ var testUtils = require('../../utils/testUtils');
 
 var JSONStateHandler = require('../../../src/core/utils/JSONStateHandler');
 
-describe('CORE --> UTILS --> JSONStateHandler @prio', function () {
+describe('CORE --> UTILS --> JSONStateHandler', function () {
     var validStatePath = testUtils.getFixturePath('core/utils/JSONStateHandler/state.json');
     var invalidStatePath = testUtils.getFixturePath('core/utils/JSONStateHandler/invalidState.json');
     var invalidJSONPath = testUtils.getFixturePath('core/utils/JSONStateHandler/invalidJsonState.json');
