@@ -37,7 +37,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 	 *
 	 * @member {NodeJS.Timer|number} core.protocol.findClosestNodes.FindClosestNodesCycle~_alphaTimeout
 	 */
-	private _alphaTimeout:number = 0;
+	private _alphaTimeout:number = null;
 
 	/**
 	 * Holds the function which gets called when the cycle is finished. Passed in constructor
@@ -66,7 +66,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 	 *
 	 * @member {NodeJS.Timer|number} core.protocol.findClosestsNodes.FindClosestNodesCycle~_cycleTimeout
 	 */
-	private _cycleTimeout:number = 0;
+	private _cycleTimeout:number = null;
 
 	/**
 	 * Maxmimum number of close nodes to return. Cycle is considered finished as soon as the confirmedList holds `k`
@@ -313,7 +313,7 @@ class FindClosestNodesCycle implements FindClosestNodesCycleInterface {
 			if (this._cycleTimeout) {
 				logger.log('findClosestNodes', 'Clearing cycle timeout');
 				global.clearTimeout(this._cycleTimeout);
-				this._cycleTimeout = 0;
+				this._cycleTimeout = null;
 			}
 
 			logger.log('findClosestNodes', 'Setting cycle timeout, as probe list is empty');

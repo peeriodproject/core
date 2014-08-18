@@ -15,7 +15,7 @@ import ProtocolConnectionManager = require('../../../src/core/protocol/net/Proto
 import FindClosestNodesManager = require('../../../src/core/protocol/findClosestNodes/FindClosestNodesManager');
 import FoundClosestNodesReadableMessage = require('../../../src/core/protocol/findClosestNodes/messages/FoundClosestNodesReadableMessage');
 
-describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesCycle', function () {
+describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesCycle @prio', function () {
 
 	var sandbox:SinonSandbox;
 
@@ -135,7 +135,7 @@ describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesCycle', f
 
 	it('should have set the cycle expiration timeout, but not the alpha timeout', function () {
 		findCycle.getCycleTimeout().should.not.equal(0);
-		findCycle.getAlphaTimeout().should.equal(0);
+		(findCycle.getAlphaTimeout() === null).should.be.true;
 	});
 
 	it('should add the node to the confirmed list', function () {
@@ -147,7 +147,7 @@ describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesCycle', f
 	});
 
 	it('should have cleared the cycle timeout and set the alpha timeout', function () {
-		findCycle.getCycleTimeout().should.equal(0);
+		(findCycle.getCycleTimeout() === null).should.be.true;
 		findCycle.getAlphaTimeout().should.not.equal(0);
 	});
 
@@ -178,9 +178,10 @@ describe('CORE --> PROTOCOL --> FIND CLOSEST NODES --> FindClosestNodesCycle', f
 		resultingList[1].getId().toBitString().should.equal('00100100');
 		resultingList[2].getId().toBitString().should.equal('11011011');
 
-		findCycle.getAlphaTimeout().should.equal(0);
-		findCycle.getCycleTimeout().should.equal(0);
-		(true).should.equal(managerListeners['6d'] === undefined);
+		(findCycle.getAlphaTimeout() === null).should.be.true;
+		(findCycle.getCycleTimeout() === null).should.be.true;
+
+		(managerListeners['6d'] === undefined).should.be.true;
 	});
 
 	it('should expire the search cycle', function (done) {

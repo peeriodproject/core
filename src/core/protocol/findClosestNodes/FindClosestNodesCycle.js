@@ -26,7 +26,7 @@ var FindClosestNodesCycle = (function () {
         *
         * @member {NodeJS.Timer|number} core.protocol.findClosestNodes.FindClosestNodesCycle~_alphaTimeout
         */
-        this._alphaTimeout = 0;
+        this._alphaTimeout = null;
         /**
         * The resulting list of close nodes, which have been successfully probed.
         *
@@ -45,7 +45,7 @@ var FindClosestNodesCycle = (function () {
         *
         * @member {NodeJS.Timer|number} core.protocol.findClosestsNodes.FindClosestNodesCycle~_cycleTimeout
         */
-        this._cycleTimeout = 0;
+        this._cycleTimeout = null;
         /**
         * Maxmimum number of close nodes to return. Cycle is considered finished as soon as the confirmedList holds `k`
         * entries.
@@ -276,7 +276,7 @@ var FindClosestNodesCycle = (function () {
             if (this._cycleTimeout) {
                 logger.log('findClosestNodes', 'Clearing cycle timeout');
                 global.clearTimeout(this._cycleTimeout);
-                this._cycleTimeout = 0;
+                this._cycleTimeout = null;
             }
 
             logger.log('findClosestNodes', 'Setting cycle timeout, as probe list is empty');
