@@ -9,8 +9,8 @@ import JSONStateHandler = require('./JSONStateHandler');
  */
 class JSONStateHandlerFactory implements StateHandlerFactoryInterface {
 
-	create (path:string):StateHandlerInterface {
-		return new JSONStateHandler(path);
+	create (path:string, fallbackPath:string = ''):StateHandlerInterface {
+		return new JSONStateHandler(path, fallbackPath);
 	}
 
 }

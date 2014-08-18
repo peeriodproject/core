@@ -7,8 +7,9 @@ var JSONStateHandler = require('./JSONStateHandler');
 var JSONStateHandlerFactory = (function () {
     function JSONStateHandlerFactory() {
     }
-    JSONStateHandlerFactory.prototype.create = function (path) {
-        return new JSONStateHandler(path);
+    JSONStateHandlerFactory.prototype.create = function (path, fallbackPath) {
+        if (typeof fallbackPath === "undefined") { fallbackPath = ''; }
+        return new JSONStateHandler(path, fallbackPath);
     };
     return JSONStateHandlerFactory;
 })();

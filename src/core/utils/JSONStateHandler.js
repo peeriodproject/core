@@ -5,31 +5,50 @@ var fs = require('fs-extra');
 * @class core.utils.JSONStateHandler
 * @implements core.utils.StateHandlerInterface
 *
-* @param {string} path
+* @param {string} path The path of the file that the handler will use get and save the state
+* @param {string} [fallbackPath] An optional fallback path where the handler will load it's initial state from.
 */
 var JSONStateHandler = (function () {
-    function JSONStateHandler(path) {
+    function JSONStateHandler(path, fallbackPath) {
+        if (typeof fallbackPath === "undefined") { fallbackPath = ''; }
         /**
         * The absolute path to load the state from and save it later on.
         *
         * @member {string} core.utils.JSONStateLoader~_path
         */
         this._path = '';
+        /**
+        * The optional fallback path where the handler will load it's initial state from.
+        *
+        * @member {string} core.utils.JSONStateLoader~_fallbackPath
+        */
+        this._fallbackPath = '';
         this._path = path;
+        this._fallbackPath = fallbackPath;
     }
     JSONStateHandler.prototype.load = function (callback) {
         var _this = this;
-        fs.readJson(this._path, function (err, data) {
-            if (err) {
-                if (err['code'] && err['code'] === 'ENOENT') {
-                    err = new Error('JSONStateHandler.load: Cannot find state file: "' + _this._path + '"');
-                } else if (err.constructor.call(undefined).toString() === 'SyntaxError') {
-                    err = new Error('JSONStateHandler.load: The file "' + _this._path + '" is not a valid JSON-File.');
-                }
+        var notFoundError = new Error('JSONStateHandler#load: Cannot find state file: "' + this._path + '"');
 
-                callback(err, null);
-            } else {
-                callback(null, data);
+        fs.exists(this._path, function (exists) {
+            if (!exists && !_this._fallbackPath) {
+                return callback(notFoundError, null);
+            }
+
+            if (exists) {
+                return _this._loadState(callback);
+            } else if (_this._fallbackPath) {
+                fs.copy(_this._fallbackPath, _this._path, function (err) {
+                    if (err) {
+                        if (err['code'] && err['code'] === 'ENOENT') {
+                            err = notFoundError;
+                        }
+
+                        return callback(err, null);
+                    }
+
+                    return _this._loadState(callback);
+                });
             }
         });
     };
@@ -58,6 +77,21 @@ var JSONStateHandler = (function () {
             } else {
                 save();
             }
+        });
+    };
+
+    JSONStateHandler.prototype._loadState = function (callback) {
+        var _this = this;
+        fs.readJson(this._path, function (err, data) {
+            if (err) {
+                if (err.constructor.call(undefined).toString() === 'SyntaxError') {
+                    err = new Error('JSONStateHandler~_loadState: The file "' + _this._path + '" is not a valid JSON-File.');
+                }
+
+                return callback(err, null);
+            }
+
+            return callback(null, data);
         });
     };
     return JSONStateHandler;

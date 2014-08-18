@@ -8,7 +8,8 @@ import StateHandlerInterface = require('./interfaces/StateHandlerInterface');
  * @class core.utils.JSONStateHandler
  * @implements core.utils.StateHandlerInterface
  *
- * @param {string} path
+ * @param {string} path The path of the file that the handler will use get and save the state
+ * @param {string} [fallbackPath] An optional fallback path where the handler will load it's initial state from.
  */
 class JSONStateHandler implements StateHandlerInterface {
 
@@ -19,24 +20,41 @@ class JSONStateHandler implements StateHandlerInterface {
 	 */
 	private _path:string = '';
 
-	constructor (path:string) {
+	/**
+	 * The optional fallback path where the handler will load it's initial state from.
+	 *
+	 * @member {string} core.utils.JSONStateLoader~_fallbackPath
+	 */
+	private _fallbackPath:string = '';
+
+	constructor (path:string, fallbackPath:string = '') {
 		this._path = path;
+		this._fallbackPath = fallbackPath;
 	}
 
 	public load (callback:(err:Error, state:Object) => any):void {
-		fs.readJson(this._path, (err:Error, data:Object) => {
-			if (err) {
-				if (err['code'] && err['code'] === 'ENOENT') {
-					err = new Error('JSONStateHandler.load: Cannot find state file: "' + this._path + '"');
-				}
-				else if (err.constructor.call(undefined).toString() === 'SyntaxError') {
-					err = new Error('JSONStateHandler.load: The file "' + this._path + '" is not a valid JSON-File.');
-				}
+		var notFoundError:Error = new Error('JSONStateHandler#load: Cannot find state file: "' + this._path + '"');
 
-				callback(err, null);
+		fs.exists(this._path, (exists:boolean) => {
+			if (!exists && !this._fallbackPath) {
+				return callback(notFoundError, null);
 			}
-			else {
-				callback(null, data);
+
+			if (exists) {
+				return this._loadState(callback);
+			}
+			else if (this._fallbackPath) {
+				fs.copy(this._fallbackPath, this._path, (err:Error) => {
+					if (err) {
+						if (err['code'] && err['code'] === 'ENOENT') {
+							err = notFoundError;
+						}
+
+						return callback(err, null);
+					}
+
+					return this._loadState(callback);
+				});
 			}
 		});
 	}
@@ -66,6 +84,20 @@ class JSONStateHandler implements StateHandlerInterface {
 			else {
 				save();
 			}
+		});
+	}
+
+	private _loadState (callback:(err:Error, state:Object) => any):void {
+		fs.readJson(this._path, (err:Error, data:Object) => {
+			if (err) {
+				if (err.constructor.call(undefined).toString() === 'SyntaxError') {
+					err = new Error('JSONStateHandler~_loadState: The file "' + this._path + '" is not a valid JSON-File.');
+				}
+
+				return callback(err, null);
+			}
+
+			return callback(null, data);
 		});
 	}
 
