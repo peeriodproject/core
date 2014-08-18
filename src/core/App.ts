@@ -21,6 +21,7 @@ import AppQuitHandler = require('./utils/AppQuitHandler');
 // topology imports
 import BucketFactory = require('./topology/BucketFactory');
 import BucketStore = require('./topology/BucketStore');
+import BrutalObjectBucketStore = require('./topology/BrutalObjectBucketStore');
 import ContactNode = require('./topology/ContactNode');
 import ContactNodeAddress = require('./topology/ContactNodeAddress');
 import ContactNodeAddressFactory = require('./topology/ContactNodeAddressFactory');
@@ -450,7 +451,8 @@ var App = {
 
 				myNode = new MyNode(myId, addressList);
 
-				bucketStore = new BucketStore('bucketstore', topologyConfig.get('topology.bucketStore.databasePath'));
+				//bucketStore = new BucketStore('bucketstore', topologyConfig.get('topology.bucketStore.databasePath'));
+				bucketStore = new BrutalObjectBucketStore();
 				bucketFactory = new BucketFactory();
 				contactNodeFactory = new ContactNodeFactory();
 				routingTable = new RoutingTable(topologyConfig, this.appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory, {
