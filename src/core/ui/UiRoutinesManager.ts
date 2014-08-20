@@ -34,7 +34,7 @@ class UiRoutinesManager implements UiRoutinesManagerInterface {
 		});
 
 		this._window.once('loaded', () => {
-			this._window.showDevTools();
+			//this._window.showDevTools();
 			//this._window.moveBy(0, 200);
 			//this._updateStatus();
 			this._updateWindow();
