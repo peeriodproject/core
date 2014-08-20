@@ -135,10 +135,12 @@ var UiFolderDropzoneComponent = (function (_super) {
                 //this.close();
             });
 
-            this._window.on('close', function () {
-                _this._window.hide(); // Pretend to be closed already
-                _this._window.close(true);
-                _this._window = null;
+            this._window.once('close', function () {
+                if (_this._window) {
+                    _this._window.hide(); // Pretend to be closed already
+                    _this._window.close(true);
+                    _this._window = null;
+                }
             });
 
             this._window.on('move', function (x, y) {
