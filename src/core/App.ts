@@ -120,6 +120,8 @@ var App = {
 			component = null;
 		}
 	},
+	_uiComponentsAdded: [],
+	_requiredUiComponentsToStart: ['indexer', 'sharing', 'topology'],
 
 	/**
 	 * Returns a JSONStateHandlerFactory by using the singleton pattern
@@ -235,11 +237,15 @@ var App = {
 			var searchResponseManager = new SearchResponseManager(this._appQuitHandler, searchClient);
 			var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
-			this._startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager);
+			this._startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager, () => {
+				this._checkAndStartUi('indexer');
+			});
 
 			this._startSharing(searchClient, searchRequestsIndexName, (downloadManager, uploadManager) => {
 				var downloadBridge = new DownloadBridge(downloadManager);
 				var uploadBridge = new UploadBridge(uploadManager);
+
+				this._checkAndStartUi('sharing');
 
 				// disables the network layer for testing purposes
 				this._startTopology(searchMessageBridge, downloadBridge, uploadBridge);
@@ -313,6 +319,7 @@ var App = {
 				});
 
 				this._addUiComponent(new UiFolderWatcherManagerComponent(this._gui, folderWatcherManager));
+				console.log('added ui folder Watcher Manager');
 			}
 		});
 
@@ -345,6 +352,7 @@ var App = {
 	},
 
 	_startUi: function () {
+		console.log('start ui');
 		if (!this._environmentConfig.get('environment.startUi')) {
 			return;
 		}
@@ -359,6 +367,26 @@ var App = {
 			this._splashScreen.once('close', () => {
 				this._checkUiRoutines();
 			});
+		}
+	},
+
+	_checkAndStartUi: function (component) {
+		var readyToTakeOff:boolean = true;
+
+		console.log('check and start ui');
+
+		this._uiComponentsAdded.push(component);
+
+		for (var i = 0, l = this._requiredUiComponentsToStart.length; i < l; i++) {
+			if (this._uiComponentsAdded.indexOf(this._requiredUiComponentsToStart[i]) === -1) {
+				readyToTakeOff = false;
+				break;
+			}
+		}
+
+		if (readyToTakeOff) {
+			console.log('ready to take off');
+			this._startUi();
 		}
 	},
 
@@ -378,7 +406,7 @@ var App = {
 
 	_startTopology: function (searchMessageBridge, downloadBridge, uploadBridge) {
 		if (!this._environmentConfig.get('environment.startTopology')) {
-			this._startUi();
+			this._checkAndStartUi('topology');
 
 			if (this._splashScreen) {
 				setImmediate(() => {
@@ -471,7 +499,7 @@ var App = {
 						protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
 						this._addUiComponent(new UiProtocolGatewayComponent(protocolGateway, this._splashScreen));
 
-						this._startUi();
+						this._checkAndStartUi('topology');
 
 						protocolGateway.start();
 						global.gateway = protocolGateway;

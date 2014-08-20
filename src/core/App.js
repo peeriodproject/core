@@ -108,6 +108,8 @@ var App = {
             component = null;
         }
     },
+    _uiComponentsAdded: [],
+    _requiredUiComponentsToStart: ['indexer', 'sharing', 'topology'],
     /**
     * Returns a JSONStateHandlerFactory by using the singleton pattern
     *
@@ -210,11 +212,15 @@ var App = {
             var searchResponseManager = new SearchResponseManager(_this._appQuitHandler, searchClient);
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
-            _this._startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager);
+            _this._startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager, function () {
+                _this._checkAndStartUi('indexer');
+            });
 
             _this._startSharing(searchClient, searchRequestsIndexName, function (downloadManager, uploadManager) {
                 var downloadBridge = new DownloadBridge(downloadManager);
                 var uploadBridge = new UploadBridge(uploadManager);
+
+                _this._checkAndStartUi('sharing');
 
                 // disables the network layer for testing purposes
                 _this._startTopology(searchMessageBridge, downloadBridge, uploadBridge);
@@ -334,6 +340,22 @@ var App = {
             });
         }
     },
+    _checkAndStartUi: function (component) {
+        var readyToTakeOff = true;
+
+        this._uiComponentsAdded.push(component);
+
+        for (var i = 0, l = this._requiredUiComponentsToStart.length; i < l; i++) {
+            if (this._uiComponentsAdded.indexOf(this._requiredUiComponentsToStart[i]) === -1) {
+                readyToTakeOff = false;
+                break;
+            }
+        }
+
+        if (readyToTakeOff) {
+            this._startUi();
+        }
+    },
     _checkUiRoutines: function () {
         var uiRoutinesManager = new UiRoutinesManager(this._gui);
         uiRoutinesManager.addUiRoutine(new UiChromeExtensionRoutine(new JSONConfig('../../config/uiChromeExtensionRoutine.json', ['extension'])));
@@ -349,7 +371,7 @@ var App = {
     _startTopology: function (searchMessageBridge, downloadBridge, uploadBridge) {
         var _this = this;
         if (!this._environmentConfig.get('environment.startTopology')) {
-            this._startUi();
+            this._checkAndStartUi('topology');
 
             if (this._splashScreen) {
                 setImmediate(function () {
@@ -440,7 +462,7 @@ var App = {
                         protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
                         _this._addUiComponent(new UiProtocolGatewayComponent(protocolGateway, _this._splashScreen));
 
-                        _this._startUi();
+                        _this._checkAndStartUi('topology');
 
                         protocolGateway.start();
                         global.gateway = protocolGateway;
