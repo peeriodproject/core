@@ -4,6 +4,8 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
+var path = require('path');
+
 var UiComponent = require('../UiComponent');
 
 /**
@@ -14,8 +16,14 @@ var UiComponent = require('../UiComponent');
 */
 var UiShareManagerComponent = (function (_super) {
     __extends(UiShareManagerComponent, _super);
-    function UiShareManagerComponent(downloadManager, uploadManager) {
+    function UiShareManagerComponent(gui, downloadManager, uploadManager) {
         _super.call(this);
+        /**
+        * todo ts-definition
+        *
+        * @member {core.share.DownloadManagerInterface} core.ui.UiShareManagerComponent~_gui
+        */
+        this._gui = null;
         /**
         * The internally used download manger instance
         *
@@ -29,6 +37,7 @@ var UiShareManagerComponent = (function (_super) {
         this._unmergedDownloadsWrittenBytes = {};
         this._uploadManager = null;
 
+        this._gui = gui;
         this._downloadManager = downloadManager;
         this._uploadManager = uploadManager;
 
@@ -44,6 +53,8 @@ var UiShareManagerComponent = (function (_super) {
             'cancelUpload',
             'removeDownload',
             'removeUpload',
+            'showDownloadDestination',
+            'showDownload',
             'updateDownloadDestination'
         ];
     };
@@ -70,7 +81,7 @@ var UiShareManagerComponent = (function (_super) {
 
     UiShareManagerComponent.prototype._setupDownloadManagerEvents = function () {
         var _this = this;
-        this._downloadManager.onDownloadAdded(function (downloadId, fileName, fileSize, fileHash, metadata) {
+        this._downloadManager.onDownloadAdded(function (downloadId, fileName, fileSize, fileHash, destination, metadata) {
             _this._runningDownloads[downloadId] = {
                 created: new Date().getTime(),
                 id: downloadId,
@@ -78,7 +89,8 @@ var UiShareManagerComponent = (function (_super) {
                 loaded: 0,
                 name: fileName,
                 size: fileSize,
-                status: 'CREATED'
+                status: 'CREATED',
+                destination: destination
             };
 
             _this._startProgressRunner();
@@ -145,6 +157,24 @@ var UiShareManagerComponent = (function (_super) {
 
                 _this.updateUi();
             }
+        });
+
+        this.on('showDownload', function (downloadId) {
+            var download = _this._runningDownloads[downloadId];
+
+            console.log('download', download);
+
+            if (download && download.status === 'COMPLETED') {
+                _this._gui.Shell.showItemInFolder(path.join(download.destination, download.name));
+            }
+        });
+
+        this.on('showDownloadDestination', function () {
+            _this._downloadManager.getDownloadDestination(function (err, destination) {
+                if (!err) {
+                    _this._gui.Shell.showItemInFolder(destination);
+                }
+            });
         });
 
         this.on('updateDownloadDestination', function (destination) {

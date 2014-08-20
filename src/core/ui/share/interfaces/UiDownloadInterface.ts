@@ -10,6 +10,7 @@ interface UiDownloadInterface {
 	name:string;
 	size:number;
 	status:string;
+	destination:string;
 }
 
 export = UiDownloadInterface;

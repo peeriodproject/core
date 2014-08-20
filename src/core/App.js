@@ -238,7 +238,7 @@ var App = {
         var downloadManager = new DownloadManager(this._getMainConfig(['app', 'share']), this._appQuitHandler, this._getJSONStateHandlerFactory(), searchClient, searchRequestsIndexName);
         var uploadManager = new UploadManager(this._appQuitHandler, searchClient, searchRequestsIndexName);
 
-        this._addUiComponent(new UiShareManagerComponent(downloadManager, uploadManager));
+        this._addUiComponent(new UiShareManagerComponent(this._gui, downloadManager, uploadManager));
 
         return process.nextTick(internalCallback.bind(null, downloadManager, uploadManager));
     },
