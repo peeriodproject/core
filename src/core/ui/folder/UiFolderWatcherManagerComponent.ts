@@ -195,6 +195,7 @@ class UiFolderWatcherManagerComponent extends UiComponent {
 			this._folderWatcherManager.removeFolderWatcher(path);
 		});
 
+		// todo limit path to watched folders
 		this.on('showFolder', (path) => {
 			this._gui.Shell.showItemInFolder(path);
 		});

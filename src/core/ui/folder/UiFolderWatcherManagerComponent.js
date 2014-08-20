@@ -191,6 +191,7 @@ var UiFolderWatcherManagerComponent = (function (_super) {
             _this._folderWatcherManager.removeFolderWatcher(path);
         });
 
+        // todo limit path to watched folders
         this.on('showFolder', function (path) {
             _this._gui.Shell.showItemInFolder(path);
         });
