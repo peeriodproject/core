@@ -47,7 +47,7 @@ var createUsageTimeout = function () {
         logUsageTimeout = null;
 
         createUsageTimeout();
-    }, 500);
+    }, 10000);
 };
 
 //createUsageTimeout();
