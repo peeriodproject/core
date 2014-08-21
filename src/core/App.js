@@ -287,8 +287,6 @@ var App = {
                             searchFormResultsManager = new SearchFormResultsManager(_this._getMainConfig(['app', 'search']), _this._appQuitHandler, _this._getJSONStateHandlerFactory(), pluginManager, searchRequestManager);
                             _this._addUiComponent(new UiSearchFormResultsManagerComponent(searchFormResultsManager, searchRequestManager));
 
-                            console.log('started indexer');
-
                             return internalCallback();
                         });
                     }
@@ -378,6 +376,7 @@ var App = {
                     _this._splashScreen.close();
                 });
             }
+
             return;
         }
 

@@ -13,7 +13,7 @@ var SearchItem = require('../../../src/core/search/SearchItem');
 var SearchItemFactory = require('../../../src/core/search/SearchItemFactory');
 var SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
-describe('CORE --> SEARCH --> SearchClient @joern', function () {
+describe('CORE --> SEARCH --> SearchClient', function () {
     var sandbox;
     var config;
     var appQuitHandlerStub;

@@ -311,15 +311,12 @@ var App = {
 							searchFormResultsManager = new SearchFormResultsManager(this._getMainConfig(['app', 'search']), this._appQuitHandler, this._getJSONStateHandlerFactory(), pluginManager, searchRequestManager);
 							this._addUiComponent(new UiSearchFormResultsManagerComponent(searchFormResultsManager, searchRequestManager));
 
-							console.log('started indexer');
-
 							return internalCallback();
 						});
 					}
 				});
 
 				this._addUiComponent(new UiFolderWatcherManagerComponent(this._gui, folderWatcherManager));
-				console.log('added ui folder Watcher Manager');
 			}
 		});
 
@@ -352,7 +349,6 @@ var App = {
 	},
 
 	_startUi: function () {
-		console.log('start ui');
 		if (!this._environmentConfig.get('environment.startUi')) {
 			return;
 		}
@@ -373,8 +369,6 @@ var App = {
 	_checkAndStartUi: function (component) {
 		var readyToTakeOff:boolean = true;
 
-		console.log('check and start ui');
-
 		this._uiComponentsAdded.push(component);
 
 		for (var i = 0, l = this._requiredUiComponentsToStart.length; i < l; i++) {
@@ -385,7 +379,6 @@ var App = {
 		}
 
 		if (readyToTakeOff) {
-			console.log('ready to take off');
 			this._startUi();
 		}
 	},
@@ -413,6 +406,7 @@ var App = {
 					this._splashScreen.close();
 				});
 			}
+
 			return;
 		}
 
