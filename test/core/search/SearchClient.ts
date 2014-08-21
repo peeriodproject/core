@@ -18,7 +18,7 @@ import SearchItemFactory = require('../../../src/core/search/SearchItemFactory')
 import SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
 
-describe('CORE --> SEARCH --> SearchClient', function () {
+describe('CORE --> SEARCH --> SearchClient @joern', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
 	var appQuitHandlerStub:any;

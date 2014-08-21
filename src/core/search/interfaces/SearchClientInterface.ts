@@ -207,7 +207,17 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 * @param {string} type
 	 * @param {Function} callback
 	 */
-	typeExists (type:string, callback:(exists:boolean) => any):void
+	typeExists (type:string, callback:(exists:boolean) => any):void;
+
+	/**
+	 * Updates the settings of the main index
+	 *
+	 * @method core.seasrch.SearchClientInterface#updateSettings
+	 *
+	 * @param {Object} settings
+	 * @param {Function} callback
+	 */
+	updateSettings (settings:Object, callback:(err:Error) => any):void;
 }
 
 export = SearchClientInterface;
