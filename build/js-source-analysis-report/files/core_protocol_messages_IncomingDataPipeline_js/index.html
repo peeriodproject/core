@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">59.71</p>
+      <p class="stat">60.16</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">516</p>
+      <p class="stat">533</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">99.76</p>
+      <p class="stat">102.58</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.29</p>
+      <p class="stat">3.46</p>
     </div>
   </div>
 </div>
@@ -217,7 +217,6 @@ var IncomingDataPipeline = (function (_super) {
     };
 
     IncomingDataPipeline.prototype.unhookSocket = function (socket) {
-        var _this = this;
         if (socket) {
             var identifier = socket.getIdentifier();
             if (identifier) {
@@ -237,16 +236,29 @@ var IncomingDataPipeline = (function (_super) {
                 }
 
                 // temporary buffer storage will only be deleted if no new data comes in within the specified time
-                if (!this._doCleanBufferTimeouts[identifier]) {
-                    this._doCleanBufferTimeouts[identifier] = global.setTimeout(function () {
-                        _this._freeMemory(identifier);
-                    }, this._clearTimeoutLength);
-                }
+                this._setCleanBufferTimeout(identifier);
 
                 return a || b;
             }
         }
         return false;
+    };
+
+    IncomingDataPipeline.prototype._setCleanBufferTimeout = function (identifier) {
+        var _this = this;
+        if (!this._doCleanBufferTimeouts[identifier]) {
+            this._doCleanBufferTimeouts[identifier] = global.setTimeout(function () {
+                delete _this._doCleanBufferTimeouts[identifier];
+                _this._freeMemory(identifier);
+            }, this._clearTimeoutLength);
+        }
+    };
+
+    IncomingDataPipeline.prototype._clearCleanBufferTimeout = function (identifier) {
+        if (this._doCleanBufferTimeouts[identifier]) {
+            global.clearTimeout(this._doCleanBufferTimeouts[identifier]);
+            delete this._doCleanBufferTimeouts[identifier];
+        }
     };
 
     /**
@@ -336,10 +348,7 @@ var IncomingDataPipeline = (function (_super) {
     IncomingDataPipeline.prototype._handleIncomingData = function (buffer, socket) {
         var identifier = socket.getIdentifier();
 
-        if (this._doCleanBufferTimeouts[identifier]) {
-            global.clearTimeout(this._doCleanBufferTimeouts[identifier]);
-            delete this._doCleanBufferTimeouts[identifier];
-        }
+        this._clearCleanBufferTimeout(identifier);
 
         if (buffer) {
             var len = buffer.length;
@@ -403,8 +412,8 @@ var IncomingDataPipeline = (function (_super) {
         }
 
         if (emptyMemoryTimeout) {
-            this._doCleanBufferTimeouts[newIdentifier] = emptyMemoryTimeout;
-            delete this._doCleanBufferTimeouts[oldIdentifier];
+            this._clearCleanBufferTimeout(oldIdentifier);
+            this._setCleanBufferTimeout(newIdentifier);
         }
     };
 
@@ -481,6 +490,8 @@ var IncomingDataPipeline = (function (_super) {
                 msgs = null;
                 break;
             }
+
+            messageBuffers[i] = null;
         }
 
         if (!msgs) {
@@ -530,6 +541,7 @@ var IncomingDataPipeline = (function (_super) {
             for (var i = 0, l = dataArray.length; i &lt; l; i++) {
                 // slice away the first four bytes (expected length)
                 var currentBuff = dataArray[i];
+                dataArray[i] = null;
                 var unignoredBuff = null;
 
                 if (bytesToIgnore) {
@@ -562,12 +574,17 @@ var IncomingDataPipeline = (function (_super) {
                 }
             }
 
+            tempMessageMemory.data = null;
             tempMessageMemory.data = newDataArray;
             tempMessageMemory.length = tempMessageMemory.length - 4 - expectedLength;
             tempMessageMemory.expectedLength = undefined;
 
             if (msgDataArray.length) {
                 messageArray.push(Buffer.concat(msgDataArray, expectedLength));
+
+                for (var j = 0, k = msgDataArray.length; j &lt; k; j++) {
+                    msgDataArray[i] = null;
+                }
             }
 
             this._sliceMessagesFromMemory(identifier, tempMessageMemory, messageArray);

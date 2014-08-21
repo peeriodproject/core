@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">74.55</p>
+      <p class="stat">74.29</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">300</p>
+      <p class="stat">342</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">32.83</p>
+      <p class="stat">34.86</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.17</p>
+      <p class="stat">3.61</p>
     </div>
   </div>
 </div>
@@ -106,6 +106,7 @@ describe(&#039;CORE --&gt; UI --&gt; SHARE --&gt; UiShareManagerComponent&#039;,
     var uploadManagerStub;
 
     var uiUpdateSpy;
+    var nwGuiStub;
 
     beforeEach(function () {
         sandbox = sinon.sandbox.create();
@@ -124,7 +125,13 @@ describe(&#039;CORE --&gt; UI --&gt; SHARE --&gt; UiShareManagerComponent&#039;,
 
         uploadManagerStub = testUtils.stubPublicApi(sandbox, UploadManager, {});
 
-        component = new UiShareManagerComponent(downloadManagerStub, uploadManagerStub);
+        nwGuiStub = {
+            Shell: {
+                showItemInFolder: sandbox.spy()
+            }
+        };
+
+        component = new UiShareManagerComponent(nwGuiStub, downloadManagerStub, uploadManagerStub);
         uiUpdateSpy = sandbox.spy();
 
         component.onUiUpdate(uiUpdateSpy);
@@ -149,7 +156,16 @@ describe(&#039;CORE --&gt; UI --&gt; SHARE --&gt; UiShareManagerComponent&#039;,
     });
 
     it(&#039;should correctly return the event names&#039;, function () {
-        component.getEventNames().should.containDeep([&#039;addDownload&#039;, &#039;cancelDownload&#039;, &#039;removeDownload&#039;, &#039;updateDownloadDestination&#039;]);
+        component.getEventNames().should.containDeep([
+            &#039;addDownload&#039;,
+            &#039;cancelDownload&#039;,
+            &#039;cancelUpload&#039;,
+            &#039;removeDownload&#039;,
+            &#039;removeUpload&#039;,
+            &#039;showDownloadDestination&#039;,
+            &#039;showDownload&#039;,
+            &#039;updateDownloadDestination&#039;
+        ]);
     });
 
     it(&#039;should correctly add the specified download&#039;, function (done) {
@@ -169,7 +185,7 @@ describe(&#039;CORE --&gt; UI --&gt; SHARE --&gt; UiShareManagerComponent&#039;,
                 return process.nextTick(arguments[1].bind(null, new Error(&#039;Error Message&#039;)));
             }
         });
-        component = new UiShareManagerComponent(downloadManagerStub, uploadManagerStub);
+        component = new UiShareManagerComponent(nwGuiStub, downloadManagerStub, uploadManagerStub);
 
         component.emit(&#039;addDownload&#039;, &#039;responseId&#039;, function (err) {
             err.should.equal(&#039;Error Message&#039;);
@@ -182,7 +198,7 @@ describe(&#039;CORE --&gt; UI --&gt; SHARE --&gt; UiShareManagerComponent&#039;,
     });
 
     it(&#039;should correctly start progress runner and update the ui after a the creation was confimed from the network layer&#039;, function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, { metadata: true });
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, &#039;/destination&#039;, { metadata: true });
 
         uiUpdateSpy.calledOnce.should.be.true;
 
@@ -194,7 +210,8 @@ describe(&#039;CORE --&gt; UI --&gt; SHARE --&gt; UiShareManagerComponent&#039;,
                         hash: &#039;hash&#039;,
                         loaded: 0,
                         name: &#039;foobar.txt&#039;,
-                        status: &#039;CREATED&#039;
+                        status: &#039;CREATED&#039;,
+                        destination: &#039;/destination&#039;
                     }
                 },
                 destination: {
@@ -207,7 +224,7 @@ describe(&#039;CORE --&gt; UI --&gt; SHARE --&gt; UiShareManagerComponent&#039;,
     });
 
     it(&#039;should correctly forward the download cancel event&#039;, function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, { metadata: true });
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, &#039;/destination&#039;, { metadata: true });
 
         setImmediate(function () {
             component.emit(&#039;cancelDownload&#039;, &#039;downloadId&#039;);
@@ -220,7 +237,7 @@ describe(&#039;CORE --&gt; UI --&gt; SHARE --&gt; UiShareManagerComponent&#039;,
     });
 
     it(&#039;should correctly remove a download and update the UI&#039;, function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, { metadata: true });
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, &#039;/destination&#039;, { metadata: true });
 
         setImmediate(function () {
             component.emit(&#039;removeDownload&#039;, &#039;downloadId&#039;);
@@ -255,8 +272,33 @@ describe(&#039;CORE --&gt; UI --&gt; SHARE --&gt; UiShareManagerComponent&#039;,
         });
     });
 
+    it(&#039;should correctly open the current download destination in the file explorer&#039;, function (done) {
+        component.emit(&#039;showDownloadDestination&#039;);
+
+        setImmediate(function () {
+            nwGuiStub.Shell.showItemInFolder.calledOnce.should.be.true;
+            nwGuiStub.Shell.showItemInFolder.getCall(0).args[0].should.equal(&#039;/destination&#039;);
+
+            done();
+        });
+    });
+
+    it(&#039;should correctly open the downloaded file in the file explorer&#039;, function (done) {
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, &#039;/destination&#039;, { metadata: true });
+        downloadManagerStub.onDownloadEnded.getCall(0).args[0](&#039;downloadId&#039;, &#039;COMPLETED&#039;);
+
+        component.emit(&#039;showDownload&#039;, &#039;downloadId&#039;);
+
+        setImmediate(function () {
+            nwGuiStub.Shell.showItemInFolder.calledOnce.should.be.true;
+            nwGuiStub.Shell.showItemInFolder.getCall(0).args[0].should.equal(&#039;/destination/foobar.txt&#039;);
+
+            done();
+        });
+    });
+
     it(&#039;should correctly update the status of a running download&#039;, function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, { metadata: true });
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, &#039;/destination&#039;, { metadata: true });
         downloadManagerStub.onDownloadStatusChanged.getCall(0).args[0](&#039;downloadId&#039;, &#039;new status&#039;);
 
         uiUpdateSpy.calledTwice.should.be.true;
@@ -275,7 +317,7 @@ describe(&#039;CORE --&gt; UI --&gt; SHARE --&gt; UiShareManagerComponent&#039;,
     });
 
     it(&#039;should correctly update the status on download ended&#039;, function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, { metadata: true });
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, &#039;/destination&#039;, { metadata: true });
         downloadManagerStub.onDownloadEnded.getCall(0).args[0](&#039;downloadId&#039;, &#039;reason&#039;);
 
         uiUpdateSpy.calledTwice.should.be.true;
@@ -294,7 +336,7 @@ describe(&#039;CORE --&gt; UI --&gt; SHARE --&gt; UiShareManagerComponent&#039;,
     });
 
     it(&#039;should update the UI in the specified interval&#039;, function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, { metadata: true });
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, &#039;/destination&#039;, { metadata: true });
 
         var bytes = 0;
         var interval = setInterval(function () {

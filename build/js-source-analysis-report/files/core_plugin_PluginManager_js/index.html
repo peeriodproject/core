@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">69.76</p>
+      <p class="stat">68.79</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">516</p>
+      <p class="stat">474</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">60.93</p>
+      <p class="stat">59.78</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.58</p>
+      <p class="stat">3.43</p>
     </div>
   </div>
 </div>
@@ -108,13 +108,14 @@ var logger = require(&#039;../utils/logger/LoggerFactory&#039;).create();
 * @implements PluginManagerInterface
 *
 * @param {core.config.ConfigInterface} config
+* @param {core.utils.StateHandlerInterface} stateHandler
 * @param {core.plugin.PluginFinderInterface} pluginFinder
 * @param {core.plugin.PluginValidatorInterface} pluginValidator
 * @param {core.plugin.PluginRunnerFactoryInterface} pluginRunnerFactory
 * @param {core.utils.ClosableAsyncOptions} options (optional)
 */
 var PluginManager = (function () {
-    function PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, options) {
+    function PluginManager(config, stateHandlerFactory, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, options) {
         if (typeof options === &quot;undefined&quot;) { options = {}; }
         /**
         * The internally used config object instance
@@ -188,6 +189,12 @@ var PluginManager = (function () {
         */
         this._pluginStateIsActive = false;
         /**
+        * The StateHandler instance that is used to store the plugin state
+        *
+        * @member {core.utils.StateHandlerInterface} core.plugin.PluginManager~_stateHandler
+        */
+        this._stateHandler = null;
+        /**
         * @member {core.plugin.PluginValidatorInterface} core.plugin.PluginManager~_pluginValidator
         */
         this._pluginValidator = null;
@@ -198,7 +205,14 @@ var PluginManager = (function () {
             }
         };
 
+        var statePath = path.join(config.get(&#039;app.dataPath&#039;), config.get(&#039;plugin.pluginManagerStateConfig&#039;));
+        var fallbackStatePath = path.join(config.get(&#039;app.internalDataPath&#039;), config.get(&#039;plugin.pluginManagerStateConfig&#039;));
+
+        console.log(statePath);
+        console.log(fallbackStatePath);
+
         this._config = config;
+        this._stateHandler = stateHandlerFactory.create(statePath, fallbackStatePath);
         this._pluginFinder = pluginFinder;
         this._pluginValidator = pluginValidator;
         this._pluginLoaderFactory = pluginLoaderFactory;
@@ -255,7 +269,7 @@ var PluginManager = (function () {
             return process.nextTick(internalCallback.bind(null, null));
         }
 
-        this._savePluginState(function (err) {
+        this._stateHandler.save(this._pluginState, function (err) {
             if (err) {
                 internalCallback(err);
             } else {
@@ -411,11 +425,12 @@ var PluginManager = (function () {
             //return internalCallback(null);
         }
 
-        this._loadPluginState(function (err, pluginState) {
+        this._stateHandler.load(function (err, pluginState) {
             if (err) {
                 console.error(err);
                 return internalCallback(err);
             }
+
             if (!_this._eventEmitter) {
                 _this._eventEmitter = new events.EventEmitter();
             }
@@ -477,17 +492,6 @@ var PluginManager = (function () {
     };
 
     /**
-    * Returns the absolute path where the manager should load and store the plugin state
-    *
-    * @method core.plugin.PluginManager~_getManagerStoragePath
-    *
-    * @returns {string} The path to load from/store to
-    */
-    PluginManager.prototype._getManagerStoragePath = function () {
-        return path.resolve(this._config.get(&#039;app.dataPath&#039;), &#039;pluginManager.json&#039;);
-    };
-
-    /**
     * Returns the mimetype for the given path.
     *
     * @method core.plugin.PluginManager~_getMimeType
@@ -502,52 +506,6 @@ var PluginManager = (function () {
     /*private _isResponsibleForMimeType (mimeType:string, pluginLoader:PluginLoaderInterface):boolean {
     return (pluginLoader.getFileMimeTypes().indexOf(mimeType) !== 1) ? true : false;
     }*/
-    /**
-    * Loads the plugin state from a persistant storage
-    *
-    * todo define pluginState
-    *
-    * @method core.plugin.PluginManager~_loadPluginState
-    *
-    * @param {Function} callback
-    */
-    PluginManager.prototype._loadPluginState = function (callback) {
-        //console.log(&#039;loading the plugin state from the preferences!&#039;);
-        fs.readJson(this._getManagerStoragePath(), function (err, data) {
-            var hasPlugins = data ? data.hasOwnProperty(&#039;plugins&#039;) : false;
-
-            // no file or no plugins
-            if (err &amp;&amp; err.name === &#039;ENOENT&#039; || !hasPlugins) {
-                return callback(null, null);
-            } else if (hasPlugins) {
-                return callback(null, data[&#039;plugins&#039;]);
-            } else {
-                // check for syntax errors
-                console.error(err);
-                return callback(null, null);
-            }
-        });
-    };
-
-    /**
-    * Saves the plugin state to a persistant storage
-    *
-    * todo define pluginState
-    *
-    * @method core.plugin.PluginManagerInterface~_savePluginState
-    *
-    * @param {Function} callback
-    */
-    PluginManager.prototype._savePluginState = function (callback) {
-        var state = {
-            plugins: this._pluginState
-        };
-
-        fs.writeJson(this._getManagerStoragePath(), state, function (err) {
-            callback(err);
-        });
-    };
-
     /**
     * Loads additional data for the specified path that are required for a plugin that uses `Apache Tika`.
     *

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">75.86</p>
+      <p class="stat">75.84</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">193</p>
+      <p class="stat">194</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">35.15</p>
+      <p class="stat">35.47</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.96</p>
+      <p class="stat">1.98</p>
     </div>
   </div>
 </div>
@@ -222,7 +222,7 @@ describe(&#039;CORE --&gt; PROTOCOL --&gt; FIND CLOSEST NODES --&gt; FindClosest
 
     it(&#039;should have set the cycle expiration timeout, but not the alpha timeout&#039;, function () {
         findCycle.getCycleTimeout().should.not.equal(0);
-        findCycle.getAlphaTimeout().should.equal(0);
+        (findCycle.getAlphaTimeout() === null).should.be.true;
     });
 
     it(&#039;should add the node to the confirmed list&#039;, function () {
@@ -234,7 +234,7 @@ describe(&#039;CORE --&gt; PROTOCOL --&gt; FIND CLOSEST NODES --&gt; FindClosest
     });
 
     it(&#039;should have cleared the cycle timeout and set the alpha timeout&#039;, function () {
-        findCycle.getCycleTimeout().should.equal(0);
+        (findCycle.getCycleTimeout() === null).should.be.true;
         findCycle.getAlphaTimeout().should.not.equal(0);
     });
 
@@ -266,9 +266,10 @@ describe(&#039;CORE --&gt; PROTOCOL --&gt; FIND CLOSEST NODES --&gt; FindClosest
         resultingList[1].getId().toBitString().should.equal(&#039;00100100&#039;);
         resultingList[2].getId().toBitString().should.equal(&#039;11011011&#039;);
 
-        findCycle.getAlphaTimeout().should.equal(0);
-        findCycle.getCycleTimeout().should.equal(0);
-        (true).should.equal(managerListeners[&#039;6d&#039;] === undefined);
+        (findCycle.getAlphaTimeout() === null).should.be.true;
+        (findCycle.getCycleTimeout() === null).should.be.true;
+
+        (managerListeners[&#039;6d&#039;] === undefined).should.be.true;
     });
 
     it(&#039;should expire the search cycle&#039;, function (done) {

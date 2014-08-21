@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">72.91</p>
+      <p class="stat">70.69</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">78</p>
+      <p class="stat">137</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">16.10</p>
+      <p class="stat">24.89</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.61</p>
+      <p class="stat">0.91</p>
     </div>
   </div>
 </div>
@@ -112,8 +112,30 @@ var UiSplashScreen = (function (_super) {
         _super.call(this);
         // todo ts-declaration gui.Window
         this._window = null;
+        /**
+        * A flag indicates whether the splash screen is open or closed
+        *
+        * @member {boolean} core.ui.UiSplashScreen~_isOpen
+        */
         this._isOpen = false;
-        this._currentStatus = &#039;&#039;;
+        /**
+        * A counter that increments on every status update and is used to decide which DOM element should be updated
+        *
+        * @member {boolean} core.ui.UiSplashScreen~_updateCounter
+        */
+        this._updateCounter = 0;
+        /**
+        * A list of pending status items that will be processed by the {@link core.ui.SplashScreen~_statusUpdateTimeout}
+        *
+        * @member {Array} core.ui.UiSplashScreen~_pendingStatusList
+        */
+        this._pendingStatusList = [];
+        /**
+        * Stores the current status update timeout
+        *
+        * @member {NodeJS.Timer} core.ui.UiSplashScreen~_statusUpdateTimeout
+        */
+        this._statusUpdateTimeout = null;
 
         this._window = gui.Window.open(&#039;./public/splash-screen.html&#039;, {
             position: &#039;center&#039;,
@@ -126,17 +148,20 @@ var UiSplashScreen = (function (_super) {
         });
 
         this._window.once(&#039;loaded&#039;, function () {
-            _this._window.showDevTools();
             _this._window.moveBy(0, 200);
             _this._updateStatus();
             _this.open();
         });
     }
     UiSplashScreen.prototype.close = function () {
-        //this._window.close(true);
         this._window.hide();
 
         this._isOpen = false;
+
+        if (this._statusUpdateTimeout) {
+            global.clearTimeout(this._statusUpdateTimeout);
+            this._statusUpdateTimeout = null;
+        }
 
         this.emit(&#039;close&#039;);
     };
@@ -155,15 +180,49 @@ var UiSplashScreen = (function (_super) {
     };
 
     UiSplashScreen.prototype.setStatus = function (status) {
-        this._currentStatus = status;
+        this._pendingStatusList.push(status);
 
         if (this.isOpen()) {
-            this._updateStatus();
+            this._startUpdateStatusInterval();
         }
     };
 
+    /**
+    * Creates the status update interval and updates the initial status
+    *
+    * @method core.ui.UiSplashScreen~_startUpdateStatusInterval
+    */
+    UiSplashScreen.prototype._startUpdateStatusInterval = function () {
+        var _this = this;
+        if (this._statusUpdateTimeout) {
+            return;
+        }
+
+        this._statusUpdateTimeout = global.setTimeout(function () {
+            if (_this._pendingStatusList.length) {
+                _this._updateStatus();
+                _this._statusUpdateTimeout = null;
+
+                _this._startUpdateStatusInterval();
+            }
+        }, 3000);
+
+        this._updateStatus();
+    };
+
+    /**
+    * Updates the status by using an even or odd DOM element to simply cross-fade to the next status in the pending status list
+    *
+    * @method core.ui.UiSplashScreen~_updateStatus
+    */
     UiSplashScreen.prototype._updateStatus = function () {
-        this._window.window.document.getElementById(&#039;status&#039;).innerHTML = i18n.__(&#039;splashScreen.&#039; + this._currentStatus);
+        this._updateCounter++;
+
+        var isEven = this._updateCounter % 2 === 0 ? true : false;
+        var element = isEven ? &#039;status-even&#039; : &#039;status-odd&#039;;
+
+        this._window.window.document.getElementById(&#039;progress-wrapper&#039;).className = isEven ? &#039;even&#039; : &#039;odd&#039;;
+        this._window.window.document.getElementById(element).innerHTML = i18n.__(&#039;splashScreen.&#039; + this._pendingStatusList.shift());
     };
     return UiSplashScreen;
 })(events.EventEmitter);

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.72</p>
+      <p class="stat">67.67</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">385</p>
+      <p class="stat">440</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">63.37</p>
+      <p class="stat">65.90</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.22</p>
+      <p class="stat">2.57</p>
     </div>
   </div>
 </div>
@@ -92,6 +92,9 @@
   <div class="row">
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../ts-definitions/node/node.d.ts&#039; /&gt;
 /// &lt;reference path=&#039;../../../ts-definitions/node-lmdb/node-lmdb.d.ts&#039; /&gt;
+var fs = require(&#039;fs&#039;);
+var path = require(&#039;path&#039;);
+
 var lmdb = require(&#039;node-lmdb&#039;);
 
 /**
@@ -142,6 +145,7 @@ var BucketStore = (function () {
         var added = this._add(txn, bucketKey, id, lastSeen, addresses);
 
         txn.commit();
+        txn = null;
 
         return added;
     };
@@ -158,6 +162,7 @@ var BucketStore = (function () {
         }
 
         txn.commit();
+        txn = null;
 
         return added;
     };
@@ -187,6 +192,8 @@ var BucketStore = (function () {
 
         cursor.close();
         txn.commit();
+        cursor = null;
+        txn = null;
 
         return value;
     };
@@ -212,6 +219,8 @@ var BucketStore = (function () {
 
         cursor.close();
         txn.commit();
+        cursor = null;
+        txn = null;
 
         return values;
     };
@@ -235,6 +244,8 @@ var BucketStore = (function () {
 
         cursor.close();
         txn.commit();
+        cursor = null;
+        txn = null;
 
         return contact;
     };
@@ -254,12 +265,14 @@ var BucketStore = (function () {
         if (this._isOpen)
             return;
 
-        this._databaseEnvironment = new lmdb.Env();
-        this._databaseEnvironment.open({
-            //name: this._name,
-            path: this._path
-        });
+        this._checkAndOpenDatabaseEnvironment();
 
+        /*this._databaseEnvironment.open({
+        //name: this._name,
+        path: this._path
+        //mapSize: 2*1024*1024*1024, // maximum database size
+        //maxDbs: 3
+        });*/
         this._databaseInstance = this._databaseEnvironment.openDbi({
             name: this._name,
             create: true
@@ -295,6 +308,7 @@ var BucketStore = (function () {
         }
 
         txn.commit();
+        txn = null;
 
         return true;
     };
@@ -317,6 +331,8 @@ var BucketStore = (function () {
 
         cursor.close();
         txn.commit();
+        cursor = null;
+        txn = null;
 
         return size;
     };
@@ -360,6 +376,8 @@ var BucketStore = (function () {
             console.error(err);
         }
 
+        value = null;
+
         return true;
     };
 
@@ -394,10 +412,47 @@ var BucketStore = (function () {
     };
 
     /**
+    * Opens the database and handles environment architecture changes by cleaning up the old bucket store.
+    *
+    * @method core.topology.BucketStore~_checkAndOpenDatabaseEnvironment
+    */
+    BucketStore.prototype._checkAndOpenDatabaseEnvironment = function () {
+        var _this = this;
+        var openDatabase = function () {
+            _this._databaseEnvironment = new lmdb.Env();
+            _this._databaseEnvironment.open({
+                //name: this._name,
+                path: _this._path
+            });
+        };
+
+        try  {
+            openDatabase();
+        } catch (e) {
+            var dbPath = path.join(this._path, &#039;data.mdb&#039;);
+            var lockPath = path.join(this._path, &#039;lock.mdb&#039;);
+
+            this._databaseEnvironment = null;
+
+            if (e.message === &#039;MDB_INVALID: File is not an MDB file&#039;) {
+                fs.unlinkSync(dbPath);
+
+                if (fs.existsSync(lockPath)) {
+                    fs.unlinkSync(lockPath);
+                }
+
+                return openDatabase();
+            }
+
+            throw e;
+        }
+    };
+
+    /**
     *
     * @method core.topology.BucketStore~_get
     *
-    * @param {lmdbTxn} txn
+    * @param {lmdb.Txn} txn
     * @param {Buffer} id
     * @returns {any}
     */
@@ -415,7 +470,7 @@ var BucketStore = (function () {
     };
 
     /**
-    * Creates a Cursor on the instace database
+    * Creates a Cursor on the database instance
     *
     * @method core.topology.BucketStore~_getCursor
     *

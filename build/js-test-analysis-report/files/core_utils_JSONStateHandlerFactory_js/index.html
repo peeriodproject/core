@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">86.73</p>
+      <p class="stat">83.30</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">11</p>
+      <p class="stat">16</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">4.00</p>
+      <p class="stat">5.70</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.07</p>
+      <p class="stat">0.11</p>
     </div>
   </div>
 </div>
@@ -97,8 +97,13 @@ var JSONStateHandlerFactory = require(&#039;../../../src/core/utils/JSONStateHan
 var JSONStateHandler = require(&#039;../../../src/core/utils/JSONStateHandler&#039;);
 
 describe(&#039;CORE --&gt; UTILS --&gt; JSONStateHandlerFactory&#039;, function () {
-    it(&#039;should correctly create JSONStateHandlers&#039;, function () {
+    it(&#039;should correctly create JSONStateHandlers without a fallback path&#039;, function () {
         var stateHandler = (new JSONStateHandlerFactory()).create(&#039;/path/to/state.json&#039;);
+        stateHandler.should.be.an.instanceof(JSONStateHandler);
+    });
+
+    it(&#039;should correctly create JSONStateHandlers with fallback path&#039;, function () {
+        var stateHandler = (new JSONStateHandlerFactory()).create(&#039;/path/to/state.json&#039;, &#039;/path/to/fallback.json&#039;);
         stateHandler.should.be.an.instanceof(JSONStateHandler);
     });
 });

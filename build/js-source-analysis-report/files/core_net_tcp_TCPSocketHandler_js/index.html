@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">72.30</p>
+      <p class="stat">72.13</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">381</p>
+      <p class="stat">376</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">60.52</p>
+      <p class="stat">55.30</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.59</p>
+      <p class="stat">2.49</p>
     </div>
   </div>
 </div>
@@ -212,15 +212,13 @@ var TCPSocketHandler = (function (_super) {
         this._heartbeatTimeout = opts.heartbeatTimeout;
         //this._TESTstartSocketInterval();
     }
-    TCPSocketHandler.prototype._TESTsocketCount = function (socket) {
-        var _this = this;
-        this._socketCount++;
-
-        socket.once(&#039;end&#039;, function () {
-            _this._socketCount--;
-        });
-    };
-
+    /*private _TESTsocketCount (socket:TCPSocketInterface):void {
+    this._socketCount++;
+    
+    socket.once(&#039;end&#039;, () =&gt; {
+    this._socketCount--;
+    });
+    }*/
     TCPSocketHandler.prototype._TESTstartSocketInterval = function () {
         /*global.setInterval(() =&gt; {
         var now:number = Math.floor(Date.now() / 1000);
@@ -289,8 +287,6 @@ var TCPSocketHandler = (function (_super) {
                     _this.emit(&#039;connection error&#039;, port, ip);
                 }
             } else {
-                _this._TESTsocketCount(socket);
-
                 if (callback) {
                     callback(socket);
                 } else {
@@ -342,7 +338,6 @@ var TCPSocketHandler = (function (_super) {
 
                     server.on(&#039;connection&#039;, function (sock) {
                         var socket = _this._socketFactory.create(sock, _this.getDefaultSocketOptions());
-                        _this._TESTsocketCount(socket);
                         _this.emit(&#039;connected&#039;, socket, &#039;incoming&#039;);
                     });
 

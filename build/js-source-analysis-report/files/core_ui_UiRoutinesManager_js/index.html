@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">69.43</p>
+      <p class="stat">65.60</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">171</p>
+      <p class="stat">234</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">29.98</p>
+      <p class="stat">36.35</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.43</p>
+      <p class="stat">2.15</p>
     </div>
   </div>
 </div>
@@ -106,8 +106,10 @@ var UiRoutinesManager = (function () {
         this._window = null;
         this._window = gui.Window.open(&#039;./public/ui-routines-installer.html&#039;, {
             position: &#039;center&#039;,
-            width: 720,
-            height: 400,
+            min_width: 1050,
+            width: 1050,
+            min_height: 600,
+            height: 600,
             frame: true,
             toolbar: false,
             resizable: true,
@@ -219,14 +221,46 @@ var UiRoutinesManager = (function () {
         this.getInstalledRoutineIds(function (err, ids) {
             var routines = _this.getUiRoutines();
             var doc = _this._window.window.document;
-            var onClick = function (event) {
-                event.target.removeEventListener(onClick);
+            var routinesList = doc.getElementById(&#039;routines-list&#039;);
+            var items = [];
+            var getClosest = function (el, tag) {
+                // this is necessary since nodeName is always in upper case
+                tag = tag.toUpperCase();
+                do {
+                    if (el.nodeName === tag) {
+                        // tag name is found! let&#039;s return it. :)
+                        return el;
+                    }
+                } while(el = el.parentNode);
+
+                // not found :(
+                return null;
+            };
+            var onItemClick = function (event) {
+                var target = event.target.tagName === &#039;LI&#039; ? event.target : getClosest(event.target, &#039;LI&#039;);
+                var newClassName = target.className.indexOf(&#039;active&#039;) === -1 ? target.className + &#039; active&#039; : target.className.replace(&#039;active&#039;, &#039;&#039;);
+
+                event.preventDefault();
+
+                for (var i = 0, l = items.length; i &lt; l; i++) {
+                    items[i].className = &#039;&#039;;
+                }
+
+                target.className = newClassName;
+            };
+            var onLinkClick = function (event) {
+                event.target.removeEventListener(onLinkClick);
 
                 _this._clickInstallRoutineButton(event);
             };
 
+            routinesList.innerHTML = &#039;&#039;;
+
+            doc.title = i18n.__(&#039;uiRoutinesManager.installRoutinesWindowTitle&#039;);
+
             doc.getElementById(&#039;headline&#039;).innerHTML = i18n.__(&#039;uiRoutinesManager.installRoutinesHeadline&#039;);
             doc.getElementById(&#039;description&#039;).innerHTML = i18n.__(&#039;uiRoutinesManager.installRoutinesDescription&#039;);
+            doc.getElementById(&#039;install-btn-placeholder&#039;).innerHTML = i18n.__(&#039;uiRoutinesManager.installRoutinesButtonPlaceholder&#039;);
 
             for (var i = 0, l = routines.length; i &lt; l; i++) {
                 var routine = routines[i];
@@ -238,23 +272,52 @@ var UiRoutinesManager = (function () {
                 }
 
                 var item = doc.createElement(&#039;li&#039;);
+                var icon = routine.getIcon();
+
+                item.className = icon ? &#039;has-icon&#039; : &#039;&#039;;
+                item.addEventListener(&#039;click&#039;, onItemClick, false);
+
+                var iconEl;
+
+                var contentEl = doc.createElement(&#039;div&#039;);
                 var heading = doc.createElement(&#039;h2&#039;);
                 var desc = doc.createElement(&#039;p&#039;);
+                var linkWrapper = doc.createElement(&#039;div&#039;);
                 var link = doc.createElement(&#039;a&#039;);
+
+                if (icon) {
+                    iconEl = doc.createElement(&#039;div&#039;);
+                    iconEl.className = &#039;icon&#039;;
+                    iconEl.style.backgroundImage = &#039;url(data:image/svg+xml;base64,&#039; + icon + &#039;)&#039;;
+                }
+
+                contentEl.className = &#039;content&#039;;
 
                 heading.appendChild(doc.createTextNode(routine.getName()));
                 desc.appendChild(doc.createTextNode(routine.getDescription()));
 
+                linkWrapper.className = &#039;install-btn-wrapper&#039;;
+
                 link.appendChild(doc.createTextNode(routine.getInstallButtonLabel()));
                 link.setAttribute(&#039;data-id&#039;, routine.getId());
                 link.href = &#039;#&#039;;
-                link.addEventListener(&#039;click&#039;, onClick, false);
+                link.className = &#039;install-btn&#039;;
+                link.addEventListener(&#039;click&#039;, onLinkClick, false);
 
-                item.appendChild(heading);
-                item.appendChild(desc);
-                item.appendChild(link);
+                if (iconEl) {
+                    item.appendChild(iconEl);
+                }
 
-                doc.getElementById(&#039;routines-list&#039;).appendChild(item);
+                contentEl.appendChild(heading);
+                contentEl.appendChild(desc);
+                item.appendChild(contentEl);
+
+                linkWrapper.appendChild(link);
+                item.appendChild(linkWrapper);
+
+                routinesList.appendChild(item);
+
+                items.push(item);
             }
         });
     };
