@@ -127,7 +127,18 @@ var SearchManager = (function () {
         this._searchClient.open(function (err) {
             openedSearchClient = true;
 
-            return checkAndClose(err);
+            if (err) {
+                return checkAndClose(err);
+            }
+
+            _this._updateAnalysis(function (err) {
+                console.log('updated settings');
+                if (err) {
+                    console.log(err);
+                }
+
+                return checkAndClose(err);
+            });
         });
     };
 
@@ -168,6 +179,44 @@ var SearchManager = (function () {
         });
     };
 
+    SearchManager.prototype._updateAnalysis = function (callback) {
+        var settings = {
+            analysis: {
+                analyzer: {
+                    filename_search: {
+                        tokenizer: "itemname",
+                        filter: [
+                            "lowercase"
+                        ]
+                    },
+                    filename_index: {
+                        tokenizer: "itemname",
+                        filter: [
+                            "lowercase",
+                            "edge_ngram"
+                        ]
+                    }
+                },
+                tokenizer: {
+                    itemname: {
+                        pattern: "[^\\p{L}\\d]+",
+                        type: "pattern"
+                    }
+                },
+                filter: {
+                    edge_ngram: {
+                        side: "front",
+                        max_gram: 20,
+                        min_gram: 1,
+                        type: "edgeNGram"
+                    }
+                }
+            }
+        };
+
+        this._searchClient.updateSettings(settings, callback);
+    };
+
     /**
     * Updates the given mapping by adding the item hash, item path and item stats.
     *
@@ -203,7 +252,8 @@ var SearchManager = (function () {
             },
             itemName: {
                 type: 'string',
-                store: 'yes'
+                search_analyzer: "filename_search",
+                index_analyzer: "filename_index"
             },
             itemStats: {
                 type: 'nested',
