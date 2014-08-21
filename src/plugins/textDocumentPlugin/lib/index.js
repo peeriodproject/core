@@ -51,28 +51,6 @@ exports.main = {
             }
         });
     },
-    /*
-    "query" : {
-    "bool" : {
-    "should" : [
-    {
-    "text_phrase" : {
-    "filename" : {
-    "boost" : 2,
-    "query" : "2012.01",
-    "analyzer" : "filename_index"
-    }
-    }
-    },
-    {
-    "text" : {
-    "filename" : "2012.01"
-    }
-    }
-    ]
-    }
-    }
-    */
     getQuery: function () {
         exit({
             "query": {
@@ -82,7 +60,6 @@ exports.main = {
             },
             "highlight": {
                 "fields": {
-                    //"itemName": {},
                     "file": {}
                 }
             }
