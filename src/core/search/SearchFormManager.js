@@ -95,9 +95,65 @@ var SearchFormManager = (function () {
                 if (err) {
                     console.log(err);
                     return internalCallback(err, null);
+                } else if (!query) {
+                    // todo return error if the query is invalid
+                    return internalCallback(new Error('SearchFormManager#addQuery: Invalid query!'), null);
                 }
 
-                return _this._searchRequestManager.addQuery(query, internalCallback);
+                _this._pluginManager.getPluginSettings(_this._currentFormIdentifier, function (settings) {
+                    // todo HERE! update query here and add filename if the plugin enabled it
+                    if (settings && settings['addItemNameToSearchQueries'] === true) {
+                        var transformedQuery = {
+                            query: {
+                                bool: {
+                                    should: [
+                                        {
+                                            text_phrase: {
+                                                itemName: {
+                                                    boost: 2,
+                                                    query: rawQuery,
+                                                    analyzer: 'filename_index'
+                                                }
+                                            }
+                                        },
+                                        {
+                                            text: {
+                                                itemName: rawQuery
+                                            }
+                                        }]
+                                }
+                            },
+                            highlight: {
+                                fields: {
+                                    itemName: {}
+                                }
+                            }
+                        };
+
+                        // attach plugin query
+                        if (query.query) {
+                            transformedQuery.query.bool.should.push(query.query);
+                        }
+
+                        // attach plugin highlights
+                        if (query.highlight && query.highlight.fields) {
+                            var fields = Object.keys(query.highlight.fields);
+
+                            for (var i = 0, l = fields.length; i < l; i++) {
+                                var field = fields[i];
+
+                                if (!transformedQuery.highlight.fields[field]) {
+                                    transformedQuery.highlight.fields[field] = query.highlight.fields[field];
+                                }
+                            }
+                        }
+
+                        query = transformedQuery;
+                        console.log(JSON.stringify(query));
+                    }
+
+                    return _this._searchRequestManager.addQuery(query, internalCallback);
+                });
             });
         });
     };
