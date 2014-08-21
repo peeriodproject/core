@@ -121,7 +121,7 @@ class SearchFormManager implements SearchFormManagerInterface {
 
 				this._pluginManager.getPluginSettings(this._currentFormIdentifier, (settings:Object) => {
 					// todo HERE! update query here and add filename if the plugin enabled it
-					if (settings && settings['addItemNameToSearchQueries'] === true) {
+					if (!settings || settings['addItemNameToSearchQueries'] !== false) {
 						var transformedQuery:any = {
 							query: {
 								bool: {
@@ -167,7 +167,6 @@ class SearchFormManager implements SearchFormManagerInterface {
 						}
 
 						query = transformedQuery;
-						console.log(JSON.stringify(query));
 					}
 
 					return this._searchRequestManager.addQuery(query, internalCallback);

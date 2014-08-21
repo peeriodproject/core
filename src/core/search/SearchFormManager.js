@@ -102,7 +102,7 @@ var SearchFormManager = (function () {
 
                 _this._pluginManager.getPluginSettings(_this._currentFormIdentifier, function (settings) {
                     // todo HERE! update query here and add filename if the plugin enabled it
-                    if (settings && settings['addItemNameToSearchQueries'] === true) {
+                    if (!settings || settings['addItemNameToSearchQueries'] !== false) {
                         var transformedQuery = {
                             query: {
                                 bool: {
@@ -149,7 +149,6 @@ var SearchFormManager = (function () {
                         }
 
                         query = transformedQuery;
-                        console.log(JSON.stringify(query));
                     }
 
                     return _this._searchRequestManager.addQuery(query, internalCallback);
