@@ -275,6 +275,12 @@ class PluginManager implements PluginManagerInterface {
 		return process.nextTick(callback.bind(null, responsibleRunners));
 	}
 
+	public getPluginSettings (identifier:string, callback:(pluginSettings:Object) => void):void {
+		var settings = this._pluginLoaders[identifier] ? this._pluginLoaders[identifier].getSettings() : null;
+
+		return process.nextTick(callback.bind(null, settings));
+	}
+
 	public getPluginState (callback:(pluginState:PluginStateInterface) => void):void {
 		return process.nextTick(callback.bind(null, this._pluginState));
 	}

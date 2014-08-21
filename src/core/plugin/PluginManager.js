@@ -241,6 +241,12 @@ var PluginManager = (function () {
         return process.nextTick(callback.bind(null, responsibleRunners));
     };
 
+    PluginManager.prototype.getPluginSettings = function (identifier, callback) {
+        var settings = this._pluginLoaders[identifier] ? this._pluginLoaders[identifier].getSettings() : null;
+
+        return process.nextTick(callback.bind(null, settings));
+    };
+
     PluginManager.prototype.getPluginState = function (callback) {
         return process.nextTick(callback.bind(null, this._pluginState));
     };
