@@ -27,30 +27,31 @@ var JSONStateHandler = (function () {
         this._fallbackPath = fallbackPath;
     }
     JSONStateHandler.prototype.load = function (callback) {
-        var _this = this;
         var notFoundError = new Error('JSONStateHandler#load: Cannot find state file: "' + this._path + '"');
 
-        fs.exists(this._path, function (exists) {
-            if (!exists && !_this._fallbackPath) {
-                return callback(notFoundError, null);
-            }
+        var exists = fs.existsSync(this._path);
+        if (!exists && !this._fallbackPath) {
+            return callback(notFoundError, null);
+        }
 
-            if (exists) {
-                return _this._loadState(callback);
-            } else if (_this._fallbackPath) {
-                fs.copy(_this._fallbackPath, _this._path, function (err) {
-                    if (err) {
-                        if (err['code'] && err['code'] === 'ENOENT') {
-                            err = notFoundError;
-                        }
-
-                        return callback(err, null);
+        if (exists) {
+            return this._loadState(callback);
+        } else if (this._fallbackPath) {
+            try  {
+                fs.copySync(this._fallbackPath, this._path);
+            } catch (err) {
+                if (err) {
+                    if (err['code'] && err['code'] === 'ENOENT') {
+                        err = notFoundError;
                     }
 
-                    return _this._loadState(callback);
-                });
+                    return callback(err, null);
+                }
             }
-        });
+            ;
+
+            return this._loadState(callback);
+        }
     };
 
     JSONStateHandler.prototype.save = function (state, callback) {

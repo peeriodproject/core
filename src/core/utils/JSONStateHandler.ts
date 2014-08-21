@@ -35,28 +35,30 @@ class JSONStateHandler implements StateHandlerInterface {
 	public load (callback:(err:Error, state:Object) => any):void {
 		var notFoundError:Error = new Error('JSONStateHandler#load: Cannot find state file: "' + this._path + '"');
 
-		fs.exists(this._path, (exists:boolean) => {
-			if (!exists && !this._fallbackPath) {
-				return callback(notFoundError, null);
-			}
+		var exists:boolean = fs.existsSync(this._path);
+		if (!exists && !this._fallbackPath) {
+			return callback(notFoundError, null);
+		}
 
-			if (exists) {
-				return this._loadState(callback);
+		if (exists) {
+			return this._loadState(callback);
+		}
+		else if (this._fallbackPath) {
+			try {
+				fs.copySync(this._fallbackPath, this._path);
 			}
-			else if (this._fallbackPath) {
-				fs.copy(this._fallbackPath, this._path, (err:Error) => {
-					if (err) {
-						if (err['code'] && err['code'] === 'ENOENT') {
-							err = notFoundError;
-						}
-
-						return callback(err, null);
+			catch (err) {
+				if (err) {
+					if (err['code'] && err['code'] === 'ENOENT') {
+						err = notFoundError;
 					}
 
-					return this._loadState(callback);
-				});
-			}
-		});
+					return callback(err, null);
+				}
+			};
+
+			return this._loadState(callback);
+		}
 	}
 
 	public save (state:Object, callback:(err:Error) => void):void {
