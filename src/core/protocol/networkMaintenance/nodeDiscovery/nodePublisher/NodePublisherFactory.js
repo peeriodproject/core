@@ -33,23 +33,30 @@ var NodePublisherFactory = (function () {
         */
         this._nodeDiscoveryState = null;
         /**
+        * @member {core.config.ConfigInterface} core.protocol.nodeDiscovery.NodePublisherFactory~_protocolConfig
+        */
+        this._protocolConfig = null;
+        /**
         * Number of seconds after which my node will be republished.
         *
         * @member {number} core.protocol.nodeDiscovery.NodePublisherFactory~_republishInSeconds
         */
         this._republishInSeconds = 0;
         this._appConfig = appConfig;
+        this._protocolConfig = protocolConfig;
         this._republishInSeconds = protocolConfig.get('protocol.nodeDiscovery.republishInSeconds');
         this._myNode = myNode;
         this._jsonStateHandlerFactory = new JSONStateHandlerFactory();
     }
     NodePublisherFactory.prototype.createPublisherList = function (callback) {
         var _this = this;
-        this._nodeDiscoveryState = this._jsonStateHandlerFactory.create(path.resolve(this._appConfig.get('app.dataPath'), 'nodeDiscovery.json'));
+        var statePath = path.resolve(this._appConfig.get('app.dataPath'), this._protocolConfig.get('protocol.nodeDiscovery.nodeSeekerFactoryStateConfig'));
+        var fallbackStatePath = path.resolve(this._appConfig.get('app.dataPath'), this._protocolConfig.get('protocol.nodeDiscovery.nodeSeekerFactoryStateConfig'));
+
+        this._nodeDiscoveryState = this._jsonStateHandlerFactory.create(statePath, fallbackStatePath);
         this._nodeDiscoveryState.load(function (err, state) {
             if (err) {
-                callback([]);
-                return;
+                return callback([]);
             }
 
             var retList = [];
@@ -62,7 +69,7 @@ var NodePublisherFactory = (function () {
                 retList.push(httpPublisher);
             }
 
-            callback(retList);
+            return callback(retList);
         });
     };
     return NodePublisherFactory;
