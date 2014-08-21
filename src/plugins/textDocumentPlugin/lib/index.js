@@ -51,20 +51,38 @@ exports.main = {
             }
         });
     },
+    /*
+    "query" : {
+    "bool" : {
+    "should" : [
+    {
+    "text_phrase" : {
+    "filename" : {
+    "boost" : 2,
+    "query" : "2012.01",
+    "analyzer" : "filename_index"
+    }
+    }
+    },
+    {
+    "text" : {
+    "filename" : "2012.01"
+    }
+    }
+    ]
+    }
+    }
+    */
     getQuery: function () {
         exit({
             "query": {
-                "multi_match": {
-                    "query": query,
-                    "fields": [
-                        "itemName",
-                        "file"
-                    ]
+                "match": {
+                    "file": query
                 }
             },
             "highlight": {
                 "fields": {
-                    "itemName": {},
+                    //"itemName": {},
                     "file": {}
                 }
             }

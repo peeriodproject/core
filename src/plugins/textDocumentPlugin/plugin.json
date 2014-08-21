@@ -8,7 +8,8 @@
     "private": true,
     "fileTypes": "./lib/fileTypes.json",
     "settings": {
-        "useApacheTika": true
+        "useApacheTika": true,
+        "addItemNameToSearchQueries": true
     },
     "modules": [
     ],
