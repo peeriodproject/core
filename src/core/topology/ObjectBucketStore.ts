@@ -45,23 +45,23 @@ class ObjectBucketStore implements BucketStoreInterface {
 
 		var objectToAdd:ContactNodeObjectInterface = {
 			addresses: addressArray,
-			id: id.toString('hex'),
-			lastSeen: lastSeen
+			id       : id.toString('hex'),
+			lastSeen : lastSeen
 		};
 
 		// build up the addresses
-		for (var i=0, l=addresses.length; i<l; i++) {
+		for (var i = 0, l = addresses.length; i < l; i++) {
 			var address:ContactNodeAddressInterface = addresses[i];
 
 			addressArray.push({
-				_ip: address.getIp(),
+				_ip  : address.getIp(),
 				_port: address.getPort()
 			});
 		}
 
 		// add the object at the right position (most recent objects at the beginning)
 		var added:boolean = false;
-		for (var i=0, k=bucket.length; i<k; i++) {
+		for (var i = 0, k = bucket.length; i < k; i++) {
 			if (lastSeen >= bucket[i].lastSeen) {
 				bucket.splice(i, 0, objectToAdd);
 				added = true;
@@ -108,13 +108,13 @@ class ObjectBucketStore implements BucketStoreInterface {
 
 		var obj = {
 			addresses: [],
-			id: (new Buffer(storedObj.id, 'hex')).toJSON(),
-			lastSeen: storedObj.lastSeen
+			id       : (new Buffer(storedObj.id, 'hex')).toJSON(),
+			lastSeen : storedObj.lastSeen
 		};
 
 		var addresses = storedObj.addresses;
 
-		for (var i=0,l=addresses.length; i<l; i++) {
+		for (var i = 0, l = addresses.length; i < l; i++) {
 			var address = addresses[i];
 			obj.addresses.push({_ip: address._ip, _port: address._port});
 		}
@@ -129,7 +129,7 @@ class ObjectBucketStore implements BucketStoreInterface {
 	public addAll (bucketKey:string, contacts:any):boolean {
 		var bucket:ContactNodeObjectListInterface = this._getBucket(bucketKey);
 
-		for (var i=0, l=contacts.length; i<l; i++) {
+		for (var i = 0, l = contacts.length; i < l; i++) {
 			var contact = contacts[i];
 			this._addToBucket(bucket, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
 		}
@@ -149,7 +149,7 @@ class ObjectBucketStore implements BucketStoreInterface {
 		var idToCheck:string = id.toString('hex');
 		var contains:boolean = false;
 
-		for (var i=0, l=bucket.length; i<l; i++) {
+		for (var i = 0, l = bucket.length; i < l; i++) {
 			if (bucket[i].id === idToCheck) {
 				contains = true;
 				break;
@@ -167,7 +167,7 @@ class ObjectBucketStore implements BucketStoreInterface {
 		var found:ContactNodeObjectInterface = null;
 		var idToSearch:string = id.toString('hex');
 
-		for (var i=0, l=bucket.length; i<l; i++) {
+		for (var i = 0, l = bucket.length; i < l; i++) {
 			if (bucket[i].id === idToSearch) {
 				found = bucket[i];
 				break;
@@ -183,7 +183,7 @@ class ObjectBucketStore implements BucketStoreInterface {
 
 		if (!bucket) return retList;
 
-		for (var i=0, l=bucket.length; i<l; i++) {
+		for (var i = 0, l = bucket.length; i < l; i++) {
 			var storedObj:ContactNodeObjectInterface = bucket[i];
 			if (storedObj) {
 				retList.push(this._mutableSafeCopy(storedObj));
@@ -238,7 +238,7 @@ class ObjectBucketStore implements BucketStoreInterface {
 		var idToSearch:string = id.toString('hex');
 		var spliceIndex:number = undefined;
 
-		for (var i=bucket.length -1; i>=0; i--) {
+		for (var i = bucket.length - 1; i >= 0; i--) {
 			if (bucket[i].id === idToSearch) {
 				spliceIndex = i;
 				break;
