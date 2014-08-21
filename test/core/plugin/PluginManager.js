@@ -349,5 +349,50 @@ describe('CORE --> PLUGIN --> PluginManager', function () {
             }
         });
     });
+
+    it('should correctly return the settings of the given plugin identifer', function (done) {
+        var config = createConfig();
+        var pluginFinder = testUtils.stubPublicApi(sandbox, PluginFinder);
+        var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator, {
+            validateState: function (pluginState, callback) {
+                return process.nextTick(callback.bind(null, null));
+            }
+        });
+        var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory, {
+            create: function () {
+                return {
+                    getMain: function () {
+                        return 'index.js';
+                    },
+                    getFileMimeTypes: function () {
+                        return ['image/jpeg'];
+                    },
+                    getSettings: function () {
+                        return {
+                            settings: true
+                        };
+                    }
+                };
+            }
+        });
+        var pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner);
+        var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory, {
+            create: function () {
+                return pluginRunnerStub;
+            }
+        });
+
+        var pluginManager = new PluginManager(config, stateHandlerFactoryStub, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+            onOpenCallback: function () {
+                pluginManager.activatePluginState(function () {
+                    pluginManager.getPluginSettings('foo bar active', function (settings) {
+                        settings.should.eql({ settings: true });
+
+                        done();
+                    });
+                });
+            }
+        });
+    });
 });
 //# sourceMappingURL=PluginManager.js.map

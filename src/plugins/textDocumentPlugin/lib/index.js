@@ -54,17 +54,12 @@ exports.main = {
     getQuery: function () {
         exit({
             "query": {
-                "multi_match": {
-                    "query": query,
-                    "fields": [
-                        "itemName",
-                        "file"
-                    ]
+                "match": {
+                    "file": query
                 }
             },
             "highlight": {
                 "fields": {
-                    "itemName": {},
                     "file": {}
                 }
             }

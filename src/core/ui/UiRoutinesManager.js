@@ -25,8 +25,7 @@ var UiRoutinesManager = (function () {
         });
 
         this._window.once('loaded', function () {
-            _this._window.showDevTools();
-
+            //this._window.showDevTools();
             //this._window.moveBy(0, 200);
             //this._updateStatus();
             _this._updateWindow();

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">77.64</p>
+      <p class="stat">77.44</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">101</p>
+      <p class="stat">130</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">22.60</p>
+      <p class="stat">23.25</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.80</p>
+      <p class="stat">0.79</p>
     </div>
   </div>
 </div>
@@ -107,8 +107,23 @@ var UiProtocolGatewayComponent = (function (_super) {
     function UiProtocolGatewayComponent(protocolGateway, splashScreen) {
         var _this = this;
         _super.call(this);
+        /**
+        * The current state of the component
+        *
+        * @member {Object} core.ui.UiProtocolGatewayComponent~_state
+        */
         this._state = {};
+        /**
+        * The splash screen instance
+        *
+        * @member {core.ui.UiSplashScreenInterface} core.ui.UiProtocolGatewayComponent~_splashScreen
+        */
         this._splashScreen = null;
+        /**
+        * The cached value of the desired amount of cirquits
+        *
+        * @member {number} core.ui.UiProtocolGatewayComponent~_desiredAmountOfCircuits
+        */
         this._desiredAmountOfCirquits = 0;
 
         this._splashScreen = splashScreen;
@@ -132,7 +147,9 @@ var UiProtocolGatewayComponent = (function (_super) {
 
         protocolGateway.once(&#039;TOPOLOGY_JOIN_COMPLETE&#039;, function () {
             _this._setKeyAndUpdateSplashScreen(&#039;topologyJoinComplete&#039;);
-            _this._splashScreen.close();
+            if (_this._splashScreen) {
+                _this._splashScreen.close();
+            }
         });
 
         protocolGateway.once(&#039;NEEDS_PROXY&#039;, function (needsProxy) {
@@ -166,15 +183,16 @@ var UiProtocolGatewayComponent = (function (_super) {
     };
 
     UiProtocolGatewayComponent.prototype.getState = function (callback) {
-        console.log(this._state);
-
         return process.nextTick(callback.bind(null, this._state));
     };
 
     /**
     * Tiny helper that sets the value for the given key to `true` if no value was provided before triggering the UI update
     *
+    * @method core.ui.UiProtocolGatewayComponent~_setKey
+    *
     * @param {string} key
+    * @param {string} [value] The optional value for the given key which will fall back to `true`
     */
     UiProtocolGatewayComponent.prototype._setKey = function (key, value) {
         if (typeof value === &quot;undefined&quot;) { value = true; }
@@ -183,9 +201,20 @@ var UiProtocolGatewayComponent = (function (_super) {
         this.updateUi();
     };
 
+    /**
+    * Sets the key for the given value as well as setting the as the new splash screen status.
+    *
+    * @method core.ui.UiProtocolGatewayComponent~_setKeyAndUpdateSplashScreen
+    *
+    * @param {string} key
+    * @param {Object} value
+    */
     UiProtocolGatewayComponent.prototype._setKeyAndUpdateSplashScreen = function (key, value) {
         this._setKey(key, value);
-        this._splashScreen.setStatus(key);
+
+        if (this._splashScreen) {
+            this._splashScreen.setStatus(key);
+        }
     };
     return UiProtocolGatewayComponent;
 })(UiComponent);

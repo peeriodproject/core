@@ -15,11 +15,33 @@ class UiSplashScreen extends events.EventEmitter implements UiSplashScreenInterf
 	// todo ts-declaration gui.Window
 	private _window = null;
 
+	/**
+	 * A flag indicates whether the splash screen is open or closed
+	 *
+	 * @member {boolean} core.ui.UiSplashScreen~_isOpen
+	 */
 	private _isOpen:boolean = false;
 
-	private _currentStatus:string = '';
-
+	/**
+	 * A counter that increments on every status update and is used to decide which DOM element should be updated
+	 *
+	 * @member {boolean} core.ui.UiSplashScreen~_updateCounter
+	 */
 	private _updateCounter:number = 0;
+
+	/**
+	 * A list of pending status items that will be processed by the {@link core.ui.SplashScreen~_statusUpdateTimeout}
+	 *
+	 * @member {Array} core.ui.UiSplashScreen~_pendingStatusList
+	 */
+	private _pendingStatusList:Array<string> = [];
+
+	/**
+	 * Stores the current status update timeout
+	 *
+	 * @member {NodeJS.Timer} core.ui.UiSplashScreen~_statusUpdateTimeout
+	 */
+	private _statusUpdateTimeout:number = null;
 
 	constructor(gui:any) {
 		super();
@@ -35,7 +57,6 @@ class UiSplashScreen extends events.EventEmitter implements UiSplashScreenInterf
 		});
 
 		this._window.once('loaded', () => {
-			//this._window.showDevTools();
 			this._window.moveBy(0, 200);
 			this._updateStatus();
 			this.open();
@@ -43,10 +64,14 @@ class UiSplashScreen extends events.EventEmitter implements UiSplashScreenInterf
 	}
 
 	public close ():void {
-		//this._window.close(true);
 		this._window.hide();
 
 		this._isOpen = false;
+
+		if (this._statusUpdateTimeout) {
+			global.clearTimeout(this._statusUpdateTimeout);
+			this._statusUpdateTimeout = null;
+		}
 
 		this.emit('close');
 	}
@@ -65,13 +90,40 @@ class UiSplashScreen extends events.EventEmitter implements UiSplashScreenInterf
 	}
 
 	public setStatus (status:string):void {
-		this._currentStatus = status;
+		this._pendingStatusList.push(status);
 
 		if (this.isOpen()) {
-			this._updateStatus();
+			this._startUpdateStatusInterval();
 		}
 	}
 
+	/**
+	 * Creates the status update interval and updates the initial status
+	 *
+	 * @method core.ui.UiSplashScreen~_startUpdateStatusInterval
+	 */
+	private _startUpdateStatusInterval ():void {
+		if (this._statusUpdateTimeout) {
+			return;
+		}
+
+		this._statusUpdateTimeout = global.setTimeout(() => {
+			if (this._pendingStatusList.length) {
+				this._updateStatus();
+				this._statusUpdateTimeout = null;
+
+				this._startUpdateStatusInterval();
+			}
+		}, 3000);
+
+		this._updateStatus();
+	}
+
+	/**
+	 * Updates the status by using an even or odd DOM element to simply cross-fade to the next status in the pending status list
+	 *
+	 * @method core.ui.UiSplashScreen~_updateStatus
+	 */
 	private _updateStatus ():void {
 		this._updateCounter++;
 
@@ -79,7 +131,7 @@ class UiSplashScreen extends events.EventEmitter implements UiSplashScreenInterf
 		var element:string = isEven ? 'status-even' : 'status-odd';
 
 		this._window.window.document.getElementById('progress-wrapper').className = isEven ? 'even' : 'odd';
-		this._window.window.document.getElementById(element).innerHTML = i18n.__('splashScreen.' + this._currentStatus);
+		this._window.window.document.getElementById(element).innerHTML = i18n.__('splashScreen.' + this._pendingStatusList.shift());
 	}
 
 }

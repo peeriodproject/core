@@ -45,7 +45,7 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">66.79</p>
+      <p class="stat">66.82</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">101.26</p>
+      <p class="stat">101.58</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">4.55</p>
+      <p class="stat">4.57</p>
     </div>
   </div>
 </div>
@@ -225,7 +225,7 @@ var RoutingTable = (function () {
             if (bucketsReturned === bucketAmount) {
                 var lastSeenKeys = Object.keys(contactLastSeenMap);
 
-                if (!lastSeenKeys) {
+                if (!lastSeenKeys.length) {
                     return callback(null, []);
                 }
 
@@ -235,7 +235,7 @@ var RoutingTable = (function () {
                     allContactsList.push(contactLastSeenMap[lastSeenKeys[i]]);
                 }
 
-                return callback(null, allContactsList);
+                return callback(null, allContactsList.slice());
             }
         };
 
@@ -377,7 +377,7 @@ var RoutingTable = (function () {
                 }
             }
 
-            callback(null, closestContactNodes);
+            callback(null, closestContactNodes.slice());
 
             distances = null;
             distanceMap = null;
@@ -430,25 +430,25 @@ var RoutingTable = (function () {
             return process.nextTick(callback.bind(null, null, []));
         }
 
-        if (this._isInBucketKeyRange(bucketKey)) {
-            this._getBucket(bucketKey).getAll(function (err, contacts) {
-                var contactLength;
-
-                if (err) {
-                    return callback(err, null);
-                }
-
-                contactLength = contacts.length;
-
-                if (!contactLength || contactLength &lt;= amount) {
-                    return callback(null, contacts);
-                } else {
-                    return callback(null, _this._getRandomizedArray(contacts).slice(0, amount));
-                }
-            });
-        } else {
+        if (!this._isInBucketKeyRange(bucketKey)) {
             return process.nextTick(callback.bind(null, new Error(&#039;RoutingTable.getRandomContactNodesFromBucket: The bucket key is out of range.&#039;), null));
         }
+
+        this._getBucket(bucketKey).getAll(function (err, contacts) {
+            var contactLength;
+
+            if (err) {
+                return callback(err, null);
+            }
+
+            contactLength = contacts.length;
+
+            if (!contactLength || contactLength &lt;= amount) {
+                return callback(null, contacts);
+            } else {
+                return callback(null, _this._getRandomizedArray(contacts).slice(0, amount));
+            }
+        });
     };
 
     RoutingTable.prototype.isOpen = function (callback) {

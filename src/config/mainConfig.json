@@ -45,7 +45,7 @@
             "parallelismDelayInSeconds": 1.5
         },
         "networkMaintenance"          : {
-            "bucketRefreshRateInSeconds": 300
+            "bucketRefreshRateInSeconds": 900
         },
         "nodeDiscovery"               : {
             "iterativeSeekTimeoutInMs": 1500,
@@ -136,7 +136,7 @@
             "interval"      : 5000,
             "binaryInterval": 15000,
             "eventDelay"    : 1000,
-            "usePolling"    : false
+            "usePolling"    : true
         },
         "folderWatcherManagerStateConfig": "folderWatcherManager.json"
     },

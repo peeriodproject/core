@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">72.28</p>
+      <p class="stat">72.40</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">241</p>
+      <p class="stat">271</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">43.01</p>
+      <p class="stat">45.74</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.87</p>
+      <p class="stat">2.15</p>
     </div>
   </div>
 </div>
@@ -96,6 +96,8 @@
     __.prototype = b.prototype;
     d.prototype = new __();
 };
+var path = require(&#039;path&#039;);
+
 var UiComponent = require(&#039;../UiComponent&#039;);
 
 /**
@@ -106,8 +108,14 @@ var UiComponent = require(&#039;../UiComponent&#039;);
 */
 var UiShareManagerComponent = (function (_super) {
     __extends(UiShareManagerComponent, _super);
-    function UiShareManagerComponent(downloadManager, uploadManager) {
+    function UiShareManagerComponent(gui, downloadManager, uploadManager) {
         _super.call(this);
+        /**
+        * todo ts-definition
+        *
+        * @member {core.share.DownloadManagerInterface} core.ui.UiShareManagerComponent~_gui
+        */
+        this._gui = null;
         /**
         * The internally used download manger instance
         *
@@ -121,6 +129,7 @@ var UiShareManagerComponent = (function (_super) {
         this._unmergedDownloadsWrittenBytes = {};
         this._uploadManager = null;
 
+        this._gui = gui;
         this._downloadManager = downloadManager;
         this._uploadManager = uploadManager;
 
@@ -136,6 +145,8 @@ var UiShareManagerComponent = (function (_super) {
             &#039;cancelUpload&#039;,
             &#039;removeDownload&#039;,
             &#039;removeUpload&#039;,
+            &#039;showDownloadDestination&#039;,
+            &#039;showDownload&#039;,
             &#039;updateDownloadDestination&#039;
         ];
     };
@@ -162,7 +173,7 @@ var UiShareManagerComponent = (function (_super) {
 
     UiShareManagerComponent.prototype._setupDownloadManagerEvents = function () {
         var _this = this;
-        this._downloadManager.onDownloadAdded(function (downloadId, fileName, fileSize, fileHash, metadata) {
+        this._downloadManager.onDownloadAdded(function (downloadId, fileName, fileSize, fileHash, destination, metadata) {
             _this._runningDownloads[downloadId] = {
                 created: new Date().getTime(),
                 id: downloadId,
@@ -170,7 +181,8 @@ var UiShareManagerComponent = (function (_super) {
                 loaded: 0,
                 name: fileName,
                 size: fileSize,
-                status: &#039;CREATED&#039;
+                status: &#039;CREATED&#039;,
+                destination: destination
             };
 
             _this._startProgressRunner();
@@ -237,6 +249,24 @@ var UiShareManagerComponent = (function (_super) {
 
                 _this.updateUi();
             }
+        });
+
+        this.on(&#039;showDownload&#039;, function (downloadId) {
+            var download = _this._runningDownloads[downloadId];
+
+            console.log(&#039;download&#039;, download);
+
+            if (download &amp;&amp; download.status === &#039;COMPLETED&#039;) {
+                _this._gui.Shell.showItemInFolder(path.join(download.destination, download.name));
+            }
+        });
+
+        this.on(&#039;showDownloadDestination&#039;, function () {
+            _this._downloadManager.getDownloadDestination(function (err, destination) {
+                if (!err) {
+                    _this._gui.Shell.showItemInFolder(destination);
+                }
+            });
         });
 
         this.on(&#039;updateDownloadDestination&#039;, function (destination) {

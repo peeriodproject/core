@@ -140,10 +140,12 @@ class UiFolderDropzoneComponent extends UiComponent {
 				//this.close();
 			});
 
-			this._window.on('close', () => {
-				this._window.hide(); // Pretend to be closed already
-				this._window.close(true);
-				this._window = null;
+			this._window.once('close', () => {
+				if (this._window) {
+					this._window.hide(); // Pretend to be closed already
+					this._window.close(true);
+					this._window = null;
+				}
 			});
 
 			this._window.on('move', (x, y) => {

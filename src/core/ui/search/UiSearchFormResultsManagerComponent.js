@@ -107,7 +107,7 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
             _this._searchRequestManager.getResponses(queryId, function (err, responses) {
                 if (err || !responses || !responses.total) {
                     if (err) {
-                        console.error(err);
+                        console.error(err.message);
                     }
 
                     return;
@@ -115,7 +115,7 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
 
                 _this._searchFormResultsManager.transformResponses(responses.hits, true, function (err, transformedResults) {
                     if (err) {
-                        console.error(err);
+                        console.error(err.message);
 
                         return;
                     }
@@ -155,7 +155,7 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
 
         this._searchFormResultsManager.addQuery(rawQuery, function (err, queryId) {
             if (err) {
-                console.error(err);
+                console.error(err.message);
             }
 
             _this._runningQuery = rawQuery;
@@ -197,7 +197,7 @@ var UiSearchFormResultsManagerComponent = (function (_super) {
 
         this._searchRequestManager.removeQuery(this._runningQueryId, function (err) {
             if (err) {
-                console.error(err);
+                console.error(err.message);
             }
         });
     };

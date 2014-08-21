@@ -1,3 +1,5 @@
+import path = require('path');
+
 import DownloadManagerInterface = require('../../share/interfaces/DownloadManagerInterface');
 import UiDownloadInterface = require('./interfaces/UiDownloadInterface');
 import UiUploadInterface = require('./interfaces/UiUploadInterface');
@@ -12,6 +14,13 @@ import UiComponent = require('../UiComponent');
  * @param {core.share.DownloadManagerInterface} downloadManager
  */
 class UiShareManagerComponent extends UiComponent {
+
+	/**
+	 * todo ts-definition
+	 *
+	 * @member {core.share.DownloadManagerInterface} core.ui.UiShareManagerComponent~_gui
+	 */
+	private _gui:any = null;
 
 	/**
 	 * The internally used download manger instance
@@ -32,9 +41,10 @@ class UiShareManagerComponent extends UiComponent {
 
 	private _uploadManager:UploadManagerInterface = null;
 
-	constructor (downloadManager:DownloadManagerInterface, uploadManager:UploadManagerInterface) {
+	constructor (gui:any, downloadManager:DownloadManagerInterface, uploadManager:UploadManagerInterface) {
 		super();
 
+		this._gui = gui;
 		this._downloadManager = downloadManager;
 		this._uploadManager = uploadManager;
 
@@ -51,6 +61,8 @@ class UiShareManagerComponent extends UiComponent {
 			'cancelUpload',
 			'removeDownload',
 			'removeUpload',
+			'showDownloadDestination',
+			'showDownload',
 			'updateDownloadDestination'
 		];
 	}
@@ -75,7 +87,7 @@ class UiShareManagerComponent extends UiComponent {
 	}
 
 	private _setupDownloadManagerEvents ():void {
-		this._downloadManager.onDownloadAdded((downloadId:string, fileName:string, fileSize:number, fileHash:string, metadata:Object) => {
+		this._downloadManager.onDownloadAdded((downloadId:string, fileName:string, fileSize:number, fileHash:string, destination:string, metadata:Object) => {
 			this._runningDownloads[downloadId] = {
 				created: new Date().getTime(),
 				id     : downloadId,
@@ -83,7 +95,8 @@ class UiShareManagerComponent extends UiComponent {
 				loaded : 0,
 				name   : fileName,
 				size   : fileSize,
-				status : 'CREATED'
+				status : 'CREATED',
+				destination: destination
 			};
 
 			this._startProgressRunner();
@@ -149,6 +162,24 @@ class UiShareManagerComponent extends UiComponent {
 
 				this.updateUi();
 			}
+		});
+
+		this.on('showDownload', (downloadId:string) => {
+			var download = this._runningDownloads[downloadId];
+
+			console.log('download', download);
+
+			if (download && download.status === 'COMPLETED') {
+				this._gui.Shell.showItemInFolder(path.join(download.destination, download.name));
+			}
+		});
+
+		this.on('showDownloadDestination', () => {
+			this._downloadManager.getDownloadDestination((err:Error, destination:string) => {
+				if (!err) {
+					this._gui.Shell.showItemInFolder(destination);
+				}
+			});
 		});
 
 		this.on('updateDownloadDestination', (destination:string) => {

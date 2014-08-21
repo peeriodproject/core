@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">66.54</p>
+      <p class="stat">66.26</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">220</p>
+      <p class="stat">226</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">24.01</p>
+      <p class="stat">24.31</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.25</p>
+      <p class="stat">1.27</p>
     </div>
   </div>
 </div>
@@ -212,57 +212,60 @@ var ResponseManager = (function () {
     */
     ResponseManager.prototype._setupListeners = function () {
         var _this = this;
-        this._broadcastManager.on(&#039;BROADCAST_QUERY&#039;, function (broadcastPayload, broadcastId) {
-            // only respond to it if we have circuits
-            if (!_this._circuitManager.getReadyCircuits().length) {
-                return;
-            }
+        // only do this if the app is not a raw node
+        if (this._searchBridge) {
+            this._broadcastManager.on(&#039;BROADCAST_QUERY&#039;, function (broadcastPayload, broadcastId) {
+                // only respond to it if we have circuits
+                if (!_this._circuitManager.getReadyCircuits().length) {
+                    return;
+                }
 
-            // we need to extract the possible feeding nodes
-            var feedingObj = null;
+                // we need to extract the possible feeding nodes
+                var feedingObj = null;
 
-            try  {
-                feedingObj = FeedingNodesMessageBlock.extractAndDeconstructBlock(broadcastPayload);
-            } catch (e) {
-                return;
-            }
+                try  {
+                    feedingObj = FeedingNodesMessageBlock.extractAndDeconstructBlock(broadcastPayload);
+                } catch (e) {
+                    return;
+                }
 
-            if (feedingObj) {
-                var feedingNodesBlock = broadcastPayload.slice(0, feedingObj.bytesRead);
-                var queryBuffer = broadcastPayload.slice(feedingObj.bytesRead);
+                if (feedingObj) {
+                    var feedingNodesBlock = broadcastPayload.slice(0, feedingObj.bytesRead);
+                    var queryBuffer = broadcastPayload.slice(feedingObj.bytesRead);
 
-                _this._pendingBroadcastQueries[broadcastId] = feedingNodesBlock;
+                    _this._pendingBroadcastQueries[broadcastId] = feedingNodesBlock;
 
-                _this._searchBridge.emit(&#039;matchBroadcastQuery&#039;, broadcastId, queryBuffer);
-            }
-        });
+                    _this._searchBridge.emit(&#039;matchBroadcastQuery&#039;, broadcastId, queryBuffer);
+                }
+            });
 
-        this._searchBridge.on(&#039;broadcastQueryResults&#039;, function (identifier, results) {
-            logger.log(&#039;query&#039;, &#039;Received broadcast query results from bridge&#039;, { broadcastId: identifier });
+            this._searchBridge.on(&#039;broadcastQueryResults&#039;, function (identifier, results) {
+                logger.log(&#039;query&#039;, &#039;Received broadcast query results from bridge&#039;, { broadcastId: identifier });
 
-            if (_this._externalQueryHandlers[identifier]) {
-                // we call the callback no matter what. if the results are empty, it must be handled externally
-                _this._externalQueryHandlers[identifier](identifier, results);
-                delete _this._externalQueryHandlers[identifier];
-            } else if (_this._pendingBroadcastQueries[identifier]) {
-                var externalFeedingNodesBlock = _this._pendingBroadcastQueries[identifier];
+                if (_this._externalQueryHandlers[identifier]) {
+                    // we call the callback no matter what. if the results are empty, it must be handled externally
+                    _this._externalQueryHandlers[identifier](identifier, results);
+                    delete _this._externalQueryHandlers[identifier];
+                } else if (_this._pendingBroadcastQueries[identifier]) {
+                    var externalFeedingNodesBlock = _this._pendingBroadcastQueries[identifier];
 
-                delete _this._pendingBroadcastQueries[identifier];
+                    delete _this._pendingBroadcastQueries[identifier];
 
-                if (results) {
-                    logger.log(&#039;query&#039;, &#039;Wrapping query response message&#039;, { broadcastId: identifier, queryCount: &#039;wrap&#039; });
+                    if (results) {
+                        logger.log(&#039;query&#039;, &#039;Wrapping query response message&#039;, { broadcastId: identifier, queryCount: &#039;wrap&#039; });
 
-                    var msg = _this._wrapQueryResponse(identifier, results);
+                        var msg = _this._wrapQueryResponse(identifier, results);
 
-                    if (msg) {
-                        var result = _this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
-                        logger.log(&#039;query&#039;, &#039;Issuing external feed to circuit&#039;, { broadcastId: identifier, result: result, queryCount: &#039;issuenext&#039; });
-                    } else {
-                        console.log(&#039;no message&#039;);
+                        if (msg) {
+                            var result = _this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
+                            logger.log(&#039;query&#039;, &#039;Issuing external feed to circuit&#039;, { broadcastId: identifier, result: result, queryCount: &#039;issuenext&#039; });
+                        } else {
+                            console.log(&#039;no message&#039;);
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
         this._transferMessageCenter.on(&#039;issueBroadcastQuery&#039;, function (predecessorCircuitId, broadcastId, searchObject, broadcastPayload) {
             // start a broadcast but answer to the query by yourself after a given time
@@ -270,23 +273,26 @@ var ResponseManager = (function () {
 
             _this._broadcastManager.initBroadcast(&#039;BROADCAST_QUERY&#039;, broadcastPayload, broadcastId);
 
-            _this.externalQueryHandler(broadcastId, searchObject, function (identifier, results) {
-                if (results) {
-                    logger.log(&#039;query&#039;, &#039;Wrapping query response message&#039;, { broadcastId: identifier, queryCount: &#039;wrap&#039; });
+            // only do this if the app is not a raw node
+            if (_this._searchBridge) {
+                _this.externalQueryHandler(broadcastId, searchObject, function (identifier, results) {
+                    if (results) {
+                        logger.log(&#039;query&#039;, &#039;Wrapping query response message&#039;, { broadcastId: identifier, queryCount: &#039;wrap&#039; });
 
-                    var msg = _this._wrapQueryResponse(identifier, results);
+                        var msg = _this._wrapQueryResponse(identifier, results);
 
-                    if (msg) {
-                        logger.log(&#039;query&#039;, &#039;Issuing result back through circuit&#039;, { broadcastId: identifier, queryCount: &#039;issueback&#039; });
+                        if (msg) {
+                            logger.log(&#039;query&#039;, &#039;Issuing result back through circuit&#039;, { broadcastId: identifier, queryCount: &#039;issueback&#039; });
 
-                        var waitingTime = Math.round(Math.random() * _this._waitForOwnResponseAsBroadcastInitiatorInMs);
+                            var waitingTime = Math.round(Math.random() * _this._waitForOwnResponseAsBroadcastInitiatorInMs);
 
-                        setTimeout(function () {
-                            _this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg);
-                        }, waitingTime);
+                            setTimeout(function () {
+                                _this._cellManager.pipeFileTransferMessage(predecessorCircuitId, msg);
+                            }, waitingTime);
+                        }
                     }
-                }
-            });
+                });
+            }
         });
     };
 

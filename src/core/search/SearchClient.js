@@ -590,6 +590,32 @@ var SearchClient = (function () {
         });
     };
 
+    SearchClient.prototype.updateSettings = function (settings, callback) {
+        var _this = this;
+        this._client.indices.close({
+            index: this._indexName
+        }, function (err) {
+            if (err) {
+                return callback(err);
+            }
+
+            _this._client.indices.putSettings({
+                index: _this._indexName,
+                body: settings
+            }, function (err) {
+                if (err) {
+                    return callback(err);
+                }
+
+                _this._client.indices.open({
+                    index: _this._indexName
+                }, function (err) {
+                    return callback(err);
+                });
+            });
+        });
+    };
+
     SearchClient.prototype.typeExists = function (type, callback) {
         if (this._client) {
             this._client.indices.existsType({

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.69</p>
+      <p class="stat">73.61</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">470</p>
+      <p class="stat">472</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">46.83</p>
+      <p class="stat">46.89</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">5.87</p>
+      <p class="stat">5.90</p>
     </div>
   </div>
 </div>
@@ -258,7 +258,7 @@ describe(&#039;CORE --&gt; PROTOCOL --&gt; NET --&gt; ProtocolConnectionManager&
     it(&#039;should correctly timeout kill the incoming pending socket&#039;, function (done) {
         var socket = manager.getIncomingPendingSocketList()[&#039;_temp1&#039;].socket;
 
-        socket.once(&#039;destroy&#039;, function () {
+        socket.once(&#039;close&#039;, function () {
             if (manager.getIncomingPendingSocketList()[&#039;_temp1&#039;] === undefined) {
                 manager.removeAllListeners(&#039;terminatedConnection&#039;);
                 done();
@@ -302,11 +302,12 @@ describe(&#039;CORE --&gt; PROTOCOL --&gt; NET --&gt; ProtocolConnectionManager&
         var contactNode = ContactNodeFactory.createDummy(&#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;, &#039;hex&#039;, &#039;127.0.0.1&#039;, remotePort);
         manager.keepSocketsOpenFromNode(contactNode);
         var sock = manager.getConfirmedSocketByContactNode(contactNode);
-        sock.once(&#039;destroy&#039;, function () {
+        var errorFunc = function () {
             throw new Error(&#039;Should not happen, nope nope.&#039;);
-        });
+        };
+        sock.once(&#039;close&#039;, errorFunc);
         setTimeout(function () {
-            sock.removeAllListeners(&#039;destroy&#039;);
+            sock.removeListener(&#039;close&#039;, errorFunc);
             done();
         }, 1500);
     });
@@ -322,7 +323,7 @@ describe(&#039;CORE --&gt; PROTOCOL --&gt; NET --&gt; ProtocolConnectionManager&
         });
     });
 
-    it(&#039;should fail obtaining an outward connection to a node&#039;, function (done) {
+    it(&#039;should fail obtaining an outbound connection to a node&#039;, function (done) {
         var id = new Id(Id.byteBufferByHexString(&#039;fe3626caca6c84fa4e5d323b6a26b897582c57f9&#039;, 20), 160);
         var badContactNode = nodeFactory.create(id, [addressFactory.create(&#039;14.213.160.0&#039;, 1111)]);
 
@@ -414,11 +415,12 @@ describe(&#039;CORE --&gt; PROTOCOL --&gt; NET --&gt; ProtocolConnectionManager&
 
         manager.writeBufferTo(goodContactNode, new Buffer([0x01]), function (err) {
             if (!err) {
-                manager.getConfirmedSocketList()[ident].socket.on(&#039;close&#039;, function () {
+                var errorFunc = function () {
                     throw new Error(&#039;Should not happen, nope, nope&#039;);
-                });
+                };
+                manager.getConfirmedSocketList()[ident].socket.on(&#039;close&#039;, errorFunc);
                 setTimeout(function () {
-                    manager.getConfirmedSocketList()[ident].socket.removeAllListeners(&#039;close&#039;);
+                    manager.getConfirmedSocketList()[ident].socket.removeListener(&#039;close&#039;, errorFunc);
                     done();
                 }, 1500);
             }

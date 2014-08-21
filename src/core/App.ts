@@ -120,6 +120,8 @@ var App = {
 			component = null;
 		}
 	},
+	_uiComponentsAdded: [],
+	_requiredUiComponentsToStart: ['indexer', 'sharing', 'topology'],
 
 	/**
 	 * Returns a JSONStateHandlerFactory by using the singleton pattern
@@ -235,11 +237,15 @@ var App = {
 			var searchResponseManager = new SearchResponseManager(this._appQuitHandler, searchClient);
 			var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
-			this._startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager);
+			this._startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager, () => {
+				this._checkAndStartUi('indexer');
+			});
 
 			this._startSharing(searchClient, searchRequestsIndexName, (downloadManager, uploadManager) => {
 				var downloadBridge = new DownloadBridge(downloadManager);
 				var uploadBridge = new UploadBridge(uploadManager);
+
+				this._checkAndStartUi('sharing');
 
 				// disables the network layer for testing purposes
 				this._startTopology(searchMessageBridge, downloadBridge, uploadBridge);
@@ -263,7 +269,7 @@ var App = {
 		var downloadManager = new DownloadManager(this._getMainConfig(['app', 'share']), this._appQuitHandler, this._getJSONStateHandlerFactory(), searchClient, searchRequestsIndexName);
 		var uploadManager = new UploadManager(this._appQuitHandler, searchClient, searchRequestsIndexName);
 
-		this._addUiComponent(new UiShareManagerComponent(downloadManager, uploadManager));
+		this._addUiComponent(new UiShareManagerComponent(this._gui, downloadManager, uploadManager));
 
 		return process.nextTick(internalCallback.bind(null, downloadManager, uploadManager));
 	},
@@ -304,8 +310,6 @@ var App = {
 
 							searchFormResultsManager = new SearchFormResultsManager(this._getMainConfig(['app', 'search']), this._appQuitHandler, this._getJSONStateHandlerFactory(), pluginManager, searchRequestManager);
 							this._addUiComponent(new UiSearchFormResultsManagerComponent(searchFormResultsManager, searchRequestManager));
-
-							console.log('started indexer');
 
 							return internalCallback();
 						});
@@ -362,6 +366,23 @@ var App = {
 		}
 	},
 
+	_checkAndStartUi: function (component) {
+		var readyToTakeOff:boolean = true;
+
+		this._uiComponentsAdded.push(component);
+
+		for (var i = 0, l = this._requiredUiComponentsToStart.length; i < l; i++) {
+			if (this._uiComponentsAdded.indexOf(this._requiredUiComponentsToStart[i]) === -1) {
+				readyToTakeOff = false;
+				break;
+			}
+		}
+
+		if (readyToTakeOff) {
+			this._startUi();
+		}
+	},
+
 	_checkUiRoutines: function () {
 		var uiRoutinesManager = new UiRoutinesManager(this._gui);
 		uiRoutinesManager.addUiRoutine(new UiChromeExtensionRoutine(new JSONConfig('../../config/uiChromeExtensionRoutine.json', ['extension'])));
@@ -378,13 +399,14 @@ var App = {
 
 	_startTopology: function (searchMessageBridge, downloadBridge, uploadBridge) {
 		if (!this._environmentConfig.get('environment.startTopology')) {
-			this._startUi();
+			this._checkAndStartUi('topology');
 
 			if (this._splashScreen) {
 				setImmediate(() => {
 					this._splashScreen.close();
 				});
 			}
+
 			return;
 		}
 
@@ -471,7 +493,7 @@ var App = {
 						protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
 						this._addUiComponent(new UiProtocolGatewayComponent(protocolGateway, this._splashScreen));
 
-						this._startUi();
+						this._checkAndStartUi('topology');
 
 						protocolGateway.start();
 						global.gateway = protocolGateway;

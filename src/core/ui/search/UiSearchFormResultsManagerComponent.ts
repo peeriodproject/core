@@ -111,7 +111,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 			this._searchRequestManager.getResponses(queryId, (err:Error, responses:any) => {
 				if (err || !responses || !responses.total) {
 					if (err) {
-						console.error(err);
+						console.error(err.message);
 					}
 
 					return;
@@ -119,7 +119,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 
 				this._searchFormResultsManager.transformResponses(responses.hits, true, (err:Error, transformedResults) => {
 					if (err) {
-						console.error(err);
+						console.error(err.message);
 
 						return;
 					}
@@ -158,7 +158,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 
 		this._searchFormResultsManager.addQuery(rawQuery, (err:Error, queryId:string) => {
 			if (err) {
-				console.error(err);
+				console.error(err.message);
 			}
 
 			this._runningQuery = rawQuery;
@@ -200,7 +200,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 
 		this._searchRequestManager.removeQuery(this._runningQueryId, (err:Error) => {
 			if (err) {
-				console.error(err);
+				console.error(err.message);
 			}
 		});
 	}

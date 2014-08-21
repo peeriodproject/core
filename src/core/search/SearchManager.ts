@@ -41,14 +41,15 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	addItem (pathToIndex:string, stats:fs.Stats, fileHash:string, callback?:(err:Error) => any):void {
-		var internalCallback:Function = callback || function () {};
+		var internalCallback:Function = callback || function () {
+		};
 
 		this._pluginManager.onBeforeItemAdd(pathToIndex, stats, fileHash, (pluginData:Object) => {
 
 			pluginData = this._updatePluginData(pluginData, pathToIndex, stats, fileHash);
 			//console.log(JSON.stringify(pluginData));
 			// to the request to the database
-			this._searchClient.addItem(pluginData, function(err) {
+			this._searchClient.addItem(pluginData, function (err) {
 				logger.log('index', 'added item', { data: pluginData, path: pathToIndex });
 
 				return internalCallback(err);
@@ -57,7 +58,8 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	close (callback?:(err:Error) => any):void {
-		var internalCallback = callback || function () {};
+		var internalCallback = callback || function () {
+		};
 		var closedPluginManager:boolean = false;
 		var closedSearchClient:boolean = false;
 		var checkAndClose = (err) => {
@@ -110,7 +112,8 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	open (callback?:(err:Error) => any):void {
-		var internalCallback = callback || function () {};
+		var internalCallback = callback || function () {
+		};
 		var openedPluginManager:boolean = false;
 		var openedSearchClient:boolean = false;
 		var checkAndClose = (err) => {
@@ -134,10 +137,21 @@ class SearchManager implements SearchManagerInterface {
 			return checkAndClose(err);
 		});
 
-		this._searchClient.open(function (err) {
+		this._searchClient.open((err) => {
 			openedSearchClient = true;
 
-			return checkAndClose(err);
+			if (err) {
+				return checkAndClose(err);
+			}
+
+			this._updateAnalysis(function (err) {
+				console.log('updated settings');
+				if (err) {
+					console.log(err);
+				}
+
+				return checkAndClose(err);
+			});
 		});
 	}
 
@@ -177,6 +191,44 @@ class SearchManager implements SearchManagerInterface {
 		});
 	}
 
+	private _updateAnalysis (callback:(err:Error) => any):void {
+		var settings = {
+			analysis: {
+				analyzer : {
+					filename_search: {
+						tokenizer: "itemname",
+						filter   : [
+							"lowercase"
+						]
+					},
+					filename_index : {
+						tokenizer: "itemname",
+						filter   : [
+							"lowercase",
+							"edge_ngram"
+						]
+					}
+				},
+				tokenizer: {
+					itemname: {
+						pattern: "[^\\p{L}\\d]+",
+						type   : "pattern"
+					}
+				},
+				filter   : {
+					edge_ngram: {
+						side    : "front",
+						max_gram: 20,
+						min_gram: 1,
+						type    : "edgeNGram"
+					}
+				}
+			}
+		};
+
+		this._searchClient.updateSettings(settings, callback);
+	}
+
 	/**
 	 * Updates the given mapping by adding the item hash, item path and item stats.
 	 *
@@ -185,7 +237,7 @@ class SearchManager implements SearchManagerInterface {
 	 * @param {Object} mapping
 	 * @returns {Object} the restricted mapping
 	 */
-	private _updateMapping(mapping:Object):Object {
+	private _updateMapping (mapping:Object):Object {
 		var source:Object = mapping['_source'] || {};
 		var properties:Object = mapping['properties'] || {};
 
@@ -200,88 +252,90 @@ class SearchManager implements SearchManagerInterface {
 		// todo check elasticsearch store:yes
 		// update properties
 		mapping['properties'] = ObjectUtils.extend(properties, {
-			itemHash: {
-				type: 'string',
+			itemHash : {
+				type : 'string',
 				store: 'yes',
 				index: 'not_analyzed'
 			},
-			itemPath: {
-				type: 'string',
+			itemPath : {
+				type : 'string',
 				store: 'yes',
 				index: 'not_analyzed'
 			},
-			itemName: {
-				type: 'string',
-				store: 'yes'
+			itemName : {
+				type           : 'string',
+				search_analyzer: "filename_search",
+				index_analyzer : "filename_index"
+				//store: 'yes'
 			},
 			itemStats: {
-				type : 'nested',
+				type      : 'nested',
 				properties: {
-					atime: {
-						type: 'date',
+					atime  : {
+						type  : 'date',
 						format: 'dateOptionalTime',
-						store: 'yes',
-						index: 'not_analyzed'
+						store : 'yes',
+						index : 'not_analyzed'
 					},
 					blksize: {
-						type: 'long',
+						type : 'long',
 						store: 'yes',
 						index: 'not_analyzed'
 					},
-					blocks: {
-						type: 'long',
+					blocks : {
+						type : 'long',
 						store: 'yes',
 						index: 'not_analyzed'
 					},
-					ctime: {
-						type: 'date',
+					ctime  : {
+						type  : 'date',
 						format: 'dateOptionalTime',
+						store : 'yes',
+						index : 'not_analyzed'
+					},
+					dev    : {
+						type : 'long',
 						store: 'yes',
 						index: 'not_analyzed'
 					},
-					dev: {
-						type: 'long',
+					gid    : {
+						type : 'long',
 						store: 'yes',
 						index: 'not_analyzed'
 					},
-					gid: {
-						type: 'long',
+					ino    : {
+						type : 'long',
 						store: 'yes',
 						index: 'not_analyzed'
 					},
-					ino: {
-						type: 'long',
+					mode   : {
+						type : 'long',
 						store: 'yes',
 						index: 'not_analyzed'
 					},
-					mode: {
-						type: 'long',
-						store: 'yes',
-						index: 'not_analyzed'
-					},
-					mtime: {
-						type: 'date',
+					mtime  : {
+						type  : 'date',
 						format: 'dateOptionalTime',
+						store : 'yes',
+						index : 'not_analyzed'
+					},
+					nlink  : {
+						type : 'long',
 						store: 'yes',
 						index: 'not_analyzed'
 					},
-					nlink: {
-						type: 'long',
+					rdev   : {
+						type : 'long',
 						store: 'yes',
 						index: 'not_analyzed'
 					},
-					rdev: {
-						type: 'long',
+					size   : {
+						type : 'long',
 						store: 'yes',
 						index: 'not_analyzed'
 					},
-					size: {
-						type: 'long',
-						store: 'yes',
-						index: 'not_analyzed'
-					},
-					uid: {
-						type: 'long',
+					uid    : {
+						type : 'long',
 						store: 'yes',
 						index: 'not_analyzed'
 					}
@@ -311,9 +365,9 @@ class SearchManager implements SearchManagerInterface {
 				var identifier:string = identifiers[i];
 
 				pluginData[identifier] = ObjectUtils.extend(pluginData[identifier], {
-					itemHash: fileHash,
-					itemPath: itemPath,
-					itemName: path.basename(itemPath),
+					itemHash : fileHash,
+					itemPath : itemPath,
+					itemName : path.basename(itemPath),
 					itemStats: stats
 				});
 			}

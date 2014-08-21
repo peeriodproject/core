@@ -604,6 +604,31 @@ class SearchClient implements SearchClientInterface {
 		});
 	}
 
+	public updateSettings (settings:Object, callback:(err:Error) => any):void {
+		this._client.indices.close({
+			index: this._indexName
+		}, (err:Error) => {
+			if (err) {
+				return callback(err);
+			}
+
+			this._client.indices.putSettings({
+				index: this._indexName,
+				body : settings
+			}, (err:Error) => {
+				if (err) {
+					return callback(err);
+				}
+
+				this._client.indices.open({
+					index: this._indexName
+				}, function (err:Error) {
+					return callback(err);
+				});
+			});
+		});
+	}
+
 	public typeExists (type:string, callback:(exists:boolean) => any):void {
 		if (this._client) {
 			this._client.indices.existsType({

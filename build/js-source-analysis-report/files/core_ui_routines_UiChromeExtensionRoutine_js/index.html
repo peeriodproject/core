@@ -45,7 +45,7 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">79.38</p>
+      <p class="stat">79.85</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">19.84</p>
+      <p class="stat">20.72</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.96</p>
+      <p class="stat">0.91</p>
     </div>
   </div>
 </div>
@@ -93,7 +93,6 @@
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../main.d.ts&#039; /&gt;
 var path = require(&#039;path&#039;);
 var fs = require(&#039;fs-extra&#039;);
-var childProcess = require(&#039;child_process&#039;);
 
 var i18n = require(&#039;i18n&#039;);
 
@@ -104,6 +103,10 @@ var UiChromeExtensionRoutine = (function () {
     }
     UiChromeExtensionRoutine.prototype.getDescription = function () {
         return this._geti18n(&#039;description&#039;);
+    };
+
+    UiChromeExtensionRoutine.prototype.getIcon = function () {
+        return this._config.get(&#039;extension.icon&#039;);
     };
 
     UiChromeExtensionRoutine.prototype.getId = function () {
@@ -132,7 +135,7 @@ var UiChromeExtensionRoutine = (function () {
 
             console.log(path.resolve(process.cwd(), _this._config.get(&#039;extension.crxPath&#039;)));
 
-            fs.writeJson(installPath, {
+            fs.outputJson(installPath, {
                 external_crx: path.resolve(process.cwd(), _this._config.get(&#039;extension.crxPath&#039;)),
                 external_version: _this._config.get(&#039;extension.version&#039;)
             }, function (err) {
@@ -159,11 +162,8 @@ var UiChromeExtensionRoutine = (function () {
         // todo windows starter
         // todo pull request to node.d.ts -&gt; exec.unref
         // todo pull request to node.d.ts -&gt; exec with a single argument
-        console.log(&#039;open -a &quot;&#039; + host + &#039;&quot; &quot;&#039; + url + &#039;&quot;&#039;);
-        var exec = childProcess.exec(&#039;open -a &quot;&#039; + host + &#039;&quot; &quot;&#039; + url + &#039;&quot;&#039;, function () {
-        });
-        exec.unref();
-
+        /*var exec:any = childProcess.exec(&#039;open -a &quot;&#039; + host + &#039;&quot; &quot;&#039; + url + &#039;&quot;&#039;, function () {});
+        exec.unref();*/
         return internalCallback(null);
     };
 
@@ -171,14 +171,14 @@ var UiChromeExtensionRoutine = (function () {
         var internalCallback = callback || function () {
         };
 
-        return process.nextTick(callback.bind(null, null));
+        return process.nextTick(callback.bind(null, new Error(&#039;UiChromeExtensionRoutine#stop: Can not stop &quot;Google Chrome&quot; programmatically. The user must close the browser manually.&#039;)));
     };
 
     UiChromeExtensionRoutine.prototype.uninstall = function (callback) {
         var internalCallback = callback || function () {
         };
 
-        return process.nextTick(callback.bind(null, null));
+        fs.unlink(this._getInstallPath(), internalCallback);
     };
 
     UiChromeExtensionRoutine.prototype._geti18n = function (key) {

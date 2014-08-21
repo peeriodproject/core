@@ -15,10 +15,13 @@ declare module "elasticsearch" {
 	}
 
 	interface Indices {
+		open (params, callback:Callback):void;
+		close (params, callback:Callback):void;
 		create (params, callback:Callback):void;
 		delete (params, callback:Callback):void;
 		existsType (params, callback:Callback):void;
 		putMapping (params, callback:Callback):void;
+		putSettings(params, callback:Callback):void;
 	}
 
 	interface ClientInterface {

@@ -67,12 +67,15 @@ describe('CORE --> SEARCH --> SearchFormManager', function () {
             },
             open: function () {
                 return process.nextTick(arguments[0].bind(null, null));
+            },
+            getPluginSettings: function () {
+                return process.nextTick(arguments[1].bind(null, { addItemNameToSearchQueries: true }));
             }
         });
 
         pluginRunnerStub = testUtils.stubPublicApi(sandbox, PluginRunner, {
             getQuery: function () {
-                return process.nextTick(arguments[1].bind(null, null, { transformed: arguments[0] }));
+                return process.nextTick(arguments[1].bind(null, null, { query: { transformed: arguments[0] }, highlight: { fields: { transformed: {} } } }));
             }
         });
 
@@ -266,7 +269,7 @@ describe('CORE --> SEARCH --> SearchFormManager', function () {
         });
     });
 
-    it('should correctly transform the "raw query" with the current form', function (done) {
+    it('should correctly transform the "raw query" with the current form @joern', function (done) {
         activeIdentifiers = ['pluginIdentifier'];
 
         createSearchFormManager(function () {
@@ -280,8 +283,11 @@ describe('CORE --> SEARCH --> SearchFormManager', function () {
                 pluginRunnerStub.getQuery.getCall(0).args[0].should.equal('foobar');
 
                 searchRequestManagerStub.addQuery.calledOnce.should.be.true;
-                searchRequestManagerStub.addQuery.getCall(0).args[0].should.containDeep({
+                searchRequestManagerStub.addQuery.getCall(0).args[0].query.bool.should[2].should.eql({
                     transformed: 'foobar'
+                });
+                searchRequestManagerStub.addQuery.getCall(0).args[0].highlight.fields.should.containDeep({
+                    transformed: {}
                 });
 
                 return closeAndDone(done);

@@ -46,7 +46,7 @@ class SearchFormResultsManager extends SearchFormManager implements SearchFormRe
 
 		super.open((err) => {
 			if (err) {
-				console.error(err);
+				console.error(err.message);
 
 				return internalCallback(err);
 			}

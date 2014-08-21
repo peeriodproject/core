@@ -115,7 +115,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-benchmark');
 
     // Task aliases
-    grunt.registerTask('createReports', ['coverage', 'plato:source']);
+    grunt.registerTask('createReports', ['coverage', 'plato']);
     grunt.registerTask('runTests', ['env:test', 'mochaTest']);
     grunt.registerTask('coverage', ['env:test', 'mochaTest:coverage']);
     //grunt.registerTask('test', ['_runTests']);

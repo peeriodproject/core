@@ -65,6 +65,15 @@ var SearchStore = (function () {
             });
         }
 
+        process.once('exit', function () {
+            if (_this._databaseServerProcessId > 0) {
+                try  {
+                    process.kill(_this._databaseServerProcessId);
+                } catch (err) {
+                }
+            }
+        });
+
         this.open(this._options.onOpenCallback);
     }
     SearchStore.getDefaults = function () {
@@ -85,7 +94,7 @@ var SearchStore = (function () {
         }
 
         // kill the elasticsearch deamon
-        if (this._databaseServerProcessId !== -1) {
+        if (this._databaseServerProcessId > 0) {
             try  {
                 process.kill(this._databaseServerProcessId);
             } catch (err) {

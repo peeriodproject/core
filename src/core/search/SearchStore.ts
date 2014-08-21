@@ -85,6 +85,16 @@ class SearchStore implements SearchStoreInterface {
 			});
 		}
 
+		process.once('exit', () => {
+			if (this._databaseServerProcessId > 0) {
+				// todo set signal for windows
+				try {
+					process.kill(this._databaseServerProcessId);
+				}
+				catch (err) {}
+			}
+		});
+
 		this.open(this._options.onOpenCallback);
 	}
 
@@ -96,7 +106,7 @@ class SearchStore implements SearchStoreInterface {
 		}
 
 		// kill the elasticsearch deamon
-		if (this._databaseServerProcessId !== -1) {
+		if (this._databaseServerProcessId > 0) {
 			// todo set signal for windows
 			try {
 				process.kill(this._databaseServerProcessId);

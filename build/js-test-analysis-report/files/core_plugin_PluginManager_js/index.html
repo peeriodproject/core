@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">76.15</p>
+      <p class="stat">75.70</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">324</p>
+      <p class="stat">351</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">32.64</p>
+      <p class="stat">33.06</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.05</p>
+      <p class="stat">3.34</p>
     </div>
   </div>
 </div>
@@ -96,6 +96,8 @@ require(&#039;should&#039;);
 var sinon = require(&#039;sinon&#039;);
 var testUtils = require(&#039;../../utils/testUtils&#039;);
 
+var JSONStateHandler = require(&#039;../../../src/core/utils/JSONStateHandler&#039;);
+var JSONStateHandlerFactory = require(&#039;../../../src/core/utils/JSONStateHandlerFactory&#039;);
 var PluginFinder = require(&#039;../../../src/core/plugin/PluginFinder&#039;);
 var PluginManager = require(&#039;../../../src/core/plugin/PluginManager&#039;);
 
@@ -114,12 +116,43 @@ describe(&#039;CORE --&gt; PLUGIN --&gt; PluginManager&#039;, function () {
             get: function (key) {
                 if (key === &#039;app.dataPath&#039;) {
                     return appDataPath;
-                } else if (key === &#039;pluginManagerStateConfig&#039;) {
+                } else if (key === &#039;app.internalDataPath&#039;) {
+                    return appDataPath;
+                } else if (key === &#039;plugin.pluginManagerStateConfig&#039;) {
                     return &#039;pluginManager.json&#039;;
                 }
             }
         });
     };
+    var stateHandlerFactoryStub;
+    var stateHandlerStub;
+    var validState = {
+        idle: [
+            {
+                name: &#039;foo bar idle&#039;,
+                path: &#039;/path&#039;,
+                hash: &#039;123&#039;,
+                since: 123456
+            }
+        ],
+        inactive: [
+            {
+                name: &#039;foo bar inactive&#039;,
+                path: &#039;/path&#039;,
+                hash: &#039;123&#039;,
+                since: 123456
+            }
+        ],
+        active: [
+            {
+                name: &#039;foo bar active&#039;,
+                path: &#039;/path&#039;,
+                hash: &#039;123&#039;,
+                since: 123456
+            }
+        ]
+    };
+
     var closeAndDone = function (pluginManager, done) {
         pluginManager.close(function () {
             done();
@@ -129,10 +162,28 @@ describe(&#039;CORE --&gt; PLUGIN --&gt; PluginManager&#039;, function () {
     beforeEach(function () {
         //testUtils.createFolder(appDataPath);
         sandbox = sinon.sandbox.create();
+
+        stateHandlerFactoryStub = testUtils.stubPublicApi(sandbox, JSONStateHandlerFactory, {
+            create: function () {
+                return stateHandlerStub;
+            }
+        });
+
+        stateHandlerStub = testUtils.stubPublicApi(sandbox, JSONStateHandler, {
+            load: function () {
+                return process.nextTick(arguments[0].bind(null, null, validState));
+            },
+            save: function () {
+                return process.nextTick(arguments[1].bind(null, null));
+            }
+        });
     });
 
     afterEach(function () {
         sandbox.restore();
+
+        stateHandlerFactoryStub = null;
+        stateHandlerStub = null;
         //testUtils.deleteFolderRecursive(appDataPath);
     });
 
@@ -143,7 +194,7 @@ describe(&#039;CORE --&gt; PLUGIN --&gt; PluginManager&#039;, function () {
         var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
         var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
 
-        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+        var pluginManager = new PluginManager(config, stateHandlerFactoryStub, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
                 closeAndDone(pluginManager, done);
             }
@@ -158,7 +209,7 @@ describe(&#039;CORE --&gt; PLUGIN --&gt; PluginManager&#039;, function () {
         var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
         var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
         var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
-        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+        var pluginManager = new PluginManager(config, stateHandlerFactoryStub, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
                 pluginManager.open(function () {
                     pluginManager.close();
@@ -188,7 +239,7 @@ describe(&#039;CORE --&gt; PLUGIN --&gt; PluginManager&#039;, function () {
         var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
         var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
         var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
-        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory);
+        var pluginManager = new PluginManager(config, stateHandlerFactoryStub, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory);
 
         pluginManager.findNewPlugins(function (err) {
             pluginFinder.findPlugins.calledOnce.should.be.true;
@@ -202,7 +253,10 @@ describe(&#039;CORE --&gt; PLUGIN --&gt; PluginManager&#039;, function () {
             get: function (key) {
                 if (key === &#039;app.dataPath&#039;) {
                     return appDataPath;
-                } else if (key === &#039;pluginManagerStateConfig&#039;) {
+                }
+                if (key === &#039;app.internalDataPath&#039;) {
+                    return appDataPath;
+                } else if (key === &#039;plugin.pluginManagerStateConfig&#039;) {
                     return &#039;invalidFileName.json&#039;;
                 }
             }
@@ -211,7 +265,7 @@ describe(&#039;CORE --&gt; PLUGIN --&gt; PluginManager&#039;, function () {
         var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
         var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
         var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
-        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+        var pluginManager = new PluginManager(config, stateHandlerFactoryStub, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
                 pluginManager.getActivePluginRunners(function (pluginState) {
                     closeAndDone(pluginManager, done);
@@ -226,37 +280,10 @@ describe(&#039;CORE --&gt; PLUGIN --&gt; PluginManager&#039;, function () {
         var pluginValidator = testUtils.stubPublicApi(sandbox, PluginValidator);
         var pluginLoaderFactory = testUtils.stubPublicApi(sandbox, PluginLoaderFactory);
         var pluginRunnerFactory = testUtils.stubPublicApi(sandbox, PluginRunnerFactory);
-        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+        var pluginManager = new PluginManager(config, stateHandlerFactoryStub, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
                 pluginManager.getPluginState(function (pluginState) {
-                    var state = {
-                        idle: [
-                            {
-                                name: &#039;foo bar idle&#039;,
-                                path: &#039;/path&#039;,
-                                hash: &#039;123&#039;,
-                                since: 123456
-                            }
-                        ],
-                        inactive: [
-                            {
-                                name: &#039;foo bar inactive&#039;,
-                                path: &#039;/path&#039;,
-                                hash: &#039;123&#039;,
-                                since: 123456
-                            }
-                        ],
-                        active: [
-                            {
-                                name: &#039;foo bar active&#039;,
-                                path: &#039;/path&#039;,
-                                hash: &#039;123&#039;,
-                                since: 123456
-                            }
-                        ]
-                    };
-
-                    pluginState.should.containDeep(state);
+                    pluginState.should.containDeep(validState);
 
                     closeAndDone(pluginManager, done);
                 });
@@ -290,7 +317,7 @@ describe(&#039;CORE --&gt; PLUGIN --&gt; PluginManager&#039;, function () {
                 return pluginRunnerStub;
             }
         });
-        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+        var pluginManager = new PluginManager(config, stateHandlerFactoryStub, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
                 pluginManager.activatePluginState();
             }
@@ -347,7 +374,7 @@ describe(&#039;CORE --&gt; PLUGIN --&gt; PluginManager&#039;, function () {
                 return pluginRunnerStub;
             }
         });
-        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+        var pluginManager = new PluginManager(config, stateHandlerFactoryStub, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
                 pluginManager.activatePluginState(function () {
                     pluginManager.getPluginRunnersForItem(testUtils.getFixturePath(&#039;core/plugin/pluginManager/image.jpg&#039;), function (pluginRunners) {
@@ -401,7 +428,7 @@ describe(&#039;CORE --&gt; PLUGIN --&gt; PluginManager&#039;, function () {
             }
         });
         var statsJson = &#039;{&quot;dev&quot;:16777222,&quot;mode&quot;:33188,&quot;nlink&quot;:1,&quot;uid&quot;:501,&quot;gid&quot;:20,&quot;rdev&quot;:0,&quot;blksize&quot;:4096,&quot;ino&quot;:27724859,&quot;size&quot;:6985,&quot;blocks&quot;:16,&quot;atime&quot;:&quot;2014-05-18T11:59:13.000Z&quot;,&quot;mtime&quot;:&quot;2014-05-16T21:16:41.000Z&quot;,&quot;ctime&quot;:&quot;2014-05-16T21:16:41.000Z&quot;}&#039;;
-        var pluginManager = new PluginManager(config, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
+        var pluginManager = new PluginManager(config, stateHandlerFactoryStub, pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
                 pluginManager.activatePluginState(function () {
                     pluginManager.onBeforeItemAdd(testUtils.getFixturePath(&#039;core/plugin/pluginManager/image.jpg&#039;), JSON.parse(statsJson), &#039;fileHash&#039;, function (pluginData) {

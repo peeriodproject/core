@@ -14,6 +14,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
     var uploadManagerStub;
 
     var uiUpdateSpy;
+    var nwGuiStub;
 
     beforeEach(function () {
         sandbox = sinon.sandbox.create();
@@ -32,7 +33,13 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
 
         uploadManagerStub = testUtils.stubPublicApi(sandbox, UploadManager, {});
 
-        component = new UiShareManagerComponent(downloadManagerStub, uploadManagerStub);
+        nwGuiStub = {
+            Shell: {
+                showItemInFolder: sandbox.spy()
+            }
+        };
+
+        component = new UiShareManagerComponent(nwGuiStub, downloadManagerStub, uploadManagerStub);
         uiUpdateSpy = sandbox.spy();
 
         component.onUiUpdate(uiUpdateSpy);
@@ -57,7 +64,16 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
     });
 
     it('should correctly return the event names', function () {
-        component.getEventNames().should.containDeep(['addDownload', 'cancelDownload', 'removeDownload', 'updateDownloadDestination']);
+        component.getEventNames().should.containDeep([
+            'addDownload',
+            'cancelDownload',
+            'cancelUpload',
+            'removeDownload',
+            'removeUpload',
+            'showDownloadDestination',
+            'showDownload',
+            'updateDownloadDestination'
+        ]);
     });
 
     it('should correctly add the specified download', function (done) {
@@ -77,7 +93,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
                 return process.nextTick(arguments[1].bind(null, new Error('Error Message')));
             }
         });
-        component = new UiShareManagerComponent(downloadManagerStub, uploadManagerStub);
+        component = new UiShareManagerComponent(nwGuiStub, downloadManagerStub, uploadManagerStub);
 
         component.emit('addDownload', 'responseId', function (err) {
             err.should.equal('Error Message');
@@ -90,7 +106,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
     });
 
     it('should correctly start progress runner and update the ui after a the creation was confimed from the network layer', function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', { metadata: true });
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', '/destination', { metadata: true });
 
         uiUpdateSpy.calledOnce.should.be.true;
 
@@ -102,7 +118,8 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
                         hash: 'hash',
                         loaded: 0,
                         name: 'foobar.txt',
-                        status: 'CREATED'
+                        status: 'CREATED',
+                        destination: '/destination'
                     }
                 },
                 destination: {
@@ -115,7 +132,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
     });
 
     it('should correctly forward the download cancel event', function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', { metadata: true });
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', '/destination', { metadata: true });
 
         setImmediate(function () {
             component.emit('cancelDownload', 'downloadId');
@@ -128,7 +145,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
     });
 
     it('should correctly remove a download and update the UI', function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', { metadata: true });
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', '/destination', { metadata: true });
 
         setImmediate(function () {
             component.emit('removeDownload', 'downloadId');
@@ -163,8 +180,33 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
         });
     });
 
+    it('should correctly open the current download destination in the file explorer', function (done) {
+        component.emit('showDownloadDestination');
+
+        setImmediate(function () {
+            nwGuiStub.Shell.showItemInFolder.calledOnce.should.be.true;
+            nwGuiStub.Shell.showItemInFolder.getCall(0).args[0].should.equal('/destination');
+
+            done();
+        });
+    });
+
+    it('should correctly open the downloaded file in the file explorer', function (done) {
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', '/destination', { metadata: true });
+        downloadManagerStub.onDownloadEnded.getCall(0).args[0]('downloadId', 'COMPLETED');
+
+        component.emit('showDownload', 'downloadId');
+
+        setImmediate(function () {
+            nwGuiStub.Shell.showItemInFolder.calledOnce.should.be.true;
+            nwGuiStub.Shell.showItemInFolder.getCall(0).args[0].should.equal('/destination/foobar.txt');
+
+            done();
+        });
+    });
+
     it('should correctly update the status of a running download', function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', { metadata: true });
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', '/destination', { metadata: true });
         downloadManagerStub.onDownloadStatusChanged.getCall(0).args[0]('downloadId', 'new status');
 
         uiUpdateSpy.calledTwice.should.be.true;
@@ -183,7 +225,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
     });
 
     it('should correctly update the status on download ended', function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', { metadata: true });
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', '/destination', { metadata: true });
         downloadManagerStub.onDownloadEnded.getCall(0).args[0]('downloadId', 'reason');
 
         uiUpdateSpy.calledTwice.should.be.true;
@@ -202,7 +244,7 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
     });
 
     it('should update the UI in the specified interval', function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', { metadata: true });
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', '/destination', { metadata: true });
 
         var bytes = 0;
         var interval = setInterval(function () {

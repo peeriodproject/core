@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">90.57</p>
+      <p class="stat">85.18</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">61</p>
+      <p class="stat">53</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">9.45</p>
+      <p class="stat">12.53</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.30</p>
+      <p class="stat">0.33</p>
     </div>
   </div>
 </div>
@@ -91,16 +91,59 @@
 <div class="container">
   <div class="row">
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;./main.d.ts&#039; /&gt;
-var gui = require(&#039;nw.gui&#039;);
-var logger = require(&#039;./core/utils/logger/LoggerFactory&#039;).create();
+var path = require(&#039;path&#039;);
+var usage = require(&#039;usage&#039;);
+var gui;
 
+try  {
+    gui = require(&#039;nw.gui&#039;);
+} catch (e) {
+    console.log(&#039;node runner&#039;);
+}
+
+//var logger = require(&#039;./core/utils/logger/LoggerFactory&#039;).create(&#039;/Volumes/HDD/logs/&#039;);
 var App = require(&#039;./core/App&#039;);
 
 var logger = require(&#039;./core/utils/logger/LoggerFactory&#039;).create();
 
-App.setLocale(window.navigator.language);
-App.start(gui, gui.App, gui.App.dataPath, gui.Window.get());
+var language;
+try  {
+    language = window &amp;&amp; window.navigator;
+} catch (e) {
+    language = &#039;en&#039;;
+}
 
+App.setLocale(language);
+App.setConfigPath(&#039;../../config/environmentConfig.json&#039;);
+
+var guiApp = gui &amp;&amp; gui.App ? gui.App : {
+    quit: function () {
+        process.exit();
+    }
+};
+
+var dataPath = gui &amp;&amp; gui.App ? gui.App.dataPath : path.resolve(&#039;./appDataFolder&#039;);
+var guiWindow = gui &amp;&amp; gui.Window ? gui.Window.get() : null;
+
+var logUsageTimeout = null;
+
+var createUsageTimeout = function () {
+    logUsageTimeout = setTimeout(function () {
+        usage.lookup(process.pid, function (err, result) {
+            if (err) {
+                return;
+            }
+
+            logger.log(&#039;usage&#039;, &#039;current cpu and memory usage&#039;, result);
+        });
+        logUsageTimeout = null;
+
+        createUsageTimeout();
+    }, 500);
+};
+
+//createUsageTimeout();
+App.start(gui, guiApp, dataPath, guiWindow);
 /*
 // lifetime &gt; 5 min &lt; 1 day
 var minSeconds:number = 30;//300;
@@ -113,45 +156,6 @@ gui.App.quit();
 });
 }, lifeTime);
 */
-var tray = new gui.Tray({
-    title: &#039;A&#039;,
-    icon: &#039;icon.png&#039;
-}), menu = new gui.Menu();
-
-// Give it a menu
-var addFolderItem = new gui.MenuItem({
-    label: &#039;Start Query&#039;
-});
-
-addFolderItem.click = function () {
-    App.startQuery();
-};
-
-menu.append(addFolderItem);
-
-menu.append(new gui.MenuItem({
-    type: &#039;separator&#039;
-}));
-
-menu.append(new gui.MenuItem({
-    label: &#039;Quit&#039;
-}));
-menu.items[menu.items.length - 1].click = function () {
-    //console.log(&#039;bye bye&#039;);
-    App.stopQueryInterval();
-
-    App.quit();
-    /*if (process.env.UI_ENABLED) {
-    App.quit();
-    }
-    else {
-    setTimeout(function () {
-    App.quit();
-    }, 40000);
-    }*/
-};
-
-tray.menu = menu;
 //# sourceMappingURL=main.js.map</textarea>
   </div>
 </div>
