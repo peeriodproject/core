@@ -144,13 +144,14 @@ class SearchManager implements SearchManagerInterface {
 				return checkAndClose(err);
 			}
 
-			this._updateAnalysis(function (err) {
-				console.log('updated settings');
-				if (err) {
-					console.log(err);
-				}
+			setImmediate(() => {
+				this._updateAnalysis(function (err) {
+					if (err) {
+						console.log(err);
+					}
 
-				return checkAndClose(err);
+					return checkAndClose(err);
+				});
 			});
 		});
 	}

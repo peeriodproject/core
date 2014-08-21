@@ -131,13 +131,14 @@ var SearchManager = (function () {
                 return checkAndClose(err);
             }
 
-            _this._updateAnalysis(function (err) {
-                console.log('updated settings');
-                if (err) {
-                    console.log(err);
-                }
+            setImmediate(function () {
+                _this._updateAnalysis(function (err) {
+                    if (err) {
+                        console.log(err);
+                    }
 
-                return checkAndClose(err);
+                    return checkAndClose(err);
+                });
             });
         });
     };
