@@ -219,7 +219,6 @@ var TCPSocket = (function (_super) {
         this._socket.on('data', this._dataListener);
 
         this._drainListener = function () {
-            //console.log('drained');
             _this._resetHeartbeatTimeout();
         };
         this._socket.on('drain', this._drainListener);
@@ -250,7 +249,6 @@ var TCPSocket = (function (_super) {
             _this._heartbeatTimeout = null;
 
             if (_this._doKeepOpen) {
-                //console.log('writing heartbeat');
                 _this.writeBuffer(new Buffer([0x00, 0x00, 0x00, 0x00]));
             } else {
                 _this._resetHeartbeatTimeout();

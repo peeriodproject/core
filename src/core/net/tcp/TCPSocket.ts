@@ -235,7 +235,6 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		this._socket.on('data', this._dataListener);
 
 		this._drainListener = () => {
-			//console.log('drained');
 			this._resetHeartbeatTimeout();
 		};
 		this._socket.on('drain', this._drainListener);
@@ -265,7 +264,6 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			this._heartbeatTimeout = null;
 
 			if (this._doKeepOpen) {
-				//console.log('writing heartbeat');
 
 				this.writeBuffer(new Buffer([0x00, 0x00, 0x00, 0x00]));
 			}
