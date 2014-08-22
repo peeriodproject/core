@@ -118,7 +118,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 		}
 
 		global.socketCount++;
-		console.log('Number of open sockets %o', global.socketCount);
+		//console.log('Number of open sockets %o', global.socketCount);
 	}
 
 	public end (data?:any, encoding?:string):void {
@@ -217,7 +217,7 @@ class TCPSocket extends events.EventEmitter implements TCPSocketInterface {
 			});
 
 			global.socketCount--;
-			console.log('Number of open sockets %o', global.socketCount);
+			//console.log('Number of open sockets %o', global.socketCount);
 		};
 		this._socket.on('close', this._closeListener);
 

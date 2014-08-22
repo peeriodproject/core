@@ -104,7 +104,7 @@ var TCPSocket = (function (_super) {
         }
 
         global.socketCount++;
-        console.log('Number of open sockets %o', global.socketCount);
+        //console.log('Number of open sockets %o', global.socketCount);
     }
     TCPSocket.prototype.end = function (data, encoding) {
         if (this._socket && !this._preventWrite) {
@@ -201,7 +201,7 @@ var TCPSocket = (function (_super) {
             });
 
             global.socketCount--;
-            console.log('Number of open sockets %o', global.socketCount);
+            //console.log('Number of open sockets %o', global.socketCount);
         };
         this._socket.on('close', this._closeListener);
 
