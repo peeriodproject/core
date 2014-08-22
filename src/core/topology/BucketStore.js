@@ -26,7 +26,7 @@ var BucketStore = (function () {
         */
         this._databaseEnvironment = null;
         /**
-        * Indicates wheather the store is open or closed
+        * Indicates whether the store is open or closed
         *
         * @member {boolean} core.topology.BucketStore~_isOpen
         */
@@ -38,7 +38,7 @@ var BucketStore = (function () {
         */
         this._name = '';
         /**
-        * An absolute path where the database stores it's files
+        * An absolute path where the database stores its files
         *
         * @member {boolean} core.topology.BucketStore~_path
         */

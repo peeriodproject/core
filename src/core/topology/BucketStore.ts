@@ -35,7 +35,7 @@ class BucketStore implements BucketStoreInterface {
 	private _databaseEnvironment:lmdb.Env = null;
 
 	/**
-	 * Indicates wheather the store is open or closed
+	 * Indicates whether the store is open or closed
 	 *
 	 * @member {boolean} core.topology.BucketStore~_isOpen
 	 */
@@ -49,7 +49,7 @@ class BucketStore implements BucketStoreInterface {
 	private _name:string = '';
 
 	/**
-	 * An absolute path where the database stores it's files
+	 * An absolute path where the database stores its files
 	 *
 	 * @member {boolean} core.topology.BucketStore~_path
 	 */
@@ -126,7 +126,7 @@ class BucketStore implements BucketStoreInterface {
 		var bucketKeyShortcut = this._getBucketKey(bucketKey);
 		var values:ContactNodeObjectListInterface = [];
 
-		// Go the the first occourence of `bucketKey` and iterate from there
+		// Go the the first occurence of `bucketKey` and iterate from there
 		for (var found = cursor.goToRange(bucketKeyShortcut); found; found = cursor.goToNext()) {
 			// Stop the loop if the current key is no longer part of the bucket
 			if (found.indexOf(bucketKeyShortcut) !== 0) {
