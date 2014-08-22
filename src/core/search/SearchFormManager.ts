@@ -81,8 +81,8 @@ class SearchFormManager implements SearchFormManagerInterface {
 			}
 		};
 
-		var statePath:string = path.join(config.get('app.dataPath'), config.get('search.searchFormStateConfig'));
-		var fallbackStatePath:string = path.join(config.get('app.internalDataPath'), config.get('search.searchFormStateConfig'));
+		var statePath:string = path.resolve(config.get('app.dataPath'), config.get('search.searchFormStateConfig'));
+		var fallbackStatePath:string = path.resolve(config.get('app.internalDataPath'), config.get('search.searchFormStateConfig'));
 
 		this._config = config;
 		this._stateHandler = stateHandlerFactory.create(statePath, fallbackStatePath);
@@ -123,25 +123,27 @@ class SearchFormManager implements SearchFormManagerInterface {
 					// todo HERE! update query here and add filename if the plugin enabled it
 					if (!settings || settings['addItemNameToSearchQueries'] !== false) {
 						var transformedQuery:any = {
-							query: {
+							query    : {
 								bool: {
-									should: [{
-										text_phrase : {
-											itemName : {
-												boost : 2,
-												query : rawQuery,
-												analyzer : 'filename_index'
+									should: [
+										{
+											match_phrase: {
+												itemName: {
+													boost   : 2,
+													query   : rawQuery,
+													analyzer: 'itemname_index'
+												}
+											}
+										},
+										{
+											match: {
+												itemName: rawQuery
 											}
 										}
-									},
-									{
-										text : {
-											itemName : rawQuery
-										}
-									}]
+									]
 								}
 							},
-							highlight:{
+							highlight: {
 								fields: {
 									itemName: {}
 								}
@@ -167,6 +169,8 @@ class SearchFormManager implements SearchFormManagerInterface {
 						}
 
 						query = transformedQuery;
+
+						console.log(query);
 					}
 
 					return this._searchRequestManager.addQuery(query, internalCallback);

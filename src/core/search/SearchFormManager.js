@@ -63,8 +63,8 @@ var SearchFormManager = (function () {
             }
         };
 
-        var statePath = path.join(config.get('app.dataPath'), config.get('search.searchFormStateConfig'));
-        var fallbackStatePath = path.join(config.get('app.internalDataPath'), config.get('search.searchFormStateConfig'));
+        var statePath = path.resolve(config.get('app.dataPath'), config.get('search.searchFormStateConfig'));
+        var fallbackStatePath = path.resolve(config.get('app.internalDataPath'), config.get('search.searchFormStateConfig'));
 
         this._config = config;
         this._stateHandler = stateHandlerFactory.create(statePath, fallbackStatePath);
@@ -108,19 +108,20 @@ var SearchFormManager = (function () {
                                 bool: {
                                     should: [
                                         {
-                                            text_phrase: {
+                                            match_phrase: {
                                                 itemName: {
                                                     boost: 2,
                                                     query: rawQuery,
-                                                    analyzer: 'filename_index'
+                                                    analyzer: 'itemname_index'
                                                 }
                                             }
                                         },
                                         {
-                                            text: {
+                                            match: {
                                                 itemName: rawQuery
                                             }
-                                        }]
+                                        }
+                                    ]
                                 }
                             },
                             highlight: {
@@ -149,6 +150,8 @@ var SearchFormManager = (function () {
                         }
 
                         query = transformedQuery;
+
+                        console.log(query);
                     }
 
                     return _this._searchRequestManager.addQuery(query, internalCallback);

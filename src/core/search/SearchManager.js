@@ -184,13 +184,13 @@ var SearchManager = (function () {
         var settings = {
             analysis: {
                 analyzer: {
-                    filename_search: {
+                    itemname_search: {
                         tokenizer: "itemname",
                         filter: [
                             "lowercase"
                         ]
                     },
-                    filename_index: {
+                    itemname_index: {
                         tokenizer: "itemname",
                         filter: [
                             "lowercase",
@@ -253,8 +253,8 @@ var SearchManager = (function () {
             },
             itemName: {
                 type: 'string',
-                search_analyzer: "filename_search",
-                index_analyzer: "filename_index"
+                search_analyzer: "itemname_search",
+                index_analyzer: "itemname_index"
             },
             itemStats: {
                 type: 'nested',
