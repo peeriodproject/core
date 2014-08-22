@@ -1,11 +1,14 @@
 /// <reference path='../../test.d.ts' />
 require('should');
 
+var testUtils = require('../../utils/testUtils');
+
 var ObjectBucketStore = require('../../../src/core/topology/ObjectBucketStore');
 var ContactNodeFactory = require('../../../src/core/topology/ContactNodeFactory');
 
 describe('CORE --> TOPOLOGY --> ObjectBucketStore @current', function () {
     var store = null;
+    var databasePath = testUtils.getFixturePath('core/topology/bucketstore/db');
 
     var cleanAddresses = function (addresses) {
         var a = [];
@@ -17,13 +20,18 @@ describe('CORE --> TOPOLOGY --> ObjectBucketStore @current', function () {
     };
 
     beforeEach(function () {
-        store = new ObjectBucketStore();
+        testUtils.createFolder(databasePath);
+        store = new ObjectBucketStore('objectBucketStore', databasePath);
     });
 
-    afterEach(function () {
+    afterEach(function (done) {
         // close the database
         store.close();
         store = null;
+        setTimeout(function () {
+            testUtils.deleteFolderRecursive(databasePath);
+            done();
+        }, 50);
     });
 
     it('should correctly instantiate ObjectBucketStore without error', function () {
@@ -36,6 +44,22 @@ describe('CORE --> TOPOLOGY --> ObjectBucketStore @current', function () {
     it('should close the bucket store correctly', function () {
         store.close();
         store.isOpen().should.be.false;
+    });
+
+    it('should add an object, persist it, and load it in a fresh store', function (done) {
+        store.close();
+        var contact = ContactNodeFactory.createDummy();
+        store.add('foobar', contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
+
+        setTimeout(function () {
+            var anotherStore = new ObjectBucketStore('objectBucketStore', databasePath);
+
+            var exist = anotherStore.get('foobar', contact.getId().getBuffer());
+            (exist == null).should.be.false;
+            exist.lastSeen.should.equal(contact.getLastSeen());
+            (new Buffer(exist.id)).toString('hex').should.equal(contact.getId().getBuffer().toString('hex'));
+            done();
+        }, 50);
     });
 
     it('should correctly return if the specified bucket contains the id', function () {

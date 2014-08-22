@@ -194,7 +194,7 @@ var App = {
         if (this._environmentConfig.get('environment.startSearchDatabase')) {
             this._startSearchDatabase();
         } else {
-            this.startTopology(null, null, null);
+            this._startTopology(null, null, null);
         }
     },
     quit: function () {
@@ -449,7 +449,7 @@ var App = {
                 myNode = new MyNode(myId, addressList);
 
                 //bucketStore = new BucketStore('bucketstore', topologyConfig.get('topology.bucketStore.databasePath'));
-                bucketStore = new ObjectBucketStore();
+                bucketStore = new ObjectBucketStore('objectBucketStore', topologyConfig.get('topology.bucketStore.databasePath'));
                 bucketFactory = new BucketFactory();
                 contactNodeFactory = new ContactNodeFactory();
                 routingTable = new RoutingTable(topologyConfig, _this._appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory, {

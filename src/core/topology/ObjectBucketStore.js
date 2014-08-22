@@ -1,3 +1,6 @@
+var path = require('path');
+var fs = require('fs');
+
 /**
 * Simple JavaScript Object Bucket store implementation.
 *
@@ -5,7 +8,7 @@
 * @implements core.topology.BucketStoreInterface
 */
 var ObjectBucketStore = (function () {
-    function ObjectBucketStore() {
+    function ObjectBucketStore(filename, folderPath) {
         /**
         * Holds the arrays of stored contact node objects
         *
@@ -17,7 +20,16 @@ var ObjectBucketStore = (function () {
         *
         * @member {boolean} core.topology.ObjectBucketStore~_isOpen
         */
-        this._isOpen = true;
+        this._isOpen = false;
+        this._isWritingFs = false;
+        this._dbPathFs = null;
+        this._dbFolderFs = null;
+        this._isUnwritableFs = false;
+        this._persistImmediate = null;
+        this._dbPathFs = path.join(folderPath, filename);
+        this._dbFolderFs = folderPath;
+
+        this.open();
     }
     /**
     * Adds an object with the given attributes to a proided bucket (array).
@@ -44,12 +56,20 @@ var ObjectBucketStore = (function () {
 
         for (var i = 0, l = addresses.length; i < l; i++) {
             var address = addresses[i];
+            var port = address.getPort();
+            var ip = address.getIp();
+
+            if (!(port && ip))
+                continue;
 
             addressArray.push({
                 _ip: address.getIp(),
                 _port: address.getPort()
             });
         }
+
+        if (!addressArray.length)
+            return false;
 
         // add the object at the right position (most recent objects at the beginning)
         var added = false;
@@ -113,8 +133,39 @@ var ObjectBucketStore = (function () {
         return obj;
     };
 
+    ObjectBucketStore.prototype._persistDb = function () {
+        var _this = this;
+        if (this._isUnwritableFs || this._isWritingFs || (!this._isOpen)) {
+            return;
+        }
+
+        if (this._persistImmediate) {
+            clearImmediate(this._persistImmediate);
+        }
+
+        this._persistImmediate = setImmediate(function () {
+            _this._persistImmediate = null;
+            _this._isWritingFs = true;
+
+            var dataToPersist = JSON.stringify(_this._buckets);
+
+            if (dataToPersist) {
+                fs.writeFile(_this._dbPathFs, dataToPersist, { encoding: 'utf8' }, function (err) {
+                    if (err) {
+                        console.log('ObjectBucketStorePersistErr %o', err.message);
+                    }
+                    _this._isWritingFs = false;
+                });
+            }
+        });
+    };
+
     ObjectBucketStore.prototype.add = function (bucketKey, id, lastSeen, addresses) {
-        return this._addToBucket(this._getBucket(bucketKey), id, lastSeen, addresses);
+        var res = this._addToBucket(this._getBucket(bucketKey), id, lastSeen, addresses);
+
+        this._persistDb();
+
+        return res;
     };
 
     ObjectBucketStore.prototype.addAll = function (bucketKey, contacts) {
@@ -125,10 +176,16 @@ var ObjectBucketStore = (function () {
             this._addToBucket(bucket, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
         }
 
+        this._persistDb();
+
         return true;
     };
 
     ObjectBucketStore.prototype.close = function () {
+        if (!this._isOpen)
+            return;
+
+        this._persistDb();
         this._isOpen = false;
     };
 
@@ -221,6 +278,25 @@ var ObjectBucketStore = (function () {
     };
 
     ObjectBucketStore.prototype.open = function () {
+        if (this._isOpen)
+            return;
+
+        if (!fs.existsSync(this._dbFolderFs)) {
+            this._isUnwritableFs = true;
+        } else if (fs.existsSync(this._dbPathFs)) {
+            try  {
+                var contents = fs.readFileSync(this._dbPathFs, { encoding: 'utf8' });
+                if (contents) {
+                    var existingBuckets = JSON.parse(contents);
+                    if (existingBuckets) {
+                        this._buckets = existingBuckets;
+                    }
+                }
+            } catch (e) {
+                fs.unlinkSync(this._dbPathFs);
+            }
+        }
+
         this._isOpen = true;
     };
 
@@ -243,6 +319,8 @@ var ObjectBucketStore = (function () {
         if (spliceIndex !== undefined) {
             bucket.splice(spliceIndex, 1);
         }
+
+        this._persistDb();
 
         return true;
     };

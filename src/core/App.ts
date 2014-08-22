@@ -218,7 +218,7 @@ var App = {
 			this._startSearchDatabase();
 		}
 		else {
-			this.startTopology(null, null, null);
+			this._startTopology(null, null, null);
 		}
 	},
 
@@ -481,7 +481,7 @@ var App = {
 				myNode = new MyNode(myId, addressList);
 
 				//bucketStore = new BucketStore('bucketstore', topologyConfig.get('topology.bucketStore.databasePath'));
-				bucketStore = new ObjectBucketStore();
+				bucketStore = new ObjectBucketStore('objectBucketStore', topologyConfig.get('topology.bucketStore.databasePath'));
 				bucketFactory = new BucketFactory();
 				contactNodeFactory = new ContactNodeFactory();
 				routingTable = new RoutingTable(topologyConfig, this._appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory, {

@@ -1,3 +1,6 @@
+import path = require('path');
+import fs = require('fs');
+
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
 import ContactNodeObjectInterface = require('./interfaces/ContactNodeObjectInterface');
 import ContactNodeObjectListInterface = require('./interfaces/ContactNodeObjectListInterface');
@@ -24,7 +27,24 @@ class ObjectBucketStore implements BucketStoreInterface {
 	 *
 	 * @member {boolean} core.topology.ObjectBucketStore~_isOpen
 	 */
-	private _isOpen:boolean = true;
+	private _isOpen:boolean = false;
+
+	private _isWritingFs:boolean = false;
+
+	private _dbPathFs:string = null;
+
+	private _dbFolderFs:string = null;
+
+	private _isUnwritableFs:boolean = false;
+
+	private _persistImmediate:any = null;
+
+	public constructor (filename:string, folderPath:string) {
+		this._dbPathFs = path.join(folderPath, filename);
+		this._dbFolderFs = folderPath;
+
+		this.open();
+	}
 
 	/**
 	 * Adds an object with the given attributes to a proided bucket (array).
@@ -52,12 +72,18 @@ class ObjectBucketStore implements BucketStoreInterface {
 		// build up the addresses
 		for (var i = 0, l = addresses.length; i < l; i++) {
 			var address:ContactNodeAddressInterface = addresses[i];
+			var port:number = address.getPort();
+			var ip:string = address.getIp();
+
+			if (!(port && ip)) continue;
 
 			addressArray.push({
 				_ip  : address.getIp(),
 				_port: address.getPort()
 			});
 		}
+
+		if (!addressArray.length) return false;
 
 		// add the object at the right position (most recent objects at the beginning)
 		var added:boolean = false;
@@ -122,8 +148,39 @@ class ObjectBucketStore implements BucketStoreInterface {
 		return obj;
 	}
 
+	private _persistDb ():void {
+		if (this._isUnwritableFs || this._isWritingFs || (!this._isOpen)) {
+			return;
+		}
+
+		if (this._persistImmediate) {
+			clearImmediate(this._persistImmediate);
+		}
+
+		this._persistImmediate = setImmediate(() => {
+			this._persistImmediate = null;
+			this._isWritingFs = true;
+
+			var dataToPersist:string = JSON.stringify(this._buckets);
+
+			if (dataToPersist) {
+				fs.writeFile(this._dbPathFs, dataToPersist, {encoding: 'utf8'}, (err:Error) => {
+					if (err) {
+						console.log('ObjectBucketStorePersistErr %o', err.message);
+					}
+					this._isWritingFs = false;
+				});
+			}
+		});
+
+	}
+
 	public add (bucketKey:string, id:Buffer, lastSeen:number, addresses:any):boolean {
-		return this._addToBucket(this._getBucket(bucketKey), id, lastSeen, addresses);
+		var res:boolean = this._addToBucket(this._getBucket(bucketKey), id, lastSeen, addresses);
+
+		this._persistDb();
+
+		return res;
 	}
 
 	public addAll (bucketKey:string, contacts:any):boolean {
@@ -134,10 +191,15 @@ class ObjectBucketStore implements BucketStoreInterface {
 			this._addToBucket(bucket, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
 		}
 
+		this._persistDb();
+
 		return true;
 	}
 
 	public close ():void {
+		if (!this._isOpen) return;
+
+		this._persistDb();
 		this._isOpen = false;
 	}
 
@@ -227,6 +289,28 @@ class ObjectBucketStore implements BucketStoreInterface {
 	}
 
 	public open ():void {
+		if (this._isOpen) return;
+
+		if (!fs.existsSync(this._dbFolderFs)) {
+			this._isUnwritableFs = true;
+		}
+		// check if the database file exists
+		else if (fs.existsSync(this._dbPathFs)) {
+			// load the contents from the file
+			try {
+				var contents:string = fs.readFileSync(this._dbPathFs, {encoding: 'utf8'});
+				if (contents) {
+					var existingBuckets = JSON.parse(contents);
+					if (existingBuckets) {
+						this._buckets = existingBuckets;
+					}
+				}
+			}
+			catch (e) {
+				fs.unlinkSync(this._dbPathFs);
+			}
+		}
+
 		this._isOpen = true;
 	}
 
@@ -248,6 +332,8 @@ class ObjectBucketStore implements BucketStoreInterface {
 		if (spliceIndex !== undefined) {
 			bucket.splice(spliceIndex, 1);
 		}
+
+		this._persistDb();
 
 		return true;
 	}
