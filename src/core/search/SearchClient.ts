@@ -610,8 +610,8 @@ class SearchClient implements SearchClientInterface {
 				requestTimeout: this._config.get('search.requestTimeoutInSeconds') * 1000,
 				log           : {
 					type : 'file',
-					//level: ['error', 'warning'],
-					level: 'trace',
+					level: ['error', 'warning'],
+					//level: 'trace',
 					path : path.join(this._options.logsPath, this._options.logsFileName)
 				}
 			});

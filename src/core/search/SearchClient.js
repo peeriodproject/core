@@ -594,8 +594,8 @@ var SearchClient = (function () {
                 requestTimeout: _this._config.get('search.requestTimeoutInSeconds') * 1000,
                 log: {
                     type: 'file',
-                    //level: ['error', 'warning'],
-                    level: 'trace',
+                    level: ['error', 'warning'],
+                    //level: 'trace',
                     path: path.join(_this._options.logsPath, _this._options.logsFileName)
                 }
             });
