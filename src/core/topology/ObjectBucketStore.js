@@ -6,6 +6,9 @@ var fs = require('fs');
 *
 * @class core.topology.ObjectBucketStore
 * @implements core.topology.BucketStoreInterface
+*
+* @param {string} filename The name of the file to which the buckets should be persisted.
+* @param {string} folderPath The path of the folder in which the persisted file should be stores / is located.
 */
 var ObjectBucketStore = (function () {
     function ObjectBucketStore(filename, folderPath) {
@@ -16,15 +19,41 @@ var ObjectBucketStore = (function () {
         */
         this._buckets = {};
         /**
+        * The path of the folder in which to store the persisted buckets.
+        *
+        * @member {string} core.topology.ObjectBucketStore~_dbFolderFs
+        */
+        this._dbFolderFs = null;
+        /**
+        * The full path to the file to which the buckets are persisted.
+        *
+        * @member {string} core.topology.ObjectBucketStore~_dbPathFs
+        */
+        this._dbPathFs = null;
+        /**
         * Indicates if the store is open
         *
         * @member {boolean} core.topology.ObjectBucketStore~_isOpen
         */
         this._isOpen = false;
+        /**
+        * Indicates if the store is currently written to file.
+        *
+        * @member {boolean} core.topology.ObjectBucketStore~_isWritingFs
+        */
         this._isWritingFs = false;
-        this._dbPathFs = null;
-        this._dbFolderFs = null;
+        /**
+        * Indicates whether the buckets can be persisted to a file. This is false
+        * if e.g. the db folder path does not exist.
+        *
+        * @member {boolean} core.topology.ObjectBucketStore~_isUnwritableFs
+        */
         this._isUnwritableFs = false;
+        /**
+        * Stores the `setImmediate`-Object to delay writes and especially prevent queuing of unnecessary file writes.
+        *
+        * @member {any} core.topology.ObjectBucketStore~_persistImmediate
+        */
         this._persistImmediate = null;
         this._dbPathFs = path.join(folderPath, filename);
         this._dbFolderFs = folderPath;
@@ -133,6 +162,13 @@ var ObjectBucketStore = (function () {
         return obj;
     };
 
+    /**
+    * Persists a JSON string representation of the current bucket state to a file.
+    * File writes are scheduled after I/O callback via `setImmediate`. To prevent an
+    * unnecessary high amount of file writes, only one write-cycle is scheduled per event loop.
+    *
+    * @method core.topology.ObjectBucketStore~_persistDb
+    */
     ObjectBucketStore.prototype._persistDb = function () {
         var _this = this;
         if (this._isUnwritableFs || this._isWritingFs || (!this._isOpen)) {

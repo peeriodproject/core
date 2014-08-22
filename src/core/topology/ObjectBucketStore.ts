@@ -12,6 +12,9 @@ import ContactNodeAddressListInterface = require('./interfaces/ContactNodeAddres
  *
  * @class core.topology.ObjectBucketStore
  * @implements core.topology.BucketStoreInterface
+ *
+ * @param {string} filename The name of the file to which the buckets should be persisted.
+ * @param {string} folderPath The path of the folder in which the persisted file should be stores / is located.
  */
 class ObjectBucketStore implements BucketStoreInterface {
 
@@ -23,20 +26,46 @@ class ObjectBucketStore implements BucketStoreInterface {
 	private _buckets:{[bucketKey:string]:ContactNodeObjectListInterface} = {};
 
 	/**
+	 * The path of the folder in which to store the persisted buckets.
+	 *
+	 * @member {string} core.topology.ObjectBucketStore~_dbFolderFs
+	 */
+	private _dbFolderFs:string = null;
+
+	/**
+	 * The full path to the file to which the buckets are persisted.
+	 *
+	 * @member {string} core.topology.ObjectBucketStore~_dbPathFs
+	 */
+	private _dbPathFs:string = null;
+
+	/**
 	 * Indicates if the store is open
 	 *
 	 * @member {boolean} core.topology.ObjectBucketStore~_isOpen
 	 */
 	private _isOpen:boolean = false;
 
+	/**
+	 * Indicates if the store is currently written to file.
+	 *
+	 * @member {boolean} core.topology.ObjectBucketStore~_isWritingFs
+	 */
 	private _isWritingFs:boolean = false;
 
-	private _dbPathFs:string = null;
-
-	private _dbFolderFs:string = null;
-
+	/**
+	 * Indicates whether the buckets can be persisted to a file. This is false
+	 * if e.g. the db folder path does not exist.
+	 *
+	 * @member {boolean} core.topology.ObjectBucketStore~_isUnwritableFs
+	 */
 	private _isUnwritableFs:boolean = false;
 
+	/**
+	 * Stores the `setImmediate`-Object to delay writes and especially prevent queuing of unnecessary file writes.
+	 *
+	 * @member {any} core.topology.ObjectBucketStore~_persistImmediate
+	 */
 	private _persistImmediate:any = null;
 
 	public constructor (filename:string, folderPath:string) {
@@ -148,6 +177,13 @@ class ObjectBucketStore implements BucketStoreInterface {
 		return obj;
 	}
 
+	/**
+	 * Persists a JSON string representation of the current bucket state to a file.
+	 * File writes are scheduled after I/O callback via `setImmediate`. To prevent an
+	 * unnecessary high amount of file writes, only one write-cycle is scheduled per event loop.
+	 *
+	 * @method core.topology.ObjectBucketStore~_persistDb
+	 */
 	private _persistDb ():void {
 		if (this._isUnwritableFs || this._isWritingFs || (!this._isOpen)) {
 			return;
