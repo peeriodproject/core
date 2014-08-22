@@ -517,7 +517,7 @@ class IndexManager implements IndexManagerInterface {
 	 */
 	private _startIndexRunner ():void {
 		if (this._isIndexing) {
-			this._indexRunnerTimeout = setTimeout(() => {
+			this._indexRunnerTimeout = global.setTimeout(() => {
 				this._indexRunner();
 			}, this._indexRunnerDelayInMilliSeconds);
 		}
@@ -530,7 +530,8 @@ class IndexManager implements IndexManagerInterface {
 	 */
 	private _stopIndexRunner ():void {
 		if (this._indexRunnerTimeout) {
-			clearTimeout(this._indexRunnerTimeout);
+			global.clearTimeout(this._indexRunnerTimeout);
+			this._indexRunnerTimeout = null;
 		}
 	}
 }

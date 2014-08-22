@@ -492,7 +492,7 @@ var IndexManager = (function () {
     IndexManager.prototype._startIndexRunner = function () {
         var _this = this;
         if (this._isIndexing) {
-            this._indexRunnerTimeout = setTimeout(function () {
+            this._indexRunnerTimeout = global.setTimeout(function () {
                 _this._indexRunner();
             }, this._indexRunnerDelayInMilliSeconds);
         }
@@ -505,7 +505,8 @@ var IndexManager = (function () {
     */
     IndexManager.prototype._stopIndexRunner = function () {
         if (this._indexRunnerTimeout) {
-            clearTimeout(this._indexRunnerTimeout);
+            global.clearTimeout(this._indexRunnerTimeout);
+            this._indexRunnerTimeout = null;
         }
     };
     return IndexManager;
