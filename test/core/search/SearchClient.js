@@ -13,7 +13,7 @@ var SearchItem = require('../../../src/core/search/SearchItem');
 var SearchItemFactory = require('../../../src/core/search/SearchItemFactory');
 var SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
-describe('CORE --> SEARCH --> SearchClient', function () {
+describe('CORE --> SEARCH --> SearchClient @prio', function () {
     var sandbox;
     var config;
     var appQuitHandlerStub;
@@ -131,11 +131,13 @@ describe('CORE --> SEARCH --> SearchClient', function () {
             }
         };
 
-        searchClient.itemExistsById('randomId', function (exists) {
+        searchClient.itemExistsById('randomId', function (err, exists) {
+            (err === null).should.be.true;
             exists.should.be.false;
 
             searchClient.addItem(dataToIndex, function (err, ids) {
-                searchClient.itemExistsById(ids[0], function (exists) {
+                searchClient.itemExistsById(ids[0], function (err, exists) {
+                    (err === null).should.be.true;
                     exists.should.be.true;
 
                     done();
@@ -206,7 +208,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
             pluginidentifier2: dataToIndex
         };
 
-        searchClient.itemExistsById('randomId', function (exists) {
+        searchClient.itemExistsById('randomId', function (err, exists) {
             exists.should.be.false;
 
             searchClient.addItem(pluginDataToIndex, function (err, ids) {

@@ -70,6 +70,13 @@ class SearchClient implements SearchClientInterface {
 	private _isOpen = false;
 
 	/**
+	 * Stores the additional settings that will applied to every created index.
+	 *
+	 * @member {Object} core.search.SearchClient~_indexSettings
+	 */
+	private _indexSettings:Object = null;
+
+	/**
 	 * The mix of the passed in options object and the defaults
 	 *
 	 * @member {core.utils.SearchClientOptions} core.search.SearchClient~_options
@@ -184,7 +191,11 @@ class SearchClient implements SearchClientInterface {
 		}
 
 		// todo get data from plugin indexes. check each plugin individual and update or add data
-		this.itemExists(objectToIndex[pluginIdentifiers[0]].itemPath, (exists:boolean, item:SearchItemInterface) => {
+		this.itemExists(objectToIndex[pluginIdentifiers[0]].itemPath, (err:Error, exists:boolean, item:SearchItemInterface) => {
+			if (err) {
+				return callback(err, []);
+			}
+
 			var existingIdentifiers:Array<string> = item ? item.getPluginIdentifiers() : [];
 			var existingIdentifiersLength:number = existingIdentifiers.length;
 
@@ -211,7 +222,7 @@ class SearchClient implements SearchClientInterface {
 		var internalCallback:Function = callback || function () {
 		};
 
-		this._createIndex(this._indexName, null, (err:Error) => {
+		this._createIndex(this._indexName, null, null, (err:Error) => {
 			var map = null;
 			if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
 				// wrap mapping in type root
@@ -272,28 +283,72 @@ class SearchClient implements SearchClientInterface {
 		var internalCallback = callback || function (err:Error) {
 		};
 
+		// todo settings and default mapping data should be handled by an external class as we're using it in the SearchManager as well!
 		var mapping = {
 			_default_: {
-				meta      : {
-					type : 'object',
-					index: 'no'
-				},
 				_timestamp: {
 					enabled: true,
 					store  : true
+				},
+				properties: {
+					itemName : {
+						type           : 'string',
+						search_analyzer: "itemname_search",
+						index_analyzer : "itemname_index"
+						//store: 'yes'
+					},
+					meta    : {
+						type : 'object',
+						index: 'no'
+					}
+				}
+			}
+		};
+
+		var settings = {
+			analysis: {
+				analyzer : {
+					itemname_search: {
+						tokenizer: "itemname",
+						filter   : [
+							"lowercase"
+						]
+					},
+					itemname_index : {
+						tokenizer: "itemname",
+						filter   : [
+							"lowercase",
+							"edge_ngram"
+						]
+					}
+				},
+				tokenizer: {
+					itemname: {
+						pattern: "[^\\p{L}\\d]+",
+						type   : "pattern"
+					}
+				},
+				filter   : {
+					edge_ngram: {
+						side    : "front",
+						max_gram: 20,
+						min_gram: 1,
+						type    : "edgeNGram"
+					}
 				}
 			}
 		};
 
 		indexName = indexName.toLowerCase();
 
-		this._createIndex(indexName, mapping, (err:Error) => {
+		this._createIndex(indexName, mapping, settings, (err:Error) => {
 			if (err) {
 				console.error(err);
 				return internalCallback(err);
 			}
 
-			return internalCallback(err);
+			return internalCallback(null);
+			//return this._updateSettings(indexName, internalCallback);
 		});
 	}
 
@@ -500,7 +555,7 @@ class SearchClient implements SearchClientInterface {
 		return process.nextTick(callback.bind(null, null, this._isOpen));
 	}
 
-	public itemExists (pathToIndex:string, callback:(exists:boolean, item:SearchItemInterface) => void):void {
+	public itemExists (pathToIndex:string, callback:(err:Error, exists:boolean, item:SearchItemInterface) => void):void {
 		var query = {
 			query  : {
 				match: {
@@ -519,19 +574,21 @@ class SearchClient implements SearchClientInterface {
 
 			exists = item !== null ? true : false;
 
-			return callback(exists, item);
+			return callback(err, exists, item);
 		});
 
 		//return process.nextTick(callback.bind(null, null, null));
 	}
 
-	public itemExistsById (id:string, callback:(exists:boolean) => void):void {
+	public itemExistsById (id:string, callback:(err:Error, exists:boolean) => void):void {
 		this._client.exists({
 			index: this._indexName,
 			type : '_all',
 			id   : id
 		}, function (err, exists) {
-			return callback(exists === true);
+			err = err || null;
+
+			return callback(err, exists === true);
 		});
 	}
 
@@ -553,7 +610,8 @@ class SearchClient implements SearchClientInterface {
 				requestTimeout: this._config.get('search.requestTimeoutInSeconds') * 1000,
 				log           : {
 					type : 'file',
-					level: ['error', 'warning'],//'trace',
+					//level: ['error', 'warning'],
+					level: 'trace',
 					path : path.join(this._options.logsPath, this._options.logsFileName)
 				}
 			});
@@ -566,7 +624,7 @@ class SearchClient implements SearchClientInterface {
 					return internalCallback(err);
 				}
 
-				this._createIndex(this._indexName, null, (err:Error) => {
+				this._createIndex(this._indexName, null, this._indexSettings, (err:Error) => {
 					err = err || null;
 
 					if (!err) {
@@ -605,28 +663,9 @@ class SearchClient implements SearchClientInterface {
 	}
 
 	public updateSettings (settings:Object, callback:(err:Error) => any):void {
-		this._client.indices.close({
-			index: this._indexName
-		}, (err:Error) => {
-			if (err) {
-				return callback(err);
-			}
+		this._indexSettings = settings;
 
-			this._client.indices.putSettings({
-				index: this._indexName,
-				body : settings
-			}, (err:Error) => {
-				if (err) {
-					return callback(err);
-				}
-
-				this._client.indices.open({
-					index: this._indexName
-				}, function (err:Error) {
-					return callback(err);
-				});
-			});
-		});
+		this._updateSettings(this._indexName, callback);
 	}
 
 	public typeExists (type:string, callback:(exists:boolean) => any):void {
@@ -703,17 +742,19 @@ class SearchClient implements SearchClientInterface {
 	 *
 	 * @param {string} indexName
 	 * @param {Object|Null} mapping The optional mapping to stick to the index.
+	 * * @param {Object|Null} settings The optional settings to stick to the index.
 	 * @param {Function} callback
 	 */
-	private _createIndex (indexName:string, mapping:Object, callback:(err:Error) => any):void {
+	private _createIndex (indexName:string, mapping:Object, settings:Object, callback:(err:Error) => any):void {
 		var params:Object = {
 			index: indexName
 		};
 
-		if (mapping) {
+		if (mapping || settings) {
 			params = ObjectUtils.extend(params, {
 				body: {
-					mappings: mapping
+					mappings: mapping,
+					settings: settings
 				}
 			});
 		}
@@ -839,6 +880,31 @@ class SearchClient implements SearchClientInterface {
 	 */
 	private _isValidResponse (err:Error, status:number, errorNameToIgnore:string):boolean {
 		return ((status >= 200 && status < 300) || (status >= 400 && err && err.message.indexOf(errorNameToIgnore) === 0)) ? true : false;
+	}
+
+	private _updateSettings (indexName:string, callback:(err:Error) => void):void {
+		this._client.indices.close({
+			index: indexName
+		}, (err:Error) => {
+			if (err) {
+				return callback(err);
+			}
+
+			this._client.indices.putSettings({
+				index: indexName,
+				body : this._indexSettings
+			}, (err:Error) => {
+				if (err) {
+					return callback(err);
+				}
+
+				this._client.indices.open({
+					index: indexName
+				}, function (err:Error) {
+					return callback(err);
+				});
+			});
+		});
 	}
 
 }

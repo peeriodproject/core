@@ -181,7 +181,7 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 * @param {string} pathToIndex
 	 * @param {Function} callback
 	 */
-	itemExists (pathToIndex:string, callback:(exists:boolean, item:SearchItemInterface) => void):void;
+	itemExists (pathToIndex:string, callback:(err:Error, exists:boolean, item:SearchItemInterface) => void):void;
 
 	/**
 	 * Returns whether the id exists across all plugin indicies or not.
@@ -189,7 +189,7 @@ interface SearchClientInterface extends ClosableAsyncInterface {
 	 * @param {string} id
 	 * @param {Function} callback
 	 */
-	itemExistsById (id:string, callback:(exists:boolean) => void):void;
+	itemExistsById (id:string, callback:(err:Error, exists:boolean) => void):void;
 
 	/**
 	 * @method core.search.SearchClientInterface#search

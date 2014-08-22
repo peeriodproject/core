@@ -18,7 +18,7 @@ import SearchItemFactory = require('../../../src/core/search/SearchItemFactory')
 import SearchStoreFactory = require('../../../src/core/search/SearchStoreFactory');
 
 
-describe('CORE --> SEARCH --> SearchClient', function () {
+describe('CORE --> SEARCH --> SearchClient @prio', function () {
 	var sandbox:SinonSandbox;
 	var config:any;
 	var appQuitHandlerStub:any;
@@ -145,11 +145,13 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 			}
 		};
 
-		searchClient.itemExistsById('randomId', function (exists) {
+		searchClient.itemExistsById('randomId', function (err:Error, exists:boolean) {
+			(err === null).should.be.true;
 			exists.should.be.false;
 
 			searchClient.addItem(dataToIndex, function (err:Error, ids:SearchItemIdListInterface) {
-				searchClient.itemExistsById(ids[0], function (exists) {
+				searchClient.itemExistsById(ids[0], function (err:Error, exists:boolean) {
+					(err === null).should.be.true;
 					exists.should.be.true;
 
 					done();
@@ -221,7 +223,7 @@ describe('CORE --> SEARCH --> SearchClient', function () {
 			pluginidentifier2: dataToIndex
 		};
 
-		searchClient.itemExistsById('randomId', function (exists) {
+		searchClient.itemExistsById('randomId', function (err:Error, exists:boolean) {
 			exists.should.be.false;
 
 			searchClient.addItem(pluginDataToIndex, function (err:Error, ids:SearchItemIdListInterface) {

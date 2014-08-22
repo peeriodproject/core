@@ -54,6 +54,12 @@ var SearchClient = (function () {
         */
         this._isOpen = false;
         /**
+        * Stores the additional settings that will applied to every created index.
+        *
+        * @member {Object} core.search.SearchClient~_indexSettings
+        */
+        this._indexSettings = null;
+        /**
         * The mix of the passed in options object and the defaults
         *
         * @member {core.utils.SearchClientOptions} core.search.SearchClient~_options
@@ -164,7 +170,11 @@ var SearchClient = (function () {
         }
 
         // todo get data from plugin indexes. check each plugin individual and update or add data
-        this.itemExists(objectToIndex[pluginIdentifiers[0]].itemPath, function (exists, item) {
+        this.itemExists(objectToIndex[pluginIdentifiers[0]].itemPath, function (err, exists, item) {
+            if (err) {
+                return callback(err, []);
+            }
+
             var existingIdentifiers = item ? item.getPluginIdentifiers() : [];
             var existingIdentifiersLength = existingIdentifiers.length;
 
@@ -192,7 +202,7 @@ var SearchClient = (function () {
         var internalCallback = callback || function () {
         };
 
-        this._createIndex(this._indexName, null, function (err) {
+        this._createIndex(this._indexName, null, null, function (err) {
             var map = null;
             if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
                 // wrap mapping in type root
@@ -253,28 +263,71 @@ var SearchClient = (function () {
         var internalCallback = callback || function (err) {
         };
 
+        // todo settings and default mapping data should be handled by an external class as we're using it in the SearchManager as well!
         var mapping = {
             _default_: {
-                meta: {
-                    type: 'object',
-                    index: 'no'
-                },
                 _timestamp: {
                     enabled: true,
                     store: true
+                },
+                properties: {
+                    itemName: {
+                        type: 'string',
+                        search_analyzer: "itemname_search",
+                        index_analyzer: "itemname_index"
+                    },
+                    meta: {
+                        type: 'object',
+                        index: 'no'
+                    }
+                }
+            }
+        };
+
+        var settings = {
+            analysis: {
+                analyzer: {
+                    itemname_search: {
+                        tokenizer: "itemname",
+                        filter: [
+                            "lowercase"
+                        ]
+                    },
+                    itemname_index: {
+                        tokenizer: "itemname",
+                        filter: [
+                            "lowercase",
+                            "edge_ngram"
+                        ]
+                    }
+                },
+                tokenizer: {
+                    itemname: {
+                        pattern: "[^\\p{L}\\d]+",
+                        type: "pattern"
+                    }
+                },
+                filter: {
+                    edge_ngram: {
+                        side: "front",
+                        max_gram: 20,
+                        min_gram: 1,
+                        type: "edgeNGram"
+                    }
                 }
             }
         };
 
         indexName = indexName.toLowerCase();
 
-        this._createIndex(indexName, mapping, function (err) {
+        this._createIndex(indexName, mapping, settings, function (err) {
             if (err) {
                 console.error(err);
                 return internalCallback(err);
             }
 
-            return internalCallback(err);
+            return internalCallback(null);
+            //return this._updateSettings(indexName, internalCallback);
         });
     };
 
@@ -505,7 +558,7 @@ var SearchClient = (function () {
 
             exists = item !== null ? true : false;
 
-            return callback(exists, item);
+            return callback(err, exists, item);
         });
         //return process.nextTick(callback.bind(null, null, null));
     };
@@ -516,7 +569,9 @@ var SearchClient = (function () {
             type: '_all',
             id: id
         }, function (err, exists) {
-            return callback(exists === true);
+            err = err || null;
+
+            return callback(err, exists === true);
         });
     };
 
@@ -539,7 +594,8 @@ var SearchClient = (function () {
                 requestTimeout: _this._config.get('search.requestTimeoutInSeconds') * 1000,
                 log: {
                     type: 'file',
-                    level: ['error', 'warning'],
+                    //level: ['error', 'warning'],
+                    level: 'trace',
                     path: path.join(_this._options.logsPath, _this._options.logsFileName)
                 }
             });
@@ -552,7 +608,7 @@ var SearchClient = (function () {
                     return internalCallback(err);
                 }
 
-                _this._createIndex(_this._indexName, null, function (err) {
+                _this._createIndex(_this._indexName, null, _this._indexSettings, function (err) {
                     err = err || null;
 
                     if (!err) {
@@ -591,29 +647,9 @@ var SearchClient = (function () {
     };
 
     SearchClient.prototype.updateSettings = function (settings, callback) {
-        var _this = this;
-        this._client.indices.close({
-            index: this._indexName
-        }, function (err) {
-            if (err) {
-                return callback(err);
-            }
+        this._indexSettings = settings;
 
-            _this._client.indices.putSettings({
-                index: _this._indexName,
-                body: settings
-            }, function (err) {
-                if (err) {
-                    return callback(err);
-                }
-
-                _this._client.indices.open({
-                    index: _this._indexName
-                }, function (err) {
-                    return callback(err);
-                });
-            });
-        });
+        this._updateSettings(this._indexName, callback);
     };
 
     SearchClient.prototype.typeExists = function (type, callback) {
@@ -688,18 +724,20 @@ var SearchClient = (function () {
     *
     * @param {string} indexName
     * @param {Object|Null} mapping The optional mapping to stick to the index.
+    * * @param {Object|Null} settings The optional settings to stick to the index.
     * @param {Function} callback
     */
-    SearchClient.prototype._createIndex = function (indexName, mapping, callback) {
+    SearchClient.prototype._createIndex = function (indexName, mapping, settings, callback) {
         var _this = this;
         var params = {
             index: indexName
         };
 
-        if (mapping) {
+        if (mapping || settings) {
             params = ObjectUtils.extend(params, {
                 body: {
-                    mappings: mapping
+                    mappings: mapping,
+                    settings: settings
                 }
             });
         }
@@ -824,6 +862,32 @@ var SearchClient = (function () {
     */
     SearchClient.prototype._isValidResponse = function (err, status, errorNameToIgnore) {
         return ((status >= 200 && status < 300) || (status >= 400 && err && err.message.indexOf(errorNameToIgnore) === 0)) ? true : false;
+    };
+
+    SearchClient.prototype._updateSettings = function (indexName, callback) {
+        var _this = this;
+        this._client.indices.close({
+            index: indexName
+        }, function (err) {
+            if (err) {
+                return callback(err);
+            }
+
+            _this._client.indices.putSettings({
+                index: indexName,
+                body: _this._indexSettings
+            }, function (err) {
+                if (err) {
+                    return callback(err);
+                }
+
+                _this._client.indices.open({
+                    index: indexName
+                }, function (err) {
+                    return callback(err);
+                });
+            });
+        });
     };
     return SearchClient;
 })();
