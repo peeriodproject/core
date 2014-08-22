@@ -51,7 +51,7 @@ var NodePublisherFactory = (function () {
     NodePublisherFactory.prototype.createPublisherList = function (callback) {
         var _this = this;
         var statePath = path.resolve(this._appConfig.get('app.dataPath'), this._protocolConfig.get('protocol.nodeDiscovery.nodeSeekerFactoryStateConfig'));
-        var fallbackStatePath = path.resolve(this._appConfig.get('app.dataPath'), this._protocolConfig.get('protocol.nodeDiscovery.nodeSeekerFactoryStateConfig'));
+        var fallbackStatePath = path.resolve(this._appConfig.get('app.internalDataPath'), this._protocolConfig.get('protocol.nodeDiscovery.nodeSeekerFactoryStateConfig'));
 
         this._nodeDiscoveryState = this._jsonStateHandlerFactory.create(statePath, fallbackStatePath);
         this._nodeDiscoveryState.load(function (err, state) {

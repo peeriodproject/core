@@ -23,6 +23,10 @@ describe('CORE --> PROTOCOL --> NODE DISOVERY --> NodePublisherFactory', functio
             get: function (what) {
                 if (what === 'app.dataPath')
                     return testUtils.getFixturePath('core/config');
+                if (what === 'app.internalDataPath')
+                    return testUtils.getFixturePath('core/config');
+                if (what === 'protocol.nodeDiscovery.nodeSeekerFactoryStateConfig')
+                    return 'nodeDiscovery.json';
                 if (what === 'protocol.nodeDiscovery.republishInSeconds')
                     return 3;
             }
@@ -42,6 +46,10 @@ describe('CORE --> PROTOCOL --> NODE DISOVERY --> NodePublisherFactory', functio
             get: function (what) {
                 if (what === 'app.dataPath')
                     return testUtils.getFixturePath('core/config/foo/');
+                if (what === 'app.internalDataPath')
+                    return testUtils.getFixturePath('core/config/foo/');
+                if (what === 'protocol.nodeDiscovery.nodeSeekerFactoryStateConfig')
+                    return 'nodeDiscovery.json';
                 if (what === 'protocol.nodeDiscovery.republishInSeconds')
                     return 3;
             }

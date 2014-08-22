@@ -24,6 +24,8 @@ describe('CORE --> PROTOCOL --> NODE DISOVERY --> NodePublisherFactory', functio
 		config = testUtils.stubPublicApi(sandbox, ObjectConfig, {
 			get: function (what):any {
 				if (what === 'app.dataPath') return testUtils.getFixturePath('core/config');
+				if (what === 'app.internalDataPath') return testUtils.getFixturePath('core/config');
+				if (what === 'protocol.nodeDiscovery.nodeSeekerFactoryStateConfig') return 'nodeDiscovery.json';
 				if (what === 'protocol.nodeDiscovery.republishInSeconds') return 3;
 			}
 		});
@@ -40,6 +42,8 @@ describe('CORE --> PROTOCOL --> NODE DISOVERY --> NodePublisherFactory', functio
 		var cStub = testUtils.stubPublicApi(sandbox, ObjectConfig, {
 			get: function (what):any {
 				if (what === 'app.dataPath') return testUtils.getFixturePath('core/config/foo/');
+				if (what === 'app.internalDataPath') return testUtils.getFixturePath('core/config/foo/');
+				if (what === 'protocol.nodeDiscovery.nodeSeekerFactoryStateConfig') return 'nodeDiscovery.json';
 				if (what === 'protocol.nodeDiscovery.republishInSeconds') return 3;
 			}
 		});

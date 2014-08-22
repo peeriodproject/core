@@ -68,7 +68,7 @@ class NodePublisherFactory implements NodePublisherFactoryInterface {
 
 	public createPublisherList (callback:(list:NodePublisherList) => any):void {
 		var statePath:string = path.resolve(this._appConfig.get('app.dataPath'), this._protocolConfig.get('protocol.nodeDiscovery.nodeSeekerFactoryStateConfig'));
-		var fallbackStatePath:string = path.resolve(this._appConfig.get('app.dataPath'), this._protocolConfig.get('protocol.nodeDiscovery.nodeSeekerFactoryStateConfig'));
+		var fallbackStatePath:string = path.resolve(this._appConfig.get('app.internalDataPath'), this._protocolConfig.get('protocol.nodeDiscovery.nodeSeekerFactoryStateConfig'));
 
 
 		this._nodeDiscoveryState = this._jsonStateHandlerFactory.create(statePath, fallbackStatePath);
