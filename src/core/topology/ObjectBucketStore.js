@@ -11,7 +11,7 @@ var fs = require('fs');
 * @param {string} folderPath The path of the folder in which the persisted file should be stores / is located.
 */
 var ObjectBucketStore = (function () {
-    function ObjectBucketStore(filename, folderPath) {
+    function ObjectBucketStore(filename, folderPath, delayPersistInSeconds) {
         /**
         * Holds the arrays of stored contact node objects
         *
@@ -30,6 +30,13 @@ var ObjectBucketStore = (function () {
         * @member {string} core.topology.ObjectBucketStore~_dbPathFs
         */
         this._dbPathFs = null;
+        /**
+        * Stores the number of ms to delay the persisting of bucket changes. Used to prevent
+        * unnecessary queuing of consecutive file writes.
+        *
+        * @member {number} core.topology.ObjectBucketStore~_delayPersistInMs
+        */
+        this._delayPersistInMs = 0;
         /**
         * Indicates if the store is open
         *
@@ -50,11 +57,12 @@ var ObjectBucketStore = (function () {
         */
         this._isUnwritableFs = false;
         /**
-        * Stores the `setImmediate`-Object to delay writes and especially prevent queuing of unnecessary file writes.
+        * Stores the `setTimeout`-Object to delay writes and especially prevent queuing of unnecessary file writes.
         *
-        * @member {any} core.topology.ObjectBucketStore~_persistImmediate
+        * @member {any} core.topology.ObjectBucketStore~_persistTimeout
         */
-        this._persistImmediate = null;
+        this._persistTimeout = null;
+        this._delayPersistInMs = delayPersistInSeconds * 1000;
         this._dbPathFs = path.join(folderPath, filename);
         this._dbFolderFs = folderPath;
 
@@ -164,8 +172,7 @@ var ObjectBucketStore = (function () {
 
     /**
     * Persists a JSON string representation of the current bucket state to a file.
-    * File writes are scheduled after I/O callback via `setImmediate`. To prevent an
-    * unnecessary high amount of file writes, only one write-cycle is scheduled per event loop.
+    * To prevent an unnecessary high amount of file writes, write-cycles are delayed with a timeout.
     *
     * @method core.topology.ObjectBucketStore~_persistDb
     */
@@ -175,12 +182,12 @@ var ObjectBucketStore = (function () {
             return;
         }
 
-        if (this._persistImmediate) {
-            clearImmediate(this._persistImmediate);
+        if (this._persistTimeout) {
+            clearTimeout(this._persistTimeout);
         }
 
-        this._persistImmediate = setImmediate(function () {
-            _this._persistImmediate = null;
+        this._persistTimeout = setTimeout(function () {
+            _this._persistTimeout = null;
             _this._isWritingFs = true;
 
             var dataToPersist = JSON.stringify(_this._buckets);
@@ -193,7 +200,7 @@ var ObjectBucketStore = (function () {
                     _this._isWritingFs = false;
                 });
             }
-        });
+        }, this._delayPersistInMs);
     };
 
     ObjectBucketStore.prototype.add = function (bucketKey, id, lastSeen, addresses) {
