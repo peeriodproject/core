@@ -1,3 +1,4 @@
+import fs = require('fs');
 import path = require('path');
 
 import DownloadManagerInterface = require('../../share/interfaces/DownloadManagerInterface');
@@ -166,12 +167,17 @@ class UiShareManagerComponent extends UiComponent {
 
 		this.on('showDownload', (downloadId:string) => {
 			var download = this._runningDownloads[downloadId];
+			var downloadPath = download ? path.join(download.destination, download.name) : null;
 
-			console.log('download', download);
-
-			if (download && download.status === 'COMPLETED') {
-				this._gui.Shell.showItemInFolder(path.join(download.destination, download.name));
+			if (!downloadPath) {
+				return;
 			}
+			
+			fs.exists(downloadPath, (exists:boolean) => {
+				if (exists) {
+					this._gui.Shell.showItemInFolder(downloadPath);
+				}
+			})
 		});
 
 		this.on('showDownloadDestination', () => {
