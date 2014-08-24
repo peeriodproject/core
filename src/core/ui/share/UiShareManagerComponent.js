@@ -4,6 +4,7 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
+var fs = require('fs');
 var path = require('path');
 
 var UiComponent = require('../UiComponent');
@@ -161,12 +162,17 @@ var UiShareManagerComponent = (function (_super) {
 
         this.on('showDownload', function (downloadId) {
             var download = _this._runningDownloads[downloadId];
+            var downloadPath = download ? path.join(download.destination, download.name) : null;
 
-            console.log('download', download);
-
-            if (download && download.status === 'COMPLETED') {
-                _this._gui.Shell.showItemInFolder(path.join(download.destination, download.name));
+            if (!downloadPath) {
+                return;
             }
+
+            fs.exists(downloadPath, function (exists) {
+                if (exists) {
+                    _this._gui.Shell.showItemInFolder(downloadPath);
+                }
+            });
         });
 
         this.on('showDownloadDestination', function () {
