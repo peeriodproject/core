@@ -45,7 +45,7 @@
             "parallelismDelayInSeconds": 1.5
         },
         "networkMaintenance"          : {
-            "bucketRefreshRateInSeconds": 900
+            "bucketRefreshRateInSeconds": 3600
         },
         "nodeDiscovery"               : {
             "iterativeSeekTimeoutInMs": 1500,
