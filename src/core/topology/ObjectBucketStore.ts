@@ -40,6 +40,14 @@ class ObjectBucketStore implements BucketStoreInterface {
 	private _dbPathFs:string = null;
 
 	/**
+	 * Stores the number of ms to delay the persisting of bucket changes. Used to prevent
+	 * unnecessary queuing of consecutive file writes.
+	 *
+	 * @member {number} core.topology.ObjectBucketStore~_delayPersistInMs
+	 */
+	private _delayPersistInMs:number = 0;
+
+	/**
 	 * Indicates if the store is open
 	 *
 	 * @member {boolean} core.topology.ObjectBucketStore~_isOpen
@@ -62,13 +70,14 @@ class ObjectBucketStore implements BucketStoreInterface {
 	private _isUnwritableFs:boolean = false;
 
 	/**
-	 * Stores the `setImmediate`-Object to delay writes and especially prevent queuing of unnecessary file writes.
+	 * Stores the `setTimeout`-Object to delay writes and especially prevent queuing of unnecessary file writes.
 	 *
-	 * @member {any} core.topology.ObjectBucketStore~_persistImmediate
+	 * @member {any} core.topology.ObjectBucketStore~_persistTimeout
 	 */
-	private _persistImmediate:any = null;
+	private _persistTimeout:any = null;
 
-	public constructor (filename:string, folderPath:string) {
+	public constructor (filename:string, folderPath:string, delayPersistInSeconds:number) {
+		this._delayPersistInMs = delayPersistInSeconds * 1000;
 		this._dbPathFs = path.join(folderPath, filename);
 		this._dbFolderFs = folderPath;
 
@@ -179,8 +188,7 @@ class ObjectBucketStore implements BucketStoreInterface {
 
 	/**
 	 * Persists a JSON string representation of the current bucket state to a file.
-	 * File writes are scheduled after I/O callback via `setImmediate`. To prevent an
-	 * unnecessary high amount of file writes, only one write-cycle is scheduled per event loop.
+	 * To prevent an unnecessary high amount of file writes, write-cycles are delayed with a timeout.
 	 *
 	 * @method core.topology.ObjectBucketStore~_persistDb
 	 */
@@ -189,12 +197,12 @@ class ObjectBucketStore implements BucketStoreInterface {
 			return;
 		}
 
-		if (this._persistImmediate) {
-			clearImmediate(this._persistImmediate);
+		if (this._persistTimeout) {
+			clearTimeout(this._persistTimeout);
 		}
 
-		this._persistImmediate = setImmediate(() => {
-			this._persistImmediate = null;
+		this._persistTimeout = setTimeout(() => {
+			this._persistTimeout = null;
 			this._isWritingFs = true;
 
 			var dataToPersist:string = JSON.stringify(this._buckets);
@@ -207,7 +215,7 @@ class ObjectBucketStore implements BucketStoreInterface {
 					this._isWritingFs = false;
 				});
 			}
-		});
+		}, this._delayPersistInMs);
 
 	}
 

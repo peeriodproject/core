@@ -21,7 +21,7 @@ describe('CORE --> TOPOLOGY --> ObjectBucketStore @current', function () {
 
     beforeEach(function () {
         testUtils.createFolder(databasePath);
-        store = new ObjectBucketStore('objectBucketStore', databasePath);
+        store = new ObjectBucketStore('objectBucketStore', databasePath, 0.01);
     });
 
     afterEach(function (done) {
@@ -52,7 +52,7 @@ describe('CORE --> TOPOLOGY --> ObjectBucketStore @current', function () {
         store.add('foobar', contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
 
         setTimeout(function () {
-            var anotherStore = new ObjectBucketStore('objectBucketStore', databasePath);
+            var anotherStore = new ObjectBucketStore('objectBucketStore', databasePath, 0.01);
 
             var exist = anotherStore.get('foobar', contact.getId().getBuffer());
             (exist == null).should.be.false;
