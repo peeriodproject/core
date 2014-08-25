@@ -63,7 +63,7 @@ var UploadBridge = require('./share/UploadBridge');
 
 // ui imports
 var UiShareManagerComponent = require('./ui/share/UiShareManagerComponent');
-
+var UiDaemon = require('./ui/UiDaemon');
 var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
 
@@ -178,19 +178,19 @@ var App = {
         this._appQuitHandler = new AppQuitHandler(nwApp);
         this._loadConfig();
 
+        var mainWin = this._gui.Window.get();
+
+        if (mainWin && mainWin.showDevTools) {
+            try  {
+                mainWin.showDevTools();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
         this._startUiDaemon();
         this._initSplashScreen();
 
-        if (win && win.showDevTools) {
-            win.showDevTools();
-        }
-
-        // copy node discovery.json to app data path
-        /*var nodeDiscoveryPath = path.resolve(this.getDataPath(), 'nodeDiscovery.json');
-        
-        if (!fs.existsSync(nodeDiscoveryPath)) {
-        fs.copySync(path.join(__dirname, '../config/nodeDiscovery.json'), nodeDiscoveryPath);
-        }*/
         if (this._environmentConfig.get('environment.startSearchDatabase')) {
             this._startSearchDatabase();
         } else {
@@ -318,7 +318,8 @@ var App = {
         if (!this._environmentConfig.get('environment.startUi')) {
             return;
         }
-        //var uiDaemon = new UiDaemon(this._gui, this._appQuitHandler);
+
+        var uiDaemon = new UiDaemon(this._gui, this._appQuitHandler);
     },
     _startUi: function () {
         var _this = this;

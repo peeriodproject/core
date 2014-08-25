@@ -200,19 +200,18 @@ var App = {
 		this._appQuitHandler = new AppQuitHandler(nwApp);
 		this._loadConfig();
 
-		this._startUiDaemon();
-		this._initSplashScreen();
+		var mainWin = this._gui.Window.get();
 
-		if (win && win.showDevTools) {
-		 	win.showDevTools();
+		if (mainWin && mainWin.showDevTools) {
+			try {
+				mainWin.showDevTools();
+			 } catch (e) {
+			 	console.error(e);
+			 }
 		}
 
-		// copy node discovery.json to app data path
-		/*var nodeDiscoveryPath = path.resolve(this.getDataPath(), 'nodeDiscovery.json');
-
-		if (!fs.existsSync(nodeDiscoveryPath)) {
-			fs.copySync(path.join(__dirname, '../config/nodeDiscovery.json'), nodeDiscoveryPath);
-		}*/
+		this._startUiDaemon();
+		this._initSplashScreen();
 
 		if (this._environmentConfig.get('environment.startSearchDatabase')) {
 			this._startSearchDatabase();
@@ -345,7 +344,7 @@ var App = {
 			return;
 		}
 
-		//var uiDaemon = new UiDaemon(this._gui, this._appQuitHandler);
+		var uiDaemon = new UiDaemon(this._gui, this._appQuitHandler);
 	},
 
 	_startUi: function () {
