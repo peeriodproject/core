@@ -3,13 +3,18 @@
         "httpServerTimeoutMs": 500,
         "httpServerList": [
             {
-                "hostname": "discovery.franky102a.de",
+                "hostname": "discovery.peeriodproject.org",
                 "port": 80,
                 "path": "/"
             },
             {
                 "hostname": "141.51.224.112",
                 "port": 30416,
+                "path": "/"
+            },
+            {
+                "hostname": "node-discovery.joernroeder.de",
+                "port": 80,
                 "path": "/"
             }
         ]
