@@ -60,10 +60,12 @@ class UiOpenPortsComponent extends UiComponent {
 	}
 
 	private _setupEventListeners ():void {
-		this.on('addPort',(portToAdd:number) => {
+		this.on('addPort',(portToAdd:any) => {
 			if (isNaN(portToAdd)) {
 				return;
 			}
+
+			portToAdd = parseInt(portToAdd, 10);
 
 			if (this._currentPorts.indexOf(portToAdd) === -1) {
 				var portsToSave = this._currentPorts.slice();

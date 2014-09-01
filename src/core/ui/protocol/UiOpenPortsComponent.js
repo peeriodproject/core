@@ -63,6 +63,8 @@ var UiOpenPortsComponent = (function (_super) {
                 return;
             }
 
+            portToAdd = parseInt(portToAdd, 10);
+
             if (_this._currentPorts.indexOf(portToAdd) === -1) {
                 var portsToSave = _this._currentPorts.slice();
                 portsToSave.push(portToAdd);
