@@ -13,7 +13,7 @@
         "idleConnectionKillTimeout": 10,
         "heartbeatTimeout"         : 3,
         "outboundConnectionTimeout": 3000,
-        "myOpenPorts"              : [],
+        "myOpenPortsStateConfig"   : "myOpenPorts.json",
         "recheckIpIntervalInSeconds": 60,
         "simulator": {
             "rtt": 0

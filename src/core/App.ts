@@ -411,16 +411,12 @@ var App = {
 
 		this._setSplashScreenStatus('startTopology');
 
-		var appConfig = new JSONConfig('../../config/mainConfig.json', ['app']);
-		var netConfig = new JSONConfig('../../config/mainConfig.json', ['net']);
-		var protocolConfig = new JSONConfig('../../config/mainConfig.json', ['protocol']);
-		var topologyConfig = new JSONConfig('../../config/mainConfig.json', ['topology']);
-		var hydraConfig = new JSONConfig('../../config/mainConfig.json', ['hydra']);
-		var transferConfig = new JSONConfig('../../config/mainConfig.json', ['fileTransfer']);
+		var topologyConfig = this._getMainConfig('topology');
+
 		var tcpSocketHandlerFactory = new TCPSocketHandlerFactory();
 		var jsonWebIp = new JSONWebIp();
 		var nodeAddressFactory = new ContactNodeAddressFactory();
-		var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, netConfig, [jsonWebIp]);
+		var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, this._getMainConfig(['app', 'net']), this._getJSONStateHandlerFactory(), [jsonWebIp]);
 		var protocolGateway = null;
 
 		networkBootstrapper.bootstrap((err) => {
@@ -489,8 +485,8 @@ var App = {
 							console.error(err);
 						}
 
-						protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
 						this._addUiComponent(new UiProtocolGatewayComponent(protocolGateway, this._splashScreen));
+						protocolGateway = new ProtocolGateway(this._getMainConfig('app'), this._getMainConfig('protocol'), topologyConfig, this._getMainConfig('hydra'), this._getMainConfig('fileTransfer'), myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
 
 						this._checkAndStartUi('topology');
 

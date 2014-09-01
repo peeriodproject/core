@@ -3,19 +3,23 @@
 require('should');
 
 import sinon = require('sinon');
-
 import testUtils = require('../../utils/testUtils');
 
+import events = require('events');
+
 import JSONWebIp = require('../../../src/core/net/ip/JSONWebIp');
+import JSONStateHandlerFactory = require('../../../src/core/utils/JSONStateHandlerFactory');
+import JSONStateHandler = require('../../../src/core/utils/JSONStateHandler');
 import NetworkBootstrapper = require('../../../src/core/net/NetworkBootstrapper');
 import TCPSocketHandlerFactory = require('../../../src/core/net/tcp/TCPSocketHandlerFactory');
 import TCPSocketHandler = require('../../../src/core/net/tcp/TCPSocketHandler');
 import ObjectConfig = require('../../../src/core/config/ObjectConfig');
-import events = require('events');
 
 describe('CORE --> NET --> NetworkBootstrapper', function () {
 	var sandbox:SinonSandbox;
 	var configStub:any;
+	var openPortsStateHandler:any;
+	var stateHandlerFactoryStub:any;
 	var factoryStub:any;
 	var tcpHandlerStub:any;
 	var ipObtainerStubSuccess:any;
@@ -30,7 +34,20 @@ describe('CORE --> NET --> NetworkBootstrapper', function () {
 				if (key === 'net.connectionRetrySeconds') return 2;
 				if (key === 'net.recheckIpIntervalInSeconds') return 2;
 				if (key === 'net.idleConnectionKillTimeout') return 5;
-				if (key === 'net.myOpenPorts') return [56789];
+				if (key === 'app.dataPath') return testUtils.getFixturePath('net/appDataPath');
+				if (key === 'net.myOpenPortsStateConfig') return 'myOpenPorts.json';
+			}	
+		});
+
+		openPortsStateHandler = testUtils.stubPublicApi(sandbox, JSONStateHandler, {
+			load: function (callback) {
+				return callback(null, [56789]);
+			}
+		})
+		
+		stateHandlerFactoryStub = testUtils.stubPublicApi(sandbox, JSONStateHandlerFactory, {
+			create: function () {
+				return openPortsStateHandler;
 			}
 		});
 
@@ -73,35 +90,35 @@ describe('CORE --> NET --> NetworkBootstrapper', function () {
 
 	it('should successfully return the external ip on first try', function (done) {
 
-		var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubSuccess]);
+		var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, stateHandlerFactoryStub, [ipObtainerStubSuccess]);
 		bootstrapper.bootstrap(function () {
 			if (bootstrapper.getExternalIp() === '127.0.0.1') done();
 		});
 	});
 
 	it('should successfully return the external ip on second try', function (done) {
-		var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubError, ipObtainerStubSuccess]);
+		var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, stateHandlerFactoryStub, [ipObtainerStubError, ipObtainerStubSuccess]);
 		bootstrapper.bootstrap(function () {
 			if (bootstrapper.getExternalIp() === '127.0.0.1') done();
 		});
 	});
 
 	it('should bootstrap with error', function (done) {
-		var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubError]);
+		var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, stateHandlerFactoryStub, [ipObtainerStubError]);
 		bootstrapper.bootstrap(function (err) {
 			if (err && err.message === 'NetworkBootstrapper: All IP obtainers throw an error.') done();
 		});
 	});
 
 	it('should error out that no IP obtainers have been specified', function (done) {
-		var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, []);
+		var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, stateHandlerFactoryStub, []);
 		bootstrapper.bootstrap(function (err) {
 			if (err && err.message === 'NetworkBootstrapper: No IP obtainers specified.') done();
 		});
 	});
 
 	it('should return tcp socket handler', function (done) {
-		var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubSuccess]);
+		var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, stateHandlerFactoryStub, [ipObtainerStubSuccess]);
 
 		bootstrapper.bootstrap(function () {
 
@@ -112,7 +129,7 @@ describe('CORE --> NET --> NetworkBootstrapper', function () {
 	});
 
 	it('should notice an ip change and set the IP on the TCP socket handler', function (done) {
-		var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubSuccess]);
+		var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, stateHandlerFactoryStub, [ipObtainerStubSuccess]);
 
 		bootstrapper.bootstrap(function () {
 			// there is none yet

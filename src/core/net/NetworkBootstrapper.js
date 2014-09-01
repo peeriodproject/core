@@ -1,3 +1,5 @@
+var path = require('path');
+
 var TCPSocketFactory = require('./tcp/TCPSocketFactory');
 
 /**
@@ -6,21 +8,22 @@ var TCPSocketFactory = require('./tcp/TCPSocketFactory');
 * @class core.net.NetworkBootstrapper
 * @implements core.net.NetworkBootstrapperInterface
 *
+* @param {core.net.tcp.TCPSocketHandlerFactoryInterface} socketHandlerFactory
 * @param {core.config.ConfigInterface} config The network configuration
 * @parma {Array<core.net.ip.ExternalIPObtainerInterface>} A list of IP obtainers to use as tools to get the machine's external IP.
 */
 var NetworkBootstrapper = (function () {
-    function NetworkBootstrapper(socketHandlerFactory, config, ipObtainers) {
+    function NetworkBootstrapper(socketHandlerFactory, config, stateHandlerFactory, ipObtainers) {
         /**
-        * Network configuration. Is used for getting the settings for TCP socket handler.
+        * Network configuration. Is used for getting the settings for TCP socket handler as well as the path for the open ports state.
         *
-        * @member {core.config.ConfigInterface} NetworkBootstrapper~_config
+        * @member {core.config.ConfigInterface} core.net.NetworkBootstrapper~_config
         */
         this._config = null;
         /**
         * The machine's external IP address.
         *
-        * @member {string} NetworkBootstrapper~_externalIp
+        * @member {string} core.net.tcp.NetworkBootstrapper~_externalIp
         */
         this._externalIp = '';
         /**
@@ -36,37 +39,44 @@ var NetworkBootstrapper = (function () {
         */
         this._recheckIpEveryMs = 0;
         /**
+        * @member {core.utils.StateHandlerInterface} core.net.NetworkBootstrapper~_stateHandler
+        */
+        this._openPortsStateHandler = null;
+        /**
         * The TCPSockhetHandler instance
         *
-        * @member {core.net.tcp.TCPSocketHandlerInterface} NetworkBootstrapper~_tcpSocketHandler
+        * @member {core.net.tcp.TCPSocketHandlerInterface} core.net.NetworkBootstrapper~_tcpSocketHandler
         */
         this._tcpSocketHandler = null;
         /**
         * TCPSocketHandler factory
         *
-        * @member {core.net.tcp.TCPSocketHandlerFactoryInterface} NetworkBootstrapper~_tcpSocketHandlerFactory
+        * @member {core.net.tcp.TCPSocketHandlerFactoryInterface} core.net.NetworkBootstrapper~_tcpSocketHandlerFactory
         */
         this._tcpSocketHandlerFactory = null;
         this._config = config;
         this._ipObtainers = ipObtainers;
         this._tcpSocketHandlerFactory = socketHandlerFactory;
+        this._openPortsStateHandler = stateHandlerFactory.create(path.join(this._config.get('app.dataPath'), this._config.get('net.myOpenPortsStateConfig')));
         this._recheckIpEveryMs = this._config.get('net.recheckIpIntervalInSeconds') * 1000;
     }
     NetworkBootstrapper.prototype.bootstrap = function (callback) {
         var _this = this;
         this._getExternalIp(function (err, ip) {
             if (err) {
-                callback(err);
-            } else {
+                return callback(err);
+            }
+
+            _this._getTCPSocketHandlerOptions(function (options) {
                 _this._externalIp = ip;
 
-                _this._tcpSocketHandler = _this._tcpSocketHandlerFactory.create(new TCPSocketFactory(), _this._getTCPSocketHandlerOptions());
+                _this._tcpSocketHandler = _this._tcpSocketHandlerFactory.create(new TCPSocketFactory(), options);
 
                 _this._tcpSocketHandler.autoBootstrap(function (openPorts) {
                     _this._setIpRecheckTimeout();
                     callback(null);
                 });
-            }
+            });
         });
     };
 
@@ -145,17 +155,22 @@ var NetworkBootstrapper = (function () {
     *
     * @returns {core.net.tcp.TCPSocketHandlerOptions}
     */
-    NetworkBootstrapper.prototype._getTCPSocketHandlerOptions = function () {
-        return {
-            allowHalfOpenSockets: this._config.get('net.allowHalfOpenSockets'),
-            connectionRetry: this._config.get('net.connectionRetrySeconds'),
-            idleConnectionKillTimeout: this._config.get('net.idleConnectionKillTimeout'),
-            heartbeatTimeout: this._config.get('net.heartbeatTimeout'),
-            myExternalIp: this._externalIp,
-            myOpenPorts: this._config.get('net.myOpenPorts'),
-            outboundConnectionTimeout: this._config.get('net.outboundConnectionTimeout'),
-            simulatorRTT: this._config.get('net.simulator.rtt')
-        };
+    NetworkBootstrapper.prototype._getTCPSocketHandlerOptions = function (callback) {
+        var _this = this;
+        this._openPortsStateHandler.load(function (err, state) {
+            var myOpenPorts = state && state.openPorts ? state.openPorts : [];
+
+            return callback({
+                allowHalfOpenSockets: _this._config.get('net.allowHalfOpenSockets'),
+                connectionRetry: _this._config.get('net.connectionRetrySeconds'),
+                idleConnectionKillTimeout: _this._config.get('net.idleConnectionKillTimeout'),
+                heartbeatTimeout: _this._config.get('net.heartbeatTimeout'),
+                myExternalIp: _this._externalIp,
+                myOpenPorts: myOpenPorts,
+                outboundConnectionTimeout: _this._config.get('net.outboundConnectionTimeout'),
+                simulatorRTT: _this._config.get('net.simulator.rtt')
+            });
+        });
     };
     return NetworkBootstrapper;
 })();
