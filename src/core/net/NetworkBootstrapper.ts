@@ -91,9 +91,9 @@ class NetworkBootstrapper implements NetworkBootstrapperInterface {
 				return callback(err);
 			}
 
-			this._getTCPSocketHandlerOptions((options) => {
-				this._externalIp = ip;
+			this._externalIp = ip;
 
+			this._getTCPSocketHandlerOptions((options) => {
 				this._tcpSocketHandler = this._tcpSocketHandlerFactory.create(new TCPSocketFactory(), options);
 
 				this._tcpSocketHandler.autoBootstrap((openPorts:Array<number>) => {

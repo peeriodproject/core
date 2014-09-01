@@ -67,9 +67,9 @@ var NetworkBootstrapper = (function () {
                 return callback(err);
             }
 
-            _this._getTCPSocketHandlerOptions(function (options) {
-                _this._externalIp = ip;
+            _this._externalIp = ip;
 
+            _this._getTCPSocketHandlerOptions(function (options) {
                 _this._tcpSocketHandler = _this._tcpSocketHandlerFactory.create(new TCPSocketFactory(), options);
 
                 _this._tcpSocketHandler.autoBootstrap(function (openPorts) {
