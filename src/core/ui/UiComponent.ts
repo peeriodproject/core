@@ -10,12 +10,12 @@ import UiComponentInterface = require('./interfaces/UiComponentInterface');
  */
 class UiComponent extends events.EventEmitter implements UiComponentInterface {
 
-	public getEventNames ():Array<string> {
-		return [];
-	}
-
 	public getChannelName ():string {
 		return undefined;
+	}
+
+	public getEventNames ():Array<string> {
+		return [];
 	}
 
 	public getState (callback:(state) => any):void {

@@ -5,7 +5,7 @@ import UiComponent = require('../UiComponent');
 
 /**
  * @class core.ui.UiSearchFormResultsManagerComponent
- * @implements core.ui.UiComponentInterface
+ * @extends core.ui.UiComponent
  *
  * @param {core.search.SearchFormResultsManagerInterface} searchFormManager
  * @param {core.search.SearchRequestManagerInterface} searchRequestManager

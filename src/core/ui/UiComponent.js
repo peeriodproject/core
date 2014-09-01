@@ -16,12 +16,12 @@ var UiComponent = (function (_super) {
     function UiComponent() {
         _super.apply(this, arguments);
     }
-    UiComponent.prototype.getEventNames = function () {
-        return [];
-    };
-
     UiComponent.prototype.getChannelName = function () {
         return undefined;
+    };
+
+    UiComponent.prototype.getEventNames = function () {
+        return [];
     };
 
     UiComponent.prototype.getState = function (callback) {
