@@ -95,12 +95,12 @@ var App = {
 	_environmentConfigPath    : '',
 	_environmentConfig        : null,
 	_environmentConfigDefaults: {
-		startUi            : false,
+		startUi             : false,
 		_startSearchDatabase: false,
-		startIndexer       : false,
-		startTopology      : true
+		startIndexer        : false,
+		startTopology       : true
 	},
-	_mainConfig: null,
+	_mainConfig               : null,
 
 	_gui     : null,
 	_dataPath: '',
@@ -112,7 +112,7 @@ var App = {
 	_responseManager    : null,
 	_stateHandlerFactory: null,
 
-	_addUiComponent: function (component:UiComponentInterface):void {
+	_addUiComponent             : function (component:UiComponentInterface):void {
 		if (this._environmentConfig.get('environment.startUi')) {
 			this._uiComponents.push(component);
 		}
@@ -120,7 +120,7 @@ var App = {
 			component = null;
 		}
 	},
-	_uiComponentsAdded: [],
+	_uiComponentsAdded          : [],
 	_requiredUiComponentsToStart: ['indexer', 'sharing', 'topology'],
 
 	/**
@@ -205,9 +205,10 @@ var App = {
 		if (mainWin && mainWin.showDevTools) {
 			try {
 				mainWin.showDevTools();
-			 } catch (e) {
-			 	console.error(e);
-			 }
+			}
+			catch (e) {
+				console.error(e);
+			}
 		}
 
 		this._startUiDaemon();
@@ -256,7 +257,8 @@ var App = {
 	},
 
 	_startSharing: function (searchClient, searchRequestsIndexName, callback:Function) {
-		var internalCallback = callback || function () {};
+		var internalCallback = callback || function () {
+		};
 
 		if (!this._environmentConfig.get('environment.startSearchDatabase')) {
 			return process.nextTick(internalCallback.bind(null, null, null));
@@ -274,7 +276,8 @@ var App = {
 	},
 
 	_startIndexer     : function (searchConfig, searchClient, searchRequestManager, searchResponseManager, callback:Function) {
-		var internalCallback = callback || function () {};
+		var internalCallback = callback || function () {
+		};
 
 		if (!this._environmentConfig.get('environment.startSearchDatabase') || !this._environmentConfig.get('environment.startIndexer')) {
 			return process.nextTick(internalCallback.bind(null));
@@ -324,7 +327,8 @@ var App = {
 
 	// index database setup
 	_startSearchClient: function (callback) {
-		var internalCallback = callback || function () {};
+		var internalCallback = callback || function () {
+		};
 		var searchConfig = this._getMainConfig(['search']);
 		var searchStoreFactory = new SearchStoreFactory();
 		var searchItemFactory = new SearchItemFactory();
