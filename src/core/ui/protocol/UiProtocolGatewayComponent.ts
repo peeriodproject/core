@@ -35,6 +35,10 @@ class UiProtocolGatewayComponent extends UiComponent {
 
 		this._splashScreen = splashScreen;
 
+		if (!protocolGateway) {
+			return;
+		}
+
 		protocolGateway.once('JOIN_NETWORK', () => {
 			this._setKeyAndUpdateSplashScreen('joinNetwork');
 		});

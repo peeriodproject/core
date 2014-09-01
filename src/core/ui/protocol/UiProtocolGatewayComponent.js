@@ -36,6 +36,10 @@ var UiProtocolGatewayComponent = (function (_super) {
 
         this._splashScreen = splashScreen;
 
+        if (!protocolGateway) {
+            return;
+        }
+
         protocolGateway.once('JOIN_NETWORK', function () {
             _this._setKeyAndUpdateSplashScreen('joinNetwork');
         });
