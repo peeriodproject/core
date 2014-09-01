@@ -53,7 +53,8 @@ class UiSplashScreen extends events.EventEmitter implements UiSplashScreenInterf
 			frame: false,
 			toolbar: false,
 			resizable: false,
-			show: false
+			show: false,
+			show_in_taskbar: false
 		});
 
 		this._window.once('loaded', () => {
@@ -125,6 +126,10 @@ class UiSplashScreen extends events.EventEmitter implements UiSplashScreenInterf
 	 * @method core.ui.UiSplashScreen~_updateStatus
 	 */
 	private _updateStatus ():void {
+		if (!this._pendingStatusList.length) {
+			return;
+		}
+
 		this._updateCounter++;
 
 		var isEven:boolean = this._updateCounter % 2 === 0 ? true : false;

@@ -52,7 +52,8 @@ var UiSplashScreen = (function (_super) {
             frame: false,
             toolbar: false,
             resizable: false,
-            show: false
+            show: false,
+            show_in_taskbar: false
         });
 
         this._window.once('loaded', function () {
@@ -124,6 +125,10 @@ var UiSplashScreen = (function (_super) {
     * @method core.ui.UiSplashScreen~_updateStatus
     */
     UiSplashScreen.prototype._updateStatus = function () {
+        if (!this._pendingStatusList.length) {
+            return;
+        }
+
         this._updateCounter++;
 
         var isEven = this._updateCounter % 2 === 0 ? true : false;
