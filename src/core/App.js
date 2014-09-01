@@ -66,6 +66,7 @@ var UiShareManagerComponent = require('./ui/share/UiShareManagerComponent');
 var UiDaemon = require('./ui/UiDaemon');
 var UiFolderWatcherManagerComponent = require('./ui/folder/UiFolderWatcherManagerComponent');
 var UiFolderDropzoneComponent = require('./ui/folder/UiFolderDropzoneComponent');
+var UiOpenPortsComponent = require('./ui/protocol/UiOpenPortsComponent');
 
 var UiProtocolGatewayComponent = require('./ui/protocol/UiProtocolGatewayComponent');
 var UiSearchFormResultsManagerComponent = require('./ui/search/UiSearchFormResultsManagerComponent');
@@ -330,6 +331,9 @@ var App = {
         this._setSplashScreenStatus('startUi');
 
         this._addUiComponent(new UiFolderDropzoneComponent(this._gui.Window));
+        var openPortsConfig = this._getMainConfig(['app', 'net']);
+
+        this._addUiComponent(new UiOpenPortsComponent(this._getJSONStateHandlerFactory().create(path.join(openPortsConfig.get('app.dataPath'), openPortsConfig.get('net.myOpenPortsStateConfig')))));
 
         var uiManager = new UiManager(this._getMainConfig(['ui']), this._appQuitHandler, this._uiComponents);
 
@@ -455,9 +459,9 @@ var App = {
                             console.error(err);
                         }
 
-                        _this._addUiComponent(new UiProtocolGatewayComponent(protocolGateway, _this._splashScreen));
                         protocolGateway = new ProtocolGateway(_this._getMainConfig('app'), _this._getMainConfig('protocol'), topologyConfig, _this._getMainConfig('hydra'), _this._getMainConfig('fileTransfer'), myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
 
+                        _this._addUiComponent(new UiProtocolGatewayComponent(protocolGateway, _this._splashScreen));
                         _this._checkAndStartUi('topology');
 
                         protocolGateway.start();
