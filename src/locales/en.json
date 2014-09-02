@@ -1,14 +1,14 @@
 {
-	"splashScreen.startSearchDatabase": "splashScreen.startSearchDatabase",
-	"splashScreen.startIndexer": "splashScreen.startIndexer",
-	"splashScreen.startSharing": "splashScreen.startSharing",
-	"splashScreen.startTopology": "splashScreen.startTopology",
-	"splashScreen.startUi": "splashScreen.startUi",
-	"splashScreen.needsProxy": "splashScreen.needsProxy",
-	"splashScreen.joinNetwork": "splashScreen.joinNetwork",
-	"splashScreen.foundEntryNode": "splashScreen.foundEntryNode",
-	"splashScreen.initialContactQueryComplete": "splashScreen.initialContactQueryComplete",
-	"splashScreen.topologyJoinComplete": "splashScreen.topologyJoinComplete",
+	"splashScreen.startSearchDatabase": "Initializing search database.",
+	"splashScreen.startIndexer": "Starting file indexer.",
+	"splashScreen.startSharing": "Building up bridges.",
+	"splashScreen.startTopology": "Preparing to join the network.",
+	"splashScreen.startUi": "Starting user interface.",
+	"splashScreen.needsProxy": "Unreachable from outside. Searching for proxies.",
+	"splashScreen.joinNetwork": "Joining the network",
+	"splashScreen.foundEntryNode": "Entry node found. Gaining knowledge of the topology.",
+	"splashScreen.initialContactQueryComplete": "Initial nodes found.",
+	"splashScreen.topologyJoinComplete": "Successfully joined the network. Preparing anonymity layer.",
 	"core.jj.uiroutine.chromeextension.name": "core.jj.uiroutine.chromeextension.name",
 	"core.jj.uiroutine.chromeextension.description": "core.jj.uiroutine.chromeextension.description",
 	"core.jj.uiroutine.chromeextension.installButtonLabel": "core.jj.uiroutine.chromeextension.installButtonLabel",
@@ -17,5 +17,6 @@
 	"uiRoutinesManager.installRoutinesButtonPlaceholder": "uiRoutinesManager.installRoutinesButtonPlaceholder",
 	"uiRoutinesManager.installRoutinesWindowTitle": "uiRoutinesManager.installRoutinesWindowTitle",
 	"UiDaemon.trayTitle": "UiDaemon.trayTitle",
-	"UiDaemon.menu.quit.title": "UiDaemon.menu.quit.title"
+	"UiDaemon.menu.quit.title": "UiDaemon.menu.quit.title",
+	"splashScreen.undefined": "splashScreen.undefined"
 }
