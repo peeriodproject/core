@@ -10,16 +10,19 @@ var UiDaemon = (function () {
         this._menu = null;
         this._tray = null;
         this._tray = new gui.Tray({
-            title: 'A'
+            title: '',
+            icon: './images/icon-menubar.png',
+            alticon: './images/icon-menubar-active.png'
         });
 
         this._menu = new gui.Menu();
 
-        /*menu.append(new gui.MenuItem({
-        type: 'separator'
-        }));*/
+        this._menu.append(new gui.MenuItem({
+            type: 'separator'
+        }));
+
         var quitItem = new gui.MenuItem({
-            label: 'Quit'
+            label: i18n.__('UiDaemon.menu.quit.title')
         });
 
         quitItem.click = function () {
@@ -29,18 +32,6 @@ var UiDaemon = (function () {
         this._menu.append(quitItem);
 
         this._tray.menu = this._menu;
-
-        console.log('added ui deamon');
-        /*if (process.env.UI_ENABLED) {
-        App.quit();
-        }
-        else {
-        setTimeout(function () {
-        App.quit();
-        }, 40000);
-        }* /
-        };
-        */
     }
     UiDaemon.prototype.getTray = function () {
         return this._tray;

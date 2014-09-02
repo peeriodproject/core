@@ -57,9 +57,10 @@ var UiSplashScreen = (function (_super) {
         });
 
         this._window.once('loaded', function () {
-            _this._window.moveBy(0, 200);
             _this._updateStatus();
-            _this.open();
+            setImmediate(function () {
+                _this.open();
+            });
         });
     }
     UiSplashScreen.prototype.close = function () {
@@ -81,6 +82,8 @@ var UiSplashScreen = (function (_super) {
 
     UiSplashScreen.prototype.open = function () {
         this._window.show();
+
+        //this._window.moveBy(0, 200);
         this._window.focus();
 
         this._isOpen = true;

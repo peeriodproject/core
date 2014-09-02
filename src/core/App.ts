@@ -213,7 +213,6 @@ var App = {
 				console.error(e);
 			}
 		}*/
-
 		this._initSplashScreen();
 
 		if (this._environmentConfig.get('environment.startSearchDatabase')) {
@@ -223,7 +222,7 @@ var App = {
 			this._startTopology(null, null, null);
 		}
 
-		return this._startUiDaemon();
+		this._startUiDaemon();
 	},
 
 	getAppQuitHandler: function () {
