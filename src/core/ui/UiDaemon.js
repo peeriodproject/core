@@ -10,7 +10,6 @@ var UiDaemon = (function () {
         this._menu = null;
         this._tray = null;
         this._tray = new gui.Tray({
-            title: '',
             icon: './images/icon-menubar.png',
             alticon: './images/icon-menubar-active.png'
         });

@@ -18,7 +18,6 @@ class UiDaemon implements UiDaemonInterface {
 
 	constructor (gui, appQuitHandler:AppQuitHandlerInterface) {
 		this._tray = new gui.Tray({
-			title: '', //i18n.__('UiDaemon.trayTitle'),
 			icon : './images/icon-menubar.png',
 			alticon: './images/icon-menubar-active.png'
 		});
