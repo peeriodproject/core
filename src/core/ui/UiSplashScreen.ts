@@ -58,9 +58,10 @@ class UiSplashScreen extends events.EventEmitter implements UiSplashScreenInterf
 		});
 
 		this._window.once('loaded', () => {
-			this._window.moveBy(0, 200);
 			this._updateStatus();
-			this.open();
+				setImmediate(() => {
+					this.open();
+				});
 		});
 	}
 
@@ -83,6 +84,7 @@ class UiSplashScreen extends events.EventEmitter implements UiSplashScreenInterf
 
 	public open ():void {
 		this._window.show();
+		//this._window.moveBy(0, 200);
 		this._window.focus();
 
 		this._isOpen = true;

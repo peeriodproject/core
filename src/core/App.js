@@ -199,7 +199,7 @@ var App = {
             this._startTopology(null, null, null);
         }
 
-        return this._startUiDaemon();
+        this._startUiDaemon();
     },
     getAppQuitHandler: function () {
         return this._appQuitHandler;

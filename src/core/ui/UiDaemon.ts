@@ -18,17 +18,18 @@ class UiDaemon implements UiDaemonInterface {
 
 	constructor (gui, appQuitHandler:AppQuitHandlerInterface) {
 		this._tray = new gui.Tray({
-			title: 'A' //i18n.__('UiDaemon.trayTitle'),
-			//icon : 'icon.png'
+			title: '', //i18n.__('UiDaemon.trayTitle'),
+			icon : './images/icon-menubar.png'
 		});
 
 		this._menu = new gui.Menu();
 
-		/*menu.append(new gui.MenuItem({
-		 type: 'separator'
-		 }));*/
+		this._menu.append(new gui.MenuItem({
+			type: 'separator'
+		}));
+
 		var quitItem = new gui.MenuItem({
-			label: 'Quit' //i18n.__('UiDaemon.menu.quit.title')
+			label: i18n.__('UiDaemon.menu.quit.title')
 		});
 
 		quitItem.click = function () {
@@ -38,19 +39,6 @@ class UiDaemon implements UiDaemonInterface {
 		this._menu.append(quitItem);
 
 		this._tray.menu = this._menu;
-
-		console.log('added ui deamon');
-
-		/*if (process.env.UI_ENABLED) {
-		App.quit();
-		}
-		else {
-		setTimeout(function () {
-		App.quit();
-		}, 40000);
-		}* /
-		};
-		*/
 	}
 
 	public getTray ():any {
