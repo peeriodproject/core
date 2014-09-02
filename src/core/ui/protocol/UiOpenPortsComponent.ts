@@ -61,7 +61,7 @@ class UiOpenPortsComponent extends UiComponent {
 
 	private _setupEventListeners ():void {
 		this.on('addPort',(portToAdd:any) => {
-			if (isNaN(portToAdd)) {
+			if (!portToAdd || isNaN(portToAdd)) {
 				return;
 			}
 

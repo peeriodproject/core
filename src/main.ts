@@ -54,9 +54,11 @@ var createUsageTimeout = function () {
 	}, 10000);
 };
 
+var _tray = null;
 //createUsageTimeout();
 
 App.start(gui, guiApp, dataPath, guiWindow);
+_tray = App.getTray();
 
 /*
  // lifetime > 5 min < 1 day

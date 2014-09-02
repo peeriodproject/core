@@ -1,4 +1,5 @@
-/// <reference path='../../../ts-definitions/node/node.d.ts' />
+/// <reference path='../../main.d.ts' />
+
 
 import AppQuitHandlerInterface = require('../utils/interfaces/AppQuitHandlerInterface');
 import UiDaemonInterface = require('./interfaces/UiDaemonInterface');
@@ -50,6 +51,10 @@ class UiDaemon implements UiDaemonInterface {
 		}* /
 		};
 		*/
+	}
+
+	public getTray ():any {
+		return this._tray;
 	}
 }
 

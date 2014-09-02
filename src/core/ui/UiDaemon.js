@@ -1,4 +1,4 @@
-/// <reference path='../../../ts-definitions/node/node.d.ts' />
+/// <reference path='../../main.d.ts' />
 var i18n = require('i18n');
 
 /**
@@ -42,6 +42,9 @@ var UiDaemon = (function () {
         };
         */
     }
+    UiDaemon.prototype.getTray = function () {
+        return this._tray;
+    };
     return UiDaemon;
 })();
 

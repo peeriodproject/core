@@ -4,6 +4,8 @@
  */
 interface UiDaemonInterface {
 
+	getTray ():any;
+
 }
 
 export = UiDaemonInterface;

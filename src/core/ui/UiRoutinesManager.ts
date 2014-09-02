@@ -30,11 +30,16 @@ class UiRoutinesManager implements UiRoutinesManagerInterface {
 			frame: true,
 			toolbar: false,
 			resizable: true,
-			show: false
+			show: false,
+			show_in_taskbar: false
 		});
 
 		this._window.once('loaded', () => {
-			//this._window.showDevTools();
+			/*try {
+				this._window.showDevTools();
+			} catch (e) {
+				console.error(e);
+			}*/
 			//this._window.moveBy(0, 200);
 			//this._updateStatus();
 			this._updateWindow();

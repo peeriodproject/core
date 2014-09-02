@@ -59,7 +59,7 @@ var UiOpenPortsComponent = (function (_super) {
     UiOpenPortsComponent.prototype._setupEventListeners = function () {
         var _this = this;
         this.on('addPort', function (portToAdd) {
-            if (isNaN(portToAdd)) {
+            if (!portToAdd || isNaN(portToAdd)) {
                 return;
             }
 

@@ -35,10 +35,6 @@ class UiProtocolGatewayComponent extends UiComponent {
 
 		this._splashScreen = splashScreen;
 
-		if (!protocolGateway) {
-			return;
-		}
-
 		protocolGateway.once('JOIN_NETWORK', () => {
 			this._setKeyAndUpdateSplashScreen('joinNetwork');
 		});
@@ -88,8 +84,6 @@ class UiProtocolGatewayComponent extends UiComponent {
 		protocolGateway.on('NUM_OF_HYDRA_CELLS', (count:number) => {
 			this._setKey('numOfHydraCells', count);
 		});
-
-
 	}
 
 	getChannelName ():string {

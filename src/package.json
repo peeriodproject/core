@@ -3,6 +3,7 @@
   "description": "",
   "version": "0.0.1",
   "main": "index.html",
+  "no-edit-menu": true,
   "window": {
     "show": false,
     "frame": false,
