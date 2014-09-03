@@ -1,6 +1,6 @@
 {
-  "name": "App",
-  "description": "",
+  "name": "Peeriod",
+  "description": "Bleeding Edge Anonymous File Sharing",
   "version": "0.0.1",
   "main": "index.html",
   "no-edit-menu": true,
@@ -30,5 +30,13 @@
     "winston": "^0.7.3",
     "winston-irc": "^0.3.4",
     "ws": "^0.4.31"
-  }
+  },
+  "maintainers":[{
+    "name": "Jonathan Pirnay",
+    "email": "mail@johnnycrab.com"
+  },
+  {
+    "name": "Jörn Röder",
+    "email": "kontak@joernroeder.de"
+  }]
 }
