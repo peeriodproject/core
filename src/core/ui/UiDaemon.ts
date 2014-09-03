@@ -18,7 +18,7 @@ class UiDaemon implements UiDaemonInterface {
 
 	constructor (gui, appQuitHandler:AppQuitHandlerInterface) {
 		this._tray = new gui.Tray({
-			icon : './images/icon-menubar.png',
+			icon   : './images/icon-menubar.png',
 			alticon: './images/icon-menubar-active.png'
 		});
 
@@ -29,16 +29,18 @@ class UiDaemon implements UiDaemonInterface {
 		});
 
 		aboutItem.click = function () {
-			gui.Window.open('about.html',{
-				"position": "center",
-				"focus": true,
-				"toolbar": false,
-				"frame": true,
-				"resizable": false,
-				"width": 300,
-				"height": 300,
+			var win = gui.Window.open('./public/about.html', {
+				"position"  : 'center',
+				"focus"     : true,
+				"toolbar"   : false,
+				"frame"     : true,
+				"resizable" : false,
+				"width"     : 300,
+				"height"    : 300,
 				"fullscreen": false
 			});
+
+			win.setAlwaysOnTop(true);
 		};
 
 		this._menu.append(aboutItem);
