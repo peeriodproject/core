@@ -31,8 +31,8 @@ class UiFolderDropzoneComponent extends UiComponent {
 
 		this._guiWindow = window;
 
-		this._windowDimensions.height = 400;
-		this._windowDimensions.width = 400;
+		this._windowDimensions.height = 450;
+		this._windowDimensions.width = 450;
 
 		this._setupEventListeners();
 	}
