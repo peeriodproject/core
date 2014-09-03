@@ -71,6 +71,7 @@ var UiOpenPortsComponent = require('./ui/protocol/UiOpenPortsComponent');
 var UiProtocolGatewayComponent = require('./ui/protocol/UiProtocolGatewayComponent');
 var UiSearchFormResultsManagerComponent = require('./ui/search/UiSearchFormResultsManagerComponent');
 var UiManager = require('./ui/UiManager');
+var UiUpdateNotify = require('./ui/UiUpdateNotify');
 var UiSplashScreen = require('./ui/UiSplashScreen');
 var UiRoutinesManager = require('./ui/UiRoutinesManager');
 var UiChromeExtensionRoutine = require('./ui/routines/UiChromeExtensionRoutine');
@@ -164,6 +165,9 @@ var App = {
     _initSplashScreen: function () {
         this._splashScreen = this._environmentConfig.get('environment.startUi') ? new UiSplashScreen(this._gui) : null;
     },
+    _checkForUpdates: function () {
+        UiUpdateNotify.checkForUpdates(this._gui);
+    },
     _setSplashScreenStatus: function (status) {
         if (this._splashScreen) {
             this._splashScreen.setStatus(status);
@@ -181,17 +185,17 @@ var App = {
         this._appQuitHandler = new AppQuitHandler(nwApp);
         this._loadConfig();
 
-        /*var mainWin = this._gui.Window.get();
-        
+        var mainWin = this._gui.Window.get();
+
         if (mainWin && mainWin.showDevTools) {
-        try {
-        mainWin.showDevTools();
+            try  {
+                mainWin.showDevTools();
+            } catch (e) {
+                console.error(e);
+            }
         }
-        catch (e) {
-        console.error(e);
-        }
-        }*/
         this._initSplashScreen();
+        this._checkForUpdates();
 
         if (this._environmentConfig.get('environment.startSearchDatabase')) {
             this._startSearchDatabase();

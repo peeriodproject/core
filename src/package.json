@@ -2,6 +2,7 @@
   "name": "Peeriod",
   "description": "Bleeding Edge Anonymous File Sharing",
   "version": "0.0.1",
+  "versionCheckUrl": "http://johnnycrab.com/data/peeriodVersionCheck.json",
   "main": "index.html",
   "no-edit-menu": true,
   "window": {
