@@ -392,7 +392,10 @@ var App = {
 		if (this._splashScreen) {
 			this._splashScreen.once('close', () => {
 				this._checkUiRoutines();
-				this._checkForUpdates();
+
+				setImmediate(() => {
+					this._checkForUpdates();
+				});
 			});
 		}
 	},

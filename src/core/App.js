@@ -361,7 +361,10 @@ var App = {
         if (this._splashScreen) {
             this._splashScreen.once('close', function () {
                 _this._checkUiRoutines();
-                _this._checkForUpdates();
+
+                setImmediate(function () {
+                    _this._checkForUpdates();
+                });
             });
         }
     },
