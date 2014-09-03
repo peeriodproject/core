@@ -21,8 +21,8 @@ var UiDaemon = (function () {
         });
 
         aboutItem.click = function () {
-            gui.Window.open('about.html', {
-                "position": "center",
+            var win = gui.Window.open('./public/about.html', {
+                "position": 'center',
                 "focus": true,
                 "toolbar": false,
                 "frame": true,
@@ -31,6 +31,8 @@ var UiDaemon = (function () {
                 "height": 300,
                 "fullscreen": false
             });
+
+            win.setAlwaysOnTop(true);
         };
 
         this._menu.append(aboutItem);
