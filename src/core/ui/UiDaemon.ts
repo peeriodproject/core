@@ -24,6 +24,25 @@ class UiDaemon implements UiDaemonInterface {
 
 		this._menu = new gui.Menu();
 
+		var aboutItem = new gui.MenuItem({
+			label: i18n.__('UiDaemon.menu.about.title')
+		});
+
+		aboutItem.click = function () {
+			gui.Window.open('about.html',{
+				"position": "center",
+				"focus": true,
+				"toolbar": false,
+				"frame": true,
+				"resizable": false,
+				"width": 300,
+				"height": 300,
+				"fullscreen": false
+			});
+		};
+
+		this._menu.append(aboutItem);
+
 		this._menu.append(new gui.MenuItem({
 			type: 'separator'
 		}));
