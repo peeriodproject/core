@@ -1,5 +1,6 @@
+/// <reference path='../../main.d.ts' />
 var path = require('path');
-var fs = require('fs');
+var fs = require('fs-extra');
 
 /**
 * Simple JavaScript Object Bucket store implementation.

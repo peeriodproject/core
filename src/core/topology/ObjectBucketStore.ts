@@ -1,5 +1,7 @@
+/// <reference path='../../main.d.ts' />
+
 import path = require('path');
-import fs = require('fs');
+import fs = require('fs-extra');
 
 import BucketStoreInterface = require('./interfaces/BucketStoreInterface');
 import ContactNodeObjectInterface = require('./interfaces/ContactNodeObjectInterface');

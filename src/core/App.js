@@ -215,14 +215,14 @@ var App = {
     },
     _startSearchDatabase: function () {
         var _this = this;
-        this._startSearchClient(function (searchConfig, searchClient) {
+        this._startSearchClient(function (searchClient) {
             var searchRequestsIndexName = 'searchrequests';
 
             var searchRequestManager = new SearchRequestManager(_this.getAppQuitHandler(), searchRequestsIndexName, searchClient);
             var searchResponseManager = new SearchResponseManager(_this.getAppQuitHandler(), searchClient);
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
-            _this._startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager, function () {
+            _this._startIndexer(searchClient, searchRequestManager, searchResponseManager, function () {
                 _this._checkAndStartUi('indexer');
             });
 
@@ -258,10 +258,11 @@ var App = {
 
         return process.nextTick(internalCallback.bind(null, downloadManager, uploadManager));
     },
-    _startIndexer: function (searchConfig, searchClient, searchRequestManager, searchResponseManager, callback) {
+    _startIndexer: function (searchClient, searchRequestManager, searchResponseManager, callback) {
         var _this = this;
         var internalCallback = callback || function () {
         };
+        var searchConfig = this._getMainConfig(['search']);
 
         if (!this._environmentConfig.get('environment.startSearchDatabase') || !this._environmentConfig.get('environment.startIndexer')) {
             return process.nextTick(internalCallback.bind(null));
@@ -311,16 +312,15 @@ var App = {
     _startSearchClient: function (callback) {
         var internalCallback = callback || function () {
         };
-        var searchConfig = this._getMainConfig(['search']);
         var searchStoreFactory = new SearchStoreFactory();
         var searchItemFactory = new SearchItemFactory();
 
         this._setSplashScreenStatus('startSearchDatabase');
 
-        var searchClient = new SearchClient(searchConfig, this.getAppQuitHandler(), 'mainIndex', searchStoreFactory, searchItemFactory, {
+        var searchClient = new SearchClient(this._getMainConfig(['app', 'search']), this.getAppQuitHandler(), 'mainIndex', searchStoreFactory, searchItemFactory, {
             onOpenCallback: function (err) {
                 console.log(err);
-                return internalCallback(searchConfig, searchClient);
+                return internalCallback(searchClient);
             }
         });
     },
@@ -401,6 +401,7 @@ var App = {
 
         this._setSplashScreenStatus('startTopology');
 
+        var appConfig = this._getMainConfig('app');
         var topologyConfig = this._getMainConfig('topology');
 
         var tcpSocketHandlerFactory = new TCPSocketHandlerFactory();
@@ -460,7 +461,7 @@ var App = {
                 myNode = new MyNode(myId, addressList);
 
                 //bucketStore = new BucketStore('bucketstore', topologyConfig.get('topology.bucketStore.databasePath'));
-                bucketStore = new ObjectBucketStore('objectBucketStore', topologyConfig.get('topology.bucketStore.databasePath'), 2);
+                bucketStore = new ObjectBucketStore('objectBucketStore', path.join(appConfig.get('app.dataPath'), topologyConfig.get('topology.bucketStore.databasePath')), 2);
                 bucketFactory = new BucketFactory();
                 contactNodeFactory = new ContactNodeFactory();
                 routingTable = new RoutingTable(topologyConfig, _this.getAppQuitHandler(), myId, bucketFactory, bucketStore, contactNodeFactory, {
@@ -469,7 +470,7 @@ var App = {
                             console.error(err);
                         }
 
-                        protocolGateway = new ProtocolGateway(_this._getMainConfig('app'), _this._getMainConfig('protocol'), topologyConfig, _this._getMainConfig('hydra'), _this._getMainConfig('fileTransfer'), myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
+                        protocolGateway = new ProtocolGateway(appConfig, _this._getMainConfig('protocol'), topologyConfig, _this._getMainConfig('hydra'), _this._getMainConfig('fileTransfer'), myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
 
                         _this._addUiComponent(new UiProtocolGatewayComponent(protocolGateway, _this._splashScreen));
                         _this._checkAndStartUi('topology');
