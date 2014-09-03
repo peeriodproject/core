@@ -61,7 +61,13 @@ var UiProtocolGatewayComponent = (function (_super) {
         });
 
         protocolGateway.once('NEEDS_PROXY', function (needsProxy) {
-            _this._setKeyAndUpdateSplashScreen('needsProxy', needsProxy);
+            _this._setKey('needsProxy', needsProxy);
+
+            if (needsProxy) {
+                _this._updateSplashScreen('needsProxy');
+            } else {
+                _this._updateSplashScreen('needsNoProxy');
+            }
         });
 
         protocolGateway.on('NUM_OF_PROXIES', function (count) {
@@ -120,6 +126,17 @@ var UiProtocolGatewayComponent = (function (_super) {
     UiProtocolGatewayComponent.prototype._setKeyAndUpdateSplashScreen = function (key, value) {
         this._setKey(key, value);
 
+        this._updateSplashScreen(key);
+    };
+
+    /**
+    * Updates the splash screen status.
+    *
+    * @method core.ui.UiProtocolGatewayComponent~_updateSplashScreen
+    *
+    * @param {string} key
+    */
+    UiProtocolGatewayComponent.prototype._updateSplashScreen = function (key) {
         if (this._splashScreen) {
             this._splashScreen.setStatus(key);
         }

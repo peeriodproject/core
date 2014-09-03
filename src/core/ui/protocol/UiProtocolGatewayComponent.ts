@@ -60,7 +60,14 @@ class UiProtocolGatewayComponent extends UiComponent {
 		});
 
 		protocolGateway.once('NEEDS_PROXY', (needsProxy:boolean) => {
-			this._setKeyAndUpdateSplashScreen('needsProxy', needsProxy);
+			this._setKey('needsProxy', needsProxy);
+
+			if (needsProxy) {
+				this._updateSplashScreen('needsProxy');
+			}
+			else {
+				this._updateSplashScreen('needsNoProxy');
+			}
 		});
 
 		protocolGateway.on('NUM_OF_PROXIES', (count:number) => {
@@ -102,7 +109,7 @@ class UiProtocolGatewayComponent extends UiComponent {
 	 * @param {string} key
 	 * @param {string} [value] The optional value for the given key which will fall back to `true`
 	 */
-	private _setKey (key:string, value:any = true) {
+	private _setKey (key:string, value:any = true):void {
 		this._state[key] = value;
 
 		this.updateUi();
@@ -116,9 +123,20 @@ class UiProtocolGatewayComponent extends UiComponent {
 	 * @param {string} key
 	 * @param {Object} value
 	 */
-	_setKeyAndUpdateSplashScreen (key:string, value?:any) {
+	private _setKeyAndUpdateSplashScreen (key:string, value?:any):void {
 		this._setKey(key, value);
 
+		this._updateSplashScreen(key);
+	}
+
+	/**
+	 * Updates the splash screen status.
+	 *
+	 * @method core.ui.UiProtocolGatewayComponent~_updateSplashScreen
+	 *
+	 * @param {string} key
+	 */
+	private _updateSplashScreen (key:string):void {
 		if (this._splashScreen) {
 			this._splashScreen.setStatus(key);
 		}
