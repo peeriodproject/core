@@ -66,6 +66,12 @@ var UiDaemon = (function () {
         });
 
         quitItem.click = function () {
+            _this._menu.remove(quitItem);
+            _this._menu.append(new gui.MenuItem({
+                enabled: false,
+                label: i18n.__('UiDaemon.menu.quitting.title')
+            }));
+
             appQuitHandler.quit();
         };
 

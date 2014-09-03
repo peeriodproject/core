@@ -73,7 +73,13 @@ class UiDaemon implements UiDaemonInterface {
 			label: i18n.__('UiDaemon.menu.quit.title')
 		});
 
-		quitItem.click = function () {
+		quitItem.click = () => {
+			this._menu.remove(quitItem);
+			this._menu.append(new gui.MenuItem({
+				enabled: false,
+				label: i18n.__('UiDaemon.menu.quitting.title')
+			}));
+
 			appQuitHandler.quit();
 		};
 
