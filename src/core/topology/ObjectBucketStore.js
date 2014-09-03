@@ -194,7 +194,7 @@ var ObjectBucketStore = (function () {
             var dataToPersist = JSON.stringify(_this._buckets);
 
             if (dataToPersist) {
-                fs.writeFile(_this._dbPathFs, dataToPersist, { encoding: 'utf8' }, function (err) {
+                fs.outputFile(_this._dbPathFs, dataToPersist, function (err) {
                     _this._isWritingFs = false;
                 });
             }
@@ -323,7 +323,11 @@ var ObjectBucketStore = (function () {
             return;
 
         if (!fs.existsSync(this._dbFolderFs)) {
-            this._isUnwritableFs = true;
+            try  {
+                fs.mkdirsSync(this._dbFolderFs);
+            } catch (e) {
+                this._isUnwritableFs = true;
+            }
         } else if (fs.existsSync(this._dbPathFs)) {
             try  {
                 var contents = fs.readFileSync(this._dbPathFs, { encoding: 'utf8' });
