@@ -21,9 +21,13 @@
 	"UiDaemon.menu.quit.title": "Quit Peeriod",
 	"UiDaemon.menu.about.title": "About",
 	"splashScreen.undefined": "splashScreen.undefined",
-    "aboutWindow_title": "About Peeriod",
-    "aboutWindow_version": "Version %s",
-	"aboutWindow_link_home": "Peeriod Project",
-	"aboutWindow_link_github": "Github",
-	"aboutWindow_link_twitter": "Twitter"
+	"aboutWindow.title": "About Peeriod",
+	"aboutWindow.version": "Version %s",
+	"aboutWindow.linkHome": "Peeriod Project",
+	"aboutWindow.linkGithub": "Github",
+	"aboutWindow.linkTwitter": "Twitter",
+	"updateNotifyWindow.title": "updateNotifyWindow.title",
+	"updateNotifyWindow.headline": "updateNotifyWindow.headline",
+	"updateNotifyWindow.description": "updateNotifyWindow.description",
+	"updateNotifyWindow.downloadButtonLabel": "updateNotifyWindow.downloadButtonLabel"
 }

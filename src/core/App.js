@@ -166,6 +166,12 @@ var App = {
         this._splashScreen = this._environmentConfig.get('environment.startUi') ? new UiSplashScreen(this._gui) : null;
     },
     _checkForUpdates: function () {
+        var appConfig = this._getMainConfig(['app']);
+
+        if (!appConfig.get('app.checkForUpdatesOnStartup', false)) {
+            return;
+        }
+
         UiUpdateNotify.checkForUpdates(this._gui);
     },
     _setSplashScreenStatus: function (status) {
@@ -196,7 +202,6 @@ var App = {
         }
         }*/
         this._initSplashScreen();
-        this._checkForUpdates();
 
         if (this._environmentConfig.get('environment.startSearchDatabase')) {
             this._startSearchDatabase();
@@ -356,6 +361,7 @@ var App = {
         if (this._splashScreen) {
             this._splashScreen.once('close', function () {
                 _this._checkUiRoutines();
+                _this._checkForUpdates();
             });
         }
     },

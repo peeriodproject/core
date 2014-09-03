@@ -2,77 +2,57 @@
 
 import http = require('http');
 import https = require('https');
-import path = require('path');
-import fs = require('fs');
 
 /**
- * @class UiUpdateNotify
+ * @class core.ui.UiUpdateNotify
  */
 class UiUpdateNotify {
 
-	public static checkForUpdates (gui) {
-		var manifestPath:string = path.resolve(process.cwd(), 'package.json');
+	public static checkForUpdates (gui:any) {
+		var currentVersion:string = gui.App.manifest.version;
+		var versionCheckUrl:string = gui.App.manifest.versionCheckUrl;
 
-		fs.readFile(manifestPath, {encoding: 'utf8'}, (err, data) => {
-			if (err) return;
+		if (currentVersion && versionCheckUrl) {
+			// check for protocol
+			var protocol:any = (versionCheckUrl.indexOf('https') === 0) ? https : http;
 
-			if (data) {
-				var manifest = null;
+			// get the new version
+			protocol.get(versionCheckUrl, function (res) {
 
-				try {
-					manifest = JSON.parse(data);
-				}
-				catch (e) {
-					console.log('Cannot read manifest');
-				}
+				var body:string = '';
 
-				if (manifest) {
-					var currentVersion:string = manifest.version;
-					var versionCheckUrl:string = manifest.versionCheckUrl;
+				res.on('data', function (d) {
+					body += d;
+				});
 
-					if (currentVersion && versionCheckUrl) {
-						// check for protocol
-						var protocol:any = (versionCheckUrl.indexOf('https') === 0) ? https : http;
+				res.on('end', function () {
+					var vObj = null;
 
-						// get the new version
-						protocol.get(versionCheckUrl, function (res) {
+					try {
+						vObj = JSON.parse(body);
+					}
+					catch (e) {
+						console.log(e);
+					}
 
-							var body:string = '';
-
-							res.on('data', function (d) {
-								body += d;
-							});
-
-							res.on('end', function () {
-								var vObj = null;
-								try {
-									vObj = JSON.parse(body);
-								}
-								catch (e) {
-									console.log(e);
-								}
-
-								if (vObj && vObj.version && vObj.version !== currentVersion) {
-									gui.Window.open('./public/update-notify.html', {
-										"position"  : 'center',
-										"focus"     : true,
-										"toolbar"   : false,
-										"frame"     : true,
-										"resizable" : false,
-										"width"     : 400,
-										"height"    : 200,
-										"fullscreen": false,
-										"always-on-top": true
-									});
-								}
-							});
-						}).on('error', function (e) {
-							console.log(e);
+					if (vObj && vObj.version && vObj.version !== currentVersion) {
+						var win =  gui.Window.open('./public/update-notify.html', {
+							position       : 'center',
+							focus          : true,
+							toolbar        : false,
+							frame          : true,
+							resizable      : false,
+							width          : 620,
+							height         : 360,
+							fullscreen     : false,
+							"always-on-top": true
 						});
 					}
-				}
-			}
-		});
+				});
+			}).on('error', function (e) {
+				console.log(e);
+			});
+		}
 	}
 
 }

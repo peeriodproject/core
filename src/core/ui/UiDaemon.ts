@@ -40,6 +40,7 @@ class UiDaemon implements UiDaemonInterface {
 
 			this._aboutWindow = gui.Window.open('./public/about.html', {
 				position       : 'center',
+				show           : false,
 				focus          : true,
 				toolbar        : false,
 				frame          : true,
@@ -51,6 +52,11 @@ class UiDaemon implements UiDaemonInterface {
 			});
 
 			this._aboutWindow.setAlwaysOnTop(true);
+
+			this._aboutWindow.once('loaded', () => {
+				this._aboutWindow.show();
+				this._aboutWindow.focus();
+			});
 
 			this._aboutWindow.once('close', () => {
 				this._aboutWindow = null;

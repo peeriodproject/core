@@ -32,6 +32,7 @@ var UiDaemon = (function () {
 
             _this._aboutWindow = gui.Window.open('./public/about.html', {
                 position: 'center',
+                show: false,
                 focus: true,
                 toolbar: false,
                 frame: true,
@@ -43,6 +44,11 @@ var UiDaemon = (function () {
             });
 
             _this._aboutWindow.setAlwaysOnTop(true);
+
+            _this._aboutWindow.once('loaded', function () {
+                _this._aboutWindow.show();
+                _this._aboutWindow.focus();
+            });
 
             _this._aboutWindow.once('close', function () {
                 _this._aboutWindow = null;
