@@ -38,7 +38,6 @@
 			-webkit-font-smoothing: antialiased;
 			text-rendering: optimizeLegibility;
 			-webkit-font-feature-settings: "kern";
-			font-kerning: normal;
 		}
 
 		h1 {
@@ -86,12 +85,14 @@
 		(function () {
 			var gui = require('nw.gui');
 			var i18n = require('i18n');
+			var win = gui.Window.get();
 
 			var updateLink = function (linkEl) {
 				linkEl.addEventListener('click', function (event) {
 					event.preventDefault();
 
 					gui.Shell.openExternal(event.target.href);
+					win.close();
 				});
 			};
 
