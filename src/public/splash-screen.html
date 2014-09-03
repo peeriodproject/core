@@ -40,6 +40,12 @@
 			}
 		}
 
+		html,
+		body {
+			height: 100%;
+			margin: 0;
+		}
+
 		body {
 			background: #f0f0f0;
 			text-align: center;
@@ -49,6 +55,8 @@
 			/*color: #6B6B6B;*/
 			color: #8E8E8E;
 			-webkit-font-smoothing: antialiased;
+			background-repeat: no-repeat;
+			background-position: 50% 37%;
 		}
 
 		* {
@@ -120,12 +128,22 @@
 	</style>
 </head>
 <body>
-
 <div id="progress-wrapper">
 	<div class="progress"></div>
 	<div id="status-even">Toplogy Started</div>
 	<div id="status-odd"></div>
 </div>
+
+<script type="text/javascript">
+	(function () {
+		var gui = require('nw.gui');
+		gui.Window.get().showDevTools();
+
+		var imageName = window.devicePixelRatio > 1 ? 'peeriod-splashscreen@2x' : 'peeriod-splashscreen';
+
+		document.body.style.backgroundImage = 'url("../images/' + imageName + '.png")';
+	}());
+</script>
 
 </body>
 </html>

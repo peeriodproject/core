@@ -41,7 +41,6 @@
 			-webkit-font-smoothing: antialiased;
 			text-rendering: optimizeLegibility;
 			-webkit-font-feature-settings: "kern";
-			font-kerning: normal;
 		}
 
 		.version,
@@ -58,6 +57,8 @@
 			color: #3c3c3c;
 			text-decoration: none;
 			font-weight: bold;
+			outline: none;
+			outline: none;
 		}
 
 		a:hover,
@@ -66,17 +67,23 @@
 		}
 
 		.version {
+			margin-top: 1rem;
 			font-style: italic;
 		}
 
 		ul {
-			margin: 32px 0;
+			margin: 2rem 0;
 			padding: 0;
 			list-style: none;
 		}
 
+		ul.links {
+			margin-bottom: 0;
+		}
+
 		ul.links li {
 			display: inline-block;
+			white-space: nowrap;
 		}
 
 		ul.links li:after {
@@ -90,12 +97,11 @@
 	</style>
 </head>
 <body>
-	<h1>Logo HERE</h1>
+	<img id="logo" src="#" />
 
 	<div class="version">&mdash; <span id="version">Version</span> &mdash;</div>
 
-	<ul id="maintainers">
-	</ul>
+	<ul id="maintainers"></ul>
 
 	<ul class="links">
 		<li><a href="https://peeriodproject.org" id="home-link">Peeriod</a></li>
@@ -107,15 +113,16 @@
 		(function () {
 			var gui = require('nw.gui');
 			var i18n = require('i18n');
-
+			var win = gui.Window.get();
 			var updateLink = function (linkEl) {
 				linkEl.addEventListener('click', function (event) {
 					event.preventDefault();
 
 					gui.Shell.openExternal(event.target.href);
+					win.close();
 				});
 			};
-
+			var iconName = window.devicePixelRatio > 1 ? 'peeriod-about@2x' : 'peeriod-about';
 			var links = document.getElementsByTagName('A');
 
 			for (var i = 0, l = links.length; i < l; i++) {
@@ -137,6 +144,7 @@
 			}
 
 			document.title = i18n.__('aboutWindow.title');
+			document.getElementById('logo').src = '../images/' + iconName + '.png';
 			document.getElementById('version').innerHTML = i18n.__('aboutWindow.version', gui.App.manifest.version);
 			document.getElementById('home-link').innerHTML = i18n.__('aboutWindow.linkHome');
 			document.getElementById('github-link').innerHTML = i18n.__('aboutWindow.linkGithub');
