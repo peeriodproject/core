@@ -12,8 +12,8 @@ var UiDaemon = (function () {
         this._menu = null;
         this._tray = null;
         this._tray = new gui.Tray({
-            icon: './images/icon-menubar.png',
-            alticon: './images/icon-menubar-active.png'
+            icon: './images/icon-menubar@2x.png',
+            alticon: './images/icon-menubar-active@2x.png'
         });
 
         this._menu = new gui.Menu();
