@@ -44,10 +44,6 @@ var UiDaemon = (function () {
 
             _this._aboutWindow.setAlwaysOnTop(true);
 
-            _this._aboutWindow.once('loaded', function () {
-                _this._aboutWindow.showDevTools();
-            });
-
             _this._aboutWindow.once('close', function () {
                 _this._aboutWindow = null;
             });

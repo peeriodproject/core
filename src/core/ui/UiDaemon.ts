@@ -52,10 +52,6 @@ class UiDaemon implements UiDaemonInterface {
 
 			this._aboutWindow.setAlwaysOnTop(true);
 
-			this._aboutWindow.once('loaded', () => {
-				this._aboutWindow.showDevTools();
-			});
-
 			this._aboutWindow.once('close', () => {
 				this._aboutWindow = null;
 			});
