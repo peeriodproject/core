@@ -7,6 +7,8 @@ var i18n = require('i18n');
 */
 var UiDaemon = (function () {
     function UiDaemon(gui, appQuitHandler) {
+        var _this = this;
+        this._aboutWindow = null;
         this._menu = null;
         this._tray = null;
         this._tray = new gui.Tray({
@@ -21,18 +23,34 @@ var UiDaemon = (function () {
         });
 
         aboutItem.click = function () {
-            var win = gui.Window.open('./public/about.html', {
-                "position": 'center',
-                "focus": true,
-                "toolbar": false,
-                "frame": true,
-                "resizable": false,
-                "width": 300,
-                "height": 300,
-                "fullscreen": false
+            if (_this._aboutWindow) {
+                _this._aboutWindow.show();
+                _this._aboutWindow.focus();
+
+                return;
+            }
+
+            _this._aboutWindow = gui.Window.open('./public/about.html', {
+                position: 'center',
+                focus: true,
+                toolbar: false,
+                frame: true,
+                resizable: false,
+                width: 400,
+                height: 470,
+                fullscreen: false,
+                show_in_taskbar: false
             });
 
-            win.setAlwaysOnTop(true);
+            _this._aboutWindow.setAlwaysOnTop(true);
+
+            _this._aboutWindow.once('loaded', function () {
+                _this._aboutWindow.showDevTools();
+            });
+
+            _this._aboutWindow.once('close', function () {
+                _this._aboutWindow = null;
+            });
         };
 
         this._menu.append(aboutItem);
