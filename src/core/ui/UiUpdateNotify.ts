@@ -28,63 +28,29 @@ class UiUpdateNotify {
 
 				res.on('end', function () {
 					var vObj = null;
-
 					try {
 						vObj = JSON.parse(body);
 					}
 					catch (e) {
-						console.log(e);
+						logger.error('UiUpdateNotify.checkForUpdate: Response from update server is invalid', {emsg: e.message});
 					}
 
 					if (vObj && vObj.version && vObj.version !== currentVersion) {
-						var win = gui.Window.open('./public/update-notify.html', {
+						gui.Window.open('./public/update-notify.html', {
 							position       : 'center',
 							focus          : true,
 							toolbar        : false,
 							frame          : true,
 							resizable      : false,
-							width          : 620,
-							height         : 360,
+							width          : 400,
+							height         : 200,
 							fullscreen     : false,
 							"always-on-top": true
 						});
-
-						// get the new version
-						protocol.get(versionCheckUrl, function (res) {
-							var body:string = '';
-
-							res.on('data', function (d) {
-								body += d;
-							});
-
-							res.on('end', function () {
-								var vObj = null;
-								try {
-									vObj = JSON.parse(body);
-								}
-								catch (e) {
-									logger.error('Response from update server is invalid', {emsg: e.message});
-								}
-
-								if (vObj && vObj.version && vObj.version !== currentVersion) {
-									gui.Window.open('./public/update-notify.html', {
-										"position"     : 'center',
-										"focus"        : true,
-										"toolbar"      : false,
-										"frame"        : true,
-										"resizable"    : false,
-										"width"        : 400,
-										"height"       : 200,
-										"fullscreen"   : false,
-										"always-on-top": true
-									});
-								}
-							}).on('error', function (e) {
-								logger.error('Update server ping error', {emsg: e.message});
-
-							});
-						});
 					}
+				}).on('error', function (e) {
+					logger.error('UiUpdateNotify.checkForUpdate: Update server ping error', {emsg: e.message});
+
 				});
 			});
 		}
