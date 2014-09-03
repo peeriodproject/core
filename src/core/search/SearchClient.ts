@@ -178,7 +178,7 @@ class SearchClient implements SearchClientInterface {
 
 		var checkCallback = function (err:Error) {
 			if (err) {
-				console.error(err);
+				logger.error(err);
 			}
 
 			if (itemIds.length === amount) {
@@ -343,7 +343,7 @@ class SearchClient implements SearchClientInterface {
 
 		this._createIndex(indexName, mapping, settings, (err:Error) => {
 			if (err) {
-				console.error(err);
+				logger.error(err);
 				return internalCallback(err);
 			}
 
@@ -382,7 +382,7 @@ class SearchClient implements SearchClientInterface {
 				queryDeleted = false;
 				responsesDeleted = false;
 
-				console.error(err);
+				logger.error(err);
 
 				return internalCallback(err);
 			}
@@ -616,7 +616,7 @@ class SearchClient implements SearchClientInterface {
 				}
 			});
 
-			console.log('added elasticsearch client');
+			logger.log('added elasticsearch client');
 
 			this._waitForDatabaseServer((err:Error) => {
 				if (err) {

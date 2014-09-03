@@ -96,9 +96,9 @@ class UploadManager implements UploadManagerInterface {
 		var searchClientClosed:boolean = false;
 		var uploadsEnded:boolean = false;
 		var checkAndReturn:Function = function (err:Error) {
-			if (err) {
+			/*if (err) {
 				console.error(err);
-			}
+			}*/
 
 			if (searchClientClosed && uploadsEnded) {
 				return internalCallback(err);

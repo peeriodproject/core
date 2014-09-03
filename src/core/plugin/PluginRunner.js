@@ -95,7 +95,7 @@ var PluginRunner = (function () {
 
         var internalCallback = function (err, output) {
             if (err) {
-                console.error(err);
+                //console.error(err);
             }
 
             if (_this._sandboxScripts[sandboxKey]) {

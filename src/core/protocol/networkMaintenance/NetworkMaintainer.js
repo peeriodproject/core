@@ -197,14 +197,13 @@ var NetworkMaintainer = (function (_super) {
         this._nodeSeekerManager.forceFindActiveNode(avoidNode, function (node) {
             _this.emit('foundEntryNode', node);
 
-            console.log('Found an entry node, starting search for own id...');
+            //console.log('Found an entry node, starting search for own id...');
             _this._findClosestNodesManager.startCycleFor(_this._myIdToSearchFor, [node]);
 
             _this._findClosestNodesManager.once('foundClosestNodes', function (searchForId, resultingList) {
                 //logger.info('Find closest nodes cycle finished', {for: searchForId.toHexString(), resultLen: resultingList.length});
                 if (!resultingList.length) {
-                    console.log('Resulting list is empty, trying to find another node');
-
+                    //console.log('Resulting list is empty, trying to find another node');
                     setImmediate(function () {
                         _this._findEntryNodeAndJoin(node);
                     });

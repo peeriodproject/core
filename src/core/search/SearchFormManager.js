@@ -93,7 +93,6 @@ var SearchFormManager = (function () {
 
             pluginRunner.getQuery(rawQuery, function (err, query) {
                 if (err) {
-                    console.log(err);
                     return internalCallback(err, null);
                 } else if (!query) {
                     // todo return error if the query is invalid
@@ -150,8 +149,6 @@ var SearchFormManager = (function () {
                         }
 
                         query = transformedQuery;
-
-                        console.log(query);
                     }
 
                     return _this._searchRequestManager.addQuery(query, internalCallback);

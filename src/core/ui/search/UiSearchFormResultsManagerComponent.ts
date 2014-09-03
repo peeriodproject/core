@@ -3,6 +3,8 @@ import SearchRequestManagerInterface = require('../../search/interfaces/SearchRe
 
 import UiComponent = require('../UiComponent');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 /**
  * @class core.ui.UiSearchFormResultsManagerComponent
  * @extends core.ui.UiComponent
@@ -111,7 +113,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 			this._searchRequestManager.getResponses(queryId, (err:Error, responses:any) => {
 				if (err || !responses || !responses.total) {
 					if (err) {
-						console.error(err.message);
+						logger.error('UiSearchFormResultsManager', {emsg: err.message});
 					}
 
 					return;
@@ -119,7 +121,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 
 				this._searchFormResultsManager.transformResponses(responses.hits, true, (err:Error, transformedResults) => {
 					if (err) {
-						console.error(err.message);
+						logger.error('UiSearchFormResultsManager', {emsg: err.message});
 
 						return;
 					}
@@ -158,7 +160,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 
 		this._searchFormResultsManager.addQuery(rawQuery, (err:Error, queryId:string) => {
 			if (err) {
-				console.error(err.message);
+				logger.error('UiSearchFormResultsManager', {emsg: err.message});
 			}
 
 			this._runningQuery = rawQuery;
@@ -200,7 +202,7 @@ class UiSearchFormResultsManagerComponent extends UiComponent {
 
 		this._searchRequestManager.removeQuery(this._runningQueryId, (err:Error) => {
 			if (err) {
-				console.error(err.message);
+				logger.error('UiSearchFormResultsManager', {emsg: err.message});
 			}
 		});
 	}

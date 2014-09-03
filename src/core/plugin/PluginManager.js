@@ -116,8 +116,8 @@ var PluginManager = (function () {
         var statePath = path.join(config.get('app.dataPath'), config.get('plugin.pluginManagerStateConfig'));
         var fallbackStatePath = path.join(config.get('app.internalDataPath'), config.get('plugin.pluginManagerStateConfig'));
 
-        console.log(statePath);
-        console.log(fallbackStatePath);
+        logger.log('PluginManager state path ' + statePath);
+        logger.log('PluginManager fallbackStatePath ' + fallbackStatePath);
 
         this._config = config;
         this._stateHandler = stateHandlerFactory.create(statePath, fallbackStatePath);
@@ -279,7 +279,6 @@ var PluginManager = (function () {
 
                 _this._loadGlobals(itemPath, fileHash, function (err, globals) {
                     if (err) {
-                        console.log(err);
                         return sendCallback();
                     }
 
@@ -291,7 +290,7 @@ var PluginManager = (function () {
                             counter++;
 
                             if (err) {
-                                console.error(err);
+                                logger.error(err.message);
                             } else if (data) {
                                 if (useApacheTika.indexOf(key) !== -1) {
                                     data = ObjectUtils.extend(data, tikaData);
@@ -321,8 +320,7 @@ var PluginManager = (function () {
 
             _this._loadApacheTikaData(itemPath, function (err, tikaData) {
                 if (err) {
-                    console.log('PluginManager.onBeforeItemAdd. MISSING CALLBACK');
-                    console.error(err);
+                    logger.log('PluginManager.onBeforeItemAdd. MISSING CALLBACK');
                 } else {
                     return runPlugins(tikaData);
                 }
@@ -341,7 +339,6 @@ var PluginManager = (function () {
 
         this._stateHandler.load(function (err, pluginState) {
             if (err) {
-                console.error(err);
                 return internalCallback(err);
             }
 
@@ -434,13 +431,11 @@ var PluginManager = (function () {
 
         fs.stat(itemPath, function (err, stats) {
             if (err) {
-                console.error(err);
-
                 return callback(err, tikaData);
             }
 
             if (!stats.isFile() || maxFileBufferLength < stats.size / 1048576) {
-                console.log('PluginManager~_loadApacheTikaData: file', itemPath, 'is not a file or does not fit into the maxFileBufferLength limit.', stats.size / 1048576, maxFileBufferLength, 'MB');
+                logger.log('PluginManager~_loadApacheTikaData: file', itemPath, 'is not a file or does not fit into the maxFileBufferLength limit.', stats.size / 1048576, maxFileBufferLength, 'MB');
 
                 return callback(null, {});
             } else {

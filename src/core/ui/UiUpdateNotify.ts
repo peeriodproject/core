@@ -3,6 +3,8 @@
 import http = require('http');
 import https = require('https');
 
+var logger = require('../utils/logger/LoggerFactory').create();
+
 /**
  * @class core.ui.UiUpdateNotify
  */
@@ -18,7 +20,6 @@ class UiUpdateNotify {
 
 			// get the new version
 			protocol.get(versionCheckUrl, function (res) {
-
 				var body:string = '';
 
 				res.on('data', function (d) {
@@ -36,7 +37,7 @@ class UiUpdateNotify {
 					}
 
 					if (vObj && vObj.version && vObj.version !== currentVersion) {
-						var win =  gui.Window.open('./public/update-notify.html', {
+						var win = gui.Window.open('./public/update-notify.html', {
 							position       : 'center',
 							focus          : true,
 							toolbar        : false,
@@ -47,10 +48,44 @@ class UiUpdateNotify {
 							fullscreen     : false,
 							"always-on-top": true
 						});
+
+						// get the new version
+						protocol.get(versionCheckUrl, function (res) {
+							var body:string = '';
+
+							res.on('data', function (d) {
+								body += d;
+							});
+
+							res.on('end', function () {
+								var vObj = null;
+								try {
+									vObj = JSON.parse(body);
+								}
+								catch (e) {
+									logger.error('Response from update server is invalid', {emsg: e.message});
+								}
+
+								if (vObj && vObj.version && vObj.version !== currentVersion) {
+									gui.Window.open('./public/update-notify.html', {
+										"position"     : 'center',
+										"focus"        : true,
+										"toolbar"      : false,
+										"frame"        : true,
+										"resizable"    : false,
+										"width"        : 400,
+										"height"       : 200,
+										"fullscreen"   : false,
+										"always-on-top": true
+									});
+								}
+							}).on('error', function (e) {
+								logger.error('Update server ping error', {emsg: e.message});
+
+							});
+						});
 					}
 				});
-			}).on('error', function (e) {
-				console.log(e);
 			});
 		}
 	}

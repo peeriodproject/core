@@ -29,7 +29,7 @@ var SearchItem = (function () {
                     scoreDivider++;
                 }
             } catch (e) {
-                console.error(e);
+                //console.error(e);
             }
         }
 
@@ -134,7 +134,6 @@ var SearchItem = (function () {
             }
 
             if (!isValid) {
-                console.log(name, this[memberName], source);
                 throw new Error('SearchItem~_processItemMember: "_source.item' + name + '" must be equal in all plugin data!');
             }
         } else if (this[memberName] === null) {

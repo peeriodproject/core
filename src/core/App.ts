@@ -204,7 +204,6 @@ var App = {
 	start: function (gui, nwApp, dataPath, win) {
 
 		process.on('uncaughtException', (err:Error) => {
-			console.error(err);
 			logger.error(err);
 		});
 
@@ -245,7 +244,6 @@ var App = {
 	},
 
 	quit: function () {
-		console.log('quitting...');
 		return process.nextTick(function () {
 			this.getAppQuitHandler().quit();
 		}.bind(this));
@@ -359,7 +357,7 @@ var App = {
 
 		var searchClient = new SearchClient(this._getMainConfig(['app', 'search']), this.getAppQuitHandler(), 'mainIndex', searchStoreFactory, searchItemFactory, {
 			onOpenCallback: function (err) {
-				console.log(err);
+				if (err) logger.error(err.message);
 				return internalCallback(searchClient);
 			}
 		});
@@ -418,14 +416,14 @@ var App = {
 	},
 
 	_checkUiRoutines: function () {
-		console.log('checking ui routines');
+		logger.log('checking ui routines');
 		var uiRoutinesManager = new UiRoutinesManager(this._gui);
 		uiRoutinesManager.addUiRoutine(new UiChromeExtensionRoutine(new JSONConfig('../../config/uiChromeExtensionRoutine.json', ['extension'])));
 
 		uiRoutinesManager.getInstalledRoutineIds(function (err, routineIds) {
 			if (!routineIds || !routineIds.length) {
 				uiRoutinesManager.open();
-				console.log('ui routines: opened manager');
+				logger.log('ui routines: opened manager');
 			}
 			else {
 				uiRoutinesManager.getUiRoutine(routineIds[0]).start();
@@ -439,7 +437,7 @@ var App = {
 
 			if (this._splashScreen) {
 				setImmediate(() => {
-					console.log('closing splashscreen');
+					logger.log('closing splashscreen');
 					this._splashScreen.close();
 				});
 			}
@@ -489,7 +487,7 @@ var App = {
 			var idState = this._getJSONStateHandlerFactory().create(path.resolve(this.getDataPath(), 'myId.json'));
 
 			idState.load((err:Error, state:any) => {
-				if (err) console.log(err);
+				if (err) logger.error('Id state error', {emsg: err.message});
 				var myId = null;
 
 				if (state && state.id) {
@@ -517,7 +515,7 @@ var App = {
 				routingTable = new RoutingTable(topologyConfig, this.getAppQuitHandler(), myId, bucketFactory, bucketStore, contactNodeFactory, {
 					onOpenCallback: (err) => {
 						if (err) {
-							console.error(err);
+							logger.error(err.message);
 						}
 
 						protocolGateway = new ProtocolGateway(appConfig, this._getMainConfig('protocol'), topologyConfig, this._getMainConfig('hydra'), this._getMainConfig('fileTransfer'), myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);

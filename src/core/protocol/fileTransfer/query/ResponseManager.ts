@@ -196,9 +196,6 @@ class ResponseManager implements ResponseManagerInterface {
 							var result = this._transferMessageCenter.issueExternalFeedToCircuit(externalFeedingNodesBlock, msg);
 							logger.log('query', 'Issuing external feed to circuit', {broadcastId: identifier, result: result, queryCount: 'issuenext'});
 						}
-						else {
-							console.log('no message');
-						}
 					}
 				}
 			});

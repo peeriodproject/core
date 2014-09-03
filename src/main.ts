@@ -8,7 +8,7 @@ try {
 	gui = require('nw.gui');
 }
 catch (e) {
-	console.log('node runner');
+	//console.log('node runner');
 }
 
 //var logger = require('./core/utils/logger/LoggerFactory').create('/Volumes/HDD/logs/');

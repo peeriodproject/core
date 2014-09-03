@@ -195,9 +195,6 @@ var ObjectBucketStore = (function () {
 
             if (dataToPersist) {
                 fs.writeFile(_this._dbPathFs, dataToPersist, { encoding: 'utf8' }, function (err) {
-                    if (err) {
-                        console.log('ObjectBucketStorePersistErr %o', err.message);
-                    }
                     _this._isWritingFs = false;
                 });
             }

@@ -160,15 +160,13 @@ var IrcLoggerBackend = (function () {
                 level: 'debug'
             });
         } else {
-            if (!process.env.DISABLE_FILE_LOGGER) {
-                var fileLogPath = this._logPath ? this._logPath : '/logs';
-
-                console.log('fileLogPath', fileLogPath);
+            if (process.env.FILE_LOGGER_PATH) {
+                this._logPath = process.env.FILE_LOGGER_PATH;
 
                 this._logger.add(winston.transports.File, {
                     silent: false,
                     timestamp: true,
-                    filename: path.resolve(path.join(fileLogPath, '/a' + Math.round(Math.random() * 1000000000000) + '.log')),
+                    filename: path.resolve(path.join(this._logPath, '/a' + Math.round(Math.random() * 1000000000000) + '.log')),
                     //filename : this._basePath + '/logs/a' + Math.round(Math.random() * 10000000000000),
                     level: 'debug',
                     handleExceptions: true

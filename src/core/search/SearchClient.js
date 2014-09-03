@@ -157,7 +157,7 @@ var SearchClient = (function () {
 
         var checkCallback = function (err) {
             if (err) {
-                console.error(err);
+                logger.error(err);
             }
 
             if (itemIds.length === amount) {
@@ -322,7 +322,7 @@ var SearchClient = (function () {
 
         this._createIndex(indexName, mapping, settings, function (err) {
             if (err) {
-                console.error(err);
+                logger.error(err);
                 return internalCallback(err);
             }
 
@@ -363,7 +363,7 @@ var SearchClient = (function () {
                 queryDeleted = false;
                 responsesDeleted = false;
 
-                console.error(err);
+                logger.error(err);
 
                 return internalCallback(err);
             } else if (queryDeleted && responsesDeleted) {
@@ -600,7 +600,7 @@ var SearchClient = (function () {
                 }
             });
 
-            console.log('added elasticsearch client');
+            logger.log('added elasticsearch client');
 
             _this._waitForDatabaseServer(function (err) {
                 if (err) {

@@ -98,7 +98,7 @@ var TransferMessageCenter = (function (_super) {
         this._setupListeners();
     }
     TransferMessageCenter.prototype.issueExternalFeedToCircuit = function (nodesToFeedBlock, payload, circuitId) {
-        console.log('Issuing external feed to circuit %o', { circuitId: circuitId, nodesToFeedBlock: JSON.stringify(FeedingNodesMessageBlock.extractAndDeconstructBlock(nodesToFeedBlock).nodes) });
+        logger.log('hydra', 'Issuing external feed to circuit', { circuitId: circuitId, nodesToFeedBlock: JSON.stringify(FeedingNodesMessageBlock.extractAndDeconstructBlock(nodesToFeedBlock).nodes) });
         var wrappedMessage = this.wrapTransferMessage('EXTERNAL_FEED', '00000000000000000000000000000000', Buffer.concat([nodesToFeedBlock, payload]));
 
         if (wrappedMessage && !(circuitId && this._circuitManager.pipeFileTransferMessageThroughCircuit(circuitId, wrappedMessage))) {

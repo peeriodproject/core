@@ -240,10 +240,10 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 		for (var i=0; i<4; i++) {
 			var toUse:Buffer = dataArray[bufferIndex];
 
-			if (!toUse) {
+			/*if (!toUse) {
 				console.log('LENGTH ERROR!!!');
 				console.log(dataArray);
-			}
+			}*/
 
 			if (toUse.length === ++byteIndex) {
 				toUse = dataArray[++bufferIndex];
@@ -288,7 +288,7 @@ class IncomingDataPipeline extends events.EventEmitter implements IncomingDataPi
 
 				if (tempMessageMemory.length > this._maxTemporaryBytes) {
 					this._freeMemory(identifier, tempMessageMemory);
-					console.log('memory excess!');
+
 					this.emit('memoryExcess', identifier);
 				}
 				else {

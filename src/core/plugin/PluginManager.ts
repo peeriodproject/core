@@ -150,8 +150,8 @@ class PluginManager implements PluginManagerInterface {
 		var statePath:string = path.join(config.get('app.dataPath'), config.get('plugin.pluginManagerStateConfig'));
 		var fallbackStatePath:string = path.join(config.get('app.internalDataPath'), config.get('plugin.pluginManagerStateConfig'));
 
-		console.log(statePath);
-		console.log(fallbackStatePath);
+		logger.log('PluginManager state path ' + statePath);
+		logger.log('PluginManager fallbackStatePath ' + fallbackStatePath);
 
 		this._config = config;
 		this._stateHandler = stateHandlerFactory.create(statePath, fallbackStatePath);
@@ -312,7 +312,6 @@ class PluginManager implements PluginManagerInterface {
 
 				this._loadGlobals(itemPath, fileHash, (err:Error, globals:Object) => {
 					if (err) {
-						console.log(err);
 						return sendCallback();
 					}
 
@@ -324,7 +323,7 @@ class PluginManager implements PluginManagerInterface {
 							counter++;
 
 							if (err) {
-								console.error(err);
+								logger.error(err.message);
 							}
 							else if (data) {
 								if (useApacheTika.indexOf(key) !== -1) {
@@ -357,8 +356,7 @@ class PluginManager implements PluginManagerInterface {
 
 			this._loadApacheTikaData(itemPath, (err:Error, tikaData) => {
 				if (err) {
-					console.log('PluginManager.onBeforeItemAdd. MISSING CALLBACK');
-					console.error(err);
+					logger.log('PluginManager.onBeforeItemAdd. MISSING CALLBACK');
 				}
 				else {
 					return runPlugins(tikaData);
@@ -377,7 +375,6 @@ class PluginManager implements PluginManagerInterface {
 
 		this._stateHandler.load((err:Error, pluginState:any) => {
 			if (err) {
-				console.error(err);
 				return internalCallback(err);
 			}
 
@@ -472,13 +469,12 @@ class PluginManager implements PluginManagerInterface {
 
 		fs.stat(itemPath, (err:Error, stats:fs.Stats) => {
 			if (err) {
-				console.error(err);
 
 				return callback(err, tikaData);
 			}
 
 			if (!stats.isFile() || maxFileBufferLength <  stats.size / 1048576) {
-				console.log('PluginManager~_loadApacheTikaData: file', itemPath, 'is not a file or does not fit into the maxFileBufferLength limit.', stats.size / 1048576, maxFileBufferLength, 'MB');
+				logger.log('PluginManager~_loadApacheTikaData: file', itemPath, 'is not a file or does not fit into the maxFileBufferLength limit.', stats.size / 1048576, maxFileBufferLength, 'MB');
 
 				return callback(null, {});
 			}

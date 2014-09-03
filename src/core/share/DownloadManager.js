@@ -111,10 +111,9 @@ var DownloadManager = (function () {
         var searchClientClosed = false;
         var downloadsEnded = false;
         var checkAndReturn = function (err) {
-            if (err) {
-                console.error(err);
-            }
-
+            /*if (err) {
+            console.error(err);
+            }*/
             if (searchClientClosed && downloadsEnded) {
                 return internalCallback(err);
             }

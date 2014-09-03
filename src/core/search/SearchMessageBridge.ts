@@ -72,11 +72,11 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 		// query added
 		this._searchRequestManager.onQueryAdd((queryId:string, queryBody:Buffer) => {
 			if (process.env.UI_ENABLED && process.env.DISABLE_TOPOLOGY) {
-				console.log('--- 1. QUERY ADDED ---');
-				console.log(queryId, queryBody.toString());
+				//console.log('--- 1. QUERY ADDED ---');
+				//console.log(queryId, queryBody.toString());
 
 				setTimeout(() => {
-					console.log('--- 2. INCOMING QUERY ---');
+					//console.log('--- 2. INCOMING QUERY ---');
 					this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
 				}, Math.min(3000, Math.round(Math.random() * 19000)));
 			}
@@ -118,10 +118,10 @@ class SearchMessageBridge extends events.EventEmitter implements SearchMessageBr
 	private _setupOutgoingResults ():void {
 		this._searchResponseManager.onResultsFound((queryId:string, results:Buffer) => {
 			if (process.env.UI_ENABLED && process.env.DISABLE_TOPOLOGY) {
-				console.log('--- 3. RESULTS FOUND ---');
+				//console.log('--- 3. RESULTS FOUND ---');
 				setTimeout(() => {
-					console.log('--- 4. INCOMING RESULTS ---');
-					console.log(results.toString());
+					//console.log('--- 4. INCOMING RESULTS ---');
+					//console.log(results.toString());
 					for (var i = 0; i < Math.round(Math.random() * 20); i++) {
 						setTimeout(() => {
 							setImmediate(() => {

@@ -163,7 +163,7 @@ var UiManager = (function () {
         if (process.env.NODE_ENV === 'test') {
             return this._socketServer;
         } else {
-            console.error('Do not use this method outside the test environment!');
+            //console.error('Do not use this method outside the test environment!');
             return null;
         }
     };

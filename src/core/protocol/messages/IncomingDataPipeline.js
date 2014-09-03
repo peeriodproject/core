@@ -228,11 +228,10 @@ var IncomingDataPipeline = (function (_super) {
         for (var i = 0; i < 4; i++) {
             var toUse = dataArray[bufferIndex];
 
-            if (!toUse) {
-                console.log('LENGTH ERROR!!!');
-                console.log(dataArray);
-            }
-
+            /*if (!toUse) {
+            console.log('LENGTH ERROR!!!');
+            console.log(dataArray);
+            }*/
             if (toUse.length === ++byteIndex) {
                 toUse = dataArray[++bufferIndex];
                 byteIndex = 0;
@@ -275,7 +274,7 @@ var IncomingDataPipeline = (function (_super) {
 
                 if (tempMessageMemory.length > this._maxTemporaryBytes) {
                     this._freeMemory(identifier, tempMessageMemory);
-                    console.log('memory excess!');
+
                     this.emit('memoryExcess', identifier);
                 } else {
                     // get sliced message here

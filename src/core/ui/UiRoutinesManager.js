@@ -1,6 +1,8 @@
 /// <reference path='../../main.d.ts' />
 var i18n = require('i18n');
 
+var logger = require('../utils/logger/LoggerFactory').create();
+
 /**
 * @class core.ui.UiRoutinesManager
 * @implements core.ui.UiRoutinesManagerInterface
@@ -119,7 +121,7 @@ var UiRoutinesManager = (function () {
 
                 routine.start();
             } else {
-                console.error(err);
+                logger.error('Error installing UI routine', { errmsg: err.message });
             }
         });
     };
