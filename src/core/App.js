@@ -185,15 +185,16 @@ var App = {
         this._appQuitHandler = new AppQuitHandler(nwApp);
         this._loadConfig();
 
-        var mainWin = this._gui.Window.get();
-
+        /*var mainWin = this._gui.Window.get();
+        
         if (mainWin && mainWin.showDevTools) {
-            try  {
-                mainWin.showDevTools();
-            } catch (e) {
-                console.error(e);
-            }
+        try {
+        mainWin.showDevTools();
         }
+        catch (e) {
+        console.error(e);
+        }
+        }*/
         this._initSplashScreen();
         this._checkForUpdates();
 
