@@ -24,15 +24,11 @@ var UiRoutinesManager = (function () {
             toolbar: false,
             resizable: true,
             show: false,
-            show_in_taskbar: false
+            show_in_taskbar: false,
+            fullscreen: false
         });
 
         this._window.once('loaded', function () {
-            /*try {
-            this._window.showDevTools();
-            } catch (e) {
-            console.error(e);
-            }*/
             //this._window.moveBy(0, 200);
             //this._updateStatus();
             _this._updateWindow();
@@ -53,7 +49,6 @@ var UiRoutinesManager = (function () {
     UiRoutinesManager.prototype.close = function () {
         this._window.close(true);
 
-        //this._window.hide();
         this._isOpen = false;
     };
 

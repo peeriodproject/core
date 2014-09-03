@@ -12,6 +12,8 @@ var i18n = require('i18n');
  */
 class UiDaemon implements UiDaemonInterface {
 
+	private _aboutWindow = null;
+
 	private _menu = null;
 
 	private _tray = null;
@@ -28,19 +30,31 @@ class UiDaemon implements UiDaemonInterface {
 			label: i18n.__('UiDaemon.menu.about.title')
 		});
 
-		aboutItem.click = function () {
-			var win = gui.Window.open('./public/about.html', {
-				"position"  : 'center',
-				"focus"     : true,
-				"toolbar"   : false,
-				"frame"     : true,
-				"resizable" : false,
-				"width"     : 300,
-				"height"    : 300,
-				"fullscreen": false
+		aboutItem.click = () => {
+			if (this._aboutWindow) {
+				this._aboutWindow.show();
+				this._aboutWindow.focus();
+
+				return;
+			}
+
+			this._aboutWindow = gui.Window.open('./public/about.html', {
+				position       : 'center',
+				focus          : true,
+				toolbar        : false,
+				frame          : true,
+				resizable      : false,
+				width          : 400,
+				height         : 470,
+				fullscreen     : false,
+				show_in_taskbar: false
 			});
 
-			win.setAlwaysOnTop(true);
+			this._aboutWindow.setAlwaysOnTop(true);
+
+			this._aboutWindow.once('close', () => {
+				this._aboutWindow = null;
+			});
 		};
 
 		this._menu.append(aboutItem);

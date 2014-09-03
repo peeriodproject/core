@@ -24,24 +24,20 @@ class UiRoutinesManager implements UiRoutinesManagerInterface {
 
 	constructor (gui) {
 		this._window = gui.Window.open('./public/ui-routines-installer.html', {
-			position: 'center',
-			min_width: 1050,
-			width: 1050,
-			min_height: 600,
-			height: 600,
-			frame: true,
-			toolbar: false,
-			resizable: true,
-			show: false,
-			show_in_taskbar: false
+			position       : 'center',
+			min_width      : 1050,
+			width          : 1050,
+			min_height     : 600,
+			height         : 600,
+			frame          : true,
+			toolbar        : false,
+			resizable      : true,
+			show           : false,
+			show_in_taskbar: false,
+			fullscreen     : false
 		});
 
 		this._window.once('loaded', () => {
-			/*try {
-				this._window.showDevTools();
-			} catch (e) {
-				console.error(e);
-			}*/
 			//this._window.moveBy(0, 200);
 			//this._updateStatus();
 			this._updateWindow();
@@ -62,7 +58,6 @@ class UiRoutinesManager implements UiRoutinesManagerInterface {
 
 	public close ():void {
 		this._window.close(true);
-		//this._window.hide();
 
 		this._isOpen = false;
 	}
