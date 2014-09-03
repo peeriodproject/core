@@ -94,7 +94,7 @@ class HttpNodeSeeker extends NodeSeeker implements NodeSeekerInterface {
 				callback(node);
 			}
 		};
-		console.log(remoteServer);
+
 		var request = http.request({
 			method  : 'GET',
 			hostname: remoteServer.hostname,

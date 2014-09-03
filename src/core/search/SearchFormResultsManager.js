@@ -40,8 +40,7 @@ var SearchFormResultsManager = (function (_super) {
 
         _super.prototype.open.call(this, function (err) {
             if (err) {
-                console.error(err.message);
-
+                //console.error(err.message);
                 return internalCallback(err);
             }
 

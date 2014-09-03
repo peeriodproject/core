@@ -111,7 +111,6 @@ class SearchFormManager implements SearchFormManagerInterface {
 
 			pluginRunner.getQuery(rawQuery, (err:Error, query:any) => {
 				if (err) {
-					console.log(err);
 					return internalCallback(err, null);
 				}
 				else if (!query) {
@@ -170,7 +169,6 @@ class SearchFormManager implements SearchFormManagerInterface {
 
 						query = transformedQuery;
 
-						console.log(query);
 					}
 
 					return this._searchRequestManager.addQuery(query, internalCallback);

@@ -9,6 +9,8 @@ var i18n = require('i18n');
 import ConfigInterface = require('../../config/interfaces/ConfigInterface');
 import UiRoutineInterface = require('../interfaces/UiRoutineInterface');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 class UiChromeExtensionRoutine implements UiRoutineInterface {
 
 	private _config:ConfigInterface = null;
@@ -47,13 +49,12 @@ class UiChromeExtensionRoutine implements UiRoutineInterface {
 
 			var installPath = this._getInstallPath();
 
-			console.log(path.resolve(process.cwd(), this._config.get('extension.crxPath')));
+			logger.log('Chrome routing extension install path ' + path.resolve(process.cwd(), this._config.get('extension.crxPath')));
 
 			fs.outputJson(installPath, {
 				external_crx: path.resolve(process.cwd(), this._config.get('extension.crxPath')),
 				external_version: this._config.get('extension.version')
 			}, function (err) {
-				console.log(err);
 
 				return internalCallback(err);
 			});

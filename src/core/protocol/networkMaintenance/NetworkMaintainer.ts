@@ -216,7 +216,7 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 
 			this.emit('foundEntryNode', node);
 
-			console.log('Found an entry node, starting search for own id...');
+			//console.log('Found an entry node, starting search for own id...');
 			this._findClosestNodesManager.startCycleFor(this._myIdToSearchFor, [node]);
 
 			this._findClosestNodesManager.once('foundClosestNodes', (searchForId:IdInterface, resultingList:ContactNodeListInterface) => {
@@ -224,7 +224,7 @@ class NetworkMaintainer extends events.EventEmitter implements NetworkMaintainer
 				//logger.info('Find closest nodes cycle finished', {for: searchForId.toHexString(), resultLen: resultingList.length});
 
 				if (!resultingList.length) {
-					console.log('Resulting list is empty, trying to find another node');
+					//console.log('Resulting list is empty, trying to find another node');
 
 					setImmediate(() => {
 						this._findEntryNodeAndJoin(node);

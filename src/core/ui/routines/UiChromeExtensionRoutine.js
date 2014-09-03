@@ -4,6 +4,8 @@ var fs = require('fs-extra');
 
 var i18n = require('i18n');
 
+var logger = require('../../utils/logger/LoggerFactory').create();
+
 var UiChromeExtensionRoutine = (function () {
     function UiChromeExtensionRoutine(config) {
         this._config = null;
@@ -41,14 +43,12 @@ var UiChromeExtensionRoutine = (function () {
 
             var installPath = _this._getInstallPath();
 
-            console.log(path.resolve(process.cwd(), _this._config.get('extension.crxPath')));
+            logger.log('Chrome routing extension install path ' + path.resolve(process.cwd(), _this._config.get('extension.crxPath')));
 
             fs.outputJson(installPath, {
                 external_crx: path.resolve(process.cwd(), _this._config.get('extension.crxPath')),
                 external_version: _this._config.get('extension.version')
             }, function (err) {
-                console.log(err);
-
                 return internalCallback(err);
             });
         });

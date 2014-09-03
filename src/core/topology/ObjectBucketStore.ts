@@ -211,9 +211,6 @@ class ObjectBucketStore implements BucketStoreInterface {
 
 			if (dataToPersist) {
 				fs.writeFile(this._dbPathFs, dataToPersist, {encoding: 'utf8'}, (err:Error) => {
-					if (err) {
-						console.log('ObjectBucketStorePersistErr %o', err.message);
-					}
 					this._isWritingFs = false;
 				});
 			}

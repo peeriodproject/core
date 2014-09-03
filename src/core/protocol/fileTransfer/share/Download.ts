@@ -510,7 +510,7 @@ class Download extends events.EventEmitter implements DownloadInterface {
 			this.removeAllListeners('completed');
 			this.removeAllListeners('writtenBytes');
 
-			console.log('Download killed due to: ' + message);
+			//console.log('Download killed due to: ' + message);
 			this.emit('killed', message);
 
 			this.removeAllListeners('killed');
@@ -595,13 +595,13 @@ class Download extends events.EventEmitter implements DownloadInterface {
 							this._kill(true, true, errorMessage, transferIdentToUse, nodesToFeedBlock);
 						}
 						else {
-							console.log('Sending block request. Position:' + bytePosition);
+							//console.log('Sending block request. Position:' + bytePosition);
 							this._shareMessenger.pipeMessageAndWaitForResponse(sendableBuffer, nodesToFeedBlock, 'ENCRYPTED_SHARE', nextTransferIdentifier, (err:Error, responsePayload:Buffer) => {
 								if (err) {
 									this._kill(true, false, err.message);
 								}
 								else {
-									console.log('Received a block message');
+									//console.log('Received a block message');
 									this._handleBlockMessage(responsePayload, bytePosition);
 								}
 							});

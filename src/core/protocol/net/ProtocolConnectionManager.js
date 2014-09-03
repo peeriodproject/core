@@ -953,8 +953,6 @@ var ProtocolConnectionManager = (function (_super) {
 
         this._tcpSocketHandler.on('ipReset', function (ip) {
             if (_this._tcpSocketHandler.getOpenServerPortsArray().length) {
-                console.log('External IP change must be handled');
-
                 // has no proxy, so change the addresses
                 _this._myNode.updateAddresses(_this.getExternalAddressList(), 'ipChange');
             }

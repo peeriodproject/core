@@ -85,10 +85,9 @@ var UploadManager = (function () {
         var searchClientClosed = false;
         var uploadsEnded = false;
         var checkAndReturn = function (err) {
-            if (err) {
-                console.error(err);
-            }
-
+            /*if (err) {
+            console.error(err);
+            }*/
             if (searchClientClosed && uploadsEnded) {
                 return internalCallback(err);
             }

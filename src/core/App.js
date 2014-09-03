@@ -175,7 +175,6 @@ var App = {
     },
     start: function (gui, nwApp, dataPath, win) {
         process.on('uncaughtException', function (err) {
-            console.error(err);
             logger.error(err);
         });
 
@@ -213,7 +212,6 @@ var App = {
         return this._tray;
     },
     quit: function () {
-        console.log('quitting...');
         return process.nextTick(function () {
             this.getAppQuitHandler().quit();
         }.bind(this));
@@ -324,7 +322,8 @@ var App = {
 
         var searchClient = new SearchClient(this._getMainConfig(['app', 'search']), this.getAppQuitHandler(), 'mainIndex', searchStoreFactory, searchItemFactory, {
             onOpenCallback: function (err) {
-                console.log(err);
+                if (err)
+                    logger.error(err.message);
                 return internalCallback(searchClient);
             }
         });
@@ -376,14 +375,14 @@ var App = {
         }
     },
     _checkUiRoutines: function () {
-        console.log('checking ui routines');
+        logger.log('checking ui routines');
         var uiRoutinesManager = new UiRoutinesManager(this._gui);
         uiRoutinesManager.addUiRoutine(new UiChromeExtensionRoutine(new JSONConfig('../../config/uiChromeExtensionRoutine.json', ['extension'])));
 
         uiRoutinesManager.getInstalledRoutineIds(function (err, routineIds) {
             if (!routineIds || !routineIds.length) {
                 uiRoutinesManager.open();
-                console.log('ui routines: opened manager');
+                logger.log('ui routines: opened manager');
             } else {
                 uiRoutinesManager.getUiRoutine(routineIds[0]).start();
             }
@@ -396,7 +395,7 @@ var App = {
 
             if (this._splashScreen) {
                 setImmediate(function () {
-                    console.log('closing splashscreen');
+                    logger.log('closing splashscreen');
                     _this._splashScreen.close();
                 });
             }
@@ -446,7 +445,7 @@ var App = {
 
             idState.load(function (err, state) {
                 if (err)
-                    console.log(err);
+                    logger.error('Id state error', { emsg: err.message });
                 var myId = null;
 
                 if (state && state.id) {
@@ -472,7 +471,7 @@ var App = {
                 routingTable = new RoutingTable(topologyConfig, _this.getAppQuitHandler(), myId, bucketFactory, bucketStore, contactNodeFactory, {
                     onOpenCallback: function (err) {
                         if (err) {
-                            console.error(err);
+                            logger.error(err.message);
                         }
 
                         protocolGateway = new ProtocolGateway(appConfig, _this._getMainConfig('protocol'), topologyConfig, _this._getMainConfig('hydra'), _this._getMainConfig('fileTransfer'), myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);

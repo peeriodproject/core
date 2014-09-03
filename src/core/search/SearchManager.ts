@@ -106,7 +106,7 @@ class SearchManager implements SearchManagerInterface {
 	}
 
 	public itemExists (pathToIndex:string, callback:(exists:boolean) => void):void {
-		console.log('todo SearchManager#itemExists');
+		//console.log('todo SearchManager#itemExists');
 
 		return process.nextTick(callback.bind(null, null, null));
 	}
@@ -147,7 +147,7 @@ class SearchManager implements SearchManagerInterface {
 			setImmediate(() => {
 				this._updateAnalysis(function (err) {
 					if (err) {
-						console.log(err);
+						logger.error(err);
 					}
 
 					return checkAndClose(err);
@@ -172,20 +172,19 @@ class SearchManager implements SearchManagerInterface {
 			this._pluginManager.getActivePluginRunner(pluginIdentifier, (pluginRunner:PluginRunnerInterface) => {
 				pluginRunner.getMapping((err:Error, mapping:Object) => {
 					if (err) {
-						console.error(err);
+						logger.error(err);
 					}
 					if (mapping) {
 						mapping = this._updateMapping(mapping);
 
 						this._searchClient.addMapping(pluginIdentifier, mapping, function (err) {
 							if (err) {
-								console.error(err);
+								logger.error(err);
 							}
 						});
 					}
 					else {
 						// todo plugin uses elasticsearch auto mapping feature! Maybe it's better to throw an error here?
-						console.log('todo: plugin uses elasticsearch auto mapping feature! Maybe it\'s better to throw an error here?');
 					}
 				});
 			});

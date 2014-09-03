@@ -113,7 +113,7 @@ class PluginRunner implements PluginRunnerInterface {
 
 		var internalCallback = (err:Error, output:any):void => {
 			if (err) {
-				console.error(err);
+				//console.error(err);
 			}
 
 			if (this._sandboxScripts[sandboxKey]) {

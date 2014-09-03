@@ -106,7 +106,7 @@ var FeedingNodesBlockMaintainer = (function (_super) {
 
         this._nodeBatch = newBatch;
 
-        console.log('FeedingNodesBlockMaintainer %o', newBatch);
+        //console.log('FeedingNodesBlockMaintainer %o', newBatch);
         this._block = FeedingNodesMessageBlock.constructBlock(this._nodeBatch);
 
         var nodeBatchLength = this._nodeBatch.length;

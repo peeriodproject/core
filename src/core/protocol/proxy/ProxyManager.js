@@ -319,7 +319,7 @@ var ProxyManager = (function (_super) {
                 if (msgType === 'PROXY_ACCEPT' && Object.keys(this._confirmedProxies).length < this._maxNumberOfProxies) {
                     this._addToConfirmedProxies(identifier, sender);
                     this.emit('newProxy', sender);
-                    console.log('Got new proxy %o', { id: sender.getId().toHexString(), proxyNow: Object.keys(this._confirmedProxies).length });
+
                     logger.log('proxy', 'Got new proxy', { id: sender.getId().toHexString(), lengthNow: Object.keys(this._confirmedProxies).length });
                 } else {
                     this.emit('proxyReject', sender);
@@ -495,7 +495,6 @@ var ProxyManager = (function (_super) {
     */
     ProxyManager.prototype._sendAddressChangeToAllKnownNodes = function () {
         var _this = this;
-        console.log('sending ADDRESS_CHANGE to all known nodes');
         this._routingTable.getAllContactNodes(function (err, allNodes) {
             for (var i = 0, l = allNodes.length; i < l; i++) {
                 _this._protocolConnectionManager.writeMessageTo(allNodes[i], 'ADDRESS_CHANGE', new Buffer(0));
@@ -526,7 +525,6 @@ var ProxyManager = (function (_super) {
                 } else if (message.getMessageType() === 'ADDRESS_CHANGE') {
                     // we can safely call this, as if we would be proxying for this node, we would always communicate
                     // with this node via incoming connections
-                    console.log('handling ADDRESS_CHANGE message');
                     _this._protocolConnectionManager.invalidateOutgoingConnectionsTo(message.getSender());
                 } else {
                     _this.emit('message', message);
@@ -555,7 +553,6 @@ var ProxyManager = (function (_super) {
                     delete _this._confirmedProxies[identifier];
                     _this._updateMyNodeAddresses();
                     _this.emit('lostProxy', confirmedProxy);
-                    console.log('Lost proxy %o', confirmedProxy.getId().toHexString());
                     _this.emit('proxyCount', Object.keys(_this._confirmedProxies).length);
                 }
                 if (proxyingFor) {
@@ -573,8 +570,6 @@ var ProxyManager = (function (_super) {
         });
 
         this._myNode.onAddressChange(function (info) {
-            console.log('address has changed. %o', info);
-
             if (_this._addressChangeTimeout) {
                 global.clearTimeout(_this._addressChangeTimeout);
                 _this._addressChangeTimeout = 0;

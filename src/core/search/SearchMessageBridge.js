@@ -70,11 +70,10 @@ var SearchMessageBridge = (function (_super) {
         // query added
         this._searchRequestManager.onQueryAdd(function (queryId, queryBody) {
             if (process.env.UI_ENABLED && process.env.DISABLE_TOPOLOGY) {
-                console.log('--- 1. QUERY ADDED ---');
-                console.log(queryId, queryBody.toString());
-
+                //console.log('--- 1. QUERY ADDED ---');
+                //console.log(queryId, queryBody.toString());
                 setTimeout(function () {
-                    console.log('--- 2. INCOMING QUERY ---');
+                    //console.log('--- 2. INCOMING QUERY ---');
                     _this._searchResponseManager.validateQueryAndTriggerResults(queryId, queryBody);
                 }, Math.min(3000, Math.round(Math.random() * 19000)));
             }
@@ -116,10 +115,8 @@ var SearchMessageBridge = (function (_super) {
         var _this = this;
         this._searchResponseManager.onResultsFound(function (queryId, results) {
             if (process.env.UI_ENABLED && process.env.DISABLE_TOPOLOGY) {
-                console.log('--- 3. RESULTS FOUND ---');
+                //console.log('--- 3. RESULTS FOUND ---');
                 setTimeout(function () {
-                    console.log('--- 4. INCOMING RESULTS ---');
-                    console.log(results.toString());
                     for (var i = 0; i < Math.round(Math.random() * 20); i++) {
                         setTimeout(function () {
                             setImmediate(function () {

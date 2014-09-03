@@ -6,6 +6,8 @@ import UiRoutineInterface = require('./interfaces/UiRoutineInterface');
 import UiRoutineListInterface = require('./interfaces/UiRoutineListInterface');
 import UiRoutinesManagerInterface = require('./interfaces/UiRoutinesManagerInterface');
 
+var logger = require('../utils/logger/LoggerFactory').create();
+
 /**
  * @class core.ui.UiRoutinesManager
  * @implements core.ui.UiRoutinesManagerInterface
@@ -134,7 +136,7 @@ class UiRoutinesManager implements UiRoutinesManagerInterface {
 				routine.start();
 			}
 			else {
-				console.error(err);
+				logger.error('Error installing UI routine', {errmsg: err.message});
 			}
 		});
 	}

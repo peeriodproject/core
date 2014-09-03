@@ -113,7 +113,7 @@ class SearchStore implements SearchStoreInterface {
 			}
 			catch (err) {
 				// todo log process not found!
-				console.error('SearchStore#close: Database is already down.');
+				logger.error('SearchStore#close: Database is already down.');
 			}
 		}
 

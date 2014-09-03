@@ -100,26 +100,19 @@ var NodeSeekerManager = (function () {
 
         this._forceSearchActive = true;
 
-        console.log('Force find active node initiated.');
-
         this._proxyManager.once('contactNodeInformation', function (node) {
-            //console.log('NodeSeeker: on contact node!');
             _this._forceSearchActive = false;
 
             if (_this._iterativeSeekTimeout) {
-                //console.log('clearing iterative seek timeout');
                 global.clearTimeout(_this._iterativeSeekTimeout);
                 _this._iterativeSeekTimeout = 0;
             }
 
             if (_this._avoidNode && _this._avoidNode.getId().equals(node.getId())) {
-                //console.log('Force finding again on nex event loop');
                 setImmediate(function () {
-                    //console.log('Force finding again, as the node should be avoided.');
                     _this.forceFindActiveNode(_this._avoidNode, callback);
                 });
             } else {
-                //console.log('Found a node, calling back');
                 _this._avoidNode = null;
                 callback(node);
             }
@@ -140,7 +133,6 @@ var NodeSeekerManager = (function () {
         if (this._forceSearchActive) {
             setImmediate(function () {
                 for (var i = 0; i < _this._nodeSeekerList.length; i++) {
-                    //console.log(this._nodeSeekerList[i]);
                     _this._nodeSeekerList[i].seek(function (node) {
                         if (node && !node.getId().equals(_this._myNode.getId()) && !(avoidNode && node.getId().equals(avoidNode.getId()))) {
                             _this._pingNodeIfActive(node);
@@ -149,7 +141,6 @@ var NodeSeekerManager = (function () {
                 }
 
                 _this._iterativeSeekTimeout = global.setTimeout(function () {
-                    //console.log('setting new iterative seek timeout');
                     _this._iterativeSeekAndPing(avoidNode);
                 }, _this._iterativeSeekTimeoutMs);
             });

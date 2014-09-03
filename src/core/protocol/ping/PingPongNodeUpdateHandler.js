@@ -71,8 +71,6 @@ var PingPongNodeUpdateHandler = (function (_super) {
         this._myNode = myNode;
         this._reactionTime = config.get('protocol.waitForNodeReactionInSeconds') * 1000;
 
-        console.log(this._reactionTime);
-
         this._maxWaitingListSize = config.get('protocol.pingpong.maxWaitingListSize');
         this._protocolConnectionManager = protocolConnectionManager;
         this._proxyManager = proxyManager;

@@ -92,8 +92,7 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype.itemExists = function (pathToIndex, callback) {
-        console.log('todo SearchManager#itemExists');
-
+        //console.log('todo SearchManager#itemExists');
         return process.nextTick(callback.bind(null, null, null));
     };
 
@@ -134,7 +133,7 @@ var SearchManager = (function () {
             setImmediate(function () {
                 _this._updateAnalysis(function (err) {
                     if (err) {
-                        console.log(err);
+                        logger.error(err);
                     }
 
                     return checkAndClose(err);
@@ -161,19 +160,18 @@ var SearchManager = (function () {
             _this._pluginManager.getActivePluginRunner(pluginIdentifier, function (pluginRunner) {
                 pluginRunner.getMapping(function (err, mapping) {
                     if (err) {
-                        console.error(err);
+                        logger.error(err);
                     }
                     if (mapping) {
                         mapping = _this._updateMapping(mapping);
 
                         _this._searchClient.addMapping(pluginIdentifier, mapping, function (err) {
                             if (err) {
-                                console.error(err);
+                                logger.error(err);
                             }
                         });
                     } else {
                         // todo plugin uses elasticsearch auto mapping feature! Maybe it's better to throw an error here?
-                        console.log('todo: plugin uses elasticsearch auto mapping feature! Maybe it\'s better to throw an error here?');
                     }
                 });
             });

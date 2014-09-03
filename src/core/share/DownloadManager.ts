@@ -128,9 +128,9 @@ class DownloadManager implements DownloadManagerInterface {
 		var searchClientClosed:boolean = false;
 		var downloadsEnded:boolean = false;
 		var checkAndReturn:Function = function (err:Error) {
-			if (err) {
+			/*if (err) {
 				console.error(err);
-			}
+			}*/
 
 			if (searchClientClosed && downloadsEnded) {
 				return internalCallback(err);

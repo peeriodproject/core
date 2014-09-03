@@ -5,6 +5,8 @@ import https = require('https');
 import path = require('path');
 import fs = require('fs');
 
+var logger = require('../utils/logger/LoggerFactory').create();
+
 /**
  * @class UiUpdateNotify
  */
@@ -23,7 +25,7 @@ class UiUpdateNotify {
 					manifest = JSON.parse(data);
 				}
 				catch (e) {
-					console.log('Cannot read manifest');
+					logger.error('Cannot read package.json manifest', {emsg: e.message});
 				}
 
 				if (manifest) {
@@ -49,7 +51,7 @@ class UiUpdateNotify {
 									vObj = JSON.parse(body);
 								}
 								catch (e) {
-									console.log(e);
+									logger.error('Response from update server is invalid', {emsg: e.message});
 								}
 
 								if (vObj && vObj.version && vObj.version !== currentVersion) {
@@ -67,7 +69,7 @@ class UiUpdateNotify {
 								}
 							});
 						}).on('error', function (e) {
-							console.log(e);
+							logger.error('Update server ping error', {emsg: e.message});
 						});
 					}
 				}

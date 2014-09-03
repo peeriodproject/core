@@ -109,7 +109,7 @@ var UiPluginManagerComponent = (function (_super) {
     */
     UiPluginManagerComponent.prototype._addSearchFields = function (identifier, err, fields) {
         if (err) {
-            console.error(err);
+            //console.error(err);
         } else if (fields) {
             this._state[identifier] = fields;
         }

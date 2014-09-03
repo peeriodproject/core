@@ -232,7 +232,7 @@ var TCPSocketHandler = (function (_super) {
                     }, _this._connectionRetry * 1000);
                 }
             } else {
-                console.error('TCPServer onError', { code: error.code, err: error });
+                logger.error('TCPServer onError', { code: error.code, err: error });
             }
         });
 

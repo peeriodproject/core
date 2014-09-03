@@ -107,7 +107,7 @@ class UiPluginManagerComponent extends UiComponent {
 	 */
 	private _addSearchFields (identifier:string, err:Error, fields:Object):void {
 		if (err) {
-			console.error(err);
+			//console.error(err);
 		}
 		else if (fields) {
 			this._state[identifier] = fields;
