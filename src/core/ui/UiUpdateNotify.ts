@@ -42,8 +42,8 @@ class UiUpdateNotify {
 							toolbar        : false,
 							frame          : true,
 							resizable      : false,
-							width          : 400,
-							height         : 200,
+							width          : 620,
+							height         : 400,
 							fullscreen     : false,
 							"always-on-top": true
 						});
