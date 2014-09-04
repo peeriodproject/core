@@ -31,6 +31,10 @@ var SearchManager = (function () {
         };
 
         this._pluginManager.onBeforeItemAdd(pathToIndex, stats, fileHash, function (pluginData) {
+            if (!pluginData) {
+                return internalCallback(new Error('SearchManager#addItem: No plugin data provided.'));
+            }
+
             pluginData = _this._updatePluginData(pluginData, pathToIndex, stats, fileHash);
 
             //console.log(JSON.stringify(pluginData));

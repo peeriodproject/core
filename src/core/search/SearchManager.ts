@@ -45,6 +45,9 @@ class SearchManager implements SearchManagerInterface {
 		};
 
 		this._pluginManager.onBeforeItemAdd(pathToIndex, stats, fileHash, (pluginData:Object) => {
+			if (!pluginData) {
+				return internalCallback(new Error('SearchManager#addItem: No plugin data provided.'));
+			}
 
 			pluginData = this._updatePluginData(pluginData, pathToIndex, stats, fileHash);
 			//console.log(JSON.stringify(pluginData));

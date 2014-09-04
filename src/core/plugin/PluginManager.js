@@ -320,7 +320,7 @@ var PluginManager = (function () {
 
             _this._loadApacheTikaData(itemPath, function (err, tikaData) {
                 if (err) {
-                    logger.log('PluginManager.onBeforeItemAdd. MISSING CALLBACK');
+                    return sendCallback(null);
                 } else {
                     return runPlugins(tikaData);
                 }

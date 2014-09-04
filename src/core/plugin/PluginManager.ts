@@ -356,7 +356,7 @@ class PluginManager implements PluginManagerInterface {
 
 			this._loadApacheTikaData(itemPath, (err:Error, tikaData) => {
 				if (err) {
-					logger.log('PluginManager.onBeforeItemAdd. MISSING CALLBACK');
+					return sendCallback(null);
 				}
 				else {
 					return runPlugins(tikaData);
