@@ -191,15 +191,17 @@ describe('CORE --> UI --> SHARE --> UiShareManagerComponent', function () {
         });
     });
 
-    it('should correctly open the downloaded file in the file explorer', function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'foobar.txt', 123, 'hash', '/destination', { metadata: true });
+    it('should correctly open the downloaded file in the file explorer if the file exists', function (done) {
+        var destinationPath = testUtils.getFixturePath('/core/ui/uiShareManagerComponent/');
+
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0]('downloadId', 'file.txt', 123, 'hash', destinationPath, { metadata: true });
         downloadManagerStub.onDownloadEnded.getCall(0).args[0]('downloadId', 'COMPLETED');
 
         component.emit('showDownload', 'downloadId');
 
         setImmediate(function () {
             nwGuiStub.Shell.showItemInFolder.calledOnce.should.be.true;
-            nwGuiStub.Shell.showItemInFolder.getCall(0).args[0].should.equal('/destination/foobar.txt');
+            nwGuiStub.Shell.showItemInFolder.getCall(0).args[0].should.equal(destinationPath + 'file.txt');
 
             done();
         });
