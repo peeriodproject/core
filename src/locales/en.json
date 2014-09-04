@@ -19,7 +19,7 @@
 	"uiRoutinesManager.installRoutinesWindowTitle": "Install Peeriod User Interface",
 	"UiDaemon.trayTitle": "UiDaemon.trayTitle",
 	"UiDaemon.menu.quit.title": "Quit Peeriod",
-    "UiDaemon.menu.quitting.title": "Quitting...",
+    "UiDaemon.menu.quitting.title": "Quitting…",
 	"UiDaemon.menu.about.title": "About",
 	"splashScreen.undefined": "splashScreen.undefined",
 	"aboutWindow.title": "About Peeriod",
@@ -27,8 +27,8 @@
 	"aboutWindow.linkHome": "Peeriod Project",
 	"aboutWindow.linkGithub": "Github",
 	"aboutWindow.linkTwitter": "Twitter",
-	"updateNotifyWindow.title": "updateNotifyWindow.title",
-	"updateNotifyWindow.headline": "updateNotifyWindow.headline",
-	"updateNotifyWindow.description": "updateNotifyWindow.description",
-	"updateNotifyWindow.downloadButtonLabel": "updateNotifyWindow.downloadButtonLabel",
+	"updateNotifyWindow.title": "Peeriod - Update Available",
+	"updateNotifyWindow.headline": "Update Available",
+	"updateNotifyWindow.description": "A new version of Peeriod is available. Please visit the official page and download the latest release!",
+	"updateNotifyWindow.downloadButtonLabel": "Visit Download Page"
 }
