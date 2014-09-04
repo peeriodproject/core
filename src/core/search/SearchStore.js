@@ -1,6 +1,6 @@
-/// <reference path='../../../ts-definitions/node/node.d.ts' />
+/// <reference path='../../main.d.ts' />
 var childProcess = require('child_process');
-var fs = require('fs');
+var fs = require('fs-extra');
 var path = require('path');
 
 var ObjectUtils = require('../utils/ObjectUtils');
@@ -156,25 +156,45 @@ var SearchStore = (function () {
     /**
     * Returns the arguments the database server should start with. The following options are currently included:
     *
-    * - __-p__: The path where elasticsearch should save it's process id
+    * - __-p__: The path where elasticsearch should save its process id
     * - __-Des.config__: The path to the config file
     * - __-Des.path.data__: The path where the indexes should be stored
     * * - __-Des.logger.level__: The level of the logger
+    *
+    * If we are in node-webkit and the config-file does not exist in Peeriod's specific application data path,
+    * it is dumped there. This is to ensure elasticsearch's whitespace problem in paths, as we have no control over
+    * where users store their applications.
     *
     * @method core.search.SearchStore~_getDatabaseServerProcessArgs
     *
     * @returns {Array<string>}
     */
     SearchStore.prototype._getDatabaseServerProcessArgs = function () {
-        var configPath = path.resolve(__dirname, '../../', this._config.get('search.searchStoreConfig'));
-        var storagePath = path.resolve(__dirname, '../../', this._config.get('search.databasePath'));
+        var originalConfigPath = path.resolve(__dirname, '../../', this._config.get('search.searchStoreConfig'));
+        var storagePath = null;
+        var configPath = null;
+
+        if (process.env.IS_NODE_WEBKIT) {
+            var destinationConfigPath = path.resolve(this._config.get('app.dataPath'), '../../Peeriod', this._config.get('search.searchStoreConfig'));
+
+            if (!fs.existsSync(destinationConfigPath)) {
+                var origContents = fs.readFileSync(originalConfigPath, { encoding: 'utf8' });
+
+                fs.outputFileSync(destinationConfigPath, origContents);
+            }
+
+            configPath = destinationConfigPath;
+            storagePath = path.resolve(this._config.get('app.dataPath'), '../../Peeriod', this._config.get('search.databasePath'));
+        } else {
+            storagePath = path.resolve(__dirname, '../../', this._config.get('search.databasePath'));
+            configPath = originalConfigPath;
+        }
 
         return [
             '-p',
             this._getDatabaseServerProcessIdPath(),
             ('-Des.config=' + configPath),
             ('-Des.path.data=' + storagePath),
-            ('-Des.logger.level=DEBUG'),
             '-d'
         ];
     };
@@ -182,12 +202,19 @@ var SearchStore = (function () {
     /**
     * Returns the path where to look up the database server process id.
     *
+    * This is in the database server module path when no node-webkit is used.
+    * Otherwise it's the os-specific appDataPath.
+    *
     * @method core.search.SearchStore~_getDatabaseServerProcessIdPath
     *
     * @returns {string}
     */
     SearchStore.prototype._getDatabaseServerProcessIdPath = function () {
-        return path.join(this._getDatabaseServerModulePath(), this._config.get('search.pidFilename'));
+        if (!process.env.IS_NODE_WEBKIT) {
+            return path.join(this._getDatabaseServerModulePath(), this._config.get('search.pidFilename'));
+        } else {
+            return path.resolve(this._config.get('app.dataPath'), '../../Peeriod', this._config.get('search.pidFilename'));
+        }
     };
 
     /**
