@@ -1,78 +1,57 @@
 /// <reference path='../../main.d.ts' />
 var http = require('http');
 var https = require('https');
-var path = require('path');
-var fs = require('fs');
 
 var logger = require('../utils/logger/LoggerFactory').create();
 
 /**
-* @class UiUpdateNotify
+* @class core.ui.UiUpdateNotify
 */
 var UiUpdateNotify = (function () {
     function UiUpdateNotify() {
     }
     UiUpdateNotify.checkForUpdates = function (gui) {
-        var manifestPath = path.resolve(process.cwd(), 'package.json');
+        var currentVersion = gui.App.manifest.version;
+        var versionCheckUrl = gui.App.manifest.versionCheckUrl;
 
-        fs.readFile(manifestPath, { encoding: 'utf8' }, function (err, data) {
-            if (err)
-                return;
+        if (currentVersion && versionCheckUrl) {
+            // check for protocol
+            var protocol = (versionCheckUrl.indexOf('https') === 0) ? https : http;
 
-            if (data) {
-                var manifest = null;
+            // get the new version
+            protocol.get(versionCheckUrl, function (res) {
+                var body = '';
 
-                try  {
-                    manifest = JSON.parse(data);
-                } catch (e) {
-                    logger.error('Cannot read package.json manifest', { emsg: e.message });
-                }
+                res.on('data', function (d) {
+                    body += d;
+                });
 
-                if (manifest) {
-                    var currentVersion = manifest.version;
-                    var versionCheckUrl = manifest.versionCheckUrl;
+                res.on('end', function () {
+                    var vObj = null;
+                    try  {
+                        vObj = JSON.parse(body);
+                    } catch (e) {
+                        logger.error('UiUpdateNotify.checkForUpdate: Response from update server is invalid', { emsg: e.message });
+                    }
 
-                    if (currentVersion && versionCheckUrl) {
-                        // check for protocol
-                        var protocol = (versionCheckUrl.indexOf('https') === 0) ? https : http;
-
-                        // get the new version
-                        protocol.get(versionCheckUrl, function (res) {
-                            var body = '';
-
-                            res.on('data', function (d) {
-                                body += d;
-                            });
-
-                            res.on('end', function () {
-                                var vObj = null;
-                                try  {
-                                    vObj = JSON.parse(body);
-                                } catch (e) {
-                                    logger.error('Response from update server is invalid', { emsg: e.message });
-                                }
-
-                                if (vObj && vObj.version && vObj.version !== currentVersion) {
-                                    gui.Window.open('./public/update-notify.html', {
-                                        "position": 'center',
-                                        "focus": true,
-                                        "toolbar": false,
-                                        "frame": true,
-                                        "resizable": false,
-                                        "width": 400,
-                                        "height": 200,
-                                        "fullscreen": false,
-                                        "always-on-top": true
-                                    });
-                                }
-                            });
-                        }).on('error', function (e) {
-                            logger.error('Update server ping error', { emsg: e.message });
+                    if (vObj && vObj.version && vObj.version !== currentVersion) {
+                        gui.Window.open('./public/update-notify.html', {
+                            position: 'center',
+                            focus: true,
+                            toolbar: false,
+                            frame: true,
+                            resizable: false,
+                            width: 620,
+                            height: 400,
+                            fullscreen: false,
+                            "always-on-top": true
                         });
                     }
-                }
-            }
-        });
+                }).on('error', function (e) {
+                    logger.error('UiUpdateNotify.checkForUpdate: Update server ping error', { emsg: e.message });
+                });
+            });
+        }
     };
     return UiUpdateNotify;
 })();

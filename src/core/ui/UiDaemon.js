@@ -12,8 +12,8 @@ var UiDaemon = (function () {
         this._menu = null;
         this._tray = null;
         this._tray = new gui.Tray({
-            icon: './images/icon-menubar.png',
-            alticon: './images/icon-menubar-active.png'
+            icon: './images/icon-menubar@2x.png',
+            alticon: './images/icon-menubar-active@2x.png'
         });
 
         this._menu = new gui.Menu();
@@ -32,6 +32,7 @@ var UiDaemon = (function () {
 
             _this._aboutWindow = gui.Window.open('./public/about.html', {
                 position: 'center',
+                show: false,
                 focus: true,
                 toolbar: false,
                 frame: true,
@@ -43,6 +44,11 @@ var UiDaemon = (function () {
             });
 
             _this._aboutWindow.setAlwaysOnTop(true);
+
+            _this._aboutWindow.once('loaded', function () {
+                _this._aboutWindow.show();
+                _this._aboutWindow.focus();
+            });
 
             _this._aboutWindow.once('close', function () {
                 _this._aboutWindow = null;
@@ -60,6 +66,12 @@ var UiDaemon = (function () {
         });
 
         quitItem.click = function () {
+            _this._menu.remove(quitItem);
+            _this._menu.append(new gui.MenuItem({
+                enabled: false,
+                label: i18n.__('UiDaemon.menu.quitting.title')
+            }));
+
             appQuitHandler.quit();
         };
 

@@ -20,8 +20,8 @@ class UiDaemon implements UiDaemonInterface {
 
 	constructor (gui, appQuitHandler:AppQuitHandlerInterface) {
 		this._tray = new gui.Tray({
-			icon   : './images/icon-menubar.png',
-			alticon: './images/icon-menubar-active.png'
+			icon   : './images/icon-menubar@2x.png',
+			alticon: './images/icon-menubar-active@2x.png'
 		});
 
 		this._menu = new gui.Menu();
@@ -40,6 +40,7 @@ class UiDaemon implements UiDaemonInterface {
 
 			this._aboutWindow = gui.Window.open('./public/about.html', {
 				position       : 'center',
+				show           : false,
 				focus          : true,
 				toolbar        : false,
 				frame          : true,
@@ -51,6 +52,11 @@ class UiDaemon implements UiDaemonInterface {
 			});
 
 			this._aboutWindow.setAlwaysOnTop(true);
+
+			this._aboutWindow.once('loaded', () => {
+				this._aboutWindow.show();
+				this._aboutWindow.focus();
+			});
 
 			this._aboutWindow.once('close', () => {
 				this._aboutWindow = null;
@@ -67,7 +73,13 @@ class UiDaemon implements UiDaemonInterface {
 			label: i18n.__('UiDaemon.menu.quit.title')
 		});
 
-		quitItem.click = function () {
+		quitItem.click = () => {
+			this._menu.remove(quitItem);
+			this._menu.append(new gui.MenuItem({
+				enabled: false,
+				label: i18n.__('UiDaemon.menu.quitting.title')
+			}));
+
 			appQuitHandler.quit();
 		};
 

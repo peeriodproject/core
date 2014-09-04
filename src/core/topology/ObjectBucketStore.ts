@@ -210,12 +210,11 @@ class ObjectBucketStore implements BucketStoreInterface {
 			var dataToPersist:string = JSON.stringify(this._buckets);
 
 			if (dataToPersist) {
-				fs.writeFile(this._dbPathFs, dataToPersist, {encoding: 'utf8'}, (err:Error) => {
+				fs.outputFile(this._dbPathFs, dataToPersist, (err:Error) => {
 					this._isWritingFs = false;
 				});
 			}
 		}, this._delayPersistInMs);
-
 	}
 
 	public add (bucketKey:string, id:Buffer, lastSeen:number, addresses:any):boolean {
@@ -335,8 +334,14 @@ class ObjectBucketStore implements BucketStoreInterface {
 		if (this._isOpen) return;
 
 		if (!fs.existsSync(this._dbFolderFs)) {
-			this._isUnwritableFs = true;
+			try {
+				fs.mkdirsSync(this._dbFolderFs);
+			}
+			catch (e) {
+				this._isUnwritableFs = true;
+			}
 		}
+
 		// check if the database file exists
 		else if (fs.existsSync(this._dbPathFs)) {
 			// load the contents from the file

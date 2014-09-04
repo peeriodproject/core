@@ -186,6 +186,12 @@ var App = {
 	},
 
 	_checkForUpdates: function () {
+		var appConfig = this._getMainConfig(['app']);
+
+		if (!appConfig.get('app.checkForUpdatesOnStartup', false)) {
+			return;
+		}
+
 		UiUpdateNotify.checkForUpdates(this._gui);
 	},
 
@@ -218,7 +224,6 @@ var App = {
 			}
 		}*/
 		this._initSplashScreen();
-		this._checkForUpdates();
 
 		if (this._environmentConfig.get('environment.startSearchDatabase')) {
 			this._startSearchDatabase();
@@ -385,6 +390,10 @@ var App = {
 		if (this._splashScreen) {
 			this._splashScreen.once('close', () => {
 				this._checkUiRoutines();
+
+				setImmediate(() => {
+					this._checkForUpdates();
+				});
 			});
 		}
 	},
