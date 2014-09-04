@@ -19,6 +19,7 @@
 	"uiRoutinesManager.installRoutinesWindowTitle": "Install Peeriod User Interface",
 	"UiDaemon.trayTitle": "UiDaemon.trayTitle",
 	"UiDaemon.menu.quit.title": "Quit Peeriod",
+    "UiDaemon.menu.quitting.title": "Quitting...",
 	"UiDaemon.menu.about.title": "About",
 	"splashScreen.undefined": "splashScreen.undefined",
 	"aboutWindow.title": "About Peeriod",
@@ -29,5 +30,5 @@
 	"updateNotifyWindow.title": "updateNotifyWindow.title",
 	"updateNotifyWindow.headline": "updateNotifyWindow.headline",
 	"updateNotifyWindow.description": "updateNotifyWindow.description",
-	"updateNotifyWindow.downloadButtonLabel": "updateNotifyWindow.downloadButtonLabel"
+	"updateNotifyWindow.downloadButtonLabel": "updateNotifyWindow.downloadButtonLabel",
 }
