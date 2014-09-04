@@ -34,7 +34,16 @@ var guiApp = gui && gui.App ? gui.App : {
 	}
 };
 
-var dataPath = gui && gui.App ? gui.App.dataPath : path.resolve('./appDataFolder');
+var dataPath = null;
+
+if (gui && gui.App) {
+	dataPath = gui.App.dataPath;
+	process.env.IS_NODE_WEBKIT = true;
+}
+else {
+	dataPath = path.resolve('./appDataFolder');
+}
+
 var guiWindow = gui && gui.Window ? gui.Window.get() : null;
 
 var logUsageTimeout = null;
