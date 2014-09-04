@@ -28,6 +28,7 @@ class UiUpdateNotify {
 
 				res.on('end', function () {
 					var vObj = null;
+
 					try {
 						vObj = JSON.parse(body);
 					}
@@ -36,16 +37,22 @@ class UiUpdateNotify {
 					}
 
 					if (vObj && vObj.version && vObj.version !== currentVersion) {
-						gui.Window.open('./public/update-notify.html', {
+						var win = gui.Window.open('./public/update-notify.html', {
 							position       : 'center',
-							focus          : true,
+							focus          : false,
 							toolbar        : false,
 							frame          : true,
 							resizable      : false,
 							width          : 620,
-							height         : 400,
+							height         : 330,
 							fullscreen     : false,
-							"always-on-top": true
+							"always-on-top": true,
+							show           : false
+						});
+
+						win.once('loaded', function () {
+							win.show();
+							win.focus();
 						});
 					}
 				}).on('error', function (e) {
