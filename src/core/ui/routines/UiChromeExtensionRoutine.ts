@@ -76,8 +76,8 @@ class UiChromeExtensionRoutine implements UiRoutineInterface {
 		// todo windows starter
 		// todo pull request to node.d.ts -> exec.unref
 		// todo pull request to node.d.ts -> exec with a single argument
-		/*var exec:any = childProcess.exec('open -a "' + host + '" "' + url + '"', function () {});
-		exec.unref();*/
+		var exec:any = childProcess.exec('open -a "' + host + '" "' + url + '"', function () {});
+		exec.unref();
 
 		return internalCallback(null);
 	}
