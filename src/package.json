@@ -10,7 +10,6 @@
     "frame": false,
     "show_in_taskbar": false
   },
-  "js-flags": "--expose-gc",
   "dependencies": {
     "buffertools": "^2.1.2",
     "chokidar": "^0.8.2",
