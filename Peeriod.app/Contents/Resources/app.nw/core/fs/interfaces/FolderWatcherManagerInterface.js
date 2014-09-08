@@ -1,0 +1,2 @@
+
+//# sourceMappingURL=FolderWatcherManagerInterface.js.map

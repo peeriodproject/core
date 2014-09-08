@@ -1,0 +1,42 @@
+{
+    "cluster": {
+        "name": "random name"
+    },
+    "index": {
+        "number_of_shards"  : 1,
+        "number_of_replicas": 0
+    },
+    "node"     : {
+        "local": true
+    },
+    "network": {
+        "host": "127.0.0.1"
+    },
+    "discovery": {
+        "zen": {
+            "ping": {
+                "multicast": {
+                    "enabled": false
+                },
+                "unicast"  : {
+                    "hosts": []
+                }
+            }
+        }
+    },
+    "plugin": {
+        "mandatory": "mapper-attachments",
+        "info_refresh_interval": 0
+    },
+    "http": {
+        "port": 9200
+    },
+    "transport": {
+        "tcp": {
+            "port": 9300
+        }
+    },
+    "script": {
+        "disable_dynamic": true
+    }
+}

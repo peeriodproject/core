@@ -1,0 +1,42 @@
+{
+  "name": "Peeriod",
+  "description": "Bleeding Edge Anonymous File Sharing",
+  "version": "0.0.1",
+  "versionCheckUrl": "https://peeriodproject.github.io/peeriodVersionCheck.json",
+  "main": "index.html",
+  "no-edit-menu": true,
+  "window": {
+    "show": false,
+    "frame": false,
+    "show_in_taskbar": false
+  },
+  "dependencies": {
+    "buffertools": "^2.1.2",
+    "chokidar": "^0.8.2",
+    "elastic.js": "^1.1.1",
+    "elasticsearch": "^2.4.0",
+    "fs-extra": "^0.10.0",
+    "i18n": "^0.5.0",
+    "json-stable-stringify": "^1.0.0",
+    "microtime": "^0.6.0",
+    "mime": "^1.2.11",
+    "node-lmdb": "^0.2.2",
+    "node-static": "^0.7.3",
+    "primus.io": "^3.1.1",
+    "sandcastle": "https://github.com/joernroeder/sandcastle/tarball/master",
+    "stack-trace": "0.0.9",
+    "usage": "^0.4.12",
+    "usb-detection": "^1.0.3",
+    "winston": "^0.7.3",
+    "winston-irc": "^0.3.4",
+    "ws": "^0.4.31"
+  },
+  "maintainers":[{
+    "name": "Jonathan Pirnay",
+    "email": "mail@johnnycrab.com"
+  },
+  {
+    "name": "Jörn Röder",
+    "email": "kontakt@joernroeder.de"
+  }]
+}

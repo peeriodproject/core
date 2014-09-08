@@ -1,0 +1,8 @@
+{
+    "environment": {
+        "startUi": true,
+        "startSearchDatabase": true,
+        "startIndexer": true,
+        "startTopology": true
+    }
+}
