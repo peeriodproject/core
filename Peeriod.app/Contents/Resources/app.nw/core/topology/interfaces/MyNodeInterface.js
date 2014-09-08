@@ -1,2 +1,0 @@
-
-//# sourceMappingURL=MyNodeInterface.js.map
