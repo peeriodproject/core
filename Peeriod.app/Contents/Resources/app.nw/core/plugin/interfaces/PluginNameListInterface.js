@@ -1,2 +1,0 @@
-
-//# sourceMappingURL=PluginNameListInterface.js.map

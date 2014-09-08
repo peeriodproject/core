@@ -1,2 +1,0 @@
-
-//# sourceMappingURL=UploadManagerInterface.js.map

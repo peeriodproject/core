@@ -1,2 +1,0 @@
-
-//# sourceMappingURL=UiSplashScreenInterface.js.map
