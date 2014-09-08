@@ -1,0 +1,10 @@
+{
+  "active": [
+    {
+      "name": "jj.core.documentAnalyser",
+      "path": "plugins/textDocumentPlugin",
+      "hash": "123",
+      "since": 123456
+    }
+  ]
+}

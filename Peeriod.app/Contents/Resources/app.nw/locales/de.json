@@ -1,0 +1,19 @@
+{
+	"splashScreen.startSearchDatabase": "splashScreen.startSearchDatabase",
+	"splashScreen.startIndexer": "splashScreen.startIndexer",
+	"splashScreen.startSharing": "splashScreen.startSharing",
+	"splashScreen.startTopology": "splashScreen.startTopology",
+	"splashScreen.startUi": "splashScreen.startUi",
+	"splashScreen.needsProxy": "splashScreen.needsProxy",
+	"splashScreen.joinNetwork": "splashScreen.joinNetwork",
+	"splashScreen.foundEntryNode": "splashScreen.foundEntryNode",
+	"splashScreen.initialContactQueryComplete": "splashScreen.initialContactQueryComplete",
+	"splashScreen.topologyJoinComplete": "splashScreen.topologyJoinComplete",
+	"uiRoutinesManager.installRoutinesWindowTitle": "uiRoutinesManager.installRoutinesWindowTitle",
+	"uiRoutinesManager.installRoutinesHeadline": "uiRoutinesManager.installRoutinesHeadline",
+	"uiRoutinesManager.installRoutinesDescription": "uiRoutinesManager.installRoutinesDescription",
+	"uiRoutinesManager.installRoutinesButtonPlaceholder": "uiRoutinesManager.installRoutinesButtonPlaceholder",
+	"core.jj.uiroutine.chromeextension.name": "core.jj.uiroutine.chromeextension.name",
+	"core.jj.uiroutine.chromeextension.description": "core.jj.uiroutine.chromeextension.description",
+	"core.jj.uiroutine.chromeextension.installButtonLabel": "core.jj.uiroutine.chromeextension.installButtonLabel"
+}
