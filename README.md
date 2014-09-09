@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://peeriodproject.github.io/dl/peeriod-img.png" />
+<a href="https://peeriodproject.github.io"><img src="https://peeriodproject.github.io/dl/peeriod-img.png" /></a>
 </p>
 
 Peeriod is an open source project which strives for making privacy protected peer-to-peer file sharing available to the masses.
