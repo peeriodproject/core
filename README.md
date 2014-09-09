@@ -1,2 +1,1 @@
-abschluss_app
-=============
+![PeeriodLogo](https://peeriodproject.github.io/dl/peeriod-img.png "Peeriod - Bleeding Edge File Sharing")
