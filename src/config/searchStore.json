@@ -1,6 +1,6 @@
 {
     "cluster": {
-        "name": "random name"
+        "name": "peeriod-file-index"
     },
     "index": {
         "number_of_shards"  : 1,

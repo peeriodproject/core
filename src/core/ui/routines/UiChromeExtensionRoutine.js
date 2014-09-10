@@ -28,6 +28,10 @@ var UiChromeExtensionRoutine = (function () {
         return this._geti18n('name');
     };
 
+    UiChromeExtensionRoutine.prototype.getNotice = function () {
+        return this._geti18n('subnotice');
+    };
+
     UiChromeExtensionRoutine.prototype.getInstallButtonLabel = function () {
         return this._geti18n('installButtonLabel');
     };

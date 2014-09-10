@@ -22,7 +22,6 @@
 	"UiDaemon.menu.quit.title": "Quit Peeriod",
     "UiDaemon.menu.quitting.title": "Quitting…",
 	"UiDaemon.menu.about.title": "About",
-	"splashScreen.undefined": "splashScreen.undefined",
 	"aboutWindow.title": "About Peeriod",
 	"aboutWindow.version": "Version %s",
 	"aboutWindow.linkHome": "Peeriod Project",

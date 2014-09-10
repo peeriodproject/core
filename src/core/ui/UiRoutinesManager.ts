@@ -201,6 +201,7 @@ class UiRoutinesManager implements UiRoutinesManagerInterface {
 				var contentEl = doc.createElement('div');
 				var heading = doc.createElement('h2');
 				var desc = doc.createElement('p');
+				var notice = doc.createElement('p');
 				var linkWrapper = doc.createElement('div');
 				var link = doc.createElement('a');
 
@@ -211,9 +212,12 @@ class UiRoutinesManager implements UiRoutinesManagerInterface {
 				}
 
 				contentEl.className = 'content';
+				desc.className = 'description';
+				notice.className = 'notice';
 
 				heading.appendChild(doc.createTextNode(routine.getName()));
 				desc.appendChild(doc.createTextNode(routine.getDescription()));
+				notice.appendChild(doc.createTextNode(routine.getNotice()));
 
 				linkWrapper.className = 'install-btn-wrapper';
 
@@ -229,6 +233,7 @@ class UiRoutinesManager implements UiRoutinesManagerInterface {
 
 				contentEl.appendChild(heading);
 				contentEl.appendChild(desc);
+				contentEl.appendChild(notice);
 				item.appendChild(contentEl);
 
 				linkWrapper.appendChild(link);

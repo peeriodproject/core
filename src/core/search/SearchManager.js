@@ -211,7 +211,7 @@ var SearchManager = (function () {
                     edge_ngram: {
                         side: "front",
                         max_gram: 20,
-                        min_gram: 1,
+                        min_gram: 3,
                         type: "edgeNGram"
                     }
                 }

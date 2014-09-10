@@ -35,6 +35,10 @@ class UiChromeExtensionRoutine implements UiRoutineInterface {
 		return this._geti18n('name');
 	}
 
+	public getNotice ():string {
+		return this._geti18n('subnotice');
+	}
+
 	getInstallButtonLabel ():string {
 		return this._geti18n('installButtonLabel');
 	}
