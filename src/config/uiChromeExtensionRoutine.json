@@ -6,7 +6,7 @@
         "extensionId": "fdebdfighadoiekjndfoholpdkcahnjg",
         "crxPath"   : "./ui_routines/chrome_extension/peeriod-latest.crx",
         "crxPathTo": "Library/Peeriod/chrome_extension",
-        "version": "0.0.1",
+        "version": "0.1.0",
         "host": "Google Chrome",
         "hostUrl": "./public/routines/ui-chrome-extension-starter.html"
     }
