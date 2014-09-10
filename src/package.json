@@ -1,7 +1,7 @@
 {
   "name": "Peeriod",
   "description": "Bleeding Edge Anonymous File Sharing",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "versionCheckUrl": "https://peeriodproject.github.io/peeriodVersionCheck.json",
   "main": "index.html",
   "no-edit-menu": true,
