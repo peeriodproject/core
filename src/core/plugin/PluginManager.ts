@@ -139,7 +139,7 @@ class PluginManager implements PluginManagerInterface {
 	 */
 	private _pluginValidator:PluginValidatorInterface = null;
 
-	constructor (config:ConfigInterface, stateHandlerFactory:StateHandlerFactoryInterface ,pluginFinder:PluginFinderInterface, pluginValidator:PluginValidatorInterface, pluginLoaderFactory:PluginLoaderFactoryInterface, pluginRunnerFactory:PluginRunnerFactoryInterface, options:ClosableAsyncOptions = {}) {
+	constructor (config:ConfigInterface, stateHandlerFactory:StateHandlerFactoryInterface, pluginFinder:PluginFinderInterface, pluginValidator:PluginValidatorInterface, pluginLoaderFactory:PluginLoaderFactoryInterface, pluginRunnerFactory:PluginRunnerFactoryInterface, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
 			onCloseCallback: function (err:Error) {
 			},
@@ -149,9 +149,6 @@ class PluginManager implements PluginManagerInterface {
 
 		var statePath:string = path.join(config.get('app.dataPath'), config.get('plugin.pluginManagerStateConfig'));
 		var fallbackStatePath:string = path.join(config.get('app.internalDataPath'), config.get('plugin.pluginManagerStateConfig'));
-
-		logger.log('PluginManager state path ' + statePath);
-		logger.log('PluginManager fallbackStatePath ' + fallbackStatePath);
 
 		this._config = config;
 		this._stateHandler = stateHandlerFactory.create(statePath, fallbackStatePath);
@@ -356,6 +353,8 @@ class PluginManager implements PluginManagerInterface {
 
 			this._loadApacheTikaData(itemPath, (err:Error, tikaData) => {
 				if (err) {
+					logger.log('_loadApacheTikaData error!', err);
+					//return runPlugins(tikaData);
 					return sendCallback(null);
 				}
 				else {
@@ -473,7 +472,7 @@ class PluginManager implements PluginManagerInterface {
 				return callback(err, tikaData);
 			}
 
-			if (!stats.isFile() || maxFileBufferLength <  stats.size / 1048576) {
+			if (!stats.isFile() || maxFileBufferLength < stats.size / 1048576) {
 				logger.log('PluginManager~_loadApacheTikaData: file', itemPath, 'is not a file or does not fit into the maxFileBufferLength limit.', stats.size / 1048576, maxFileBufferLength, 'MB');
 
 				return callback(null, {});

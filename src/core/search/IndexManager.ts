@@ -121,8 +121,10 @@ class IndexManager implements IndexManagerInterface {
 
 	constructor (config:ConfigInterface, appQuitHandler:AppQuitHandlerInterface, folderWatcherManager:FolderWatcherManagerInterface, pathValidator:PathValidatorInterface, searchManager:SearchManagerInterface, options:ClosableAsyncOptions = {}) {
 		var defaults:ClosableAsyncOptions = {
-			onOpenCallback: function () {},
-			onCloseCallback: function () {},
+			onOpenCallback    : function () {
+			},
+			onCloseCallback   : function () {
+			},
 			closeOnProcessExit: true
 		};
 

@@ -116,9 +116,6 @@ var PluginManager = (function () {
         var statePath = path.join(config.get('app.dataPath'), config.get('plugin.pluginManagerStateConfig'));
         var fallbackStatePath = path.join(config.get('app.internalDataPath'), config.get('plugin.pluginManagerStateConfig'));
 
-        logger.log('PluginManager state path ' + statePath);
-        logger.log('PluginManager fallbackStatePath ' + fallbackStatePath);
-
         this._config = config;
         this._stateHandler = stateHandlerFactory.create(statePath, fallbackStatePath);
         this._pluginFinder = pluginFinder;
@@ -320,6 +317,9 @@ var PluginManager = (function () {
 
             _this._loadApacheTikaData(itemPath, function (err, tikaData) {
                 if (err) {
+                    logger.log('_loadApacheTikaData error!', err);
+
+                    //return runPlugins(tikaData);
                     return sendCallback(null);
                 } else {
                     return runPlugins(tikaData);
