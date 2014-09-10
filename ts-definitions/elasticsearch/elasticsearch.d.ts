@@ -24,6 +24,10 @@ declare module "elasticsearch" {
 		putSettings(params, callback:Callback):void;
 	}
 
+	interface Cluster {
+		health (param, callback:Callback):void;
+	}
+
 	interface ClientInterface {
 		delete (params:{
 			index:string;
@@ -48,6 +52,7 @@ declare module "elasticsearch" {
 		getSource (params:getParams, callback:Callback):void;
 
 		indices:Indices;
+		cluster:Cluster;
 
 		index (params:{
 			index:string;
