@@ -46,6 +46,15 @@ interface UiRoutineInterface {
 	getName ():string;
 
 	/**
+	 * Returns a aditional notice which will be shown below the description
+	 *
+	 * @method core.ui.UiRoutineInterface#getNotice
+	 *
+	 * @returns {string}
+	 */
+	getNotice ():string;
+
+	/**
 	 * Installs the ui routine and returns a possible error as the first argument in the callback
 	 *
 	 * @method core.ui.UiRoutineInterface#install
