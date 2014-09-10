@@ -46,8 +46,14 @@ var UiChromeExtensionRoutine = (function () {
 
             logger.log('Chrome routing extension install path ' + path.resolve(process.cwd(), _this._config.get('extension.crxPath')));
 
+            var externalCrxPath = _this._moveCrxAndGetPath();
+
+            if (!externalCrxPath) {
+                return internalCallback(null);
+            }
+
             fs.outputJson(installPath, {
-                external_crx: path.resolve(process.cwd(), _this._config.get('extension.crxPath')),
+                external_crx: externalCrxPath,
                 external_version: _this._config.get('extension.version')
             }, function (err) {
                 return internalCallback(err);
@@ -56,7 +62,11 @@ var UiChromeExtensionRoutine = (function () {
     };
 
     UiChromeExtensionRoutine.prototype.isInstalled = function (callback) {
-        fs.exists(this._getInstallPath(), callback);
+        var installed = fs.existsSync(this._getInstallPath()) && fs.existsSync(this._getDestinationCrxPath());
+
+        process.nextTick(function () {
+            callback(installed);
+        });
     };
 
     UiChromeExtensionRoutine.prototype.start = function (callback) {
@@ -100,6 +110,27 @@ var UiChromeExtensionRoutine = (function () {
         var home = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
 
         return path.resolve(path.join(home, this._config.get('extension.installPath'), this._config.get('extension.extensionId') + '.json'));
+    };
+
+    UiChromeExtensionRoutine.prototype._getDestinationCrxPath = function () {
+        var destCrxFolderPath = path.resolve(path.join(process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']), this._config.get('extension.crxPathTo'));
+
+        return path.join(destCrxFolderPath, 'peeriod-chrome.crx');
+    };
+
+    UiChromeExtensionRoutine.prototype._moveCrxAndGetPath = function () {
+        var origCrxPath = path.resolve(process.cwd(), this._config.get('extension.crxPath'));
+        var destCrxFolderPath = path.resolve(path.join(process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']), this._config.get('extension.crxPathTo'));
+        var destCrxPath = this._getDestinationCrxPath();
+
+        try  {
+            fs.ensureDirSync(destCrxFolderPath);
+            fs.copySync(origCrxPath, destCrxPath);
+        } catch (e) {
+            return null;
+        }
+
+        return destCrxPath;
     };
     return UiChromeExtensionRoutine;
 })();

@@ -51,8 +51,14 @@ class UiChromeExtensionRoutine implements UiRoutineInterface {
 
 			logger.log('Chrome routing extension install path ' + path.resolve(process.cwd(), this._config.get('extension.crxPath')));
 
+			var externalCrxPath:string = this._moveCrxAndGetPath();
+
+			if (!externalCrxPath) {
+				return internalCallback(null);
+			}
+
 			fs.outputJson(installPath, {
-				external_crx: path.resolve(process.cwd(), this._config.get('extension.crxPath')),
+				external_crx: externalCrxPath,
 				external_version: this._config.get('extension.version')
 			}, function (err) {
 
@@ -62,7 +68,11 @@ class UiChromeExtensionRoutine implements UiRoutineInterface {
 	}
 
 	public isInstalled (callback:(installed:boolean) => any):void {
-		fs.exists(this._getInstallPath(), callback);
+		var installed:boolean = fs.existsSync(this._getInstallPath()) && fs.existsSync(this._getDestinationCrxPath());
+
+		process.nextTick(function () {
+			callback(installed);
+		});
 	}
 
 	public start (callback?:(err:Error) => any):void {
@@ -102,6 +112,29 @@ class UiChromeExtensionRoutine implements UiRoutineInterface {
 		var home = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
 
 		return path.resolve(path.join(home, this._config.get('extension.installPath'), this._config.get('extension.extensionId') + '.json'))
+	}
+
+	private _getDestinationCrxPath ():string {
+		var destCrxFolderPath:string = path.resolve(path.join(process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']), this._config.get('extension.crxPathTo'));
+
+		return path.join(destCrxFolderPath, 'peeriod-chrome.crx');
+	}
+
+	private _moveCrxAndGetPath ():string {
+
+		var origCrxPath:string = path.resolve(process.cwd(), this._config.get('extension.crxPath'));
+		var destCrxFolderPath:string = path.resolve(path.join(process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']), this._config.get('extension.crxPathTo'));
+		var destCrxPath:string = this._getDestinationCrxPath();
+
+		try {
+			fs.ensureDirSync(destCrxFolderPath);
+			fs.copySync(origCrxPath, destCrxPath);
+		}
+		catch (e) {
+			return null;
+		}
+
+		return destCrxPath;
 	}
 
 }

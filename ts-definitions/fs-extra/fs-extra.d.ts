@@ -128,6 +128,7 @@ declare module "fs-extra" {
 	export function mkdir(path: string, mode?: string, callback?: (err: Error) => void): void;
 	export function mkdirSync(path: string, mode?: number): void;
 	export function mkdirSync(path: string, mode?: string): void;
+	export function ensureDirSync(path: string): void;
 	export function readdir(path: string, callback?: (err: Error, files: string[]) => void ): void;
 	export function readdirSync(path: string): string[];
 	export function close(fd: number, callback?: (err: Error) => void): void;

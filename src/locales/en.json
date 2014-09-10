@@ -12,6 +12,7 @@
 	"splashScreen.topologyJoinComplete": "Successfully joined network. Preparing anonymity layer…",
 	"core.jj.uiroutine.chromeextension.name": "Peeriod for Google Chrome",
 	"core.jj.uiroutine.chromeextension.description": "Peeriod’s user interface in a Google Chrome browser extension.",
+    "core.jj.uiroutine.chromeextension.subnotice": "Chrome restart required",
 	"core.jj.uiroutine.chromeextension.installButtonLabel": "Install for Google Chrome",
 	"uiRoutinesManager.installRoutinesHeadline": "Install Peeriod User Interface",
 	"uiRoutinesManager.installRoutinesDescription": "Peeriod’s main application runs in the background. The user interface – where you can download, share and search files – lives in the browser. \n In order to use Peeriod’s full functionality, please install one of the following browser addons (currently only available for Chromium based browsers). The browser addon will not connect to the Internet!",
