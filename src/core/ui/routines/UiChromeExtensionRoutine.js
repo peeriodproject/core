@@ -62,10 +62,11 @@ var UiChromeExtensionRoutine = (function () {
     };
 
     UiChromeExtensionRoutine.prototype.isInstalled = function (callback) {
-        fs.exists(this._getInstallPath(), callback);
-        /*process.nextTick(function () {
-        callback(false);
-        });*/
+        var installed = fs.existsSync(this._getInstallPath()) && fs.existsSync(this._getDestinationCrxPath());
+
+        process.nextTick(function () {
+            callback(installed);
+        });
     };
 
     UiChromeExtensionRoutine.prototype.start = function (callback) {
@@ -111,10 +112,16 @@ var UiChromeExtensionRoutine = (function () {
         return path.resolve(path.join(home, this._config.get('extension.installPath'), this._config.get('extension.extensionId') + '.json'));
     };
 
+    UiChromeExtensionRoutine.prototype._getDestinationCrxPath = function () {
+        var destCrxFolderPath = path.resolve(path.join(process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']), this._config.get('extension.crxPathTo'));
+
+        return path.join(destCrxFolderPath, 'peeriod-chrome.crx');
+    };
+
     UiChromeExtensionRoutine.prototype._moveCrxAndGetPath = function () {
         var origCrxPath = path.resolve(process.cwd(), this._config.get('extension.crxPath'));
         var destCrxFolderPath = path.resolve(path.join(process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME']), this._config.get('extension.crxPathTo'));
-        var destCrxPath = path.join(destCrxFolderPath, 'peeriod-chrome.crx');
+        var destCrxPath = this._getDestinationCrxPath();
 
         try  {
             fs.ensureDirSync(destCrxFolderPath);
