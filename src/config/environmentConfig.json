@@ -4,8 +4,5 @@
         "startSearchDatabase": true,
         "startIndexer": true,
         "startTopology": true
-    },
-    "logger": {
-        "filePath": "/Volumes/HDD/logs"
     }
 }
