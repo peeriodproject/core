@@ -323,6 +323,7 @@ var SearchClient = (function () {
         this._createIndex(indexName, mapping, settings, function (err) {
             if (err) {
                 logger.error(err);
+
                 return internalCallback(err);
             }
 
@@ -605,6 +606,7 @@ var SearchClient = (function () {
             _this._waitForDatabaseServer(function (err) {
                 if (err) {
                     logger.error(err);
+
                     return internalCallback(err);
                 }
 
@@ -615,7 +617,7 @@ var SearchClient = (function () {
                         _this._isOpen = true;
                     }
 
-                    return internalCallback(null);
+                    return _this._checkDatabaseServerHealth(internalCallback);
                 });
             });
         };
@@ -847,6 +849,23 @@ var SearchClient = (function () {
         };
 
         check(0);
+    };
+
+    /**
+    * Checks the health of the elasticsearch cluster
+    *
+    * @method core.search.SearchClient~_checkDatabaseServerHealth
+    *
+    * @param {Function} callback
+    */
+    SearchClient.prototype._checkDatabaseServerHealth = function (callback) {
+        this._client.cluster.health({
+            waitForStatus: 'green'
+        }, function (err, response, status) {
+            err = err || null;
+
+            return callback(err);
+        });
     };
 
     /**

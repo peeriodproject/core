@@ -344,6 +344,7 @@ class SearchClient implements SearchClientInterface {
 		this._createIndex(indexName, mapping, settings, (err:Error) => {
 			if (err) {
 				logger.error(err);
+
 				return internalCallback(err);
 			}
 
@@ -621,6 +622,7 @@ class SearchClient implements SearchClientInterface {
 			this._waitForDatabaseServer((err:Error) => {
 				if (err) {
 					logger.error(err);
+
 					return internalCallback(err);
 				}
 
@@ -631,7 +633,7 @@ class SearchClient implements SearchClientInterface {
 						this._isOpen = true;
 					}
 
-					return internalCallback(null);
+					return this._checkDatabaseServerHealth(internalCallback);
 				});
 			});
 		};
@@ -842,7 +844,7 @@ class SearchClient implements SearchClientInterface {
 	 *
 	 * @param {Function} callback
 	 */
-	private _waitForDatabaseServer (callback):void {
+	private _waitForDatabaseServer (callback:(err:Error) => any):void {
 		var check = (i:number) => {
 			this._client.ping({
 				requestTimeout: 1000,
@@ -865,6 +867,23 @@ class SearchClient implements SearchClientInterface {
 		};
 
 		check(0);
+	}
+
+	/**
+	 * Checks the health of the elasticsearch cluster
+	 *
+	 * @method core.search.SearchClient~_checkDatabaseServerHealth
+	 *
+	 * @param {Function} callback
+	 */
+	private _checkDatabaseServerHealth (callback:(err:Error) => any) {
+		this._client.cluster.health({
+			waitForStatus: 'green'
+		}, function (err:Error, response:any, status:number) {
+			err = err || null;
+
+			return callback(err);
+		});
 	}
 
 	/**
