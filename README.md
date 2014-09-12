@@ -7,9 +7,11 @@ Peeriod’s aim is to construct Onion Routing on top of a DHT, while at the same
 
 [peeriodproject.org](http://peeriodproject.org)
 
-[View the conceptual paper (PDF)](https://peeriodproject.github.io/dl/Peeriod_Anonymous_decentralized_network.pdf)
+[View the conceptual paper (PDF)](https://peeriodproject.github.io/dl/peeriod_an-anonymous-approach-for-decentralized-overlay-networks.pdf)
 
-[View the application design specification (PDF)](https://peeriodproject.github.io/dl/Peeriod_Anonymous_decentralized_network.pdf)
+[View the application design specification (PDF)](https://peeriodproject.github.io/dl/peeriod_application-design-specifications.pdf)
+
+[Download Peeriod Alpha](https://peeriodproject.github.io/dl/peeriod-latest.dmg)
 
 # Peeriod Core
 
