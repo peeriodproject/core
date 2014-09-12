@@ -17,6 +17,8 @@ Peeriod’s aim is to construct Onion Routing on top of a DHT, while at the same
 
 __We are currently working on a larger wiki and an accompanying generated code documentation. For a detailed description of the implemented concepts, see the two linked PDFs above for now.__
 
+Version: 0.1.0, Mac OSX 10.7+  
+
 This repository contains the core code + tests of the main application which runs in the background.  
 
 Peeriod runs completely on [node.js](http://nodejs.org), currently powered by [node-webkit](https://github.com/rogerwang/node-webkit)
