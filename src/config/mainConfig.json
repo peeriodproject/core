@@ -97,7 +97,7 @@
         "pluginConfigName"        : "plugin.json",
         "pluginManagerStateConfig": "pluginManager.json",
         "pluginManagerMaxFileBufferInMegaBytes": 50,
-        "binaryPath"              : "core/plugin/pluginRunner/node_v0_10_30",
+        "binaryPath"              : "core/plugin/pluginRunner/node_v0_10_31",
         "timeoutInSeconds": 30,
         "pluginRunnerChunkSize": 512,
         "api"                     : {
