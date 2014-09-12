@@ -68,9 +68,30 @@ var UiChromeExtensionRoutine = (function () {
     UiChromeExtensionRoutine.prototype.isInstalled = function (callback) {
         var installed = fs.existsSync(this._getInstallPath()) && fs.existsSync(this._getDestinationCrxPath());
 
-        process.nextTick(function () {
-            callback(installed);
-        });
+        var doCallback = function (isInstalled) {
+            process.nextTick(function () {
+                callback(isInstalled);
+            });
+        };
+
+        if (!installed) {
+            doCallback(false);
+            return;
+        } else {
+            try  {
+                var contents = fs.readFileSync(this._getInstallPath(), { encoding: 'utf8' });
+                var obj = JSON.parse(contents);
+
+                if (obj && obj.external_version === this._config.get('extension.version')) {
+                    doCallback(true);
+                    return;
+                }
+            } catch (e) {
+            }
+        }
+
+        // fallback
+        doCallback(false);
     };
 
     UiChromeExtensionRoutine.prototype.start = function (callback) {

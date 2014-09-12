@@ -74,9 +74,33 @@ class UiChromeExtensionRoutine implements UiRoutineInterface {
 	public isInstalled (callback:(installed:boolean) => any):void {
 		var installed:boolean = fs.existsSync(this._getInstallPath()) && fs.existsSync(this._getDestinationCrxPath());
 
-		process.nextTick(function () {
-			callback(installed);
-		});
+		var doCallback:Function = function (isInstalled:boolean) {
+			process.nextTick(function () {
+				callback(isInstalled);
+			});
+		};
+
+		if (!installed) {
+			doCallback(false);
+			return;
+		}
+		else {
+			// check if it is the right version
+			try {
+				var contents:string = fs.readFileSync(this._getInstallPath(), {encoding: 'utf8'});
+				var obj:any = JSON.parse(contents);
+
+				if (obj && obj.external_version === this._config.get('extension.version')) {
+					doCallback(true);
+					return;
+				}
+			}
+			catch (e) {
+			}
+		}
+
+		// fallback
+		doCallback(false);
 	}
 
 	public start (callback?:(err:Error) => any):void {
