@@ -14,7 +14,7 @@
     "buffertools": "^2.1.2",
     "chokidar": "^0.8.2",
     "elastic.js": "^1.1.1",
-    "elasticsearch": "^2.4.0",
+    "elasticsearch": "^2.4.2",
     "fs-extra": "^0.10.0",
     "i18n": "^0.5.0",
     "json-stable-stringify": "^1.0.0",
