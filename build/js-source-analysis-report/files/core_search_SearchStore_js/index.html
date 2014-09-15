@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">73.33</p>
+      <p class="stat">70.45</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">215</p>
+      <p class="stat">251</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">30.07</p>
+      <p class="stat">33.39</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.20</p>
+      <p class="stat">1.54</p>
     </div>
   </div>
 </div>
@@ -90,9 +90,9 @@
 
 <div class="container">
   <div class="row">
-    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../ts-definitions/node/node.d.ts&#039; /&gt;
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../main.d.ts&#039; /&gt;
 var childProcess = require(&#039;child_process&#039;);
-var fs = require(&#039;fs&#039;);
+var fs = require(&#039;fs-extra&#039;);
 var path = require(&#039;path&#039;);
 
 var ObjectUtils = require(&#039;../utils/ObjectUtils&#039;);
@@ -157,6 +157,15 @@ var SearchStore = (function () {
             });
         }
 
+        process.once(&#039;exit&#039;, function () {
+            if (_this._databaseServerProcessId &gt; 0) {
+                try  {
+                    process.kill(_this._databaseServerProcessId);
+                } catch (err) {
+                }
+            }
+        });
+
         this.open(this._options.onOpenCallback);
     }
     SearchStore.getDefaults = function () {
@@ -177,12 +186,12 @@ var SearchStore = (function () {
         }
 
         // kill the elasticsearch deamon
-        if (this._databaseServerProcessId !== -1) {
+        if (this._databaseServerProcessId &gt; 0) {
             try  {
                 process.kill(this._databaseServerProcessId);
             } catch (err) {
                 // todo log process not found!
-                console.error(&#039;SearchStore#close: Database is already down.&#039;);
+                logger.error(&#039;SearchStore#close: Database is already down.&#039;);
             }
         }
 
@@ -239,25 +248,45 @@ var SearchStore = (function () {
     /**
     * Returns the arguments the database server should start with. The following options are currently included:
     *
-    * - __-p__: The path where elasticsearch should save it&#039;s process id
+    * - __-p__: The path where elasticsearch should save its process id
     * - __-Des.config__: The path to the config file
     * - __-Des.path.data__: The path where the indexes should be stored
     * * - __-Des.logger.level__: The level of the logger
+    *
+    * If we are in node-webkit and the config-file does not exist in Peeriod&#039;s specific application data path,
+    * it is dumped there. This is to ensure elasticsearch&#039;s whitespace problem in paths, as we have no control over
+    * where users store their applications.
     *
     * @method core.search.SearchStore~_getDatabaseServerProcessArgs
     *
     * @returns {Array&lt;string&gt;}
     */
     SearchStore.prototype._getDatabaseServerProcessArgs = function () {
-        var configPath = path.resolve(__dirname, &#039;../../&#039;, this._config.get(&#039;search.searchStoreConfig&#039;));
-        var storagePath = path.resolve(__dirname, &#039;../../&#039;, this._config.get(&#039;search.databasePath&#039;));
+        var originalConfigPath = path.resolve(__dirname, &#039;../../&#039;, this._config.get(&#039;search.searchStoreConfig&#039;));
+        var storagePath = null;
+        var configPath = null;
+
+        if (process.env.IS_NODE_WEBKIT) {
+            var destinationConfigPath = path.resolve(this._config.get(&#039;app.dataPath&#039;), &#039;../../Peeriod&#039;, this._config.get(&#039;search.searchStoreConfig&#039;));
+
+            if (!fs.existsSync(destinationConfigPath)) {
+                var origContents = fs.readFileSync(originalConfigPath, { encoding: &#039;utf8&#039; });
+
+                fs.outputFileSync(destinationConfigPath, origContents);
+            }
+
+            configPath = destinationConfigPath;
+            storagePath = path.resolve(this._config.get(&#039;app.dataPath&#039;), &#039;../../Peeriod&#039;, this._config.get(&#039;search.databasePath&#039;));
+        } else {
+            storagePath = path.resolve(__dirname, &#039;../../&#039;, this._config.get(&#039;search.databasePath&#039;));
+            configPath = originalConfigPath;
+        }
 
         return [
             &#039;-p&#039;,
             this._getDatabaseServerProcessIdPath(),
             (&#039;-Des.config=&#039; + configPath),
             (&#039;-Des.path.data=&#039; + storagePath),
-            (&#039;-Des.logger.level=DEBUG&#039;),
             &#039;-d&#039;
         ];
     };
@@ -265,12 +294,19 @@ var SearchStore = (function () {
     /**
     * Returns the path where to look up the database server process id.
     *
+    * This is in the database server module path when no node-webkit is used.
+    * Otherwise it&#039;s the os-specific appDataPath.
+    *
     * @method core.search.SearchStore~_getDatabaseServerProcessIdPath
     *
     * @returns {string}
     */
     SearchStore.prototype._getDatabaseServerProcessIdPath = function () {
-        return path.join(this._getDatabaseServerModulePath(), this._config.get(&#039;search.pidFilename&#039;));
+        if (!process.env.IS_NODE_WEBKIT) {
+            return path.join(this._getDatabaseServerModulePath(), this._config.get(&#039;search.pidFilename&#039;));
+        } else {
+            return path.resolve(this._config.get(&#039;app.dataPath&#039;), &#039;../../Peeriod&#039;, this._config.get(&#039;search.pidFilename&#039;));
+        }
     };
 
     /**

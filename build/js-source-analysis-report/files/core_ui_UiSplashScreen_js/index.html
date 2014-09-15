@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.69</p>
+      <p class="stat">70.89</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">137</p>
+      <p class="stat">145</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">24.89</p>
+      <p class="stat">26.51</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.91</p>
+      <p class="stat">0.93</p>
     </div>
   </div>
 </div>
@@ -144,13 +144,15 @@ var UiSplashScreen = (function (_super) {
             frame: false,
             toolbar: false,
             resizable: false,
-            show: false
+            show: false,
+            show_in_taskbar: false
         });
 
         this._window.once(&#039;loaded&#039;, function () {
-            _this._window.moveBy(0, 200);
             _this._updateStatus();
-            _this.open();
+            setImmediate(function () {
+                _this.open();
+            });
         });
     }
     UiSplashScreen.prototype.close = function () {
@@ -172,6 +174,8 @@ var UiSplashScreen = (function (_super) {
 
     UiSplashScreen.prototype.open = function () {
         this._window.show();
+
+        //this._window.moveBy(0, 200);
         this._window.focus();
 
         this._isOpen = true;
@@ -216,6 +220,10 @@ var UiSplashScreen = (function (_super) {
     * @method core.ui.UiSplashScreen~_updateStatus
     */
     UiSplashScreen.prototype._updateStatus = function () {
+        if (!this._pendingStatusList.length) {
+            return;
+        }
+
         this._updateCounter++;
 
         var isEven = this._updateCounter % 2 === 0 ? true : false;

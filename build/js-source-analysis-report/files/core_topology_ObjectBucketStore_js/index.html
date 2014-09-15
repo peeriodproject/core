@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - core/topology/ObjectBucketStore.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome-ie7.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>core/topology/ObjectBucketStore.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">62.68</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">383</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">71.94</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">2.50</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../main.d.ts&#039; /&gt;
+var path = require(&#039;path&#039;);
+var fs = require(&#039;fs-extra&#039;);
+
+/**
+* Simple JavaScript Object Bucket store implementation.
+*
+* @class core.topology.ObjectBucketStore
+* @implements core.topology.BucketStoreInterface
+*
+* @param {string} filename The name of the file to which the buckets should be persisted.
+* @param {string} folderPath The path of the folder in which the persisted file should be stores / is located.
+*/
+var ObjectBucketStore = (function () {
+    function ObjectBucketStore(filename, folderPath, delayPersistInSeconds) {
+        /**
+        * Holds the arrays of stored contact node objects
+        *
+        * @member {[bucketKey:string]:ContactNodeObjectListInterface} core.topology.ObjectBucketStore~_buckets
+        */
+        this._buckets = {};
+        /**
+        * The path of the folder in which to store the persisted buckets.
+        *
+        * @member {string} core.topology.ObjectBucketStore~_dbFolderFs
+        */
+        this._dbFolderFs = null;
+        /**
+        * The full path to the file to which the buckets are persisted.
+        *
+        * @member {string} core.topology.ObjectBucketStore~_dbPathFs
+        */
+        this._dbPathFs = null;
+        /**
+        * Stores the number of ms to delay the persisting of bucket changes. Used to prevent
+        * unnecessary queuing of consecutive file writes.
+        *
+        * @member {number} core.topology.ObjectBucketStore~_delayPersistInMs
+        */
+        this._delayPersistInMs = 0;
+        /**
+        * Indicates if the store is open
+        *
+        * @member {boolean} core.topology.ObjectBucketStore~_isOpen
+        */
+        this._isOpen = false;
+        /**
+        * Indicates if the store is currently written to file.
+        *
+        * @member {boolean} core.topology.ObjectBucketStore~_isWritingFs
+        */
+        this._isWritingFs = false;
+        /**
+        * Indicates whether the buckets can be persisted to a file. This is false
+        * if e.g. the db folder path does not exist.
+        *
+        * @member {boolean} core.topology.ObjectBucketStore~_isUnwritableFs
+        */
+        this._isUnwritableFs = false;
+        /**
+        * Stores the `setTimeout`-Object to delay writes and especially prevent queuing of unnecessary file writes.
+        *
+        * @member {any} core.topology.ObjectBucketStore~_persistTimeout
+        */
+        this._persistTimeout = null;
+        this._delayPersistInMs = delayPersistInSeconds * 1000;
+        this._dbPathFs = path.join(folderPath, filename);
+        this._dbFolderFs = folderPath;
+
+        this.open();
+    }
+    /**
+    * Adds an object with the given attributes to a proided bucket (array).
+    * The object is added at the right position, sorted by `lastSeen`.
+    * Most recently seen nodes at the beginning, least recently seen nodes at the end.
+    *
+    * @method core.topology.ObjectBucketStore~_addToBucket
+    *
+    * @param {core.topology.ContactNodeObjectListInterface} bucket The bucket to add to.
+    * @param {Buffer} id
+    * @param {number} lastSeen
+    * @param {any} addresses
+    *
+    * @returns {boolean} true
+    */
+    ObjectBucketStore.prototype._addToBucket = function (bucket, id, lastSeen, addresses) {
+        var addressArray = [];
+
+        var objectToAdd = {
+            addresses: addressArray,
+            id: id.toString(&#039;hex&#039;),
+            lastSeen: lastSeen
+        };
+
+        for (var i = 0, l = addresses.length; i &lt; l; i++) {
+            var address = addresses[i];
+            var port = address.getPort();
+            var ip = address.getIp();
+
+            if (!(port &amp;&amp; ip))
+                continue;
+
+            addressArray.push({
+                _ip: address.getIp(),
+                _port: address.getPort()
+            });
+        }
+
+        if (!addressArray.length)
+            return false;
+
+        // add the object at the right position (most recent objects at the beginning)
+        var added = false;
+        for (var i = 0, k = bucket.length; i &lt; k; i++) {
+            if (lastSeen &gt;= bucket[i].lastSeen) {
+                bucket.splice(i, 0, objectToAdd);
+                added = true;
+                break;
+            }
+        }
+
+        if (!added) {
+            bucket.push(objectToAdd);
+        }
+
+        return true;
+    };
+
+    /**
+    * Returns the bucket stored under the given key. If no bucket is yet stored, a fresh array is set under the
+    * given key.
+    *
+    * @method core.topology.ObjectBucketStore~_getBucket
+    *
+    * @param {string} bucketKey
+    * @returns {ContactNodeObjectListInterface}
+    */
+    ObjectBucketStore.prototype._getBucket = function (bucketKey) {
+        var bucket = this._buckets[bucketKey];
+
+        if (!bucket) {
+            this._buckets[bucketKey] = bucket = [];
+        }
+
+        return bucket;
+    };
+
+    /**
+    * Returns an object copy of a stored object, with the only exception that the stored id is transferred to
+    * a JSON-Buffer representation.
+    *
+    * @method core.topology.ObjectBucketStore~_mutableSafeCopy
+    *
+    * @param {core.topology.ContactNodeObjectInterface} storedObj The stored object to copy.
+    * @returns {core.topology.ContactNodeObjectInterface}
+    */
+    ObjectBucketStore.prototype._mutableSafeCopy = function (storedObj) {
+        var obj = {
+            addresses: [],
+            id: (new Buffer(storedObj.id, &#039;hex&#039;)).toJSON(),
+            lastSeen: storedObj.lastSeen
+        };
+
+        var addresses = storedObj.addresses;
+
+        for (var i = 0, l = addresses.length; i &lt; l; i++) {
+            var address = addresses[i];
+            obj.addresses.push({ _ip: address._ip, _port: address._port });
+        }
+
+        return obj;
+    };
+
+    /**
+    * Persists a JSON string representation of the current bucket state to a file.
+    * To prevent an unnecessary high amount of file writes, write-cycles are delayed with a timeout.
+    *
+    * @method core.topology.ObjectBucketStore~_persistDb
+    */
+    ObjectBucketStore.prototype._persistDb = function () {
+        var _this = this;
+        if (this._isUnwritableFs || this._isWritingFs || (!this._isOpen)) {
+            return;
+        }
+
+        if (this._persistTimeout) {
+            clearTimeout(this._persistTimeout);
+        }
+
+        this._persistTimeout = setTimeout(function () {
+            _this._persistTimeout = null;
+            _this._isWritingFs = true;
+
+            var dataToPersist = JSON.stringify(_this._buckets);
+
+            if (dataToPersist) {
+                fs.outputFile(_this._dbPathFs, dataToPersist, function (err) {
+                    _this._isWritingFs = false;
+                });
+            }
+        }, this._delayPersistInMs);
+    };
+
+    ObjectBucketStore.prototype.add = function (bucketKey, id, lastSeen, addresses) {
+        var res = this._addToBucket(this._getBucket(bucketKey), id, lastSeen, addresses);
+
+        this._persistDb();
+
+        return res;
+    };
+
+    ObjectBucketStore.prototype.addAll = function (bucketKey, contacts) {
+        var bucket = this._getBucket(bucketKey);
+
+        for (var i = 0, l = contacts.length; i &lt; l; i++) {
+            var contact = contacts[i];
+            this._addToBucket(bucket, contact.getId().getBuffer(), contact.getLastSeen(), contact.getAddresses());
+        }
+
+        this._persistDb();
+
+        return true;
+    };
+
+    ObjectBucketStore.prototype.close = function () {
+        if (!this._isOpen)
+            return;
+
+        this._persistDb();
+        this._isOpen = false;
+    };
+
+    ObjectBucketStore.prototype.contains = function (bucketKey, id) {
+        var bucket = this._buckets[bucketKey];
+
+        if (!bucket)
+            return false;
+
+        var idToCheck = id.toString(&#039;hex&#039;);
+        var contains = false;
+
+        for (var i = 0, l = bucket.length; i &lt; l; i++) {
+            if (bucket[i].id === idToCheck) {
+                contains = true;
+                break;
+            }
+        }
+
+        return contains;
+    };
+
+    ObjectBucketStore.prototype.get = function (bucketKey, id) {
+        var bucket = this._buckets[bucketKey];
+
+        if (!bucket)
+            return null;
+
+        var found = null;
+        var idToSearch = id.toString(&#039;hex&#039;);
+
+        for (var i = 0, l = bucket.length; i &lt; l; i++) {
+            if (bucket[i].id === idToSearch) {
+                found = bucket[i];
+                break;
+            }
+        }
+
+        return found ? this._mutableSafeCopy(found) : null;
+    };
+
+    ObjectBucketStore.prototype.getAll = function (bucketKey) {
+        var retList = [];
+        var bucket = this._buckets[bucketKey];
+
+        if (!bucket)
+            return retList;
+
+        for (var i = 0, l = bucket.length; i &lt; l; i++) {
+            var storedObj = bucket[i];
+            if (storedObj) {
+                retList.push(this._mutableSafeCopy(storedObj));
+            }
+        }
+
+        return retList;
+    };
+
+    ObjectBucketStore.prototype.getLongestNotSeen = function (bucketKey) {
+        var longestNotSeen = null;
+        var bucket = this._buckets[bucketKey];
+
+        if (bucket) {
+            var bucketLength = bucket.length;
+
+            if (bucketLength) {
+                longestNotSeen = this._mutableSafeCopy(bucket[bucketLength - 1]);
+            }
+        }
+
+        return longestNotSeen;
+    };
+
+    ObjectBucketStore.prototype.getRandom = function (bucketKey) {
+        var bucket = this._buckets[bucketKey];
+
+        if (bucket) {
+            var bucketLength = bucket.length;
+
+            if (bucketLength) {
+                return this._mutableSafeCopy(bucket[Math.floor(Math.random() * bucketLength)]);
+            }
+        }
+
+        return null;
+    };
+
+    ObjectBucketStore.prototype.isOpen = function () {
+        return this._isOpen;
+    };
+
+    ObjectBucketStore.prototype.open = function () {
+        if (this._isOpen)
+            return;
+
+        if (!fs.existsSync(this._dbFolderFs)) {
+            try  {
+                fs.mkdirsSync(this._dbFolderFs);
+            } catch (e) {
+                this._isUnwritableFs = true;
+            }
+        } else if (fs.existsSync(this._dbPathFs)) {
+            try  {
+                var contents = fs.readFileSync(this._dbPathFs, { encoding: &#039;utf8&#039; });
+                if (contents) {
+                    var existingBuckets = JSON.parse(contents);
+                    if (existingBuckets) {
+                        this._buckets = existingBuckets;
+                    }
+                }
+            } catch (e) {
+                fs.unlinkSync(this._dbPathFs);
+            }
+        }
+
+        this._isOpen = true;
+    };
+
+    ObjectBucketStore.prototype.remove = function (bucketKey, id) {
+        var bucket = this._buckets[bucketKey];
+
+        if (!bucket)
+            return true;
+
+        var idToSearch = id.toString(&#039;hex&#039;);
+        var spliceIndex = undefined;
+
+        for (var i = bucket.length - 1; i &gt;= 0; i--) {
+            if (bucket[i].id === idToSearch) {
+                spliceIndex = i;
+                break;
+            }
+        }
+
+        if (spliceIndex !== undefined) {
+            bucket.splice(spliceIndex, 1);
+        }
+
+        this._persistDb();
+
+        return true;
+    };
+
+    ObjectBucketStore.prototype.size = function (bucketKey) {
+        var bucket = this._buckets[bucketKey];
+
+        if (!bucket)
+            return 0;
+
+        return bucket.length;
+    };
+    return ObjectBucketStore;
+})();
+
+module.exports = ObjectBucketStore;
+//# sourceMappingURL=ObjectBucketStore.js.map</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

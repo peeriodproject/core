@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">65.60</p>
+      <p class="stat">64.82</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">234</p>
+      <p class="stat">241</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">36.35</p>
+      <p class="stat">36.21</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.15</p>
+      <p class="stat">2.31</p>
     </div>
   </div>
 </div>
@@ -93,6 +93,8 @@
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../main.d.ts&#039; /&gt;
 var i18n = require(&#039;i18n&#039;);
 
+var logger = require(&#039;../utils/logger/LoggerFactory&#039;).create();
+
 /**
 * @class core.ui.UiRoutinesManager
 * @implements core.ui.UiRoutinesManagerInterface
@@ -113,11 +115,12 @@ var UiRoutinesManager = (function () {
             frame: true,
             toolbar: false,
             resizable: true,
-            show: false
+            show: false,
+            show_in_taskbar: false,
+            fullscreen: false
         });
 
         this._window.once(&#039;loaded&#039;, function () {
-            //this._window.showDevTools();
             //this._window.moveBy(0, 200);
             //this._updateStatus();
             _this._updateWindow();
@@ -138,7 +141,6 @@ var UiRoutinesManager = (function () {
     UiRoutinesManager.prototype.close = function () {
         this._window.close(true);
 
-        //this._window.hide();
         this._isOpen = false;
     };
 
@@ -211,7 +213,7 @@ var UiRoutinesManager = (function () {
 
                 routine.start();
             } else {
-                console.error(err);
+                logger.error(&#039;Error installing UI routine&#039;, { errmsg: err.message });
             }
         });
     };
@@ -282,6 +284,7 @@ var UiRoutinesManager = (function () {
                 var contentEl = doc.createElement(&#039;div&#039;);
                 var heading = doc.createElement(&#039;h2&#039;);
                 var desc = doc.createElement(&#039;p&#039;);
+                var notice = doc.createElement(&#039;p&#039;);
                 var linkWrapper = doc.createElement(&#039;div&#039;);
                 var link = doc.createElement(&#039;a&#039;);
 
@@ -292,9 +295,12 @@ var UiRoutinesManager = (function () {
                 }
 
                 contentEl.className = &#039;content&#039;;
+                desc.className = &#039;description&#039;;
+                notice.className = &#039;notice&#039;;
 
                 heading.appendChild(doc.createTextNode(routine.getName()));
                 desc.appendChild(doc.createTextNode(routine.getDescription()));
+                notice.appendChild(doc.createTextNode(routine.getNotice()));
 
                 linkWrapper.className = &#039;install-btn-wrapper&#039;;
 
@@ -310,6 +316,7 @@ var UiRoutinesManager = (function () {
 
                 contentEl.appendChild(heading);
                 contentEl.appendChild(desc);
+                contentEl.appendChild(notice);
                 item.appendChild(contentEl);
 
                 linkWrapper.appendChild(link);

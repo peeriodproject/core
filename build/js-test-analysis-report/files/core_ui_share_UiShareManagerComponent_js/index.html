@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">74.29</p>
+      <p class="stat">74.16</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">342</p>
+      <p class="stat">344</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">34.86</p>
+      <p class="stat">37.22</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.61</p>
+      <p class="stat">3.65</p>
     </div>
   </div>
 </div>
@@ -283,15 +283,17 @@ describe(&#039;CORE --&gt; UI --&gt; SHARE --&gt; UiShareManagerComponent&#039;,
         });
     });
 
-    it(&#039;should correctly open the downloaded file in the file explorer&#039;, function (done) {
-        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;foobar.txt&#039;, 123, &#039;hash&#039;, &#039;/destination&#039;, { metadata: true });
+    it(&#039;should correctly open the downloaded file in the file explorer if the file exists&#039;, function (done) {
+        var destinationPath = testUtils.getFixturePath(&#039;/core/ui/uiShareManagerComponent/&#039;);
+
+        downloadManagerStub.onDownloadAdded.getCall(0).args[0](&#039;downloadId&#039;, &#039;file.txt&#039;, 123, &#039;hash&#039;, destinationPath, { metadata: true });
         downloadManagerStub.onDownloadEnded.getCall(0).args[0](&#039;downloadId&#039;, &#039;COMPLETED&#039;);
 
         component.emit(&#039;showDownload&#039;, &#039;downloadId&#039;);
 
         setImmediate(function () {
             nwGuiStub.Shell.showItemInFolder.calledOnce.should.be.true;
-            nwGuiStub.Shell.showItemInFolder.getCall(0).args[0].should.equal(&#039;/destination/foobar.txt&#039;);
+            nwGuiStub.Shell.showItemInFolder.getCall(0).args[0].should.equal(destinationPath + &#039;file.txt&#039;);
 
             done();
         });

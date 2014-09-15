@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">60.16</p>
+      <p class="stat">60.34</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">533</p>
+      <p class="stat">532</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">102.58</p>
+      <p class="stat">104.44</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.46</p>
+      <p class="stat">3.40</p>
     </div>
   </div>
 </div>
@@ -320,11 +320,10 @@ var IncomingDataPipeline = (function (_super) {
         for (var i = 0; i &lt; 4; i++) {
             var toUse = dataArray[bufferIndex];
 
-            if (!toUse) {
-                console.log(&#039;LENGTH ERROR!!!&#039;);
-                console.log(dataArray);
-            }
-
+            /*if (!toUse) {
+            console.log(&#039;LENGTH ERROR!!!&#039;);
+            console.log(dataArray);
+            }*/
             if (toUse.length === ++byteIndex) {
                 toUse = dataArray[++bufferIndex];
                 byteIndex = 0;
@@ -367,7 +366,7 @@ var IncomingDataPipeline = (function (_super) {
 
                 if (tempMessageMemory.length &gt; this._maxTemporaryBytes) {
                     this._freeMemory(identifier, tempMessageMemory);
-                    console.log(&#039;memory excess!&#039;);
+
                     this.emit(&#039;memoryExcess&#039;, identifier);
                 } else {
                     // get sliced message here

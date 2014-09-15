@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.24</p>
+      <p class="stat">71.29</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">481</p>
+      <p class="stat">500</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">36.67</p>
+      <p class="stat">37.14</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">5.08</p>
+      <p class="stat">5.41</p>
     </div>
   </div>
 </div>
@@ -108,7 +108,7 @@ var AppQuitHandler = require(&#039;./utils/AppQuitHandler&#039;);
 // topology imports
 var BucketFactory = require(&#039;./topology/BucketFactory&#039;);
 
-var BrutalObjectBucketStore = require(&#039;./topology/BrutalObjectBucketStore&#039;);
+var ObjectBucketStore = require(&#039;./topology/ObjectBucketStore&#039;);
 
 var ContactNodeAddressFactory = require(&#039;./topology/ContactNodeAddressFactory&#039;);
 var ContactNodeFactory = require(&#039;./topology/ContactNodeFactory&#039;);
@@ -155,13 +155,15 @@ var UploadBridge = require(&#039;./share/UploadBridge&#039;);
 
 // ui imports
 var UiShareManagerComponent = require(&#039;./ui/share/UiShareManagerComponent&#039;);
-
+var UiDaemon = require(&#039;./ui/UiDaemon&#039;);
 var UiFolderWatcherManagerComponent = require(&#039;./ui/folder/UiFolderWatcherManagerComponent&#039;);
 var UiFolderDropzoneComponent = require(&#039;./ui/folder/UiFolderDropzoneComponent&#039;);
+var UiOpenPortsComponent = require(&#039;./ui/protocol/UiOpenPortsComponent&#039;);
 
 var UiProtocolGatewayComponent = require(&#039;./ui/protocol/UiProtocolGatewayComponent&#039;);
 var UiSearchFormResultsManagerComponent = require(&#039;./ui/search/UiSearchFormResultsManagerComponent&#039;);
 var UiManager = require(&#039;./ui/UiManager&#039;);
+var UiUpdateNotify = require(&#039;./ui/UiUpdateNotify&#039;);
 var UiSplashScreen = require(&#039;./ui/UiSplashScreen&#039;);
 var UiRoutinesManager = require(&#039;./ui/UiRoutinesManager&#039;);
 var UiChromeExtensionRoutine = require(&#039;./ui/routines/UiChromeExtensionRoutine&#039;);
@@ -202,6 +204,8 @@ var App = {
     },
     _uiComponentsAdded: [],
     _requiredUiComponentsToStart: [&#039;indexer&#039;, &#039;sharing&#039;, &#039;topology&#039;],
+    // todo docs
+    _tray: null,
     /**
     * Returns a JSONStateHandlerFactory by using the singleton pattern
     *
@@ -253,6 +257,15 @@ var App = {
     _initSplashScreen: function () {
         this._splashScreen = this._environmentConfig.get(&#039;environment.startUi&#039;) ? new UiSplashScreen(this._gui) : null;
     },
+    _checkForUpdates: function () {
+        var appConfig = this._getMainConfig([&#039;app&#039;]);
+
+        if (!appConfig.get(&#039;app.checkForUpdatesOnStartup&#039;, false)) {
+            return;
+        }
+
+        UiUpdateNotify.checkForUpdates(this._gui);
+    },
     _setSplashScreenStatus: function (status) {
         if (this._splashScreen) {
             this._splashScreen.setStatus(status);
@@ -260,8 +273,7 @@ var App = {
     },
     start: function (gui, nwApp, dataPath, win) {
         process.on(&#039;uncaughtException&#039;, function (err) {
-            console.log(&#039;Uncaught exception&#039;);
-            console.log(err);
+            logger.error(err);
         });
 
         this._gui = gui;
@@ -270,41 +282,47 @@ var App = {
         this._appQuitHandler = new AppQuitHandler(nwApp);
         this._loadConfig();
 
-        this._startUiDaemon();
+        /*var mainWin = this._gui.Window.get();
+        
+        if (mainWin &amp;&amp; mainWin.showDevTools) {
+        try {
+        mainWin.showDevTools();
+        }
+        catch (e) {
+        console.error(e);
+        }
+        }*/
         this._initSplashScreen();
 
-        if (win &amp;&amp; win.showDevTools) {
-            win.showDevTools();
-        }
-
-        // copy node discovery.json to app data path
-        /*var nodeDiscoveryPath = path.resolve(this.getDataPath(), &#039;nodeDiscovery.json&#039;);
-        
-        if (!fs.existsSync(nodeDiscoveryPath)) {
-        fs.copySync(path.join(__dirname, &#039;../config/nodeDiscovery.json&#039;), nodeDiscoveryPath);
-        }*/
         if (this._environmentConfig.get(&#039;environment.startSearchDatabase&#039;)) {
             this._startSearchDatabase();
         } else {
-            this.startTopology(null, null, null);
+            this._startTopology(null, null, null);
         }
+
+        this._startUiDaemon();
+    },
+    getAppQuitHandler: function () {
+        return this._appQuitHandler;
+    },
+    getTray: function () {
+        return this._tray;
     },
     quit: function () {
-        console.log(&#039;quitting...&#039;);
         return process.nextTick(function () {
-            this._appQuitHandler.quit();
+            this.getAppQuitHandler().quit();
         }.bind(this));
     },
     _startSearchDatabase: function () {
         var _this = this;
-        this._startSearchClient(function (searchConfig, searchClient) {
+        this._startSearchClient(function (searchClient) {
             var searchRequestsIndexName = &#039;searchrequests&#039;;
 
-            var searchRequestManager = new SearchRequestManager(_this._appQuitHandler, searchRequestsIndexName, searchClient);
-            var searchResponseManager = new SearchResponseManager(_this._appQuitHandler, searchClient);
+            var searchRequestManager = new SearchRequestManager(_this.getAppQuitHandler(), searchRequestsIndexName, searchClient);
+            var searchResponseManager = new SearchResponseManager(_this.getAppQuitHandler(), searchClient);
             var searchMessageBridge = new SearchMessageBridge(searchRequestManager, searchResponseManager);
 
-            _this._startIndexer(searchConfig, searchClient, searchRequestManager, searchResponseManager, function () {
+            _this._startIndexer(searchClient, searchRequestManager, searchResponseManager, function () {
                 _this._checkAndStartUi(&#039;indexer&#039;);
             });
 
@@ -333,17 +351,18 @@ var App = {
         this._setSplashScreenStatus(&#039;startSharing&#039;);
 
         //var shareConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;, &#039;share&#039;]);
-        var downloadManager = new DownloadManager(this._getMainConfig([&#039;app&#039;, &#039;share&#039;]), this._appQuitHandler, this._getJSONStateHandlerFactory(), searchClient, searchRequestsIndexName);
-        var uploadManager = new UploadManager(this._appQuitHandler, searchClient, searchRequestsIndexName);
+        var downloadManager = new DownloadManager(this._getMainConfig([&#039;app&#039;, &#039;share&#039;]), this.getAppQuitHandler(), this._getJSONStateHandlerFactory(), searchClient, searchRequestsIndexName);
+        var uploadManager = new UploadManager(this.getAppQuitHandler(), searchClient, searchRequestsIndexName);
 
         this._addUiComponent(new UiShareManagerComponent(this._gui, downloadManager, uploadManager));
 
         return process.nextTick(internalCallback.bind(null, downloadManager, uploadManager));
     },
-    _startIndexer: function (searchConfig, searchClient, searchRequestManager, searchResponseManager, callback) {
+    _startIndexer: function (searchClient, searchRequestManager, searchResponseManager, callback) {
         var _this = this;
         var internalCallback = callback || function () {
         };
+        var searchConfig = this._getMainConfig([&#039;search&#039;]);
 
         if (!this._environmentConfig.get(&#039;environment.startSearchDatabase&#039;) || !this._environmentConfig.get(&#039;environment.startIndexer&#039;)) {
             return process.nextTick(internalCallback.bind(null));
@@ -368,18 +387,16 @@ var App = {
         var pluginManager = new PluginManager(pluginConfig, this._getJSONStateHandlerFactory(), pluginFinder, pluginValidator, pluginLoaderFactory, pluginRunnerFactory, {
             onOpenCallback: function () {
                 searchManager = new SearchManager(searchConfig, pluginManager, searchClient);
-                folderWatcherManager = new FolderWatcherManager(_this._getMainConfig([&#039;app&#039;, &#039;fs&#039;]), _this._appQuitHandler, _this._getJSONStateHandlerFactory(), folderWatcherFactory, {
+                folderWatcherManager = new FolderWatcherManager(_this._getMainConfig([&#039;app&#039;, &#039;fs&#039;]), _this.getAppQuitHandler(), _this._getJSONStateHandlerFactory(), folderWatcherFactory, {
                     onOpenCallback: function () {
-                        indexManager = new IndexManager(searchConfig, _this._appQuitHandler, folderWatcherManager, pathValidator, searchManager);
+                        indexManager = new IndexManager(searchConfig, _this.getAppQuitHandler(), folderWatcherManager, pathValidator, searchManager);
                         pluginManager.activatePluginState(function (err) {
                             if (err) {
                                 logger.error(err);
                             }
 
-                            searchFormResultsManager = new SearchFormResultsManager(_this._getMainConfig([&#039;app&#039;, &#039;search&#039;]), _this._appQuitHandler, _this._getJSONStateHandlerFactory(), pluginManager, searchRequestManager);
+                            searchFormResultsManager = new SearchFormResultsManager(_this._getMainConfig([&#039;app&#039;, &#039;search&#039;]), _this.getAppQuitHandler(), _this._getJSONStateHandlerFactory(), pluginManager, searchRequestManager);
                             _this._addUiComponent(new UiSearchFormResultsManagerComponent(searchFormResultsManager, searchRequestManager));
-
-                            console.log(&#039;started indexer&#039;);
 
                             return internalCallback();
                         });
@@ -387,7 +404,6 @@ var App = {
                 });
 
                 _this._addUiComponent(new UiFolderWatcherManagerComponent(_this._gui, folderWatcherManager));
-                console.log(&#039;added ui folder Watcher Manager&#039;);
             }
         });
         //this._addUiComponent(new UiPluginManagerComponent(pluginManager));
@@ -396,28 +412,30 @@ var App = {
     _startSearchClient: function (callback) {
         var internalCallback = callback || function () {
         };
-        var searchConfig = this._getMainConfig([&#039;search&#039;]);
         var searchStoreFactory = new SearchStoreFactory();
         var searchItemFactory = new SearchItemFactory();
 
         this._setSplashScreenStatus(&#039;startSearchDatabase&#039;);
 
-        var searchClient = new SearchClient(searchConfig, this._appQuitHandler, &#039;mainIndex&#039;, searchStoreFactory, searchItemFactory, {
+        var searchClient = new SearchClient(this._getMainConfig([&#039;app&#039;, &#039;search&#039;]), this.getAppQuitHandler(), &#039;mainIndex&#039;, searchStoreFactory, searchItemFactory, {
             onOpenCallback: function (err) {
-                console.log(err);
-                return internalCallback(searchConfig, searchClient);
+                if (err)
+                    logger.error(err.message);
+                return internalCallback(searchClient);
             }
         });
     },
     _startUiDaemon: function () {
         if (!this._environmentConfig.get(&#039;environment.startUi&#039;)) {
-            return;
+            return null;
         }
-        //var uiDaemon = new UiDaemon(this._gui, this._appQuitHandler);
+
+        var uiDaemon = new UiDaemon(this._gui, this.getAppQuitHandler());
+
+        this._tray = uiDaemon.getTray();
     },
     _startUi: function () {
         var _this = this;
-        console.log(&#039;start ui&#039;);
         if (!this._environmentConfig.get(&#039;environment.startUi&#039;)) {
             return;
         }
@@ -425,19 +443,24 @@ var App = {
         this._setSplashScreenStatus(&#039;startUi&#039;);
 
         this._addUiComponent(new UiFolderDropzoneComponent(this._gui.Window));
+        var openPortsConfig = this._getMainConfig([&#039;app&#039;, &#039;net&#039;]);
 
-        var uiManager = new UiManager(this._getMainConfig([&#039;ui&#039;]), this._appQuitHandler, this._uiComponents);
+        this._addUiComponent(new UiOpenPortsComponent(this._getJSONStateHandlerFactory().create(path.join(openPortsConfig.get(&#039;app.dataPath&#039;), openPortsConfig.get(&#039;net.myOpenPortsStateConfig&#039;)))));
+
+        var uiManager = new UiManager(this._getMainConfig([&#039;ui&#039;]), this.getAppQuitHandler(), this._uiComponents);
 
         if (this._splashScreen) {
             this._splashScreen.once(&#039;close&#039;, function () {
                 _this._checkUiRoutines();
+
+                setImmediate(function () {
+                    _this._checkForUpdates();
+                });
             });
         }
     },
     _checkAndStartUi: function (component) {
         var readyToTakeOff = true;
-
-        console.log(&#039;check and start ui&#039;);
 
         this._uiComponentsAdded.push(component);
 
@@ -449,17 +472,18 @@ var App = {
         }
 
         if (readyToTakeOff) {
-            console.log(&#039;ready to take off&#039;);
             this._startUi();
         }
     },
     _checkUiRoutines: function () {
+        logger.log(&#039;checking ui routines&#039;);
         var uiRoutinesManager = new UiRoutinesManager(this._gui);
         uiRoutinesManager.addUiRoutine(new UiChromeExtensionRoutine(new JSONConfig(&#039;../../config/uiChromeExtensionRoutine.json&#039;, [&#039;extension&#039;])));
 
         uiRoutinesManager.getInstalledRoutineIds(function (err, routineIds) {
             if (!routineIds || !routineIds.length) {
                 uiRoutinesManager.open();
+                logger.log(&#039;ui routines: opened manager&#039;);
             } else {
                 uiRoutinesManager.getUiRoutine(routineIds[0]).start();
             }
@@ -471,25 +495,24 @@ var App = {
             this._checkAndStartUi(&#039;topology&#039;);
 
             if (this._splashScreen) {
-                setTimeout(function () {
+                setImmediate(function () {
+                    logger.log(&#039;closing splashscreen&#039;);
                     _this._splashScreen.close();
-                }, 5000);
+                });
             }
+
             return;
         }
 
         this._setSplashScreenStatus(&#039;startTopology&#039;);
 
-        var appConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;app&#039;]);
-        var netConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;net&#039;]);
-        var protocolConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;protocol&#039;]);
-        var topologyConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;topology&#039;]);
-        var hydraConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;hydra&#039;]);
-        var transferConfig = new JSONConfig(&#039;../../config/mainConfig.json&#039;, [&#039;fileTransfer&#039;]);
+        var appConfig = this._getMainConfig(&#039;app&#039;);
+        var topologyConfig = this._getMainConfig(&#039;topology&#039;);
+
         var tcpSocketHandlerFactory = new TCPSocketHandlerFactory();
         var jsonWebIp = new JSONWebIp();
         var nodeAddressFactory = new ContactNodeAddressFactory();
-        var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, netConfig, [jsonWebIp]);
+        var networkBootstrapper = new NetworkBootstrapper(tcpSocketHandlerFactory, this._getMainConfig([&#039;app&#039;, &#039;net&#039;]), this._getJSONStateHandlerFactory(), [jsonWebIp]);
         var protocolGateway = null;
 
         networkBootstrapper.bootstrap(function (err) {
@@ -519,15 +542,12 @@ var App = {
                 addressList.push(nodeAddressFactory.create(myIp, myOpenPorts[i]));
             }
 
-            console.log(path.resolve(_this.getDataPath(), &#039;myId.json&#039;));
             var idState = _this._getJSONStateHandlerFactory().create(path.resolve(_this.getDataPath(), &#039;myId.json&#039;));
 
             idState.load(function (err, state) {
                 if (err)
-                    console.log(err);
+                    logger.error(&#039;Id state error&#039;, { emsg: err.message });
                 var myId = null;
-
-                console.log(state);
 
                 if (state &amp;&amp; state.id) {
                     myId = new Id(Id.byteBufferByHexString(state.id, 20), 160);
@@ -536,7 +556,6 @@ var App = {
                     var randBuffer = crypto.randomBytes(20);
                     state.id = randBuffer.toString(&#039;hex&#039;);
                     idState.save(state, function () {
-                        console.log(&#039;Id state saved.&#039;);
                     });
 
                     myId = new Id(randBuffer, 160);
@@ -547,18 +566,18 @@ var App = {
                 myNode = new MyNode(myId, addressList);
 
                 //bucketStore = new BucketStore(&#039;bucketstore&#039;, topologyConfig.get(&#039;topology.bucketStore.databasePath&#039;));
-                bucketStore = new BrutalObjectBucketStore();
+                bucketStore = new ObjectBucketStore(&#039;objectBucketStore&#039;, path.join(appConfig.get(&#039;app.dataPath&#039;), topologyConfig.get(&#039;topology.bucketStore.databasePath&#039;)), 2);
                 bucketFactory = new BucketFactory();
                 contactNodeFactory = new ContactNodeFactory();
-                routingTable = new RoutingTable(topologyConfig, _this._appQuitHandler, myId, bucketFactory, bucketStore, contactNodeFactory, {
+                routingTable = new RoutingTable(topologyConfig, _this.getAppQuitHandler(), myId, bucketFactory, bucketStore, contactNodeFactory, {
                     onOpenCallback: function (err) {
                         if (err) {
-                            console.error(err);
+                            logger.error(err.message);
                         }
 
-                        protocolGateway = new ProtocolGateway(appConfig, protocolConfig, topologyConfig, hydraConfig, transferConfig, myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
-                        _this._addUiComponent(new UiProtocolGatewayComponent(protocolGateway, _this._splashScreen));
+                        protocolGateway = new ProtocolGateway(appConfig, _this._getMainConfig(&#039;protocol&#039;), topologyConfig, _this._getMainConfig(&#039;hydra&#039;), _this._getMainConfig(&#039;fileTransfer&#039;), myNode, tcpSocketHandler, routingTable, searchMessageBridge, downloadBridge, uploadBridge);
 
+                        _this._addUiComponent(new UiProtocolGatewayComponent(protocolGateway, _this._splashScreen));
                         _this._checkAndStartUi(&#039;topology&#039;);
 
                         protocolGateway.start();

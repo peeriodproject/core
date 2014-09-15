@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">63.23</p>
+      <p class="stat">63.51</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">509</p>
+      <p class="stat">508</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">34.00</p>
+      <p class="stat">32.34</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">3.53</p>
+      <p class="stat">3.45</p>
     </div>
   </div>
 </div>
@@ -377,8 +377,7 @@ var Upload = (function (_super) {
                             } else if (this._manuallyAborted) {
                                 this._kill(true, &#039;Manually aborted.&#039;, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
                             } else {
-                                console.log(&#039;Received block request. Byte pos: &#039; + blockRequest.getFirstBytePositionOfBlock());
-
+                                //console.log(&#039;Received block request. Byte pos: &#039; + blockRequest.getFirstBytePositionOfBlock());
                                 // everything okay so far. read from file.
                                 if (!this._fdOpen) {
                                     this._fileReader.prepareToRead(function (err) {
@@ -454,7 +453,7 @@ var Upload = (function (_super) {
             this.removeAllListeners(&#039;completed&#039;);
             this.removeAllListeners(&#039;startingUpload&#039;);
 
-            console.log(&#039;Upload killed due to: &#039; + message);
+            //console.log(&#039;Upload killed due to: &#039; + message);
             this.emit(&#039;killed&#039;, message);
 
             this.removeAllListeners(&#039;killed&#039;);
@@ -530,7 +529,7 @@ var Upload = (function (_super) {
                             if (errorMessage) {
                                 _this._kill(true, errorMessage, blockRequest.getNextTransferIdentifier(), blockRequest.getFeedingNodesBlock());
                             } else {
-                                console.log(&#039;Sending block.&#039;);
+                                //console.log(&#039;Sending block.&#039;);
                                 var sendableBuffer = _this._transferMessageCenter.wrapTransferMessage(&#039;ENCRYPTED_SHARE&#039;, blockRequest.getNextTransferIdentifier(), encryptedBuffer);
                                 _this._shareMessenger.pipeMessageAndWaitForResponse(sendableBuffer, blockRequest.getFeedingNodesBlock(), &#039;ENCRYPTED_SHARE&#039;, nextTransferIdentifier, function (err, responsePayload) {
                                     _this._handleMessengerResponse(err, responsePayload);

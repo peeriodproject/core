@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">70.45</p>
+      <p class="stat">70.05</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">803</p>
+      <p class="stat">912</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">90.68</p>
+      <p class="stat">86.31</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">6.66</p>
+      <p class="stat">7.54</p>
     </div>
   </div>
 </div>
@@ -145,6 +145,12 @@ var SearchClient = (function () {
         * @member {boolean} core.search.SearchClient~_isOpen
         */
         this._isOpen = false;
+        /**
+        * Stores the additional settings that will applied to every created index.
+        *
+        * @member {Object} core.search.SearchClient~_indexSettings
+        */
+        this._indexSettings = null;
         /**
         * The mix of the passed in options object and the defaults
         *
@@ -243,7 +249,7 @@ var SearchClient = (function () {
 
         var checkCallback = function (err) {
             if (err) {
-                console.error(err);
+                logger.error(err);
             }
 
             if (itemIds.length === amount) {
@@ -256,7 +262,11 @@ var SearchClient = (function () {
         }
 
         // todo get data from plugin indexes. check each plugin individual and update or add data
-        this.itemExists(objectToIndex[pluginIdentifiers[0]].itemPath, function (exists, item) {
+        this.itemExists(objectToIndex[pluginIdentifiers[0]].itemPath, function (err, exists, item) {
+            if (err) {
+                return callback(err, []);
+            }
+
             var existingIdentifiers = item ? item.getPluginIdentifiers() : [];
             var existingIdentifiersLength = existingIdentifiers.length;
 
@@ -284,7 +294,7 @@ var SearchClient = (function () {
         var internalCallback = callback || function () {
         };
 
-        this._createIndex(this._indexName, null, function (err) {
+        this._createIndex(this._indexName, null, null, function (err) {
             var map = null;
             if (Object.keys(mapping).length !== 1 || Object.keys(mapping)[0] !== type) {
                 // wrap mapping in type root
@@ -345,28 +355,72 @@ var SearchClient = (function () {
         var internalCallback = callback || function (err) {
         };
 
+        // todo settings and default mapping data should be handled by an external class as we&#039;re using it in the SearchManager as well!
         var mapping = {
             _default_: {
-                meta: {
-                    type: &#039;object&#039;,
-                    index: &#039;no&#039;
-                },
                 _timestamp: {
                     enabled: true,
                     store: true
+                },
+                properties: {
+                    itemName: {
+                        type: &#039;string&#039;,
+                        search_analyzer: &quot;itemname_search&quot;,
+                        index_analyzer: &quot;itemname_index&quot;
+                    },
+                    meta: {
+                        type: &#039;object&#039;,
+                        index: &#039;no&#039;
+                    }
+                }
+            }
+        };
+
+        var settings = {
+            analysis: {
+                analyzer: {
+                    itemname_search: {
+                        tokenizer: &quot;itemname&quot;,
+                        filter: [
+                            &quot;lowercase&quot;
+                        ]
+                    },
+                    itemname_index: {
+                        tokenizer: &quot;itemname&quot;,
+                        filter: [
+                            &quot;lowercase&quot;,
+                            &quot;edge_ngram&quot;
+                        ]
+                    }
+                },
+                tokenizer: {
+                    itemname: {
+                        pattern: &quot;[^\\p{L}\\d]+&quot;,
+                        type: &quot;pattern&quot;
+                    }
+                },
+                filter: {
+                    edge_ngram: {
+                        side: &quot;front&quot;,
+                        max_gram: 20,
+                        min_gram: 1,
+                        type: &quot;edgeNGram&quot;
+                    }
                 }
             }
         };
 
         indexName = indexName.toLowerCase();
 
-        this._createIndex(indexName, mapping, function (err) {
+        this._createIndex(indexName, mapping, settings, function (err) {
             if (err) {
-                console.error(err);
+                logger.error(err);
+
                 return internalCallback(err);
             }
 
-            return internalCallback(err);
+            return internalCallback(null);
+            //return this._updateSettings(indexName, internalCallback);
         });
     };
 
@@ -402,7 +456,7 @@ var SearchClient = (function () {
                 queryDeleted = false;
                 responsesDeleted = false;
 
-                console.error(err);
+                logger.error(err);
 
                 return internalCallback(err);
             } else if (queryDeleted &amp;&amp; responsesDeleted) {
@@ -597,7 +651,7 @@ var SearchClient = (function () {
 
             exists = item !== null ? true : false;
 
-            return callback(exists, item);
+            return callback(err, exists, item);
         });
         //return process.nextTick(callback.bind(null, null, null));
     };
@@ -608,7 +662,9 @@ var SearchClient = (function () {
             type: &#039;_all&#039;,
             id: id
         }, function (err, exists) {
-            return callback(exists === true);
+            err = err || null;
+
+            return callback(err, exists === true);
         });
     };
 
@@ -632,26 +688,28 @@ var SearchClient = (function () {
                 log: {
                     type: &#039;file&#039;,
                     level: [&#039;error&#039;, &#039;warning&#039;],
+                    //level: &#039;trace&#039;,
                     path: path.join(_this._options.logsPath, _this._options.logsFileName)
                 }
             });
 
-            console.log(&#039;added elasticsearch client&#039;);
+            logger.log(&#039;added elasticsearch client&#039;);
 
             _this._waitForDatabaseServer(function (err) {
                 if (err) {
                     logger.error(err);
+
                     return internalCallback(err);
                 }
 
-                _this._createIndex(_this._indexName, null, function (err) {
+                _this._createIndex(_this._indexName, null, _this._indexSettings, function (err) {
                     err = err || null;
 
                     if (!err) {
                         _this._isOpen = true;
                     }
 
-                    return internalCallback(null);
+                    return _this._checkDatabaseServerHealth(internalCallback);
                 });
             });
         };
@@ -680,6 +738,12 @@ var SearchClient = (function () {
 
             return callback(err, hits);
         });
+    };
+
+    SearchClient.prototype.updateSettings = function (settings, callback) {
+        this._indexSettings = settings;
+
+        this._updateSettings(this._indexName, callback);
     };
 
     SearchClient.prototype.typeExists = function (type, callback) {
@@ -754,18 +818,20 @@ var SearchClient = (function () {
     *
     * @param {string} indexName
     * @param {Object|Null} mapping The optional mapping to stick to the index.
+    * * @param {Object|Null} settings The optional settings to stick to the index.
     * @param {Function} callback
     */
-    SearchClient.prototype._createIndex = function (indexName, mapping, callback) {
+    SearchClient.prototype._createIndex = function (indexName, mapping, settings, callback) {
         var _this = this;
         var params = {
             index: indexName
         };
 
-        if (mapping) {
+        if (mapping || settings) {
             params = ObjectUtils.extend(params, {
                 body: {
-                    mappings: mapping
+                    mappings: mapping,
+                    settings: settings
                 }
             });
         }
@@ -878,6 +944,23 @@ var SearchClient = (function () {
     };
 
     /**
+    * Checks the health of the elasticsearch cluster
+    *
+    * @method core.search.SearchClient~_checkDatabaseServerHealth
+    *
+    * @param {Function} callback
+    */
+    SearchClient.prototype._checkDatabaseServerHealth = function (callback) {
+        this._client.cluster.health({
+            waitForStatus: &#039;green&#039;
+        }, function (err, response, status) {
+            err = err || null;
+
+            return callback(err);
+        });
+    };
+
+    /**
     * Returns `true` if the given response objects matches with the http status code ( &gt;= 200 &lt; 300) or the error matches the specified error name.
     * This method is used to gracefully ignore expected errors such as `not found` or `already exists`.
     *
@@ -890,6 +973,32 @@ var SearchClient = (function () {
     */
     SearchClient.prototype._isValidResponse = function (err, status, errorNameToIgnore) {
         return ((status &gt;= 200 &amp;&amp; status &lt; 300) || (status &gt;= 400 &amp;&amp; err &amp;&amp; err.message.indexOf(errorNameToIgnore) === 0)) ? true : false;
+    };
+
+    SearchClient.prototype._updateSettings = function (indexName, callback) {
+        var _this = this;
+        this._client.indices.close({
+            index: indexName
+        }, function (err) {
+            if (err) {
+                return callback(err);
+            }
+
+            _this._client.indices.putSettings({
+                index: indexName,
+                body: _this._indexSettings
+            }, function (err) {
+                if (err) {
+                    return callback(err);
+                }
+
+                _this._client.indices.open({
+                    index: indexName
+                }, function (err) {
+                    return callback(err);
+                });
+            });
+        });
     };
     return SearchClient;
 })();

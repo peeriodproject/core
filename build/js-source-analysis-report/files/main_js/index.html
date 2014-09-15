@@ -49,7 +49,7 @@
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">53</p>
+      <p class="stat">64</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">12.53</p>
+      <p class="stat">13.95</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.33</p>
+      <p class="stat">0.38</p>
     </div>
   </div>
 </div>
@@ -98,7 +98,7 @@ var gui;
 try  {
     gui = require(&#039;nw.gui&#039;);
 } catch (e) {
-    console.log(&#039;node runner&#039;);
+    //console.log(&#039;node runner&#039;);
 }
 
 //var logger = require(&#039;./core/utils/logger/LoggerFactory&#039;).create(&#039;/Volumes/HDD/logs/&#039;);
@@ -122,7 +122,15 @@ var guiApp = gui &amp;&amp; gui.App ? gui.App : {
     }
 };
 
-var dataPath = gui &amp;&amp; gui.App ? gui.App.dataPath : path.resolve(&#039;./appDataFolder&#039;);
+var dataPath = null;
+
+if (gui &amp;&amp; gui.App) {
+    dataPath = gui.App.dataPath;
+    process.env.IS_NODE_WEBKIT = true;
+} else {
+    dataPath = path.resolve(&#039;./appDataFolder&#039;);
+}
+
 var guiWindow = gui &amp;&amp; gui.Window ? gui.Window.get() : null;
 
 var logUsageTimeout = null;
@@ -139,11 +147,14 @@ var createUsageTimeout = function () {
         logUsageTimeout = null;
 
         createUsageTimeout();
-    }, 500);
+    }, 10000);
 };
+
+var _tray = null;
 
 //createUsageTimeout();
 App.start(gui, guiApp, dataPath, guiWindow);
+_tray = App.getTray();
 /*
 // lifetime &gt; 5 min &lt; 1 day
 var minSeconds:number = 30;//300;

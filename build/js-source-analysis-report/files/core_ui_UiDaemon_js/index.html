@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">71.81</p>
+      <p class="stat">66.96</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">47</p>
+      <p class="stat">87</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">8.36</p>
+      <p class="stat">13.20</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.17</p>
+      <p class="stat">0.60</p>
     </div>
   </div>
 </div>
@@ -90,7 +90,7 @@
 
 <div class="container">
   <div class="row">
-    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../ts-definitions/node/node.d.ts&#039; /&gt;
+    <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../main.d.ts&#039; /&gt;
 var i18n = require(&#039;i18n&#039;);
 
 /**
@@ -99,41 +99,81 @@ var i18n = require(&#039;i18n&#039;);
 */
 var UiDaemon = (function () {
     function UiDaemon(gui, appQuitHandler) {
+        var _this = this;
+        this._aboutWindow = null;
         this._menu = null;
         this._tray = null;
         this._tray = new gui.Tray({
-            title: &#039;A&#039;
+            icon: &#039;./images/icon-menubar@2x.png&#039;,
+            alticon: &#039;./images/icon-menubar-active@2x.png&#039;
         });
 
         this._menu = new gui.Menu();
 
-        /*menu.append(new gui.MenuItem({
-        type: &#039;separator&#039;
-        }));*/
+        var aboutItem = new gui.MenuItem({
+            label: i18n.__(&#039;UiDaemon.menu.about.title&#039;)
+        });
+
+        aboutItem.click = function () {
+            if (_this._aboutWindow) {
+                _this._aboutWindow.show();
+                _this._aboutWindow.focus();
+
+                return;
+            }
+
+            _this._aboutWindow = gui.Window.open(&#039;./public/about.html&#039;, {
+                position: &#039;center&#039;,
+                show: false,
+                focus: true,
+                toolbar: false,
+                frame: true,
+                resizable: false,
+                width: 400,
+                height: 470,
+                fullscreen: false,
+                show_in_taskbar: false
+            });
+
+            _this._aboutWindow.setAlwaysOnTop(true);
+
+            _this._aboutWindow.once(&#039;loaded&#039;, function () {
+                _this._aboutWindow.show();
+                _this._aboutWindow.focus();
+            });
+
+            _this._aboutWindow.once(&#039;close&#039;, function () {
+                _this._aboutWindow = null;
+            });
+        };
+
+        this._menu.append(aboutItem);
+
+        this._menu.append(new gui.MenuItem({
+            type: &#039;separator&#039;
+        }));
+
         var quitItem = new gui.MenuItem({
-            label: &#039;Quit&#039;
+            label: i18n.__(&#039;UiDaemon.menu.quit.title&#039;)
         });
 
         quitItem.click = function () {
+            _this._menu.remove(quitItem);
+            _this._menu.append(new gui.MenuItem({
+                enabled: false,
+                label: i18n.__(&#039;UiDaemon.menu.quitting.title&#039;)
+            }));
+
             appQuitHandler.quit();
         };
 
         this._menu.append(quitItem);
 
         this._tray.menu = this._menu;
-
-        console.log(&#039;added ui deamon&#039;);
-        /*if (process.env.UI_ENABLED) {
-        App.quit();
-        }
-        else {
-        setTimeout(function () {
-        App.quit();
-        }, 40000);
-        }* /
-        };
-        */
     }
+    UiDaemon.prototype.getTray = function () {
+        return this._tray;
+    };
     return UiDaemon;
 })();
 

@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">37.12</p>
+      <p class="stat">37.20</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.16</p>
+      <p class="stat">2.17</p>
     </div>
   </div>
 </div>
@@ -190,7 +190,7 @@ var TransferMessageCenter = (function (_super) {
         this._setupListeners();
     }
     TransferMessageCenter.prototype.issueExternalFeedToCircuit = function (nodesToFeedBlock, payload, circuitId) {
-        console.log(&#039;Issuing external feed to circuit %o&#039;, { circuitId: circuitId, nodesToFeedBlock: JSON.stringify(FeedingNodesMessageBlock.extractAndDeconstructBlock(nodesToFeedBlock).nodes) });
+        logger.log(&#039;hydra&#039;, &#039;Issuing external feed to circuit&#039;, { circuitId: circuitId, nodesToFeedBlock: JSON.stringify(FeedingNodesMessageBlock.extractAndDeconstructBlock(nodesToFeedBlock).nodes) });
         var wrappedMessage = this.wrapTransferMessage(&#039;EXTERNAL_FEED&#039;, &#039;00000000000000000000000000000000&#039;, Buffer.concat([nodesToFeedBlock, payload]));
 
         if (wrappedMessage &amp;&amp; !(circuitId &amp;&amp; this._circuitManager.pipeFileTransferMessageThroughCircuit(circuitId, wrappedMessage))) {

@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">72.49</p>
+      <p class="stat">72.69</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">163</p>
+      <p class="stat">178</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">32.04</p>
+      <p class="stat">36.47</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.89</p>
+      <p class="stat">1.06</p>
     </div>
   </div>
 </div>
@@ -90,7 +90,9 @@
 
 <div class="container">
   <div class="row">
-    <textarea id="file-source" class="col-md-12">var TCPSocketFactory = require(&#039;./tcp/TCPSocketFactory&#039;);
+    <textarea id="file-source" class="col-md-12">var path = require(&#039;path&#039;);
+
+var TCPSocketFactory = require(&#039;./tcp/TCPSocketFactory&#039;);
 
 /**
 * NetworkBootstraper implementation.
@@ -98,21 +100,22 @@
 * @class core.net.NetworkBootstrapper
 * @implements core.net.NetworkBootstrapperInterface
 *
+* @param {core.net.tcp.TCPSocketHandlerFactoryInterface} socketHandlerFactory
 * @param {core.config.ConfigInterface} config The network configuration
 * @parma {Array&lt;core.net.ip.ExternalIPObtainerInterface&gt;} A list of IP obtainers to use as tools to get the machine&#039;s external IP.
 */
 var NetworkBootstrapper = (function () {
-    function NetworkBootstrapper(socketHandlerFactory, config, ipObtainers) {
+    function NetworkBootstrapper(socketHandlerFactory, config, stateHandlerFactory, ipObtainers) {
         /**
-        * Network configuration. Is used for getting the settings for TCP socket handler.
+        * Network configuration. Is used for getting the settings for TCP socket handler as well as the path for the open ports state.
         *
-        * @member {core.config.ConfigInterface} NetworkBootstrapper~_config
+        * @member {core.config.ConfigInterface} core.net.NetworkBootstrapper~_config
         */
         this._config = null;
         /**
         * The machine&#039;s external IP address.
         *
-        * @member {string} NetworkBootstrapper~_externalIp
+        * @member {string} core.net.tcp.NetworkBootstrapper~_externalIp
         */
         this._externalIp = &#039;&#039;;
         /**
@@ -128,37 +131,44 @@ var NetworkBootstrapper = (function () {
         */
         this._recheckIpEveryMs = 0;
         /**
+        * @member {core.utils.StateHandlerInterface} core.net.NetworkBootstrapper~_stateHandler
+        */
+        this._openPortsStateHandler = null;
+        /**
         * The TCPSockhetHandler instance
         *
-        * @member {core.net.tcp.TCPSocketHandlerInterface} NetworkBootstrapper~_tcpSocketHandler
+        * @member {core.net.tcp.TCPSocketHandlerInterface} core.net.NetworkBootstrapper~_tcpSocketHandler
         */
         this._tcpSocketHandler = null;
         /**
         * TCPSocketHandler factory
         *
-        * @member {core.net.tcp.TCPSocketHandlerFactoryInterface} NetworkBootstrapper~_tcpSocketHandlerFactory
+        * @member {core.net.tcp.TCPSocketHandlerFactoryInterface} core.net.NetworkBootstrapper~_tcpSocketHandlerFactory
         */
         this._tcpSocketHandlerFactory = null;
         this._config = config;
         this._ipObtainers = ipObtainers;
         this._tcpSocketHandlerFactory = socketHandlerFactory;
+        this._openPortsStateHandler = stateHandlerFactory.create(path.join(this._config.get(&#039;app.dataPath&#039;), this._config.get(&#039;net.myOpenPortsStateConfig&#039;)));
         this._recheckIpEveryMs = this._config.get(&#039;net.recheckIpIntervalInSeconds&#039;) * 1000;
     }
     NetworkBootstrapper.prototype.bootstrap = function (callback) {
         var _this = this;
         this._getExternalIp(function (err, ip) {
             if (err) {
-                callback(err);
-            } else {
-                _this._externalIp = ip;
+                return callback(err);
+            }
 
-                _this._tcpSocketHandler = _this._tcpSocketHandlerFactory.create(new TCPSocketFactory(), _this._getTCPSocketHandlerOptions());
+            _this._externalIp = ip;
+
+            _this._getTCPSocketHandlerOptions(function (options) {
+                _this._tcpSocketHandler = _this._tcpSocketHandlerFactory.create(new TCPSocketFactory(), options);
 
                 _this._tcpSocketHandler.autoBootstrap(function (openPorts) {
                     _this._setIpRecheckTimeout();
                     callback(null);
                 });
-            }
+            });
         });
     };
 
@@ -237,17 +247,22 @@ var NetworkBootstrapper = (function () {
     *
     * @returns {core.net.tcp.TCPSocketHandlerOptions}
     */
-    NetworkBootstrapper.prototype._getTCPSocketHandlerOptions = function () {
-        return {
-            allowHalfOpenSockets: this._config.get(&#039;net.allowHalfOpenSockets&#039;),
-            connectionRetry: this._config.get(&#039;net.connectionRetrySeconds&#039;),
-            idleConnectionKillTimeout: this._config.get(&#039;net.idleConnectionKillTimeout&#039;),
-            heartbeatTimeout: this._config.get(&#039;net.heartbeatTimeout&#039;),
-            myExternalIp: this._externalIp,
-            myOpenPorts: this._config.get(&#039;net.myOpenPorts&#039;),
-            outboundConnectionTimeout: this._config.get(&#039;net.outboundConnectionTimeout&#039;),
-            simulatorRTT: this._config.get(&#039;net.simulator.rtt&#039;)
-        };
+    NetworkBootstrapper.prototype._getTCPSocketHandlerOptions = function (callback) {
+        var _this = this;
+        this._openPortsStateHandler.load(function (err, state) {
+            var myOpenPorts = state &amp;&amp; state.openPorts ? state.openPorts : [];
+
+            return callback({
+                allowHalfOpenSockets: _this._config.get(&#039;net.allowHalfOpenSockets&#039;),
+                connectionRetry: _this._config.get(&#039;net.connectionRetrySeconds&#039;),
+                idleConnectionKillTimeout: _this._config.get(&#039;net.idleConnectionKillTimeout&#039;),
+                heartbeatTimeout: _this._config.get(&#039;net.heartbeatTimeout&#039;),
+                myExternalIp: _this._externalIp,
+                myOpenPorts: myOpenPorts,
+                outboundConnectionTimeout: _this._config.get(&#039;net.outboundConnectionTimeout&#039;),
+                simulatorRTT: _this._config.get(&#039;net.simulator.rtt&#039;)
+            });
+        });
     };
     return NetworkBootstrapper;
 })();

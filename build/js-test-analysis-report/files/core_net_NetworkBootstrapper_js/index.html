@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">77.39</p>
+      <p class="stat">76.67</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">133</p>
+      <p class="stat">150</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">24.59</p>
+      <p class="stat">25.13</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">1.00</p>
+      <p class="stat">1.18</p>
     </div>
   </div>
 </div>
@@ -94,10 +94,11 @@
 require(&#039;should&#039;);
 
 var sinon = require(&#039;sinon&#039;);
-
 var testUtils = require(&#039;../../utils/testUtils&#039;);
 
 var JSONWebIp = require(&#039;../../../src/core/net/ip/JSONWebIp&#039;);
+var JSONStateHandlerFactory = require(&#039;../../../src/core/utils/JSONStateHandlerFactory&#039;);
+var JSONStateHandler = require(&#039;../../../src/core/utils/JSONStateHandler&#039;);
 var NetworkBootstrapper = require(&#039;../../../src/core/net/NetworkBootstrapper&#039;);
 var TCPSocketHandlerFactory = require(&#039;../../../src/core/net/tcp/TCPSocketHandlerFactory&#039;);
 var TCPSocketHandler = require(&#039;../../../src/core/net/tcp/TCPSocketHandler&#039;);
@@ -106,6 +107,8 @@ var ObjectConfig = require(&#039;../../../src/core/config/ObjectConfig&#039;);
 describe(&#039;CORE --&gt; NET --&gt; NetworkBootstrapper&#039;, function () {
     var sandbox;
     var configStub;
+    var openPortsStateHandler;
+    var stateHandlerFactoryStub;
     var factoryStub;
     var tcpHandlerStub;
     var ipObtainerStubSuccess;
@@ -124,8 +127,22 @@ describe(&#039;CORE --&gt; NET --&gt; NetworkBootstrapper&#039;, function () {
                     return 2;
                 if (key === &#039;net.idleConnectionKillTimeout&#039;)
                     return 5;
-                if (key === &#039;net.myOpenPorts&#039;)
-                    return [56789];
+                if (key === &#039;app.dataPath&#039;)
+                    return testUtils.getFixturePath(&#039;net/appDataPath&#039;);
+                if (key === &#039;net.myOpenPortsStateConfig&#039;)
+                    return &#039;myOpenPorts.json&#039;;
+            }
+        });
+
+        openPortsStateHandler = testUtils.stubPublicApi(sandbox, JSONStateHandler, {
+            load: function (callback) {
+                return callback(null, [56789]);
+            }
+        });
+
+        stateHandlerFactoryStub = testUtils.stubPublicApi(sandbox, JSONStateHandlerFactory, {
+            create: function () {
+                return openPortsStateHandler;
             }
         });
 
@@ -167,7 +184,7 @@ describe(&#039;CORE --&gt; NET --&gt; NetworkBootstrapper&#039;, function () {
     });
 
     it(&#039;should successfully return the external ip on first try&#039;, function (done) {
-        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubSuccess]);
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, stateHandlerFactoryStub, [ipObtainerStubSuccess]);
         bootstrapper.bootstrap(function () {
             if (bootstrapper.getExternalIp() === &#039;127.0.0.1&#039;)
                 done();
@@ -175,7 +192,7 @@ describe(&#039;CORE --&gt; NET --&gt; NetworkBootstrapper&#039;, function () {
     });
 
     it(&#039;should successfully return the external ip on second try&#039;, function (done) {
-        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubError, ipObtainerStubSuccess]);
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, stateHandlerFactoryStub, [ipObtainerStubError, ipObtainerStubSuccess]);
         bootstrapper.bootstrap(function () {
             if (bootstrapper.getExternalIp() === &#039;127.0.0.1&#039;)
                 done();
@@ -183,7 +200,7 @@ describe(&#039;CORE --&gt; NET --&gt; NetworkBootstrapper&#039;, function () {
     });
 
     it(&#039;should bootstrap with error&#039;, function (done) {
-        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubError]);
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, stateHandlerFactoryStub, [ipObtainerStubError]);
         bootstrapper.bootstrap(function (err) {
             if (err &amp;&amp; err.message === &#039;NetworkBootstrapper: All IP obtainers throw an error.&#039;)
                 done();
@@ -191,7 +208,7 @@ describe(&#039;CORE --&gt; NET --&gt; NetworkBootstrapper&#039;, function () {
     });
 
     it(&#039;should error out that no IP obtainers have been specified&#039;, function (done) {
-        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, []);
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, stateHandlerFactoryStub, []);
         bootstrapper.bootstrap(function (err) {
             if (err &amp;&amp; err.message === &#039;NetworkBootstrapper: No IP obtainers specified.&#039;)
                 done();
@@ -199,7 +216,7 @@ describe(&#039;CORE --&gt; NET --&gt; NetworkBootstrapper&#039;, function () {
     });
 
     it(&#039;should return tcp socket handler&#039;, function (done) {
-        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubSuccess]);
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, stateHandlerFactoryStub, [ipObtainerStubSuccess]);
 
         bootstrapper.bootstrap(function () {
             if (bootstrapper.getTCPSocketHandler() === tcpHandlerStub) {
@@ -210,7 +227,7 @@ describe(&#039;CORE --&gt; NET --&gt; NetworkBootstrapper&#039;, function () {
     });
 
     it(&#039;should notice an ip change and set the IP on the TCP socket handler&#039;, function (done) {
-        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, [ipObtainerStubSuccess]);
+        var bootstrapper = new NetworkBootstrapper(factoryStub, configStub, stateHandlerFactoryStub, [ipObtainerStubSuccess]);
 
         bootstrapper.bootstrap(function () {
             // there is none yet

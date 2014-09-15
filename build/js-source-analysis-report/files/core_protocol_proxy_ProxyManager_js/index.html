@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">68.27</p>
+      <p class="stat">68.68</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">610</p>
+      <p class="stat">605</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">78.95</p>
+      <p class="stat">79.66</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">4.49</p>
+      <p class="stat">4.32</p>
     </div>
   </div>
 </div>
@@ -411,7 +411,7 @@ var ProxyManager = (function (_super) {
                 if (msgType === &#039;PROXY_ACCEPT&#039; &amp;&amp; Object.keys(this._confirmedProxies).length &lt; this._maxNumberOfProxies) {
                     this._addToConfirmedProxies(identifier, sender);
                     this.emit(&#039;newProxy&#039;, sender);
-                    console.log(&#039;Got new proxy %o&#039;, { id: sender.getId().toHexString(), proxyNow: Object.keys(this._confirmedProxies).length });
+
                     logger.log(&#039;proxy&#039;, &#039;Got new proxy&#039;, { id: sender.getId().toHexString(), lengthNow: Object.keys(this._confirmedProxies).length });
                 } else {
                     this.emit(&#039;proxyReject&#039;, sender);
@@ -587,7 +587,6 @@ var ProxyManager = (function (_super) {
     */
     ProxyManager.prototype._sendAddressChangeToAllKnownNodes = function () {
         var _this = this;
-        console.log(&#039;sending ADDRESS_CHANGE to all known nodes&#039;);
         this._routingTable.getAllContactNodes(function (err, allNodes) {
             for (var i = 0, l = allNodes.length; i &lt; l; i++) {
                 _this._protocolConnectionManager.writeMessageTo(allNodes[i], &#039;ADDRESS_CHANGE&#039;, new Buffer(0));
@@ -618,7 +617,6 @@ var ProxyManager = (function (_super) {
                 } else if (message.getMessageType() === &#039;ADDRESS_CHANGE&#039;) {
                     // we can safely call this, as if we would be proxying for this node, we would always communicate
                     // with this node via incoming connections
-                    console.log(&#039;handling ADDRESS_CHANGE message&#039;);
                     _this._protocolConnectionManager.invalidateOutgoingConnectionsTo(message.getSender());
                 } else {
                     _this.emit(&#039;message&#039;, message);
@@ -647,7 +645,6 @@ var ProxyManager = (function (_super) {
                     delete _this._confirmedProxies[identifier];
                     _this._updateMyNodeAddresses();
                     _this.emit(&#039;lostProxy&#039;, confirmedProxy);
-                    console.log(&#039;Lost proxy %o&#039;, confirmedProxy.getId().toHexString());
                     _this.emit(&#039;proxyCount&#039;, Object.keys(_this._confirmedProxies).length);
                 }
                 if (proxyingFor) {
@@ -665,8 +662,6 @@ var ProxyManager = (function (_super) {
         });
 
         this._myNode.onAddressChange(function (info) {
-            console.log(&#039;address has changed. %o&#039;, info);
-
             if (_this._addressChangeTimeout) {
                 global.clearTimeout(_this._addressChangeTimeout);
                 _this._addressChangeTimeout = 0;

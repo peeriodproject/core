@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">67.74</p>
+      <p class="stat">67.39</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">316</p>
+      <p class="stat">370</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">38.14</p>
+      <p class="stat">36.74</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">2.16</p>
+      <p class="stat">2.54</p>
     </div>
   </div>
 </div>
@@ -123,6 +123,11 @@ var SearchManager = (function () {
         };
 
         this._pluginManager.onBeforeItemAdd(pathToIndex, stats, fileHash, function (pluginData) {
+            if (!pluginData) {
+                logger.log(&#039;SearchManager#addItem: No plugin data provided.&#039;);
+                return internalCallback(new Error(&#039;SearchManager#addItem: No plugin data provided.&#039;));
+            }
+
             pluginData = _this._updatePluginData(pluginData, pathToIndex, stats, fileHash);
 
             //console.log(JSON.stringify(pluginData));
@@ -184,8 +189,7 @@ var SearchManager = (function () {
     };
 
     SearchManager.prototype.itemExists = function (pathToIndex, callback) {
-        console.log(&#039;todo SearchManager#itemExists&#039;);
-
+        //console.log(&#039;todo SearchManager#itemExists&#039;);
         return process.nextTick(callback.bind(null, null, null));
     };
 
@@ -219,7 +223,19 @@ var SearchManager = (function () {
         this._searchClient.open(function (err) {
             openedSearchClient = true;
 
-            return checkAndClose(err);
+            if (err) {
+                return checkAndClose(err);
+            }
+
+            setImmediate(function () {
+                _this._updateAnalysis(function (err) {
+                    if (err) {
+                        logger.error(err);
+                    }
+
+                    return checkAndClose(err);
+                });
+            });
         });
     };
 
@@ -241,23 +257,60 @@ var SearchManager = (function () {
             _this._pluginManager.getActivePluginRunner(pluginIdentifier, function (pluginRunner) {
                 pluginRunner.getMapping(function (err, mapping) {
                     if (err) {
-                        console.error(err);
+                        logger.error(err);
                     }
                     if (mapping) {
                         mapping = _this._updateMapping(mapping);
 
                         _this._searchClient.addMapping(pluginIdentifier, mapping, function (err) {
                             if (err) {
-                                console.error(err);
+                                logger.error(err);
                             }
                         });
                     } else {
                         // todo plugin uses elasticsearch auto mapping feature! Maybe it&#039;s better to throw an error here?
-                        console.log(&#039;todo: plugin uses elasticsearch auto mapping feature! Maybe it\&#039;s better to throw an error here?&#039;);
                     }
                 });
             });
         });
+    };
+
+    SearchManager.prototype._updateAnalysis = function (callback) {
+        var settings = {
+            analysis: {
+                analyzer: {
+                    itemname_search: {
+                        tokenizer: &quot;itemname&quot;,
+                        filter: [
+                            &quot;lowercase&quot;
+                        ]
+                    },
+                    itemname_index: {
+                        tokenizer: &quot;itemname&quot;,
+                        filter: [
+                            &quot;lowercase&quot;,
+                            &quot;edge_ngram&quot;
+                        ]
+                    }
+                },
+                tokenizer: {
+                    itemname: {
+                        pattern: &quot;[^\\p{L}\\d]+&quot;,
+                        type: &quot;pattern&quot;
+                    }
+                },
+                filter: {
+                    edge_ngram: {
+                        side: &quot;front&quot;,
+                        max_gram: 20,
+                        min_gram: 3,
+                        type: &quot;edgeNGram&quot;
+                    }
+                }
+            }
+        };
+
+        this._searchClient.updateSettings(settings, callback);
     };
 
     /**
@@ -295,7 +348,8 @@ var SearchManager = (function () {
             },
             itemName: {
                 type: &#039;string&#039;,
-                store: &#039;yes&#039;
+                search_analyzer: &quot;itemname_search&quot;,
+                index_analyzer: &quot;itemname_index&quot;
             },
             itemStats: {
                 type: &#039;nested&#039;,

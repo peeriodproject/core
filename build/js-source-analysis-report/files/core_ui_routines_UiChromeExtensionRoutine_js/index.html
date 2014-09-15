@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">79.85</p>
+      <p class="stat">75.97</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">103</p>
+      <p class="stat">162</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">20.72</p>
+      <p class="stat">30.72</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.91</p>
+      <p class="stat">1.57</p>
     </div>
   </div>
 </div>
@@ -93,8 +93,11 @@
     <textarea id="file-source" class="col-md-12">/// &lt;reference path=&#039;../../../main.d.ts&#039; /&gt;
 var path = require(&#039;path&#039;);
 var fs = require(&#039;fs-extra&#039;);
+var childProcess = require(&#039;child_process&#039;);
 
 var i18n = require(&#039;i18n&#039;);
+
+var logger = require(&#039;../../utils/logger/LoggerFactory&#039;).create();
 
 var UiChromeExtensionRoutine = (function () {
     function UiChromeExtensionRoutine(config) {
@@ -117,6 +120,10 @@ var UiChromeExtensionRoutine = (function () {
         return this._geti18n(&#039;name&#039;);
     };
 
+    UiChromeExtensionRoutine.prototype.getNotice = function () {
+        return this._geti18n(&#039;subnotice&#039;);
+    };
+
     UiChromeExtensionRoutine.prototype.getInstallButtonLabel = function () {
         return this._geti18n(&#039;installButtonLabel&#039;);
     };
@@ -133,21 +140,50 @@ var UiChromeExtensionRoutine = (function () {
 
             var installPath = _this._getInstallPath();
 
-            console.log(path.resolve(process.cwd(), _this._config.get(&#039;extension.crxPath&#039;)));
+            logger.log(&#039;Chrome routing extension install path &#039; + path.resolve(process.cwd(), _this._config.get(&#039;extension.crxPath&#039;)));
+
+            var externalCrxPath = _this._moveCrxAndGetPath();
+
+            if (!externalCrxPath) {
+                return internalCallback(null);
+            }
 
             fs.outputJson(installPath, {
-                external_crx: path.resolve(process.cwd(), _this._config.get(&#039;extension.crxPath&#039;)),
+                external_crx: externalCrxPath,
                 external_version: _this._config.get(&#039;extension.version&#039;)
             }, function (err) {
-                console.log(err);
-
                 return internalCallback(err);
             });
         });
     };
 
     UiChromeExtensionRoutine.prototype.isInstalled = function (callback) {
-        fs.exists(this._getInstallPath(), callback);
+        var installed = fs.existsSync(this._getInstallPath()) &amp;&amp; fs.existsSync(this._getDestinationCrxPath());
+
+        var doCallback = function (isInstalled) {
+            process.nextTick(function () {
+                callback(isInstalled);
+            });
+        };
+
+        if (!installed) {
+            doCallback(false);
+            return;
+        } else {
+            try  {
+                var contents = fs.readFileSync(this._getInstallPath(), { encoding: &#039;utf8&#039; });
+                var obj = JSON.parse(contents);
+
+                if (obj &amp;&amp; obj.external_version === this._config.get(&#039;extension.version&#039;)) {
+                    doCallback(true);
+                    return;
+                }
+            } catch (e) {
+            }
+        }
+
+        // fallback
+        doCallback(false);
     };
 
     UiChromeExtensionRoutine.prototype.start = function (callback) {
@@ -162,8 +198,10 @@ var UiChromeExtensionRoutine = (function () {
         // todo windows starter
         // todo pull request to node.d.ts -&gt; exec.unref
         // todo pull request to node.d.ts -&gt; exec with a single argument
-        /*var exec:any = childProcess.exec(&#039;open -a &quot;&#039; + host + &#039;&quot; &quot;&#039; + url + &#039;&quot;&#039;, function () {});
-        exec.unref();*/
+        var exec = childProcess.exec(&#039;open -a &quot;&#039; + host + &#039;&quot; &quot;&#039; + url + &#039;&quot;&#039;, function () {
+        });
+        exec.unref();
+
         return internalCallback(null);
     };
 
@@ -189,6 +227,27 @@ var UiChromeExtensionRoutine = (function () {
         var home = process.env[(process.platform == &#039;win32&#039;) ? &#039;USERPROFILE&#039; : &#039;HOME&#039;];
 
         return path.resolve(path.join(home, this._config.get(&#039;extension.installPath&#039;), this._config.get(&#039;extension.extensionId&#039;) + &#039;.json&#039;));
+    };
+
+    UiChromeExtensionRoutine.prototype._getDestinationCrxPath = function () {
+        var destCrxFolderPath = path.resolve(path.join(process.env[(process.platform == &#039;win32&#039;) ? &#039;USERPROFILE&#039; : &#039;HOME&#039;]), this._config.get(&#039;extension.crxPathTo&#039;));
+
+        return path.join(destCrxFolderPath, &#039;peeriod-chrome.crx&#039;);
+    };
+
+    UiChromeExtensionRoutine.prototype._moveCrxAndGetPath = function () {
+        var origCrxPath = path.resolve(process.cwd(), this._config.get(&#039;extension.crxPath&#039;));
+        var destCrxFolderPath = path.resolve(path.join(process.env[(process.platform == &#039;win32&#039;) ? &#039;USERPROFILE&#039; : &#039;HOME&#039;]), this._config.get(&#039;extension.crxPathTo&#039;));
+        var destCrxPath = this._getDestinationCrxPath();
+
+        try  {
+            fs.ensureDirSync(destCrxFolderPath);
+            fs.copySync(origCrxPath, destCrxPath);
+        } catch (e) {
+            return null;
+        }
+
+        return destCrxPath;
     };
     return UiChromeExtensionRoutine;
 })();

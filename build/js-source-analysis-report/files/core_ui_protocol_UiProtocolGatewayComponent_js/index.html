@@ -45,11 +45,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
-      <p class="stat">77.44</p>
+      <p class="stat">76.95</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
-      <p class="stat">130</p>
+      <p class="stat">147</p>
     </div>
   </div>
   <div class="row historical">
@@ -63,11 +63,11 @@
   <div class="row">
     <div class="col-md-6">
       <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
-      <p class="stat">23.25</p>
+      <p class="stat">25.78</p>
     </div>
     <div class="col-md-6">
       <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
-      <p class="stat">0.79</p>
+      <p class="stat">0.86</p>
     </div>
   </div>
 </div>
@@ -153,7 +153,13 @@ var UiProtocolGatewayComponent = (function (_super) {
         });
 
         protocolGateway.once(&#039;NEEDS_PROXY&#039;, function (needsProxy) {
-            _this._setKeyAndUpdateSplashScreen(&#039;needsProxy&#039;, needsProxy);
+            _this._setKey(&#039;needsProxy&#039;, needsProxy);
+
+            if (needsProxy) {
+                _this._updateSplashScreen(&#039;needsProxy&#039;);
+            } else {
+                _this._updateSplashScreen(&#039;needsNoProxy&#039;);
+            }
         });
 
         protocolGateway.on(&#039;NUM_OF_PROXIES&#039;, function (count) {
@@ -212,6 +218,17 @@ var UiProtocolGatewayComponent = (function (_super) {
     UiProtocolGatewayComponent.prototype._setKeyAndUpdateSplashScreen = function (key, value) {
         this._setKey(key, value);
 
+        this._updateSplashScreen(key);
+    };
+
+    /**
+    * Updates the splash screen status.
+    *
+    * @method core.ui.UiProtocolGatewayComponent~_updateSplashScreen
+    *
+    * @param {string} key
+    */
+    UiProtocolGatewayComponent.prototype._updateSplashScreen = function (key) {
         if (this._splashScreen) {
             this._splashScreen.setStatus(key);
         }
