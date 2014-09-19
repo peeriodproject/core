@@ -44,7 +44,7 @@ describe('CORE --> PLUGIN --> PluginRunner', function () {
                 } else if (key === 'plugin.api.pluginApiName') {
                     return 'PluginApi.js';
                 } else if (key === 'plugin.binaryPath') {
-                    return './core/plugin/pluginRunner/node_v0_10_30';
+                    return './core/plugin/pluginRunner/node_v0_10_31';
                 } else if (key === 'plugin.timeoutInSeconds') {
                     return 5;
                 }
